@@ -86,8 +86,6 @@ particles = getparticles(info);
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -98,10 +96,7 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T11:03:34.121
 
-
 Code: RAMSES
-
-
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
@@ -113,14 +108,10 @@ ndim: 3
 cosmological:  false
 -------------------------------------------------------
 amr:           true
-level(s): 
-
-6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
+level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -129,17 +120,13 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05 
-particle-variables: 
-
-7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: 
-
-("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
@@ -149,26 +136,20 @@ patchfile:        true
 
 [Mera]: Get particle data: 2026-08-03T11:03:39.167
 
-
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :
-
-38.428720474243164 MB
+Memory used for data table :38.428720474243164 MB
 -------------------------------------------------------
 ```
 
@@ -290,7 +271,6 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 [Mera]: 2026-08-03T11:03:51.758
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -316,9 +296,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 [Mera]: 2026-08-03T11:03:54.137
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -366,7 +344,6 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 [Mera]: 2026-08-03T11:03:58.133
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -375,7 +352,6 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Effective resolution: 512^2
-
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
@@ -771,7 +747,6 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin],
 ```
 [Mera]: 2026-08-03T11:04:23.505
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -839,9 +814,7 @@ usedmemory(proj_z);
 ```
 
 ```
-Memory used: 4.918
-
- MB
+Memory used: 4.918 MB
 ```
 
 
@@ -1039,7 +1012,6 @@ proj_z = projection(particles,
 ```
 [Mera]: 2026-08-03T11:04:31.367
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -1179,7 +1151,6 @@ proj_z = projection(particles,
 
 ```
 [Mera]: 2026-08-03T11:04:34.616
-
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1354,7 +1325,6 @@ proj_x = projection(particles, :age, :Myr, mask=mask,
 ```
 [Mera]: 2026-08-03T11:04:51.127
 
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1366,9 +1336,7 @@ Simulation min.: 46.875 [pc]
 
 :mask provided by function
 
-
 [Mera]: 2026-08-03T11:04:54.399
-
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]

@@ -30,8 +30,6 @@ println("cells loaded : ", length(gas.data))
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -42,10 +40,7 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T11:52:25.491
 
-
 Code: RAMSES
-
-
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
@@ -60,9 +55,7 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -71,17 +64,13 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05 
-particle-variables: 
-
-7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: 
-
-("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
@@ -91,20 +80,15 @@ patchfile:        true
 
 [Mera]: Get hydro data: 2026-08-03T11:52:28.149
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 📊 Processing Configuration:
-
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
@@ -113,22 +97,15 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 42.044 seconds
-
-Memory used for data table :2.321086215786636
-
- GB
+Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 
 cells loaded : 28320979
@@ -150,9 +127,7 @@ println("center_of (:com,  kpc)      : ", round.(c_kpc,     digits=4))
 ```
 
 ```
-center_of (:com,  fraction) : 
-
-[0.50001, 0.50046, 0.50044]
+center_of (:com,  fraction) : [0.50001, 0.50046, 0.50044]
 center_of (:densest)        : [0.49658, 0.50244, 0.50146]
 center_of (:com,  kpc)      : [24.0003, 24.022, 24.0212]
 ```
@@ -183,7 +158,6 @@ println("angmom : ", round.(fr.angmom, sigdigits=4))
 
 ```
 GalaxyFrame:
-
   center (standard) = [0.5, 0.5005, 0.5004]
   los  = [-0.0004, -0.0002, 1.0]
   up   = [-1.0, 0.0, -0.0004]
@@ -209,7 +183,6 @@ println("los_faceon · los_edgeon = ", round(sum(fr.los .* eo.los), digits=6))
 
 ```
 GalaxyFrame:
-
   center (standard) = [0.5, 0.5005, 0.5004]
   los  = [-0.0, 1.0, 0.0002]
   up   = [-0.0004, -0.0002, 1.0]
@@ -253,7 +226,6 @@ fig
 ```
 [Mera]: 2026-08-03T11:53:58.646
 
-
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 
 domain:
@@ -262,14 +234,11 @@ ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Selected var(s)=(:sd,) 
-
 Weighting      = :mass
 Off-axis LOS   = [-0.0004, -0.0002, 1.0]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
 
-
 [Mera]: 2026-08-03T11:54:09.266
-
 
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 
@@ -279,20 +248,16 @@ ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Selected var(s)=(:sd,) 
-
 Weighting      = :mass
 Off-axis LOS   = [-0.0, 1.0, 0.0002]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
 
-
-face-on Sigma extrema : (
-
-0.0, 200.81405317206742)
+face-on Sigma extrema : (0.0, 200.81405317206742)
 edge-on Sigma extrema : (0.0, 6539.3160386012305)
 ```
 
 
-![](galaxyframe_files/galaxyframe_10_8.png)
+![](galaxyframe_files/galaxyframe_10_1.png)
 
 
 ## Several galaxies, mergers, cosmological boxes
@@ -334,7 +299,6 @@ println("aperture-framed center [kpc] : ", round.(fr_ap.center, digits=4))
 
 ```
 GalaxyFrame:
-
   center (kpc) = [24.0003, 24.022, 24.0212]
   los  = [-0.0004, -0.0002, 1.0]
   up   = [-1.0, 0.0, -0.0004]

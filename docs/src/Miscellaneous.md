@@ -15,8 +15,6 @@ info=getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10/", verbose=false);
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -48,7 +46,6 @@ viewfields(myargs)
 
 ```
 [Mera]: Fields to use as arguments in functions
-
 =======================================================================
 pxsize	= missing
 res	= missing
@@ -103,14 +100,10 @@ gas = gethydro(info, myargs=myargs);
 ```
 [Mera]: Get hydro data: 2026-08-06T10:38:11.411
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
-center: [0.5, 0.5, 0.5] 
-
-==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -118,8 +111,6 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 📊 Processing Configuration:
-
-
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
@@ -128,22 +119,15 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 6914359 cells, 7 variables
 Creating Table from 6914359 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 9.903 seconds
-
-Memory used for data table :580.2772397994995
-
- MB
+Memory used for data table :580.2772397994995 MB
 -------------------------------------------------------
 ```
 
@@ -154,7 +138,6 @@ part = getparticles(info, myargs=myargs);
 
 ```
 [Mera]: Get particle data: 2026-08-06T10:38:53.657
-
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -169,13 +152,9 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-
 Combining results from 4 thread(s)...
-
 Found 5.368130e+05 particles
-Memory used for data table :
-
-37.885175704956055 MB
+Memory used for data table :37.885175704956055 MB
 -------------------------------------------------------
 ```
 
@@ -186,7 +165,6 @@ p = projection(gas, :sd, :Msun_pc2, myargs=myargs);
 
 ```
 [Mera]: 2026-08-06T10:39:03.487
-
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -199,14 +177,11 @@ Selected var(s)=(:sd,)
 Weighting      = :mass
 
 Effective resolution: 481^2
-
 Map size: 201 x 201
 Pixel size: 99.792 [pc]
 Simulation min.: 46.875 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -307,20 +282,15 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
   Threading: 4 threads for 11 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 40.936 seconds
-
-Memory used for data table :2.321086215786636
-
- GB
+Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
 
@@ -382,19 +352,15 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Compute threads: 4
    GC threads: 4
 
-
 ✓ Data combination complete!
-
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
   Threading: 4 threads for 11 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 39.602 seconds
-
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
@@ -452,9 +418,7 @@ showprogress_mode: nothing
 ```
 
 ```
-search: 
-
-bell real ceil Real fill help all kill
+search: bell real ceil Real fill help all kill
 
 
   bell(sound = nothing)

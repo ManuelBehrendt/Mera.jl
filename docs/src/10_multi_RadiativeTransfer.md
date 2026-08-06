@@ -68,8 +68,6 @@ show_map(p.maps[:Np_total]; logscale=true,
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -80,10 +78,7 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T11:14:10.150
 
-
 Code: RAMSES
-
-
 output [3] summary:
 mtime: 2026-06-01T21:54:33.519
 ctime: 2026-06-01T21:54:33.519
@@ -98,9 +93,7 @@ amr:           true
 level(s): 6 - 7 --> cellsize(s): 234.38 [pc] - 117.19 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-8  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01, :scalar_02)
+hydro-variables:  8  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01, :scalar_02)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01, :scalar_02)
 γ: 1.4
 gravity:       false
@@ -111,9 +104,7 @@ rt-variables: 12
 nIons: 3
 nGroups: 3
 iIons: 6
-photon group energies [eV]: 
-
-[18.85, 35.08, 65.67]
+photon group energies [eV]: [18.85, 35.08, 65.67]
 -------------------------------------------------------
 clumps:           false
 -------------------------------------------------------
@@ -130,7 +121,7 @@ patchfile:        true
 ```
 
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_3_9.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_3_3.png)
 
 
 **Takeaway:** `getinfo → getrt → projection → show_map` already reveals the ionized sphere.
@@ -238,7 +229,7 @@ show_map(psub.maps[:Np_total]; logscale=true, clabel=L"$\log_{10}\,N_p^{\rm tota
 ```
 
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_12_2.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_12_1.png)
 
 
 ## The projection model (once)
@@ -455,7 +446,7 @@ round(ifront, digits = 2) = 2.44
 ```
 
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_27_2.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_27_1.png)
 
 
 ```
@@ -540,13 +531,11 @@ legend(loc="upper right"); title("Ionization balance (Γ·n_HI vs α·n_e·n_HII
 maximum(getvar(rt, :Gamma_HI)) = 4.5615961435093065e-12
 maximum(getvar(rt, :photoheating_HI)) = 5.436954544982253e-23
 round(sum(pion[core]) / sum(rec[core]), digits = 2) = 5.27
-
-
 maximum(getvar(rt, :ionization_balance, hydro_data = gas)) = 5.428058169900033e-18
 ```
 
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_31_2.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_31_1.png)
 
 
 ## Physical units & the descriptor

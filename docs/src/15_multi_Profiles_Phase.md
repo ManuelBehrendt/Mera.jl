@@ -35,8 +35,6 @@ println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -45,10 +43,7 @@ println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-
-gas cells = 590311
-
-   particles = 45470
+gas cells = 590311   particles = 45470
 ```
 
 
@@ -80,13 +75,11 @@ axislegend(ax2, position=:rt); fig
 ```
 
 ```
-binsize=(500,:pc) → bin width [kpc] = 0.5
-
-  (48 bins)
+binsize=(500,:pc) → bin width [kpc] = 0.5  (48 bins)
 ```
 
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_4_2.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_4_1.png)
 
 
 ## 2. Per-bin statistics — a binned statistic is not a histogram
@@ -291,13 +284,11 @@ axislegend(ax2, position=:rt, framevisible=false); fig
 ```
 
 ```
-equal-count points/bin (min..max): (
-
-32096, 33456)  → nearly equal
+equal-count points/bin (min..max): (32096, 33456)  → nearly equal
 ```
 
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_16_2.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_16_1.png)
 
 
 ## More features (same API, no separate plot here)

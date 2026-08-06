@@ -35,8 +35,6 @@ println("hydro cells      : ", length(gas.data))
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -47,10 +45,7 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T12:19:09.624
 
-
 Code: RAMSES
-
-
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
@@ -65,9 +60,7 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -76,17 +69,13 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05 
-particle-variables: 
-
-7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: 
-
-("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
@@ -96,30 +85,23 @@ patchfile:        true
 
 [Mera]: Get particle data: 2026-08-03T12:19:15.216
 
-
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :
-
-38.428720474243164 MB
+Memory used for data table :38.428720474243164 MB
 -------------------------------------------------------
 
 [Mera]: Get hydro data: 2026-08-03T12:19:19.051
-
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
@@ -130,8 +112,6 @@ ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 📊 Processing Configuration:
-
-
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
@@ -140,22 +120,15 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 40.708 seconds
-
-Memory used for data table :2.321086215786636
-
- GB
+Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 
 particles loaded : 544515
@@ -183,14 +156,10 @@ println("mean SFR     [M☉/yr] : ", sum(s)/length(s))
 
 ```
 number of time bins  : 22
-
-
 time range     [Myr] : (1.419158337486011, 421.419158337486)
 peak SFR     [M☉/yr] : 1.19558
 mean SFR     [M☉/yr] : 0.9825318181818182
-sum(s) * 20.0 * 1.0e6 = 
-
-4.32314e8
+sum(s) * 20.0 * 1.0e6 = 4.32314e8
 
 4.32314e8
 ```
@@ -229,9 +198,7 @@ println("mass field used       : ", snap.mass_field)
 ```
 
 ```
-windows         [Myr] : 
-
-[5.0, 10.0, 100.0]
+windows         [Myr] : [5.0, 10.0, 100.0]
 SFR per window [M☉/yr]: [1.3736, 1.377, 1.14778]
 lifetime mean  [M☉/yr]: 0.986498525911278
 n_stars               : 544515
@@ -272,8 +239,6 @@ println("epsilon_ff (KM)         : ", d.eps_ff)
 
 ```
 SFR used        [M☉/yr] : 1.377
-
-
 M_gas (dense)   [M☉]    : 3.5681431847261477e8
 depletion time  [Gyr]   : 0.2591244142865757
 ⟨t_ff⟩ (mass-w)  [Myr]   : 7.170885863082442
@@ -290,9 +255,7 @@ println("per-cell t_ff [Myr] range : ", extrema(tff))
 ```
 
 ```
-per-cell t_ff [Myr] range : (
-
-4.434042095351683, 158141.82257929075)
+per-cell t_ff [Myr] range : (4.434042095351683, 158141.82257929075)
 ```
 
 

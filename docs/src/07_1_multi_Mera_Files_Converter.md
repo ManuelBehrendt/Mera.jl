@@ -80,8 +80,6 @@ println("JLD2 target   : ", jld_dir)
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -91,8 +89,6 @@ println("JLD2 target   : ", jld_dir)
 Mera v1.8.0
 
 RAMSES source : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d
-
-
 JLD2 target   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_nasKQz
 ```
 
@@ -113,16 +109,12 @@ println("size           : ", round(filesize(jld_file)/1024^2, digits=2), " MB")
 ```
 [Mera]: 2026-08-03T10:21:55.913
 
-
-Requested datatypes: 
-
-[:hydro]
+Requested datatypes: [:hydro]
 Max threads: 4 of 4 available
 Threading applied to: hydro, gravity, particles
 Threading NOT applied to: clumps (single-threaded by design)
 
 domain:
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
@@ -130,15 +122,12 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 
 reading/writing lmax: 6 of 6
 -----------------------------------
-Compression: 
-
-JLD2Lz4.Lz4Filter(0x40000000)
+Compression: JLD2Lz4.Lz4Filter(0x40000000)
 -----------------------------------
 - hydro (threaded: max_threads=4)
 
 
 ✓ File processing complete! Combining results...
-
 
 Final Statistics:
 ================
@@ -150,9 +139,7 @@ Final Statistics:
 - data reduction: 94.2%
 - total processing time: 8.43 seconds
 - effective threads: 4
-wrote          : 
-
-/var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_nasKQz/output_00001.jld2
+wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_nasKQz/output_00001.jld2
 size           : 0.15 MB
 ```
 
@@ -173,14 +160,10 @@ println("total mass     : ", round(msum(gas, :Msol), sigdigits=4), " Msol")
 
 Mera-file output_00001.jld2 contains:
 
-Datatype: 
-
-hydro
+Datatype: hydro
 merafile_version: 1.0
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
-CodecZlib: 
-
-VersionNumber[v"0.7.8"]
+CodecZlib: VersionNumber[v"0.7.8"]
 merafile_version: 1.0
 JLD2: VersionNumber[v"0.6.5"]
 CodecBzip2: VersionNumber[v"0.8.5"]
@@ -199,24 +182,18 @@ Total file size: 154.741 KB
 
 [Mera]: 2026-08-03T10:22:06.215
 
-
 Open Mera-file output_00001.jld2:
 
 domain:
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 
-Memory used for data table :
-
-2.2739639282226562 MB
+Memory used for data table :2.2739639282226562 MB
 -------------------------------------------------------
 
 cells loaded   : 32768
-total mass     : 6.284e-35
-
- Msol
+total mass     : 6.284e-35 Msol
 ```
 
 
@@ -237,12 +214,9 @@ println("mera files     : ", made)
 ```
 ✓ File processing complete! Combining results...
 
-
 ✓ File processing complete! Combining results...
 
-
 ✓ File processing complete! Combining results...
-
 mera files     : ["output_00001.jld2", "output_00002.jld2", "output_00003.jld2"]
 ```
 
@@ -321,7 +295,6 @@ println("converted dir  : ", sort(readdir(converted_dir)))
 
 ```
 ================================================================================
-
 Safe Multithreaded JLD2 Batch Converter with Safety Margin Monitoring
 ================================================================================
 Input directory:  /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_nasKQz
@@ -355,15 +328,12 @@ Starting multithreaded conversion with safety margin monitoring...
   ⚠️  Safety margin exceeded during load of output_00001.jld2 (99.8%)
 
 
-┌ Warning: Safety margin exceeded (99.8% > 80.0%) while processing output_00002.jld2
-
   ⚠️  Safety margin exceeded during load of output_00002.jld2 (99.8%)
 
 
 ┌ Warning: Safety margin exceeded (99.8% > 80.0%) while processing output_00003.jld2
 
   ⚠️  Safety margin exceeded during load of output_00003.jld2 (99.8%)
-
 
 ================================================================================
 Conversion Summary with Safety Margin Report

@@ -83,8 +83,6 @@ gas = loaddata(600, path, :hydro); # load full box
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -95,11 +93,8 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T12:27:51.641
 
-
 Use datatype: hydro
-Code: 
-
-RAMSES
+Code: RAMSES
 output [600] summary:
 mtime: 2024-09-08T15:29:04
 ctime: 2024-09-10T11:23:16.230
@@ -114,9 +109,7 @@ amr:           true
 level(s): 6 - 13 --> cellsize(s): 750.0 [pc] - 5.86 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7
-
-  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -125,16 +118,13 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   1.353087e+06 
-
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: (
-
-"&COOLING_PARAMS", "&HYDRO_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&HYDRO_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
@@ -144,18 +134,14 @@ patchfile:        true
 
 [Mera]: 2026-08-03T12:27:55.435
 
-
 Open Mera-file output_00600.jld2:
 
 domain:
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
-Memory used for data table :
-
-8.63788539916277 GB
+Memory used for data table :8.63788539916277 GB
 -------------------------------------------------------
 ```
 
@@ -182,47 +168,25 @@ export_vtk(
 ```
 [Mera]: 2026-08-03T12:28:25.383
 
-
 Available Threads: 4
 Processing levels: [6, 7, 8, 9]
-
-
 Will interpolate levels [10, 11, 12, 13] down to 9
 Level 6
-
-  wrote 0600_galaxy_L6.vtu
-
- (Size: 0.0 GB)
+  wrote 0600_galaxy_L6.vtu (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
-
 Level 7
-
-  wrote 0600_galaxy_L7.vtu
-
- (Size: 0.02 GB)
+  wrote 0600_galaxy_L7.vtu (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
-
 Level 8
-
-  wrote 0600_galaxy_L8.vtu
-
- (Size: 0.33 GB)
+  wrote 0600_galaxy_L8.vtu (Size: 0.33 GB)
   ✓ Level 8 completed, memory cleaned
-
 Level 9
   Including higher levels for interpolation
-
   Interpolating down to level 9
-
   Unique coarse cells at level 9: 13663000 (out of max 134217728) [safe_size: 97141255]
-
   → 13663000 coarse cells after interpolation
-
-  wrote 0600_galaxy_L9.vtu
-
- (Size: 0.64 GB)
+  wrote 0600_galaxy_L9.vtu (Size: 0.64 GB)
   ✓ Level 9 completed, memory cleaned
-
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
   Added block 'Level_7' to scalar VTM for 0600_galaxy_L7.vtu
   Added block 'Level_8' to scalar VTM for 0600_galaxy_L8.vtu
@@ -288,61 +252,33 @@ export_vtk(
 
 Available Threads: 4
 Processing levels: [6, 7, 8, 9, 10]
-
-
 Will interpolate levels [11, 12, 13] down to 10
 Level 6
-
-  wrote 0600_galaxy_L6.vtu
-
- (Size: 0.0 GB)
+  wrote 0600_galaxy_L6.vtu (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
-
 Level 7
-
-  wrote 0600_galaxy_L7.vtu
-
- (Size: 0.02 GB)
+  wrote 0600_galaxy_L7.vtu (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
-
 Level 8
-
-  wrote 0600_galaxy_L8.vtu
-
- (Size: 0.33 GB)
+  wrote 0600_galaxy_L8.vtu (Size: 0.33 GB)
   ✓ Level 8 completed, memory cleaned
-
 Level 9
-
-  wrote 0600_galaxy_L9.vtu
-
- (Size: 0.54 GB)
+  wrote 0600_galaxy_L9.vtu (Size: 0.54 GB)
   ✓ Level 9 completed, memory cleaned
-
 Level 10
   Including higher levels for interpolation
-
   Interpolating down to level 10
-
   Unique coarse cells at level 10: 6968288 (out of max 1073741824) [safe_size: 84349291]
-
   Capping output cells to 100000 (from 6968288)
-
   → 100000 coarse cells after interpolation
-
-  wrote 0600_galaxy_L10.vtu
-
- (Size: 0.0 GB)
+  wrote 0600_galaxy_L10.vtu (Size: 0.0 GB)
   ✓ Level 10 completed, memory cleaned
-
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
   Added block 'Level_7' to scalar VTM for 0600_galaxy_L7.vtu
   Added block 'Level_8' to scalar VTM for 0600_galaxy_L8.vtu
   Added block 'Level_9' to scalar VTM for 0600_galaxy_L9.vtu
   Added block 'Level_10' to scalar VTM for 0600_galaxy_L10.vtu
 Created scalar multiblock: 0600_galaxy_scalar.vtm
-
-
   Updating scalar VTM file to reference scalar VTU files...
     - Added reference to 0600_galaxy_L6.vtu in block 'Level_6' of scalar VTM
     - Added reference to 0600_galaxy_L7.vtu in block 'Level_7' of scalar VTM
@@ -402,58 +338,29 @@ export_vtk(
 ```
 [Mera]: 2026-08-03T13:12:11.569
 
-
 Available Threads: 4
 Processing levels: [6, 7, 8, 9]
-
-
 Will interpolate levels [10, 11, 12, 13] down to 9
 Level 6
-
-  wrote 0600_galaxy_L6.vtu
-
- (Size: 0.0 GB)
-  wrote 0600_galaxy_vec_L6.vtu
-
- (Size: 0.0 GB)
+  wrote 0600_galaxy_L6.vtu (Size: 0.0 GB)
+  wrote 0600_galaxy_vec_L6.vtu (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
 Level 7
-
-  wrote 0600_galaxy_L7.vtu
-
- (Size: 0.01 GB)
-  wrote 0600_galaxy_vec_L7.vtu
-
- (Size: 0.02 GB)
+  wrote 0600_galaxy_L7.vtu (Size: 0.01 GB)
+  wrote 0600_galaxy_vec_L7.vtu (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
-
 Level 8
-
-  wrote 0600_galaxy_L8.vtu
-
- (Size: 0.28 GB)
-  wrote 0600_galaxy_vec_L8.vtu
-
- (Size: 0.39 GB)
+  wrote 0600_galaxy_L8.vtu (Size: 0.28 GB)
+  wrote 0600_galaxy_vec_L8.vtu (Size: 0.39 GB)
   ✓ Level 8 completed, memory cleaned
-
 Level 9
   Including higher levels for interpolation
-
   Interpolating down to level 9
-
   Unique coarse cells at level 9: 13663000 (out of max 134217728) [safe_size: 97141255]
-
   → 13663000 coarse cells after interpolation
-
-  wrote 0600_galaxy_L9.vtu
-
- (Size: 0.55 GB)
-  wrote 0600_galaxy_vec_L9.vtu
-
- (Size: 0.75 GB)
+  wrote 0600_galaxy_L9.vtu (Size: 0.55 GB)
+  wrote 0600_galaxy_vec_L9.vtu (Size: 0.75 GB)
   ✓ Level 9 completed, memory cleaned
-
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
   Added block 'Level_7' to scalar VTM for 0600_galaxy_L7.vtu
   Added block 'Level_8' to scalar VTM for 0600_galaxy_L8.vtu
@@ -552,45 +459,23 @@ export_vtk(
 
 Available Threads: 4
 Processing levels: [6, 7, 8]
-
-
 Will interpolate levels [9, 10, 11, 12, 13] down to 8
 Level 6
-
-  wrote 0600_galaxy_L6.vtu
-
- (Size: 0.0 GB)
-  wrote 0600_galaxy_vec_L6.vtu
-
- (Size: 0.0 GB)
+  wrote 0600_galaxy_L6.vtu (Size: 0.0 GB)
+  wrote 0600_galaxy_vec_L6.vtu (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
 Level 7
-
-  wrote 0600_galaxy_L7.vtu
-
- (Size: 0.01 GB)
-  wrote 0600_galaxy_vec_L7.vtu
-
- (Size: 0.02 GB)
+  wrote 0600_galaxy_L7.vtu (Size: 0.01 GB)
+  wrote 0600_galaxy_vec_L7.vtu (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
-
 Level 8
   Including higher levels for interpolation
-
   Interpolating down to level 8
-
   Unique coarse cells at level 8: 9517504 (out of max 16777216) [safe_size: 104950884]
-
   → 9517504 coarse cells after interpolation
-
-  wrote 0600_galaxy_L8.vtu
-
- (Size: 0.39 GB)
-  wrote 0600_galaxy_vec_L8.vtu
-
- (Size: 0.53 GB)
+  wrote 0600_galaxy_L8.vtu (Size: 0.39 GB)
+  wrote 0600_galaxy_vec_L8.vtu (Size: 0.53 GB)
   ✓ Level 8 completed, memory cleaned
-
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
   Added block 'Level_7' to scalar VTM for 0600_galaxy_L7.vtu
   Added block 'Level_8' to scalar VTM for 0600_galaxy_L8.vtu
@@ -686,13 +571,11 @@ gassub = subregion(gas, :cylinder, radius=1., height=1., range_unit=:kpc, center
 
 ```
 [Mera] Hint: regions also work as value types, with EXACT edge-cell splitting.
-
              subregion(data, Cylinder(1.0, 1.0; center=Any[23.0, 23.0, :bc], range_unit=:kpc))
              gives exact getvar :mass/:volume/msum and composes with ∩ ∪ \ !. The symbol form
              above still works; pass split=false for classic whole cells. See ?subregion.
              (shown once per session; verbose(false) silences Mera's messages)
 [Mera]: 2026-08-03T14:05:36.362
-
 
 center: [0.4791667, 0.4791667, 0.5] ==> [23.0 [kpc] :: 23.0 [kpc] :: 24.0 [kpc]]
 
@@ -703,9 +586,7 @@ zmin::zmax: 0.4791667 :: 0.5208333  	==> 23.0 [kpc] :: 25.0 [kpc]
 
 Radius: 1000.0 [pc]
 Height: 1000.0 [pc]
-Memory used for data table :148.6678113937378
-
- MB
+Memory used for data table :148.6678113937378 MB
 -------------------------------------------------------
 ```
 
@@ -734,42 +615,21 @@ export_vtk(
 Available Threads: 4
 Processing levels: [10, 11, 12, 13]
 Level 10
-
   wrote 0600_galaxy_L10.vtu (Size: 0.0 GB)
-  wrote 0600_galaxy_vec_L10.vtu
-
- (Size: 0.0 GB)
+  wrote 0600_galaxy_vec_L10.vtu (Size: 0.0 GB)
   ✓ Level 10 completed, memory cleaned
 Level 11
-
-  wrote 0600_galaxy_L11.vtu
-
- (Size: 0.01 GB)
-  wrote 0600_galaxy_vec_L11.vtu
-
- (Size: 0.02 GB)
+  wrote 0600_galaxy_L11.vtu (Size: 0.01 GB)
+  wrote 0600_galaxy_vec_L11.vtu (Size: 0.02 GB)
   ✓ Level 11 completed, memory cleaned
-
 Level 12
-
-  wrote 0600_galaxy_L12.vtu
-
- (Size: 0.02 GB)
-  wrote 0600_galaxy_vec_L12.vtu
-
- (Size: 0.03 GB)
+  wrote 0600_galaxy_L12.vtu (Size: 0.02 GB)
+  wrote 0600_galaxy_vec_L12.vtu (Size: 0.03 GB)
   ✓ Level 12 completed, memory cleaned
-
 Level 13
-
-  wrote 0600_galaxy_L13.vtu
-
- (Size: 0.03 GB)
-  wrote 0600_galaxy_vec_L13.vtu
-
- (Size: 0.04 GB)
+  wrote 0600_galaxy_L13.vtu (Size: 0.03 GB)
+  wrote 0600_galaxy_vec_L13.vtu (Size: 0.04 GB)
   ✓ Level 13 completed, memory cleaned
-
   Added block 'Level_10' to scalar VTM for 0600_galaxy_L10.vtu
   Added block 'Level_11' to scalar VTM for 0600_galaxy_L11.vtu
   Added block 'Level_12' to scalar VTM for 0600_galaxy_L12.vtu

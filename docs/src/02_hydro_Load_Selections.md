@@ -111,8 +111,6 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -123,10 +121,7 @@ Mera v1.8.0
 
 [Mera]: 2026-08-05T15:58:21.377
 
-
 Code: RAMSES
-
-
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
@@ -141,9 +136,7 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -152,17 +145,13 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05 
-particle-variables: 
-
-7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: 
-
-("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
@@ -209,20 +198,15 @@ gas = gethydro(info);
 ```
 [Mera]: Get hydro data: 2026-08-05T15:58:25.005
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 📊 Processing Configuration:
-
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
@@ -231,22 +215,15 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 41.775 seconds
-
-Memory used for data table :2.321086215786636
-
- GB
+Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
 
@@ -302,17 +279,14 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 28320979 cells, 2 variables
 Creating Table from 28320979 cells with max 4 threads...
   Threading: 4 threads for 6 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 6 columns...
 ✓ Table created in 2.145 seconds
-
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
 ```
@@ -344,17 +318,14 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 28320979 cells, 2 variables
 Creating Table from 28320979 cells with max 4 threads...
   Threading: 4 threads for 6 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 6 columns...
 ✓ Table created in 1.796 seconds
-
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
 ```
@@ -386,17 +357,14 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 28320979 cells, 2 variables
 Creating Table from 28320979 cells with max 4 threads...
   Threading: 4 threads for 6 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 6 columns...
 ✓ Table created in 1.749 seconds
-
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
 ```
@@ -465,20 +433,15 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 28320979 cells, 1 variables
 Creating Table from 28320979 cells with max 4 threads...
   Threading: 4 threads for 5 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 5 columns...
 ✓ Table created in 2.716 seconds
-
-Memory used for data table :1.0550392987206578
-
- GB
+Memory used for data table :1.0550392987206578 GB
 -------------------------------------------------------
 ```
 
@@ -556,8 +519,6 @@ Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
 domain:
-
-
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -579,10 +540,7 @@ Creating Table from 1233232 cells with max 4 threads...
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
 ✓ Table created in 1.81 seconds
-
-Memory used for data table :103.4980878829956
-
- MB
+Memory used for data table :103.4980878829956 MB
 -------------------------------------------------------
 ```
 
@@ -638,7 +596,6 @@ zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 1233232 cells, 7 variables
 Creating Table from 1233232 cells with max 4 threads...
   Threading: 4 threads for 11 columns
@@ -647,7 +604,6 @@ Creating Table from 1233232 cells with max 4 threads...
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
 ✓ Table created in 1.79 seconds
-
 Memory used for data table :103.4980878829956 MB
 -------------------------------------------------------
 ```
@@ -676,7 +632,6 @@ gas = gethydro(info, lmax=8,
 ```
 [Mera]: Get hydro data: 2026-08-05T16:01:12.278
 
-
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
@@ -700,10 +655,8 @@ Creating Table from 229992 cells with max 4 threads...
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 0.31 seconds
-
 Memory used for data table :19.302836418151855 MB
 -------------------------------------------------------
 ```
@@ -719,9 +672,7 @@ viewfields(info.scale)  # or e.g.: gas.info.scale
 ```
 [Mera]: Fields to scale from user/code units to selected units
 =======================================================================
-Mpc
-
-	= 0.0010000000000006482
+Mpc	= 0.0010000000000006482
 kpc	= 1.0000000000006481
 pc	= 1000.0000000006482
 mpc	= 1.0000000000006482e6
@@ -899,7 +850,6 @@ Creating Table from 650848 cells with max 4 threads...
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
 ✓ Table created in 0.906 seconds
-
 Memory used for data table :54.622477531433105 MB
 -------------------------------------------------------
 ```
@@ -933,13 +883,10 @@ gas = gethydro(info, lmax=8,
 ```
 [Mera]: Get hydro data: 2026-08-05T16:01:18.086
 
-
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
-center: [0.5, 0.5, 0.5] 
-
-==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -963,7 +910,6 @@ Creating Table from 650848 cells with max 4 threads...
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
 ✓ Table created in 0.938 seconds
-
 Memory used for data table :54.622477531433105 MB
 -------------------------------------------------------
 ```
@@ -1008,7 +954,6 @@ Creating Table from 650848 cells with max 4 threads...
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
 ✓ Table created in 0.945 seconds
-
 Memory used for data table :54.622477531433105 MB
 -------------------------------------------------------
 ```
@@ -1027,7 +972,6 @@ gas = gethydro(info, lmax=8,
 
 ```
 [Mera]: Get hydro data: 2026-08-05T16:01:24.610
-
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
@@ -1054,10 +998,8 @@ Creating Table from 650848 cells with max 4 threads...
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 0.905 seconds
-
 Memory used for data table :54.622477531433105 MB
 -------------------------------------------------------
 ```

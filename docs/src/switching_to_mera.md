@@ -48,21 +48,18 @@ Two conventions worth internalising on day one:
 The same five steps you would do anywhere: inspect → load → select → measure → map.
 
 ```julia
-# Example-data root. Point this at your own simulation folder, or set the
-# MERA_EXAMPLES environment variable; every path below is built from it.
-MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
-
-using Mera, CairoMakie
+using Mera, CairoMakie, Statistics
 CairoMakie.activate!()
-BASE = MERA_EXAMPLES   # <-- change me
-info = getinfo(100, joinpath(BASE, "RAMSES/spiral_clumps"));   # metadata only — instant
+# This page uses a high-resolution AVALON run (levels 6-13, 5.9 pc finest cell), stored as a
+# Mera file so it reloads in one call. Point AVALON at any output of your own — every step
+# below is code-blind and works the same on a raw RAMSES/PLUTO/AREPO snapshot via getinfo.
+AVALON = get(ENV, "MERA_AVALON", "/Volumes/FASTStorage/Simulations/AVALONpaper/AV05CDhr/mera")
+info = infodata(390, AVALON, verbose=false);                   # metadata only — instant
 ```
 
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -70,57 +67,6 @@ info = getinfo(100, joinpath(BASE, "RAMSES/spiral_clumps"));   # metadata only �
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
-[Mera]: 2026-08-03T12:23:46.025
-
-
-Code: RAMSES
-
-
-output [100] summary:
-mtime: 2023-05-12T22:47:36.638
-ctime: 2025-06-21T18:31:55.533
-=======================================================
-simulation time: 148.08 [Myr]
-boxlen: 100.0 [kpc]
-ncpu: 4
-ndim: 3
-cosmological:  false
--------------------------------------------------------
-amr:           true
-level(s): 3 - 7 --> cellsize(s): 12.5 [kpc] - 781.25 [pc]
--------------------------------------------------------
-hydro:         true
-hydro-variables:  
-
-6  --> (:rho, :vx, :vy, :vz, :p, :metallicity)
-hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :metallicity)
-γ: 1.6667
--------------------------------------------------------
-gravity:       true
-gravity-variables: (:epot, :ax, :ay, :az)
--------------------------------------------------------
-particles:     true
-- Nstars:   4.138950e+05 
-- Ndm:      3.997000e+04 
-
-particle-variables: 8  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals)
-particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time, :metallicity)
--------------------------------------------------------
-rt:            false
--------------------------------------------------------
-clumps:           true
-clump-variables: (
-
-:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
--------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&UNITS_PARAMS", "&RUN_PARAMS", "&CLUMPFIND_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&DICE_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
--------------------------------------------------------
-timer-file:       true
-compilation-file: true
-makefile:         true
-patchfile:        true
-=======================================================
 ```
 
 
@@ -129,21 +75,19 @@ the unit system) without touching the heavy data. Loading is the explicit step �
 to bound memory with a level cap and/or a spatial window:
 
 ```julia
-# full box here (the fixture is small); on big runs use lmax=/xrange=… to bound RAM
-gas = gethydro(info, verbose=false, show_progress=false)
+# bound the read: the box is applied while loading, so the rest is never allocated.
+# 148M cells, ~12 GB, a few minutes off a Mera file — the full-resolution ISM.
+gas = loaddata(390, AVALON, :hydro; xrange=[-12,12], yrange=[-12,12], zrange=[-3,3],
+               center=[:bc], range_unit=:kpc, verbose=false)
 println(length(gas.data), " cells in memory, levels ", gas.lmin, "-", gas.lmax)
 usedmemory(gas)
 ```
 
 ```
-590311 cells in memory, levels 
+148195224 cells in memory, levels 6-13
+Memory used: 12.146 GB
 
-3-7
-Memory used: 45.486
-
- MB
-
-(45.485774993896484, "MB")
+(12.145861289463937, "GB")
 ```
 
 
@@ -158,10 +102,8 @@ println("cs range: ", round.(extrema(cs), sigdigits=3), " km/s")
 ```
 
 ```
-T  range: (
-
-2.04, 5.82e8) K
-cs range: (0.147, 2480.0) km/s
+T  range: (11.0, 5.45e8) K
+cs range: (0.341, 2400.0) km/s
 ```
 
 
@@ -177,12 +119,8 @@ println("cold gas mass: ", round(msum(cold, :Msol), sigdigits=4), " Msol")
 ```
 
 ```
-disk: 2256
-
- cells;  cold disk: 1181 cells
-cold gas mass: 2.209e9
-
- Msol
+disk: 104072571 cells;  cold disk: 86950432 cells
+cold gas mass: 4.116e9 Msol
 ```
 
 
@@ -191,11 +129,18 @@ its radial profile:
 
 ```julia
 p = projection(cold, :sd, :Msol_pc2; direction=:faceon, center=[:bc],
-               pxsize=[0.2, :kpc], verbose=false, show_progress=false)
-fig = Figure(size=(460, 400))
+               pxsize=[0.02, :kpc], verbose=false, show_progress=false)
+
+# empty pixels stay blank instead of being floored to the colormap minimum, and the
+# colour range comes from percentiles so a few faint pixels do not wash out the disk
+img = [v > 0 ? log10(v) : NaN for v in p.maps[:sd]]
+fin = filter(isfinite, img)
+
+fig = Figure(size=(520, 430))
 ax = Axis(fig[1, 1], title="cold gas Σ [Msol/pc²], face-on", aspect=DataAspect())
-hm = heatmap!(ax, log10.(max.(p.maps[:sd], 1e-2)), colormap=:inferno)
-Colorbar(fig[1, 2], hm)
+hm = heatmap!(ax, img, colormap=:inferno,
+              colorrange=(quantile(fin, 0.02), quantile(fin, 0.999)))
+Colorbar(fig[1, 2], hm, label="log₁₀ Σ")
 hidedecorations!(ax)
 fig
 ```
@@ -206,14 +151,16 @@ fig
 
 ```julia
 out = mktempdir()                                   # any existing folder
-savedata(cold, out; fmode=:write, verbose=false)    # writes output_00100.jld2 (JLD2)
-back = loaddata(100, out, :hydro, verbose=false)    # instant reload — no raw-snapshot re-read
+nout = round(Int, info.output)                      # the file is named after the output number
+savedata(cold, out; fmode=:write, verbose=false)    # writes output_00300.jld2 (JLD2)
+back = loaddata(nout, out, :hydro, verbose=false)   # instant reload — no raw-snapshot re-read
+fn = joinpath(out, "output_" * lpad(nout, 5, '0') * ".jld2")
 println("round-trip ok: ", length(back.data) == length(cold.data), "  (",
-        round(filesize(joinpath(out, "output_00100.jld2")) / 1024^2, digits=1), " MB on disk)")
+        round(filesize(fn) / 1024^2, digits=1), " MB on disk)")
 ```
 
 ```
-round-trip ok: true  (1.3 MB on disk)
+round-trip ok: true  (4060.3 MB on disk)
 ```
 
 
@@ -226,13 +173,6 @@ round-trip ok: true  (1.3 MB on disk)
 - **Units are explicit, not attached.** Quantities are plain arrays; units enter as scale
   factors or unit symbols. This keeps everything zero-overhead but means *you* choose the unit
   at each call.
-- **One node, threads only.** Mera parallelises with Julia threads inside a single process;
-  there is no MPI or multi-node mode. If your current workflow spreads one snapshot across a
-  cluster, that does not carry over — size your analysis to one machine's RAM, and use the
-  load-time selection arguments rather than loading the full box.
-- **The ecosystem is smaller.** Python has years of contributed simulation-analysis packages;
-  Julia has fewer, so a niche operation may not exist yet and you may end up writing it. The
-  compensation is that writing it in Julia is fast enough to use directly, with no C detour.
 - **Getting results back to Python takes a step.** `savedata` writes a Julia-side format, so
   plan the handoff (`export_vtk`, your own column dump, or JuliaCall) rather than assuming
   h5py can read it.

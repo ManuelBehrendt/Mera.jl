@@ -82,8 +82,6 @@ println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -92,10 +90,7 @@ println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-
-gravity cells  : 4879946
-
-   columns: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
+gravity cells  : 4879946   columns: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
 gas cells      : 4879946
 star particles : 508939
 box            : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
@@ -247,17 +242,10 @@ println("measured whole-cell excess            : ",
 ```
 
 ```
-whole cells (classic API)   2506705   
-
-4692.9682     dev = 12.0 %
-centre test  (split=false)  
-
-2488588   4196.3146     dev = 0.18 %
-split        (split=true)   2504682   
-
-4188.7277     dev = -0.00149 %
+whole cells (classic API)   2506705   4692.9682     dev = 12.0 %
+centre test  (split=false)  2488588   4196.3146     dev = 0.18 %
+split        (split=true)   2504682   4188.7277     dev = -0.00149 %
 analytic 4/3 π R³                     4188.7902
-
 
 partial cells (0 < fraction < 1) : 31813  =  1.27 % of the selected rows
 their mean size, per cell        : 0.155 kpc
@@ -328,9 +316,7 @@ println("centre test vs split, volume mean: ",
 ```
 
 ```
-mean over cells,  split region   : -1907.2
-
- (km/s)²
+mean over cells,  split region   : -1907.2 (km/s)²
 mean over volume, centre test    : -1632.52 (km/s)²
 mean over volume, split region   : -1632.64 (km/s)²
 
@@ -389,14 +375,11 @@ println("ratio                       : ",
 
 ```
 [Mera] Hint: getvar(:ar_sphere) has no `center` — it is measured about the box CORNER.
-
              Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.
              This is a different argument from the `center` that places a region; give it
              the same origin. Absolute positions :x/:y/:z are unaffected.
              (shown once per session; verbose(false) silences Mera's messages)
-⟨a_r⟩ about the box corner  : -1.99e-9
-
- cm/s²
+⟨a_r⟩ about the box corner  : -1.99e-9 cm/s²
 ⟨a_r⟩ about the box centre  : -1.526e-8 cm/s²
 ratio                       : 0.13
 ```
@@ -461,14 +444,12 @@ fig
 ```
 
 ```
-v_c at 8 kpc, origin = galaxy centre : 189.1
-
- km/s
+v_c at 8 kpc, origin = galaxy centre : 189.1 km/s
 v_c at 8 kpc, origin = box corner    : 65.8 km/s
 ```
 
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_17_2.png)
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_17_1.png)
 
 
 The blue curve rises through the inner few kpc and then flattens near 190 km/s
@@ -520,9 +501,7 @@ end
 ```
 
 ```
-r [kpc]  M_dyn       
-
-M_gas       M_star      M_baryon    M_dyn / M_baryon
+r [kpc]  M_dyn       M_gas       M_star      M_baryon    M_dyn / M_baryon
 -------------------------------------------------------------------------
 2.0      5.411e9     1.858e9     4.984e8     2.356e9     2.3
 4.0      2.328e10    5.918e9     1.853e9     7.77e9      3.0
@@ -623,14 +602,12 @@ fig
 ```
 
 ```
-annulus at 7.5 kpc : v_φ(gas) = 190.3
-
- km/s   vs   v_c(field) = 189.1 km/s
+annulus at 7.5 kpc : v_φ(gas) = 190.3 km/s   vs   v_c(field) = 189.1 km/s
 outermost annulus  : 13942 cells — the gas disc has ended, the mean is meaningless
 ```
 
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_24_2.png)
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_24_1.png)
 
 
 Out to the edge of the gas disc the two curves track each other within about
@@ -691,16 +668,10 @@ println("⟨epot⟩ over the ring   : ",
 ```
 
 ```
-ring volume            : 1712.947
-
- kpc³
+ring volume            : 1712.947 kpc³
 analytic slab − band   : 1713.215 kpc³   dev = -0.0157 %
 identical to the operator form : true
-
-
-⟨epot⟩ over the ring   : 
-
--1600.32 (km/s)²
+⟨epot⟩ over the ring   : -1600.32 (km/s)²
 ```
 
 
@@ -800,14 +771,10 @@ println("analytic 24×24×4: ", 24*24*4, " kpc³   dev = ", V_slab_split/2304 - 
 ```
 
 ```
-classic cuboid  : 3825112
-
- cells, V = 2457.87 kpc³ (whole cells)
+classic cuboid  : 3825112 cells, V = 2457.87 kpc³ (whole cells)
 classic shell   : 2197457 cells
 
-value-type slab : 
-
-2304.0 kpc³ (split)
+value-type slab : 2304.0 kpc³ (split)
 analytic 24×24×4: 2304 kpc³   dev = -1.9984014443252818e-15
 ```
 

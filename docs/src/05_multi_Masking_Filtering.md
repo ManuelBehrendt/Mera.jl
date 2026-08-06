@@ -68,8 +68,6 @@ println("clumps         : ", length(clumps.data))
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -78,10 +76,7 @@ println("clumps         : ", length(clumps.data))
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-
 gas cells      : 849332
-
-
 star particles : 508939
 clumps         : 644
 ```
@@ -102,19 +97,11 @@ println("identical                       : ", msum(hot, :Msol) == msum(gas, :Mso
 ```
 
 ```
-filterdata → HydroDataType
+filterdata → HydroDataType, 489608 cells
+getmask    → BitVector, 489608 true of 849332
 
-, 489608 cells
-getmask    → BitVector
-
-, 489608 true of 849332
-
-mass of hot gas, via the object : 2.14499e9
-
- Msol
-            ... via the mask    : 2.14499e9
-
- Msol
+mass of hot gas, via the object : 2.14499e9 Msol
+            ... via the mask    : 2.14499e9 Msol
 identical                       : true
 ```
 
@@ -151,30 +138,19 @@ end
 ```
 
 ```
-condition                         cells     
-
-mass share
+condition                         cells     mass share
 ------------------------------------------------------------
 Above(:rho, 1, :nH)               10126     79.8 %
 Below(:T, 2e4, :K)                33569     37.0 %
-Above(:cs, 20, :km_s)             652583    
-
-44.6 %
-Above(:mach, 1)                   
-
-520858    94.5 %
+Above(:cs, 20, :km_s)             652583    44.6 %
+Above(:mach, 1)                   520858    94.5 %
 [Mera] Hint: getvar(:r_cylinder) has no `center` — it is measured about the box CORNER.
-
              Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.
              This is a different argument from the `center` that places a region; give it
              the same origin. Absolute positions :x/:y/:z are unaffected.
              (shown once per session; verbose(false) silences Mera's messages)
-InRange(:r_cylinder, 0,10,:kpc)   8896      
-
-0.1 %
-Equals(:level, gas.lmax)          
-
-501568    92.6 %
+InRange(:r_cylinder, 0,10,:kpc)   8896      0.1 %
+Equals(:level, gas.lmax)          501568    92.6 %
 ```
 
 
@@ -220,9 +196,7 @@ println("whole box mass        : ", round(m_all, sigdigits=10))
 ```
 
 ```
-rho > 1 nH  AND  T < 1e5 K    10080    
-
-1.6812e10 Msol
+rho > 1 nH  AND  T < 1e5 K    10080    1.6812e10 Msol
 T > 1e6 K   OR   rho > 10 nH  490701   2.1381e10 Msol
 NOT (T < 2e4 K)               815763   1.9503e10 Msol
 r < 15 kpc  AND  T < 2e4 K    516      2.1893e6 Msol
@@ -256,9 +230,7 @@ println("finest level & top 1 %: ", rpad(length(core.data), 9),
 ```
 
 ```
-densest 10 % of cells : 84934    
-
-91.1 % of the mass
+densest 10 % of cells : 84934    91.1 % of the mass
 faintest 10 %         : 0        0.0 %
 finest level & top 1 %: 8494     78.6 %
 ```
@@ -306,14 +278,9 @@ println("... same as one combined condition : ",
 ```
 
 ```
-object route : 848882
-
- cells, map max Σ = 161.6 Msol/pc²
-mask route   : 848882
-
- cells, mass = 1.33692e10 Msol
+object route : 848882 cells, map max Σ = 161.6 Msol/pc²
+mask route   : 848882 cells, mass = 1.33692e10 Msol
 same mass    : true
-
 
 cells satisfying both : 848882
 ... same as one combined condition : true
@@ -354,26 +321,14 @@ println("gas ⟨vx⟩ mass-weighted [km/s] : all ", round(s_all.mean, digits=3),
 ```
 
 ```
-statistic                         all                 
-
-masked
+statistic                         all                 masked
 ----------------------------------------------------------------------
-gas  msum [Msol]                  3.09688e10          
+gas  msum [Msol]                  3.09688e10          1.33692e10
+gas  centre of mass x [kpc]       23.3607             23.6093
+gas  bulk velocity x [km/s]       -1.2                -3.094
+part msum [Msol]                  5.80443e9           1.81123e9
 
-1.33692e10
-gas  centre of mass x [kpc]       23.3607             
-
-23.6093
-gas  bulk velocity x [km/s]       -1.2                
-
--3.094
-part msum [Msol]                  5.80443e9           
-
-1.81123e9
-
-gas ⟨vx⟩ mass-weighted [km/s] : all 
-
--1.2   masked -3.094
+gas ⟨vx⟩ mass-weighted [km/s] : all -1.2   masked -3.094
 ```
 
 
@@ -436,15 +391,13 @@ fig
 ```
 
 ```
-cold  T<2e4 K : 
-
-33569    1.147e10 Msol  = 37.0 % of the box
+cold  T<2e4 K : 33569    1.147e10 Msol  = 37.0 % of the box
 hot   T>1e6 K : 489608   2.145e9 Msol  = 6.9 % of the box
 densest 1%    : 8494     2.433e10 Msol  = 78.6 % of the box
 ```
 
 
-![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_20_2.png)
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_20_1.png)
 
 
 Three views of one simulation, on one colour scale. The cold phase is
@@ -485,9 +438,7 @@ println("filter→region == region→filter cells : ", length(other.data) == len
 ```
 
 ```
-cold (< 2e4 K) in the disc : 8.9066e9
-
- Msol
+cold (< 2e4 K) in the disc : 8.9066e9 Msol
 rest (≥ 2e4 K) in the disc : 1.3963e10 Msol
 cold + rest  vs  disc      : 2.28691723e10  vs  2.28691723e10 Msol
 
@@ -537,9 +488,7 @@ println("cold mass, refine_to vs plain      : ", round(msum(cold_px, :Msol) / m_
 ```
 
 ```
-largest straddling cell on the rim : 0.094
-
- kpc   (map-ready)
+largest straddling cell on the rim : 0.094 kpc   (map-ready)
 cold mass, refine_to vs plain      : 1.0
 ```
 
@@ -572,15 +521,9 @@ println("columns after removal: ", propertynames(Mera.columns(gas.data)))
 ```
 
 ```
-columns now: (
-
-:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2, :mach)
-supersonic cells : 520858
-
-  = 61.3 % of the box
-columns after removal: (
-
-:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+columns now: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2, :mach)
+supersonic cells : 520858  = 61.3 % of the box
+columns after removal: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 ```
 
 
@@ -626,9 +569,7 @@ println("mass via filtered_db / construct_datatype / filterdata : ",
 
 ```
 select == getvar : true   columns() gives (:rho, :level)
-rows kept: 210
-
- of 849332
+rows kept: 210 of 849332
 mass via filtered_db / construct_datatype / filterdata : 1.4862768e10  1.4862768e10  1.4862768e10
 ```
 
@@ -657,9 +598,7 @@ println("region × condition            : ", length(sel.data), " rows, ",
 ```
 
 ```
-hand-built cylinder + density : 33
-
- rows, 2.81234e9 Msol
+hand-built cylinder + density : 33 rows, 2.81234e9 Msol
 region × condition            : 37 rows, 2.83126e9 Msol   (split boundary)
 ```
 
@@ -690,13 +629,9 @@ println("@apply pipeline       : ", length(filtered_db), " rows")
 ```
 
 ```
-@filter on the object : HydroDataType
-
-, 501568 cells
+@filter on the object : HydroDataType, 501568 cells
 @filter on the table  : IndexedTable, 210 rows
-@apply pipeline       : 210
-
- rows
+@apply pipeline       : 210 rows
 ```
 
 
@@ -713,9 +648,7 @@ println("type            : ", typeof(mask_c))
 ```
 
 ```
-all three agree : true
-
-   (849177 cells)
+all three agree : true   (849177 cells)
 type            : BitVector
 ```
 

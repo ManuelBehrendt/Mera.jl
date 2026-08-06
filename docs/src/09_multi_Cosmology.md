@@ -58,8 +58,6 @@ info = getinfo(80, "$MERA_EXAMPLES/RAMSES/yt_cosmo");
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -70,10 +68,7 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T11:13:33.151
 
-
 Code: RAMSES
-
-
 output [80] summary:
 mtime: 2012-08-13T16:51:06
 ctime: 2026-06-01T07:42:48.561
@@ -86,16 +81,13 @@ ndim: 3
 cosmological:  true
 redshift z:    0.1426   (aexp = 0.8752)
 H0: 70.30 km/s/Mpc   Ωm: 0.276   ΩΛ: 0.724   Ωk: 0.000   Ωb: 0.045
-
 age: 11.925 Gyr   lookback: 1.798 Gyr   Hubble time: 13.909 Gyr
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 16 --> cellsize(s): 970.86 [kpc] - 948.11 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  6
-
-  --> (:rho, :vx, :vy, :vz, :p, :var6)
+hydro-variables:  6  --> (:rho, :vx, :vy, :vz, :p, :var6)
 γ: 1.4
 -------------------------------------------------------
 gravity:       true
@@ -199,26 +191,20 @@ ages  = getvar(particles, :age, :Gyr)
 ```
 [Mera]: Get particle data: 2026-08-03T11:13:39.085
 
-
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 
 Processing 16 CPU files using 4 threads
 Mode: Threaded processing
-
 Combining results from 4 thread(s)...
 Found 1.090895e+06 particles
-Memory used for data table :
-
-74.9068775177002 MB
+Memory used for data table :74.9068775177002 MB
 -------------------------------------------------------
 
 
@@ -289,9 +275,7 @@ delta = getvar(gas, :overdensity)
 ```
 [Mera]: Get hydro data: 2026-08-03T11:13:50.660
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
 
 domain:
@@ -300,7 +284,6 @@ ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 
 📊 Processing Configuration:
-
    Total CPU files available: 16
    Files to be processed: 16
    Compute threads: 4
@@ -309,19 +292,14 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 1749455 cells, 6 variables
 Creating Table from 1749455 cells with max 4 threads...
-
   Threading: 4 threads for 10 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 10 columns...
 ✓ Table created in 0.87 seconds
-
 Memory used for data table :133.47387886047363 MB
 -------------------------------------------------------
 

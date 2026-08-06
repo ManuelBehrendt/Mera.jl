@@ -114,8 +114,6 @@ gas = gethydro(info, smallr=1e-11, lmax=12);
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -126,12 +124,9 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T10:57:50.947
 
-
 Code: RAMSES
 output [400] summary:
-mtime: 
-
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -144,9 +139,7 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -156,7 +149,6 @@ gravity-variables: (:epot, :ax, :ay, :az)
 particles:     true
 - Npart:    5.091500e+05 
 - Nstars:   5.066030e+05 
-
 - Ndm:      2.547000e+03 
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
@@ -174,20 +166,15 @@ patchfile:        true
 
 [Mera]: Get hydro data: 2026-08-03T10:57:53.342
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 📊 Processing Configuration:
-
    Total CPU files available: 2048
    Files to be processed: 2048
    Compute threads: 4
@@ -196,22 +183,15 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 18966620 cells, 7 variables
 Creating Table from 18966620 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 26.08 seconds
-
-Memory used for data table :1.5544367535039783
-
- GB
+Memory used for data table :1.5544367535039783 GB
 -------------------------------------------------------
 ```
 
@@ -341,26 +321,20 @@ proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbo
 ```
 [Mera]: 2026-08-03T10:58:55.267
 
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==> 21.6 [kpc] :: 26.4 [kpc]
 
 Selected var(s)=(:sd,) 
-
-
 Weighting      = :mass
 
 Effective resolution: 4096^2
-
-
 Map size: 4096 x 4096
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -388,7 +362,6 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 [Mera]: 2026-08-03T10:59:10.973
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -405,8 +378,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -428,7 +399,6 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 [Mera]: 2026-08-03T10:59:13.243
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -437,7 +407,6 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Selected var(s)=(:sd,) 
-
 Weighting      = :mass
 
 Effective resolution: 4096^2
@@ -446,8 +415,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -481,8 +448,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -504,7 +469,6 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 [Mera]: 2026-08-03T10:59:17.176
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -513,7 +477,6 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Selected var(s)=(:sd,) 
-
 Weighting      = :mass
 
 Effective resolution: 4096^2
@@ -522,8 +485,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -572,8 +533,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -615,8 +574,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 2 (sd, vx)
 Processing mode: Variable-based parallel (2 threads)
@@ -657,8 +614,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 2 (sd, vx)
 Processing mode: Variable-based parallel (2 threads)
@@ -691,7 +646,6 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Selected var(s)=(:vx, :vy, :vz, :sd) 
-
 Weighting      = :mass
 
 Effective resolution: 4096^2
@@ -700,8 +654,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 4 (sd, vx, vy, vz)
 Processing mode: Variable-based parallel (4 threads)
@@ -865,9 +817,7 @@ println("kpc, centered : ", getextent(proj1_z, :kpc; center=true))  # like .cext
 ```
 
 ```
-kpc           : 
-
-[13.992187500009068, 34.00781250002204, 21.996093750014257, 26.003906250016854]
+kpc           : [13.992187500009068, 34.00781250002204, 21.996093750014257, 26.003906250016854]
 pc            : [13992.18750000907, 34007.812500022046, 21996.093750014257, 26003.90625001686]
 kpc, centered : [-10.007812499990933, 10.007812500022041, -2.003906249985746, 2.003906250016852]
 ```
@@ -1045,7 +995,6 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and 
 ```
 [Mera]: 2026-08-03T10:59:50.534
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -1062,8 +1011,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 9 (sd, v, v2, vx, vx2, vy, vy2, vz, vz2)
 Processing mode: Variable-based parallel (4 threads)
@@ -1127,9 +1074,7 @@ usedmemory(proj_z);
 ```
 
 ```
-Memory used: 311.886
-
- MB
+Memory used: 311.886 MB
 ```
 
 
@@ -1193,7 +1138,6 @@ proj_z = projection(gas,
 ```
 [Mera]: 2026-08-03T10:59:57.808
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -1210,8 +1154,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 11 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vϕ_cylinder, vϕ_cylinder2)
 Processing mode: Variable-based parallel (4 threads)
@@ -1387,7 +1329,6 @@ proj_z = projection(gas,
 ```
 [Mera]: 2026-08-03T11:00:10.568
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -1404,8 +1345,6 @@ Pixel size: 750.0 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
 Processing mode: Variable-based parallel (4 threads)
@@ -1492,7 +1431,6 @@ proj_z = projection(gas,
 ```
 [Mera]: 2026-08-03T11:00:18.208
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -1509,8 +1447,6 @@ Pixel size: 494.845 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
 Processing mode: Variable-based parallel (4 threads)
@@ -1604,8 +1540,6 @@ Pixel size: 979.592 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
 Processing mode: Variable-based parallel (4 threads)
@@ -1618,7 +1552,6 @@ Processing mode: Variable-based parallel (4 threads)
    Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
    Processing levels 6 to 12
    🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4
-
 ✅ Variable-based parallel processing completed in 2.178s
    ⚡ No combining phase needed - direct variable assignment eliminates overhead!
    📊 Performance Metrics:
@@ -1727,11 +1660,9 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
-
 [Mera]: 2026-08-03T11:00:33.648
 
 domain:
@@ -1748,7 +1679,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
@@ -1852,7 +1782,6 @@ proj_x = projection(gas, :sd, :Msol_pc2,
 ```
 [Mera]: 2026-08-03T11:00:36.133
 
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1869,8 +1798,6 @@ Simulation min.: 11.719 [pc]
 :mask provided by function
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -1894,8 +1821,6 @@ Simulation min.: 11.719 [pc]
 :mask provided by function
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -1937,7 +1862,6 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 [Mera]: 2026-08-03T11:00:45.898
 
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1952,7 +1876,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
@@ -1986,7 +1909,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
@@ -2011,7 +1933,6 @@ proj_y = projection(gas, [:sd, :v], [:Msol_pc2, :km_s],
 ```
 [Mera]: 2026-08-03T11:02:10.300
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -2028,8 +1949,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 2 (sd, v)
 Processing mode: Variable-based parallel (2 threads)

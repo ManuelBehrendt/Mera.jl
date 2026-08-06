@@ -107,8 +107,6 @@ info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -119,12 +117,9 @@ Mera v1.8.0
 
 [Mera]: 2026-08-05T15:58:06.355
 
-
 Code: RAMSES
 output [400] summary:
-mtime: 
-
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -137,9 +132,7 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -149,7 +142,6 @@ gravity-variables: (:epot, :ax, :ay, :az)
 particles:     true
 - Npart:    5.091500e+05 
 - Nstars:   5.066030e+05 
-
 - Ndm:      2.547000e+03 
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
@@ -203,19 +195,14 @@ clumps = getclumps(info);
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:08.661
 
-
 domain:
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Read 12 colums: 
-
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-
-61.58203125 KB
+Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
 
@@ -266,9 +253,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Read 7 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]
-Memory used for data table :
-
-35.9912109375 KB
+Memory used for data table :35.9912109375 KB
 -------------------------------------------------------
 ```
 
@@ -289,9 +274,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Read 7 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]
-Memory used for data table :
-
-35.9912109375 KB
+Memory used for data table :35.9912109375 KB
 -------------------------------------------------------
 ```
 
@@ -347,9 +330,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Read 15 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance, :vx, :vy, :vz]
-Memory used for data table :
-
-76.9365234375 KB
+Memory used for data table :76.9365234375 KB
 -------------------------------------------------------
 ```
 
@@ -416,16 +397,13 @@ clumps = getclumps(info,
 [Mera]: Get clump data: 2026-08-05T15:58:11.129
 
 domain:
-
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 
 Read 12 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-
-61.58203125 KB
+Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
 
@@ -506,9 +484,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Read 12 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-
-12.64453125 KB
+Memory used for data table :12.64453125 KB
 -------------------------------------------------------
 ```
 
@@ -717,7 +693,6 @@ clumps = getclumps(info,
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:12.026
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -727,9 +702,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Read 12 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-
-61.58203125 KB
+Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
 
@@ -775,7 +748,6 @@ clumps = getclumps(info,
 [Mera]: Get clump data: 2026-08-05T15:58:12.256
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]

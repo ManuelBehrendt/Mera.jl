@@ -83,8 +83,6 @@ println("clump masses   : ", round(minimum(getvar(clumps, :mass, :Msol)), sigdig
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -93,19 +91,10 @@ println("clump masses   : ", round(minimum(getvar(clumps, :mass, :Msol)), sigdig
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-
 clumps         : 644
-
-
-columns        : 
-
-(:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
-total clump mass: 
-
-1.3743e10 Msol
-     gas mass   : 
-
-3.0401e10 Msol   (whole box)
+columns        : (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
+total clump mass: 1.3743e10 Msol
+     gas mass   : 3.0401e10 Msol   (whole box)
 clump masses   : 312000.0 – 8.61e8 Msol
 ```
 
@@ -217,16 +206,12 @@ println("clump mass as a share of the gas inside r < 10 kpc : ",
 ```
 
 ```
-all clumps        : 644    
-
-1.374328e10 Msol
+all clumps        : 644    1.374328e10 Msol
 peak inside  r<10 : 400    9.640827e9
 peak outside r>10 : 244    4.102454e9
 
 count residual : 0
-clump mass as a share of the gas inside r < 10 kpc : 
-
-52.94 %
+clump mass as a share of the gas inside r < 10 kpc : 52.94 %
 ```
 
 
@@ -290,11 +275,8 @@ println("bracket width                        : ",
 ```
 
 ```
-cells per clump : 87
-
- – 12250
+cells per clump : 87 – 12250
 effective radii : 8.1 – 41.9 pc   (median 16.5 pc)
-
 
 clumps cut by the r = 10 kpc surface : 1 of 644
 mass inside — lower / peak / upper   : 9.59732e9 / 9.64083e9 / 9.64083e9 Msol
@@ -359,9 +341,7 @@ fig
 ```
 
 ```
-slab |z| < 2.0    
-
- kpc :  bracket = 0.0 %
+slab |z| < 2.0     kpc :  bracket = 0.0 %
 slab |z| < 0.5     kpc :  bracket = 0.45 %
 slab |z| < 0.1     kpc :  bracket = 51.39 %
 slab |z| < 0.02    kpc :  bracket = 153.13 %
@@ -369,7 +349,7 @@ slab |z| < 0.005   kpc :  bracket = 234.42 %
 ```
 
 
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_13_2.png)
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_13_1.png)
 
 
 At the slab thicknesses this galaxy is normally sliced with the bracket is
@@ -440,20 +420,16 @@ fig
 ```
 
 ```
-Cuboid — a slab               603    
-
-95.4 % of the clump mass
+Cuboid — a slab               603    95.4 % of the clump mass
 Cylinder(8, 2)                352    57.9 % of the clump mass
 Sphere(6)                     249    37.8 % of the clump mass
-SphericalShell(6, 10)         
-
-151    32.3 % of the clump mass
+SphericalShell(6, 10)         151    32.3 % of the clump mass
 CylindricalShell(6, 10, 2)    151    32.3 % of the clump mass
 Cylinder(8, 2) tilted 40°     196    28.5 % of the clump mass
 ```
 
 
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_16_3.png)
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_16_1.png)
 
 
 Grey is the whole catalogue, orange what the region kept, seen edge-on. With a
@@ -497,9 +473,7 @@ println("masses add       : ", msum(c_core, :Msol) + msum(c_ring, :Msol) ≈ msu
 ```
 
 ```
-disc slab            : 519    
-
-1.14995e10 Msol
+disc slab            : 519    1.14995e10 Msol
   nucleus  r < 4     : 169    3.16131e9
   annulus 4 < r < 12 : 350    8.33822e9
 
@@ -556,9 +530,7 @@ println("region∘filter == filter∘region : ", length(alt.data) == length(soli
 ```
 
 ```
-disc slab               : 519    
-
-1.14995e10 Msol
+disc slab               : 519    1.14995e10 Msol
   relevance > 3         : 439    1.08897e10
   most massive 10 %     : 52     6.81601e9
   both conditions       : 50     6.69392e9
@@ -692,9 +664,7 @@ println("catalogue extent  : x ", round.(rx, digits=2), "  y ", round.(ry, digit
 ```
 
 ```
-classic :sphere   : 400    
-
-9.6408271e9
+classic :sphere   : 400    9.6408271e9
 value-type Sphere : 400    9.6408271e9
 identical         : true
 

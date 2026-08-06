@@ -15,9 +15,7 @@ import Pkg; Pkg.activate("../."); Pkg.build("Mera")
 ```
 
 ```
-  Activating 
-
-project at `/Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1`
+  Activating project at `/Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1`
 ```
 
 
@@ -28,8 +26,6 @@ using Mera
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -53,20 +49,15 @@ particles = getparticles(info, :mass);
 ```
 [Mera]: Get hydro data: 2026-08-06T10:36:44.702
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1,) = (:rho,) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 📊 Processing Configuration:
-
    Total CPU files available: 2048
    Files to be processed: 2048
    Compute threads: 4
@@ -75,25 +66,18 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 4879946 cells, 1 variables
 Creating Table from 4879946 cells with max 4 threads...
-
   Threading: 4 threads for 5 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 5 columns...
 ✓ Table created in 0.979 seconds
-
-Memory used for data table :186.1557970046997
-
- MB
+Memory used for data table :186.1557970046997 MB
 -------------------------------------------------------
 
 [Mera]: Get particle data: 2026-08-06T10:37:14.140
-
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
@@ -106,12 +90,9 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Processing 2048 CPU files using 4 threads
 Mode: Threaded processing
-
 Combining results from 4 thread(s)...
 Found 5.089390e+05 particles
-Memory used for data table :
-
-19.415205001831055 MB
+Memory used for data table :19.415205001831055 MB
 -------------------------------------------------------
 ```
 
@@ -310,7 +291,6 @@ viewheader("database_partilces.csv", 5)
 
 ```
 "level","x","y","z","id","mass"
-
 6,0.004629472789625229,22.388543919075275,24.571021484979347,327957,1.1360607549574087e-5
 6,0.1090659052277639,22.3782196217294,21.58442789512976,116193,1.1360607549574087e-5
 6,0.2382109772356709,28.753723953405462,24.81911909925676,194252,1.1360607549574087e-5

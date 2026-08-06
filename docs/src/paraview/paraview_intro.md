@@ -14,8 +14,6 @@ using Mera
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -31,9 +29,7 @@ Mera v1.8.0
 ```
 
 ```
-search: 
-
-export_vtk export exponent
+search: export_vtk export exponent
 
 
   Export particle data to VTK format for visualization in tools like
