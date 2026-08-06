@@ -17,22 +17,53 @@ The `projection` function uses Julia's multiple dispatch to provide specialized 
 
 ## Data Type Support
 
-### Hydro Data Projections (HydroDataType)
+### Hydro and RT projections
 
-**Key Method Signatures**:
+The hydro methods dispatch on `Union{HydroDataType, RtDataType}` — the same call works on
+an object from [`getrt`](@ref).
+
 ```julia
-# Single variable with default units
-projection(dataobject::HydroDataType, var::Symbol)
+# Single variable, code units / with a unit
+projection(dataobject::Union{HydroDataType, RtDataType}, var::Symbol)
+projection(dataobject::Union{HydroDataType, RtDataType}, var::Symbol, unit::Symbol)
 
-# Single variable with custom units  
-projection(dataobject::HydroDataType, var::Symbol, unit::Symbol)
-
-# Multiple variables with custom units
-projection(dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1})
-
-# Multiple variables with same units
-projection(dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol)
+# Several variables, one unit each / one unit for all
+projection(dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1}, units::Array{Symbol,1})
+projection(dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1}, unit::Symbol)
 ```
+
+### Gravity (combined form)
+
+Gravity quantities are projected by passing the gravity object alongside the hydro one — the
+cells come from the hydro object, the quantity from gravity:
+
+```julia
+projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbol)
+```
+
+### Common keyword arguments
+
+| Keyword | What it does |
+|---|---|
+| `pxsize=[value, :unit]` | physical size of a map pixel — the preferred way to set resolution |
+| `res` | grid cells per side instead of a physical pixel size |
+| `lmax` | cap the AMR level used; defaults to the object's own `lmax` |
+| `direction` | `:x`, `:y`, `:z` (default `:z`), or `:faceon`/`:edgeon` after [`galaxyframe`](../galaxyframe.md) |
+| `los`, `up`, `theta`, `phi`, `inclination`, `azimuth` | off-axis line of sight — see [Off-axis](offaxis.md) |
+| `weighting` | how intensive quantities are averaged (see the note below) |
+| `mode` | `:standard` normalises per area; `:sum` returns the raw weighted sum |
+| `mask` | a boolean array from [`getmask`](@ref), applied before projecting |
+| `center`, `range_unit` | which part of the box to project, and in what units |
+| `data_center`, `data_center_unit` | origin the map axes and cylindrical/spherical quantities are measured from |
+| `xrange`, `yrange`, `zrange` | restrict the projected volume |
+| `max_threads` | cap the threads used |
+| `myargs` | pass a bundle instead of repeating keywords — see [Bundling Arguments](../bundled_arguments.md) |
+
+!!! warning "`weighting` has a different type for particles"
+    Hydro, gravity and RT take an **array**: `weighting=[:mass]`, `weighting=[:volume]`, or
+    `[:quantity, unit]`. Particle projections take a bare **symbol**: `weighting=:mass`,
+    `:volume`, `:sph` or `:voronoi`. Passing a symbol to a hydro projection raises
+    `TypeError: expected Vector, got Symbol`.
 
 **Key features**: 
 - AMR-aware grid mapping with conservative mass preservation
