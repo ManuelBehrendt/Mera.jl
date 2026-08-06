@@ -122,7 +122,7 @@ gas = gethydro(info, smallr=1e-11, lmax=12);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-03T10:57:50.947
+[Mera]: 2026-08-06T16:02:12.521
 
 Code: RAMSES
 output [400] summary:
@@ -164,7 +164,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-08-03T10:57:53.342
+[Mera]: Get hydro data: 2026-08-06T16:02:14.897
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2) 
@@ -190,7 +190,7 @@ Creating Table from 18966620 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 26.08 seconds
+✓ Table created in 26.581 seconds
 Memory used for data table :1.5544367535039783 GB
 -------------------------------------------------------
 ```
@@ -319,7 +319,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbo
 ```
 
 ```
-[Mera]: 2026-08-03T10:58:55.267
+[Mera]: 2026-08-06T16:03:29.352
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -360,7 +360,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:10.973
+[Mera]: 2026-08-06T16:03:45.286
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -397,7 +397,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:13.243
+[Mera]: 2026-08-06T16:03:47.757
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -430,7 +430,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:14.925
+[Mera]: 2026-08-06T16:03:49.549
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -467,7 +467,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:17.176
+[Mera]: 2026-08-06T16:03:51.813
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -515,7 +515,7 @@ proj1_x = projection(gas, [:sd],                # Single variable in array
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:18.919
+[Mera]: 2026-08-06T16:03:53.549
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -556,7 +556,7 @@ proj1_z = projection(gas, [:sd, :vx],           # Surface density + x-velocity
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:20.359
+[Mera]: 2026-08-06T16:03:55.023
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -596,7 +596,7 @@ proj1_z = projection(gas, [:sd, :vx], [:Msol_pc2, :km_s],  # Required positional
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:22.050
+[Mera]: 2026-08-06T16:03:56.981
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -636,7 +636,7 @@ projvel_z = projection(gas, [:vx, :vy, :vz],    # Velocity components
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:23.561
+[Mera]: 2026-08-06T16:03:58.802
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -916,7 +916,7 @@ cb = colorbar(im,
 
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x3300748e0>
+PyObject <matplotlib.colorbar.Colorbar object at 0x313e4c7c0>
 ```
 
 
@@ -955,11 +955,26 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x331662080>
+PyObject <matplotlib.colorbar.Colorbar object at 0x3150b9f60>
 ```
 
 
-Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):
+### Where the map's axes are measured from: `data_center`
+
+`center` says which part of the box to project. `data_center` says what the map's coordinate
+axes are measured *relative to* — it sets the origin of `cextent`, so it controls the numbers
+on the axes and the reference point for cylindrical and spherical quantities such as
+`:vr_cylinder` or `:σr_cylinder`.
+
+They are usually the same point, and `data_center=[:boxcenter]` is the common choice. Set
+them differently when you want a map centred on one structure but measured from another — for
+example projecting a satellite while keeping radii relative to the host's centre:
+
+```julia
+projection(gas, :sd, :Msol_pc2;
+           center=[:boxcenter], range_unit=:kpc,
+           data_center=[24., 24., 24.], data_center_unit=:kpc)
+```
 
 ## Advanced Kinematic Analysis
 
@@ -993,7 +1008,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and 
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:50.534
+[Mera]: 2026-08-06T16:04:27.022
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1136,7 +1151,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-08-03T10:59:57.808
+[Mera]: 2026-08-06T16:04:35.211
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1327,7 +1342,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-08-03T11:00:10.568
+[Mera]: 2026-08-06T16:04:49.857
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1414,12 +1429,12 @@ colorbar();
 ![](06_hydro_Projection_files/06_hydro_Projection_71_0.png)
 
 
-#### Direct Resolution Specification (`res`)
+#### Setting the pixel size directly (`pxsize`)
 
-Specify absolute grid resolution independent of AMR levels:
+Fix the physical size of a map pixel, independent of the AMR levels present:
 
 ```julia
-# Direct resolution specification: 100x100 grid
+# 0.5 kpc pixels — the map size follows from the range you project
 proj_z = projection(gas, 
     [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder], 
     :km_s,
@@ -1429,7 +1444,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-08-03T11:00:18.208
+[Mera]: 2026-08-06T16:04:59.508
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1522,7 +1537,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-08-03T11:00:25.243
+[Mera]: 2026-08-06T16:05:08.883
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1552,11 +1567,11 @@ Processing mode: Variable-based parallel (4 threads)
    Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
    Processing levels 6 to 12
    🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4
-✅ Variable-based parallel processing completed in 2.178s
+✅ Variable-based parallel processing completed in 3.334s
    ⚡ No combining phase needed - direct variable assignment eliminates overhead!
    📊 Performance Metrics:
       ├─ Total operations: 241678294 (18590638 cells × 13 vars)
-      ├─ Processing rate: 110943440 cells/second
+      ├─ Processing rate: 72488361 cells/second
       ├─ Parallel efficiency: 100.0% (target: 85-95%)
       ├─ Threads utilized: 4 / 4 available
       └─ Memory benefit: Direct allocation (no intermediate combining buffers)
@@ -1644,7 +1659,7 @@ proj_x = projection(gas, :cs, :km_s,           # X-direction sound speed
 ```
 
 ```
-[Mera]: 2026-08-03T11:00:32.247
+[Mera]: 2026-08-06T16:05:17.665
 
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1663,7 +1678,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
-[Mera]: 2026-08-03T11:00:33.648
+[Mera]: 2026-08-06T16:05:19.215
 
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1753,14 +1768,14 @@ Apply physical selection criteria to isolate specific gas phases or conditions. 
 
 ```julia
 # Create physical condition masks
-# Select low-density gas (< 1 particle per cm³)
-mask_nH = getvar(gas, :rho, :nH) .< .1     # Number density constraint
+# Select diffuse gas: below 0.1 hydrogen atoms per cm³
+mask_nH = getvar(gas, :rho, :nH) .< 0.1
 
-# Select ionized gas (> 10⁴ K)  
-mask_T = getvar(gas, :Temperature, :K) .> 1e4  # Temperature constraint
+# Select warm/ionized gas: above 10⁴ K
+mask_T = getvar(gas, :Temperature, :K) .> 1e4
 
-# Combine masks: hot AND low-density gas
-mask_tot = mask_nH .* mask_T;
+# Combine: gas that is BOTH diffuse and warm
+mask_tot = mask_nH .& mask_T;
 ```
 
 #### Apply Masks to Projections
@@ -1780,7 +1795,7 @@ proj_x = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-03T11:00:36.133
+[Mera]: 2026-08-06T16:05:21.864
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1803,7 +1818,7 @@ Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 
 
-[Mera]: 2026-08-03T11:00:40.252
+[Mera]: 2026-08-06T16:05:25.823
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1860,7 +1875,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-08-03T11:00:45.898
+[Mera]: 2026-08-06T16:05:31.410
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1893,7 +1908,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-08-03T11:01:27.660
+[Mera]: 2026-08-06T16:06:13.836
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1931,7 +1946,7 @@ proj_y = projection(gas, [:sd, :v], [:Msol_pc2, :km_s],
 ```
 
 ```
-[Mera]: 2026-08-03T11:02:10.300
+[Mera]: 2026-08-06T16:06:56.455
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
