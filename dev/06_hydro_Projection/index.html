@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Hydro · Mera.jl</title><meta name="title" content="Hydro · Mera.jl"/><meta property="og:title" content="Hydro · Mera.jl"/><meta property="twitter:title" content="Hydro · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/06_hydro_Projection/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/06_hydro_Projection/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/06_hydro_Projection/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../assets/custom.js"></script><script src="../assets/music_player.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../report/">First Look</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><a class="tocitem" href="../switching_to_mera/">Coming from Other Tools</a></li><li><a class="tocitem" href="../julia_for_simulation_analysis/">Julia for Simulation Analysis</a></li><li><a class="tocitem" href="../troubleshooting/">Troubleshooting</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-4-1" type="checkbox"/><label class="tocitem" for="menuitem-4-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_gravity_First_Inspection/">Gravity</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-2" type="checkbox"/><label class="tocitem" for="menuitem-4-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_gravity_Load_Selections/">Gravity</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-3" type="checkbox"/><label class="tocitem" for="menuitem-4-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_gravity_Get_Subregions/">Gravity</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../covering_grid/">Uniform Grid / Resampling</a></li><li><a class="tocitem" href="../09_multi_Cosmology/">Cosmological Runs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-5-1" type="checkbox"/><label class="tocitem" for="menuitem-5-1"><span class="docs-label">Quantities &amp; Fields</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../04_multi_Basic_Calculations/">Basic Calculations</a></li><li><a class="tocitem" href="../computation_reference/">How Quantities Are Computed</a></li><li><a class="tocitem" href="../derived_fields/">Derived Fields &amp; add_field</a></li><li><a class="tocitem" href="../magnetic_fields/">Magnetic Fields (MHD)</a></li><li><a class="tocitem" href="../10_multi_RadiativeTransfer/">Radiative Transfer</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Selection, Statistics &amp; Metadata</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../05_multi_Masking_Filtering/">Mask/Filter/Meta</a></li><li><a class="tocitem" href="../statistics/">Statistics (PDFs)</a></li><li><a class="tocitem" href="../15_multi_Profiles_Phase/">Profiles &amp; Phase Diagrams</a></li><li><a class="tocitem" href="../provenance/">Provenance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-3" type="checkbox"/><label class="tocitem" for="menuitem-5-3"><span class="docs-label">Structure Finding</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../clumpfind/">Clump Finding</a></li><li><a class="tocitem" href="../clumpfind_synthetic/">Clump Finding — Synthetic Example</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-4" type="checkbox"/><label class="tocitem" for="menuitem-5-4"><span class="docs-label">Gas Flows &amp; Star Formation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../fluxbudget/">Flux Budgets</a></li><li><a class="tocitem" href="../sfr/">Star-Formation Rate</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-5" type="checkbox"/><label class="tocitem" for="menuitem-5-5"><span class="docs-label">Time Series &amp; Movies</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../timeseries/">Time Series (multi-snapshot)</a></li><li><a class="tocitem" href="../movie/">Movies (getmovie)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox" checked/><label class="tocitem" for="menuitem-6"><span class="docs-label">Projection &amp; Maps</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../galaxyframe/">Auto-Frame (center &amp; orient)</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox" checked/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Axis-aligned (x/y/z)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Hydro</a><ul class="internal"><li><a class="tocitem" href="#Quick-Reference"><span>Quick Reference</span></a></li><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Key-Concepts"><span>Key Concepts</span></a></li><li><a class="tocitem" href="#Environment-Setup-and-Data-Loading"><span>Environment Setup and Data Loading</span></a></li><li><a class="tocitem" href="#Basic-Projections"><span>Basic Projections</span></a></li><li><a class="tocitem" href="#Projection-Output-Structure"><span>Projection Output Structure</span></a></li><li><a class="tocitem" href="#Visualization-and-Plotting"><span>Visualization and Plotting</span></a></li><li><a class="tocitem" href="#Advanced-Kinematic-Analysis"><span>Advanced Kinematic Analysis</span></a></li><li><a class="tocitem" href="#Grid-Resolution-Control"><span>Grid Resolution Control</span></a></li><li><a class="tocitem" href="#Thermal-Properties-Analysis"><span>Thermal Properties Analysis</span></a></li><li><a class="tocitem" href="#Selective-Data-Analysis"><span>Selective Data Analysis</span></a></li><li><a class="tocitem" href="#Weighting-and-Integration-Schemes"><span>Weighting and Integration Schemes</span></a></li><li><a class="tocitem" href="#Specialized-Applications"><span>Specialized Applications</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../06_offaxis_Projection/">Off-axis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Data &amp; Visualization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-7-1" type="checkbox"/><label class="tocitem" for="menuitem-7-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-2" type="checkbox"/><label class="tocitem" for="menuitem-7-2"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Other Simulation Codes</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../multicode/">Overview</a></li><li><a class="tocitem" href="../multicode_examples/">Worked Examples</a></li><li><a class="tocitem" href="../pluto_reader/">PLUTO</a></li><li><a class="tocitem" href="../athena_reader/">Athena++</a></li><li><a class="tocitem" href="../flash_reader/">FLASH</a></li><li><a class="tocitem" href="../gadget_reader/">GADGET</a></li><li><a class="tocitem" href="../arepo_reader/">AREPO</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-9" type="checkbox"/><label class="tocitem" for="menuitem-9"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../api/data_inspection/">Data Inspection</a></li><li><a class="tocitem" href="../api/data_loading/">Data Loading</a></li><li><a class="tocitem" href="../api/subregions/">Subregions</a></li><li><a class="tocitem" href="../api/calculations/">Calculations</a></li><li><a class="tocitem" href="../api/masking_filtering/">Masking &amp; Filtering</a></li><li><a class="tocitem" href="../profiles_phase/">Profiles &amp; Phase</a></li><li><a class="tocitem" href="../api/projections/">Projections</a></li><li><a class="tocitem" href="../api/offaxis/">Off-axis Projection</a></li><li><a class="tocitem" href="../api/mera_files/">Mera-Files</a></li><li><a class="tocitem" href="../api/volume_rendering/">Volume Rendering</a></li><li><a class="tocitem" href="../api/multithreading/">Multi-Threading</a></li><li><a class="tocitem" href="../api/notifications/">Notifications</a></li><li><a class="tocitem" href="../api/">Complete API</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10" type="checkbox"/><label class="tocitem" for="menuitem-10"><span class="docs-label">More</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-10-1" type="checkbox"/><label class="tocitem" for="menuitem-10-1"><span class="docs-label">Advanced Features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../bundled_arguments/">Bundling Arguments (myargs)</a></li><li><a class="tocitem" href="../verbose_progress_switches/">Verbose &amp; Progress Switches</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">Multi-Threading</a></li><li><a class="tocitem" href="../advanced_features/testing_guide/">Testing Framework</a></li><li><input class="collapse-toggle" id="menuitem-10-1-5" type="checkbox"/><label class="tocitem" for="menuitem-10-1-5"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../notifications/">Overview</a></li><li><a class="tocitem" href="../notifications/setup_and_usage/">Setup &amp; Usage</a></li><li><a class="tocitem" href="../notifications/examples/">Examples</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-2" type="checkbox"/><label class="tocitem" for="menuitem-10-2"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Projections</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-3" type="checkbox"/><label class="tocitem" for="menuitem-10-3"><span class="docs-label">Quick Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../quickreference/06_resources/">Resources &amp; Community</a></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia Cheat Sheet (all-in-one)</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-4" type="checkbox"/><label class="tocitem" for="menuitem-10-4"><span class="docs-label">Examples &amp; Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../Miscellaneous/">Miscellaneous</a></li><li><a class="tocitem" href="../recommended_packages/">Recommended Packages</a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Projection &amp; Maps</a></li><li><a class="is-disabled">Axis-aligned (x/y/z)</a></li><li class="is-active"><a href>Hydro</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Hydro</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Hydro-Data-Projections"><a class="docs-heading-anchor" href="#Hydro-Data-Projections">Hydro Data Projections</a><a id="Hydro-Data-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Hydro-Data-Projections" title="Permalink"></a></h1><div class="admonition is-success" id="Run-it-yourself-460d0996f44a5219"><header class="admonition-header">Run it yourself<a class="admonition-anchor" href="#Run-it-yourself-460d0996f44a5219" title="Permalink"></a></header><div class="admonition-body"><p>This page is also an executable <strong>Jupyter notebook</strong> — <a href="https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_hydro_Projection.ipynb">open / download <code>06_hydro_Projection.ipynb</code></a>. The notebooks run end-to-end and double as part of Mera&#39;s test suite.</p></div></div><p>This tutorial demonstrates advanced projection techniques for hydrodynamical simulation data using MERA.jl. Learn how to create 2D projections from 3D data, handle different coordinate systems, and visualize complex astrophysical datasets.</p><h2 id="Quick-Reference"><a class="docs-heading-anchor" href="#Quick-Reference">Quick Reference</a><a id="Quick-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference" title="Permalink"></a></h2><h3 id="Essential-Functions"><a class="docs-heading-anchor" href="#Essential-Functions">Essential Functions</a><a id="Essential-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Essential-Functions" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Basic projection
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Hydro · Mera.jl</title><meta name="title" content="Hydro · Mera.jl"/><meta property="og:title" content="Hydro · Mera.jl"/><meta property="twitter:title" content="Hydro · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/06_hydro_Projection/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/06_hydro_Projection/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/06_hydro_Projection/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../assets/custom.js"></script><script src="../assets/music_player.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../report/">First Look</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><a class="tocitem" href="../switching_to_mera/">Coming from Other Tools</a></li><li><a class="tocitem" href="../julia_for_simulation_analysis/">Julia for Simulation Analysis</a></li><li><a class="tocitem" href="../troubleshooting/">Troubleshooting</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-4-1" type="checkbox"/><label class="tocitem" for="menuitem-4-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_gravity_First_Inspection/">Gravity</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-2" type="checkbox"/><label class="tocitem" for="menuitem-4-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_gravity_Load_Selections/">Gravity</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-3" type="checkbox"/><label class="tocitem" for="menuitem-4-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_gravity_Get_Subregions/">Gravity</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../covering_grid/">Uniform Grid / Resampling</a></li><li><a class="tocitem" href="../09_multi_Cosmology/">Cosmological Runs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-5-1" type="checkbox"/><label class="tocitem" for="menuitem-5-1"><span class="docs-label">Quantities &amp; Fields</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../04_multi_Basic_Calculations/">Basic Calculations</a></li><li><a class="tocitem" href="../computation_reference/">How Quantities Are Computed</a></li><li><a class="tocitem" href="../derived_fields/">Derived Fields &amp; add_field</a></li><li><a class="tocitem" href="../magnetic_fields/">Magnetic Fields (MHD)</a></li><li><a class="tocitem" href="../10_multi_RadiativeTransfer/">Radiative Transfer</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Selection, Statistics &amp; Metadata</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../05_multi_Masking_Filtering/">Mask/Filter/Meta</a></li><li><a class="tocitem" href="../statistics/">Statistics (PDFs)</a></li><li><a class="tocitem" href="../15_multi_Profiles_Phase/">Profiles &amp; Phase Diagrams</a></li><li><a class="tocitem" href="../provenance/">Provenance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-3" type="checkbox"/><label class="tocitem" for="menuitem-5-3"><span class="docs-label">Structure Finding</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../clumpfind/">Clump Finding</a></li><li><a class="tocitem" href="../clumpfind_synthetic/">Clump Finding — Synthetic Example</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-4" type="checkbox"/><label class="tocitem" for="menuitem-5-4"><span class="docs-label">Gas Flows &amp; Star Formation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../fluxbudget/">Flux Budgets</a></li><li><a class="tocitem" href="../sfr/">Star-Formation Rate</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-5" type="checkbox"/><label class="tocitem" for="menuitem-5-5"><span class="docs-label">Time Series &amp; Movies</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../timeseries/">Time Series (multi-snapshot)</a></li><li><a class="tocitem" href="../movie/">Movies (getmovie)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox" checked/><label class="tocitem" for="menuitem-6"><span class="docs-label">Projection &amp; Maps</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../galaxyframe/">Auto-Frame (center &amp; orient)</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox" checked/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Axis-aligned (x/y/z)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Hydro</a><ul class="internal"><li><a class="tocitem" href="#Quick-Reference"><span>Quick Reference</span></a></li><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Key-Concepts"><span>Key Concepts</span></a></li><li><a class="tocitem" href="#Environment-Setup-and-Data-Loading"><span>Environment Setup and Data Loading</span></a></li><li><a class="tocitem" href="#Basic-Projections"><span>Basic Projections</span></a></li><li><a class="tocitem" href="#Projection-Output-Structure"><span>Projection Output Structure</span></a></li><li><a class="tocitem" href="#Visualization-and-Plotting"><span>Visualization and Plotting</span></a></li><li><a class="tocitem" href="#Advanced-Kinematic-Analysis"><span>Advanced Kinematic Analysis</span></a></li><li><a class="tocitem" href="#Grid-Resolution-Control"><span>Grid Resolution Control</span></a></li><li><a class="tocitem" href="#Thermal-Properties-Analysis"><span>Thermal Properties Analysis</span></a></li><li><a class="tocitem" href="#Selective-Data-Analysis"><span>Selective Data Analysis</span></a></li><li><a class="tocitem" href="#Weighting-and-Integration-Schemes"><span>Weighting and Integration Schemes</span></a></li><li><a class="tocitem" href="#Specialized-Applications"><span>Specialized Applications</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../06_offaxis_Projection/">Off-axis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Data &amp; Visualization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-7-1" type="checkbox"/><label class="tocitem" for="menuitem-7-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-2" type="checkbox"/><label class="tocitem" for="menuitem-7-2"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Other Simulation Codes</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../multicode/">Overview</a></li><li><a class="tocitem" href="../multicode_examples/">Worked Examples</a></li><li><a class="tocitem" href="../pluto_reader/">PLUTO</a></li><li><a class="tocitem" href="../athena_reader/">Athena++</a></li><li><a class="tocitem" href="../flash_reader/">FLASH</a></li><li><a class="tocitem" href="../gadget_reader/">GADGET</a></li><li><a class="tocitem" href="../arepo_reader/">AREPO</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-9" type="checkbox"/><label class="tocitem" for="menuitem-9"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../api/data_inspection/">Data Inspection</a></li><li><a class="tocitem" href="../api/data_loading/">Data Loading</a></li><li><a class="tocitem" href="../api/subregions/">Subregions</a></li><li><a class="tocitem" href="../api/calculations/">Calculations</a></li><li><a class="tocitem" href="../api/masking_filtering/">Masking &amp; Filtering</a></li><li><a class="tocitem" href="../api/structure_finding/">Structure Finding</a></li><li><a class="tocitem" href="../profiles_phase/">Profiles &amp; Phase</a></li><li><a class="tocitem" href="../api/projections/">Projections</a></li><li><a class="tocitem" href="../api/offaxis/">Off-axis Projection</a></li><li><a class="tocitem" href="../api/mera_files/">Mera-Files</a></li><li><a class="tocitem" href="../api/volume_rendering/">Volume Rendering</a></li><li><a class="tocitem" href="../api/multithreading/">Multi-Threading</a></li><li><a class="tocitem" href="../api/notifications/">Notifications</a></li><li><a class="tocitem" href="../api/">Complete API</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10" type="checkbox"/><label class="tocitem" for="menuitem-10"><span class="docs-label">More</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-10-1" type="checkbox"/><label class="tocitem" for="menuitem-10-1"><span class="docs-label">Advanced Features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../bundled_arguments/">Bundling Arguments (myargs)</a></li><li><a class="tocitem" href="../verbose_progress_switches/">Verbose &amp; Progress Switches</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">Multi-Threading</a></li><li><a class="tocitem" href="../advanced_features/testing_guide/">Testing Framework</a></li><li><input class="collapse-toggle" id="menuitem-10-1-5" type="checkbox"/><label class="tocitem" for="menuitem-10-1-5"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../notifications/">Overview</a></li><li><a class="tocitem" href="../notifications/setup_and_usage/">Setup &amp; Usage</a></li><li><a class="tocitem" href="../notifications/examples/">Examples</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-2" type="checkbox"/><label class="tocitem" for="menuitem-10-2"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Projections</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-3" type="checkbox"/><label class="tocitem" for="menuitem-10-3"><span class="docs-label">Quick Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../quickreference/06_resources/">Resources &amp; Community</a></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia Cheat Sheet (all-in-one)</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-4" type="checkbox"/><label class="tocitem" for="menuitem-10-4"><span class="docs-label">Examples &amp; Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../Miscellaneous/">Miscellaneous</a></li><li><a class="tocitem" href="../recommended_packages/">Recommended Packages</a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Projection &amp; Maps</a></li><li><a class="is-disabled">Axis-aligned (x/y/z)</a></li><li class="is-active"><a href>Hydro</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Hydro</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Hydro-Data-Projections"><a class="docs-heading-anchor" href="#Hydro-Data-Projections">Hydro Data Projections</a><a id="Hydro-Data-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Hydro-Data-Projections" title="Permalink"></a></h1><div class="admonition is-success" id="Run-it-yourself-460d0996f44a5219"><header class="admonition-header">Run it yourself<a class="admonition-anchor" href="#Run-it-yourself-460d0996f44a5219" title="Permalink"></a></header><div class="admonition-body"><p>This page is also an executable <strong>Jupyter notebook</strong> — <a href="https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_hydro_Projection.ipynb">open / download <code>06_hydro_Projection.ipynb</code></a>. The notebooks run end-to-end and double as part of Mera&#39;s test suite.</p></div></div><p>This tutorial demonstrates advanced projection techniques for hydrodynamical simulation data using MERA.jl. Learn how to create 2D projections from 3D data, handle different coordinate systems, and visualize complex astrophysical datasets.</p><h2 id="Quick-Reference"><a class="docs-heading-anchor" href="#Quick-Reference">Quick Reference</a><a id="Quick-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference" title="Permalink"></a></h2><h3 id="Essential-Functions"><a class="docs-heading-anchor" href="#Essential-Functions">Essential Functions</a><a id="Essential-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Essential-Functions" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Basic projection
 projection(data, :variable, :unit)
 
 # Multi-quantity projection  
@@ -21,7 +21,7 @@ projection(data, :sd, :Msol_pc2, pxsize=[100.,:pc])  # Physical pixel size
 projection(data, :sd, :Msol_pc2, mask=mask_array)
 projection(data, :rho, :g_cm3, weighting=[:volume])</code></pre><h3 id="Key-Projection-Quantities"><a class="docs-heading-anchor" href="#Key-Projection-Quantities">Key Projection Quantities</a><a id="Key-Projection-Quantities-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Projection-Quantities" title="Permalink"></a></h3><ul><li><strong><code>:sd</code></strong> - Surface density (Σ) </li><li><strong><code>:vx, :vy, :vz</code></strong> - Velocity components</li><li><strong><code>:v</code></strong> - Total velocity magnitude</li><li><strong><code>:σ, :σx, :σy, :σz</code></strong> - Velocity dispersions</li><li><strong><code>:cs</code></strong> - Sound speed</li><li><strong><code>:r_cylinder, :vr_cylinder, :vϕ_cylinder</code></strong> </li><li><strong><code>:ϕ, :σr_cylinder, :σϕ_cylinder</code></strong> </li></ul><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p>MERA.jl provides powerful projection capabilities for analyzing hydrodynamical simulations:</p><ul><li><strong>Surface density projections</strong> in arbitrary directions</li><li><strong>Kinematic analysis</strong> with velocity fields and dispersions</li><li><strong>Multi-quantity projections</strong> with customizable units</li><li><strong>Coordinate system transformations</strong> (Cartesian, cylindrical, spherical)</li><li><strong>Advanced masking and filtering</strong> for targeted analysis</li></ul><h2 id="Key-Concepts"><a class="docs-heading-anchor" href="#Key-Concepts">Key Concepts</a><a id="Key-Concepts-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Concepts" title="Permalink"></a></h2><ul><li><strong>Projection Direction</strong>: Control viewing angle (x, y, z directions)</li><li><strong>Grid Resolution</strong>: Customize output resolution via <code>lmax</code>, <code>res</code>, or <code>pxsize</code></li><li><strong>Weighting Schemes</strong>: Mass-weighted, volume-weighted, or custom weighting</li><li><strong>Coordinate Systems</strong>: Native Cartesian or derived cylindrical/spherical coordinates</li></ul><h3 id="Intensive-vs.-extensive-quantities-—-what-a-projection-*means*"><a class="docs-heading-anchor" href="#Intensive-vs.-extensive-quantities-—-what-a-projection-*means*">Intensive vs. extensive quantities — what a projection <em>means</em></a><a id="Intensive-vs.-extensive-quantities-—-what-a-projection-*means*-1"></a><a class="docs-heading-anchor-permalink" href="#Intensive-vs.-extensive-quantities-—-what-a-projection-*means*" title="Permalink"></a></h3><p>A line-of-sight projection reduces a 3-D field to a 2-D map, and <strong>how</strong> the cells along each sightline are combined depends on whether the quantity is <em>intensive</em> or <em>extensive</em>:</p><table><tr><th style="text-align: right">Quantity kind</th><th style="text-align: right">Examples</th><th style="text-align: right">How it is projected</th><th style="text-align: right">Result per pixel</th></tr><tr><td style="text-align: right"><strong>Extensive</strong> (adds up)</td><td style="text-align: right"><code>:sd</code> (surface density), <code>:mass</code></td><td style="text-align: right"><strong>summed</strong> along the sightline, divided by the pixel area</td><td style="text-align: right">a column / surface density — the total is conserved</td></tr><tr><td style="text-align: right"><strong>Intensive</strong> (a local value)</td><td style="text-align: right"><code>:T</code>, <code>:vx</code>, <code>:rho</code>, <code>:cs</code>, <code>:p</code>, …</td><td style="text-align: right"><strong>weight-averaged</strong> along the sightline (<code>weighting=:mass</code> by default, or <code>:volume</code>)</td><td style="text-align: right">a representative value, <em>not</em> a sum</td></tr></table><p>In other words: a mass-weighted projection of an intensive field answers <em>&quot;what value would a mass-tracer see, averaged down this column?&quot;</em>, while a surface-density projection answers <em>&quot;how much is there per unit area?&quot;</em>. Choosing the wrong combination is the most common projection mistake — e.g. mass-weighting a temperature map biases it toward dense gas, whereas volume-weighting (<code>weighting=[:volume]</code>) gives the volume-filling temperature.</p><pre><code class="language-julia hljs">projection(gas, :T)                      # mass-weighted T (default) — tracks dense gas
 projection(gas, :T,  weighting=[:volume]) # volume-weighted T — volume-filling value
-projection(gas, :sd, :Msol_pc2)          # extensive: summed mass per pixel area (column)</code></pre><div class="admonition is-info" id="mode:standard-vs-mode:sum-db5539c8a48e2c19"><header class="admonition-header">`mode=:standard` vs `mode=:sum`<a class="admonition-anchor" href="#mode:standard-vs-mode:sum-db5539c8a48e2c19" title="Permalink"></a></header><div class="admonition-body"><p>The default <code>mode=:standard</code> produces the <strong>physically normalized</strong> map described above (extensive ⇒ per-area column; intensive ⇒ weight-average). <code>mode=:sum</code> instead returns the <strong>raw per-pixel weighted sum</strong> with no area/normalization division — useful when you want to accumulate a conserved total yourself (e.g. summing energy or a custom budget across pixels) and will apply your own normalization. For standard surface-density and weighted-average maps, keep <code>mode=:standard</code>. (Hydro, gravity and RT take the weighting as an ARRAY — <code>[:mass]</code>, <code>[:volume]</code>;</p></div></div><p>only particle projections take a bare symbol, <code>weighting=:mass</code>/<code>:volume</code>. <code>mode</code> applies to</p><h2 id="Environment-Setup-and-Data-Loading"><a class="docs-heading-anchor" href="#Environment-Setup-and-Data-Loading">Environment Setup and Data Loading</a><a id="Environment-Setup-and-Data-Loading-1"></a><a class="docs-heading-anchor-permalink" href="#Environment-Setup-and-Data-Loading" title="Permalink"></a></h2><h3 id="Package-Configuration"><a class="docs-heading-anchor" href="#Package-Configuration">Package Configuration</a><a id="Package-Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#Package-Configuration" title="Permalink"></a></h3><p>First, we configure the development environment and load the required packages for this tutorial.</p><pre><code class="language-julia hljs"># Example-data root. Point this at your own simulation folder, or set the
+projection(gas, :sd, :Msol_pc2)          # extensive: summed mass per pixel area (column)</code></pre><div class="admonition is-info" id="mode:standard-vs-mode:sum-12f808c0b0bd9490"><header class="admonition-header">`mode=:standard` vs `mode=:sum`<a class="admonition-anchor" href="#mode:standard-vs-mode:sum-12f808c0b0bd9490" title="Permalink"></a></header><div class="admonition-body"><p>The default <code>mode=:standard</code> produces the <strong>physically normalized</strong> map described above (extensive ⇒ per-area column; intensive ⇒ weight-average). <code>mode=:sum</code> instead returns the <strong>raw per-pixel weighted sum</strong> with no area/normalization division — useful when you want to accumulate a conserved total yourself (e.g. summing energy or a custom budget across pixels) and will apply your own normalization. For standard surface-density and weighted-average maps, keep <code>mode=:standard</code>. (Hydro, gravity and RT take the weighting as an ARRAY — <code>[:mass]</code>, <code>[:volume]</code>; only particle projections take a bare symbol, <code>weighting=:mass</code>/<code>:volume</code>. <code>mode</code> applies to the hydro/gravity grid path.)</p></div></div><h2 id="Environment-Setup-and-Data-Loading"><a class="docs-heading-anchor" href="#Environment-Setup-and-Data-Loading">Environment Setup and Data Loading</a><a id="Environment-Setup-and-Data-Loading-1"></a><a class="docs-heading-anchor-permalink" href="#Environment-Setup-and-Data-Loading" title="Permalink"></a></h2><h3 id="Package-Configuration"><a class="docs-heading-anchor" href="#Package-Configuration">Package Configuration</a><a id="Package-Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#Package-Configuration" title="Permalink"></a></h3><p>First, we configure the development environment and load the required packages for this tutorial.</p><pre><code class="language-julia hljs"># Example-data root. Point this at your own simulation folder, or set the
 # MERA_EXAMPLES environment variable; every path below is built from it.
 MERA_EXAMPLES = get(ENV, &quot;MERA_EXAMPLES&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests&quot;);
 
@@ -34,8 +34,6 @@ info = getinfo(400, &quot;$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14&quot;)
 # Load hydrodynamical data with specified constraints
 # smallr: sets minimum density value in loaded data, lmax: maximum level to load
 gas = gethydro(info, smallr=1e-11, lmax=12);</code></pre><pre><code class="nohighlight hljs">*__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -46,12 +44,9 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T10:57:50.947
 
-
 Code: RAMSES
 output [400] summary:
-mtime: 
-
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -64,9 +59,7 @@ amr:           true
 level(s): 6 - 14 --&gt; cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --&gt; (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -76,7 +69,6 @@ gravity-variables: (:epot, :ax, :ay, :az)
 particles:     true
 - Npart:    5.091500e+05 
 - Nstars:   5.066030e+05 
-
 - Ndm:      2.547000e+03 
 particle-variables: 5  --&gt; (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
@@ -94,20 +86,15 @@ patchfile:        true
 
 [Mera]: Get hydro data: 2026-08-03T10:57:53.342
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 
 📊 Processing Configuration:
-
    Total CPU files available: 2048
    Files to be processed: 2048
    Compute threads: 4
@@ -116,22 +103,15 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 18966620 cells, 7 variables
 Creating Table from 18966620 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
 ✓ Table created in 26.08 seconds
-
-Memory used for data table :1.5544367535039783
-
- GB
+Memory used for data table :1.5544367535039783 GB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs"># Inspect the loaded hydro data structure
 # This shows the available fields and data organization
 gas.data</code></pre><pre><code class="nohighlight hljs">Table with 18966620 rows, 11 columns:
@@ -209,26 +189,20 @@ proj_z = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], verbose=false)
 # Shows structure when viewed from the side
 proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbose=false);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T10:58:55.267
 
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==&gt; 21.6 [kpc] :: 26.4 [kpc]
 
 Selected var(s)=(:sd,) 
-
-
 Weighting      = :mass
 
 Effective resolution: 4096^2
-
-
 Map size: 4096 x 4096
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -243,7 +217,6 @@ proj_z = projection(gas, :sd, :Msol_pc2,
                     center=[cv,cv,cv],     # Center at box center
                     range_unit=:kpc);       # Specify range units</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T10:59:10.973
 
-
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -260,8 +233,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)</code></pre><p><strong>Convenience Notation for Box Center:</strong></p><p>Use shorthand notation <code>:bc</code> or <code>:boxcenter</code> to automatically reference the simulation box center without manual calculation:</p><pre><code class="language-julia hljs"># Use :boxcenter shorthand for automatic box center calculation
@@ -270,7 +241,6 @@ proj_z = projection(gas, :sd, :Msol_pc2,
                     center=[:boxcenter],   # Automatic box center
                     range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T10:59:13.243
 
-
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -279,7 +249,6 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 
 Selected var(s)=(:sd,) 
-
 Weighting      = :mass
 
 Effective resolution: 4096^2
@@ -288,8 +257,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)</code></pre><pre><code class="language-julia hljs"># Alternative abbreviated notation
@@ -314,8 +281,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)</code></pre><p><strong>Dimension-Specific Center Control:</strong></p><p>Apply box center notation to individual spatial dimensions while specifying custom values for others:</p><pre><code class="language-julia hljs"># Mixed center specification: box center for x,z; custom value for y
@@ -323,7 +288,6 @@ proj_z = projection(gas, :sd, :Msol_pc2,
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
                     center=[:bc, 24., :bc],  # [x_center, y_center, z_center]
                     range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T10:59:17.176
-
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -333,7 +297,6 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 
 Selected var(s)=(:sd,) 
-
 Weighting      = :mass
 
 Effective resolution: 4096^2
@@ -342,8 +305,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)</code></pre><h3 id="Multi-Quantity-Projections"><a class="docs-heading-anchor" href="#Multi-Quantity-Projections">Multi-Quantity Projections</a><a id="Multi-Quantity-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Multi-Quantity-Projections" title="Permalink"></a></h3><h4 id="Single-Quantity-Arrays"><a class="docs-heading-anchor" href="#Single-Quantity-Arrays">Single Quantity Arrays</a><a id="Single-Quantity-Arrays-1"></a><a class="docs-heading-anchor-permalink" href="#Single-Quantity-Arrays" title="Permalink"></a></h4><p>Efficiently compute multiple projections in a single function call by passing arrays of quantities and units. This approach optimizes performance and ensures consistent spatial sampling across all requested variables.</p><p><strong>Syntax Requirements:</strong></p><ul><li><strong>Variables</strong>: Array format <code>[:var1, :var2, ...]</code> for multiple quantities</li><li><strong>Units</strong>: Plural keyword <code>units=</code> (not <code>unit=</code>) for array specification</li><li><strong>Consistency</strong>: Each variable requires corresponding unit specification</li></ul><pre><code class="language-julia hljs"># Single quantity in array format (demonstrates array syntax)
@@ -372,8 +333,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)</code></pre><h4 id="Multiple-Quantities-with-Different-Units"><a class="docs-heading-anchor" href="#Multiple-Quantities-with-Different-Units">Multiple Quantities with Different Units</a><a id="Multiple-Quantities-with-Different-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Multiple-Quantities-with-Different-Units" title="Permalink"></a></h4><p>Combine different physical quantities in a single projection call, each with appropriate units:</p><pre><code class="language-julia hljs"># Multiple quantities with different units
@@ -402,8 +361,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 2 (sd, vx)
 Processing mode: Variable-based parallel (2 threads)</code></pre><h4 id="Positional-Argument-Syntax"><a class="docs-heading-anchor" href="#Positional-Argument-Syntax">Positional Argument Syntax</a><a id="Positional-Argument-Syntax-1"></a><a class="docs-heading-anchor-permalink" href="#Positional-Argument-Syntax" title="Permalink"></a></h4><p>Streamline function calls by using positional arguments in the correct order: <code>dataobject</code>, <code>variables</code>, <code>units</code>:</p><pre><code class="language-julia hljs"># Positional arguments: data, variables, units (keywords follow)
@@ -431,8 +388,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 2 (sd, vx)
 Processing mode: Variable-based parallel (2 threads)</code></pre><h4 id="Uniform-Units-for-Multiple-Quantities"><a class="docs-heading-anchor" href="#Uniform-Units-for-Multiple-Quantities">Uniform Units for Multiple Quantities</a><a id="Uniform-Units-for-Multiple-Quantities-1"></a><a class="docs-heading-anchor-permalink" href="#Uniform-Units-for-Multiple-Quantities" title="Permalink"></a></h4><p>When all quantities share the same unit, use single unit specification rather than array format:</p><pre><code class="language-julia hljs"># All velocity components with uniform units
@@ -452,7 +407,6 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 
 Selected var(s)=(:vx, :vy, :vz, :sd) 
-
 Weighting      = :mass
 
 Effective resolution: 4096^2
@@ -461,8 +415,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 4 (sd, vx, vy, vz)
 Processing mode: Variable-based parallel (4 threads)</code></pre><h2 id="Projection-Output-Structure"><a class="docs-heading-anchor" href="#Projection-Output-Structure">Projection Output Structure</a><a id="Projection-Output-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Projection-Output-Structure" title="Permalink"></a></h2><h3 id="Data-Organization-and-Access"><a class="docs-heading-anchor" href="#Data-Organization-and-Access">Data Organization and Access</a><a id="Data-Organization-and-Access-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Organization-and-Access" title="Permalink"></a></h3><p>Projection results are stored in a structured object containing 2D maps, metadata, and spatial information. Understanding this organization enables efficient data access and further analysis.</p><h4 id="Object-Properties"><a class="docs-heading-anchor" href="#Object-Properties">Object Properties</a><a id="Object-Properties-1"></a><a class="docs-heading-anchor-permalink" href="#Object-Properties" title="Permalink"></a></h4><p>Examine the structure of projection output objects:</p><pre><code class="language-julia hljs"># List all available fields in the projection object
@@ -514,9 +466,7 @@ proj1_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.Sort
    2.003906250015553</code></pre><h4 id="Physical-unit-axes-with-getextent"><a class="docs-heading-anchor" href="#Physical-unit-axes-with-getextent">Physical-unit axes with <code>getextent</code></a><a id="Physical-unit-axes-with-getextent-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-unit-axes-with-getextent" title="Permalink"></a></h4><p><code>proj.extent</code>/<code>proj.cextent</code> above are in <strong>code length</strong> units. To get plot axes in a physical unit that matches the map (surface density here is <code>Msol/pc²</code>), use <code>getextent(proj, :kpc)</code> rather than the raw field — it returns <code>[xmin, xmax, ymin, ymax]</code> scaled to the unit (<code>center=true</code> for the centre-relative form, like <code>.cextent</code>). This is the robust idiom: for these tutorial runs one code length happens to equal 1 kpc, but for a run in pc / Mpc — or a GADGET/AREPO snapshot — the raw code-unit extent would mislabel the axes.</p><pre><code class="language-julia hljs"># physical-unit extent for plot axes (robust regardless of the sim&#39;s code-length convention)
 println(&quot;kpc           : &quot;, getextent(proj1_z, :kpc))
 println(&quot;pc            : &quot;, getextent(proj1_z, :pc))                 # ×1000 — raw .extent (code units) is NOT physical in general
-println(&quot;kpc, centered : &quot;, getextent(proj1_z, :kpc; center=true))  # like .cextent; pass straight to imshow(extent=…)</code></pre><pre><code class="nohighlight hljs">kpc           : 
-
-[13.992187500009068, 34.00781250002204, 21.996093750014257, 26.003906250016854]
+println(&quot;kpc, centered : &quot;, getextent(proj1_z, :kpc; center=true))  # like .cextent; pass straight to imshow(extent=…)</code></pre><pre><code class="nohighlight hljs">kpc           : [13.992187500009068, 34.00781250002204, 21.996093750014257, 26.003906250016854]
 pc            : [13992.18750000907, 34007.812500022046, 21996.093750014257, 26003.90625001686]
 kpc, centered : [-10.007812499990933, 10.007812500022041, -2.003906249985746, 2.003906250016852]</code></pre><pre><code class="language-julia hljs">proj1_z.ratio # the ratio between the two ranges</code></pre><pre><code class="nohighlight hljs">4.994152046783626</code></pre><h2 id="Visualization-and-Plotting"><a class="docs-heading-anchor" href="#Visualization-and-Plotting">Visualization and Plotting</a><a id="Visualization-and-Plotting-1"></a><a class="docs-heading-anchor-permalink" href="#Visualization-and-Plotting" title="Permalink"></a></h2><h3 id="PyPlot-Integration"><a class="docs-heading-anchor" href="#PyPlot-Integration">PyPlot Integration</a><a id="PyPlot-Integration-1"></a><a class="docs-heading-anchor-permalink" href="#PyPlot-Integration" title="Permalink"></a></h3><p>MERA.jl seamlessly integrates with Python plotting libraries, providing access to sophisticated visualization capabilities through PyPlot and matplotlib.</p><pre><code class="language-julia hljs"># Prepare projections for visualization
 # Z-direction: top-down view of galactic disk
@@ -600,7 +550,6 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and 
                     center=[24.,24.,24.], 
                     range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T10:59:50.534
 
-
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -617,8 +566,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 9 (sd, v, v2, vx, vx2, vy, vy2, vz, vz2)
 Processing mode: Variable-based parallel (4 threads)</code></pre><h4 id="Velocity-Dispersion-Implementation"><a class="docs-heading-anchor" href="#Velocity-Dispersion-Implementation">Velocity Dispersion Implementation</a><a id="Velocity-Dispersion-Implementation-1"></a><a class="docs-heading-anchor-permalink" href="#Velocity-Dispersion-Implementation" title="Permalink"></a></h4><p>Additional intermediate maps are automatically created for velocity dispersion calculations:</p><p><strong>Mathematical Formula:</strong> σₓ = √(⟨vₓ²⟩ - ⟨vₓ⟩²)</p><p>This requires computation of both first and second moments of the velocity distribution, stored as separate map components.</p><pre><code class="language-julia hljs">proj_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 13 entries:
@@ -647,9 +594,7 @@ Processing mode: Variable-based parallel (4 threads)</code></pre><h4 id="Velocit
   :σ   =&gt; :km_s
   :σx  =&gt; :km_s
   :σy  =&gt; :km_s
-  :σz  =&gt; :km_s</code></pre><pre><code class="language-julia hljs">usedmemory(proj_z);</code></pre><pre><code class="nohighlight hljs">Memory used: 311.886
-
- MB</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 5.5))
+  :σz  =&gt; :km_s</code></pre><pre><code class="language-julia hljs">usedmemory(proj_z);</code></pre><pre><code class="nohighlight hljs">Memory used: 311.886 MB</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 5.5))
 
 subplot(2, 3, 1)
 title(&quot;v [km/s]&quot;)
@@ -690,7 +635,6 @@ proj_z = projection(gas,
     # Coordinate transformation center
     data_center=[24.,24.,24.], data_center_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T10:59:57.808
 
-
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -707,8 +651,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 11 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vϕ_cylinder, vϕ_cylinder2)
 Processing mode: Variable-based parallel (4 threads)</code></pre><pre><code class="language-julia hljs">proj_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 18 entries:
@@ -814,7 +756,6 @@ proj_z = projection(gas,
     center=[:boxcenter], range_unit=:kpc,
     lmax=6);  # 2^6 = 64 grid cells per dimension</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T11:00:10.568
 
-
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -831,8 +772,6 @@ Pixel size: 750.0 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
 Processing mode: Variable-based parallel (4 threads)</code></pre><pre><code class="language-julia hljs"># this corresponds to an effective resolution of:
@@ -889,7 +828,6 @@ proj_z = projection(gas,
     center=[:boxcenter], range_unit=:kpc,
     pxsize=[0.5, :kpc]);  # 0.5 kpc pixels (~96x96 over the 48 kpc box)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T11:00:18.208
 
-
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -906,8 +844,6 @@ Pixel size: 494.845 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
 Processing mode: Variable-based parallel (4 threads)</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 8.5))
@@ -980,8 +916,6 @@ Pixel size: 979.592 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
 Processing mode: Variable-based parallel (4 threads)
@@ -994,7 +928,6 @@ Processing mode: Variable-based parallel (4 threads)
    Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
    Processing levels 6 to 12
    🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4
-
 ✅ Variable-based parallel processing completed in 2.178s
    ⚡ No combining phase needed - direct variable assignment eliminates overhead!
    📊 Performance Metrics:
@@ -1073,11 +1006,9 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
-
 [Mera]: 2026-08-03T11:00:33.648
 
 domain:
@@ -1094,7 +1025,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
@@ -1142,7 +1072,6 @@ proj_x = projection(gas, :sd, :Msol_pc2,
                     mask=mask_tot,        # Same mask for consistency
                     direction=:x);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T11:00:36.133
 
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -1159,8 +1088,6 @@ Simulation min.: 11.719 [pc]
 :mask provided by function
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
@@ -1184,8 +1111,6 @@ Simulation min.: 11.719 [pc]
 :mask provided by function
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
@@ -1204,7 +1129,6 @@ tight_layout()</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Pr
 proj_z = projection(gas, :cs, :km_s, 
                     weighting=[:volume]);  # Volume weighting instead of mass</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T11:00:45.898
 
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -1219,7 +1143,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)</code></pre><h4 id="Custom-Weighting-with-Units"><a class="docs-heading-anchor" href="#Custom-Weighting-with-Units">Custom Weighting with Units</a><a id="Custom-Weighting-with-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Weighting-with-Units" title="Permalink"></a></h4><p>Use any predefined quantity as weighting with specified units:</p><pre><code class="language-julia hljs"># Volume-weighted with explicit units
@@ -1240,7 +1163,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)</code></pre><h2 id="Specialized-Applications"><a class="docs-heading-anchor" href="#Specialized-Applications">Specialized Applications</a><a id="Specialized-Applications-1"></a><a class="docs-heading-anchor-permalink" href="#Specialized-Applications" title="Permalink"></a></h2><h3 id="Ultra-Thin-Slice-Analysis"><a class="docs-heading-anchor" href="#Ultra-Thin-Slice-Analysis">Ultra-Thin Slice Analysis</a><a id="Ultra-Thin-Slice-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Ultra-Thin-Slice-Analysis" title="Permalink"></a></h3><p>Create quasi-2D cuts through 3D data using extremely narrow projection ranges:</p><pre><code class="language-julia hljs"># Ultra-thin slice: effectively 2D cut through 3D data
@@ -1249,7 +1171,6 @@ proj_y = projection(gas, [:sd, :v], [:Msol_pc2, :km_s],
                     center=[:bc], 
                     range_unit=:kpc, 
                     direction=:y)  ;           # Y-direction slice</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T11:02:10.300
-
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1267,8 +1188,6 @@ Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 2 (sd, v)
 Processing mode: Variable-based parallel (2 threads)</code></pre><pre><code class="language-julia hljs"># Visualize ultra-thin slice velocity field
@@ -1281,4 +1200,4 @@ xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=L&quot;\mathrm{log10(v) \ [km \ s^{-1}]}&quot;);
 
-# Note: Ultra-thin slices provide all cells that intersect the 2D plane</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_96_0.png" alt/></p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This tutorial covered the comprehensive projection capabilities of MERA.jl for hydrodynamical data analysis. You&#39;ve learned how to:</p><h3 id="Core-Functionality"><a class="docs-heading-anchor" href="#Core-Functionality">Core Functionality</a><a id="Core-Functionality-1"></a><a class="docs-heading-anchor-permalink" href="#Core-Functionality" title="Permalink"></a></h3><ul><li><strong>Create basic projections</strong> with <code>projection(data, :variable, :unit)</code></li><li><strong>Control projection directions</strong> (x, y, z) for different viewing angles</li><li><strong>Select spatial regions</strong> using <code>xrange</code>, <code>yrange</code>, <code>zrange</code> parameters</li><li><strong>Access projection results</strong> through the structured output object</li></ul><h3 id="Advanced-Techniques"><a class="docs-heading-anchor" href="#Advanced-Techniques">Advanced Techniques</a><a id="Advanced-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Techniques" title="Permalink"></a></h3><ul><li><strong>Multi-quantity projections</strong> for efficient batch processing</li><li><strong>Cylindrical coordinate analysis</strong> for galactic disk studies</li><li><strong>Resolution control</strong> via <code>lmax</code>, <code>res</code>, and <code>pxsize</code> parameters</li><li><strong>Masking and filtering</strong> for targeted physical analysis</li><li><strong>Custom weighting schemes</strong> beyond default mass-weighting</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../galaxyframe/">« Auto-Frame (center &amp; orient)</a><a class="docs-footer-nextpage" href="../06_particles_Projection/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 6 August 2026 07:09">Thursday 6 August 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+# Note: Ultra-thin slices provide all cells that intersect the 2D plane</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_96_0.png" alt/></p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This tutorial covered the comprehensive projection capabilities of MERA.jl for hydrodynamical data analysis. You&#39;ve learned how to:</p><h3 id="Core-Functionality"><a class="docs-heading-anchor" href="#Core-Functionality">Core Functionality</a><a id="Core-Functionality-1"></a><a class="docs-heading-anchor-permalink" href="#Core-Functionality" title="Permalink"></a></h3><ul><li><strong>Create basic projections</strong> with <code>projection(data, :variable, :unit)</code></li><li><strong>Control projection directions</strong> (x, y, z) for different viewing angles</li><li><strong>Select spatial regions</strong> using <code>xrange</code>, <code>yrange</code>, <code>zrange</code> parameters</li><li><strong>Access projection results</strong> through the structured output object</li></ul><h3 id="Advanced-Techniques"><a class="docs-heading-anchor" href="#Advanced-Techniques">Advanced Techniques</a><a id="Advanced-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Techniques" title="Permalink"></a></h3><ul><li><strong>Multi-quantity projections</strong> for efficient batch processing</li><li><strong>Cylindrical coordinate analysis</strong> for galactic disk studies</li><li><strong>Resolution control</strong> via <code>lmax</code>, <code>res</code>, and <code>pxsize</code> parameters</li><li><strong>Masking and filtering</strong> for targeted physical analysis</li><li><strong>Custom weighting schemes</strong> beyond default mass-weighting</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../galaxyframe/">« Auto-Frame (center &amp; orient)</a><a class="docs-footer-nextpage" href="../06_particles_Projection/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 6 August 2026 13:43">Thursday 6 August 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
