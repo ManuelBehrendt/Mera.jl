@@ -86,7 +86,8 @@ projection(gas, :sd, :Msol_pc2)          # extensive: summed mass per pixel area
     accumulate a conserved total yourself (e.g. summing energy or a custom budget across pixels) and
     will apply your own normalization. For standard surface-density and weighted-average maps, keep
     `mode=:standard`. (Hydro, gravity and RT take the weighting as an ARRAY — `[:mass]`, `[:volume]`;
-only particle projections take a bare symbol, `weighting=:mass`/`:volume`. `mode` applies to
+    only particle projections take a bare symbol, `weighting=:mass`/`:volume`. `mode` applies to
+    the hydro/gravity grid path.)
 
 ## Environment Setup and Data Loading
 

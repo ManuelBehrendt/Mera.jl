@@ -45,13 +45,13 @@ Mera v1.8.0
 # MERA_EXAMPLES environment variable; every path below is built from it.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
-info = getinfo(400, "$MERA_EXAMPLES/manu_sim_sf_L14", verbose=false)
+info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14", verbose=false)
 hydro = gethydro(info, :rho, smallr=1e-5, lmax=10)
 particles = getparticles(info, :mass);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-03T11:36:55.436
+[Mera]: Get hydro data: 2026-08-06T10:36:44.702
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -80,19 +80,19 @@ Final data size: 4879946 cells, 1 variables
 Creating Table from 4879946 cells with max 4 threads...
 
   Threading: 4 threads for 5 columns
+
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 5 columns...
-✓ Table created in 0.891 seconds
+✓ Table created in 0.979 seconds
 
 Memory used for data table :186.1557970046997
 
  MB
 -------------------------------------------------------
 
-[Mera]: Get particle data: 2026-08-03T11:37:27.790
+[Mera]: Get particle data: 2026-08-06T10:37:14.140
 
 
 Using threaded processing with 4 threads

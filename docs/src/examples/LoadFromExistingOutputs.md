@@ -31,7 +31,7 @@ MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera
 
 # mw_L10 has one complete output (300); 301 is an incomplete output
 for i in [300]
-    info = getinfo(output=i, "$MERA_EXAMPLES/mw_L10", verbose=false)
+    info = getinfo(output=i, "$MERA_EXAMPLES/RAMSES/mw_L10", verbose=false)
     #...gethydro(info)...getparticles(info)... etc.
 end
 ```
@@ -40,7 +40,7 @@ end
 List the content of a given folder:
 
 ```julia
-path = "$MERA_EXAMPLES/mw_L10"
+path = "$MERA_EXAMPLES/RAMSES/mw_L10"
 readdir(path)
 ```
 
