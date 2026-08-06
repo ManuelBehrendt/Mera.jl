@@ -5,8 +5,9 @@
 
 If you already post-process simulations — with a Python analysis package, your group's own
 scripts, or the simulation code's tools — this page maps the concepts you know onto Mera and
-walks one complete workflow end to end. For line-by-line language syntax (Python/MATLAB/IDL →
-Julia), see the [migration cheat sheet](quickreference/02_migrators.md).
+walks one complete workflow end to end. For the Julia language itself (Python/MATLAB/IDL →
+Julia syntax, not simulation analysis), see
+[Julia for Python/MATLAB/IDL users](quickreference/02_migrators.md).
 
 ## The mental model
 
@@ -23,7 +24,11 @@ control RAM at load time (level cap, spatial window), not through deferred evalu
 | geometric selection | `subregion(gas, :sphere; …)`, `shellregion(…)` — return the same table type, chainable |
 | value-based selection | `filterdata(gas, …)` / `getmask` — thresholds on any `getvar` quantity |
 | projections | `projection(gas, :sd, :Msol_pc2; direction=:z or any line of sight)` |
-| profiles / phase diagrams | `profile(…)`, `phase(…)` |
+| profiles / phase diagrams | `profile(…)`, `phase(…)`, `pdf(…)` |
+| 2-D slice through the volume | `slice(gas, :rho, :g_cm3; …)` — axis-aligned or along any line of sight |
+| loop over snapshots | `timeseries(path, d -> …)` — reads each output, returns a table |
+| find structures | `clumpfind(gas, …)` — FoF/watershed on loaded data, scored in [Clump Finding](clumpfind_synthetic.md) |
+| animations | `getmovie(path, :rho)` / `savemovie(…)` |
 | unit handling | a `scale` factor table: multiply, or pass the unit symbol (`:g_cm3`, `:km_s`, `:Msol_pc2`) |
 | saving processed data | `savedata`/`loaddata` — LZ4-compressed JLD2, the fast Mera-native round-trip. Julia-side only: it stores the Mera object, so h5py cannot reconstruct the table — use `export_vtk`, write columns out yourself, or call Mera from Python via JuliaCall |
 
@@ -221,9 +226,16 @@ round-trip ok: true  (1.3 MB on disk)
 - **Units are explicit, not attached.** Quantities are plain arrays; units enter as scale
   factors or unit symbols. This keeps everything zero-overhead but means *you* choose the unit
   at each call.
-- **The multi-code promise:** the same verbs run on every code Mera reads (RAMSES, PLUTO,
-  Chombo, Athena++, FLASH, GADGET/AREPO-family) — see
-  [Other Simulation Codes](multicode.md) and `supports(info, :hydro)` for per-code capabilities.
+- **One node, threads only.** Mera parallelises with Julia threads inside a single process;
+  there is no MPI or multi-node mode. If your current workflow spreads one snapshot across a
+  cluster, that does not carry over — size your analysis to one machine's RAM, and use the
+  load-time selection arguments rather than loading the full box.
+- **The ecosystem is smaller.** Python has years of contributed simulation-analysis packages;
+  Julia has fewer, so a niche operation may not exist yet and you may end up writing it. The
+  compensation is that writing it in Julia is fast enough to use directly, with no C detour.
+- **Getting results back to Python takes a step.** `savedata` writes a Julia-side format, so
+  plan the handoff (`export_vtk`, your own column dump, or JuliaCall) rather than assuming
+  h5py can read it.
 
 **Next:** [Julia for Simulation Analysis](julia_for_simulation_analysis.md) — environments,
 compile-time latency, memory habits and measured multithreading.

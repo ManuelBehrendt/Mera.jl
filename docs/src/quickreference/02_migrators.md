@@ -591,27 +591,30 @@ function process_data_julia(data::Vector{Float64})
     return result
 end
 
-# Keep Python for I/O and preprocessing
+# Keep Python for I/O and preprocessing.
+# Note: this uses PythonCall throughout. PyCall is a separate package with a different API
+# (the py"..." string macro is PyCall's, `pyimport`/`pyconvert` are PythonCall's) — pick one
+# and stay in it, because mixing them will not run.
+using PythonCall
+
 function hybrid_workflow(filename::String)
-    # Python: file reading and preprocessing  
-    py"""
-    import pandas as pd
-    df = pd.read_csv($filename)
-    processed_df = df.dropna().reset_index()
-    """
-    
+    # Python: file reading and preprocessing
+    pd = pyimport("pandas")
+    df = pd.read_csv(filename)
+    processed = df.dropna().reset_index()
+
+    # Python -> Julia: pyconvert names the Julia type you want
+    data = pyconvert(Vector{Float64}, processed["values"].values)
+
     # Julia: computational core
-    data = Vector{Float64}(py"processed_df['values'].values")
     result = process_data_julia(data)
-    
-    # Python: visualization and output
-    py"""
-    import matplotlib.pyplot as plt
+
+    # Julia -> Python: plotting stays where you already know it
+    plt = pyimport("matplotlib.pyplot")
     plt.figure(figsize=(10, 6))
-    plt.plot($result)
+    plt.plot(result)
     plt.show()
-    """
-    
+
     return result
 end
 ```
