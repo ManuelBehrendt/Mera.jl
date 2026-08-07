@@ -150,8 +150,13 @@ makedocs(modules = [Mera],
                                                     "Performance & Debugging" => "quickreference/05_performance.md",
                                                     "Resources & Community"   => "quickreference/06_resources.md",
                                                     "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md"],
+                          # "Miscellaneous" is deliberately not listed: its four sections (myargs,
+                          # verbose/progress switches, bell, notifyme) each have a dedicated page in
+                          # this same "More" section, and its notification sections are pasted `?bell`
+                          # / `?notifyme` REPL output that api.md already renders properly. Meeting the
+                          # same four topics twice, at two levels of quality, is what the docs panel
+                          # flagged. The page and its notebook are kept, just not offered as a route.
                           "Examples & Misc" => Any[ "Examples"             => "examples.md",
-                                                    "Miscellaneous"        => "Miscellaneous.md",
                                                     "Recommended Packages" => "recommended_packages.md"]]
                     ]
 )

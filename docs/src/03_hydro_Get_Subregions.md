@@ -797,6 +797,8 @@ tiling), but it is measured with the same guarantee.
 
 ## 5. Region Algebra: Composing Regions
 
+*Signatures, the full list of region types and the `split`/`nsub`/`inverse` semantics are in the [Subregions API](api/subregions.md).*
+
 Regions are values, so they compose with the set operators `∩` (also `&`),
 `∪` (also `|`), `\` (difference), and `!` (complement) — arbitrarily nested,
 with a different centre allowed in every part, and the composite's boundary
