@@ -53,7 +53,7 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-first call: 11.49 s   second call: 0.044 s
+first call: 12.07 s   second call: 0.042 s
 ```
 
 
@@ -84,7 +84,7 @@ println("mass-weighted T (ρ>1e-24 g/cm³): ", round(mwT(rho, T, vol), sigdigits
 ```
 
 ```
-mass-weighted T (ρ>1e-24 g/cm³): 67870.0 K   —   590311 cells in 0.2 ms
+mass-weighted T (ρ>1e-24 g/cm³): 67870.0 K   —   590311 cells in 0.21 ms
 ```
 
 
@@ -154,10 +154,10 @@ fig
 
 ```
 Julia threads: 4
-max_threads=1  106.59 s   speedup ×1.0
-max_threads=2  77.18 s   speedup ×1.38
-max_threads=4  53.12 s   speedup ×2.01
-max_threads=8  53.53 s   speedup ×1.99
+max_threads=1  105.42 s   speedup ×1.0
+max_threads=2  75.87 s   speedup ×1.39
+max_threads=4  52.57 s   speedup ×2.01
+max_threads=8  52.54 s   speedup ×2.01
 ```
 
 

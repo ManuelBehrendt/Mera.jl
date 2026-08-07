@@ -320,7 +320,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-03T11:02:56.904
+[Mera]: 2026-08-07T13:10:30.749
 
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 
@@ -331,12 +331,12 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
 
 Selected var(s)=(:sd,) 
 Weighting      = :mass
-Off-axis LOS   = [0.8601, 0.0126, -0.51]  (binning=:overlap)
-Effective resolution: 334^2  →  map size: 162 x 371
+Off-axis LOS   = [-0.0059, 0.8781, -0.4785]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 158 x 372
 
-xrange/yrange ±22 kpc    frame   (162, 371)   extent [kpc] = [-24.0, 24.5, -54.9, 56.2]
-fov=22 :square           frame   (147, 147)   extent [kpc] = [-22.0, 22.0, -21.9, 22.1]
-fov=22 :circle           frame   (156, 162)   extent [kpc] = [-23.4, 23.3, -24.2, 24.3]
+xrange/yrange ±22 kpc    frame   (158, 372)   extent [kpc] = [-23.6, 23.8, -54.9, 56.5]
+fov=22 :square           frame   (147, 147)   extent [kpc] = [-22.0, 22.0, -22.0, 22.0]
+fov=22 :circle           frame   (156, 161)   extent [kpc] = [-23.4, 23.3, -24.2, 24.0]
 ```
 
 
@@ -568,10 +568,10 @@ level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       64.4 %     0.007     1.3004
-cic       27.8 %     0.006     1.2898
-overlap   0.0 %      0.026     0.0005
-exact     0.0 %      0.094     0.0
+ngp       85.7 %     0.006     1.0381
+cic       64.4 %     0.006     0.9733
+overlap   0.0 %      0.026     0.0021
+exact     0.0 %      0.09      0.0
 ```
 
 
@@ -855,10 +855,10 @@ end
 ```
 
 ```
-azimuth   0°   frame (88, 88)   extent [kpc] = [-21.817, 21.964, -21.837, 21.944]
-azimuth  90°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.925, 21.857]
-azimuth 180°   frame (88, 88)   extent [kpc] = [-21.786, 21.995, -21.917, 21.864]
-azimuth 270°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.781, 22.0]
+azimuth   0°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.781, 22.0]
+azimuth  90°   frame (88, 88)   extent [kpc] = [-21.817, 21.964, -21.837, 21.944]
+azimuth 180°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.925, 21.857]
+azimuth 270°   frame (88, 88)   extent [kpc] = [-21.786, 21.995, -21.917, 21.864]
 ```
 
 
@@ -882,18 +882,33 @@ Write the frames to disk with any Makie/`FileIO` recorder, or hand the vector st
 `Makie.record`. For a long sweep, `parallel_frames=true` renders the frames concurrently (each
 projection single-threaded) — typically 1.5–2× faster once you have more frames than threads.
 
-Every frame is the same array, the same physical extent and the same pixel scale. To turn that into a movie, animate with a **fixed colour range across all frames** (otherwise the animation flickers and destroys the very stability it is demonstrating), then encode:
+Every frame is the same array, the same physical extent and the same pixel scale. Turning that
+into a movie is one `Makie.record` call — Makie ships its own ffmpeg through `FFMPEG_jll`, so
+this needs nothing installed on the system and runs as part of the notebook:
 
 ```julia
-# not executed in the docs build — ffmpeg is not a documentation dependency
-cr = sharedrange(frames, :sd)
-fig = Figure(size=(500,500)); ax = Axis(fig[1,1])
-record(fig, "orbit.mp4", eachindex(frames); framerate=12) do k
-    empty!(ax); showmap!(ax, frames[k], :sd; crange=cr)
+# Rendered here rather than pasted in, so the movie can never drift from the code above.
+cr  = sharedrange(frames, :sd)
+fig = Figure(size=(560, 560))
+ax  = Axis(fig[1, 1], aspect=DataAspect(), title="orbit movie (auto FOV, square)")
+hidedecorations!(ax)
+
+mkpath("assets/offaxis")
+record(fig, "assets/offaxis/orbit_movie.gif", eachindex(frames); framerate=8) do k
+    empty!(ax)
+    showmap!(ax, frames[k], :sd; crange=cr)
 end
+println("wrote assets/offaxis/orbit_movie.gif  (",
+        round(filesize("assets/offaxis/orbit_movie.gif") / 1024, digits=1), " KB)")
+
 ```
 
-![Orbit movie](assets/offaxis/orbit_movie.mp4)
+```
+wrote assets/offaxis/orbit_movie.gif  (641.8 KB)
+```
+
+
+![Orbit movie — the camera sweeps azimuth at fixed inclination; the frame does not breathe.](assets/offaxis/orbit_movie.gif)
 
 ## 10. Reading the result, and fixing a map that looks wrong
 
@@ -1033,7 +1048,7 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 ```
 
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_45_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_47_1.png)
 
 
 Same keywords, same camera, three different kinds of data — and each one says something the
