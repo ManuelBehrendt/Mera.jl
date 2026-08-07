@@ -351,6 +351,17 @@ the ``\alpha_B`` power law) and pairs with the RT photoionization rate for ioniz
 *Data: any **AMR cell** type — hydro, gravity or RT. `:cellsize` is AMR-only; `:volume` is
 also available on GADGET/AREPO gas particles, by a different route (below).*
 
+Every position Mera reports is a cell **centre**, not a corner. For integer cell indices
+``(c_x, c_y, c_z)`` at refinement `level`:
+
+```math
+x = (c_x - \tfrac12)\,\Delta x , \qquad \Delta x = \frac{L_\mathrm{box}}{2^{\text{level}}} .
+```
+
+The half-cell offset matters whenever you compare a Mera position against something computed
+from raw indices, or against another tool's convention — a whole-cell error at the finest
+level is small, but it is systematic.
+
 For an AMR cell at refinement `level` (uniform-grid runs use `lmax`), with box length
 ``L_\mathrm{box}``:
 
