@@ -37,16 +37,27 @@ abstract type ReportCard end
 struct ProjectionCard <: ReportCard
     kind::Symbol; var::Symbol; unit::Symbol; weight::Symbol
     res::Int; direction::Symbol; center::Vector{Any}; range_unit::Symbol; label::String
+    # `pxsize` is `nothing` unless the card was built with one. Cards are constructed before any
+    # data is loaded, so a physical pixel size cannot be turned into a pixel count here — it is
+    # passed to `projection` as-is, and the cost model resolves it against `boxlen` once `info`
+    # is known. `res` remains the data-independent fallback.
+    pxsize::Union{Nothing,Vector{Any}}
 end
-"""    ProjectionCard(kind, var; unit=:standard, weight=:mass, res=256, direction=:z, center=[:bc], range_unit=:standard, label="")
+"""    ProjectionCard(kind, var; unit=:standard, weight=:mass, res=256, pxsize=nothing, direction=:z, center=[:bc], range_unit=:standard, label="")
 
 A [`projection`](@ref) card (surface-density / mass-weighted map) for a [`ReportPlan`](@ref).
+
+Resolution is set either by `res` (pixels per side) or by `pxsize=[value, unit]` (physical size
+of a pixel, e.g. `[100., :pc]`). `pxsize` wins when both are given. Because a card is built
+before the simulation is read, a `pxsize` cannot be converted to a pixel count until `report`
+runs — `estimate`/`preview` therefore resolve it against the box at that point.
 """
 ProjectionCard(kind::Symbol, var::Symbol; unit::Symbol=:standard, weight::Symbol=:mass,
-               res::Int=256, direction::Symbol=:z, center=[:bc], range_unit::Symbol=:standard,
-               label::String="") =
+               res::Int=256, pxsize=nothing, direction::Symbol=:z, center=[:bc],
+               range_unit::Symbol=:standard, label::String="") =
     ProjectionCard(_norm_dt(kind), var, unit, weight, res, direction, collect(Any, center),
-                   range_unit, label == "" ? "$(_norm_dt(kind))_$(var)_map" : label)
+                   range_unit, label == "" ? "$(_norm_dt(kind))_$(var)_map" : label,
+                   pxsize === nothing ? nothing : collect(Any, pxsize))
 
 struct PhaseCard <: ReportCard
     kind::Symbol; xvar::Symbol; yvar::Symbol; weight::Symbol
@@ -204,13 +215,17 @@ end
 #  Per-card compute (runs on the already-read data object)
 # =====================================================================================
 function card_compute(c::ProjectionCard, data)
-    p = projection(data, c.var, c.unit; res=c.res, direction=c.direction, center=c.center,
+    # pxsize wins when set; otherwise fall back to the pixel count
+    p = c.pxsize === nothing ?
+        projection(data, c.var, c.unit; res=c.res, direction=c.direction, center=c.center,
+                   weighting=[c.weight, missing], range_unit=c.range_unit, verbose=false, show_progress=false) :
+        projection(data, c.var, c.unit; pxsize=c.pxsize, direction=c.direction, center=c.center,
                    weighting=[c.weight, missing], range_unit=c.range_unit, verbose=false, show_progress=false)
     z = p.maps[c.var]
     extent_kpc = collect(Float64, p.extent) .* data.scale.kpc   # projection extent is code length → kpc
     ReportResultCard(c.label, :map, c.kind, :projection,
                      (z=Float64.(z), extent=extent_kpc, pixsize=p.pixsize),
-                     (var=c.var, unit=c.unit, weight=c.weight, res=c.res, direction=c.direction,
+                     (var=c.var, unit=c.unit, weight=c.weight, res=size(z, 1), direction=c.direction,
                       range_unit=c.range_unit, vrange=_finite_extrema(z)))
 end
 
