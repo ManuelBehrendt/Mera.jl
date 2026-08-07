@@ -4,7 +4,7 @@
 
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
-**MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for **RAMSES** — multi-resolution AMR grids, particles, gravity, clumps and radiative-transfer fields loaded into memory-efficient tables — and now reading **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 140+ physics-derived quantities on demand and provides conservation-correct projections, profiles, flux budgets and structure finding — all through one unified, multiple-dispatch API.
+**MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for **RAMSES** — multi-resolution AMR grids, particles, gravity, clumps and radiative-transfer fields loaded into memory-efficient tables — and now reading **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 170+ physics-derived quantities on demand (across hydro, particles, gravity, RT and clumps) and provides conservation-correct projections, profiles, flux budgets and structure finding — all through one unified, multiple-dispatch API.
 
 Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`, `getrt` and `getclumps` readers, because it writes those to separate files. Where another code stores the same physics inside its snapshot — Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`, Athena++ six-ray radiation — the reader maps it to the canonical field, so `getvar(gas, :gpot)` works there too. AREPO and GADGET add particles and FoF group catalogues (`getgroups`; subhalos are not read).
 
@@ -155,7 +155,7 @@ proj = projection(gas, :rho, direction=:z)
 - **Julia-Native Performance**: JIT compilation delivers native performance for numerical computations without Python overhead
 - **Memory-Efficient AMR Processing**: Handle TB-scale simulations with selective loading and IndexedTables.jl backend
 - **Multi-Threaded I/O Optimization**: Comprehensive benchmarking framework for optimal thread configuration
-- **Extensive Physics Variables**: 70+ hydro and 30+ particle derived quantities (Jeans mass, Mach numbers, virial parameters)
+- **Extensive Physics Variables**: 82 hydro and 47 particle quantities, plus gravity, RT and clumps (Jeans mass, Mach numbers, virial parameters) — `getvar()` lists them all
 - **Advanced AMR Projections**: Mass-conserving projections with proper AMR boundary handling
 - **Professional Visualization Pipeline**: VTK export preserving AMR structure for ParaView/VisIt
 - **Compressed Data Storage**: MERA-Files with LZ4/Zlib/Bzip2 compression for efficient time-series analysis
