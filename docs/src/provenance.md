@@ -16,9 +16,7 @@ you can print, compare, or stamp onto a figure or a FITS header.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
 using Mera
-base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
-
-info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
+info = getinfo(300, joinpath(MERA_EXAMPLES, "RAMSES/mw_L10"))
 gas  = gethydro(info);
 ```
 

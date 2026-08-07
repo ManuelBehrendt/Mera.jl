@@ -39,7 +39,7 @@ MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera
 using Mera, CairoMakie, Statistics
 CairoMakie.activate!(type="png")
 
-info = getinfo(100, joinpath(get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES),
+info = getinfo(100, joinpath(MERA_EXAMPLES,
                 "RAMSES/spiral_clumps"), verbose=false)
 gas  = gethydro(info, verbose=false, show_progress=false)
 

@@ -177,7 +177,7 @@ end. This is the shape most analysis scripts want.
 ```julia
 using Mera, CairoMakie
 
-path    = joinpath(ENV["MERA_TEST_DATA"], "RAMSES/spiral_clumps")
+path    = joinpath(get(ENV, "MERA_EXAMPLES", "/path/to/simulations"), "RAMSES/spiral_clumps")
 tracker = create_progress_tracker(4; task_name="Spiral disc analysis",
                                   zulip_channel="progress", zulip_topic="Spiral disc")
 

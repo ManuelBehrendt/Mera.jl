@@ -23,9 +23,7 @@ several refinement levels. Each cell prints real values.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
 using Mera
-base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
-
-info = getinfo(400, joinpath(base, "RAMSES/manu_sim_sf_L14"))
+info = getinfo(400, joinpath(MERA_EXAMPLES, "RAMSES/manu_sim_sf_L14"))
 # lmax=10 keeps the load ~1-2 GB instead of ~10 GB. Nothing below needs more:
 # the covering grid targets level 8, the sub-box and slice cap at 9.
 gas  = gethydro(info, lmax=10);

@@ -20,8 +20,7 @@ file outputs are written to a temporary directory.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
 using Mera
-base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
-run  = joinpath(base, "RAMSES/timeseries_sedov3d")
+run  = joinpath(MERA_EXAMPLES, "RAMSES/timeseries_sedov3d")
 tmp  = mktempdir()
 println("temp output dir : ", tmp)
 

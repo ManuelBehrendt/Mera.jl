@@ -69,8 +69,7 @@ the repo or fills the disk.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
 using Mera
-base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
-run  = joinpath(base, "RAMSES/timeseries_sedov3d")   # RAMSES outputs output_00001 … output_00013
+run  = joinpath(MERA_EXAMPLES, "RAMSES/timeseries_sedov3d")   # RAMSES outputs output_00001 … output_00013
 
 jld_dir = mktempdir()                          # all .jld2 output goes here
 println("RAMSES source : ", run)

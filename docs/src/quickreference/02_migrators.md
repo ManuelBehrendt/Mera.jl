@@ -1073,7 +1073,7 @@ result = expensive_function.(data)  # Broadcasting
 
 **Julia Advantages for MATLAB Users:**
 
-- **Performance**: 10-100x faster for numerical computations
+- **Performance**: numerical loops compile to native code — no need to push work into library calls for speed
 - **Composability**: Packages work together seamlessly  
 - **Modern Language**: Better abstractions, multiple dispatch
 - **Open Source**: No licensing costs, community-driven development

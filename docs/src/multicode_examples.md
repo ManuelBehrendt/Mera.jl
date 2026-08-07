@@ -24,7 +24,7 @@ It also covers self-gravity, chemistry and radiative-transfer fields, and conver
 Mera file. See the [Multi-code support](https://manuelbehrendt.github.io/Mera.jl/stable/multicode/)
 docs for the full reference.
 
-> The test snapshots live under `MERA_TEST_DATA` (download the synthetic/sample data, or point the
+> The test snapshots live under `MERA_EXAMPLES` (download the synthetic/sample data, or point the
 > path at your own runs).
 
 ```julia
@@ -33,7 +33,6 @@ docs for the full reference.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
 using Mera
-base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
 ```
 
 ```
@@ -67,7 +66,7 @@ Mera v1.8.0
 RAMSES snapshot would; `gethydro` then returns an ordinary `HydroDataType`.
 
 ```julia
-info = getinfo(5, joinpath(base, "PLUTO/pluto_sedov3d"))   # auto-detects PLUTO
+info = getinfo(5, joinpath(MERA_EXAMPLES, "PLUTO/pluto_sedov3d"))   # auto-detects PLUTO
 gas  = gethydro(info, verbose=false)
 maximum(getvar(gas, :rho))                           # the usual analysis, unchanged
 ```
@@ -100,7 +99,7 @@ variables: (rho, vx, vy, vz, p)
 PLUTO's AMR output (the Chombo HDF5 format) loads as a Mera **AMR** object with a `:level` column.
 
 ```julia
-gc = gethydro(getinfo(0, joinpath(base, "CHOMBO/chombo_3d/IsothermalSphere"), verbose=false), verbose=false)
+gc = gethydro(getinfo(0, joinpath(MERA_EXAMPLES, "CHOMBO/chombo_3d/IsothermalSphere"), verbose=false), verbose=false)
 sort(unique(getvar(gc, :level)))                # the refinement levels present
 ```
 
@@ -126,7 +125,7 @@ Athena++ `.athdf` snapshots carry cell-centred MHD, so `:bx/:by/:bz` and derived
 spatial-window arguments load only part of the box (reading only the intersecting MeshBlocks).
 
 ```julia
-ia = getinfo(5, joinpath(base, "ATHENA/athena_blast"))       # a self-built 3-D MHD blast
+ia = getinfo(5, joinpath(MERA_EXAMPLES, "ATHENA/athena_blast"))       # a self-built 3-D MHD blast
 ga = gethydro(ia, verbose=false)
 @show maximum(getvar(ga, :bmag));                    # magnetic field strength
 
@@ -165,7 +164,7 @@ maximum(getvar(ga, :bmag)) = 1.1211309571451635
 FLASH plot files load as AMR hydro/MHD; a self-gravity potential (if present) appears as `:gpot`.
 
 ```julia
-gf = gethydro(getinfo(150, joinpath(base, "FLASH/flash_gassloshing/GasSloshing"), verbose=false), verbose=false)
+gf = gethydro(getinfo(150, joinpath(MERA_EXAMPLES, "FLASH/flash_gassloshing/GasSloshing"), verbose=false), verbose=false)
 :gpot in gf.info.variable_list
 ```
 
@@ -189,7 +188,7 @@ GADGET HDF5 is particle-based, so it loads through `getparticles` into a `PartDa
 is the particle type (0 gas, 1 DM, 2 disk, 3 bulge, 4 stars, 5 BH); `families=` selects a subset.
 
 ```julia
-ig = getinfo(200, joinpath(base, "GADGET/gadget_diskgalaxy/GadgetDiskGalaxy"))
+ig = getinfo(200, joinpath(MERA_EXAMPLES, "GADGET/gadget_diskgalaxy/GadgetDiskGalaxy"))
 stars = getparticles_gadget(ig; families=[4])        # just the star particles
 length(stars.data), msum(stars) > 0
 ```
@@ -216,7 +215,7 @@ runs in **physical units** (comoving→physical *a*/*h* is applied automatically
 runs). Below: a real IllustrisTNG halo cutout.
 
 ```julia
-it  = getinfo(59, joinpath(base, "AREPO/TNGHalo/TNGHalo/halo_59.hdf5"))   # IllustrisTNG (AREPO)
+it  = getinfo(59, joinpath(MERA_EXAMPLES, "AREPO/TNGHalo/TNGHalo/halo_59.hdf5"))   # IllustrisTNG (AREPO)
 gas = getparticles_gadget(it; families=[0])      # PartType0 gas → :rho,:u,:ne,:metallicity,:sfr,:volume + :T
 println("gas cells   : ", length(gas.data))
 println("rho [g/cm³] : ", extrema(getvar(gas, :rho, :g_cm3)))
@@ -304,7 +303,7 @@ the whole volume. Surface density and mass-weighted temperature (SPH kernel).
 
 ```julia
 using CairoMakie, Statistics
-ib   = getinfo(150, joinpath(base, "AREPO/ArepoBullet/ArepoBullet/snapshot_150.hdf5"))  # AREPO cluster-merger box
+ib   = getinfo(150, joinpath(MERA_EXAMPLES, "AREPO/ArepoBullet/ArepoBullet/snapshot_150.hdf5"))  # AREPO cluster-merger box
 bgas = getparticles_gadget(ib; families=[0])
 sd = projection(bgas, :sd, :Msol_pc2, res=256, center=[:bc], weighting=:sph)   # fills the frame
 Tm = projection(bgas, :T,             res=256, center=[:bc], weighting=:sph)
@@ -379,7 +378,7 @@ are read, usually the dominant memory cost — and the invariant that makes a mo
 from an AMR grid: **the Voronoi cells tile space exactly**, so their volumes sum to the box volume.
 
 ```julia
-capath = joinpath(base, "AREPO/camels_GZ28_499/snapdir_024")
+capath = joinpath(MERA_EXAMPLES, "AREPO/camels_GZ28_499/snapdir_024")
 if isdir(capath)
     ci = getinfo(24, capath)                       # 16 chunks, resolved automatically
     println("chunks found : ", length(Mera._gadget_files(24, capath)))
@@ -457,7 +456,7 @@ as `age = 0` — which looks like "formed just now" and would distort a star-for
 Always select real stars on the raw column first: `getvar(stars, :aform) .> 0`.
 
 ```julia
-tngpath = joinpath(base, "AREPO/TNGHalo/TNGHalo/halo_59.hdf5")
+tngpath = joinpath(MERA_EXAMPLES, "AREPO/TNGHalo/TNGHalo/halo_59.hdf5")
 if isfile(tngpath)
     ti    = getinfo(59, tngpath, verbose=false)
     stars = getparticles(ti; families=[4], verbose=false)
@@ -514,7 +513,7 @@ of `GroupLenType`, since the snapshot is ordered by group), and the fact that **
 in `PartType4` but count as gas** (`a_form < 0`).
 
 ```julia
-tngdir = joinpath(base, "AREPO/TNG50-4/snapdir_033")
+tngdir = joinpath(MERA_EXAMPLES, "AREPO/TNG50-4/snapdir_033")
 if isdir(tngdir)
     ti = getinfo(33, tngdir, verbose=false)
     gc = getgroups(ti, verbose=false)                 # catalogue found beside the snapshot
@@ -568,7 +567,7 @@ cut by cells comparable to itself, and a plain in/out test on the cell centre be
 different physical questions — the first follows the dense gas, the second the diffuse.
 
 ```julia
-capath = joinpath(base, "AREPO/camels_GZ28_499/snapdir_024")
+capath = joinpath(MERA_EXAMPLES, "AREPO/camels_GZ28_499/snapdir_024")
 if isdir(capath)
     ci  = getinfo(24, capath, verbose=false)
     gas = getparticles(ci; families=[0], vars=[:rho, :u, :ne],
@@ -765,9 +764,9 @@ Where a code writes these fields, the reader maps them to **canonical names** �
 `:Np1…:Np8` (radiation photon groups).
 
 ```julia
-sg = gethydro(getinfo(2, joinpath(base, "ATHENA/athena_selfgravity"), verbose=false), verbose=false)
-ch = gethydro(getinfo(5, joinpath(base, "ATHENA/athena_chemistry"),  verbose=false), verbose=false)
-rt = gethydro(getinfo(5, joinpath(base, "ATHENA/athena_sixray"),     verbose=false), verbose=false)
+sg = gethydro(getinfo(2, joinpath(MERA_EXAMPLES, "ATHENA/athena_selfgravity"), verbose=false), verbose=false)
+ch = gethydro(getinfo(5, joinpath(MERA_EXAMPLES, "ATHENA/athena_chemistry"),  verbose=false), verbose=false)
+rt = gethydro(getinfo(5, joinpath(MERA_EXAMPLES, "ATHENA/athena_sixray"),     verbose=false), verbose=false)
 (gpot = extrema(getvar(sg, :gpot)),
  xH2  = maximum(getvar(ch, :xH2)),                   # H2 fraction (PDR chemistry)
  Np1  = extrema(getvar(rt, :Np1)))                   # UV radiation field, attenuated by shielding
