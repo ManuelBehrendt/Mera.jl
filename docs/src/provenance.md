@@ -8,8 +8,6 @@ Mera version, what units produced this?* `provenance` answers it. It reads the m
 Mera result already carries (its `InfoType`) and returns a compact, **deterministic** record
 you can print, compare, or stamp onto a figure or a FITS header.
 
-> Companion to the [Provenance](https://github.com/ManuelBehrendt/Mera.jl) doc page.
-
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
 # MERA_EXAMPLES environment variable; every path below is built from it.

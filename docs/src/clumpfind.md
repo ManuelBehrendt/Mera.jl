@@ -49,6 +49,15 @@ All take the same shared keywords (`field`, `threshold`, `linking_length`, `back
 boundedness, tidal truncation, …); see the **Density-adaptive finders** and **Phase-space & topology**
 sections below for the algorithm-specific parameters.
 
+!!! tip "Plotting the mass function"
+    [`massfunctionplot`](@ref) draws the clump mass function straight from a
+    [`ClumpCatalog`](@ref) — cumulative or differential — with a Makie backend loaded:
+
+    ```julia
+    using CairoMakie
+    massfunctionplot(cat; cumulative=true)
+    ```
+
 ## 3D — cells or particles (friends-of-friends)
 
 Cells/particles with `field ≥ threshold` are linked into a clump when they lie within
