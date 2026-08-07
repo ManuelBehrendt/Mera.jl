@@ -72,6 +72,10 @@ shellregion(data, :sphere, radius=[8., 12.], range_unit=:kpc)
 
 ## Composable regions with exact cell splitting
 
+*Reference for the value-type API. For the same material derived step by step on real data —
+one sphere measured three ways, the mass ledger, and how exact "exact" is — see
+[Get Subregions](../03_hydro_Get_Subregions.md).*
+
 Alongside the symbol API (`subregion(data, :sphere; …)`), `subregion` accepts a **region value
 type** ([`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref), [`CylindricalShell`](@ref)). With
 `split=true` (the default for this form), cells straddling the region boundary are **clipped
@@ -157,7 +161,7 @@ anti-aliased edge instead of a blocky one), and a `:sd` map integrates to the ex
 
 ```julia
 ball = subregion(gas, Sphere(20.0; range_unit=:kpc))                                  # split=true
-projection(ball, :sd, :Msol_pc2; res=512)                                             # exact clipped Σ-map
+projection(ball, :sd, :Msol_pc2; pxsize=[100., :pc])                                  # exact clipped Σ-map
 projection(subregion(gas, Sphere(20.0; range_unit=:kpc) \ Cylinder(5.0, 40.0; range_unit=:kpc)), :sd, :Msol_pc2)
 ```
 
