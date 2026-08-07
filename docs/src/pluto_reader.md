@@ -49,7 +49,7 @@ gas = gethydro(info; xrange=[0.0, 0.5], yrange=[0.25, 0.75], range_unit=:standar
 ```
 
 The selection acts on the cells, so it is an exact filter and the returned object records the window
-in `gas.ranges`; resolution is chosen later at analysis time (`projection(…, res=)`), not at load.
+in `gas.ranges`; resolution is chosen later at analysis time (`projection(…, pxsize=…)`), not at load.
 
 !!! note "What is available per data type"
     Data is loaded per type, exactly as for RAMSES: [`gethydro`](@ref) always, and
@@ -74,7 +74,7 @@ extrema(getvar(gas, :rho))                                 # 2. inspect — getv
 getvar(gas, :cellsize)[1]                                  #    = boxlen / 2^level
 msum(gas)                                                  #    total mass (code units)
 
-p = projection(gas, :sd, res=512, center=[:bc], direction=:z)   # 3. projection (off-axis engine)
+p = projection(gas, :sd, pxsize=[0.002, :standard], center=[:bc], direction=:z)   # 3. projection
 
 ts = timeseries(path, d -> (rho_max = maximum(getvar(d, :rho)), mass = msum(d));   # 4. time series
                 time_unit = :standard)                     #    over all 6 outputs (reads dbl.out)
@@ -97,7 +97,7 @@ runs in one octant, so the shell appears as a quarter-circle from each direction
 
     fig = Figure(size=(1150, 380))
     for (i, dir) in enumerate((:x, :y, :z))
-        Σ  = projection(gas, :sd, res=512, center=[:bc], direction=dir).maps[:sd]
+        Σ  = projection(gas, :sd, pxsize=[0.002, :standard], center=[:bc], direction=dir).maps[:sd]
         ax = Axis(fig[1, i]; title="PLUTO Sedov 3-D — direction :$dir", aspect=DataAspect())
         hidedecorations!(ax)
         heatmap!(ax, log10.(Σ' .+ 1e-30); colormap=:inferno)   # transpose: array (col,row) → (x,y)
@@ -202,7 +202,7 @@ a self-gravitating isothermal sphere, Mera levels 6 → 7):
     ```julia
     using CairoMakie
 
-    m = projection(gas, :level, res=512, center=[:bc], direction=:z, weighting=[:volume]).maps[:level]
+    m = projection(gas, :level, pxsize=[0.002, :standard], center=[:bc], direction=:z, weighting=[:volume]).maps[:level]
 
     fig = Figure(size=(560, 470))
     ax  = Axis(fig[1,1]; title="PLUTO-AMR (Chombo) — AMR refinement level (mean along LOS)",
