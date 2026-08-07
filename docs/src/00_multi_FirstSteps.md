@@ -39,117 +39,6 @@ v"1.8.0"
 ```
 
 
-## Function Quick Reference
-
-This section provides a comprehensive reference of essential Mera.jl functions for getting started with simulation analysis.
-
-### Core Simulation Information
-```julia
-# Load simulation metadata
-info = getinfo(output_number, "path/to/simulation")
-info = getinfo(300, "/path/to/sim")                    # Specific output
-info = getinfo("/path/to/sim")                         # Latest output
-
-# Get simulation time
-time_myr = gettime(info, :Myr)                         # In Megayears
-time_gyr = gettime(info, :Gyr)                         # In Gigayears
-
-# Check simulation outputs and storage
-co = checkoutputs("path/to/simulation")                # Check all outputs
-storage = storageoverview(info)                        # Storage analysis
-```
-
-### Data Exploration and Structure
-```julia
-# Explore InfoType object structure
-viewfields(info)                                       # InfoType structure
-viewfields(info.scale)                                 # Scaling factors
-viewfields(info.constants)                             # Physical constants
-viewallfields(info)                                    # Complete hierarchy
-
-# Get field names programmatically
-propertynames(info.scale)                              # All scaling factors
-propertynames(info.constants)                          # All constants
-```
-
-### Unit Conversion and Shortcuts
-```julia
-# Create shortcuts for frequent use
-scale = info.scale                                     # Scaling factors
-constants = info.constants                             # Physical constants
-
-# Create standalone scaling and constants objects
-scales = createscales(info)                            # Independent scale object
-consts = createconstants()                         # Independent constants object
-
-# Basic unit conversions
-velocity_kms = velocity_code * scale.km_s              # Velocity to km/s
-density_gcm3 = density_code * scale.g_cm3             # Density to g/cm³
-mass_msol = mass_code * scale.Msol                     # Mass to solar masses
-time_myr = sim_time * scale.Myr                       # Time to Megayears
-```
-
-### Configuration and File Access
-```julia
-# RAMSES configuration access
-namelist_info = namelist(info)                         # Namelist parameters
-make_info = makefile(info)                             # Compilation info
-timer_info = timerfile(info)                           # Performance data
-patch_info = patchfile(info)                           # AMR patch info
-```
-
-### Memory Management
-```julia
-# Clean up variables to free memory
-variable_name = nothing                                # Clear specific variable
-GC.gc()                                                # Force garbage collection
-```
-
-### Common Workflow Pattern
-```julia
-# Standard workflow for new simulation inspection
-info = getinfo(300, "/path/to/simulation")             # Load metadata
-println("Time: $(gettime(info, :Myr)) Myr")           # Check simulation time
-scale = info.scale; constants = info.constants         # Create shortcuts
-viewfields(info)                                       # Explore structure
-co = checkoutputs("/path/to/simulation")               # Check all outputs
-storage = storageoverview(info)                        # Analyze storage requirements
-```
-
-This quick reference covers the essential functions for getting started with Mera.jl simulation inspection and metadata exploration.
-
-### Troubleshooting Common Issues
-Here are some common issues and how to resolve them:
-1. **Missing Files**
-   - If `getinfo()` fails, verify all required output files of a snapshot (output folder) are present.
-   - Use `checkoutputs()` to check output folder integrity.
-2. **Memory Management**
-   - For large datasets, use data selection and filtering.
-   - Monitor memory usage when loading multiple outputs.
-3. **Path Issues**
-   - Use absolute or correct relative paths.
-   - Check file permissions if access is denied.
-4. **Version Mismatches**
-   - Ensure your Mera version matches your RAMSES version.
-   - Update packages as needed with `Pkg.update()`.
-
-### Best Practices and Navigation Tips
-
-1. **Organized Workflow**
-   - Use `getinfo()` to understand your data.
-   - Check available fields before accessing them.
-   - Use clear variable names for different outputs.
-2. **Memory Efficiency**
-   - Create new variables only when needed.
-   - Use shortcuts like `scale` and `constants` for frequently accessed unit conversions.
-   - Clear unused variables with `GC.gc()`.
-3. **Data Exploration**
-   - Use `viewfields()` to discover available properties.
-   - Check data types with `typeof()`.
-   - Print small samples before processing large datasets.
-
-These tips will help you work efficiently with RAMSES data in Mera.
-
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
 # MERA_EXAMPLES environment variable; every path below is built from it.
@@ -159,7 +48,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10"); # output=300 in given path
 ```
 
 ```
-[Mera]: 2026-08-03T10:08:33.067
+[Mera]: 2026-08-07T10:01:05.117
 
 Code: RAMSES
 output [300] summary:
@@ -435,21 +324,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 1.14e-322
-a_mag	= 2.2e-322
-v_esc	= 2.2e-322
-ax	= 1.8e-322
-ay	= 1.8e-322
-az	= 1.6e-322
-epot	= 1.6e-322
-a_magnitude	= 1.24e-322
-escape_speed	= 1.24e-322
-gravitational_redshift	= 1.04e-322
-gravitational_energy_density	= 1.04e-322
-gravitational_binding_energy	= 1.0e-322
-total_binding_energy	= 1.0e-322
+delta_rho	= 1.0
+a_mag	= 1.3935734353956443e-8
+v_esc	= 6.557528732282063e6
+ax	= 1.3935734353956443e-8
+ay	= 1.3935734353956443e-8
+az	= 1.3935734353956443e-8
+epot	= 4.30011830747048e13
+a_magnitude	= 1.3935734353956443e-8
+escape_speed	= 6.557528732282063e6
+gravitational_redshift	= 1.0
+gravitational_energy_density	= 2.910484414358466e-9
+gravitational_binding_energy	= 2.910484414358466e-9
+total_binding_energy	= 8.55100014027443e55
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 5.4e-323
+gravitational_work	= 8.551000140274429e55
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -457,8 +346,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 4.0e-323
-poisson_source	= 3.5e-323
+Fg	= 9.432237612943517e-31
+poisson_source	= 4.5162639280564735e-30
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -1436,3 +1325,145 @@ Data completeness: 50.0%
 ```julia
 
 ```
+
+## Your first map
+
+Metadata and units are the groundwork; this is the payoff. Load the gas, project it, and
+look at the galaxy — three calls.
+
+```julia
+using CairoMakie
+
+# a bounded read — cap the level and the box so only what you need is allocated
+gas = gethydro(info, lmax=9, xrange=[-15,15], yrange=[-15,15], zrange=[-3,3],
+               center=[:bc], range_unit=:kpc, verbose=false, show_progress=false)
+
+p = projection(gas, :sd, :Msol_pc2, pxsize=[0.1, :kpc],
+               center=[:bc], verbose=false, show_progress=false)
+
+fig = Figure(size=(500, 420))
+ax  = Axis(fig[1, 1], title="gas surface density, face-on", aspect=DataAspect())
+hm  = heatmap!(ax, log10.(p.maps[:sd]), colormap=:inferno)
+Colorbar(fig[1, 2], hm, label="log₁₀ Σ [M⊙/pc²]")
+hidedecorations!(ax)
+fig
+
+```
+
+
+![](00_multi_FirstSteps_files/00_multi_FirstSteps_36_0.png)
+
+
+## Function Quick Reference
+
+Now that you have run the workflow, here is the same ground as a lookup table — the calls
+you will reach for again, common problems, and where to go next.
+
+This section provides a comprehensive reference of essential Mera.jl functions for getting started with simulation analysis.
+
+### Core Simulation Information
+```julia
+# Load simulation metadata
+info = getinfo(output_number, "path/to/simulation")
+info = getinfo(300, "/path/to/sim")                    # Specific output
+info = getinfo("/path/to/sim")                         # Latest output
+
+# Get simulation time
+time_myr = gettime(info, :Myr)                         # In Megayears
+time_gyr = gettime(info, :Gyr)                         # In Gigayears
+
+# Check simulation outputs and storage
+co = checkoutputs("path/to/simulation")                # Check all outputs
+storage = storageoverview(info)                        # Storage analysis
+```
+
+### Data Exploration and Structure
+```julia
+# Explore InfoType object structure
+viewfields(info)                                       # InfoType structure
+viewfields(info.scale)                                 # Scaling factors
+viewfields(info.constants)                             # Physical constants
+viewallfields(info)                                    # Complete hierarchy
+
+# Get field names programmatically
+propertynames(info.scale)                              # All scaling factors
+propertynames(info.constants)                          # All constants
+```
+
+### Unit Conversion and Shortcuts
+```julia
+# Create shortcuts for frequent use
+scale = info.scale                                     # Scaling factors
+constants = info.constants                             # Physical constants
+
+# Create standalone scaling and constants objects
+scales = createscales(info)                            # Independent scale object
+consts = createconstants()                         # Independent constants object
+
+# Basic unit conversions
+velocity_kms = velocity_code * scale.km_s              # Velocity to km/s
+density_gcm3 = density_code * scale.g_cm3             # Density to g/cm³
+mass_msol = mass_code * scale.Msol                     # Mass to solar masses
+time_myr = sim_time * scale.Myr                       # Time to Megayears
+```
+
+### Configuration and File Access
+```julia
+# RAMSES configuration access
+namelist_info = namelist(info)                         # Namelist parameters
+make_info = makefile(info)                             # Compilation info
+timer_info = timerfile(info)                           # Performance data
+patch_info = patchfile(info)                           # AMR patch info
+```
+
+### Memory Management
+```julia
+# Clean up variables to free memory
+variable_name = nothing                                # Clear specific variable
+GC.gc()                                                # Force garbage collection
+```
+
+### Common Workflow Pattern
+```julia
+# Standard workflow for new simulation inspection
+info = getinfo(300, "/path/to/simulation")             # Load metadata
+println("Time: $(gettime(info, :Myr)) Myr")           # Check simulation time
+scale = info.scale; constants = info.constants         # Create shortcuts
+viewfields(info)                                       # Explore structure
+co = checkoutputs("/path/to/simulation")               # Check all outputs
+storage = storageoverview(info)                        # Analyze storage requirements
+```
+
+This quick reference covers the essential functions for getting started with Mera.jl simulation inspection and metadata exploration.
+
+### Troubleshooting Common Issues
+Here are some common issues and how to resolve them:
+1. **Missing Files**
+   - If `getinfo()` fails, verify all required output files of a snapshot (output folder) are present.
+   - Use `checkoutputs()` to check output folder integrity.
+2. **Memory Management**
+   - For large datasets, use data selection and filtering.
+   - Monitor memory usage when loading multiple outputs.
+3. **Path Issues**
+   - Use absolute or correct relative paths.
+   - Check file permissions if access is denied.
+4. **Version Mismatches**
+   - Ensure your Mera version matches your RAMSES version.
+   - Update packages as needed with `Pkg.update()`.
+
+### Best Practices and Navigation Tips
+
+1. **Organized Workflow**
+   - Use `getinfo()` to understand your data.
+   - Check available fields before accessing them.
+   - Use clear variable names for different outputs.
+2. **Memory Efficiency**
+   - Create new variables only when needed.
+   - Use shortcuts like `scale` and `constants` for frequently accessed unit conversions.
+   - Clear unused variables with `GC.gc()`.
+3. **Data Exploration**
+   - Use `viewfields()` to discover available properties.
+   - Check data types with `typeof()`.
+   - Print small samples before processing large datasets.
+
+These tips will help you work efficiently with RAMSES data in Mera.

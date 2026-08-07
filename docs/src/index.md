@@ -23,7 +23,7 @@ rather than core work, because the analysis layer is code-blind, so
 **Julia Performance Advantage**: Compiled language speed for numerical computations while maintaining interactive development  
 **RAMSES-Native Processing**: Direct binary file reading with optimized AMR algorithms and Hilbert space-filling curve support  
 **AMR-Aware Analysis**: Proper handling of multi-resolution grids with correct level weighting  
-**Reproducible Research Pipeline**: Complete environment management with Project.toml/Manifest.toml for computational reproducibility
+**Reproducible Research Pipeline**: Julia's environment files pin your package versions, and [`provenance`](provenance.md) records the Mera version, output and simulation code behind a result
 
 ## Quick Start: Choose Your Path
 
@@ -159,7 +159,7 @@ proj = projection(gas, :rho, direction=:z)
 - **Advanced AMR Projections**: Mass-conserving projections with proper AMR boundary handling
 - **Professional Visualization Pipeline**: VTK export preserving AMR structure for ParaView/VisIt
 - **Compressed Data Storage**: MERA-Files with LZ4/Zlib/Bzip2 compression for efficient time-series analysis
-- **Publication-Grade Reproducibility**: Julia environment management ensuring identical computational setups
+- **Publication-Grade Reproducibility**: pin versions with a `Project.toml`/`Manifest.toml` in your own analysis project, and record what produced each number with [`provenance`](provenance.md)
 - **RAMSES-Native Integration**: Direct binary file reading with Hilbert space-filling curve support
 - **Interactive Research Workflow**: REPL exploration + Jupyter integration + production scripting
 
