@@ -17,32 +17,31 @@ By the end of this guide, you should be able to:
 
 > **Comprehensive Python-to-Julia Migration Guide for Scientific Computing**: Julia provides superior performance and modern language features while maintaining compatibility with Python's scientific computing workflows. This guide covers essential Python packages, migration strategies, and real-world workflow transformations for successful transitions from Python's data science and scientific computing ecosystem.
 
-#### 🐍 Python User Learning Path (45 minutes total)
+#### 🐍 Python User Learning Path
 
-**Phase 1: Core Syntax (10 minutes)**
+**Phase 1: Core Syntax**
 - [ ] Master indexing differences (1-based vs 0-based)
 - [ ] Learn broadcasting with dot syntax
 - [ ] Understand multiple dispatch vs classes
 
-**Phase 2: Ecosystem Mapping (15 minutes)**  
+**Phase 2: Ecosystem Mapping**  
 - [ ] NumPy → Base Julia arrays
 - [ ] pandas → DataFrames.jl
 - [ ] matplotlib → Plots.jl
 - [ ] scipy → Domain-specific packages
 
-**Phase 3: Workflow Transformation (20 minutes)**
+**Phase 3: Workflow Transformation**
 - [ ] Object-oriented → Multiple dispatch patterns
 - [ ] Exception handling differences
 - [ ] Package management (pip → Pkg)
 
-### ✅ Start Here: Critical Syntax Differences (5 minutes)
+### ✅ Start Here: Critical Syntax Differences
 **Most important changes that affect every line of code:**
 
-### ✅ Try This - Python to Julia Basics (5-8 minutes)
+### ✅ Try This — Python to Julia Basics
 **Exercise**: Complete "Julia for Python Programmers" from Julia Academy  
 **Link**: https://juliaacademy.com/p/julia-for-python-programmers  
 **Goal**: Master the critical syntax differences (indexing, broadcasting, etc.)  
-**Time**: 5-8 minutes  
 
 **Quick Reference**: Use the Python-Julia cheat sheet  
 **Link**: https://cheatsheets.quantecon.org/  
@@ -670,52 +669,50 @@ end
 
 This comprehensive Python-to-Julia migration guide provides scientists and data analysts with the detailed ecosystem mappings, workflow transformations, and practical strategies needed for successful migration from Python's scientific computing environment to Julia's high-performance computing ecosystem while maintaining compatibility with existing workflows through gradual migration approaches.
 
-### ✅ Try This - Complete Python Migration Path (15-20 minutes)
+### ✅ Try This - Complete Python Migration Path
 **Interactive Tutorial**: Work through the MIT "Introduction to Computational Thinking" Python-Julia comparison  
 **Link**: https://computationalthinking.mit.edu/Fall23/ (Homework 0)  
 **Goal**: Hands-on experience with real scientific computing workflows  
-**Time**: 15-20 minutes  
 
 **Advanced Practice**: Explore the QuantEcon Julia lectures  
 **Link**: https://julia.quantecon.org/  
 **Focus**: Python economists transitioning to Julia for performance
 
 **Code-Along**: Follow "From Python to Julia" blog series  
-**Link**: https://www.juliafordatascience.com/python-to-julia/  
+**Link**: https://juliafordatascience.com/python-to-julia/  
 **Goal**: Step-by-step migration of common data science patterns
 
 ### MATLAB → Julia
 
 > **Comprehensive MATLAB-to-Julia Migration Guide**: Julia maintains MATLAB's mathematical syntax while offering superior performance, composability, and modern language features. This guide covers 300+ essential mappings for successful migration.
 
-#### 📊 MATLAB User Learning Path (90 minutes total)
+#### 📊 MATLAB User Learning Path
 
-**Phase 1: Syntax Similarities & Differences (20 minutes)**
+**Phase 1: Syntax Similarities & Differences**
 - [ ] 1-based indexing advantage (same as MATLAB!)
 - [ ] Array syntax changes: `A(i,j)` → `A[i,j]`
 - [ ] Broadcasting: explicit dot notation required
 - [ ] Function definitions and multiple dispatch
 
-**Phase 2: Core Functions Migration (40 minutes)**
+**Phase 2: Core Functions Migration**
 - [ ] Array creation and manipulation
 - [ ] Mathematical functions (99% identical)
 - [ ] Linear algebra operations
 - [ ] Statistical functions
 
-**Phase 3: Toolbox Equivalents (30 minutes)**
+**Phase 3: Toolbox Equivalents**
 - [ ] Signal Processing → DSP.jl, FFTW.jl
 - [ ] Statistics → Statistics.jl, Distributions.jl
 - [ ] Optimization → Optim.jl, JuMP.jl
 - [ ] Plotting → Plots.jl, Makie.jl
 
-### ✅ Start Here: MATLAB Advantage (5 minutes)
+### ✅ Start Here: MATLAB Advantage
 **What makes Julia easier for MATLAB users:**
 
-### ✅ Try This - MATLAB to Julia Basics (8-12 minutes)
+### ✅ Try This - MATLAB to Julia Basics
 **Exercise**: Complete "MATLAB vs Julia" syntax comparison  
 **Link**: https://cheatsheets.quantecon.org/ (MATLAB-Julia section)  
 **Goal**: Master array syntax changes and mathematical functions  
-**Time**: 8-12 minutes  
 
 **Interactive**: Try MATLAB-to-Julia examples on JuliaBox  
 **Link**: Search "MATLAB Julia comparison" on https://github.com/JuliaLang/  
@@ -1082,11 +1079,10 @@ result = expensive_function.(data)  # Broadcasting
 
 This comprehensive guide covers the essential mappings needed for MATLAB-to-Julia migration in scientific computing contexts, focusing on the functions most commonly used in research and data analysis workflows.
 
-### ✅ Try This - Complete MATLAB Migration Path (20-25 minutes)
+### ✅ Try This - Complete MATLAB Migration Path
 **Structured Tutorial**: Work through the "Julia for MATLAB users" workshop  
 **Link**: https://github.com/JuliaLang/julia/wiki/Julia-for-MATLAB-users  
 **Goal**: Hands-on practice with mathematical computing patterns  
-**Time**: 20-25 minutes  
 
 **Scientific Computing Focus**: Follow QuantEcon's "Julia Essentials"  
 **Link**: https://julia.quantecon.org/getting_started_julia/julia_essentials.html  
@@ -1100,34 +1096,33 @@ This comprehensive guide covers the essential mappings needed for MATLAB-to-Juli
 
 > **Comprehensive IDL-to-Julia Migration Guide for Astronomical Computing**: Julia provides superior performance and modern language features while maintaining compatibility with astronomical data analysis workflows. This guide covers essential IDL functions used in astrophysical research and their Julia equivalents, with focus on FITS handling, coordinate systems, and large dataset processing relevant to Mera.jl's simulation analysis capabilities.
 
-#### 🔭 IDL User Learning Path (60 minutes total)
+#### 🔭 IDL User Learning Path
 
-**Phase 1: Critical Index Convention (15 minutes)**
+**Phase 1: Critical Index Convention**
 - [ ] **CRITICAL**: 0-based → 1-based indexing conversion
 - [ ] Array creation and manipulation differences
 - [ ] Loop structure changes
 
-**Phase 2: Astronomical Data Processing (25 minutes)**
+**Phase 2: Astronomical Data Processing**
 - [ ] FITS file handling: IDL Astron → FITSIO.jl
 - [ ] Array operations and statistical functions
 - [ ] Image processing and coordinate systems
 
-**Phase 3: Advanced Astronomical Computing (20 minutes)**
+**Phase 3: Advanced Astronomical Computing**
 - [ ] WCS coordinate transformations
 - [ ] Spectral analysis and time series
 - [ ] Integration with MERA.jl workflows
 
-### ⚠️ Start Here: Critical Index Difference (10 minutes)
+### ⚠️ Start Here: Critical Index Difference
 **MOST IMPORTANT**: IDL uses 0-based indexing, Julia uses 1-based indexing. This affects every array operation and is the primary source of migration bugs.
 
-### ✅ Try This - IDL Indexing Migration (8-12 minutes)
+### ✅ Try This - IDL Indexing Migration
 **Critical Exercise**: Practice index conversion with "Julia for Astronomers"  
 **Link**: https://github.com/JuliaAstro (Documentation section)  
 **Goal**: Master 0-based → 1-based indexing conversion patterns  
-**Time**: 8-12 minutes  
 
 **FITS Tutorial**: Complete "FITSIO.jl Tutorial" for astronomical data  
-**Link**: https://juliaastro.org/FITSIO.jl/stable/tutorial/  
+**Link**: https://juliaastro.org/FITSIO/stable/  
 **Focus**: Reading/writing FITS files (essential for astronomy)
 
 #### Critical Index Convention Migration
@@ -1643,14 +1638,13 @@ end
 
 This comprehensive guide transforms the basic IDL syntax comparison into a complete astronomical computing migration resource, providing IDL astronomers with the detailed mappings and workflows needed for successful migration to Julia while leveraging Mera.jl's capabilities for astrophysical simulation analysis.
 
-### ✅ Try This - Complete IDL Migration Path (15-20 minutes)
+### ✅ Try This - Complete IDL Migration Path
 **Astronomical Computing**: Work through "Julia for Astronomical Computing"  
 **Link**: https://github.com/JuliaAstro (Examples directory)  
 **Goal**: Real astronomical data processing workflows  
-**Time**: 15-20 minutes  
 
 **Interactive Notebooks**: Explore "AstroJulia" tutorial notebooks  
-**Link**: https://github.com/JuliaAstro/AstroTutorials  
+**Link**: [JuliaAstro organisation](https://github.com/JuliaAstro) — packages and their docs  
 **Focus**: FITS handling, coordinate systems, image processing
 
 **Scientific Computing**: Follow "SciML Tutorials" for differential equations  

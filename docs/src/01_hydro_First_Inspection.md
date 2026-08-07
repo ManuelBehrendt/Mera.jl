@@ -47,7 +47,6 @@ propertynames(gas)                                     # List all available fiel
 ```julia
 # Access and modify variable descriptors
 info.descriptor.hydro                                  # Current hydro variable names
-info.descriptor.hydro[2] = :vel_x                     # Customize variable names
 propertynames(info.descriptor)                        # All descriptor properties
 
 # Access predefined variables (always available)
@@ -153,7 +152,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-06T15:50:11.304
+[Mera]: 2026-08-07T11:27:10.055
 
 Code: RAMSES
 output [300] summary:
@@ -207,11 +206,11 @@ The output above provides a comprehensive overview of the loaded hydro data prop
 
 ## Variable Names and Descriptors
 
-**Predefined Variable Names**: Mera.jl recognizes standard hydro variable names such as `:rho`, `:vx`, `:vy`, `:vz`, `:p`, `:var6`, `:var7`, etc. These provide a consistent interface for accessing common hydrodynamic quantities across different simulations.
+Mera addresses hydro variables by canonical names — `:rho`, `:vx`, `:vy`, `:vz`, `:p` and the
+derived quantities built on them — regardless of what the simulation called them.
 
-**Custom Variable Descriptors**: In future versions, you will be able to use variable names directly from the hydro descriptor by setting `info.descriptor.usehydro = true`. Currently, you can customize variable names by modifying the descriptor array manually.
-
-Let's examine the current hydro descriptor configuration:
+`info.descriptor.hydro` shows what the RAMSES descriptor file actually declared, which is
+useful for checking that a run wrote the variables you expect and in what order:
 
 ```julia
 info.descriptor.hydro
@@ -229,29 +228,10 @@ info.descriptor.hydro
 ```
 
 
-### Customizing Variable Names
-
-You can modify variable names in the descriptor to better match your simulation setup or personal preferences. For example, changing the second hydro variable to a more descriptive name:
-
-```julia
-info.descriptor.hydro[2] = :vel_x;
-```
-
-```julia
-info.descriptor.hydro
-```
-
-```
-7-element Vector{Symbol}:
- :density
- :vel_x
- :velocity_y
- :velocity_z
- :pressure
- :scalar_00
- :scalar_01
-```
-
+!!! note "Renaming is not wired up yet"
+    You can assign into `info.descriptor.hydro`, but nothing reads it: `usehydro` is set to
+    `false` when the simulation is read, and the branch that would honour custom names is not
+    active. Use the canonical names; descriptor-driven naming is reserved for a future release.
 
 ### Exploring Descriptor Properties
 
@@ -266,7 +246,7 @@ viewfields(info.descriptor)
 [Mera]: Descriptor overview
 =================================
 hversion	= 1
-hydro	= [:density, :vel_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
+hydro	= [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
 htypes	= ["d", "d", "d", "d", "d", "d", "d"]
 usehydro	= false
 hydrofile	= true
@@ -376,7 +356,7 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-06T15:50:15.283
+[Mera]: Get hydro data: 2026-08-07T11:27:13.965
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
@@ -402,7 +382,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 39.708 seconds
+✓ Table created in 42.904 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
@@ -520,7 +500,7 @@ gas = gethydro(info, smallr=1e-11);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-06T15:51:17.573
+[Mera]: Get hydro data: 2026-08-07T11:28:19.594
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
@@ -546,7 +526,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 39.274 seconds
+✓ Table created in 40.601 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
@@ -615,7 +595,12 @@ overviewplot(gas)
 ```
 
 
-![](01_hydro_First_Inspection_files/01_hydro_First_Inspection_40_0.png)
+```
+[ Info: Mera v1.8.0
+```
+
+
+![](01_hydro_First_Inspection_files/01_hydro_First_Inspection_38_1.png)
 
 
 ### Statistical Data Analysis

@@ -1,113 +1,12 @@
-# Gravity Data: First Inspection
+!!! note "Renaming is not wired up yet"
+    You can assign into `info.descriptor.gravity`, but nothing reads it: `usegravity` is set to
+    `false` when the simulation is read, and the branch that would honour custom names is not
+    active. Use the canonical names; descriptor-driven naming is reserved for a future release.
+
+### Package Import and Initial Setup
 
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
-
-This notebook provides a comprehensive introduction to loading and analyzing gravitational field data using Mera.jl. You'll learn the fundamentals of working with RAMSES gravity data and its relationship to AMR (Adaptive Mesh Refinement) structures.
-
-## Learning Objectives
-
-- Load and inspect gravitational simulation data
-- Understand gravitational potential and acceleration field organization
-- Analyze gravity data distributions across AMR levels
-- Handle different gravity variable types and unit conversions
-- Work with IndexedTables data structures for gravity field analysis
-- Apply memory management best practices for gravity data
-
-## Quick Reference: Essential Gravity Functions
-
-This section provides a comprehensive reference of key Mera.jl functions for gravity data analysis.
-
-### Data Loading Functions
-```julia
-# Load simulation metadata with gravity information
-info = getinfo(output_number, "path/to/simulation")
-info = getinfo(300, "/path/to/sim")                   # Specific output
-info = getinfo("/path/to/sim")                        # Latest output
-
-# Load gravity data - basic usage
-grav = getgravity(info)                               # Load all variables, all levels
-```
-
-### Data Exploration Functions
-```julia
-# Analyze data structure and properties
-overview_amr = amroverview(grav)                      # AMR grid structure analysis
-data_overview = dataoverview(grav)                   # Statistical overview of variables
-usedmemory(grav)                                      # Memory usage analysis
-
-# Explore object structure
-viewfields(grav)                                      # View GravDataType structure
-viewfields(info.descriptor)                          # View descriptor properties
-propertynames(grav)                                   # List all available fields
-```
-
-### Variable and Descriptor Management
-```julia
-# Access and modify variable descriptors
-info.descriptor.gravity                               # Current gravity variable names
-info.descriptor.gravity[2] = :accel_x                # Customize variable names
-propertynames(info.descriptor)                       # All descriptor properties
-
-# Access predefined variables (always available)
-# :epot (gravitational potential field), :ax, :ay, :az (acceleration components)
-```
-
-### IndexedTables Operations
-```julia
-# Work with gravity data tables
-using Mera.IndexedTables
-
-# Select specific columns
-select(grav.data, (:level, :cx, :cy, :cz, :epot))    # View coordinates + potential
-select(data_overview, (:level, :epot_min, :epot_max, :epot_tot)) # Statistical summary
-
-# Extract column data
-column(data_overview, :epot_tot)                     # Extract total potential as array
-column(data_overview, :epot_min) * info.scale.J_g    # Convert with scaling
-
-# Transform data in-place
-transform(data_overview, :epot_tot => :epot_tot => value->value * info.scale.J_g)
-```
-
-### Unit Conversion
-```julia
-# Access scaling factors
-scale = grav.scale                                    # Shortcut to scaling factors
-constants = grav.info.constants                      # Physical constants
-
-# Common unit conversions for gravity data
-potential_physical = grav.data.epot * scale.J_g      # Potential field to J/g
-accel_cms2 = grav.data.ax * scale.cm_s2              # Acceleration to cm/s²
-force_dyn = mass_g * grav.data.ax * scale.cm_s2      # Force in dynes
-```
-
-### Memory Management
-```julia
-# Monitor and optimize memory usage
-usedmemory(grav)                                      # Check current memory usage
-grav = nothing; GC.gc()                              # Clear variable and garbage collect
-```
-
-### Common Analysis Workflow
-```julia
-# Standard gravity data analysis workflow
-info = getinfo(300, "/path/to/simulation")           # Load simulation metadata
-grav = getgravity(info)                              # Load gravity data
-usedmemory(grav)                                      # Check memory usage
-
-# Analyze structure and properties
-amr_overview = amroverview(grav)                      # AMR grid analysis
-data_overview = dataoverview(grav)                   # Variable statistics
-viewfields(grav)                                      # Explore data structure
-
-# Convert units and extract specific data
-scale = grav.scale                                    # Create scaling shortcut
-potential_jg = select(grav.data, :epot) * scale.J_g  # Physical potential field
-field_dist = select(data_overview, (:level, :epot_tot)) # Potential distribution by level
-```
-
-### Package Import and Initial Setup
 
 Let's start by importing Mera.jl and loading simulation information for output 300:
 
@@ -131,7 +30,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-03T10:23:25.310
+[Mera]: 2026-08-07T11:33:37.518
 
 Code: RAMSES
 output [300] summary:
@@ -212,17 +111,13 @@ info.descriptor.gravity
 You can modify variable names in the descriptor to better match your simulation setup or personal preferences. For example, changing the second gravity variable to a more descriptive name:
 
 ```julia
-info.descriptor.gravity[2] = :a_x;
-```
-
-```julia
 info.descriptor.gravity
 ```
 
 ```
 4-element Vector{Symbol}:
  :epot
- :a_x
+ :ax
  :ay
  :az
 ```
@@ -250,7 +145,7 @@ particles	= [:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :v
 ptypes	= ["d", "d", "d", "d", "d", "d", "d", "i", "i", "b", "b", "d"]
 useparticles	= false
 particlesfile	= true
-gravity	= [:epot, :a_x, :ay, :az]
+gravity	= [:epot, :ax, :ay, :az]
 usegravity	= false
 gravityfile	= false
 rtversion	= 0
@@ -311,7 +206,7 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:23:29.298
+[Mera]: Get gravity data: 2026-08-07T11:33:41.294
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
@@ -337,7 +232,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 3.681 seconds
+✓ Table created in 3.903 seconds
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 ```
@@ -486,7 +381,6 @@ data_overview = dataoverview(grav)
 
 ```
 Calculating...
-
 
 Table with 5 rows, 10 columns:
 Columns:
