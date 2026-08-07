@@ -171,7 +171,7 @@ list **cards**:
 
 ```julia
 report(400; path="/sim", output=:ascii, cards=[
-    ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=512),                 # surface-density map
+    ProjectionCard(:hydro, :sd; unit=:Msol_pc2, pxsize=[100., :pc]),      # surface-density map
     PhaseCard(:hydro, :rho, :T; weight=:mass, xunit=:nH, yunit=:K),       # ρ–T phase diagram
     ProfileCard(:hydro, :r_cylinder, :rho; weight=:mass, nbins=40,        # disk radial density profile
                 geometry=:cylindrical, center=[:bc], range_unit=:kpc, xunit=:kpc, unit=:nH, yscale=:log),
@@ -204,9 +204,13 @@ showing the exponential disk and its outer break), and the star-formation histor
 Each card names a **datatype** (first argument), a **quantity**, optional **unit**, and card-specific
 options. Any name `getvar` understands works — including your own [`add_field`](@ref) fields.
 
+Resolution on a `ProjectionCard` is set either by `pxsize=[value, unit]` (physical size of a
+pixel) or by `res` (pixels per side); `pxsize` wins when both are given. Budget mode scales
+whichever you used, so `report(...; budget_s=...)` works the same either way.
+
 | Card | Wraps | Example |
 |------|-------|---------|
-| [`ProjectionCard`](@ref) | [`projection`](@ref) | `ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=512, direction=:edgeon)` |
+| [`ProjectionCard`](@ref) | [`projection`](@ref) | `ProjectionCard(:hydro, :sd; unit=:Msol_pc2, pxsize=[100., :pc], direction=:edgeon)` |
 | [`PhaseCard`](@ref) | [`phase`](@ref) | `PhaseCard(:hydro, :rho, :T; weight=:mass, xunit=:nH, yunit=:K)` |
 | [`ProfileCard`](@ref) | [`profile`](@ref) | `ProfileCard(:hydro, :r_sphere, :vz; weight=:mass, nbins=40)` |
 | [`ScalarCard`](@ref) | a reduction | `ScalarCard(:particles, :mass; reduce=:sum, unit=:Msol)` |
@@ -266,7 +270,7 @@ Projection cards take the same view controls as [`projection`](@ref) — `direct
 tilt the map to the disk (the report automatically reads the velocities needed to orient it):
 
 ```julia
-ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=512, direction=:edgeon)   # edge-on Σ map
+ProjectionCard(:hydro, :sd; unit=:Msol_pc2, pxsize=[100., :pc], direction=:edgeon)   # edge-on Σ map
 ```
 
 See [Off-axis Projection](06_offaxis_Projection.md) for the full set of view options. Any field you
@@ -298,7 +302,7 @@ hydro-only output.
     volume, since RT carries no mass):
 
     ```julia
-    report(output; path="/sim", cards=[ProjectionCard(:rt, :Np1; res=512)])   # photon density, group 1
+    report(output; path="/sim", cards=[ProjectionCard(:rt, :Np1; pxsize=[100., :pc])])   # photon density, group 1
     ```
 
     ![RAMSES-RT Strömgren-sphere test: the gas surface density (left) with the ionization front carved
