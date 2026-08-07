@@ -60,9 +60,7 @@ Cells/particles with `field ≥ threshold` are linked into a clump when they lie
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
 using Mera
-base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
-
-info = getinfo(400, joinpath(base, "RAMSES/manu_sim_sf_L14"))
+info = getinfo(400, joinpath(MERA_EXAMPLES, "RAMSES/manu_sim_sf_L14"))
 # cap the refinement (lmax=10) and load only the central box, so the finders run in seconds
 gas  = gethydro(info; lmax=10, xrange=[-5,5], yrange=[-5,5], zrange=[-5,5],
                 center=[:bc], range_unit=:kpc);

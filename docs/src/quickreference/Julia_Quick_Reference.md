@@ -715,7 +715,7 @@ my_function.(array)                        # Works with any function
 
 ### Performance \& Ecosystem
 
-- **Speed**: Julia often 10-100x faster for numerical code without optimization
+- **Speed**: loops run at compiled speed, so hand-written per-element code needs no vectorising to be fast
 - **Compilation**: First run slower (JIT), subsequent runs fast
 - **Type system**: Optional but helpful for performance
 - **Multiple dispatch**: Natural in Julia, not available in Python

@@ -7,7 +7,7 @@
 
 ![DataSetType hierarchy](assets/TypeHierarchy.png)
 
-- HydroMapsType <: DataMapsType
+- AMRMapsType <: DataMapsType  (`HydroMapsType` is a kept alias of it)
 - PartMapsType  <: DataMapsType
 
 #### List of types
