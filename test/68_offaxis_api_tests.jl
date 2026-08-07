@@ -16,6 +16,52 @@
         @test err2 !== nothing && occursin("axis", err2)
     end
 
+    # A user reported that projections at inclination 0 and inclination 1 came out rotated 90
+    # degrees from each other. The line of sight was correct in both cases — only the image
+    # "up" jumped, because at inclination 0 the reference axis IS the line of sight, so the
+    # pole-projection that defines up degenerates to the zero vector and an unrelated basis
+    # vector was substituted. Nothing about the output looked wrong; the maps were simply
+    # rolled. These are cheap, data-free, and no format or contract test would catch them.
+    @testset "camera roll is continuous and matches the axis-aligned convention" begin
+        R(; kw...) = Mera.resolve_los(; los=nothing, theta=nothing, phi=nothing, up=nothing,
+                                      L=nothing, axis=:z, angle_unit=:deg,
+                                      inclination=nothing, azimuth=nothing, kw...)
+        ang(u, v) = acosd(clamp(sum(u .* v), -1, 1))
+
+        @testset "no jump through inclination = 0" begin
+            ups = [R(inclination=i, azimuth=0.0)[2] for i in (0.0, 1e-9, 1e-6, 1e-3, 0.01, 0.1)]
+            for k in 2:length(ups)
+                @test ang(ups[k-1], ups[k]) < 1.0        # was 90 degrees at the first step
+            end
+        end
+
+        @testset "the same holds at other azimuths" begin
+            for az in (0.0, 45.0, 90.0, 180.0, 270.0)
+                u0 = R(inclination=0.0,  azimuth=az)[2]
+                u1 = R(inclination=1e-6, azimuth=az)[2]
+                @test ang(u0, u1) < 1.0
+            end
+        end
+
+        @testset "face-on agrees with `direction=:z`, edge-on keeps the pole up" begin
+            # direction=:z renders with +y up; an off-axis view at inclination 0 is the same
+            # view, so it must agree rather than sit 90 degrees away from it
+            @test ang(R(inclination=0.0, azimuth=0.0)[2], [0.0, 1.0, 0.0]) < 1e-6
+            # at 90 degrees the reference axis is in the image plane and defines up
+            @test ang(R(inclination=90.0, azimuth=0.0)[2], [0.0, 0.0, 1.0]) < 1e-6
+        end
+
+        @testset "the line of sight itself is unaffected by the roll convention" begin
+            @test ang(R(inclination=0.0,  azimuth=0.0)[1], [0.0, 0.0, 1.0]) < 1e-6
+            @test ang(R(inclination=90.0, azimuth=0.0)[1], [0.0, -1.0, 0.0]) < 1e-6
+            # up must always be perpendicular to the line of sight
+            for i in (0.0, 1e-6, 17.0, 45.0, 90.0), az in (0.0, 30.0, 200.0)
+                los, up = R(inclination=i, azimuth=az)
+                @test abs(sum(los .* up)) < 1e-8
+            end
+        end
+    end
+
     @testset "one view specifier still resolves" begin
         v, _ = Mera.resolve_los(los=[0., 0., 2.])
         @test v ≈ [0., 0., 2.]

@@ -282,11 +282,21 @@ function resolve_los(; los=nothing, theta=nothing, phi=nothing,
         az = (azimuth     === nothing ? 0.0 : float(azimuth))     * f
         ahat   = _resolve_axis(axis, L)
         e1, e2 = _inplane_basis(ahat)
-        adir   = cos(az).*e1 .+ sin(az).*e2          # in-plane direction picked by azimuth
+        # Azimuth zero tilts toward -e2, not +e1. The image "up" is the reference axis
+        # projected perpendicular to the line of sight, so as inclination -> 0 that up tends
+        # to -adir. Anchoring adir at -e2 therefore makes the face-on limit +e2, which is the
+        # same orientation the axis-aligned path (`direction=:z`) produces. With the previous
+        # anchor (+e1) the limit was -e1: `inclination=0` and `inclination=1e-4` returned maps
+        # rotated 90 degrees from each other, and every off-axis view was rotated 90 degrees
+        # from the corresponding `direction=` view.
+        adir   = sin(az).*e1 .- cos(az).*e2          # in-plane tilt direction picked by azimuth
         losv   = cos(i).*ahat .+ sin(i).*adir
         losv ./= norm(losv)
         upv    = ahat .- dot(ahat, losv).*losv       # reference axis projected ⟂ los → image up
-        upv    = norm(upv) < 1e-8 ? e2 : upv ./ norm(upv)
+        # At inclination 0 the reference axis IS the line of sight, so the projection above is
+        # the zero vector. Use the limit of the family (-adir) rather than an unrelated basis
+        # vector, so the roll is continuous through zero.
+        upv    = norm(upv) < 1e-8 ? -adir : upv ./ norm(upv)
         return losv, (up === nothing ? upv : up)
     end
 
