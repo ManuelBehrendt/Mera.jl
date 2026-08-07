@@ -48,7 +48,7 @@ This is the leaf-cell analogue of Athena++'s **own** reader and of yt — the up
 selection mirrors (and is validated against), see [Reference readers](#Reference-readers) below.
 Because Mera keeps the **leaf cells** (each point covered by exactly one cell at its finest level),
 a spatial window is an *exact, hole-free* filter; the returned object records it in `gas.ranges`.
-Resolution/level is chosen later at analysis time (`projection(…, res=)`), not at load — a level
+Resolution/level is chosen later at analysis time (`projection(…, pxsize=…)`), not at load — a level
 cap would leave gaps, since no coarse data sits under a leaf.
 
 The window also **prunes I/O**: only the MeshBlocks whose bounding box intersects the box are read
@@ -85,7 +85,7 @@ Mera workflow — here the log column density along each axis:
 
 ```julia
 gas = gethydro(info)                              # 14,024,704 cells, in Mera's cell convention
-projection(gas, :sd, res=512, center=[:bc], direction=:z)   # column density, face-on
+projection(gas, :sd, pxsize=[0.004, :standard], center=[:bc], direction=:z)   # column density, face-on
 ```
 
 ![Log column density of the Athena++ AM06 snapshot, projected along x, y and z with Mera's projection engine — the AMR MHD data load into the standard structs, so the off-axis projection runs unchanged.](assets/athena/am06_projection.png)
@@ -121,8 +121,8 @@ field into clean lines):
         return B
     end
 
-    res = 640
-    p  = projection(gas, [:sd, :bx, :by], res=res, center=[:bc], direction=:z)
+    px = [0.003, :standard]                       # ~667 pixels across the boxlen=2 domain
+    p  = projection(gas, [:sd, :bx, :by], pxsize=px, center=[:bc], direction=:z)
     Σ  = p.maps[:sd]
     Bx = smooth2d(p.maps[:bx], 4);  By = smooth2d(p.maps[:by], 4)
 
@@ -175,7 +175,7 @@ concentric squares tightening onto the dense core (levels 7 → 11):
 
 !!! details "Show the CairoMakie code"
     ```julia
-    m = projection(gas, :level, res=512, center=[:bc], direction=:z, weighting=[:volume]).maps[:level]
+    m = projection(gas, :level, pxsize=[0.004, :standard], center=[:bc], direction=:z, weighting=[:volume]).maps[:level]
 
     fig = Figure(size=(560, 470))
     ax  = Axis(fig[1,1]; title="AM06 — AMR refinement level (mean along LOS)",
