@@ -39,7 +39,27 @@ _corr(k::Symbol) = get(COST[].corr, k, 1.0)
 _ema(old, new; α=0.5) = old <= 0 ? new : (1 - α) * old + α * new
 
 # cost-relevant parameters per card kind (for the model)
+# A card's pixel count. With `pxsize` the count depends on the box, so `info` is required —
+# `_estimate_core` has it. Falls back to `res` when the card carries no pxsize, and when the
+# unit cannot be resolved (then the estimate is simply the res the card was built with).
+function _card_res(c::ProjectionCard, info=nothing)
+    c.pxsize === nothing && return c.res
+    info === nothing && return c.res
+    v = c.pxsize[1]
+    u = length(c.pxsize) > 1 ? c.pxsize[2] : :standard
+    (v isa Real && v > 0) || return c.res
+    f = try
+        u === :standard ? 1.0 : Float64(getfield(info.scale, u))
+    catch
+        return c.res
+    end
+    (isfinite(f) && f > 0) || return c.res
+    n = round(Int, info.boxlen / (Float64(v) / f))
+    return clamp(n, 1, 100_000)
+end
+
 _cost_params(c::ProjectionCard) = (res=c.res,)
+_cost_params(c::ProjectionCard, info) = (res=_card_res(c, info),)
 _cost_params(c::PhaseCard)      = (nbins=c.nbins[1] * c.nbins[2],)
 _cost_params(c::ProfileCard)    = (nbins=c.nbins,)
 _cost_params(c::ScalarCard)     = NamedTuple()
@@ -93,7 +113,7 @@ function _estimate_core(info, cards, luse::Int)
                 push!(per, (card_label(c), card_result_kind(c), dt, 0.0, 0.0)); continue
             end
             k = card_result_kind(c)
-            ec = _raw_compute(k, _cost_params(c), N) * _corr(k)
+            ec = _raw_compute(k, c isa ProjectionCard ? _cost_params(c, info) : _cost_params(c), N) * _corr(k)
             comp_s += ec
             push!(per, (card_label(c), k, dt, N, ec))
         end
@@ -145,8 +165,10 @@ end
 # ---- budget mode -----------------------------------------------------------------------
 # shrink a card's resolution/bins by ρ>1 (cheaper); scalars/sfr are already cheap → unchanged
 _shrink(c::ProjectionCard, ρ) = ProjectionCard(c.kind, c.var; unit=c.unit, weight=c.weight,
-    res=max(64, round(Int, c.res / sqrt(ρ))), direction=c.direction, center=c.center,
-    range_unit=c.range_unit, label=c.label)
+    res=max(64, round(Int, c.res / sqrt(ρ))),
+    # a physical pixel gets LARGER to get cheaper — the inverse of shrinking a pixel count
+    pxsize=c.pxsize === nothing ? nothing : Any[c.pxsize[1] * sqrt(ρ), c.pxsize[2:end]...],
+    direction=c.direction, center=c.center, range_unit=c.range_unit, label=c.label)
 _shrink(c::PhaseCard, ρ) = PhaseCard(c.kind, c.xvar, c.yvar; weight=c.weight,
     nbins=(max(8, round(Int, c.nbins[1] / cbrt(ρ))), max(8, round(Int, c.nbins[2] / cbrt(ρ)))),
     xscale=c.xscale, yscale=c.yscale, xunit=c.xunit, yunit=c.yunit, label=c.label)

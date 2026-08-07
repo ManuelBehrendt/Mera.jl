@@ -25,6 +25,37 @@
         @test length(plan.cards) == 4 && all(c -> c isa ReportCard, plan.cards)
     end
 
+    @testset "ProjectionCard pxsize (data-free)" begin
+        # A card is built before any data is read, so a physical pixel size cannot become a
+        # pixel count at construction — it is resolved against boxlen when the report runs.
+        cres = ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=512)
+        cpx  = ProjectionCard(:hydro, :sd; unit=:Msol_pc2, pxsize=[100., :pc])
+        @test cres.pxsize === nothing
+        @test cpx.pxsize == Any[100., :pc]
+
+        # a stand-in info: 48 kpc box, scale.pc = 1000 code-length per pc
+        scale = Mera.createscales(3.085677581282e21, 6.76838218451376e-23,
+                                  4.70554946422349e14,
+                                  6.76838218451376e-23 * (3.085677581282e21)^3,
+                                  Mera.createconstants())
+        info  = Mera.InfoType(); info.boxlen = 48.0; info.scale = scale
+
+        @test Mera._card_res(cres, info) == 512          # res passes through untouched
+        @test Mera._card_res(cpx,  info) == 480          # 48 kpc / 100 pc
+        @test Mera._card_res(cpx, nothing) == cpx.res    # no info -> fall back, never throw
+
+        # budget mode: both forms must halve the linear pixel count for rho=4
+        s_res = Mera._shrink(cres, 4.0)
+        s_px  = Mera._shrink(cpx,  4.0)
+        @test s_res.res == 256
+        @test s_px.pxsize[1] == 200.0                    # coarser pixel == cheaper
+        @test Mera._card_res(s_px, info) == 240
+
+        # a malformed pxsize must degrade to res rather than error
+        @test Mera._card_res(ProjectionCard(:hydro, :sd; pxsize=[0., :pc]), info) == 256
+        @test Mera._card_res(ProjectionCard(:hydro, :sd; pxsize=[10., :not_a_unit]), info) == 256
+    end
+
     @testset "colormap policy (_seq_cmap, data-free)" begin
         # the colorblind-safe per-quantity sequential map: temperature reads "hot" (:inferno),
         # everything else uses the perceptually-uniform density/count standard (:viridis).
