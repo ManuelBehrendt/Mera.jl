@@ -26,7 +26,7 @@ info = getinfo(300, "/path/to/sim")                   # Specific output
 info = getinfo("/path/to/sim")                        # Latest output
 
 # Load particle data - basic usage
-part = getparticles(info)                                   # Load all variables, all levels
+particles = getparticles(info)                                   # Load all variables, all levels
 
 ```
 
@@ -134,7 +134,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-03T10:30:27.135
+[Mera]: 2026-08-07T13:37:38.580
 
 Code: RAMSES
 output [300] summary:
@@ -266,7 +266,7 @@ particles = getparticles(info);
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:30:32.891
+[Mera]: Get particle data: 2026-08-07T13:37:44.166
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -314,7 +314,7 @@ PartDataType
 
 ### Type Hierarchy
 
-`PartDataType` is part of a well-organized type hierarchy. It's a sub-type of `ContainMassDataSetType`:
+`PartDataType` is particles of a well-organized type hierarchy. It's a sub-type of `ContainMassDataSetType`:
 
 ```julia
 # Which in turn is a subtype of the general `DataSetType`.

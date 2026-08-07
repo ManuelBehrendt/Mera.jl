@@ -1,5 +1,16 @@
 # Recommended Julia Packages for Mera Workflows
 
+Mera draws nothing itself. The tutorials plot with **CairoMakie**, and a few older
+projection pages use **PyPlot** — neither is a Mera dependency:
+
+```julia
+using Pkg
+Pkg.add("CairoMakie")
+```
+
+Mera's Makie support is a package extension: it activates once a backend is loaded.
+
+
 Packages that commonly pair well with Mera for astrophysical AMR / N-body analysis. None is
 required — Mera works on its own. For the wider Julia ecosystem beyond Mera workflows, see
 [Essential Packages](quickreference/03_packages.md), which also marks which packages Mera
