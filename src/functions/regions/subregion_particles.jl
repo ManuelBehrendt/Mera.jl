@@ -25,20 +25,15 @@ function subregioncuboid(dataobject::PartDataType;
          yrange[1] === missing && yrange[2] === missing &&
          zrange[1] === missing && zrange[2] === missing)
 
+       # columnwise (see `_subset_table`): the row-wise form allocated a NamedTuple per particle
+       cols = IndexedTables.columns(dataobject.data)
+       inside = (cols.x .>= xmin * boxlen) .& (cols.x .<= xmax * boxlen) .&
+                (cols.y .>= ymin * boxlen) .& (cols.y .<= ymax * boxlen) .&
+                (cols.z .>= zmin * boxlen) .& (cols.z .<= zmax * boxlen)
        if inverse == false
-           sub_data = filter(p->   p.x >=  xmin * boxlen  &&
-                                   p.x <=  xmax * boxlen  &&
-                                   p.y >=  ymin * boxlen  &&
-                                   p.y <=  ymax * boxlen  &&
-                                   p.z >=  zmin * boxlen  &&
-                                   p.z <=  zmax * boxlen, dataobject.data)
+           sub_data = _subset_table(dataobject.data, inside)
        elseif inverse == true
-           sub_data = filter(p->   (p.x <  xmin * boxlen  ||
-                                   p.x >  xmax * boxlen)  ||
-                                   (p.y <  ymin * boxlen  ||
-                                   p.y >  ymax * boxlen)  ||
-                                   (p.z <  zmin * boxlen  ||
-                                   p.z >  zmax * boxlen), dataobject.data)
+           sub_data = _subset_table(dataobject.data, .!inside)
            ranges = dataobject.ranges
        end
 
@@ -94,18 +89,15 @@ function subregioncylinder(dataobject::PartDataType;
 
 
 
+    # columnwise (see `_subset_table`); same `sqrt` arithmetic as the row-wise form it replaced
+    cols = IndexedTables.columns(dataobject.data)
+    inside = (sqrt.((cols.x .- cx_shift*boxlen).^2 .+
+                    (cols.y .- cy_shift*boxlen).^2) .<= (radius_shift*boxlen)) .&
+             (abs.(cols.z .- cz_shift*boxlen) .<= (height_shift*boxlen))
     if inverse == false
-        sub_data = filter(p-> sqrt( (p.x -  cx_shift*boxlen)^2 +
-                                    (p.y -  cy_shift*boxlen )^2)
-                                    <= ( radius_shift*boxlen )  &&
-                            abs(p.z - cz_shift*boxlen) <= ( height_shift*boxlen),
-                                dataobject.data)
+        sub_data = _subset_table(dataobject.data, inside)
     elseif inverse == true
-        sub_data = filter(p-> sqrt( (p.x -  cx_shift*boxlen)^2 +
-                                    (p.y -  cy_shift*boxlen )^2)
-                                    > ( radius_shift*boxlen )  ||
-                            abs(p.z - cz_shift*boxlen) > ( height_shift*boxlen),
-                                dataobject.data)
+        sub_data = _subset_table(dataobject.data, .!inside)
         ranges = dataobject.ranges
     end
 
@@ -151,18 +143,16 @@ function subregionsphere(dataobject::PartDataType;
     height = 0.
     ranges, cx_shift, cy_shift, cz_shift, radius_shift = prepranges(dataobject.info, center, radius, height, range_unit, verbose)
 
+    # columnwise (see `_subset_table`); same `sqrt` arithmetic as the row-wise form it replaced.
+    # This is the `fov=` path: _fov_selection selects a sphere before projecting.
+    cols = IndexedTables.columns(dataobject.data)
+    inside = sqrt.((cols.x .- cx_shift*boxlen).^2 .+
+                   (cols.y .- cy_shift*boxlen).^2 .+
+                   (cols.z .- cz_shift*boxlen).^2) .<= (radius_shift*boxlen)
     if inverse == false
-        sub_data = filter(p-> sqrt( (p.x -  cx_shift*boxlen)^2 +
-                                    (p.y -  cy_shift*boxlen )^2 +
-                                    (p.z - cz_shift*boxlen)^2 )
-                                    <= ( radius_shift*boxlen ),
-                                dataobject.data)
+        sub_data = _subset_table(dataobject.data, inside)
     elseif inverse == true
-        sub_data = filter(p-> sqrt( (p.x -  cx_shift*boxlen)^2 +
-                                    (p.y -  cy_shift*boxlen )^2 +
-                                    (p.z - cz_shift*boxlen)^2 )
-                                    > ( radius_shift*boxlen ),
-                                dataobject.data)
+        sub_data = _subset_table(dataobject.data, .!inside)
         ranges = dataobject.ranges
     end
 

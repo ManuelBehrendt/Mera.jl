@@ -11,6 +11,25 @@ const MERA_CACHE_ENABLED = get(ENV, "MERA_CACHE_ENABLED", "true") == "true"
 
 
 """
+    _subset_table(t, keep::AbstractVector{Bool})
+
+Select the rows of `t` where `keep` is true, working on whole columns.
+
+`filter(p -> …, t)` walks the table row by row, and StructArrays materialises a full `NamedTuple`
+for every row it visits — on a 12-column AREPO gas table that is ~80 allocations *per particle*,
+which dominated the axis-aligned particle projection (~90 alloc/particle, 4.2 GiB for 800k cells).
+Selecting each column by index instead is the same result for a constant number of allocations.
+
+The row order, column types and table type are identical to `filter`'s, so this is a drop-in
+replacement wherever the predicate can be written as a columnwise boolean.
+"""
+@inline function _subset_table(t, keep::AbstractVector{Bool})
+    idx = findall(keep)
+    return IndexedTables.table(map(col -> col[idx], IndexedTables.columns(t)); copy=false)
+end
+
+
+"""
     createconstants!(info::InfoType) -> InfoType
 
 Fill `info.constants` with Mera's CGS constant table and return `info`. The in-place companion of

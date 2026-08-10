@@ -837,13 +837,14 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
 
 
-    filtered_data = filter(p->
-                            p.x >= (xmin * dataobject.boxlen) &&
-                            p.x <= (xmax * dataobject.boxlen) &&
-                            p.y >= (ymin * dataobject.boxlen) &&
-                            p.y <= (ymax * dataobject.boxlen) &&
-                            p.z >= (zmin * dataobject.boxlen) &&
-                            p.z <= (zmax * dataobject.boxlen), dataobject.data)
+    # Columnwise, not row-wise: a row-wise `filter` rebuilds a NamedTuple per particle and cost
+    # ~80 allocations each on a 12-column gas table (see `_subset_table`).
+    _cols = IndexedTables.columns(dataobject.data)
+    _bl   = dataobject.boxlen
+    _keep = (_cols.x .>= (xmin * _bl)) .& (_cols.x .<= (xmax * _bl)) .&
+            (_cols.y .>= (ymin * _bl)) .& (_cols.y .<= (ymax * _bl)) .&
+            (_cols.z .>= (zmin * _bl)) .& (_cols.z .<= (zmax * _bl))
+    filtered_data = _subset_table(dataobject.data, _keep)
 
 
     closed=:left

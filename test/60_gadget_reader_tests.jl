@@ -1015,4 +1015,82 @@ end
         end
     end
 
+    # -------------------------------------------------------------------------------------
+    # Particle projection used to walk the table ROW-WISE (`filter(p -> …, data)`), which makes
+    # StructArrays materialise a NamedTuple per particle: ~90 allocations each on a 12-column
+    # gas table, measured on a real AREPO zoom as 1.89 G allocations / 86 s for one 20.5 M-star
+    # map. Two routes triggered it — `direction=` and `fov=` (the latter through the sphere
+    # subregion) — while off-axis-without-fov was already columnar and cheap.
+    # These assert the per-particle cost, not a wall-clock time, so they are machine-independent.
+    # -------------------------------------------------------------------------------------
+    @testset "projection allocates O(1) per particle, not O(columns)" begin
+        n = 40_000
+        dir = mktempdir(); sd = joinpath(dir, "snapdir_009"); mkpath(sd)
+        s = UInt64(97531)
+        nxt() = (s = (0x5DEECE66D * s + 11) & 0x0000FFFFFFFFFFFF; Float64(s >> 16) / Float64(1 << 32))
+        pos = Array{Float64}(undef, 3, n)
+        for j in 1:n, i in 1:3
+            pos[i, j] = 20.0 + 60.0 * nxt()
+        end
+        h5open(joinpath(sd, "snap_009.0.hdf5"), "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 100.0; hg["Time"] = 1.0
+            hg["NumPart_Total"] = UInt32[n, 0, 0, 0, 0, 0]
+            hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+            g = create_group(f, "PartType0")
+            g["Coordinates"]     = pos
+            g["Velocities"]      = zeros(Float32, 3, n)
+            g["ParticleIDs"]     = UInt32.(1:n)
+            g["Masses"]          = fill(1.0f-6, n)
+            g["Density"]         = fill(1.0f0, n)
+            g["InternalEnergy"]  = fill(100.0f0, n)
+        end
+        info = getinfo(9, dir, verbose=false)
+        gas  = getparticles(info, families=[0], verbose=false)
+        N    = length(gas.data)
+        los  = [0.3, 0.4, sqrt(1 - 0.09 - 0.16)]
+        px   = [2.0, :standard]
+        ctr  = [:bc]
+
+        routes = Dict(
+            "direction=:z"      => () -> projection(gas, :sd; direction=:z, pxsize=px, center=ctr,
+                                                    verbose=false, show_progress=false),
+            "los (no fov)"      => () -> projection(gas, :sd; los=los, pxsize=px, center=ctr,
+                                                    verbose=false, show_progress=false),
+            "los+fov :square"   => () -> projection(gas, :sd; los=los, fov=0.3, fov_unit=:standard,
+                                                    aperture=:square, pxsize=px, center=ctr,
+                                                    verbose=false, show_progress=false),
+            "los+fov :circle"   => () -> projection(gas, :sd; los=los, fov=0.3, fov_unit=:standard,
+                                                    aperture=:circle, pxsize=px, center=ctr,
+                                                    verbose=false, show_progress=false),
+        )
+        for (name, f) in routes
+            f()                                              # compile before counting
+            GC.gc()
+            r = @timed f()
+            per_particle = Base.gc_alloc_count(r.gcstats) / N
+            @test per_particle < 5.0                          # was ~90 on the row-wise path
+        end
+
+        # the subregions the fov route goes through are the other half of the fix
+        for sub in (subregion(gas, :sphere,   radius=0.3, center=ctr, range_unit=:standard, verbose=false),
+                    subregion(gas, :cuboid,   xrange=[-0.2,0.2], yrange=[-0.2,0.2], zrange=[-0.2,0.2],
+                              center=ctr, range_unit=:standard, verbose=false),
+                    subregion(gas, :cylinder, radius=0.25, height=0.2, center=ctr,
+                              range_unit=:standard, verbose=false))
+            @test length(sub.data) > 0
+        end
+        GC.gc()
+        rs = @timed subregion(gas, :sphere, radius=0.3, center=ctr, range_unit=:standard, verbose=false)
+        @test Base.gc_alloc_count(rs.gcstats) / N < 5.0
+
+        # and the maps are still mass-conserving: Σ pixel·area == total mass in the frame
+        M = msum(gas)
+        for w in (:mass, :volume, :sph)
+            m = projection(gas, :sd; direction=:z, pxsize=px, center=ctr, weighting=w,
+                           verbose=false, show_progress=false)
+            @test isapprox(sum(first(values(m.maps))) * m.pixsize^2 / M, 1.0; atol=1e-3)
+        end
+    end
+
 end
