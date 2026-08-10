@@ -183,4 +183,82 @@
             end
         end
     end
+
+    # ------------------------------------------------------------------------------
+    # Moving-mesh gas (AREPO/GADGET PartType0) has no cell indices to replicate, so it
+    # gets its own core: every output cell centre takes the value of the nearest
+    # generator that reaches it, the same ownership rule weighting=:voronoi uses.
+    # Data-free: a regular lattice of generators, whose Voronoi cells are cubes.
+    # ------------------------------------------------------------------------------
+    @testset "moving-mesh gas (particles with :volume), data-free" begin
+        ncell, L, mass = 16, 100.0, 1e-6
+        d = L / ncell; N = ncell^3
+        pos = Array{Float64}(undef, 3, N); k = 0
+        for i in 0:ncell-1, j in 0:ncell-1, l in 0:ncell-1
+            k += 1
+            pos[1,k] = (i+0.5)*d; pos[2,k] = (j+0.5)*d; pos[3,k] = (l+0.5)*d
+        end
+        # a density that varies with x so "which generator owns this point" is observable
+        rho = Float32[Float32(mass/d^3 * (1 + pos[1,i]/L)) for i in 1:N]
+        dir = mktempdir(); sd = joinpath(dir, "snapdir_012"); mkpath(sd)
+        Mera.HDF5.h5open(joinpath(sd, "snap_012.0.hdf5"), "w") do f
+            hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+            hg["BoxSize"] = L; hg["Time"] = 1.0
+            hg["NumPart_Total"] = UInt32[N, 2, 0, 0, 0, 0]
+            hg["NumFilesPerSnapshot"] = Int32(1)
+            hg["MassTable"] = [0.0, 3.0, 0.0, 0.0, 0.0, 0.0]
+            g = Mera.HDF5.create_group(f, "PartType0")
+            g["Coordinates"]    = pos
+            g["Velocities"]     = zeros(Float32, 3, N)
+            g["ParticleIDs"]    = UInt32.(1:N)
+            g["Masses"]         = [Float32(mass * (1 + pos[1,i]/L)) for i in 1:N]
+            g["Density"]        = rho                      # ⇒ volume = m/ρ = d³ for every cell
+            g["InternalEnergy"] = fill(100.0f0, N)
+            g1 = Mera.HDF5.create_group(f, "PartType1")    # DM: no Density ⇒ no :volume column
+            g1["Coordinates"] = Float64[20 80; 20 80; 20 80]
+            g1["Velocities"]  = zeros(Float32, 3, 2)
+            g1["ParticleIDs"] = UInt32[N+1, N+2]
+        end
+        info = getinfo(12, dir, verbose=false)
+        gas  = getparticles(info, families=[0], verbose=false)
+
+        # grid at exactly the lattice pitch: every output centre coincides with a generator,
+        # so the grid must be fully covered and reproduce the input values cell for cell
+        cg = covering_grid(gas, :rho; lmax=4, verbose=false)
+        A  = cg[:rho]
+        @test size(A) == (16, 16, 16)
+        @test count(isnan, A) == 0                       # a space-filling mesh leaves no holes
+        @test cg.cellsize ≈ d
+        # density varies along x only — so each x-slab is constant, and slabs increase with x
+        for i in 1:16
+            @test length(unique(round.(vec(A[i,:,:]), sigdigits=10))) == 1
+        end
+        @test issorted([A[i,1,1] for i in 1:16])
+        @test A[16,1,1] > A[1,1,1]
+
+        # multiple variables and units come back together
+        cg2 = covering_grid(gas, [:rho, :mass], [:standard, :standard]; lmax=4, verbose=false)
+        @test Set(keys(cg2.grid)) == Set([:rho, :mass])
+        @test cg2[:rho] == A
+
+        # a sub-box selects a sub-grid
+        cgs = covering_grid(gas, :rho; lmax=4, center=[:bc], range_unit=:standard,
+                            xrange=[-0.25, 0.25], yrange=[-0.25, 0.25], zrange=[-0.25, 0.25],
+                            verbose=false)
+        @test all(size(cgs[:rho]) .< size(A))
+
+        # a grid far finer than the mesh still resolves it, and leaves the corners of each
+        # cell beyond the (√3/2)·V^(1/3) reach as NaN rather than inventing values
+        cgf = covering_grid(gas, :rho; lmax=6, verbose=false)
+        @test size(cgf[:rho]) == (64, 64, 64)
+        @test count(isnan, cgf[:rho]) < length(cgf[:rho])   # mostly covered
+
+        # point particles have no extent to resample — a clear error, not a wrong answer
+        dm = getparticles(info, families=[1], verbose=false)
+        @test !in(:volume, propertynames(dm.data.columns))
+        @test_throws ArgumentError covering_grid(dm, :mass, verbose=false)
+
+        # and the memory guard still fires before allocating
+        @test_throws ErrorException covering_grid(gas, :rho; lmax=11, max_bytes=1e6, verbose=false)
+    end
 end
