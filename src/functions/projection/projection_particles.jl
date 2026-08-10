@@ -108,7 +108,25 @@ function _voronoi_los(pa, pb, plos, dens, vals, reff, ea::AbstractVector, eb::Ab
     ca = [(Float64(ea[i])+Float64(ea[i+1]))/2 for i in 1:n1]
     cb = [(Float64(eb[j])+Float64(eb[j+1]))/2 for j in 1:n2]
     dl = (hi-lo)/nlos
-    npix = n1*n2
+    # A sample contributes only if it falls within `reff` of some generator, so anything farther
+    # than max(reff) from the generators' bounding box is provably empty. Dropping those pixels
+    # and those LOS steps removes the KD-tree query outright and cannot change the result — on a
+    # zoom or a cutout most of the frame is empty (37 % of pixels on a real off-axis AREPO map).
+    isempty(pa) && return colρ, colρv
+    rmax = Float64(maximum(reff))
+    amin, amax = extrema(pa); bmin, bmax = extrema(pb); zmin, zmax = extrema(plos)
+    alo = amin - rmax; ahi = amax + rmax
+    blo = bmin - rmax; bhi = bmax + rmax
+    live = Int[]
+    for j in 1:n2, i in 1:n1
+        (ca[i] >= alo && ca[i] <= ahi && cb[j] >= blo && cb[j] <= bhi) || continue
+        push!(live, i + (j-1)*n1)
+    end
+    # z_k = lo + (k-0.5)·dl, so only these steps can reach the data at all
+    k0 = max(1,    ceil(Int,  ((zmin - rmax) - lo)/dl + 0.5))
+    k1 = min(nlos, floor(Int, ((zmax + rmax) - lo)/dl + 0.5))
+    (isempty(live) || k0 > k1) && return colρ, colρv
+    npix = length(live)
     # Partition over PIXELS, not over LOS steps. Each ray is independent, so a thread that owns a
     # disjoint set of pixels owns the matching output entries outright — no atomics, no locks, no
     # reduction. It also keeps every pixel's accumulation in k order, so the result is bitwise
@@ -120,16 +138,16 @@ function _voronoi_los(pa, pb, plos, dens, vals, reff, ea::AbstractVector, eb::Ab
         p0 > p1 && continue
         m = p1 - p0 + 1
         Q = Matrix{Float64}(undef, 3, m)            # thread-local; the tree itself is read-only
-        @inbounds for k in 1:nlos
+        @inbounds for k in k0:k1
             z = lo + (k-0.5)*dl
             for c in 1:m
-                p = p0 + c - 1
+                p = live[p0 + c - 1]
                 i = ((p-1) % n1) + 1; j = ((p-1) ÷ n1) + 1
                 Q[1,c]=ca[i]; Q[2,c]=cb[j]; Q[3,c]=z
             end
             idxs, dists = nn(tree, Q)               # nearest generator per LOS sample = its Voronoi cell
             for c in 1:m
-                p = p0 + c - 1
+                p = live[p0 + c - 1]
                 i = ((p-1) % n1) + 1; j = ((p-1) ÷ n1) + 1
                 ix = idxs[c]
                 # By definition the nearest generator OWNS this point, so on a space-filling

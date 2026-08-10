@@ -241,6 +241,19 @@
                         weighting=:voronoi, nlos=128, verbose=false, show_progress=false)
         @test size(first(values(o2.maps))) == size(first(values(off.maps)))
 
+        # Empty parts of the frame are skipped before the KD-tree is queried (a sample farther
+        # than max(reff) from the generators' bounding box can never be owned by any cell). That
+        # is an optimisation only: enlarging the frame must add empty pixels and change nothing
+        # else, since :voronoi -- unlike :sph -- has no kernel wings to clip.
+        tight = projection(gas, :sd; direction=:z, pxsize=px, center=ctr, weighting=:voronoi,
+                           range_unit=:standard, xrange=[-0.5,0.5], yrange=[-0.5,0.5],
+                           verbose=false, show_progress=false)
+        @test isapprox(frac(tight), frac(ax); rtol=1e-12)
+        sub = projection(gas, :sd; direction=:z, pxsize=px, center=ctr, weighting=:voronoi,
+                         range_unit=:standard, xrange=[-0.25,0.25], yrange=[-0.25,0.25],
+                         zrange=[-0.25,0.25], verbose=false, show_progress=false)
+        @test sum(first(values(sub.maps))) > 0            # a sub-box still finds its cells
+
         # and the stale guard no longer claims off-axis is unimplemented
         err = try
             projection(gas, :sd; direction=:notanaxis, pxsize=px, center=ctr,
