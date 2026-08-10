@@ -300,6 +300,17 @@ Particle projection is single-threaded (see
 [Multi-Threading](multi-threading/multi-threading_intro.md)), so more threads will not shorten
 these. Project a sub-volume or use a coarser `pxsize` instead.
 
+!!! note "`:voronoi` on a cutout is not losing mass"
+    Compare `sum(map) * pixsize^2` against [`msum`](@ref) on a sub-volume and `:voronoi` comes up
+    a few percent short. That is a boundary effect, not a bug: `msum` counts the **whole** mass of
+    every cell whose generator lies inside the region, including the part poking out through the
+    boundary, while the map integrates only what is inside. So it scales with surface-over-volume
+    and shrinks as the region grows — 4.2 %, 3.4 %, 1.8 %, 1.0 % for half-widths of 200, 400, 800
+    and 1600 ckpc/h on an AREPO zoom. Sampling more finely (`nlos=`) converges to the same value
+    rather than to 1, which is how you can tell it apart from a sampling error. `:mass` hides it
+    because point deposition drops each cell's full mass at its generator. If you need an exact
+    integral over a sub-volume, select a larger region than the one you measure.
+
 !!! tip "Zooming on a halo: use `pxsize`, not `res`"
     `res` counts pixels **across the whole box** (`pixsize = boxlen/res`), so a windowed
     projection keeps only the pixels the window happens to cover. On a large box this bites
