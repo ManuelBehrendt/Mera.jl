@@ -235,6 +235,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            nlos::Union{Nothing,Int}=nothing,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -267,6 +268,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
+                                nlos=nlos,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -304,6 +306,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            nlos::Union{Nothing,Int}=nothing,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -336,6 +339,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
+                                nlos=nlos,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -373,6 +377,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            nlos::Union{Nothing,Int}=nothing,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -405,6 +410,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
+                                nlos=nlos,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -442,6 +448,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            nlos::Union{Nothing,Int}=nothing,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -474,6 +481,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
+                                nlos=nlos,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -510,6 +518,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            nlos::Union{Nothing,Int}=nothing,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -542,6 +551,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
+                                nlos=nlos,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -579,6 +589,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            nlos::Union{Nothing,Int}=nothing,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -630,7 +641,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                               pxsize=pxsize, mask=mask, direction=direction, los=los, up=up,
                               theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
                               position_angle=position_angle, axis=axis, angle_unit=angle_unit,
-                              binning=binning, weighting=weighting, xrange=win, yrange=win,
+                              binning=binning, weighting=weighting, nlos=nlos, xrange=win, yrange=win,
                               zrange=win, center=center, range_unit=fov_unit,
                               data_center=data_center, data_center_unit=data_center_unit,
                               ref_time=ref_time, verbose=verbose, show_progress=show_progress)
@@ -733,7 +744,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         return projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                             ranges, data_centerm, range_unit, mask,
                                             los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
-                                            boxlen, dataobject.lmin, lmax, scale, ref_time, verbose)
+                                            boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos)
     end
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
@@ -1058,11 +1069,15 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     # genuine moving-mesh field rather than an SPH blob. Axis-aligned; needs :rho.
                     in(:volume, propertynames(filtered_data.columns)) || throw(ArgumentError(
                         "projection (particles): weighting=:voronoi needs :rho/:volume columns (AREPO/GADGET gas)."))
+                    # Off-axis :voronoi IS supported — `is_offaxis` routes those calls to
+                    # projection_offaxis_particles long before this branch, so this only fires on a
+                    # `direction` that is not an axis at all. The old message claimed "no off-axis
+                    # yet", which was untrue and sent people to a workaround they did not need.
                     direction in (:x, :y, :z) || throw(ArgumentError(
-                        "projection (particles): weighting=:voronoi supports axis-aligned directions only (no off-axis yet)."))
+                        "projection (particles): direction=:$direction is not an axis — use :x, :y or :z, " *
+                        "or give a line of sight (los=/inclination=/azimuth=) for an off-axis view."))
                     lo, hi = direction == :z ? (zmin, zmax) : direction == :y ? (ymin, ymax) : (xmin, xmax)
                     lo *= dataobject.boxlen; hi *= dataobject.boxlen
-                    nlos = clamp(round(Int, (hi - lo) / pixsize), 1, 512)        # sample the LOS at ~pixel depth
                     pa = select(filtered_data, var_a); pb = select(filtered_data, var_b)
                     plos = select(filtered_data, direction); dens = select(filtered_data, :rho)
                     # How far a cell may legitimately reach from its generator. NOT the
@@ -1076,14 +1091,27 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     #     0.620 (r_eff)      3.3 %   / 0.733          0.802
                     #     0.866 (√3/2)       0.0 %   / 0.993          1.039   ← both best
                     #     ∞     (no cap)     0.0 %   / 1.018          1.057
-                    reff = (sqrt(3)/2) .* (select(filtered_data, :volume) .^ (1/3))
+                    Vc   = select(filtered_data, :volume)
+                    reff = (sqrt(3)/2) .* (Vc .^ (1/3))
                     isstd = in(i_var, sd_names)
                     vals = isstd ? dens : getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)
                     if length(mask) != 1                                          # honour the particle mask
                         mk = select(filtered_data, :mask) .> 0
                         pa = pa[mk]; pb = pb[mk]; plos = plos[mk]; dens = dens[mk]; reff = reff[mk]; isstd || (vals = vals[mk])
+                        Vc = Vc[mk]
                     end
-                    colρ, colρv = _voronoi_los(pa, pb, plos, dens, vals, reff, newrange1, newrange2, lo, hi, nlos)
+                    # Step along the ray at the scale of the STRUCTURE it crosses, not the pixel — the
+                    # same rule the off-axis path uses. Stepping at `pixsize` walks straight over whole
+                    # cells whenever cells are smaller than a pixel, and how often it does depends on
+                    # how the ray happens to line up with the mesh; on the off-axis path that showed up
+                    # as an ~8 % variation of the total with viewing angle. Half the median cell size
+                    # samples every cell the ray passes through.
+                    nlos_used = nlos === nothing ?
+                        clamp(round(Int, (hi - lo) / min(pixsize, 0.5 * median(Vc) ^ (1/3))), 1, 4096) :
+                        max(1, nlos)
+                    verbose && println("Voronoi LOS samples (nlos): ", nlos_used,
+                                       nlos === nothing ? "" : " (set by keyword)")
+                    colρ, colρv = _voronoi_los(pa, pb, plos, dens, vals, reff, newrange1, newrange2, lo, hi, nlos_used)
                     selected_unit, unit_name = getunit(dataobject, i_var, selected_vars, units, uname=true)
                     m = isstd ? colρ : (colρv ./ colρ)                           # sd = ∫ρ dl ; intensive = ∫ρv dl / ∫ρ dl
                     maps[Symbol(i_var)] = selected_unit != 1. ? m .* selected_unit : m
@@ -1250,7 +1278,7 @@ end
 function projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                        ranges, data_centerm, range_unit, mask,
                                        los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
-                                       boxlen, lmin, lmax, scale, ref_time, verbose)
+                                       boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing)
 
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
@@ -1395,13 +1423,16 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
             # made the total vary by ~8 % with viewing angle. Half the median cell size keeps the
             # integral sampling every cell it passes through.
             dl_cell = 0.5 * median(Vc) ^ (1/3)
-            nlos = clamp(round(Int, (hi - lo) / min(pixsize, dl_cell)), 1, 4096)
+            nlos_used = nlos === nothing ?
+                clamp(round(Int, (hi - lo) / min(pixsize, dl_cell)), 1, 4096) : max(1, nlos)
+            verbose && println("Voronoi LOS samples (nlos): ", nlos_used,
+                               nlos === nothing ? "" : " (set by keyword)")
             for ivar in selected_vars
                 su, un = getunit(dataobject, ivar, selected_vars, units, uname=true)
                 isstd = ivar in sd_names
                 vals  = isstd ? dens :
                         Float64.(getvar(dataobject, ivar, center=data_centerm, ref_time=ref_time)[sel])
-                colρ, colρv = _voronoi_los(xc, yc, zc, dens, vals, reff, e1, e2, lo, hi, nlos)
+                colρ, colρv = _voronoi_los(xc, yc, zc, dens, vals, reff, e1, e2, lo, hi, nlos_used)
                 m = isstd ? colρ : (colρv ./ colρ)
                 maps[ivar] = su != 1. ? m .* su : m
                 maps_unit[ivar] = un; maps_mode[ivar] = :voronoi
