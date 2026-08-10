@@ -51,6 +51,8 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 | `MagneticField` | `:bx`, `:by`, `:bz` | MHD field; comoving→physical `a⁻²` and cgs→Gauss baked in — `getvar(:bx, :muG)` / `:Gauss` / `:nG` |
 | `Potential` | `:gpot` | gravitational potential (peculiar, `a⁻¹`); present on all particle types |
 | `NeutralHydrogenAbundance` | `:nh` | neutral-hydrogen fraction (dimensionless) |
+| `Machnumber` | `:mach` | cell Mach number (dimensionless) |
+| *(derived)* | `:T`, `:p`, `:cs` | `T = (γ-1)·u·μ·m_H/k_B`; μ from `:ne` (neutral-primordial fallback if absent) |
 
 !!! tip "Stellar ages"
     Star particles carry `GFM_StellarFormationTime` as a scale factor, not an age.
@@ -58,8 +60,6 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
     `NaN` for the negative `aform` values that mark **wind particles** in IllustrisTNG, so
     they drop out of statistics instead of becoming spurious ages. (The RAMSES equivalent,
     starting from a `:birth` time, is [`stellar_age`](@ref).)
-| `Machnumber` | `:mach` | cell Mach number (dimensionless) |
-| *(derived)* | `:T`, `:p`, `:cs` | `T = (γ-1)·u·μ·m_H/k_B`; μ from `:ne` (neutral-primordial fallback if absent) |
 
 ```julia
 getvar(gas, :rho, :g_cm3)        # physical density
@@ -68,7 +68,12 @@ getvar(gas, :T, :K)              # temperature [K] — matches the official TNG 
 getvar(gas, :metallicity)        # metal mass fraction
 getvar(gas, :bmag, :muG)         # |B| [μG]; also :pmag (:Ba), :beta, :v_alfven (:km_s), :mach_alfven/fast/slow
 pdf(gas, :rho); profile(gas, :r_sphere, :T)   # PDFs / radial profiles on the gas
+phase(gas, :rho, :T; xscale=:log, yscale=:log)  # mass-weighted ρ–T phase diagram
 ```
+
+[`phase`](@ref) bins any two `getvar` quantities and sums the weight (mass by default),
+returning `xedges`, `yedges` and the `H` grid — a ρ–T diagram is one call, not a hand-rolled
+2-D histogram.
 
 The temperature reproduces IllustrisTNG's documented conversion (density to machine precision,
 temperature to sub-percent), so the values match what TNG itself reports.
