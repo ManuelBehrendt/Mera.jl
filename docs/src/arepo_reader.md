@@ -87,8 +87,9 @@ A Voronoi cell is neither a grid cell nor an SPH particle, so [`projection`](@re
 depositions (`weighting=`):
 
 - **`:mass`** (default) — deposit each cell at its point; fast, mass-conserving, but speckly.
-- **`:sph`** — smear each cell over an **M4 kernel** sized from its volume (`h = (3V/4π)^⅓`); smooth
-  and mass-conserving — the standard moving-mesh rendering, as in [yt](https://yt-project.org).
+- **`:sph`** — smear each cell over an **M4 cubic-spline kernel** ([Monaghan & Lattanzio
+  1985](https://ui.adsabs.harvard.edu/abs/1985A%26A...149..135M)) sized from its volume
+  (`h = (3V/4π)^⅓`); smooth and mass-conserving, and the usual way moving-mesh data is rendered.
 - **`:voronoi`** — sample each line of sight through the **nearest cell** (KD-tree, capped at the
   cell radius): sharp, genuinely cell-respecting. **Intensive** maps (`:T`, metallicity) are exact;
   surface density is approximate (use `:sph`/`:mass` for conserving column mass).
@@ -101,6 +102,11 @@ projection(gas, :T, weighting=:voronoi)         # sharp, cell-respecting tempera
 
 A fully Voronoi-exact renderer (re-tessellate + analytic polyhedron–pixel integration, as in AREPO's
 `ArepoVTK`) would be more faithful still, but is rarely needed.
+
+`:mass` and `:sph` cost about the same; `:voronoi` runs roughly **10× slower**, and particle
+projection is single-threaded, so extra threads will not recover the difference. Measured
+numbers and how to keep a zoom cheap are in
+[What each scheme costs](gadget_reader.md#What-each-scheme-costs).
 
 !!! note "Cutout vs full box"
     An IllustrisTNG **halo cutout** (±400 ckpc around one galaxy) is centrally concentrated, so its

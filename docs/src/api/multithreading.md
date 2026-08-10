@@ -13,14 +13,15 @@ julia -t 8              # or: export JULIA_NUM_THREADS=8
 
 ## Which functions are threaded, and over what
 
-Every function below accepts `max_threads::Int` to cap what it uses, defaulting to
+The functions below accept `max_threads::Int` to cap what they use, defaulting to
 `Threads.nthreads()`. The *dimension* each one parallelises over decides whether more threads
 help — a single-variable projection stays flat no matter how many you give it.
 
 | Function | Parallel over |
 |---|---|
 | [`gethydro`](@ref), [`getparticles`](@ref), [`getgravity`](@ref), [`getrt`](@ref) | RAMSES CPU-file chunks |
-| [`projection`](@ref) | the variables requested in one call |
+| [`projection`](@ref) on cells (hydro/gravity) | the variables requested in one call |
+| [`projection`](@ref) on particles | **not threaded** — see below |
 | [`clumpfind`](@ref) | candidate chunks |
 | [`export_vtk`](@ref) | particles / cells |
 | [`convertdata`](@ref), [`batch_convert_mera`](@ref) | components being converted |
@@ -29,6 +30,14 @@ help — a single-variable projection stays flat no matter how many you give it.
 gas = gethydro(info, max_threads=4)                       # cap the read
 projection(gas, [:sd, :T, :vx], :km_s, max_threads=3)     # one task per variable
 ```
+
+!!! warning "Particle projection is single-threaded"
+    The particle backend runs on one thread and does not take `max_threads` at all — passing
+    it is an error rather than a silent no-op. Extra threads do not speed up
+    `projection(part, ...)`, which matters most for particle-based codes (GADGET, AREPO,
+    SWIFT, GIZMO), where *every* component including the gas arrives as particles. Budget
+    wall-clock accordingly, and reduce cost with `pxsize`, a spatial `xrange`/`yrange`/
+    `zrange` selection, or a cheaper `weighting` scheme instead.
 
 ## Diagnostics
 

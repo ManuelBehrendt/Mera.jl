@@ -262,7 +262,8 @@ projection(gas, :sd, :Msol_pc2, weighting=:sph)          # SPH-kernel: smear eac
     mass-conserving, but it ignores the cell's extent and can speckle in sparse regions).
     `weighting=:sph` is the **moving-mesh conversion**: it smears every cell over an **M4
     cubic-spline kernel** sized from the cell volume (`h = α·(3V/4π)^⅓`, floored at one pixel),
-    treating each Voronoi cell as an SPH-like blob — the same approach `yt` uses for AREPO. It
+    treating each Voronoi cell as an SPH-like blob ([Monaghan & Lattanzio
+    1985](https://ui.adsabs.harvard.edu/abs/1985A%26A...149..135M)). It
     resolves each cell's footprint while staying mass-conserving to machine precision
     (`Σ pixel·area == msum` for cells inside the field; cells straddling the edge contribute only
     their in-field share). For a **genuinely cell-respecting** map, `weighting=:voronoi` (nearest
@@ -273,8 +274,40 @@ projection(gas, :sd, :Msol_pc2, weighting=:sph)          # SPH-kernel: smear eac
     (analytic polyhedron–pixel clipping, as in AREPO's `ArepoVTK`) would be more faithful still but
     is rarely needed. Comoving→physical `a`/`h` is applied automatically for cosmological snapshots.
 
-(Tip: for a halo *cutout* in a large box, zoom the projection — `center=[…], range_unit=:kpc,
-xrange=[-R,R], …` — and raise `res` so the window spans enough pixels, since `res` is full-box-relative.)
+### What each scheme costs
+
+The three schemes are not interchangeable in runtime. Measured on an AREPO zoom, 35.8 M gas
+cells projected to a 513² map, single-threaded:
+
+| `weighting` | time | |
+|---|---:|---|
+| `:mass` | 208 s | fast point deposition |
+| `:sph` | 183 s | kernel smoothing — same cost bracket |
+| `:voronoi` | **1907 s** | ~10× slower |
+
+`:mass` and `:sph` cost about the same, so prefer `:sph` when you want a smooth map. `:voronoi`
+is the outlier because its nearest-cell lookup runs per pixel against every cell. Reach for it
+when you need a sharp, sampling-correct map of an *intensive* field (temperature, metallicity),
+and stay on `:sph` while you are still iterating on the framing.
+
+Particle projection is single-threaded (see
+[Multi-Threading](multi-threading/multi-threading_intro.md)), so more threads will not shorten
+these. Project a sub-volume or use a coarser `pxsize` instead.
+
+!!! tip "Zooming on a halo: use `pxsize`, not `res`"
+    `res` counts pixels **across the whole box** (`pixsize = boxlen/res`), so a windowed
+    projection keeps only the pixels the window happens to cover. On a large box this bites
+    hard: `res=512` over a ±1100 ckpc/h window works out to `pixsize = 146.5` and returns a
+    **16×16** map — not the 512² the number suggests.
+
+    Set the pixel size directly instead. `pxsize` dominates over `res`/`lmax`, and it is the
+    only one of the three that means the same thing whatever the window:
+
+    ```julia
+    win = (center=[cx, cy, cz], range_unit=:kpc,
+           xrange=[-R, R], yrange=[-R, R], zrange=[-R, R])
+    projection(gas, :sd, :Msol_pc2; weighting=:sph, pxsize=[0.5, :kpc], win...)
+    ```
 
 ## Units
 
