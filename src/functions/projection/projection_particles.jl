@@ -181,6 +181,19 @@ return PartMapsType
   (smear each cell over an M4 kernel sized from its `:volume`; mass-conserving; needs a `:volume` column),
   or `:voronoi` (nearest-generator: sample each LOS through the nearest cell — sharp, genuinely
   moving-mesh; intensive maps exact, surface density approximate)
+- **`nlos`:** number of samples along each line of sight, `:voronoi` only. By default Mera steps at
+  the scale of the *cells* — `min(pixsize, ½·median(V)^⅓)`, capped at 4096 — because stepping at
+  pixel scale walks over whole cells whenever cells are smaller than a pixel. Set it only to trade
+  accuracy for speed, or to check convergence; `verbose=true` reports the value used.
+- **`:voronoi` on a cutout does not lose mass, even though `∫Σ dA` looks short of `msum`.**
+  The two count different things: `msum` adds the *whole* mass of every cell whose generator lies
+  in the region, including the part of that cell sticking out through the boundary, while the map
+  integrates only what is actually inside. The shortfall is therefore a surface-to-volume effect
+  and falls off as 1/L — measured on an AREPO zoom at 4.2 %, 3.4 %, 1.8 %, 1.0 % for half-widths of
+  200, 400, 800, 1600 ckpc/h. Refining `nlos` does not remove it (it converges to the same value),
+  because it is not a sampling error. `:mass` does not show it only because point deposition dumps
+  each cell's entire mass at its generator. To integrate a sub-volume exactly, select a region
+  larger than the one you measure.
 - **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** axis-aligned `:x`, `:y`, `:z`, or the disk presets `:faceon`/`:edgeon`
