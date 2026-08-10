@@ -67,7 +67,7 @@ end
 | `getgravity` | ✅ | ✅ | Same as gethydro |
 | `getparticles` | ✅ | ✅ | Same as gethydro |
 | `projection` (cells) | ✅ | ✅ | 1 thread per variable |
-| `projection` (particles) | ✗ | ✗ | Single-threaded backend |
+| `projection` (particles) | ✅ | ✅ | Pixels or particle chunks |
 | `export_vtk` | ✅ | ✗ | Auto-threading only |
 | `getinfo` | ✗ | ✗ | Lightweight, single-thread |
 
@@ -149,7 +149,7 @@ differs per operation, so the same thread count pays off differently:
 |---|---|---|
 | `gethydro` / `getparticles` / `getgravity` / `getrt` | RAMSES CPU-file chunks | the output has many CPU files |
 | `projection` on cells | the **variables you request** | you ask for several variables in one call |
-| `projection` on particles | nothing — single-threaded | never; extra threads do not help |
+| `projection` on particles | pixels (`:voronoi`) or particle chunks | the map is large, or there are many particles |
 | `clumpfind` | candidate chunks | there are many candidates |
 | `export_vtk` | particles / cells | the export is large |
 
@@ -178,14 +178,16 @@ not a misconfiguration. The ten-variable case gains about 1.6× and then saturat
 usually I/O bound, so it saturates once the storage does; see
 [Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md).
 
-!!! warning "None of this applies to particle projection"
-    The particle backend is single-threaded and takes no `max_threads`. Batching variables
-    into one call is still tidier, but it buys no parallelism there, and neither does starting
-    Julia with more threads. This is worth knowing before planning a run on a particle-based
-    code (GADGET, AREPO, SWIFT, GIZMO), where the gas is particles too, so *every* projection
-    takes this path. To cut the cost, project a sub-volume, use a coarser `pxsize`, or pick a
-    cheaper `weighting` — see the deposition-cost table in
-    [GADGET / AREPO](../gadget_reader.md).
+!!! note "Particle projection splits differently"
+    The particle backend parallelises *inside* one map rather than across variables, so a
+    single-variable particle projection does speed up — unlike the cell case above. `:voronoi`
+    splits the pixels (bitwise identical to serial at any thread count); `:mass`, `:volume` and
+    `:sph` split the particles into chunks with per-thread accumulators reduced in a fixed order.
+
+    This matters most on the particle-based codes (GADGET, AREPO, SWIFT, GIZMO), where the gas
+    is particles too, so *every* projection takes this path. `:voronoi` is compute-bound and
+    scales well; the deposition schemes are memory-bandwidth bound and gain roughly 2–4×. Costs
+    per scheme are in [GADGET / AREPO](../gadget_reader.md).
 
 ## 2 Setting Up Julia for Threading
 

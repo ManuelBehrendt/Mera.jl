@@ -9,12 +9,61 @@
 # footprint (incl. off-grid pixels), and only the in-grid pixels receive a share — so a cell fully
 # inside conserves exactly (Σgrid == Σw) while a cell straddling the edge contributes only its
 # in-grid fraction (boundary leakage is physical, not corrected away). `edges1/2` are the pixel edges.
-function _sph_deposit(xs, ys, ws, hs, edges1::AbstractVector, edges2::AbstractVector)
+# Threaded 2-D weighted histogram. Deliberately delegates to StatsBase `fit` per chunk against the
+# SAME edges rather than reimplementing the binning, so bin-edge and `closed` semantics are exactly
+# what the serial path produced. Chunks are reduced in a fixed order, so a given thread count gives
+# the same answer every run; it differs from the serial sum only by floating-point association.
+function _hist2d(a, b, w, e1, e2, closed::Symbol; max_threads::Int=Threads.nthreads())
+    np = length(a)
+    nt = max(1, min(max_threads, Threads.nthreads(), np))
+    nt == 1 && return fit(Histogram, (a, b), weights(w), closed=closed, (e1, e2))
+    bnds  = [((t-1)*np) ÷ nt for t in 1:nt+1]
+    parts = Vector{Any}(undef, nt)
+    Threads.@threads for t in 1:nt
+        lo = bnds[t] + 1; hi = bnds[t+1]
+        rng = lo <= hi ? (lo:hi) : (1:0)
+        parts[t] = fit(Histogram, (view(a, rng), view(b, rng)), weights(view(w, rng)),
+                       closed=closed, (e1, e2))
+    end
+    h = parts[1]
+    @inbounds for t in 2:nt
+        h.weights .+= parts[t].weights
+    end
+    return h
+end
+
+function _sph_deposit(xs, ys, ws, hs, edges1::AbstractVector, edges2::AbstractVector;
+                      max_threads::Int=Threads.nthreads())
     n1 = length(edges1) - 1; n2 = length(edges2) - 1
-    grid = zeros(Float64, n1, n2)
     lo1 = Float64(first(edges1)); d1 = (Float64(last(edges1)) - lo1) / n1
     lo2 = Float64(first(edges2)); d2 = (Float64(last(edges2)) - lo2) / n2
-    @inbounds for p in eachindex(xs)
+    np = length(xs)
+    nt = max(1, min(max_threads, Threads.nthreads(), np))
+    if nt == 1
+        grid = zeros(Float64, n1, n2)
+        _sph_deposit_chunk!(grid, xs, ys, ws, hs, 1:np, n1, n2, lo1, d1, lo2, d2)
+        return grid
+    end
+    # Particles smear over a footprint, so two threads can hit the same pixel — give each its own
+    # accumulator and reduce afterwards. The reduction runs in a FIXED chunk order, so the result
+    # is reproducible run to run for a given thread count (it differs from the serial sum only by
+    # floating-point association, ~1e-16 relative).
+    bnds  = [((t-1)*np) ÷ nt for t in 1:nt+1]
+    parts = [zeros(Float64, n1, n2) for _ in 1:nt]
+    Threads.@threads for t in 1:nt
+        lo = bnds[t] + 1; hi = bnds[t+1]
+        lo <= hi && _sph_deposit_chunk!(parts[t], xs, ys, ws, hs, lo:hi, n1, n2, lo1, d1, lo2, d2)
+    end
+    grid = parts[1]
+    @inbounds for t in 2:nt
+        grid .+= parts[t]
+    end
+    return grid
+end
+
+function _sph_deposit_chunk!(grid, xs, ys, ws, hs, rng, n1::Int, n2::Int,
+                             lo1::Float64, d1::Float64, lo2::Float64, d2::Float64)
+    @inbounds for p in rng
         x = Float64(xs[p]); y = Float64(ys[p]); w = Float64(ws[p]); h = Float64(hs[p])
         (w == 0.0 || !isfinite(w) || h <= 0.0) && continue
         # full (unclamped) footprint covered by the 2h support → normalisation
@@ -50,7 +99,7 @@ end
 # ρ-weighted column ∫ρ·v dl (for an intensive map ⟨v⟩ = ∫ρv dl / ∫ρ dl). `ea/eb` are the in-plane
 # pixel edges (code length); `plos`/`lo`/`hi` the line-of-sight coordinate and its range.
 function _voronoi_los(pa, pb, plos, dens, vals, reff, ea::AbstractVector, eb::AbstractVector,
-                      lo::Float64, hi::Float64, nlos::Int)
+                      lo::Float64, hi::Float64, nlos::Int; max_threads::Int=Threads.nthreads())
     pts = Matrix{Float64}(undef, 3, length(pa))
     @inbounds for i in eachindex(pa); pts[1,i]=Float64(pa[i]); pts[2,i]=Float64(pb[i]); pts[3,i]=Float64(plos[i]); end
     tree = KDTree(pts)
@@ -59,31 +108,45 @@ function _voronoi_los(pa, pb, plos, dens, vals, reff, ea::AbstractVector, eb::Ab
     ca = [(Float64(ea[i])+Float64(ea[i+1]))/2 for i in 1:n1]
     cb = [(Float64(eb[j])+Float64(eb[j+1]))/2 for j in 1:n2]
     dl = (hi-lo)/nlos
-    Q = Matrix{Float64}(undef, 3, n1*n2)
-    @inbounds for k in 1:nlos
-        z = lo + (k-0.5)*dl
-        c = 0
-        for j in 1:n2, i in 1:n1
-            c += 1; Q[1,c]=ca[i]; Q[2,c]=cb[j]; Q[3,c]=z
-        end
-        idxs, dists = nn(tree, Q)                   # nearest generator per LOS sample = its Voronoi cell
-        c = 0
-        for j in 1:n2, i in 1:n1
-            c += 1; ix = idxs[c]
-            # By definition the nearest generator OWNS this point, so on a space-filling
-            # tessellation no cap is correct. The cap exists only for data that does NOT fill its
-            # region (a cutout or zoom), where an unbounded nearest-neighbour would paint empty
-            # space and inflate the mass — measured ~6x on a real TNG cutout.
-            #
-            # It must not be applied to space-filling data: reff = (3V/4π)^(1/3) is the radius of a
-            # sphere of the cell's volume, but a cell is not a sphere. For a cube of side s,
-            # reff ≈ 0.620·s while the half-diagonal is 0.866·s, so capping discards each cell's own
-            # CORNERS. On a quasi-regular mesh those line up into a lattice of holes — 3.3 % of
-            # pixels on ArepoBullet, which is exactly space-filling (ΣV/boxlen³ = 1.0000).
-            dists[c] <= Float64(reff[ix]) || continue
-            ρ = Float64(dens[ix])
-            colρ[i,j]  += ρ*dl
-            colρv[i,j] += ρ*Float64(vals[ix])*dl
+    npix = n1*n2
+    # Partition over PIXELS, not over LOS steps. Each ray is independent, so a thread that owns a
+    # disjoint set of pixels owns the matching output entries outright — no atomics, no locks, no
+    # reduction. It also keeps every pixel's accumulation in k order, so the result is bitwise
+    # identical to the serial one at any thread count, not merely equal to a tolerance.
+    nt = max(1, min(max_threads, Threads.nthreads(), npix))
+    bnds = [((t-1)*npix) ÷ nt for t in 1:nt+1]
+    Threads.@threads for t in 1:nt
+        p0 = bnds[t] + 1; p1 = bnds[t+1]
+        p0 > p1 && continue
+        m = p1 - p0 + 1
+        Q = Matrix{Float64}(undef, 3, m)            # thread-local; the tree itself is read-only
+        @inbounds for k in 1:nlos
+            z = lo + (k-0.5)*dl
+            for c in 1:m
+                p = p0 + c - 1
+                i = ((p-1) % n1) + 1; j = ((p-1) ÷ n1) + 1
+                Q[1,c]=ca[i]; Q[2,c]=cb[j]; Q[3,c]=z
+            end
+            idxs, dists = nn(tree, Q)               # nearest generator per LOS sample = its Voronoi cell
+            for c in 1:m
+                p = p0 + c - 1
+                i = ((p-1) % n1) + 1; j = ((p-1) ÷ n1) + 1
+                ix = idxs[c]
+                # By definition the nearest generator OWNS this point, so on a space-filling
+                # tessellation no cap is correct. The cap exists only for data that does NOT fill
+                # its region (a cutout or zoom), where an unbounded nearest-neighbour would paint
+                # empty space and inflate the mass — measured ~6x on a real TNG cutout.
+                #
+                # It must not be applied to space-filling data: reff = (3V/4π)^(1/3) is the radius
+                # of a sphere of the cell's volume, but a cell is not a sphere. For a cube of side
+                # s, reff ≈ 0.620·s while the half-diagonal is 0.866·s, so capping discards each
+                # cell's own CORNERS. On a quasi-regular mesh those line up into a lattice of holes
+                # — 3.3 % of pixels on ArepoBullet, which is exactly space-filling (ΣV/boxlen³ = 1).
+                dists[c] <= Float64(reff[ix]) || continue
+                ρ = Float64(dens[ix])
+                colρ[i,j]  += ρ*dl
+                colρv[i,j] += ρ*Float64(vals[ix])*dl
+            end
         end
     end
     return colρ, colρv
@@ -185,6 +248,16 @@ return PartMapsType
   the scale of the *cells* — `min(pixsize, ½·median(V)^⅓)`, capped at 4096 — because stepping at
   pixel scale walks over whole cells whenever cells are smaller than a pixel. Set it only to trade
   accuracy for speed, or to check convergence; `verbose=true` reports the value used.
+- **`:sph` totals depend on how tightly the frame crops the data.** Each cell is smeared over an M4
+  kernel and only the part landing on in-frame pixels is deposited — the wings that fall outside are
+  dropped, which is physical, not a bug. So the same data in a tighter frame keeps less mass: on one
+  test field `∫Σ dA / M` was 1.000000 at half-widths 0.50/0.40/0.33 of the box, 0.9934 at 0.31 and
+  0.9604 at 0.30, as the frame started clipping the kernel. This is also why an axis-aligned and an
+  off-axis `:sph` map of the same data can differ by ~1 %: the two routes frame differently (the
+  off-axis extent is derived from the rotated data, not from your window). Compare them with
+  `los=[0,0,1], up=[0,1,0]`, which makes the off-axis camera reproduce the axis-aligned geometry —
+  the disagreement then drops to ~0.01 %, and `:mass` agrees exactly. Leave margin around the data
+  if you want the total to be frame-independent.
 - **`:voronoi` on a cutout does not lose mass, even though `∫Σ dA` looks short of `msum`.**
   The two count different things: `msum` adds the *whole* mass of every cell whose generator lies
   in the region, including the part of that cell sticking out through the boundary, while the map
@@ -249,6 +322,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             nlos::Union{Nothing,Int}=nothing,
+                            max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -282,6 +356,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
+                                max_threads=max_threads,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -320,6 +395,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             nlos::Union{Nothing,Int}=nothing,
+                            max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -353,6 +429,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
+                                max_threads=max_threads,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -391,6 +468,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             nlos::Union{Nothing,Int}=nothing,
+                            max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -424,6 +502,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
+                                max_threads=max_threads,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -462,6 +541,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             nlos::Union{Nothing,Int}=nothing,
+                            max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -495,6 +575,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
+                                max_threads=max_threads,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -532,6 +613,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             nlos::Union{Nothing,Int}=nothing,
+                            max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -565,6 +647,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
+                                max_threads=max_threads,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -603,6 +686,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             nlos::Union{Nothing,Int}=nothing,
+                            max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -654,7 +738,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                               pxsize=pxsize, mask=mask, direction=direction, los=los, up=up,
                               theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
                               position_angle=position_angle, axis=axis, angle_unit=angle_unit,
-                              binning=binning, weighting=weighting, nlos=nlos, xrange=win, yrange=win,
+                              binning=binning, weighting=weighting, nlos=nlos,
+                              max_threads=max_threads, xrange=win, yrange=win,
                               zrange=win, center=center, range_unit=fov_unit,
                               data_center=data_center, data_center_unit=data_center_unit,
                               ref_time=ref_time, verbose=verbose, show_progress=show_progress)
@@ -757,7 +842,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         return projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                             ranges, data_centerm, range_unit, mask,
                                             los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
-                                            boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos)
+                                            boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos, max_threads)
     end
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
@@ -890,17 +975,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 if weighting == :mass
                     if in(i_var, sd_names)
                         if length(mask) == 1
-                            global h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass) ) ,
-                                            closed=closed,
-                                            (newrange1, newrange2) )
+                            global h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass), newrange1, newrange2, closed; max_threads=max_threads)
                         else
-                            global h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass) .* select(filtered_data, :mask)) ,
-                                            closed=closed,
-                                            (newrange1, newrange2) )
+                            global h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass) .* select(filtered_data, :mask), newrange1, newrange2, closed; max_threads=max_threads)
                         end
                         selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
                         if selected_unit != 1.
@@ -912,17 +989,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         maps_mode[Symbol( string(i_var)  )] = :mass_weighted
                     elseif in(i_var, density_names)
                         if length(mask) == 1
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :mass)  ) ,
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass), newrange1, newrange2, closed; max_threads=max_threads)
                         else
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :mass) .* select(filtered_data, :mask) ) ,
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass) .* select(filtered_data, :mask), newrange1, newrange2, closed; max_threads=max_threads)
                         end
                         selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
                         if selected_unit != 1.
@@ -934,27 +1003,11 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         maps_mode[Symbol( string(i_var)  )] = :mass_weighted
                     else
                         if length(mask) == 1
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
-                            h_mass = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :mass) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass), newrange1, newrange2, closed; max_threads=max_threads)
+                            h_mass = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass), newrange1, newrange2, closed; max_threads=max_threads)
                         else
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass) .* select(filtered_data, :mask) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
-                            h_mass = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :mass) .* select(filtered_data, :mask) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass) .* select(filtered_data, :mask), newrange1, newrange2, closed; max_threads=max_threads)
+                            h_mass = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass) .* select(filtered_data, :mask), newrange1, newrange2, closed; max_threads=max_threads)
                         end
                         selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
                         if selected_unit != 1.
@@ -968,17 +1021,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 elseif weighting == :volume
                     if in(i_var, sd_names)
                         if length(mask) == 1
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :mass) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass), newrange1, newrange2, closed; max_threads=max_threads)
                         else
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :mass) .* select(filtered_data, :mask) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass) .* select(filtered_data, :mask), newrange1, newrange2, closed; max_threads=max_threads)
                         end
                         selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
                         if selected_unit != 1.
@@ -990,17 +1035,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         maps_mode[Symbol( string(i_var)  )] = :volume_weighted
                     elseif in(i_var, density_names)
                         if length(mask) == 1
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :mass) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass), newrange1, newrange2, closed; max_threads=max_threads)
                         else
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :mass) .* select(filtered_data, :mask)  ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :mass) .* select(filtered_data, :mask), newrange1, newrange2, closed; max_threads=max_threads)
                         end
                         selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
                         if selected_unit != 1.
@@ -1019,27 +1056,11 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             "projection (particles): weighting=:volume on '$(i_var)' needs a :volume column " *
                             "(e.g. AREPO/GADGET gas); use weighting=:mass for particles without one."))
                         if length(mask) == 1
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :volume) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
-                            h_vol = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :volume) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :volume), newrange1, newrange2, closed; max_threads=max_threads)
+                            h_vol = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :volume), newrange1, newrange2, closed; max_threads=max_threads)
                         else
-                            h = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :volume) .* select(filtered_data, :mask) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
-                            h_vol = fit(Histogram, (select(filtered_data, var_a) ,
-                                                select(filtered_data, var_b) ),
-                                                weights( select(filtered_data, :volume) .* select(filtered_data, :mask) ),
-                                                closed=closed,
-                                                (newrange1, newrange2) )
+                            h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :volume) .* select(filtered_data, :mask), newrange1, newrange2, closed; max_threads=max_threads)
+                            h_vol = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), select(filtered_data, :volume) .* select(filtered_data, :mask), newrange1, newrange2, closed; max_threads=max_threads)
                         end
                         selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
                         if selected_unit != 1.
@@ -1064,13 +1085,13 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                              select(filtered_data, :mass) .* select(filtered_data, :mask)
                     selected_unit, unit_name = getunit(dataobject, i_var, selected_vars, units, uname=true)
                     if in(i_var, sd_names)
-                        grid = _sph_deposit(xa, xb, mw, hs, newrange1, newrange2)      # Σmass per pixel (smoothed)
+                        grid = _sph_deposit(xa, xb, mw, hs, newrange1, newrange2; max_threads=max_threads)      # Σmass per pixel (smoothed)
                         sd = grid ./ pixsize^2                                          # → surface density [code]
                         maps[Symbol(i_var)] = selected_unit != 1. ? sd .* selected_unit : sd
                     else
                         q   = getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)
-                        num = _sph_deposit(xa, xb, q .* mw, hs, newrange1, newrange2)   # Σ(q·m·W)
-                        den = _sph_deposit(xa, xb, mw,      hs, newrange1, newrange2)   # Σ(m·W)
+                        num = _sph_deposit(xa, xb, q .* mw, hs, newrange1, newrange2; max_threads=max_threads)   # Σ(q·m·W)
+                        den = _sph_deposit(xa, xb, mw,      hs, newrange1, newrange2; max_threads=max_threads)   # Σ(m·W)
                         m   = num ./ den                                               # mass-weighted ⟨q⟩
                         maps[Symbol(i_var)] = selected_unit != 1. ? m .* selected_unit : m
                     end
@@ -1124,7 +1145,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         max(1, nlos)
                     verbose && println("Voronoi LOS samples (nlos): ", nlos_used,
                                        nlos === nothing ? "" : " (set by keyword)")
-                    colρ, colρv = _voronoi_los(pa, pb, plos, dens, vals, reff, newrange1, newrange2, lo, hi, nlos_used)
+                    colρ, colρv = _voronoi_los(pa, pb, plos, dens, vals, reff, newrange1, newrange2, lo, hi, nlos_used;
+                                               max_threads=max_threads)
                     selected_unit, unit_name = getunit(dataobject, i_var, selected_vars, units, uname=true)
                     m = isstd ? colρ : (colρv ./ colρ)                           # sd = ∫ρ dl ; intensive = ∫ρv dl / ∫ρ dl
                     maps[Symbol(i_var)] = selected_unit != 1. ? m .* selected_unit : m
@@ -1291,7 +1313,7 @@ end
 function projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                        ranges, data_centerm, range_unit, mask,
                                        los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
-                                       boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing)
+                                       boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing, max_threads=Threads.nthreads())
 
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
@@ -1415,11 +1437,11 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
             for ivar in selected_vars
                 su, un = getunit(dataobject, ivar, selected_vars, units, uname=true)
                 if ivar in sd_names
-                    m = _sph_deposit(xc, yc, massv, hs, e1, e2) ./ pixel_area
+                    m = _sph_deposit(xc, yc, massv, hs, e1, e2; max_threads=max_threads) ./ pixel_area
                 else
                     q   = Float64.(getvar(dataobject, ivar, center=data_centerm, ref_time=ref_time)[sel])
-                    num = _sph_deposit(xc, yc, q .* massv, hs, e1, e2)
-                    den = _sph_deposit(xc, yc, massv,      hs, e1, e2)
+                    num = _sph_deposit(xc, yc, q .* massv, hs, e1, e2; max_threads=max_threads)
+                    den = _sph_deposit(xc, yc, massv,      hs, e1, e2; max_threads=max_threads)
                     m   = num ./ den
                 end
                 maps[ivar] = su != 1. ? m .* su : m
@@ -1445,7 +1467,8 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                 isstd = ivar in sd_names
                 vals  = isstd ? dens :
                         Float64.(getvar(dataobject, ivar, center=data_centerm, ref_time=ref_time)[sel])
-                colρ, colρv = _voronoi_los(xc, yc, zc, dens, vals, reff, e1, e2, lo, hi, nlos_used)
+                colρ, colρv = _voronoi_los(xc, yc, zc, dens, vals, reff, e1, e2, lo, hi, nlos_used;
+                                           max_threads=max_threads)
                 m = isstd ? colρ : (colρv ./ colρ)
                 maps[ivar] = su != 1. ? m .* su : m
                 maps_unit[ivar] = un; maps_mode[ivar] = :voronoi
