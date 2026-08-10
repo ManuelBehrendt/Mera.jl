@@ -166,6 +166,74 @@ end
 
 _axis_dim(ax::Symbol) = ax === :x ? 1 : ax === :y ? 2 : 3
 
+# Particle/moving-mesh version of the core. AREPO-style gas has no cell indices to replicate, so
+# instead of painting cells onto the grid we ask, for every output cell centre, which generator
+# owns it — the same nearest-generator rule `_voronoi_los` uses for the projection, including the
+# same (√3/2)·V^(1/3) reach cap, so a covering grid and a Voronoi projection of the same data agree
+# about which cell a point belongs to. Sampled at cell centres, not integrated.
+function _covering_core_particles(obj, vars::Vector{Symbol}, units::Vector{Symbol}, L::Int,
+                                  ranges::Vector{Float64}, pos_unit::Symbol, max_bytes::Real,
+                                  slice_axis, verbose::Bool)
+    in(:volume, propertynames(obj.data.columns)) || throw(ArgumentError(
+        "covering_grid (particles): needs a :volume column to know how far each cell reaches " *
+        "(AREPO/GADGET gas has one; star/DM particles do not). Use `projection` for point particles."))
+    g0, dims = _grid_dims(ranges, L)
+    nv = length(vars)
+    peak = prod(dims) * sizeof(Float64) * (nv + 1)
+    if peak > max_bytes
+        ncells = prod(dims); npart = length(obj.data)
+        error("covering_grid would need ~$(_human_bytes(peak)) (peak) for dims $(dims) = $(ncells) cells × $(nv) var(s)" *
+              " — a ×$(round(ncells/npart, sigdigits=4)) blow-up over the $(npart) cells — above max_bytes=" *
+              "$(_human_bytes(max_bytes)). Reduce lmax, narrow the range, or raise max_bytes.")
+    end
+    bl  = obj.boxlen
+    xs  = select(obj.data, :x); ys = select(obj.data, :y); zs = select(obj.data, :z)
+    pts = Matrix{Float64}(undef, 3, length(xs))
+    @inbounds for i in eachindex(xs)
+        pts[1,i] = Float64(xs[i]); pts[2,i] = Float64(ys[i]); pts[3,i] = Float64(zs[i])
+    end
+    tree  = KDTree(pts)
+    reff  = (sqrt(3)/2) .* (Float64.(select(obj.data, :volume)) .^ (1/3))
+    vmats = [Float64.(getvar(obj, v, u)) for (v, u) in zip(vars, units)]
+
+    nx, ny, nz = dims; gx0, gy0, gz0 = g0
+    N = 2.0^L
+    grids = [fill(NaN, dims) for _ in 1:nv]
+    # query one z-slab at a time so the query matrix stays O(nx·ny) rather than O(nx·ny·nz)
+    Q = Matrix{Float64}(undef, 3, nx*ny)
+    cxs = [bl * (gx0 + i - 0.5) / N for i in 1:nx]
+    cys = [bl * (gy0 + j - 0.5) / N for j in 1:ny]
+    @inbounds for k in 1:nz
+        zc = bl * (gz0 + k - 0.5) / N
+        c = 0
+        for j in 1:ny, i in 1:nx
+            c += 1; Q[1,c] = cxs[i]; Q[2,c] = cys[j]; Q[3,c] = zc
+        end
+        idxs, dists = nn(tree, Q)
+        c = 0
+        for j in 1:ny, i in 1:nx
+            c += 1; ix = idxs[c]
+            dists[c] <= reff[ix] || continue          # outside every cell's reach → stays NaN
+            for vi in 1:nv
+                grids[vi][i,j,k] = vmats[vi][ix]
+            end
+        end
+    end
+
+    boxcm = bl * (pos_unit === :standard ? 1.0 : getfield(obj.scale, pos_unit))
+    extent = [ranges[1], ranges[2], ranges[3], ranges[4], ranges[5], ranges[6]] .* boxcm
+    cellsize = boxcm / 2.0^L
+    gdict = Dict{Symbol,Array{Float64}}(); udict = Dict{Symbol,Symbol}()
+    for (vi, v) in enumerate(vars)
+        arr = slice_axis === nothing ? grids[vi] : dropdims(grids[vi]; dims=_axis_dim(slice_axis))
+        gdict[v] = arr; udict[v] = units[vi]
+    end
+    odims = slice_axis === nothing ? dims : Tuple(d for (a, d) in enumerate(dims) if a != _axis_dim(slice_axis))
+    res = CoveringGridResult(gdict, udict, L, odims, extent, cellsize, pos_unit, ranges, slice_axis, obj.info)
+    verbose && show(stdout, res)
+    return res
+end
+
 # covering_grid/slice operate on AMR CELL data only (these carry :cx/:cy/:cz cell indices and :level).
 # Particles (point positions :x/:y/:z, no cell indices) and clumps (no :lmax / no cells) are excluded so
 # such calls fail with a clear MethodError at the call site instead of a cryptic column/field error deep
@@ -177,11 +245,18 @@ const _CGCellData = Union{HydroDataType, GravDataType, RtDataType}
                   xrange=[missing,missing], yrange=[missing,missing], zrange=[missing,missing],
                   range_unit=:standard, max_bytes=4e9, pos_unit=:standard, verbose=true) -> CoveringGridResult
 
-Resample **AMR cell data** (`HydroDataType`, `GravDataType`, or `RtDataType`) onto a **uniform
-Nx×Ny×Nz grid** at refinement level `lmax` over the (optional) sub-box — every output cell sampled
-(not integrated). `var` may be a `Symbol` or a vector; `unit` likewise (defaults to code units).
-Coarse leaves are replicated, fine leaves volume-averaged; output cells outside the data are `NaN`.
-Particles and clumps are not AMR cells and raise a `MethodError` (use [`projection`](@ref) for particles).
+Resample **AMR cell data** (`HydroDataType`, `GravDataType`, or `RtDataType`) — or **moving-mesh gas**
+carried as particles (`PartDataType` with a `:volume` column, i.e. AREPO/GADGET `PartType0`) — onto a
+**uniform Nx×Ny×Nz grid** at refinement level `lmax` over the (optional) sub-box, every output cell
+sampled (not integrated). `var` may be a `Symbol` or a vector; `unit` likewise (defaults to code units).
+
+For AMR cells, coarse leaves are replicated and fine leaves volume-averaged. For moving-mesh gas each
+output cell centre takes the value of the **nearest generator** that reaches it (KD-tree, capped at
+`(√3/2)·V^(1/3)` — the same ownership rule [`projection`](@ref)'s `weighting=:voronoi` uses, so the two
+agree about which cell owns a point). Output cells that no cell reaches are `NaN` in both cases.
+
+Point particles without a `:volume` column (stars, dark matter) have no extent to resample and raise
+an `ArgumentError`; use [`projection`](@ref) for those. Clumps raise a `MethodError`.
 
 A uniform grid is dense and can be far larger than the AMR data — call [`covering_grid_memory`](@ref)
 first; this errors rather than allocate past `max_bytes`.
@@ -204,6 +279,20 @@ function covering_grid(obj::_CGCellData, vars::AbstractVector{Symbol}, units::Ab
     ranges = prepranges(obj.info, range_unit, false, collect(xrange), collect(yrange), collect(zrange), collect(center))
     return _covering_core(obj, collect(Symbol, vars), collect(Symbol, units), lmax, ranges, pos_unit,
                           max_bytes, nothing, verbose)
+end
+
+covering_grid(obj::PartDataType, var::Symbol, unit::Symbol=:standard; kwargs...) =
+    covering_grid(obj, [var], [unit]; kwargs...)
+covering_grid(obj::PartDataType, vars::AbstractVector{Symbol}; kwargs...) =
+    covering_grid(obj, vars, fill(:standard, length(vars)); kwargs...)
+function covering_grid(obj::PartDataType, vars::AbstractVector{Symbol}, units::AbstractVector{Symbol};
+                       lmax::Int=obj.lmax, center=[0.,0.,0.], xrange=[missing,missing],
+                       yrange=[missing,missing], zrange=[missing,missing], range_unit::Symbol=:standard,
+                       max_bytes::Real=4e9, pos_unit::Symbol=:standard, verbose::Bool=true)
+    length(units) == length(vars) || throw(ArgumentError("units length must match vars"))
+    ranges = prepranges(obj.info, range_unit, false, collect(xrange), collect(yrange), collect(zrange), collect(center))
+    return _covering_core_particles(obj, collect(Symbol, vars), collect(Symbol, units), lmax, ranges,
+                                    pos_unit, max_bytes, nothing, verbose)
 end
 
 # Off-axis view keywords. If a `slice(...)` call carries ANY of these it is a cutting plane along an

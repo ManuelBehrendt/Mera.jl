@@ -113,6 +113,24 @@ projection is single-threaded, so extra threads will not recover the difference.
 numbers and how to keep a zoom cheap are in
 [What each scheme costs](gadget_reader.md#What-each-scheme-costs).
 
+## Resampling onto a uniform grid
+
+[`covering_grid`](@ref) accepts moving-mesh gas as well as AMR cells, so you can turn the
+tessellation into a plain `Nx×Ny×Nz` array — for an FFT, a power spectrum, or export to a tool
+that expects a regular grid:
+
+```julia
+covering_grid_memory(gas, [:rho, :T]; lmax=8)            # check the size first — a uniform
+cg = covering_grid(gas, [:rho, :T], [:g_cm3, :K]; lmax=8) # grid is dense and can dwarf the mesh
+cg[:rho]                                                  # the 3-D array
+```
+
+Each output cell centre takes the value of the **nearest generator** that reaches it, capped at
+`(√3/2)·V^(1/3)` — the same ownership rule `weighting=:voronoi` uses, so a covering grid and a
+Voronoi projection of the same snapshot agree about which cell owns a point. Cells that no
+generator reaches come back `NaN` rather than being filled in. Star and dark-matter particles
+have no `:volume` and therefore no extent to resample; use [`projection`](@ref) for those.
+
 !!! note "Cutout vs full box"
     An IllustrisTNG **halo cutout** (±400 ckpc around one galaxy) is centrally concentrated, so its
     maps do not fill the frame — that is physical, not a bug. A **full simulation volume** (e.g. an
