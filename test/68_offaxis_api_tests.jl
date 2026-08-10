@@ -250,4 +250,59 @@
         @test !occursin("no off-axis yet", err)
         @test occursin("los=", err)                     # points at the off-axis route instead
     end
+
+    # ---------------------------------------------------------------------------------
+    # Axis vs off-axis :sph totals differ by ~1 % on real data, which looks like a kernel
+    # bug and is not: the two routes FRAME differently (the off-axis extent comes from the
+    # rotated data, not from your window), and _sph_deposit drops the kernel wings that
+    # fall outside the frame. Control the geometry with los=[0,0,1], up=[0,1,0] and the
+    # disagreement collapses. Lives here rather than in 34_offaxis_invariance_tests.jl
+    # because that file runs on real RAMSES data; this one is data-free so it runs in CI.
+    # ---------------------------------------------------------------------------------
+    @testset "axis vs off-axis :sph — the difference is framing, not the kernel" begin
+        n = 50_000
+        s = UInt64(11223)
+        nxt() = (s = (0x5DEECE66D * s + 11) & 0x0000FFFFFFFFFFFF; Float64(s >> 16) / Float64(1 << 32))
+        pos = Array{Float64}(undef, 3, n)
+        for j in 1:n, i in 1:3
+            pos[i, j] = 20.0 + 60.0 * nxt()          # data occupies the middle 60 % of the box
+        end
+        dir = mktempdir(); sd = joinpath(dir, "snapdir_014"); mkpath(sd)
+        Mera.HDF5.h5open(joinpath(sd, "snap_014.0.hdf5"), "w") do f
+            hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+            hg["BoxSize"] = 100.0; hg["Time"] = 1.0
+            hg["NumPart_Total"] = UInt32[n,0,0,0,0,0]
+            hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+            g = Mera.HDF5.create_group(f, "PartType0")
+            g["Coordinates"]    = pos
+            g["Velocities"]     = zeros(Float32, 3, n)
+            g["ParticleIDs"]    = UInt32.(1:n)
+            g["Masses"]         = fill(1.0f-6, n)
+            g["Density"]        = fill(1.0f0, n)
+            g["InternalEnergy"] = fill(100.0f0, n)
+        end
+        gas = getparticles(getinfo(14, dir, verbose=false), families=[0], verbose=false)
+        M = msum(gas); ctr = [:bc]; px = [1.0, :standard]
+        frac(m) = sum(first(values(m.maps))) * m.pixsize^2 / M
+
+        # los=[0,0,1], up=[0,1,0] makes the off-axis camera reproduce the axis-aligned view
+        for w in (:mass, :sph)
+            a = projection(gas, :sd; direction=:z, pxsize=px, center=ctr, weighting=w,
+                           verbose=false, show_progress=false)
+            b = projection(gas, :sd; los=[0.,0.,1.], up=[0.,1.,0.], pxsize=px, center=ctr,
+                           weighting=w, verbose=false, show_progress=false)
+            @test isapprox(frac(b) / frac(a), 1.0; atol = w === :mass ? 1e-6 : 5e-3)
+        end
+
+        # ...and the mechanism: the SAME axis route loses mass once the frame clips the
+        # kernel, so this is a property of the framing, not of either route
+        wide  = projection(gas, :sd; direction=:z, pxsize=px, center=ctr, weighting=:sph,
+                           range_unit=:standard, xrange=[-0.40,0.40], yrange=[-0.40,0.40],
+                           verbose=false, show_progress=false)
+        tight = projection(gas, :sd; direction=:z, pxsize=px, center=ctr, weighting=:sph,
+                           range_unit=:standard, xrange=[-0.30,0.30], yrange=[-0.30,0.30],
+                           verbose=false, show_progress=false)
+        @test isapprox(frac(wide), 1.0; atol=1e-3)      # frame clears the data: nothing lost
+        @test frac(tight) < frac(wide) - 1e-3           # frame clips the wings: mass leaks out
+    end
 end

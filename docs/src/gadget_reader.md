@@ -296,9 +296,10 @@ is the outlier because its nearest-cell lookup runs per pixel against every cell
 when you need a sharp, sampling-correct map of an *intensive* field (temperature, metallicity),
 and stay on `:sph` while you are still iterating on the framing.
 
-Particle projection is single-threaded (see
-[Multi-Threading](multi-threading/multi-threading_intro.md)), so more threads will not shorten
-these. Project a sub-volume or use a coarser `pxsize` instead.
+These were measured single-threaded. Particle projection is now threaded *inside* one map
+(see [Multi-Threading](multi-threading/multi-threading_intro.md)): `:voronoi` splits the pixels
+and scales well, while `:mass`/`:sph` split the particles and are memory-bandwidth bound, so
+they gain roughly 2–4×. `max_threads=` caps it. A sub-volume or a coarser `pxsize` still helps.
 
 !!! note "`:voronoi` on a cutout is not losing mass"
     Compare `sum(map) * pixsize^2` against [`msum`](@ref) on a sub-volume and `:voronoi` comes up

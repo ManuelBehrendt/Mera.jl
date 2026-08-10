@@ -21,7 +21,7 @@ help — a single-variable projection stays flat no matter how many you give it.
 |---|---|
 | [`gethydro`](@ref), [`getparticles`](@ref), [`getgravity`](@ref), [`getrt`](@ref) | RAMSES CPU-file chunks |
 | [`projection`](@ref) on cells (hydro/gravity) | the variables requested in one call |
-| [`projection`](@ref) on particles | **not threaded** — see below |
+| [`projection`](@ref) on particles | pixels (`:voronoi`) or particle chunks (`:mass`/`:volume`/`:sph`) |
 | [`clumpfind`](@ref) | candidate chunks |
 | [`export_vtk`](@ref) | particles / cells |
 | [`convertdata`](@ref), [`batch_convert_mera`](@ref) | components being converted |
@@ -31,13 +31,19 @@ gas = gethydro(info, max_threads=4)                       # cap the read
 projection(gas, [:sd, :T, :vx], :km_s, max_threads=3)     # one task per variable
 ```
 
-!!! warning "Particle projection is single-threaded"
-    The particle backend runs on one thread and does not take `max_threads` at all — passing
-    it is an error rather than a silent no-op. Extra threads do not speed up
-    `projection(part, ...)`, which matters most for particle-based codes (GADGET, AREPO,
-    SWIFT, GIZMO), where *every* component including the gas arrives as particles. Budget
-    wall-clock accordingly, and reduce cost with `pxsize`, a spatial `xrange`/`yrange`/
-    `zrange` selection, or a cheaper `weighting` scheme instead.
+!!! note "What the particle backend parallelises over"
+    Unlike the cell backend, particle projection does **not** parallelise over variables — it
+    splits the work inside a single map, so one variable already benefits:
+
+    - `weighting=:voronoi` partitions the **pixels**. Each ray is independent and each thread
+      owns disjoint output pixels, so the result is bitwise identical to the serial one at any
+      thread count.
+    - `:mass`, `:volume` and `:sph` partition the **particles** into chunks with per-thread
+      accumulators, reduced in a fixed order. Reproducible for a given thread count; it differs
+      from the serial sum only by floating-point association (~1e-15 relative).
+
+    `:voronoi` scales best because it is compute-bound; the deposition schemes are limited by
+    memory bandwidth and gain roughly 2–4×.
 
 ## Diagnostics
 

@@ -1093,4 +1093,110 @@ end
         end
     end
 
+    # -------------------------------------------------------------------------------------
+    # Particle projection is threaded INSIDE one map (unlike the cell backend, which threads
+    # over variables): :voronoi splits the pixels, the deposition schemes split the particles
+    # into chunks with per-thread accumulators. Threading must not move the numbers, and must
+    # give the same answer every run for a given thread count.
+    # `max_threads` above Threads.nthreads() is clamped, so these also cover the
+    # degrade-to-serial path when Julia was started with one thread.
+    # -------------------------------------------------------------------------------------
+    @testset "threaded particle projection == serial" begin
+        n = 60_000
+        dir = mktempdir(); sd = joinpath(dir, "snapdir_010"); mkpath(sd)
+        s = UInt64(24680)
+        nxt() = (s = (0x5DEECE66D * s + 11) & 0x0000FFFFFFFFFFFF; Float64(s >> 16) / Float64(1 << 32))
+        pos = Array{Float64}(undef, 3, n)
+        for j in 1:n, i in 1:3
+            pos[i, j] = 20.0 + 60.0 * nxt()
+        end
+        rho = Float32[Float32(10^(2*nxt())) for _ in 1:n]     # contrast, so sampling matters
+        h5open(joinpath(sd, "snap_010.0.hdf5"), "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 100.0; hg["Time"] = 1.0
+            hg["NumPart_Total"] = UInt32[n, 0, 0, 0, 0, 0]
+            hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+            g = create_group(f, "PartType0")
+            g["Coordinates"]    = pos
+            g["Velocities"]     = zeros(Float32, 3, n)
+            g["ParticleIDs"]    = UInt32.(1:n)
+            g["Masses"]         = fill(1.0f-6, n)
+            g["Density"]        = rho
+            g["InternalEnergy"] = fill(100.0f0, n)
+        end
+        gas = getparticles(getinfo(10, dir, verbose=false), families=[0], verbose=false)
+        ctr = [:bc]; px = [2.0, :standard]
+        los = [0.3, 0.4, sqrt(1 - 0.09 - 0.16)]
+
+        for (route, kw) in (("axis", (direction=:z,)), ("off-axis", (los=los,)))
+            for w in (:mass, :volume, :sph, :voronoi)
+                serial = projection(gas, :sd; pxsize=px, center=ctr, weighting=w, max_threads=1,
+                                    verbose=false, show_progress=false, kw...)
+                A = first(values(serial.maps))
+                for nt in (2, 4, 8)
+                    m = projection(gas, :sd; pxsize=px, center=ctr, weighting=w, max_threads=nt,
+                                   verbose=false, show_progress=false, kw...)
+                    B = first(values(m.maps))
+                    @test size(B) == size(A)
+                    if w === :voronoi
+                        # pixels are partitioned, so each one still accumulates in the same
+                        # order as the serial run — this is exact, not approximate
+                        @test B == A
+                    else
+                        # per-thread buffers reduced in a fixed order: only FP association differs
+                        @test maximum(abs.(B .- A) ./ max.(abs.(A), 1e-300)) < 1e-10
+                    end
+                end
+                # and the same thread count reproduces itself run to run
+                r1 = projection(gas, :sd; pxsize=px, center=ctr, weighting=w, max_threads=4,
+                                verbose=false, show_progress=false, kw...)
+                r2 = projection(gas, :sd; pxsize=px, center=ctr, weighting=w, max_threads=4,
+                                verbose=false, show_progress=false, kw...)
+                @test first(values(r1.maps)) == first(values(r2.maps))
+            end
+        end
+    end
+
+    # A timing assertion is only meaningful with real cores and a workload big enough that
+    # thread start-up is not the story, so this skips rather than flakes on a small or loaded
+    # machine. :voronoi is the compute-bound path, so it is the one worth asserting on.
+    @testset "threading actually speeds :voronoi up" begin
+        if Threads.nthreads() < 4
+            @test_skip "needs >= 4 threads (have $(Threads.nthreads()))"
+        else
+            n = 120_000
+            dir = mktempdir(); sd = joinpath(dir, "snapdir_013"); mkpath(sd)
+            s = UInt64(13579)
+            nxt() = (s = (0x5DEECE66D * s + 11) & 0x0000FFFFFFFFFFFF; Float64(s >> 16) / Float64(1 << 32))
+            pos = Array{Float64}(undef, 3, n)
+            for j in 1:n, i in 1:3
+                pos[i, j] = 20.0 + 60.0 * nxt()
+            end
+            h5open(joinpath(sd, "snap_013.0.hdf5"), "w") do f
+                hg = attributes(create_group(f, "Header"))
+                hg["BoxSize"] = 100.0; hg["Time"] = 1.0
+                hg["NumPart_Total"] = UInt32[n, 0, 0, 0, 0, 0]
+                hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+                g = create_group(f, "PartType0")
+                g["Coordinates"]    = pos
+                g["Velocities"]     = zeros(Float32, 3, n)
+                g["ParticleIDs"]    = UInt32.(1:n)
+                g["Masses"]         = fill(1.0f-6, n)
+                g["Density"]        = fill(1.0f0, n)
+                g["InternalEnergy"] = fill(100.0f0, n)
+            end
+            gas = getparticles(getinfo(13, dir, verbose=false), families=[0], verbose=false)
+            run(nt) = projection(gas, :sd; direction=:z, pxsize=[1.5, :standard], center=[:bc],
+                                 weighting=:voronoi, max_threads=nt, verbose=false, show_progress=false)
+            run(1); run(4)                                   # compile both paths
+            t1 = @elapsed run(1)
+            tn = @elapsed run(4)
+            if t1 < 0.5
+                @test_skip "workload too small to time reliably ($(round(t1, digits=2)) s)"
+            else
+                @test t1 / tn > 1.3                          # deliberately loose: CI machines are shared
+            end
+        end
+    end
+
 end

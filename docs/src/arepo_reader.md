@@ -108,9 +108,9 @@ projection(gas, :T, weighting=:voronoi)         # sharp, cell-respecting tempera
 A fully Voronoi-exact renderer (re-tessellate + analytic polyhedron–pixel integration, as in AREPO's
 `ArepoVTK`) would be more faithful still, but is rarely needed.
 
-`:mass` and `:sph` cost about the same; `:voronoi` runs roughly **10× slower**, and particle
-projection is single-threaded, so extra threads will not recover the difference. Measured
-numbers and how to keep a zoom cheap are in
+`:mass` and `:sph` cost about the same; `:voronoi` runs roughly **10× slower** single-threaded,
+though it is also the scheme that threads best (it splits the pixels, so `max_threads=8` recovers
+much of the difference). Measured numbers and how to keep a zoom cheap are in
 [What each scheme costs](gadget_reader.md#What-each-scheme-costs).
 
 ## Resampling onto a uniform grid

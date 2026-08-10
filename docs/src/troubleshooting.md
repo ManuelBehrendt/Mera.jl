@@ -117,18 +117,21 @@ resolving.
 
 ## More threads didn't speed up my projection
 
-Two separate reasons, so check which one applies:
+The two backends split the work differently, so check which one you are on:
 
-- **Particle projection is single-threaded.** It contains no threading and takes no
-  `max_threads`. This covers *all* gas on the particle-based codes (GADGET, AREPO, SWIFT,
-  GIZMO). Cut the cost with a smaller window, a coarser `pxsize`, or a cheaper `weighting`
-  (`:voronoi` is ~10× `:mass`/`:sph`) rather than with cores.
-- **Cell projection parallelises over variables**, not pixels. One variable stays flat however
-  many threads you give it; ask for several in one call to get the benefit.
+- **Cell projection (hydro/gravity) parallelises over variables**, not pixels. One variable
+  stays flat however many threads you give it; ask for several in one call to get the benefit.
+- **Particle projection parallelises inside a single map**, so one variable does speed up. But
+  only `:voronoi` is compute-bound and scales well — `:mass`, `:volume` and `:sph` are limited
+  by memory bandwidth and typically gain 2–4×, not 8×.
 
 ```julia
-projection(gas, [:sd, :T, :vx], :km_s)    # threads over the three variables
+projection(gas,  [:sd, :T, :vx], :km_s)          # cells: threads over the three variables
+projection(part, :sd, max_threads=8)             # particles: threads inside the one map
 ```
+
+Also check you actually started Julia with threads (`Threads.nthreads()`), and that
+`max_threads` is not capping you below that.
 
 ## Julia runs on one thread
 
