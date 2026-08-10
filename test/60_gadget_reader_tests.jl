@@ -578,6 +578,11 @@ end
         end
         info = getinfo_gadget(7, dir2, verbose=false)                  # resolves snapdir_007/
         @test sort(getvar(getparticles_gadget(info, verbose=false), :x)) == [10.0, 90.0]
+        # the .hdf5 sit one level down, so a scan of `dir2` itself sees only a directory;
+        # detection has to look inside snapdir_NNN/ or it falls through to :ramses and the
+        # bare `getinfo` hunts for a non-existent output_00007/info_00007.txt
+        @test Mera.detect_simcode(dir2) == :gadget
+        @test getinfo(7, dir2, verbose=false).simcode == "GADGET"      # no code=:gadget needed
     end
 
     @testset "64-bit particle counts (NumPart_Total_HighWord)" begin

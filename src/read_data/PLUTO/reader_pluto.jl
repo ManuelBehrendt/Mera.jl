@@ -79,6 +79,15 @@ function detect_simcode(path::String)
             _is_gadget_h5(fn) && return :gadget
             return _is_flash_h5(fn) ? :flash : :chombo
         end
+        # GADGET-4 / AREPO keep the chunks one level down in `snapdir_NNN/`, so the scan above
+        # finds only directories and the run would fall through to :ramses — which is what a
+        # user hit: `getinfo(32, path)` looked for `output_00032/info_00032.txt` on an AREPO
+        # zoom. `_gadget_files` already resolves this layout; detection has to see it too.
+        for d in filter(f -> occursin(r"^snapdir_\d+$", f) && isdir(joinpath(path, f)), readdir(path))
+            for c in filter(f -> endswith(lowercase(f), ".hdf5"), readdir(joinpath(path, d)))
+                _is_gadget_h5(joinpath(path, d, c)) && return :gadget
+            end
+        end
     end
     return :ramses
 end
