@@ -97,6 +97,39 @@ projection(gas,  :T, weighting=[:volume])   # hydro / gravity / RT
 projection(part, :sd, weighting=:mass)      # particles
 ```
 
+## My zoomed projection came back far smaller than `res`
+
+`res` counts pixels across the **whole box** (`pixsize = boxlen/res`), not across the window you
+asked for. Zoom into a small region of a big box and most of those pixels fall outside it, so
+`res=512` on a ±1100 ckpc/h window of a large box returns a **16×16** map.
+
+Set the pixel size directly instead — `pxsize` dominates over both `res` and `lmax`, and means
+the same thing whatever the window:
+
+```julia
+projection(gas, :sd, :Msol_pc2, pxsize=[0.5, :kpc],
+           center=[:bc], range_unit=:kpc,
+           xrange=[-20,20], yrange=[-20,20], zrange=[-5,5])
+```
+
+Going finer than the data helps nothing: below the smallest cell you are upsampling, not
+resolving.
+
+## More threads didn't speed up my projection
+
+Two separate reasons, so check which one applies:
+
+- **Particle projection is single-threaded.** It contains no threading and takes no
+  `max_threads`. This covers *all* gas on the particle-based codes (GADGET, AREPO, SWIFT,
+  GIZMO). Cut the cost with a smaller window, a coarser `pxsize`, or a cheaper `weighting`
+  (`:voronoi` is ~10× `:mass`/`:sph`) rather than with cores.
+- **Cell projection parallelises over variables**, not pixels. One variable stays flat however
+  many threads you give it; ask for several in one call to get the benefit.
+
+```julia
+projection(gas, [:sd, :T, :vx], :km_s)    # threads over the three variables
+```
+
 ## Julia runs on one thread
 
 ```julia

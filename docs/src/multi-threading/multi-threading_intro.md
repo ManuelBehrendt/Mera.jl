@@ -66,7 +66,8 @@ end
 | `gethydro` | ✅ | ✅ | Parallel file loading |
 | `getgravity` | ✅ | ✅ | Same as gethydro |
 | `getparticles` | ✅ | ✅ | Same as gethydro |
-| `projection` | ✅ | ✅ | 1 thread per variable |
+| `projection` (cells) | ✅ | ✅ | 1 thread per variable |
+| `projection` (particles) | ✗ | ✗ | Single-threaded backend |
 | `export_vtk` | ✅ | ✗ | Auto-threading only |
 | `getinfo` | ✗ | ✗ | Lightweight, single-thread |
 
@@ -135,7 +136,8 @@ end
 | `gethydro`    | Parallel across files/levels with dynamic load balancing; final table creation parallel by column | `Threads.nthreads()`   | ✓             |
 | `getgravity`  | Same strategy as `gethydro`                               | `Threads.nthreads()`   | ✓             |
 | `getparticles`| Same strategy as `gethydro`                               | `Threads.nthreads()`   | ✓             |
-| `projection`  | One task per variable (bounded by available/max_threads); dynamic queueing if variables > threads | `Threads.nthreads()`   | ✓             |
+| `projection` (cells) | One task per variable (bounded by available/max_threads); dynamic queueing if variables > threads | `Threads.nthreads()`   | ✓             |
+| `projection` (particles) | Single-threaded; the backend contains no threading and takes no `max_threads` | 1                      | ✗             |
 | `export_vtk`  | Internally threaded (hydro and particles); thread count auto-managed | `Threads.nthreads()`   | ✗             |
 
 ### What to expect from more threads
@@ -146,11 +148,12 @@ differs per operation, so the same thread count pays off differently:
 | Operation | Parallel over | More threads help when |
 |---|---|---|
 | `gethydro` / `getparticles` / `getgravity` / `getrt` | RAMSES CPU-file chunks | the output has many CPU files |
-| `projection` | the **variables you request** | you ask for several variables in one call |
+| `projection` on cells | the **variables you request** | you ask for several variables in one call |
+| `projection` on particles | nothing — single-threaded | never; extra threads do not help |
 | `clumpfind` | candidate chunks | there are many candidates |
 | `export_vtk` | particles / cells | the export is large |
 
-The projection case has a practical consequence worth internalising:
+The cell-projection case has a practical consequence worth internalising:
 
 ```julia
 # one call, nine variables — the variables run in parallel
@@ -174,6 +177,15 @@ A single light projection is **serial-fraction dominated and stays flat** — th
 not a misconfiguration. The ten-variable case gains about 1.6× and then saturates. Reading is
 usually I/O bound, so it saturates once the storage does; see
 [Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md).
+
+!!! warning "None of this applies to particle projection"
+    The particle backend is single-threaded and takes no `max_threads`. Batching variables
+    into one call is still tidier, but it buys no parallelism there, and neither does starting
+    Julia with more threads. This is worth knowing before planning a run on a particle-based
+    code (GADGET, AREPO, SWIFT, GIZMO), where the gas is particles too, so *every* projection
+    takes this path. To cut the cost, project a sub-volume, use a coarser `pxsize`, or pick a
+    cheaper `weighting` — see the deposition-cost table in
+    [GADGET / AREPO](../gadget_reader.md).
 
 ## 2 Setting Up Julia for Threading
 
