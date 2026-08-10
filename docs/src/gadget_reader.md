@@ -243,7 +243,13 @@ getvar(gas, :T, :K)                                # temperature [K] from :u (+ 
 getvar(gas, :metallicity)                          # mass-fraction metallicity
 
 pdf(gas, :rho); profile(gas, :r_sphere, :T)        # PDFs / radial profiles on the gas
+phase(gas, :rho, :T; xscale=:log, yscale=:log)     # mass-weighted ρ–T phase diagram
 ```
+
+[`phase`](@ref) bins any two `getvar` quantities and sums the weight (mass by default), so the
+usual density–temperature diagram is one call rather than a hand-rolled 2-D histogram — it
+returns `xedges`, `yedges` and the `H` weight grid ready to hand to `heatmap`. Pass a third
+field to get its per-bin weighted mean as well.
 
 Maps come from the particle projection, which deposits each Voronoi cell at its position. **Extensive**
 maps (surface density) are mass-conserving to machine precision (`Σ pixel·area == msum`); **intensive**
