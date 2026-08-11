@@ -227,8 +227,29 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
             println("boxlen = ", info.boxlen)
             length(fns) > 1 && println("snapshot chunks: ", length(fns))
             present = [(p, npart[p+1]) for p in 0:5 if npart[p+1] > 0]
-            println("particles: ", join(["$(n) $(_GADGET_FAMILY[p])" for (p, n) in present], ", "),
+            # On AREPO (and IllustrisTNG) PartType0 is not a particle at all — it is a Voronoi
+            # mesh-generating point carrying a cell volume. Calling it "gas particles" invites
+            # people to look for `gethydro`; naming it "gas cells" says what the data model is.
+            isarepo = info.simcode == "AREPO"
+            label(p) = (p == 0 && isarepo) ? "gas cells (Voronoi)" : _GADGET_FAMILY[p]
+            println(isarepo ? "cells/particles: " : "particles: ",
+                    join(["$(n) $(label(p))" for (p, n) in present], ", "),
                     "  (total ", sum(npart), ")")
+            isarepo && println("gas is PartType0 → load with getparticles(info, families=[0]); " *
+                               "there is no separate hydro block")
+            # A group catalogue beside the snapshot is easy to miss, and it is what halo work
+            # starts from — say whether it is there rather than leaving getgroups to error.
+            try
+                gfns = _groupcat_files(output, path)
+                ng = h5open(first(gfns), "r") do gf
+                    hh = attributes(gf["Header"])
+                    haskey(hh, "Ngroups_Total") ? Int(read(hh["Ngroups_Total"])) : -1
+                end
+                println("group catalogue: ", length(gfns), " file(s)",
+                        ng >= 0 ? ", $(ng) FoF groups" : "", "  → getgroups(info)")
+            catch
+                println("group catalogue: none found  (halo membership via halo= unavailable)")
+            end
             println("-------------------------------------------------------")
         end
     end
@@ -274,7 +295,7 @@ end
 
 """
     getparticles_gadget(info::InfoType; families=:all, vars=:all, xrange, yrange, zrange,
-                        center, range_unit, verbose=true) -> PartDataType
+                        center, range_unit, verbose=true, show_progress=true) -> PartDataType
 
 Read the particles of a GADGET HDF5 snapshot described by `info` (from [`getinfo_gadget`](@ref))
 into a `PartDataType` with columns `(:x,:y,:z, :vx,:vy,:vz, :mass, :id, :family)`. `:family` is the
@@ -300,7 +321,8 @@ window the columns are sized from the header once, rather than grown per chunk.
 """
 function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=nothing,
                              xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
-                             center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)
+                             center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true,
+                             show_progress::Bool=true)
     fns = _gadget_files(round(Int, info.output), info.path)
     # `halo=i` selects one FoF group by MEMBERSHIP rather than geometry — the idiom the TNG
     # workflow uses (illustris_python has no spatial selection at all). Membership comes from the
@@ -413,6 +435,13 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
     # chunk-by-chunk streaming: each file is read and windowed independently, so a spatial
     # sub-selection of a large multi-file snapshot never holds more than one chunk in memory
     seen = zeros(Int64, 6)                 # particles of each type passed so far (global ordering)
+    # One chunk is the natural unit of progress here: a TNG/GADGET-4 snapshot is split into
+    # snapdir_NNN/snap_NNN.K.hdf5 pieces, and a large one takes long enough per chunk that a
+    # silent minute of reading is indistinguishable from a hang. Same bar style as the RAMSES
+    # reader. Suppressed when there is only one chunk — a bar that jumps 0→100 % says nothing.
+    pbar = (show_progress && length(fns) > 1) ?
+           Progress(length(fns); desc="Reading chunks: ", dt=0.2, showspeed=true, barlen=50) :
+           nothing
     for fn in fns
     h5open(fn, "r") do f
         masstable = Float64.(_gadget_attr(attributes(f["Header"]), "MassTable", zeros(6)))
@@ -487,7 +516,9 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
         end
         seen .+= nthis                      # every chunk advances the global per-type position
     end
+    pbar === nothing || ProgressMeter.next!(pbar)
     end
+    pbar === nothing || ProgressMeter.finish!(pbar)
     # GADGET cosmological velocity convention: the stored value is v_peculiar/√a, so multiply by
     # √a to recover the physical peculiar velocity (no-op for non-cosmological runs, a = 1).
     if info.aexp != 1.0

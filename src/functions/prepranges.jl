@@ -521,7 +521,24 @@ function prepboxcenter(dataobject::InfoType, range_unit::Symbol, center::Array{<
             end
         end
     end
-    
+
+    # With range_unit=:standard the centre is a BOX FRACTION in [0,1]. Passing code-unit
+    # coordinates instead — the natural thing to do with a group-catalogue position like
+    # GroupPos, which is in ckpc/h — selects a region far outside the box and returns an
+    # EMPTY object with no error at all. That silence is the problem: it has produced
+    # confidently wrong downstream results (a rank-1 covariance / bogus principal axes)
+    # rather than an obvious failure. Warn, and say exactly how to convert.
+    if range_unit == :standard
+        bad = findall(c -> c isa Real && (c < -1.0 || c > 1.0), centerm)
+        if !isempty(bad)
+            @warn "center=$(centerm) with range_unit=:standard, but :standard means a BOX " *
+                  "FRACTION in [0,1] — component(s) $(bad) look like code units. This selects " *
+                  "a region outside the box and usually yields an empty result. Divide by " *
+                  "info.boxlen (center = pos ./ info.boxlen), or pass the centre in a physical " *
+                  "unit with a matching range_unit (e.g. range_unit=:kpc)." maxlog=3
+        end
+    end
+
     return  centerm
 
 end

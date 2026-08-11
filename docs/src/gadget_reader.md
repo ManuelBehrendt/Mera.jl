@@ -117,10 +117,44 @@ the valid ones.
 
 ### Halo membership: the group catalogue
 
-A snapshot says where the gas is; the **group catalogue** says which halo it belongs to. In the
-IllustrisTNG workflow membership comes from the halo finder, not from geometry — the reference
-reader `illustris_python` has no spatial selection at all, only `loadHalo(id)`. Mera offers the
-same idiom:
+#### What a group catalogue is
+
+A snapshot stores particles, not objects. Which particles form *one galaxy* or *one halo* is a
+separate question, answered by a **halo finder** run after the simulation and written beside the
+snapshot as a **group catalogue** (`groups_NNN/` next to `snapdir_NNN/`).
+
+Two levels of object appear in it, and the distinction matters:
+
+- **FoF groups** — "friends-of-friends": particles are linked when they lie within a linking
+  length of each other (conventionally 0.2× the mean interparticle separation), and each connected
+  set is one group. This is a *halo*: a central galaxy plus everything falling into it. Groups are
+  written in order of decreasing mass, so group 0 is the most massive.
+- **Subhaloes** — SUBFIND then splits each FoF group into gravitationally bound substructures: the
+  central object plus its satellites. One FoF group therefore contains several subhaloes.
+
+Mera's [`getgroups`](@ref) reads the **FoF** level. Fields are plain arrays, one row per group —
+`GroupPos` (position), `GroupMassType` (mass per particle type), `Group_M_Crit200` /
+`Group_R_Crit200` (the mass and radius of a sphere enclosing 200× the critical density, the usual
+definition of "the halo").
+
+!!! warning "The most massive two groups are often not two different objects"
+    Ranking by mass and taking groups 0 and 1 is the obvious way to find a halo pair, and it
+    fails when one halo dominates: rank 1 is then frequently a *satellite* of rank 0 rather than
+    an independent halo. Check the separation, e.g. accept the next group only beyond some
+    distance from the first. For a merger or a filament pair, following the same object across
+    snapshots by proximity to its previous position is more reliable than re-ranking by mass at
+    every output — FoF ranks swap between objects as the system evolves.
+
+!!! note "Catalogue arrays are `(n_groups, k)`"
+    Row = group, column = component: `gc.GroupPos[i, :]` is group `i`'s position, **not**
+    `gc.GroupPos[:, i]`. Catalogue units are the raw GADGET ones — positions in ckpc/h, masses in
+    `1e10 M⊙/h` — so they are neither Mera code units nor physical units until you convert.
+
+#### Loading one group's particles
+
+In the IllustrisTNG workflow membership comes from the halo finder, not from geometry — the
+reference reader `illustris_python` has no spatial selection at all, only `loadHalo(id)`. Mera
+offers the same idiom:
 
 ```julia
 info = getinfo(33, "/path/to/TNG50-4")   # simcode = "AREPO"

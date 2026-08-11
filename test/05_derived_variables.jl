@@ -72,7 +72,12 @@ end
     hydro = load_test_hydro(:spiral_clumps)
     gamma = hydro.info.gamma
     boxlen = hydro.info.boxlen
-    center = [boxlen/2, boxlen/2, boxlen/2]
+    # `center` with the default center_unit=:standard is a BOX FRACTION in [0,1], not code
+    # units — so the box centre is [0.5,0.5,0.5], not [boxlen/2,...]. This read boxlen/2 = 50
+    # on the boxlen=100 fixture, i.e. a point 50 box-lengths away. It went unnoticed because
+    # every identity asserted below (vr²+vϕ² = vx²+vy², and the spherical equivalent) is
+    # invariant under the choice of centre.
+    center = [0.5, 0.5, 0.5]
 
     # ========================================================================
     # Sound Speed Tests
