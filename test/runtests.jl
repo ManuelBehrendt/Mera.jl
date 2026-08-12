@@ -223,6 +223,13 @@ if isempty(_focus)
         include("29_parallel_execution_tests.jl")
     end
 
+    # ------------------------------------------------------------------------
+    # AREPO real-data validation (inert unless MERA_IPM_DATA points at IPM data)
+    # ------------------------------------------------------------------------
+    @testset "AREPO Real-Data Validation" begin
+        include("73_arepo_realdata_validation.jl")
+    end
+
     end  # if SMOKE_ONLY / DATA_AVAILABLE
 
 end
