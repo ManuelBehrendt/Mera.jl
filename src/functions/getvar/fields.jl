@@ -135,6 +135,14 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
 # -------------------------------------------------------------------------------------
 const USER_FIELDS = Dict{Symbol, Dict{Symbol,Any}}()
 
+# The registries above are keyed in the SINGULAR (:particle, :clump) while every user-facing
+# name for a data kind is plural — `getparticles`, `getclumps`, `list_fields(:particles)`.
+# That mismatch silently returned an EMPTY field list for particles and clumps: the 39
+# particle entries were there all along, just under a key nobody passes. Normalising at the
+# boundary lets both spellings reach the same registry.
+const _KIND_ALIASES = Dict(:particles => :particle, :clumps => :clump)
+_canon_kind(k::Symbol) = get(_KIND_ALIASES, k, k)
+
 # -------------------------------------------------------------------------------------
 # Resolver: transitive closure of a derived var down to leaf (raw) symbols.
 # -------------------------------------------------------------------------------------
@@ -162,7 +170,8 @@ The transitive set of leaf (raw) symbols a derived `var` is built from, for the 
 data-type `kind` (`:hydro`, `:gravity`, `:rt`, `:particle`, `:clump`). Includes geometry
 leaves; use [`getvar_requirements`](@ref) for the physical-variables-to-read set.
 """
-required_raw_vars(kind::Symbol, var::Symbol) = _resolve_leaves!(Set{Symbol}(), kind, var, Set{Symbol}())
+required_raw_vars(kind::Symbol, var::Symbol) =
+    _resolve_leaves!(Set{Symbol}(), _canon_kind(kind), var, Set{Symbol}())
 
 """
     getvar_requirements(kind::Symbol, vars) -> Vector{Symbol}
@@ -178,6 +187,7 @@ getvar_requirements(:hydro, [:sd, :T])    # [:rho, :p]   (:sd is an alias of sur
 ```
 """
 function getvar_requirements(kind::Symbol, vars)
+    kind = _canon_kind(kind)
     vlist = vars isa Symbol ? (vars,) : vars
     out = Set{Symbol}()
     for v in vlist
@@ -269,6 +279,7 @@ quantity (a few specialised fields, e.g. some RT-ionization variables, are compu
 arguments.
 """
 function list_fields(kind::Symbol=:hydro; builtin::Bool=false)
+    kind = _canon_kind(kind)
     names = haskey(USER_FIELDS, kind) ? collect(keys(USER_FIELDS[kind])) : Symbol[]
     if builtin && haskey(FIELD_DEPS, kind)
         union!(names, keys(FIELD_DEPS[kind]))
@@ -282,7 +293,8 @@ end
 The registration record `(; compute, depends_on, unit, description)` for a user field,
 or `nothing` if it isn't registered for that `kind`.
 """
-field_info(name::Symbol; kind::Symbol=:hydro) =
+field_info(name::Symbol; kind::Symbol=:hydro) = _field_info(name, _canon_kind(kind))
+_field_info(name::Symbol, kind::Symbol) =
     (haskey(USER_FIELDS, kind) && haskey(USER_FIELDS[kind], name)) ? USER_FIELDS[kind][name] : nothing
 
 # -------------------------------------------------------------------------------------
@@ -430,6 +442,7 @@ variables it ultimately needs (same as [`getvar_requirements`](@ref)). Works for
 [`add_field`](@ref)-registered quantities.
 """
 function field_dependencies(kind::Symbol, var::Symbol)
+    kind = _canon_kind(kind)
     direct = haskey(FIELD_DEPS, kind) ? get(FIELD_DEPS[kind], var, Symbol[]) : Symbol[]
     return (direct=copy(direct), raw=getvar_requirements(kind, var))
 end

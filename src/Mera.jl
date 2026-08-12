@@ -115,6 +115,8 @@ export
     getlogs_gadget,
     loglist,
     configflags,
+    groupfields,
+    sf_threshold,
     createpath,
     gethydro,
     getgravity,

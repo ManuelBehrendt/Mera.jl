@@ -123,6 +123,39 @@ Mera prefers the snapshot's own `/Parameters` group when it exists, because that
 the fallback. Values from `/Parameters` keep their HDF5 types, values from the text file are
 `String`.
 
+## Related quantities the run does not hand you
+
+Three things users routinely re-derive by hand, or get wrong:
+
+**The star-formation threshold.** [`sf_threshold`](@ref) returns it *with its provenance*,
+never a silent guess:
+
+```julia
+sf_threshold(info)                            # :parameter, when CritPhysDensity > 0
+sf_threshold(info, gas; method=:measured)     # exact: min n_H among cells with sfr > 0
+```
+
+When `CritPhysDensity` is `0` — as it is on a TNG-like run — AREPO does **not** use a
+supplied threshold: it derives one at run time from the Springel & Hernquist self-regulation
+condition, and that number is not stored anywhere. Two nearby values are commonly mistaken
+for it and are both wrong: `CritOverDensity` is a separate comoving-overdensity floor (three
+decades lower at z ≈ 3.4), and `SelfShieldingDensity` merely lands close. On the reference
+run the measured threshold was 0.1065 cm⁻³ against `SelfShieldingDensity` = 0.1295 and the
+commonly quoted 0.13 — both ~22 % high. Mera refuses rather than substituting either.
+
+**Which catalogue fields exist.** [`groupfields`](@ref) lists them without reading the
+payload — name, table (`:Group` or `:Subhalo`), shape as Mera returns it (row = group) and
+element type:
+
+```julia
+for f in groupfields(info); f.table === :Group && println(f.name, " ", f.shape); end
+```
+
+**Mean densities.** [`mean_baryon_density`](@ref), [`mean_matter_density`](@ref) and
+[`critical_density`](@ref) all take `unit=` and `z=`, and work for any code. Note
+`critical_density` carries the full Friedmann `E(a)` while the mean densities scale exactly
+as `(1+z)³` — they are not interchangeable, and differ by percent at z ≈ 3.
+
 ## Related
 
 - [Reading GADGET data](gadget_reader.md) — the snapshot frontend
