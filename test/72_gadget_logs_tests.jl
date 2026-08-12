@@ -494,9 +494,43 @@ end
             @test f in pf
             @test (getvar(gas, f); true)
         end
-        # ...and :mach is deliberately NOT listed: it does not exist for particles
+        # :mach is deliberately NOT in the DERIVED registry for particles: on AREPO it is a
+        # STORED column (the shock finder's Machnumber), not |v|/c_s. Deriving it would
+        # silently redefine a quantity the code itself supplies. This fixture has no
+        # Machnumber, so the column is simply absent.
         @test :mach ∉ pf
         @test_throws Exception getvar(gas, :mach)
+    end
+
+    # ---------------------------------------------------------------------------------
+    # `:mach` means different physics on different codes and Mera must not paper over it:
+    #   RAMSES hydro -> DERIVED |v|/c_s, the bulk-flow Mach number in the box frame
+    #   AREPO gas    -> STORED Machnumber, the shock finder's Mach number
+    # They can differ by an order of magnitude on the same gas.
+    # ---------------------------------------------------------------------------------
+    @testset "23. AREPO :mach is the stored shock number, not |v|/cs" begin
+        dir = mktempdir(); sd = joinpath(dir, "snapdir_007"); mkpath(sd); n = 5
+        stored = Float32[1.5, 2.5, 3.5, 4.5, 5.5]
+        Mera.HDF5.h5open(joinpath(sd, "snap_007.0.hdf5"), "w") do f
+            hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+            hg["BoxSize"] = 100.0; hg["Time"] = 1.0
+            hg["NumPart_Total"] = UInt32[n,0,0,0,0,0]
+            hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+            g = Mera.HDF5.create_group(f, "PartType0")
+            g["Coordinates"] = rand(3,n) .* 100
+            g["Velocities"] = fill(100f0,3,n); g["ParticleIDs"] = UInt32.(1:n)
+            g["Masses"] = fill(1f-3,n); g["Density"] = fill(1f0,n)
+            g["InternalEnergy"] = fill(100f0,n); g["Machnumber"] = stored
+        end
+        gas = getparticles(getinfo(7, dir, verbose=false), families=[0], verbose=false)
+        @test :mach in propertynames(gas.data.columns)        # it IS available — as a column
+        @test getvar(gas, :mach) ≈ Float64.(stored)           # verbatim, not recomputed
+        # ...and it is emphatically not |v|/c_s, which is what :mach means on RAMSES hydro
+        flow = getvar(gas, :v) ./ getvar(gas, :cs)
+        @test !isapprox(first(flow), first(stored); rtol=0.5)
+        # both ingredients for the RAMSES-convention quantity are present, so a user can
+        # build it explicitly — Mera just refuses to overload the name
+        @test all(isfinite, flow) && all(flow .> 0)
     end
 
     @testset "21. every/dedupe ordering and restart definitions are pinned" begin

@@ -51,8 +51,31 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 | `MagneticField` | `:bx`, `:by`, `:bz` | MHD field; comoving→physical `a⁻²` and cgs→Gauss baked in — `getvar(:bx, :muG)` / `:Gauss` / `:nG` |
 | `Potential` | `:gpot` | gravitational potential (peculiar, `a⁻¹`); present on all particle types |
 | `NeutralHydrogenAbundance` | `:nh` | neutral-hydrogen fraction (dimensionless) |
-| `Machnumber` | `:mach` | cell Mach number (dimensionless) |
+| `Machnumber` | `:mach` | shock Mach number from AREPO's shock finder — **not** \|v\|/c_s, see below |
 | *(derived)* | `:T`, `:p`, `:cs` | `T = (γ-1)·u·μ·m_H/k_B`; μ from `:ne` (neutral-primordial fallback if absent) |
+
+!!! warning "`:mach` is not the same quantity on AREPO as on RAMSES"
+    The symbol is shared, the physics is not:
+
+    | data | `:mach` is | how it is obtained |
+    |---|---|---|
+    | RAMSES hydro | \|v\|/c_s — the **bulk-flow** Mach number in the box frame | derived from `:v` and `:cs` |
+    | AREPO gas | the **shock** Mach number of AREPO's on-the-fly shock finder | read from the stored `Machnumber` dataset |
+
+    These can differ by an order of magnitude on the same physical gas: quiescent flow moving
+    fast through the box has a large \|v\|/c_s and no shock at all. Mera reports each code's
+    own quantity rather than silently redefining one, so **do not compare `:mach` across
+    codes** without deciding which you mean. For a bulk-flow Mach number on AREPO gas, build
+    it explicitly — both ingredients are available:
+
+    ```julia
+    mach_flow = getvar(gas, :v) ./ getvar(gas, :cs)     # |v|/c_s, the RAMSES convention
+    getvar(gas, :mach)                                   # AREPO's shock finder, when present
+    ```
+
+    `:mach` exists on AREPO gas only when the run wrote `Machnumber` (a compile-time option);
+    without it the column is simply absent. `configflags(info)` tells you what the run was
+    built with.
 
 !!! tip "Stellar ages"
     Star particles carry `GFM_StellarFormationTime` as a scale factor, not an age.
