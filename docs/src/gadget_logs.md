@@ -92,8 +92,37 @@ time:
 ```julia
 t = getlogs(info, :sfr)                   # dedupe=:last (default) — `a` comes back monotonic
 raw = getlogs(info, :sfr; dedupe=:none)   # the rows exactly as written
-t.restarts                                # how many backward jumps were found
+t.restarts                                # backward STEPS (rows below their predecessor)
+t.restart_events                          # turnarounds (maximal descending runs)
 ```
+
+Both counts are reported because "how many restarts" stops being obvious once a descent
+covers more than one row. A restart that simply re-emits an earlier block gives one step and
+one event, so they agree in the ordinary case. They also count only the rows Mera **parsed**,
+so a `wc -l`-style count over the raw file can read one higher — a truncated final row is
+dropped here but is still a line there.
+
+### `every` samples the raw stream; `dedupe` runs after
+
+The order is parse → `arange` → `every` → `dedupe`. Measured on a real 175 MB `sfr.txt`
+(2 041 340 raw lines, 1 044 616 distinct scale factors):
+
+| call | rows |
+|---|---:|
+| `getlogs(info, :sfr)` | 1 044 614 |
+| `getlogs(info, :sfr; dedupe=:none)` | 2 041 339 |
+| `getlogs(info, :sfr; every=100)` | 19 538 |
+| `getlogs(info, :sfr; every=100, dedupe=:none)` | 20 414 |
+
+So `every=100` is **not** "a hundredth of what the default returns" — it is a hundredth of the
+raw stream, which then deduplicates. That order is deliberate: sampling first is what keeps
+`every=` O(1) in memory. Deduplicating first would mean holding the whole distinct set —
+47.8 MB instead of 0.9 MB for the file above, 51× more — and would remove the only reason
+`every=` is cheap on a multi-gigabyte log. If you need every Nth *distinct* time, sample the
+returned columns yourself.
+
+Note also that `dedupe=:last` collapses duplicate times **whether or not the run restarted**;
+AREPO writes several rows per scale factor either way.
 
 ## `info.txt`
 
