@@ -18,7 +18,7 @@
 # ====================================================================================
 
 # The complete set of registrable entry points.
-const _READER_CAPABILITIES = (:info, :hydro, :particles, :gravity, :rt, :clumps, :groups)
+const _READER_CAPABILITIES = (:info, :hydro, :particles, :gravity, :rt, :clumps, :groups, :logs)
 
 struct SimReader
     code::Symbol                  # registry key, e.g. :pluto (the getinfo `code=` value)
@@ -66,11 +66,12 @@ function register_reader!(code::Symbol; simcodes::Vector{String},
                           groups::Union{Function,Nothing}=nothing,
                           gravity::Union{Function,Nothing}=nothing,
                           rt::Union{Function,Nothing}=nothing,
-                          clumps::Union{Function,Nothing}=nothing)
+                          clumps::Union{Function,Nothing}=nothing,
+                          logs::Union{Function,Nothing}=nothing)
     isempty(simcodes) && error("register_reader!: `simcodes` must name at least one InfoType.simcode string.")
     funcs = Dict{Symbol,Function}()
     for (cap, f) in pairs((info=info, hydro=hydro, particles=particles, groups=groups,
-                           gravity=gravity, rt=rt, clumps=clumps))
+                           gravity=gravity, rt=rt, clumps=clumps, logs=logs))
         f === nothing || (funcs[cap] = f)
     end
     for s in simcodes

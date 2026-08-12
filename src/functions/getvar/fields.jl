@@ -361,6 +361,30 @@ end
 const USER_UNITS = Dict{Symbol,Float64}()
 
 """
+Solar metallicity **as a convention**, not as a measurement — `Z⊙ = 0.0127`, the value
+AREPO/GFM compiles in as `GFM_SOLAR_METALLICITY`.
+
+This number is **not stored in any snapshot or parameter file**, so it cannot be read: it has
+to be declared. Mera declares this one and says so rather than baking it in silently, because
+the choice moves published numbers substantially — the common values differ by ~50 %:
+
+| source | Z⊙ |
+|---|---|
+| AREPO / GFM (used here) | 0.0127 |
+| Asplund et al. (2009) | 0.0134 |
+| Grevesse & Sauval (1998) | 0.0201 |
+
+`getvar(gas, :metallicity)` returns the raw **metal mass fraction** `M_Z/M_tot`;
+`getvar(gas, :metallicity, :Zsun)` divides by this constant. To use a different convention,
+re-register the unit — the value is yours to choose, and worth stating in any paper:
+
+```julia
+add_unit(:Zsun, 1 / 0.0134)      # Asplund et al. (2009) instead
+```
+"""
+const MERA_ZSUN_GFM = 0.0127
+
+"""
     add_unit(name::Symbol, factor::Real)
 
 Register a custom unit: a value in code units is multiplied by `factor` to convert to this unit.

@@ -351,26 +351,56 @@ end
 formation_time(info::InfoType, birth::Real; unit::Symbol=:Gyr) = formation_time(info, [Float64(birth)]; unit=unit)[1]
 
 """
-    mean_matter_density(info::InfoType) -> Float64
+    critical_density(info::InfoType; unit=:g_cm3, z=redshift(info)) -> Float64
+
+Critical density at redshift `z`, `ρ_crit(z) = 3H(z)²/8πG`, with `H(z) = H0·E(a)` and the
+full Friedmann `E(a) = √(Ωm a⁻³ + Ωk a⁻² + ΩΛ)` — the same value `cosmology(info).rho_crit_cgs`
+reports at the snapshot redshift.
+
+Note this is **not** `ρ̄_m/Ωm`. The mean matter density scales exactly as `(1+z)³` whatever
+ΩΛ does, so [`mean_matter_density`](@ref) uses `Ωm·ρ_crit,0·(1+z)³`; the critical density
+follows `E(a)`, which adds the ΩΛ term. At z ≈ 3.4 with Planck-like parameters the two
+differ by a couple of percent, so they are not interchangeable.
+
+Code-agnostic: it needs only `H0`, the density parameters and the constants, so it works for
+RAMSES, GADGET and AREPO alike. Pass `z` for another redshift, or `unit` for something other
+than `g/cm³` (any density unit `getunit` accepts, e.g. `:Msol_pc3`).
+"""
+function critical_density(info::InfoType; unit::Symbol=:g_cm3, z::Real=redshift(info))
+    H0_cgs = info.H0 * 1.0e5 / info.constants.Mpc
+    a      = 1.0 / (1.0 + z)
+    Hz     = H0_cgs * _Efunc(a, info.omega_m, info.omega_l, info.omega_k)
+    rho    = 3.0 * Hz^2 / (8.0 * pi * info.constants.G)
+    return unit === :g_cm3 ? rho : rho / getunit(info, :g_cm3) * getunit(info, unit)
+end
+
+"""
+    mean_matter_density(info::InfoType; unit=:g_cm3, z=redshift(info)) -> Float64
 
 Mean (proper) matter mass density at the snapshot redshift,
 `ρ̄_m = Ωm · ρ_crit,0 · (1+z)³` `[g/cm³]`.
 """
-function mean_matter_density(info::InfoType)
-    H0_cgs  = info.H0 * 1.0e5 / info.constants.Mpc
-    rho_c0  = 3.0 * H0_cgs^2 / (8.0 * pi * info.constants.G)
-    return info.omega_m * rho_c0 * (1.0 + redshift(info))^3
+function mean_matter_density(info::InfoType; unit::Symbol=:g_cm3, z::Real=redshift(info))
+    return info.omega_m * _rho_crit0_times_1pz3(info, z, unit)
+end
+
+# Ωx · ρ_crit,0 · (1+z)³ — the mean-density scaling, which is exact for matter and baryons
+# whatever ΩΛ is. Deliberately NOT routed through `critical_density`, which carries the E(a)
+# term and would change these long-standing values by a couple of percent.
+function _rho_crit0_times_1pz3(info::InfoType, z::Real, unit::Symbol)
+    H0_cgs = info.H0 * 1.0e5 / info.constants.Mpc
+    rho_c0 = 3.0 * H0_cgs^2 / (8.0 * pi * info.constants.G)
+    rho    = rho_c0 * (1.0 + z)^3
+    return unit === :g_cm3 ? rho : rho / getunit(info, :g_cm3) * getunit(info, unit)
 end
 
 """
-    mean_baryon_density(info::InfoType) -> Float64
+    mean_baryon_density(info::InfoType; unit=:g_cm3, z=redshift(info)) -> Float64
 
 Mean (proper) baryon mass density at the snapshot redshift,
 `ρ̄_b = Ωb · ρ_crit,0 · (1+z)³` `[g/cm³]`. This is the reference density for the
 gas overdensity `getvar(hydro, :overdensity)`.
 """
-function mean_baryon_density(info::InfoType)
-    H0_cgs  = info.H0 * 1.0e5 / info.constants.Mpc
-    rho_c0  = 3.0 * H0_cgs^2 / (8.0 * pi * info.constants.G)
-    return info.omega_b * rho_c0 * (1.0 + redshift(info))^3
+function mean_baryon_density(info::InfoType; unit::Symbol=:g_cm3, z::Real=redshift(info))
+    return info.omega_b * _rho_crit0_times_1pz3(info, z, unit)
 end

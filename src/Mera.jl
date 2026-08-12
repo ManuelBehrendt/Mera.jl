@@ -111,6 +111,10 @@ export
     getparticles_gadget,
     getgroups_gadget,
     getgroups,
+    getlogs,
+    getlogs_gadget,
+    loglist,
+    configflags,
     createpath,
     gethydro,
     getgravity,
@@ -195,6 +199,7 @@ export
     formation_time,
     mean_matter_density,
     mean_baryon_density,
+    critical_density,
     comoving_to_proper_length,
     proper_to_comoving_length,
     comoving_to_proper_density,
@@ -451,6 +456,7 @@ include("read_data/Athena/reader_athena.jl") # Athena++ frontend (HDF5 .athdf Me
 include("read_data/FLASH/reader_flash.jl")   # FLASH frontend (HDF5 PARAMESH leaf blocks)
 include("read_data/GADGET/reader_gadget.jl")
 include("read_data/GADGET/groupcat_gadget.jl") # GADGET/GIZMO/… frontend (HDF5 particles)
+include("read_data/GADGET/logs_gadget.jl")   # run-time ASCII logs (sfr.txt, …)
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
@@ -587,6 +593,9 @@ function __init__()
     # MERA_QUIET=1 silences the load message entirely — for scripts, pipelines, and anyone who
     # has Mera as a dependency and does not want another package's banner in their session.
     lowercase(get(ENV, "MERA_QUIET", "false")) in ("1", "true", "yes") && return nothing
+    # `:Zsun` is a CONVENTION (see MERA_ZSUN_GFM), registered as a normal user unit so it can
+    # be re-registered with a different convention via add_unit(:Zsun, 1/0.0134).
+    haskey(USER_UNITS, :Zsun) || add_unit(:Zsun, 1 / MERA_ZSUN_GFM)
     if isinteractive()
         println()
         println( "*__   __ _______ ______   _______ ")

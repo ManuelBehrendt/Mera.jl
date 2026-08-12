@@ -28,8 +28,14 @@ end
         @test capabilities(_registry_stub_info("RAMSES")) ==
               [:info, :hydro, :particles, :gravity, :rt, :clumps]
         @test capabilities(_registry_stub_info("PLUTO")) == [:info, :hydro, :particles]
-        # the GADGET-HDF5 family gained :groups (SUBFIND/FoF catalogue) — getgroups(info)
-        @test capabilities(_registry_stub_info("AREPO")) == [:info, :particles, :groups]
+        # the GADGET-HDF5 family gained :groups (SUBFIND/FoF catalogue) — getgroups(info) —
+        # and :logs (the run-time ASCII files: sfr.txt, blackholes.txt, info.txt, …)
+        @test capabilities(_registry_stub_info("AREPO")) == [:info, :particles, :groups, :logs]
+        # :logs is registered only where a reader exists; RAMSES must report false rather
+        # than pretend, since its run-time files are a different set entirely
+        @test supports(_registry_stub_info("AREPO"), :logs)
+        @test !supports(_registry_stub_info("RAMSES"), :logs)
+        @test !supports(_registry_stub_info("PLUTO"), :logs)
         @test capabilities(_registry_stub_info("Athena++")) == [:info, :hydro]
         # unknown simcode (e.g. from an old mera-file) falls back to RAMSES-native
         @test capabilities(_registry_stub_info("UNKNOWN_LEGACY")) ==

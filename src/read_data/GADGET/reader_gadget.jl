@@ -250,10 +250,42 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
             catch
                 println("group catalogue: none found  (halo membership via halo= unavailable)")
             end
+            # The ASCII logs record what happened BETWEEN snapshots (one row per timestep),
+            # so they are easy to miss entirely — say they are there.
+            try
+                present = [String(nm) for (nm, fn, _) in _log_entries()
+                           if _find_log(path, fn) !== nothing]
+                _find_log(path, _GADGET_INFO_LOG[2]) === nothing || push!(present, "info")
+                if !isempty(present)
+                    shown = length(present) > 4 ? join(present[1:4], ", ") * ", …" : join(present, ", ")
+                    println("run-time logs: ", length(present), " file(s) (", shown,
+                            ")  → getlogs(info), loglist(info)")
+                end
+            catch
+            end
             println("-------------------------------------------------------")
         end
     end
     _fill_undefined!(info); createconstants!(info); createscales!(info)
+    # The run's parameter values, exposed through the same `namelist(info)` viewer RAMSES
+    # uses. Two sources, in order of trust: the snapshot's own /Parameters group (travels
+    # inside the file), then the parameters-usedvalues text file beside it. Both optional —
+    # older builds write neither, and absence must not break getinfo. Runs AFTER
+    # _fill_undefined!, which is what constructs info.fnames.
+    let pars = _read_gadget_hdf5_parameters(fn)
+        if pars !== nothing
+            info.namelist_content = pars
+            info.namelist = true
+            info.fnames.namelist = fn
+        else
+            ppath, pd = _read_gadget_paramfile(path)
+            if pd !== nothing
+                info.namelist_content = pd
+                info.namelist = true
+                info.fnames.namelist = ppath
+            end
+        end
+    end
     return info
 end
 
