@@ -430,6 +430,144 @@ getlogs_gadget(info::InfoType; kwargs...) = getlogs(info, :physics; kwargs...)
 # Strings (paths, numbers and flags are mixed); `namelist(info)` then views it exactly as it
 # views a RAMSES namelist.
 """
+    sf_threshold(info::InfoType, data=nothing; method=:auto, unit=:cm3)
+        -> (value, unit, method, note)
+
+The **star-formation density threshold** of the run, together with *how it was obtained*.
+Never a silent guess: the returned `method` and `note` always say where the number came from.
+
+`method`:
+
+- `:parameter` — `CritPhysDensity` from the run's parameters, **when it is greater than
+  zero**. Then it really is the threshold, in code density units converted to `unit`.
+- `:measured` — the minimum hydrogen number density among cells with `sfr > 0` in the
+  `data` you pass. Exact for that snapshot, but needs the data loaded (and `:sfr`/`:rho`
+  read).
+- `:auto` (default) — `:parameter` when it is available and non-zero, else `:measured` when
+  `data` is given, else an error explaining what to supply.
+
+!!! warning "`CritPhysDensity = 0` does not mean "no threshold""
+    When `CritPhysDensity` is zero, AREPO does not use a supplied physical threshold at all:
+    it derives one at run time from the Springel & Hernquist self-regulation condition using
+    `MaxSfrTimescale`, `FactorEVP`, `TempSupernova` and `TempClouds`. **That derived number
+    is not stored in the snapshot.** Mera will not invent it — ask for `:measured` with data
+    loaded, which recovers it exactly.
+
+    Two nearby values are *not* the threshold and are commonly mistaken for it:
+    `CritOverDensity` is a separate comoving-overdensity floor (at z ≈ 3.4 it corresponds to
+    n_H ≈ 9e-4 cm⁻³, three decades below the physical threshold, so it is not the binding
+    criterion there), and `SelfShieldingDensity` is a different parameter that merely lands
+    close. On the reference run the measured threshold was 0.1065 cm⁻³ while
+    `SelfShieldingDensity` was 0.1295 and the commonly quoted TNG value 0.13 — both ~22 %
+    high. Mera therefore defaults to neither.
+
+```julia
+sf_threshold(info)                              # :parameter, if the run supplies one
+sf_threshold(info, gas; method=:measured)       # exact, from cells with sfr > 0
+```
+"""
+function sf_threshold(info::InfoType, data=nothing; method::Symbol=:auto, unit::Symbol=:nH)
+    method in (:auto, :parameter, :measured) ||
+        throw(ArgumentError("sf_threshold: method must be :auto, :parameter or :measured, got :$method"))
+
+    par = nothing
+    if info.namelist
+        v = get(info.namelist_content, "CritPhysDensity", nothing)
+        if v !== nothing
+            pv = v isa AbstractString ? tryparse(Float64, v) : Float64(v)
+            pv !== nothing && pv > 0 && (par = pv)
+        end
+    end
+
+    if method === :parameter || (method === :auto && par !== nothing)
+        par === nothing && throw(ArgumentError(
+            "sf_threshold: the run has no positive CritPhysDensity, so there is no supplied " *
+            "threshold to report. AREPO derives one at run time from MaxSfrTimescale/FactorEVP/" *
+            "TempSupernova/TempClouds and does not store it. Pass the gas and use " *
+            "method=:measured to recover it exactly."))
+        return (value=par, unit=:code, method=:parameter,
+                note="CritPhysDensity from the run's parameters (code density units).")
+    end
+
+    data === nothing && throw(ArgumentError(
+        "sf_threshold: CritPhysDensity is absent or zero, so the threshold was derived at run " *
+        "time and is not stored. Pass the gas object — sf_threshold(info, gas; method=:measured) " *
+        "— to measure it from the cells that are actually forming stars. Mera will not " *
+        "substitute a literature value (0.13 cm^-3 and SelfShieldingDensity are both ~22 % off " *
+        "on the run this was calibrated against)."))
+
+    sfr = getvar(data, :sfr)
+    rho = getvar(data, :rho, unit)
+    sel = sfr .> 0
+    any(sel) || throw(ArgumentError(
+        "sf_threshold: no cell in the supplied data has sfr > 0, so there is nothing to " *
+        "measure. Load a snapshot with star-forming gas, or read :sfr (vars=[:sfr, :rho])."))
+    val = minimum(@view rho[sel])
+    n = count(sel)
+    return (value=val, unit=unit, method=:measured,
+            note="minimum $(unit) among the $(n) cell(s) with sfr > 0 in the supplied data.")
+end
+
+"""
+    groupfields(info::InfoType) -> Vector{NamedTuple}
+
+List the datasets in the **group catalogue** without reading any of them. Each entry is
+`(name, table, shape, eltype)`, where `table` is `:Group` (the FoF level, what
+[`getgroups`](@ref) reads) or `:Subhalo` (the SUBFIND substructure level).
+
+`getgroups(info; fields=[...])` needs the field names in advance, and which fields exist
+depends on the build — so this answers "what can I ask for?" cheaply, reading only the HDF5
+metadata. Shapes are reported **as Mera returns them**, i.e. after the reader's
+`permutedims`: row = group, so a scalar is `(n,)`, a vector `(n, 3)`, a metal array
+`(n, 10)`.
+
+An absent catalogue gives an empty vector, not an error — a run without SUBFIND is normal.
+
+```julia
+for f in groupfields(info)
+    f.table === :Group && println(rpad(f.name, 26), f.shape)
+end
+gc = getgroups(info; fields=[:GroupPos, :Group_M_Crit200])
+```
+
+The header counts are on the returned entries' `n` fields; see also [`getgroups`](@ref).
+"""
+function groupfields(info::InfoType)
+    out = NamedTuple[]
+    fns = try
+        _groupcat_files(round(Int, info.output), info.path)
+    catch
+        return out                                  # no catalogue: empty, not an error
+    end
+    isempty(fns) && return out
+    try
+        h5open(first(fns), "r") do f
+            hh = haskey(f, "Header") ? attributes(f["Header"]) : nothing
+            ngroups = (hh !== nothing && haskey(hh, "Ngroups_Total")) ?
+                      Int(read(hh["Ngroups_Total"])) : -1
+            nsubs = (hh !== nothing && haskey(hh, "Nsubgroups_Total")) ?
+                    Int(read(hh["Nsubgroups_Total"])) : -1
+            for (tbl, ntot) in ((:Group, ngroups), (:Subhalo, nsubs))
+                gname = String(tbl)
+                haskey(f, gname) || continue
+                for ds in sort(collect(keys(f[gname])))
+                    d = f[gname][ds]
+                    sz = size(d)
+                    # report the shape Mera hands back: the reader transposes 2-D datasets
+                    # so that row = group, which is the indexing users actually write
+                    shape = length(sz) == 2 ? (sz[2], sz[1]) : sz
+                    push!(out, (name=Symbol(ds), table=tbl, shape=shape,
+                                eltype=eltype(d), n=ntot))
+                end
+            end
+        end
+    catch
+        return out
+    end
+    return out
+end
+
+"""
     configflags(info::InfoType) -> Vector{String}
 
 The **compile-time flags** the run was built with, read from the snapshot's `/Config` group

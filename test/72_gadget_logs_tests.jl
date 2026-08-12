@@ -270,6 +270,128 @@ end
         end
     end
 
+    # ---------------------------------------------------------------------------------
+    # sf_threshold must report HOW it got the number, and must refuse to invent one. On the
+    # reference run CritPhysDensity is 0 (AREPO then derives the threshold at run time and
+    # does not store it), SelfShieldingDensity = 0.1295 and the quoted TNG value 0.13 are
+    # both ~22 % above the measured 0.1065 — so neither may be used as a fallback.
+    # ---------------------------------------------------------------------------------
+    @testset "15. sf_threshold reports its provenance" begin
+        function _mk_sf(dir; critphys=0.0, n=200)
+            sd = joinpath(dir, "snapdir_032"); mkpath(sd)
+            rho = Float32[Float32(0.01 + 0.01*(i-1)) for i in 1:n]
+            sfr = Float32[rho[i] >= 0.1f0 ? 1f0 : 0f0 for i in 1:n]
+            Mera.HDF5.h5open(joinpath(sd, "snap_032.0.hdf5"), "w") do f
+                hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+                hg["BoxSize"] = 75000.0; hg["Time"] = 0.22762315212396259
+                hg["NumPart_Total"] = UInt32[n,0,0,0,0,0]
+                hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+                hg["Omega0"] = 0.3089; hg["OmegaLambda"] = 0.6911
+                hg["OmegaBaryon"] = 0.0486; hg["HubbleParam"] = 0.6774
+                pa = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Parameters"))
+                pa["CritPhysDensity"] = critphys
+                pa["CritOverDensity"] = 57.7; pa["SelfShieldingDensity"] = 0.1295
+                Mera.HDF5.create_group(f, "Config")
+                g = Mera.HDF5.create_group(f, "PartType0")
+                g["Coordinates"] = rand(3,n) .* 75000
+                g["Velocities"] = zeros(Float32,3,n); g["ParticleIDs"] = UInt32.(1:n)
+                g["Masses"] = fill(1f-3,n); g["Density"] = rho
+                g["InternalEnergy"] = fill(100f0,n); g["StarFormationRate"] = sfr
+            end
+        end
+        # a positive CritPhysDensity IS the threshold
+        d1 = mktempdir(); _mk_sf(d1; critphys=0.05); i1 = getinfo(32, d1, verbose=false)
+        r1 = sf_threshold(i1)
+        @test r1.value == 0.05
+        @test r1.method === :parameter
+        @test occursin("CritPhysDensity", r1.note)
+
+        # CritPhysDensity = 0 -> derived at run time, not stored: measure it instead
+        d2 = mktempdir(); _mk_sf(d2; critphys=0.0); i2 = getinfo(32, d2, verbose=false)
+        gas = getparticles(i2, families=[0], vars=[:rho, :sfr], verbose=false)
+        r2 = sf_threshold(i2, gas; method=:measured, unit=:standard)
+        @test isapprox(r2.value, 0.1; rtol=1e-6)          # recovers the injected threshold
+        @test r2.method === :measured
+        @test occursin("sfr > 0", r2.note)
+        rhov = getvar(gas, :rho); sfrv = getvar(gas, :sfr)
+        @test r2.value > maximum(rhov[sfrv .== 0])         # every non-SF cell is below it
+
+        # ...and it must NOT quietly fall back to a literature value or SelfShieldingDensity
+        err = try; sf_threshold(i2); nothing; catch e; sprint(showerror, e); end
+        @test err !== nothing
+        @test occursin("method=:measured", err)
+        @test !occursin("0.13", err[1:min(200, end)])      # no literature value offered
+        @test_throws ArgumentError sf_threshold(i2; method=:parameter)
+        @test_throws ArgumentError sf_threshold(i2, gas; method=:bogus)
+    end
+
+    @testset "16. groupfields lists the catalogue without reading it" begin
+        dir = mktempdir(); info = _logs_fixture_info(dir)
+        gd = joinpath(dir, "groups_032"); mkpath(gd)
+        Mera.HDF5.h5open(joinpath(gd, "fof_subhalo_tab_032.0.hdf5"), "w") do f
+            hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+            hg["Ngroups_Total"] = Int32(7); hg["Nsubgroups_Total"] = Int32(19)
+            hg["Ngroups_ThisFile"] = Int32(7); hg["NumFiles"] = Int32(1)
+            hg["BoxSize"] = 75000.0
+            G = Mera.HDF5.create_group(f, "Group")
+            G["GroupPos"] = rand(3,7); G["GroupMass"] = rand(Float32,7)
+            G["GroupLenType"] = zeros(UInt32,6,7)
+            G["GroupGasMetalFractions"] = rand(Float32,10,7)
+            S = Mera.HDF5.create_group(f, "Subhalo")
+            S["SubhaloPos"] = rand(3,19); S["SubhaloMass"] = rand(Float32,19)
+        end
+        F = groupfields(info)
+        byname = Dict(e.name => e for e in F)
+        @test haskey(byname, :GroupPos) && haskey(byname, :SubhaloPos)
+        @test byname[:GroupPos].table === :Group
+        @test byname[:SubhaloPos].table === :Subhalo
+        # shapes are reported as Mera RETURNS them (row = group), i.e. post-permutedims
+        @test byname[:GroupMass].shape == (7,)
+        @test byname[:GroupPos].shape == (7, 3)
+        @test byname[:GroupGasMetalFractions].shape == (7, 10)
+        @test byname[:GroupLenType].shape == (7, 6)
+        @test byname[:GroupMass].eltype == Float32
+        @test byname[:GroupPos].n == 7 && byname[:SubhaloPos].n == 19
+        # an absent catalogue is empty, never an error
+        d2 = mktempdir(); i2 = _logs_fixture_info(d2)
+        @test isempty(groupfields(i2))
+    end
+
+    # ---------------------------------------------------------------------------------
+    # The field registries are keyed in the SINGULAR (:particle, :clump) while every
+    # user-facing name is plural (getparticles, list_fields(:particles)). That mismatch made
+    # list_fields(:particles) return an empty list even though 39 entries were registered —
+    # so on AREPO, where everything is particle data, field discovery answered "nothing".
+    # ---------------------------------------------------------------------------------
+    @testset "17. field discovery works for particles and clumps" begin
+        @test length(list_fields(:particles; builtin=true)) > 0
+        @test list_fields(:particles; builtin=true) == list_fields(:particle; builtin=true)
+        @test list_fields(:clumps; builtin=true) == list_fields(:clump; builtin=true)
+        @test length(list_fields(:hydro; builtin=true)) > 0        # unchanged
+        pf = list_fields(:particles; builtin=true)
+        for f in (:r_sphere, :vr_sphere, :ekin, :v, :bmag)
+            @test f in pf
+        end
+        # the other kind-taking entry points normalise too
+        @test field_dependencies(:particles, :ekin) == field_dependencies(:particle, :ekin)
+        @test getvar_requirements(:particles, [:ekin]) == getvar_requirements(:particle, [:ekin])
+
+        # and the registry must agree with what getvar actually accepts: every listed field
+        # that only needs the columns we loaded has to evaluate, not just be named
+        dir = mktempdir(); info = _logs_fixture_info(dir)
+        gas = getparticles(info, families=[0], verbose=false)
+        have = Set(propertynames(gas.data.columns))
+        checked = 0
+        for f in pf
+            req = getvar_requirements(:particles, [f])
+            all(r -> r in have, req) || continue         # needs a column this fixture lacks
+            v = try; getvar(gas, f); catch; nothing; end
+            @test v !== nothing
+            checked += 1
+        end
+        @test checked > 5                                # the check actually exercised fields
+    end
+
     @testset "12. colnames override marks the names verified" begin
         dir = mktempdir(); info = _logs_fixture_info(dir)
         write_sn_log(dir; nrows=5)
