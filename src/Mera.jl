@@ -584,6 +584,9 @@ during precompilation, so this lives in `__init__` instead.)
 function __init__()
     v = pkgversion(@__MODULE__)
     vstr = v === nothing ? "" : " v$v"
+    # MERA_QUIET=1 silences the load message entirely — for scripts, pipelines, and anyone who
+    # has Mera as a dependency and does not want another package's banner in their session.
+    lowercase(get(ENV, "MERA_QUIET", "false")) in ("1", "true", "yes") && return nothing
     if isinteractive()
         println()
         println( "*__   __ _______ ______   _______ ")
@@ -593,7 +596,14 @@ function __init__()
         println( "|       |    ___|    __  |       |")
         println( "| ||_|| |   |___|   |  | |   _   |")
         println( "|_|   |_|_______|___|  |_|__| |__|")
-        println( "Mera$vstr")
+        # Thread count is the one piece of state that is invisible, has to be chosen before Julia
+        # starts, and is the usual reason a run is slower than expected — worth one line at the
+        # REPL. Deliberately NOT added to the non-interactive branch below: that line ends up in
+        # scripts, CI logs and the sessions of anyone who has Mera as a dependency, where a
+        # script author already knows their own thread count.
+        nt = Threads.nthreads()
+        println( "Mera$vstr | Julia $VERSION | $nt thread", nt == 1 ? "" : "s")
+        nt == 1 && println( "start with `julia -t 8` (or JULIA_NUM_THREADS=8) to use more")
         println()
     else
         @info "Mera$vstr"
