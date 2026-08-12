@@ -48,7 +48,8 @@ function register_builtin_readers!()
         note = "Gas in the GADGET-HDF5 family is particle data — load it with getparticles(info).",
         info = getinfo_gadget,
         particles = getparticles_gadget,
-        groups = getgroups_gadget)
+        groups = getgroups_gadget,
+        logs = getlogs_gadget)
 
     return nothing
 end

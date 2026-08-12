@@ -138,6 +138,7 @@ if isempty(_focus)
         include("53_overlay_absorption_tests.jl")    # gridoverlay (AMR cell boundaries)
         include("07_regions.jl")
         include("63_region_coverage_tests.jl")       # RT/gravity/particle sub- & shellregion paths (cell modes, inverse partitions, uniform-grid branch)
+        include("72_gadget_logs_tests.jl")           # data-free: AREPO/GADGET run-time ASCII logs (sfr.txt, info.txt, …)
         include("71_info_initialization_tests.jl")   # every reader fills InfoType/scale/constants — no field left holding uninitialized memory
     end
 
