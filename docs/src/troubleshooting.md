@@ -135,6 +135,15 @@ Also check you actually started Julia with threads (`Threads.nthreads()`), and t
 
 ## Julia runs on one thread
 
+At an interactive prompt Mera tells you on load:
+
+```
+Mera v1.8.0 | Julia 1.12.6 | 1 thread
+start with `julia -t 8` (or JULIA_NUM_THREADS=8) to use more
+```
+
+or check it yourself:
+
 ```julia
 Threads.nthreads()    # 1 unless you asked for more
 ```
@@ -177,6 +186,15 @@ It isn't meant to. [`savedata`](@ref) stores the Julia object and compresses wit
 Julia compiles as it runs, so expect several seconds on the first call in a session and
 near-instant afterwards. This is normal and not a sign anything is wrong — see
 [Julia for Simulation Analysis](julia_for_simulation_analysis.md).
+
+## Mera's load message is in my way
+
+At an interactive prompt Mera prints a banner with its version, Julia's version and the thread
+count; in a script it logs a single `[ Info: Mera vX.Y.Z`. Silence both with:
+
+```bash
+export MERA_QUIET=1
+```
 
 ## Something else
 
