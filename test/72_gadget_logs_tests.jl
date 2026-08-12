@@ -392,6 +392,168 @@ end
         @test checked > 5                                # the check actually exercised fields
     end
 
+    # ---------------------------------------------------------------------------------
+    # OPTIONAL field dependencies. `getvar(gas, :T)` needs :u but merely PREFERS :ne — μ
+    # comes from the electron abundance when it was loaded, else a neutral-primordial
+    # fallback. So :T is a function of the snapshot AND the vars= used at load time, and a
+    # single depends_on list cannot say that: naming :ne would make a valid vars=[:rho,:u]
+    # load look insufficient, omitting it records nothing about the silent change.
+    # ---------------------------------------------------------------------------------
+    @testset "18. optional dependencies" begin
+        # required and optional are reported separately, and optional is never demanded
+        @test getvar_requirements(:particles, :T) == [:u]
+        @test :ne ∉ getvar_requirements(:particles, :T)
+        @test getvar_optional(:particles, :T) == [:ne]
+        @test :ne in getvar_requirements(:particles, :T; include_optional=true)
+        @test :u  in getvar_requirements(:particles, :T; include_optional=true)
+        # the newly registered gas fields resolve to the right raw columns
+        @test getvar_requirements(:particles, :volume) == [:rho]
+        @test getvar_requirements(:particles, :cs) == [:u]
+        @test sort(getvar_requirements(:particles, :p)) == [:rho, :u]
+        @test isempty(getvar_optional(:particles, :cs))      # no μ term in c_s
+        # field_info exposes optional + the variant note for a BUILT-IN field
+        fi = field_info(:T; kind=:particles)
+        @test fi !== nothing && fi.optional == [:ne] && !isempty(fi.variants)
+        # add_field round-trips optional=
+        add_field(:_optdemo, (o,d) -> d[:rho]; depends_on=[:rho], optional=[:ne],
+                  variants="demo", datatypes=:particles)
+        try
+            d = field_info(:_optdemo; kind=:particles)
+            @test d.depends_on == [:rho] && d.optional == [:ne] && d.variants == "demo"
+            @test :ne ∉ getvar_requirements(:particles, :_optdemo)
+            @test getvar_optional(:particles, :_optdemo) == [:ne]
+            @test_throws ArgumentError add_field(:_bad, (o,d) -> d[:rho];
+                                                 depends_on=[:ne], optional=[:ne],
+                                                 datatypes=:particles)
+        finally
+            delete_field(:_optdemo)
+        end
+    end
+
+    @testset "19. list_fields(data) names the variant that would run" begin
+        function _mk_gas(dir; withne)
+            sd = joinpath(dir, "snapdir_007"); mkpath(sd); n = 6
+            Mera.HDF5.h5open(joinpath(sd, "snap_007.0.hdf5"), "w") do f
+                hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+                hg["BoxSize"] = 100.0; hg["Time"] = 1.0
+                hg["NumPart_Total"] = UInt32[n,0,0,0,0,0]
+                hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+                g = Mera.HDF5.create_group(f, "PartType0")
+                g["Coordinates"] = rand(3,n) .* 100
+                g["Velocities"] = fill(100f0,3,n); g["ParticleIDs"] = UInt32.(1:n)
+                g["Masses"] = fill(1f-3,n); g["Density"] = fill(1f0,n)
+                g["InternalEnergy"] = fill(100f0,n)
+                withne && (g["ElectronAbundance"] = fill(1.0f0,n))
+            end
+            getparticles(getinfo(7, dir, verbose=false), families=[0], verbose=false)
+        end
+        g_ne = _mk_gas(mktempdir(); withne=true)
+        g_no = _mk_gas(mktempdir(); withne=false)
+        e_ne = only(filter(e -> e.name === :T, list_fields(g_ne)))
+        e_no = only(filter(e -> e.name === :T, list_fields(g_no)))
+        @test e_ne.available && e_no.available            # both work...
+        @test e_ne.using_optional == [:ne]                # ...but by different routes
+        @test isempty(e_no.using_optional)
+        @test !isempty(e_ne.note)
+        # the annotation is not cosmetic: the two temperatures really differ, by the μ ratio
+        T_ne = first(getvar(g_ne, :T)); T_no = first(getvar(g_no, :T))
+        @test !isapprox(T_ne, T_no; rtol=0.1)
+        @test isapprox(T_no / T_ne, (1 + 3*0.76 + 4*0.76) / (1 + 3*0.76); rtol=1e-6)
+        # a field whose required column is missing is reported unavailable, with what it needs
+        e_bmag = only(filter(e -> e.name === :bmag, list_fields(g_no)))
+        @test !e_bmag.available && !isempty(e_bmag.missing)
+        @test_throws ArgumentError list_fields(42)
+    end
+
+    @testset "20. registry and dispatch agree for particles" begin
+        dir = mktempdir(); sd = joinpath(dir, "snapdir_007"); mkpath(sd); n = 8
+        Mera.HDF5.h5open(joinpath(sd, "snap_007.0.hdf5"), "w") do f
+            hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+            hg["BoxSize"] = 100.0; hg["Time"] = 1.0
+            hg["NumPart_Total"] = UInt32[n,0,0,0,0,0]
+            hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+            g = Mera.HDF5.create_group(f, "PartType0")
+            g["Coordinates"] = rand(3,n) .* 100
+            g["Velocities"] = fill(100f0,3,n); g["ParticleIDs"] = UInt32.(1:n)
+            g["Masses"] = fill(1f-3,n); g["Density"] = fill(1f0,n)
+            g["InternalEnergy"] = fill(100f0,n); g["ElectronAbundance"] = fill(0.5f0,n)
+        end
+        gas = getparticles(getinfo(7, dir, verbose=false), families=[0], verbose=false)
+        have = Set(propertynames(gas.data.columns))
+        checked = 0
+        for f in list_fields(:particles; builtin=true)
+            all(r -> r in have, getvar_requirements(:particles, f)) || continue
+            v = try; getvar(gas, f); catch; nothing; end
+            @test v !== nothing                       # registry must not name what getvar refuses
+            checked += 1
+        end
+        @test checked > 10
+        # the four that were missing before are now listed AND work
+        pf = list_fields(:particles; builtin=true)
+        for f in (:T, :cs, :p, :volume)
+            @test f in pf
+            @test (getvar(gas, f); true)
+        end
+        # ...and :mach is deliberately NOT listed: it does not exist for particles
+        @test :mach ∉ pf
+        @test_throws Exception getvar(gas, :mach)
+    end
+
+    @testset "21. every/dedupe ordering and restart definitions are pinned" begin
+        dir = mktempdir(); info = _logs_fixture_info(dir)
+        # a series with duplicate scale factors, so dedupe actually removes rows
+        p = joinpath(dir, "sfr.txt")
+        open(p, "w") do io
+            for i in 1:100, rep in 1:2                      # every time appears twice
+                Mera.Printf.@printf(io, "  %.6e   %.6e   %.6e\n", 0.1 + 0.001i, Float64(i), Float64(rep))
+            end
+        end
+        raw  = getlogs(info, :sfr; dedupe=:none, verbose=false)
+        ded  = getlogs(info, :sfr; verbose=false)
+        @test raw.nrows == 200
+        @test ded.nrows == 100                              # duplicates collapsed, not lost
+        # `every` samples the RAW stream and dedupe runs AFTERWARDS. With two rows per time,
+        # every=10 takes every 10th raw row — i.e. one row from every 5th time — so the
+        # sampled set has no duplicates left and dedupe removes nothing. The result is 20,
+        # neither 200/10 nor the 100/10 = 10 a user might expect from "a tenth of the default".
+        e10_raw = getlogs(info, :sfr; every=10, dedupe=:none, verbose=false)
+        e10     = getlogs(info, :sfr; every=10, verbose=false)
+        @test e10_raw.nrows == 20
+        @test e10.nrows == 20
+        @test e10.nrows != ded.nrows ÷ 10                   # NOT a tenth of the default call
+
+        # restarts vs restart_events: one descent spanning three rows is ONE event, THREE steps
+        p2 = joinpath(dir, "SN.txt")
+        as = [0.10,0.11,0.12, 0.09, 0.10,0.11,0.12,0.13, 0.08,0.07,0.06, 0.09,0.10]
+        open(p2, "w") do io
+            for (i, a) in enumerate(as)
+                Mera.Printf.@printf(io, "%.6e %.6e %.6e\n", a, Float64(i), 0.0)
+            end
+        end
+        t = getlogs(info, :sn; dedupe=:none, verbose=false)
+        @test t.restarts == 4          # backward STEPS: rows 4, 9, 10, 11
+        @test t.restart_events == 2    # turnarounds: at row 4 and at row 9
+    end
+
+    @testset "22. performance logs stay untouched by the defaults (regression guard)" begin
+        dir = mktempdir(); info = _logs_fixture_info(dir)
+        write_sfr_log(dir; nrows=20)
+        big = joinpath(dir, "cpu.txt")
+        open(big, "w") do io                                # bigger than a small max_bytes
+            for i in 1:5000
+                Mera.Printf.@printf(io, "%.6e %.6e %.6e\n", Float64(i), Float64(2i), Float64(3i))
+            end
+        end
+        before = mtime(big)
+        phys = getlogs(info, :physics; max_bytes=1000, verbose=false)
+        allr = getlogs(info, :all;     max_bytes=1000, verbose=false)
+        @test !haskey(phys, :cpu) && !haskey(allr, :cpu)
+        @test mtime(big) == before                          # never even opened
+        # and it is still reachable when named explicitly, with a ceiling that allows it
+        perf = getlogs(info, :cpu; max_bytes=10_000_000, verbose=false)
+        @test perf.nrows == 5000
+    end
+
     @testset "12. colnames override marks the names verified" begin
         dir = mktempdir(); info = _logs_fixture_info(dir)
         write_sn_log(dir; nrows=5)

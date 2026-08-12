@@ -94,6 +94,16 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
   ),
 
   # Particles store positions/velocities/mass directly, so :x/:y/:z/:mass are leaves.
+  # AREPO/GADGET gas thermodynamics. These are computed inline in getvar_particles.jl and
+  # were missing from the registry, so `list_fields(:particles)` did not mention them even
+  # though `getvar` accepts them. Registered here after checking each against dispatch:
+  #   :volume  = mass/ρ            (:mass is a base column, always loaded)
+  #   :p       = (γ-1)·ρ·u
+  #   :cs      = √(γ(γ-1)·u)       — NO μ term, so no optional dependency
+  #   :T       = (γ-1)·u·μ·m_H/k_B — μ from :ne when present, else neutral-primordial μ≈1.22
+  # `:mach` is deliberately NOT registered: it does not exist for particles at all
+  # (getvar throws KeyError). Only :mach_alfven/:mach_fast/:mach_slow do, and those need the
+  # magnetic field, which is already recorded below.
   :particle => Dict{Symbol,Vector{Symbol}}(
     :vx2=>[:vx], :vy2=>[:vy], :vz2=>[:vz],
     :v=>[:vx,:vy,:vz], :v2=>[:vx,:vy,:vz],
@@ -109,6 +119,9 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :lϕ_sphere=>[:mass,:x,:y,:z,:vx,:vy,:vz],
     :ekin=>[:mass,:vx,:vy,:vz],
     :age=>[:birth], :zform=>[:birth], :formation_redshift=>[:birth], :formation_time=>[:birth],
+    # AREPO/GADGET gas thermodynamics (see the note above this Dict)
+    :volume=>[:rho], :p=>[:rho,:u], :cs=>[:u],
+    :T=>[:u], :Temp=>[:u], :Temperature=>[:u],
     # gas magnetic field (AREPO/TNG): :bx/:by/:bz are stored leaves; these are the derived quantities
     :bmag=>[:bx,:by,:bz], :pmag=>[:bx,:by,:bz], :beta=>[:rho,:u,:bx,:by,:bz],
     :v_alfven=>[:bx,:by,:bz,:rho], :e_magnetic=>[:bx,:by,:bz,:volume],
@@ -142,6 +155,49 @@ const USER_FIELDS = Dict{Symbol, Dict{Symbol,Any}}()
 # boundary lets both spellings reach the same registry.
 const _KIND_ALIASES = Dict(:particles => :particle, :clumps => :clump)
 _canon_kind(k::Symbol) = get(_KIND_ALIASES, k, k)
+
+# -------------------------------------------------------------------------------------
+# OPTIONAL dependencies.
+#
+# Some derived fields need one set of columns to work at all, and *prefer* another that
+# merely improves them. AREPO gas temperature is the case that forced this: `:T` throws
+# without `:u`, but takes μ from the electron abundance `:ne` when it was loaded and falls
+# back to a neutral-primordial μ ≈ 1.22 otherwise. The two differ by up to ~2x for ionised
+# gas, so `getvar(gas, :T)` is not a function of the snapshot alone — it is a function of the
+# snapshot AND the `vars=` used at load time, and nothing used to say so.
+#
+# A single `depends_on` list cannot express that: listing `:ne` makes `getvar_requirements`
+# demand a column that is not required (so a legitimate vars=[:rho,:u] load looks
+# insufficient), while omitting it records nothing about the silent change in result.
+#
+# Kept in parallel dicts rather than widening FIELD_DEPS' value type, so every existing
+# consumer of FIELD_DEPS keeps working unchanged.
+const _T_VARIANTS = "μ from :ne when it was loaded; neutral-primordial μ≈1.22 otherwise " *
+                    "(up to ~2x apart for ionised gas)"
+
+const FIELD_OPTIONAL = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
+    :particle => Dict{Symbol,Vector{Symbol}}(
+        :T => [:ne], :Temp => [:ne], :Temperature => [:ne],
+    ),
+)
+const FIELD_VARIANTS = Dict{Symbol, Dict{Symbol,String}}(
+    :particle => Dict{Symbol,String}(
+        :T => _T_VARIANTS, :Temp => _T_VARIANTS, :Temperature => _T_VARIANTS,
+    ),
+)
+
+_field_optional(kind::Symbol, name::Symbol) =
+    get(get(FIELD_OPTIONAL, _canon_kind(kind), Dict{Symbol,Vector{Symbol}}()), name, Symbol[])
+_field_variants(kind::Symbol, name::Symbol) =
+    get(get(FIELD_VARIANTS, _canon_kind(kind), Dict{Symbol,String}()), name, "")
+
+# Declare an optional dependency for a built-in field.
+function _register_optional!(kind::Symbol, name::Symbol, optional::Vector{Symbol}, variants::String)
+    kind = _canon_kind(kind)
+    get!(FIELD_OPTIONAL, kind, Dict{Symbol,Vector{Symbol}}())[name] = optional
+    isempty(variants) || (get!(FIELD_VARIANTS, kind, Dict{Symbol,String}())[name] = variants)
+    return nothing
+end
 
 # -------------------------------------------------------------------------------------
 # Resolver: transitive closure of a derived var down to leaf (raw) symbols.
@@ -186,7 +242,7 @@ getvar_requirements(:hydro, :ekin)        # [:rho, :vx, :vy, :vz]
 getvar_requirements(:hydro, [:sd, :T])    # [:rho, :p]   (:sd is an alias of surface density → :rho)
 ```
 """
-function getvar_requirements(kind::Symbol, vars)
+function getvar_requirements(kind::Symbol, vars; include_optional::Bool=false)
     kind = _canon_kind(kind)
     vlist = vars isa Symbol ? (vars,) : vars
     out = Set{Symbol}()
@@ -194,8 +250,39 @@ function getvar_requirements(kind::Symbol, vars)
         # :sd / :surfacedensity are projection aliases for a mass(=:rho) map
         vv = (v === :sd || v === :surfacedensity) ? :mass : v
         union!(out, required_raw_vars(kind, vv))
+        # Optional columns are NEVER part of the required set — including them would make a
+        # perfectly valid load look insufficient. They are added only when asked for, e.g. by
+        # a caller that would rather read a bit more than get the fallback variant.
+        include_optional && union!(out, _field_optional(kind, vv))
     end
     setdiff!(out, _GEOMETRY_LEAVES)
+    return sort!(collect(out))
+end
+
+"""
+    getvar_optional(kind::Symbol, vars) -> Vector{Symbol}
+
+The **optional** columns of `vars` — ones that change the *result* when present but are not
+needed for it to work. Empty for most fields.
+
+The case this exists for is AREPO gas temperature: `getvar(gas, :T)` needs `:u`, but takes μ
+from `:ne` when that was loaded and otherwise falls back to a neutral-primordial μ ≈ 1.22.
+The two differ by up to a factor ~2 for ionised gas, so which variant ran depends on the
+`vars=` used at load time. [`getvar_requirements`](@ref) deliberately does **not** report
+these, so they never make a valid load look insufficient.
+
+```julia
+getvar_requirements(:particles, :T)   # [:u]        — what it needs
+getvar_optional(:particles, :T)       # [:ne]       — what would improve it
+```
+"""
+function getvar_optional(kind::Symbol, vars)
+    kind = _canon_kind(kind)
+    vlist = vars isa Symbol ? (vars,) : vars
+    out = Set{Symbol}()
+    for v in vlist
+        union!(out, _field_optional(kind, v))
+    end
     return sort!(collect(out))
 end
 
@@ -229,14 +316,24 @@ See also [`delete_field`](@ref), [`list_fields`](@ref).
 """
 function add_field(name::Symbol, compute::Function;
                    depends_on::AbstractVector{Symbol}=Symbol[],
+                   optional::AbstractVector{Symbol}=Symbol[],
+                   variants::String="",
                    datatypes=:hydro, unit=:standard, description::String="")
     kinds = datatypes isa Symbol ? (datatypes,) : datatypes
     deps = collect(Symbol, depends_on)
+    opts = collect(Symbol, optional)
+    isempty(intersect(deps, opts)) || throw(ArgumentError(
+        "add_field: $(intersect(deps, opts)) appears in both depends_on and optional — a " *
+        "column is either required or optional, not both."))
     for kind in kinds
-        reg = get!(USER_FIELDS, kind, Dict{Symbol,Any}())
-        reg[name] = (compute=compute, depends_on=deps, unit=unit, description=description)
-        # record edges so the requirements resolver can see through the custom field
-        get!(FIELD_DEPS, kind, Dict{Symbol,Vector{Symbol}}())[name] = deps
+        k = _canon_kind(kind)
+        reg = get!(USER_FIELDS, k, Dict{Symbol,Any}())
+        reg[name] = (compute=compute, depends_on=deps, optional=opts, variants=variants,
+                     unit=unit, description=description)
+        # record edges so the requirements resolver can see through the custom field. ONLY the
+        # required deps go in: an optional column must never make a load look insufficient.
+        get!(FIELD_DEPS, k, Dict{Symbol,Vector{Symbol}}())[name] = deps
+        isempty(opts) && isempty(variants) || _register_optional!(k, name, opts, variants)
     end
     return nothing
 end
@@ -288,14 +385,83 @@ function list_fields(kind::Symbol=:hydro; builtin::Bool=false)
 end
 
 """
+    list_fields(data; io=stdout) -> Vector{NamedTuple}
+
+Which derived fields are available **for this loaded object**, and — where it matters — which
+*variant* of a field would actually run. Unlike `list_fields(:particles)`, which answers for a
+data *kind*, this answers for the columns you actually read.
+
+Each entry is `(name, available, missing, using_optional, note)`:
+
+- `available` — every required column is present, so `getvar(data, name)` will work;
+- `missing` — the required columns that are absent (empty when `available`);
+- `using_optional` — optional columns that ARE loaded and will therefore be used;
+- `note` — the variant description, when the field has one.
+
+This exists because a field's *value* can depend on what was loaded, not only on the
+snapshot. `getvar(gas, :T)` takes μ from `:ne` when present and falls back to a
+neutral-primordial μ ≈ 1.22 otherwise — up to a factor ~2 apart for ionised gas — so the same
+call on the same snapshot gives different temperatures depending on the `vars=` used at load
+time. This is the only place that says so.
+
+```julia
+gas = getparticles(info; families=[0], vars=[:rho, :u])        # no :ne
+for f in list_fields(gas)
+    f.name === :T && println(f.note, "   using: ", f.using_optional)
+end
+# → "μ from :ne when it was loaded; neutral-primordial μ≈1.22 otherwise"   using: Symbol[]
+```
+
+See also [`getvar_requirements`](@ref), [`getvar_optional`](@ref), [`field_info`](@ref).
+"""
+function list_fields(data; io=nothing)
+    kind = _field_kind(data)
+    kind === :unknown && throw(ArgumentError(
+        "list_fields: $(typeof(data)) is not a Mera data object. Pass a kind symbol " *
+        "(e.g. list_fields(:particles)) or a loaded hydro/particle/gravity/rt/clump object."))
+    have = Set{Symbol}(propertynames(data.data.columns))
+    out = NamedTuple[]
+    for name in list_fields(kind; builtin=true)
+        req  = getvar_requirements(kind, name)
+        opt  = _field_optional(kind, name)
+        miss = Symbol[r for r in req if !(r in have)]
+        push!(out, (name=name, available=isempty(miss), missing=miss,
+                    using_optional=Symbol[o for o in opt if o in have],
+                    note=_field_variants(kind, name)))
+    end
+    sort!(out, by = e -> String(e.name))
+    if io !== nothing
+        for e in out
+            status = e.available ? "ok " : "-- "
+            optstr = join(e.using_optional, ", ")
+            extra = isempty(e.note) ? "" :
+                    (isempty(e.using_optional) ? "   [fallback variant: " * e.note * "]" :
+                                                 "   [using " * optstr * "]")
+            println(io, "  ", status, rpad(String(e.name), 22),
+                    e.available ? "" : "needs " * join(e.missing, ", "), extra)
+        end
+    end
+    return out
+end
+
+"""
     field_info(name::Symbol; kind::Symbol=:hydro)
 
 The registration record `(; compute, depends_on, unit, description)` for a user field,
 or `nothing` if it isn't registered for that `kind`.
 """
 field_info(name::Symbol; kind::Symbol=:hydro) = _field_info(name, _canon_kind(kind))
-_field_info(name::Symbol, kind::Symbol) =
-    (haskey(USER_FIELDS, kind) && haskey(USER_FIELDS[kind], name)) ? USER_FIELDS[kind][name] : nothing
+function _field_info(name::Symbol, kind::Symbol)
+    if haskey(USER_FIELDS, kind) && haskey(USER_FIELDS[kind], name)
+        return USER_FIELDS[kind][name]
+    end
+    # built-in: synthesise the same record shape so callers do not need two code paths
+    deps = get(get(FIELD_DEPS, kind, Dict{Symbol,Vector{Symbol}}()), name, nothing)
+    deps === nothing && return nothing
+    return (compute=nothing, depends_on=deps, optional=_field_optional(kind, name),
+            variants=_field_variants(kind, name), unit=:standard,
+            description="built-in field (computed in getvar)")
+end
 
 # -------------------------------------------------------------------------------------
 # getvar hook: split requested vars into built-in vs user-registered, compute each, merge.

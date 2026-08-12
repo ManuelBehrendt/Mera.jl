@@ -176,6 +176,7 @@ export
     average_mweighted,
     getvar,
     getvar_requirements,
+    getvar_optional,
     add_field,
     delete_field,
     list_fields,

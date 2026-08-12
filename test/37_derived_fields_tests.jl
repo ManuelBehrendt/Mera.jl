@@ -133,7 +133,13 @@
                                   :bmag, :pmag, :beta, :v_alfven, :e_magnetic,# need magnetic field
                                   :mach_alfven, :mach_fast, :mach_slow]),     # need magnetic field
                 :gravity  => Set{Symbol}(),
-                :particle => Set([:formation_redshift, :formation_time, :zform,    # cosmological only
+                :particle => Set([:T, :Temp, :Temperature, :cs, :p, :volume,      # AREPO/GADGET GAS
+                                  # ^ these need the gas columns :u/:rho that PartType0 carries.
+                                  #   A RAMSES particle file is stars/DM and has neither, so
+                                  #   getvar correctly refuses — that is a missing column, not
+                                  #   registry drift. 72_gadget_logs_tests.jl exercises them on a
+                                  #   synthetic gas object where the columns ARE present.
+                                  :formation_redshift, :formation_time, :zform,    # cosmological only
                                   :bmag, :pmag, :beta, :v_alfven, :e_magnetic,     # need magnetic field (AREPO/TNG gas)
                                   :mach_alfven, :mach_fast, :mach_slow]),
             )

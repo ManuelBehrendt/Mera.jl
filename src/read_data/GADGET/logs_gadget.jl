@@ -224,15 +224,33 @@ function _parse_log_table(p::String, name::Symbol, guess::Vector{Symbol};
         cols[c][r] = rows[r][c]
     end
 
-    # restarts: the scale factor in column 1 stepping backwards
+    # Two different counts, because "how many restarts" is ambiguous once a descent spans more
+    # than one row:
+    #   restarts       — backward STEPS: every row whose scale factor is below its predecessor
+    #   restart_events — maximal descending RUNS: one per place the series turns around
+    # A restart that simply re-emits an earlier block gives one step and one event, so the two
+    # agree in the ordinary case and diverge only when consecutive rows keep decreasing.
+    #
+    # Note this counts the rows Mera actually PARSED. A `wc -l`-style count over the raw file
+    # can differ by one, because a truncated final row is dropped here but is still a line
+    # there — which is the likeliest explanation for a naive count reading one higher.
     restarts = 0
+    restart_events = 0
     if ncol >= 1 && nrows > 1
         a = cols[1]
         @inbounds for i in 2:nrows
-            a[i] < a[i-1] && (restarts += 1)
+            if a[i] < a[i-1]
+                restarts += 1
+                (i == 2 || a[i-1] >= a[i-2]) && (restart_events += 1)   # start of a descent
+            end
         end
     end
-    if restarts > 0 && dedupe === :last
+    # Deliberately NOT gated on `restarts > 0`. AREPO writes several rows at the same scale
+    # factor whether or not the run ever restarted, so gating made `dedupe=:last` mean two
+    # different things depending on an unrelated property: a file with duplicate times and no
+    # restart kept them, while the same file plus one backward step collapsed them all.
+    # `:last` now always means "keep the last row at each time".
+    if dedupe === :last && nrows > 1 && ncol >= 1
         a = cols[1]
         keep = trues(nrows)
         # keep the LAST occurrence of each time: walking backwards, drop anything at or
@@ -248,8 +266,12 @@ function _parse_log_table(p::String, name::Symbol, guess::Vector{Symbol};
         idx = findall(keep)
         cols = [c[idx] for c in cols]
         nrows = length(idx)
-        verbose && println("[Mera]: $(basename(p)): $(restarts) restart(s) detected; " *
-                           "dedupe=:last kept $(nrows) of $(kept) rows (monotonic in a).")
+        if verbose && nrows < kept
+            println("[Mera]: $(basename(p)): dedupe=:last kept $(nrows) of $(kept) rows " *
+                    "(one per scale factor, monotonic in a)" *
+                    (restarts > 0 ? "; $(restarts) backward step(s) in $(restart_events) " *
+                                    "restart event(s)." : "."))
+        end
     elseif restarts > 0
         verbose && println("[Mera]: $(basename(p)): $(restarts) restart(s) detected; " *
                            "dedupe=:none, so the scale factor is NOT monotonic.")
@@ -266,7 +288,8 @@ function _parse_log_table(p::String, name::Symbol, guess::Vector{Symbol};
                                         "but $(basename(p)) has $(ncol) columns.")
 
     nt = (; name=name, path=p, cols=cols, colnames=names_used, colnames_verified=verified,
-            ncols=ncol, nrows=nrows, truncated=truncated, restarts=restarts)
+            ncols=ncol, nrows=nrows, truncated=truncated, restarts=restarts,
+            restart_events=restart_events)
     # also expose each column by name, so t.a / t.sfr_total work directly
     return merge(nt, NamedTuple{Tuple(names_used)}(Tuple(cols)))
 end
@@ -317,7 +340,8 @@ Read the **run-time logs** of an AREPO/GADGET run. `which` is
 
 Each table is a `NamedTuple` of plain `Vector{Float64}` columns:
 
-    (name, path, cols, colnames, colnames_verified, ncols, nrows, truncated, restarts)
+    (name, path, cols, colnames, colnames_verified, ncols, nrows, truncated,
+     restarts, restart_events)
 
 plus each column under its name, so `t.a` and `t.sfr_total` work directly and go straight
 into `lines!`, [`pdf`](@ref) or [`profile`](@ref).
@@ -339,8 +363,50 @@ Keywords:
   applied while streaming.
 - `dedupe` — `:last` (default) keeps the last occurrence of each time, which undoes the
   duplicated stretch a **restart** appends; `:none` returns the raw rows. Restarts are
-  counted in `restarts` either way.
+  counted either way, in `restarts` and `restart_events` (below).
 - `colnames` — override the guessed names, and mark them verified.
+
+!!! note "`every` samples the raw stream, and `dedupe` runs afterwards"
+    The order is: parse → `arange` → `every` → `dedupe`. So `every=100` keeps every hundredth
+    **raw** row, and the deduplication then removes some of those — you do not get exactly a
+    hundredth of what the default call returns. Measured on a real 175 MB `sfr.txt`
+    (2 041 340 raw lines, 1 044 616 distinct scale factors):
+
+    | call | rows |
+    |---|---:|
+    | `getlogs(info, :sfr)` | 1 044 614 |
+    | `getlogs(info, :sfr; dedupe=:none)` | 2 041 339 |
+    | `getlogs(info, :sfr; every=100)` | 19 538 |
+    | `getlogs(info, :sfr; every=100, dedupe=:none)` | 20 414 |
+
+    This order is deliberate: sampling before deduplication is what keeps `every=` O(1) in
+    memory. Deduplicating first would mean holding the whole distinct set before sampling —
+    for the file above, 47.8 MB instead of 0.9 MB, 51× more, and it would remove the only
+    reason `every=` is cheap on a multi-gigabyte log. If you need exactly every Nth *distinct*
+    time, sample the returned columns yourself.
+
+!!! note "The default row count is about half of `wc -l`"
+    AREPO writes several rows per scale factor, so `dedupe=:last` — the default — roughly
+    halves the count on a real file (1 044 614 from 2 041 340 lines above). Rows were not
+    lost; duplicated times were collapsed. Pass `dedupe=:none` to see the file as written.
+
+    `:last` means "keep the last row at each time" unconditionally — it collapses duplicates
+    whether or not the run ever restarted. (It used to run only when a backward step had been
+    seen, which made the same keyword mean two different things depending on an unrelated
+    property of the file.)
+
+!!! note "`restarts` counts backward steps; `restart_events` counts turnarounds"
+    Both are reported because "how many restarts" stops being obvious once a descent covers
+    more than one row:
+
+    - `restarts` — rows whose scale factor is **below the previous row**. One per backward
+      step.
+    - `restart_events` — **maximal descending runs**. One per place the series turns around.
+
+    A restart that simply re-emits an earlier block produces one step and one event, so the
+    two agree in the ordinary case; they diverge only when consecutive rows keep decreasing.
+    Both count the rows Mera actually parsed, so a `wc -l`-style count over the raw file can
+    read one higher — a truncated final row is dropped here but is still a line there.
 
 Missing files are normal (they depend on the build) and are skipped, not an error.
 Use [`loglist`](@ref) to see what is there before reading.
