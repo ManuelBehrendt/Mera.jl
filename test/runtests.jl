@@ -223,14 +223,25 @@ if isempty(_focus)
         include("29_parallel_execution_tests.jl")
     end
 
+    end  # if SMOKE_ONLY / DATA_AVAILABLE
+
     # ------------------------------------------------------------------------
-    # AREPO real-data validation (inert unless MERA_IPM_DATA points at IPM data)
+    # AREPO real-data validation. Deliberately OUTSIDE the gate above: that gate is
+    # DATA_AVAILABLE = isdir(SIMULATION_PATH), which tracks the RAMSES corpus
+    # (MERA_TEST_DATA) and says nothing about whether the AREPO data is present.
+    # Inside it, the machine that HAS the AREPO data but not the RAMSES corpus
+    # silently skipped the one file that most needed to run there — it only ever
+    # ran via MERA_FOCUS, which bypasses the gate.
+    #
+    # It is also outside SMOKE_ONLY, on purpose. The file guards itself on
+    # MERA_IPM_DATA and costs a fraction of a second to skip, and including it means
+    # CI actually PARSES it. Inside the gate CI never loaded it at all, so a syntax
+    # error or an undeclared import could reach master unnoticed — which is exactly
+    # what happened with `using Printf` (caught only by a full local run, not by CI).
     # ------------------------------------------------------------------------
     @testset "AREPO Real-Data Validation" begin
         include("73_arepo_realdata_validation.jl")
     end
-
-    end  # if SMOKE_ONLY / DATA_AVAILABLE
 
 end
 end  # if isempty(_focus)
