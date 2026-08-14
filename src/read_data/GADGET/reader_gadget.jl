@@ -38,7 +38,26 @@ const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("Electro
 # so `getparticles(info; families=[4])` had no :gpot column at all; and it was filled only for
 # pt == 0, so a mixed load gave stars and dark matter an all-NaN :gpot. AREPO/TNG write
 # `Potential` in every PartTypeN, so the data was there and silently discarded.
-const _GADGET_ANY_FIELDS = (("Potential", :gpot),)
+const _GADGET_ANY_FIELDS = (("Potential", :gpot),
+                            # SUBFIND writes per-PARTICLE quantities back into the snapshot
+                            # (distinct from the group catalogue, which is per halo): the local
+                            # velocity dispersion, the local total/DM density and the smoothing
+                            # length used to estimate them. Present only when SUBFIND ran and
+                            # wrote them back, so like every other field here they are optional.
+                            #
+                            # DELIBERATELY RAW. Every other comoving→physical factor in this
+                            # reader is applied explicitly a few hundred lines below, and these
+                            # four are absent from that block on purpose: the correct exponents
+                            # depend on how the run stores them, which cannot be settled without
+                            # reading the datasets' own a_scaling/h_scaling/to_cgs attributes on
+                            # a real snapshot. Guessing would repeat the :T-in-Kelvin bug — a
+                            # silent factor-of-two at z ≈ 3.4 for a velocity if √a were applied
+                            # wrongly. They are therefore returned exactly as stored, and the
+                            # docstring says so.
+                            ("SubfindVelDisp",   :subfind_veldisp),
+                            ("SubfindDensity",   :subfind_density),
+                            ("SubfindDMDensity", :subfind_dmdensity),
+                            ("SubfindHsml",      :subfind_hsml))
 
 # does this HDF5 file look like GADGET? (a Header group carrying NumPart_Total)
 function _is_gadget_h5(fn::String)

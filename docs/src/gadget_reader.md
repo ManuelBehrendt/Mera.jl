@@ -23,7 +23,9 @@ unchanged.
     `PartType*` groups into a Mera [`PartDataType`](@ref) via [`getparticles`](@ref). For **gas**
     (`PartType0`, e.g. AREPO/TNG) the cell fields present in the file are read as columns —
     `Density→:rho`, `InternalEnergy→:u`, `ElectronAbundance→:ne`, `GFM_Metallicity→:metallicity`,
-    `StarFormationRate→:sfr`, `NeutralHydrogenAbundance→:nh`, `Machnumber→:mach`, the `MagneticField`
+    `StarFormationRate→:sfr`, `NeutralHydrogenAbundance→:nh`, `Machnumber→:mach`,
+    the SUBFIND per-particle set `SubfindVelDisp/Density/DMDensity/Hsml→:subfind_*` (returned
+    **raw**, no comoving factor — see the [AREPO page](arepo_reader.md)), the `MagneticField`
     vector→`:bx,:by,:bz` (MHD, physical Gauss) — and `:volume = mass/ρ` is derived;
     [`getvar`](@ref) adds `:T`, `:p`, `:cs` (temperature from `:u`+`:ne`, with a neutral-primordial μ
     fallback when `:ne` is absent).
@@ -84,7 +86,8 @@ gas = getparticles_gadget(info; families=[0], vars=[:rho, :u, :ne])   # + the ba
 
 The nine **base columns** (`:x, :y, :z, :vx, :vy, :vz, :mass, :id, :family`) always load — they
 define the object. `vars` selects among the *stored* gas fields (`:rho, :u, :ne, :metallicity,
-:sfr, :nh, :mach, :gpot, :bx, :by, :bz`) plus `:volume`, which is derived from `:rho` and pulls it
+:sfr, :nh, :mach, :gpot, :bx, :by, :bz`, plus `:subfind_veldisp, :subfind_density,
+:subfind_dmdensity, :subfind_hsml` where SUBFIND wrote them) plus `:volume`, which is derived from `:rho` and pulls it
 in automatically. Omit `vars` (or pass `:all`) for everything present.
 
 Measured on a 16-chunk CAMELS snapshot, same rows each time:

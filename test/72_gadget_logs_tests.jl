@@ -588,6 +588,78 @@ end
         @test perf.nrows == 5000
     end
 
+    # ---------------------------------------------------------------------------------
+    # SUBFIND writes PER-PARTICLE quantities back into the snapshot, distinct from the group
+    # catalogue: local velocity dispersion, local total/DM density, and the smoothing length
+    # used to estimate them. Mera read none of them — they were in the file and silently
+    # dropped. They are returned RAW: the comoving exponents cannot be settled without the
+    # datasets' own a_scaling/h_scaling attributes on a real snapshot, and guessing a √a on a
+    # velocity would be a silent factor of two at z ≈ 3.4.
+    # ---------------------------------------------------------------------------------
+    @testset "24. the SUBFIND per-particle family loads, and stays raw" begin
+        function _mk_sub(dir; a=1.0, withsub=true)
+            sd = joinpath(dir, "snapdir_007"); mkpath(sd); n = 5
+            Mera.HDF5.h5open(joinpath(sd, "snap_007.0.hdf5"), "w") do f
+                hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+                hg["BoxSize"] = 100.0; hg["Time"] = a
+                hg["NumPart_Total"] = UInt32[n,0,0,0,n,0]
+                hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+                if a != 1.0
+                    hg["Omega0"] = 0.3; hg["OmegaLambda"] = 0.7
+                    hg["HubbleParam"] = 0.7; hg["Redshift"] = 1/a - 1
+                end
+                Mera.HDF5.create_group(f, "Config")
+                for pt in (0, 4)
+                    g = Mera.HDF5.create_group(f, "PartType$pt")
+                    g["Coordinates"] = rand(3,n) .* 100
+                    g["Velocities"] = fill(100f0,3,n)
+                    g["ParticleIDs"] = UInt32.((pt*10+1):(pt*10+n))
+                    g["Masses"] = fill(1f-3,n)
+                    if pt == 0
+                        g["Density"] = fill(1f0,n); g["InternalEnergy"] = fill(100f0,n)
+                    end
+                    if withsub
+                        g["SubfindVelDisp"]   = Float32[10,20,30,40,50]
+                        g["SubfindDensity"]   = Float32[1,2,3,4,5]
+                        g["SubfindDMDensity"] = Float32[6,7,8,9,10]
+                        g["SubfindHsml"]      = Float32[2,2,2,2,2]
+                    end
+                end
+            end
+        end
+        d = mktempdir(); _mk_sub(d)
+        gas = getparticles(getinfo(7, d, verbose=false), families=[0], verbose=false)
+        cols = propertynames(gas.data.columns)
+        for c in (:subfind_veldisp, :subfind_density, :subfind_dmdensity, :subfind_hsml)
+            @test c in cols
+        end
+        @test getvar(gas, :subfind_veldisp) == [10.0, 20.0, 30.0, 40.0, 50.0]
+        @test getvar(gas, :subfind_dmdensity) == [6.0, 7.0, 8.0, 9.0, 10.0]
+
+        # SUBFIND writes them for every particle type, not only gas
+        st = getparticles(getinfo(7, d, verbose=false), families=[4], verbose=false)
+        @test :subfind_veldisp in propertynames(st.data.columns)
+
+        # RAW: no comoving correction is applied, even on a cosmological run. If a √a ever
+        # starts being applied to :subfind_veldisp this test fails, which is the intent —
+        # the exponent must be established from the file's own attributes, not assumed.
+        d2 = mktempdir(); _mk_sub(d2; a=0.25)
+        g2 = getparticles(getinfo(7, d2, verbose=false), families=[0], verbose=false)
+        @test g2.info.aexp == 0.25
+        @test getvar(g2, :subfind_veldisp) == [10.0, 20.0, 30.0, 40.0, 50.0]
+        @test getvar(g2, :subfind_hsml) == fill(2.0, 5)
+        # ...while :vx on the SAME object does carry its √a, so the contrast is real
+        @test getvar(g2, :vx) ≈ fill(100.0 * sqrt(0.25), 5)
+
+        # selectable through vars=, and absent (not an error) when SUBFIND did not run
+        g3 = getparticles(getinfo(7, d, verbose=false), families=[0],
+                          vars=[:subfind_veldisp], verbose=false)
+        @test :subfind_veldisp in propertynames(g3.data.columns)
+        d4 = mktempdir(); _mk_sub(d4; withsub=false)
+        g4 = getparticles(getinfo(7, d4, verbose=false), families=[0], verbose=false)
+        @test !(:subfind_veldisp in propertynames(g4.data.columns))
+    end
+
     @testset "12. colnames override marks the names verified" begin
         dir = mktempdir(); info = _logs_fixture_info(dir)
         write_sn_log(dir; nrows=5)

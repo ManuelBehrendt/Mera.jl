@@ -52,6 +52,10 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 | `Potential` | `:gpot` | gravitational potential (peculiar, `a⁻¹`); present on all particle types |
 | `NeutralHydrogenAbundance` | `:nh` | neutral-hydrogen fraction (dimensionless) |
 | `Machnumber` | `:mach` | shock Mach number from AREPO's shock finder — **not** \|v\|/c_s, see below |
+| `SubfindVelDisp` | `:subfind_veldisp` | local velocity dispersion at the cell (SUBFIND) — **raw**, see below |
+| `SubfindDensity` | `:subfind_density` | local total density estimate (SUBFIND) — **raw** |
+| `SubfindDMDensity` | `:subfind_dmdensity` | local dark-matter density estimate (SUBFIND) — **raw** |
+| `SubfindHsml` | `:subfind_hsml` | smoothing length used for those estimates — **raw** |
 | *(derived)* | `:T`, `:p`, `:cs` | `T = (γ-1)·u·μ·m_H/k_B`; μ from `:ne` (neutral-primordial fallback if absent) |
 
 !!! warning "`:mach` is not the same quantity on AREPO as on RAMSES"
@@ -76,6 +80,27 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
     `:mach` exists on AREPO gas only when the run wrote `Machnumber` (a compile-time option);
     without it the column is simply absent. `configflags(info)` tells you what the run was
     built with.
+
+!!! warning "The SUBFIND per-particle fields are returned RAW"
+    SUBFIND writes per-*particle* quantities back into the snapshot — distinct from the group
+    catalogue, which is per *halo*. They are the local velocity dispersion at each cell, local
+    total and dark-matter density estimates, and the smoothing length used to compute them.
+    Mera now reads all four; previously they sat in the file and were silently dropped.
+
+    Unlike every other field on this page, **no comoving→physical factor is applied**. That is
+    deliberate: the right exponents depend on how the run stores them, and each dataset carries
+    its own `a_scaling` / `h_scaling` / `to_cgs` attributes that settle it. Assuming a `√a` on a
+    velocity dispersion would be a silent factor of two at z ≈ 3.4 — the same class of error as
+    a temperature returned in the wrong units. So they come back exactly as stored, and scaling
+    them is yours:
+
+    ```julia
+    gas = getparticles(info; families=[0])
+    getvar(gas, :subfind_veldisp)     # as stored — check the dataset attributes before scaling
+    ```
+
+    They appear on every particle type SUBFIND processed, not only gas, and are absent
+    altogether when SUBFIND did not run or did not write them back.
 
 !!! tip "Stellar ages"
     Star particles carry `GFM_StellarFormationTime` as a scale factor, not an age.
