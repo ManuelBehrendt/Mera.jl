@@ -172,6 +172,50 @@ println(":mach_custom range    : ", extrema(getvar(gas, :mach_custom)))
 :mach_custom range    : (0.0015019848658968961, 790.5001832586903)
 ```
 
+### Optional dependencies — columns that change the answer but are not required
+
+Some fields need one set of columns to work at all and merely *prefer* another. AREPO gas
+temperature is the case: `getvar(gas, :T)` throws without `:u`, but takes the mean molecular
+weight μ from the electron abundance `:ne` **when that was loaded**, and otherwise falls back
+to a neutral-primordial μ ≈ 1.22. On ionised gas the two differ by nearly a factor of two.
+
+That makes `:T` a function of the snapshot **and** of the `vars=` used at load time — and a
+single `depends_on` list cannot express it. Naming `:ne` there would make a perfectly valid
+`getparticles(…; vars=[:rho,:u])` look insufficient; leaving it out would record nothing about
+the silent change in result. So there is a second slot:
+
+```julia
+add_field(:T_custom, compute;
+          depends_on = [:u],          # required — the field cannot run without these
+          optional   = [:ne],         # improves the result when present; never demanded
+          variants   = "μ from :ne when loaded; neutral-primordial μ≈1.22 otherwise")
+```
+
+The two are reported separately, and [`getvar_requirements`](@ref) never returns the optional
+set — that is the whole point:
+
+```julia
+getvar_requirements(:particles, :T)                          # [:u]
+getvar_optional(:particles, :T)                              # [:ne]
+getvar_requirements(:particles, :T; include_optional=true)   # [:ne, :u] — only if you ask
+field_info(:T; kind=:particles).variants                     # the note above
+```
+
+The payoff is [`list_fields`](@ref) called on a **loaded object** rather than on a kind. It
+says which fields are available, what is missing, and — where it matters — which variant would
+actually run:
+
+```julia
+gas = getparticles(info; families=[0], vars=[:rho, :u])      # no :ne
+for f in list_fields(gas)
+    f.name === :T && println(f.available, "  using: ", f.using_optional, "  ", f.note)
+end
+# true  using: Symbol[]  μ from :ne when loaded; neutral-primordial μ≈1.22 otherwise
+```
+
+Load the same gas with `vars=[:rho, :u, :ne]` and `using_optional` becomes `[:ne]`. This is the
+only place that tells you which temperature you are actually looking at.
+
 
 A registered field is a first-class citizen: it flows through [`getvar`](@ref), [`projection`](@ref),
 [`profile`](@ref) and the rest, with its dependencies read and resolved automatically. For example,

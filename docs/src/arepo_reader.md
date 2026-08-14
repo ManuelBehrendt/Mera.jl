@@ -88,7 +88,8 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 getvar(gas, :rho, :g_cm3)        # physical density
 getvar(gas, :T, :K)              # temperature [K] — matches the official TNG formula
                                  # (bare `getvar(gas, :T)` is code units, as for :p/:cs)
-getvar(gas, :metallicity)        # metal mass fraction
+getvar(gas, :metallicity)        # metal mass fraction M_Z/M_tot
+getvar(gas, :metallicity, :Zsun) # the same, in units of solar metallicity
 getvar(gas, :bmag, :muG)         # |B| [μG]; also :pmag (:Ba), :beta, :v_alfven (:km_s), :mach_alfven/fast/slow
 pdf(gas, :rho); profile(gas, :r_sphere, :T)   # PDFs / radial profiles on the gas
 phase(gas, :rho, :T; xscale=:log, yscale=:log)  # mass-weighted ρ–T phase diagram
@@ -100,6 +101,28 @@ returning `xedges`, `yedges` and the `H` grid — a ρ–T diagram is one call, 
 
 The temperature reproduces IllustrisTNG's documented conversion (density to machine precision,
 temperature to sub-percent), so the values match what TNG itself reports.
+
+!!! warning "`:Zsun` is a convention, not a measurement"
+    `GFM_Metallicity` is a **metal mass fraction**, and Mera passes it through unscaled. The
+    `:Zsun` unit divides it by a solar reference — but that reference is **in no snapshot and in
+    no parameter file**. It cannot be read; it has to be declared. Mera declares AREPO/GFM's
+    compiled-in value and says so rather than baking it in silently, because the common choices
+    differ by ~50 % and the choice moves published numbers:
+
+    | source | Z⊙ |
+    |---|---|
+    | AREPO / GFM (Mera's default) | 0.0127 |
+    | Asplund et al. (2009) | 0.0134 |
+    | Grevesse & Sauval (1998) | 0.0201 |
+
+    Re-register the unit to use a different convention — and state which you used:
+
+    ```julia
+    add_unit(:Zsun, 1 / 0.0134)      # Asplund et al. (2009)
+    ```
+
+    Measured on FilB snapshot 032 with the default: mean Z = 1.625e-3 = 0.128 Z⊙,
+    max Z = 0.196 = 15.5 Z⊙.
 
 ## Cosmological runs
 
