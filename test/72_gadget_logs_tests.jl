@@ -651,6 +651,45 @@ end
         # ...while :vx on the SAME object does carry its √a, so the contrast is real
         @test getvar(g2, :vx) ≈ fill(100.0 * sqrt(0.25), 5)
 
+        # The unit contract, from the datasets' own attributes on a real TNG-style snapshot:
+        #   SubfindVelDisp   a_scaling  0.0  to_cgs 1.0e5        (Velocities carry a_scaling 0.5)
+        #   SubfindDensity   a_scaling -3.0  h_scaling 2.0       (byte-identical to Density)
+        #   SubfindDMDensity  "                                   "
+        #   SubfindHsml      a_scaling  1.0  h_scaling -1.0      (byte-identical to Coordinates)
+        # Mera folds a/h into the unit system, so equal raw values must convert equally.
+        dc = mktempdir(); ac = 0.227623152
+        Mera.HDF5.h5open(joinpath(mkpath(joinpath(dc, "snapdir_032")), "snap_032.0.hdf5"), "w") do f
+            hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+            hg["BoxSize"] = 75000.0; hg["Time"] = ac; hg["Redshift"] = 1/ac - 1
+            hg["NumPart_Total"] = UInt32[4,0,0,0,0,0]
+            hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+            hg["Omega0"] = 0.3089; hg["OmegaLambda"] = 0.6911
+            hg["OmegaBaryon"] = 0.0486; hg["HubbleParam"] = 0.6774
+            hg["UnitLength_in_cm"] = 3.085678e21; hg["UnitMass_in_g"] = 1.989e43
+            hg["UnitVelocity_in_cm_per_s"] = 1e5
+            g = Mera.HDF5.create_group(f, "PartType0")
+            g["Coordinates"] = Float64[100 200 300 400; 100 200 300 400; 100 200 300 400]
+            g["Velocities"] = fill(100f0,3,4); g["ParticleIDs"] = UInt32.(1:4)
+            g["Masses"] = fill(1f-3,4); g["Density"] = Float32[1,2,3,4]
+            g["InternalEnergy"] = fill(100f0,4)
+            g["SubfindDensity"]   = Float32[1,2,3,4]          # same raw as Density
+            g["SubfindDMDensity"] = Float32[1,2,3,4]
+            g["SubfindHsml"]      = Float32[100,200,300,400]  # same raw as a coordinate
+            g["SubfindVelDisp"]   = Float32[100,100,100,100]  # same raw as a velocity component
+        end
+        gc = getparticles(getinfo(32, dc, verbose=false), families=[0], verbose=false)
+        # densities: identical attributes ⇒ identical physical values
+        @test getvar(gc, :subfind_density, :g_cm3)   == getvar(gc, :rho, :g_cm3)
+        @test getvar(gc, :subfind_dmdensity, :g_cm3) == getvar(gc, :rho, :g_cm3)
+        # length: identical attributes to Coordinates ⇒ same comoving→physical treatment
+        @test isapprox(first(getvar(gc, :subfind_hsml, :kpc)), first(getvar(gc, :x, :kpc)); rtol=1e-12)
+        # velocity dispersion: a_scaling = 0, so it must NOT pick up the √a that :vx does.
+        # If someone ever adds one, this ratio stops being √a and the test fails — which is
+        # the point: it would silently halve every dispersion at z ≈ 3.4.
+        @test isapprox(first(getvar(gc, :vx, :km_s)) / first(getvar(gc, :subfind_veldisp, :km_s)),
+                       sqrt(ac); rtol=1e-9)
+        @test first(getvar(gc, :subfind_veldisp, :km_s)) == 100.0   # already physical km/s
+
         # selectable through vars=, and absent (not an error) when SUBFIND did not run
         g3 = getparticles(getinfo(7, d, verbose=false), families=[0],
                           vars=[:subfind_veldisp], verbose=false)
@@ -658,6 +697,80 @@ end
         d4 = mktempdir(); _mk_sub(d4; withsub=false)
         g4 = getparticles(getinfo(7, d4, verbose=false), families=[0], verbose=false)
         @test !(:subfind_veldisp in propertynames(g4.data.columns))
+    end
+
+    # ---------------------------------------------------------------------------------
+    # sfr / sfr_snapshot threw on GADGET/AREPO because both built their star mask from
+    # getvar(p, :birth), which correctly refuses on data that stores the formation SCALE
+    # FACTOR in :aform instead. Everything else they need (:age, :zform) already worked.
+    # On AREPO `:aform > 0` is also strictly better than a non-zero test: TNG marks WIND
+    # particles with a negative formation time and they are not stars (7.8 % of PartType4
+    # in one R200c cube).
+    # ---------------------------------------------------------------------------------
+    @testset "25. sfr works on AREPO stars, and excludes wind" begin
+        dir = mktempdir(); sd = joinpath(dir, "snapdir_032"); mkpath(sd); n = 6
+        Mera.HDF5.h5open(joinpath(sd, "snap_032.0.hdf5"), "w") do f
+            hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+            hg["BoxSize"] = 75000.0; hg["Time"] = 0.5
+            hg["NumPart_Total"] = UInt32[0,0,0,0,n,0]
+            hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+            hg["Omega0"] = 0.3089; hg["OmegaLambda"] = 0.6911; hg["HubbleParam"] = 0.6774
+            g = Mera.HDF5.create_group(f, "PartType4")
+            g["Coordinates"] = rand(3,n) .* 75000
+            g["Velocities"] = zeros(Float32,3,n); g["ParticleIDs"] = UInt32.(1:n)
+            g["Masses"] = fill(1f-3,n)
+            g["GFM_InitialMass"] = fill(2f-3,n)
+            g["GFM_Metallicity"] = Float32[0.0127, 0.0254, 0.00635, 0.01, 0.02, 0.03]
+            # two WIND particles: aform < 0. They are not stars.
+            g["GFM_StellarFormationTime"] = Float32[0.4, 0.45, 0.48, 0.49, -0.2, -0.1]
+        end
+        st = getparticles(getinfo(32, dir, verbose=false), families=[4], verbose=false)
+        @test !(:birth in propertynames(st.data.columns))   # AREPO has no :birth at all
+        @test_throws Exception getvar(st, :birth)           # and asking for it still refuses
+
+        m = Mera._sfr_star_mask(st)
+        @test count(m) == 4 && count(.!m) == 2              # wind excluded, not counted as stars
+        @test all(getvar(st, :aform)[m] .> 0)
+
+        # both entry points now run rather than throwing
+        r = sfr_snapshot(st; windows=[1000.0])
+        @test r.n_stars == 4
+        t, s = sfr(st; tbinsize=1000.0)
+        @test length(t) >= 1 && all(isfinite, s)
+
+        # GFM_InitialMass is now exposed, so sfr's existing initial-mass preference engages
+        # instead of silently falling back to the (mass-loss-reduced) current mass
+        @test :minit in propertynames(st.data.columns)
+        @test Mera._sfr_mass_field(st, :auto) === :minit
+        @test r.mass_field === :minit
+
+        # stellar metallicity: GFM_Metallicity is written for gas AND stars, so it lives in the
+        # any-type table. Listing it in both would be a duplicate NamedTuple field.
+        @test :metallicity in propertynames(st.data.columns)
+        @test getvar(st, :metallicity, :Zsun)[1:3] ≈ [1.0, 2.0, 0.5]
+
+        # and a RAMSES-style object (with :birth) must keep the old sentinel behaviour
+        @test :birth ∉ propertynames(st.data.columns)
+    end
+
+    @testset "26. gas metallicity is unchanged by the move to the any-type table" begin
+        dir = mktempdir(); sd = joinpath(dir, "snapdir_032"); mkpath(sd); n = 4
+        Mera.HDF5.h5open(joinpath(sd, "snap_032.0.hdf5"), "w") do f
+            hg = Mera.HDF5.attributes(Mera.HDF5.create_group(f, "Header"))
+            hg["BoxSize"] = 75000.0; hg["Time"] = 0.5
+            hg["NumPart_Total"] = UInt32[n,0,0,0,0,0]
+            hg["NumFilesPerSnapshot"] = Int32(1); hg["MassTable"] = zeros(6)
+            g = Mera.HDF5.create_group(f, "PartType0")
+            g["Coordinates"] = rand(3,n) .* 75000
+            g["Velocities"] = zeros(Float32,3,n); g["ParticleIDs"] = UInt32.(1:n)
+            g["Masses"] = fill(1f-3,n); g["Density"] = fill(1f0,n)
+            g["InternalEnergy"] = fill(100f0,n)
+            g["GFM_Metallicity"] = Float32[0.0127, 0.00635, 0.0254, 0.0]
+        end
+        gas = getparticles(getinfo(32, dir, verbose=false), families=[0], verbose=false)
+        @test :metallicity in propertynames(gas.data.columns)
+        @test getvar(gas, :metallicity)[1] ≈ 0.0127
+        @test getvar(gas, :metallicity, :Zsun)[1:3] ≈ [1.0, 0.5, 2.0]
     end
 
     @testset "12. colnames override marks the names verified" begin

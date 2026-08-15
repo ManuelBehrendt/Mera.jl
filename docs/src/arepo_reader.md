@@ -52,10 +52,10 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 | `Potential` | `:gpot` | gravitational potential (peculiar, `a⁻¹`); present on all particle types |
 | `NeutralHydrogenAbundance` | `:nh` | neutral-hydrogen fraction (dimensionless) |
 | `Machnumber` | `:mach` | shock Mach number from AREPO's shock finder — **not** \|v\|/c_s, see below |
-| `SubfindVelDisp` | `:subfind_veldisp` | local velocity dispersion at the cell (SUBFIND) — **raw**, see below |
-| `SubfindDensity` | `:subfind_density` | local total density estimate (SUBFIND) — **raw** |
-| `SubfindDMDensity` | `:subfind_dmdensity` | local dark-matter density estimate (SUBFIND) — **raw** |
-| `SubfindHsml` | `:subfind_hsml` | smoothing length used for those estimates — **raw** |
+| `SubfindVelDisp` | `:subfind_veldisp` | local **dark-matter** dispersion (SUBFIND), km/s — not the gas dispersion, see below |
+| `SubfindDensity` | `:subfind_density` | local total density estimate (SUBFIND); scales as `:rho` |
+| `SubfindDMDensity` | `:subfind_dmdensity` | local dark-matter density estimate (SUBFIND); scales as `:rho` |
+| `SubfindHsml` | `:subfind_hsml` | smoothing length for those estimates; comoving length as `:x` |
 | *(derived)* | `:T`, `:p`, `:cs` | `T = (γ-1)·u·μ·m_H/k_B`; μ from `:ne` (neutral-primordial fallback if absent) |
 
 !!! warning "`:mach` is not the same quantity on AREPO as on RAMSES"
@@ -81,26 +81,73 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
     without it the column is simply absent. `configflags(info)` tells you what the run was
     built with.
 
-!!! warning "The SUBFIND per-particle fields are returned RAW"
-    SUBFIND writes per-*particle* quantities back into the snapshot — distinct from the group
-    catalogue, which is per *halo*. They are the local velocity dispersion at each cell, local
-    total and dark-matter density estimates, and the smoothing length used to compute them.
-    Mera now reads all four; previously they sat in the file and were silently dropped.
+!!! warning "`:subfind_veldisp` is the DARK-MATTER dispersion, not the gas dispersion"
+    This is the one most likely to be misread. On a **gas** cell, `:subfind_veldisp` is the
+    velocity dispersion of the surrounding **collisionless** matter in the local SUBFIND
+    neighbourhood — not the dispersion of the gas. Measured on a full AREPO chunk (45.9 M gas
+    cells) it tracks `GFM_WindDMVelDisp`, which is by construction the local DM dispersion used
+    to set wind launch velocities, to **0.7 % in the median**.
 
-    Unlike every other field on this page, **no comoving→physical factor is applied**. That is
-    deliberate: the right exponents depend on how the run stores them, and each dataset carries
-    its own `a_scaling` / `h_scaling` / `to_cgs` attributes that settle it. Assuming a `√a` on a
-    velocity dispersion would be a silent factor of two at z ≈ 3.4 — the same class of error as
-    a temperature returned in the wrong units. So they come back exactly as stored, and scaling
-    them is yours:
+    The magnitudes make the same point: a ~300 km/s dispersion over a `:subfind_hsml` of
+    ~1.2 pkpc would be wildly supersonic for gas and would shock away in a crossing time. It is
+    only sensible as virial motion of collisionless particles.
+
+    So it does **not** belong in a σ-vs-ρ or σ-vs-T turbulence plot. For gas turbulence use
+    [`localdispersion`](@ref) or [`velocitydispersion`](@ref), which decompose into turbulent
+    and thermal parts and make the scale dependence explicit. On the same haloes those give
+    σ_turb ≈ 159 → 181 km/s as the patch grows from 30 to 200 kpc — a rising cascade — while
+    `:subfind_veldisp` sits at ~297 km/s *despite* the smallest kernel, because it is measuring
+    a different population.
+
+!!! note "Units of the SUBFIND family, and the wind-particle zero"
+    Mera applies no per-column comoving factor to these four, and that is correct rather than
+    provisional — verified against the datasets' own attributes on a real snapshot:
+
+    | dataset | `a_scaling` | `h_scaling` | matches |
+    |---|---:|---:|---|
+    | `SubfindVelDisp` | 0.0 | 0.0 | already a **physical** velocity (km/s) |
+    | `SubfindDensity`, `SubfindDMDensity` | −3.0 | 2.0 | byte-identical to `Density` |
+    | `SubfindHsml` | 1.0 | −1.0 | byte-identical to `Coordinates` |
+
+    Mera folds `a`/`h` into the **unit system** (`unit_l = ul0·a/h`, `unit_d = ud0·h²/a³`)
+    rather than into the columns, so anything matching `Density` or `Coordinates` converts
+    correctly with no extra step — `getvar(gas, :subfind_density, :g_cm3)` and
+    `getvar(gas, :subfind_hsml, :kpc)` are right as they stand.
+
+    The exception worth knowing: `Velocities` carry `a_scaling = 0.5` and Mera applies that
+    `√a`, but `SubfindVelDisp` carries `a_scaling = 0` and must **not** get it. Applying it at
+    z ≈ 3.4 would divide by 2.1 and turn a 388 km/s dispersion into 185.
+
+    **Star particles need masking.** Wind particles (`:aform ≤ 0`) get **zero** in all four
+    columns, because SUBFIND assigns them no properties. Averaging without masking drags every
+    statistic down:
 
     ```julia
-    gas = getparticles(info; families=[0])
-    getvar(gas, :subfind_veldisp)     # as stored — check the dataset attributes before scaling
+    s  = getparticles(info; families=[4])
+    ok = getvar(s, :aform) .> 0          # real stars; excludes wind
+    mean(getvar(s, :subfind_veldisp)[ok])
     ```
 
-    They appear on every particle type SUBFIND processed, not only gas, and are absent
-    altogether when SUBFIND did not run or did not write them back.
+    The family appears on every particle type SUBFIND processed, not only gas, and is absent
+    altogether when SUBFIND did not run or did not write it back.
+
+### Star particles
+
+| AREPO/TNG dataset | Mera symbol | notes |
+|---|---|---|
+| `GFM_StellarFormationTime` | `:aform` | formation **scale factor**, not a time; `< 0` marks a wind particle |
+| `GFM_InitialMass` | `:minit` | mass at birth, before post-formation mass loss |
+| `GFM_Metallicity` | `:metallicity` | same symbol as the gas one — the dataset is written for both |
+
+[`sfr`](@ref) and [`sfr_snapshot`](@ref) work on AREPO star particles. They identify stars by
+`:aform > 0` where RAMSES uses `:birth ≠ 0`, which also **excludes wind particles** — on one
+R200c cube that is 7.8 % of `PartType4` that a non-zero test would have counted as stellar.
+
+Exposing `GFM_InitialMass` matters for more than completeness: `sfr` already preferred a stored
+initial-mass column over the current `:mass` (current mass is reduced by stellar mass loss), but
+the column was not read, so AREPO always fell back and every history bin older than ~100 Myr
+came out biased low. It now engages automatically — `sfr_snapshot(stars).mass_field` reports
+`:minit` rather than `:mass`.
 
 !!! tip "Stellar ages"
     Star particles carry `GFM_StellarFormationTime` as a scale factor, not an age.

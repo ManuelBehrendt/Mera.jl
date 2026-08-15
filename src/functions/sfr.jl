@@ -12,6 +12,41 @@
 const _INITMASS_CANDIDATES = (:minit, :mass_init, :massini, :mass_initial, :initial_mass,
                               :imass, :mass0, :mp0, :m0, :birth_mass)
 
+# Which particles are stars, and when did they form — for either stellar-time convention.
+#
+# RAMSES stores a super-conformal birth time in `:birth`, with 0 marking a non-star.
+# GADGET/AREPO stores the formation SCALE FACTOR in `:aform` (GFM_StellarFormationTime) and has
+# no `:birth` at all, so `getvar(p, :birth)` throws — correctly, since the two are different
+# quantities. That made `sfr` and `sfr_snapshot` unusable on AREPO even though everything else
+# they need (`:age`, `:zform`) is derived from `:aform` exactly.
+#
+# On the AREPO side `:aform > 0` is also STRICTLY better than a non-zero test: IllustrisTNG marks
+# WIND particles with a negative formation time, and they are not stars. On one R200c cube that
+# is 630 504 of 8 044 495 PartType4 entries — 7.8 % that a `!= 0` test would count as stellar.
+function _sfr_star_mask(p::PartDataType)
+    cols = propertynames(p.data.columns)
+    if :birth in cols
+        return getvar(p, :birth) .!= 0.0            # RAMSES sentinel: non-stars have birth == 0
+    elseif :aform in cols
+        return getvar(p, :aform) .> 0.0             # AREPO: excludes wind (aform < 0) as well
+    end
+    error("sfr: this particle object has neither :birth (RAMSES) nor :aform (GADGET/AREPO), so " *
+          "star particles cannot be identified. Load a snapshot that carries stellar formation " *
+          "times — e.g. getparticles(info; families=[4]) on a run with star formation.")
+end
+
+# Physical cosmic formation time [Myr], for the star-history binning.
+function _sfr_formation_time_Myr(p::PartDataType)
+    cols = propertynames(p.data.columns)
+    if :birth in cols
+        return iscosmological(p.info) ? getvar(p, :formation_time, :Myr) : getvar(p, :birth, :Myr)
+    end
+    # AREPO: `:formation_time` is a :birth-derived quantity and throws here, but `:age` is exact
+    # from `:aform`, so formation time is simply (age of the universe now) − (age of the star).
+    age_now_Myr = cosmology(p.info).age_Gyr * 1000.0
+    return age_now_Myr .- getvar(p, :age, :Myr)
+end
+
 function _sfr_mass_field(p::PartDataType, mass::Symbol)
     mass === :auto || return mass
     cols = propertynames(p.data.columns)
@@ -100,12 +135,8 @@ function sfr(p::PartDataType; tbinsize::Real=10.0, trange=[missing, missing], ma
     mfield = _sfr_mass_field(p, mass)
     massv  = getvar(p, mfield, :Msol)                     # initial (preferred) or current mass [M⊙]
     massv  = _sn_correct_mass!(p, massv, mfield, eta_sn, t_sn_delay, :Myr)  # reconstruct birth mass if asked
-    isstar = getvar(p, :birth) .!= 0.0                    # universal RAMSES star sentinel (non-stars: birth == 0)
-    if iscosmological(p.info)
-        tform = getvar(p, :formation_time, :Myr)          # physical cosmic formation time [Myr] (non-stars → 0)
-    else
-        tform = getvar(p, :birth, :Myr)                   # proper formation time [Myr] (may be < 0: the run's
-    end                                                   # time origin is arbitrary; the SFH shape is unaffected)
+    isstar = _sfr_star_mask(p)                            # :birth != 0 (RAMSES) or :aform > 0 (AREPO)
+    tform  = _sfr_formation_time_Myr(p)                   # physical cosmic formation time [Myr]
     if length(mask) > 1
         length(mask) == length(tform) ||
             error("sfr: mask length $(length(mask)) ≠ number of particles $(length(tform))")
@@ -150,7 +181,7 @@ function sfr_snapshot(p::PartDataType; windows=[5.0, 10.0, 100.0], time_unit::Sy
     age  = getvar(p, :age, time_unit)                    # age since formation (cosmological-correct)
     massv = getvar(p, mfield, :Msol)                     # initial (preferred) or current mass [M⊙]
     massv = _sn_correct_mass!(p, massv, mfield, eta_sn, t_sn_delay, time_unit)  # birth-mass reconstruction
-    star = getvar(p, :birth) .!= 0.0
+    star = _sfr_star_mask(p)                             # :birth != 0 (RAMSES) or :aform > 0 (AREPO)
     if length(mask) > 1
         length(mask) == length(age) ||
             error("sfr_snapshot: mask length $(length(mask)) ≠ number of particles $(length(age))")

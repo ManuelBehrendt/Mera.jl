@@ -27,10 +27,19 @@ const _GADGET_FAMILY = Dict(0=>"gas", 1=>"halo/DM", 2=>"disk", 3=>"bulge", 4=>"s
 # (not a time), so it is exposed under its own name :aform rather than reusing the RAMSES :birth,
 # which is super-conformal time — see getvar(:age)/:zform and `age_from_aform`. TNG marks WIND
 # particles with a_form < 0; the value is stored raw so that marker stays visible.
-const _GADGET_STAR_FIELDS = (("GFM_StellarFormationTime", :aform),)
+const _GADGET_STAR_FIELDS = (("GFM_StellarFormationTime", :aform),
+                             # The mass a star particle was BORN with, before post-formation
+                             # mass loss. `sfr`/`sfr_snapshot` already prefer a stored
+                             # initial-mass column over the current `:mass` (see
+                             # _INITMASS_CANDIDATES, which lists :minit first) — the column
+                             # simply was not exposed, so AREPO always fell back to :mass and
+                             # every star-formation-history bin older than ~100 Myr came out
+                             # biased low. Mapping it makes that existing preference work.
+                             ("GFM_InitialMass", :minit),
+                             )
 
 const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("ElectronAbundance", :ne),
-                            ("GFM_Metallicity", :metallicity), ("StarFormationRate", :sfr),
+                            ("StarFormationRate", :sfr),
                             ("NeutralHydrogenAbundance", :nh), ("Machnumber", :mach))
 
 # Fields AREPO/GADGET write for EVERY particle type, not only gas. `Potential` used to sit in
@@ -39,21 +48,42 @@ const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("Electro
 # pt == 0, so a mixed load gave stars and dark matter an all-NaN :gpot. AREPO/TNG write
 # `Potential` in every PartTypeN, so the data was there and silently discarded.
 const _GADGET_ANY_FIELDS = (("Potential", :gpot),
+                            # GFM_Metallicity is written for GAS *and* STARS. Keeping it in
+                            # the gas-only table filled it for PartType0 alone, so stellar
+                            # metallicity was missing even though the group catalogue
+                            # exposes GroupStarMetallicity. Listing it in both tables is not
+                            # an option — it produces a duplicate NamedTuple field — so it
+                            # belongs here, exactly like Potential, which had the same bug.
+                            ("GFM_Metallicity", :metallicity),
                             # SUBFIND writes per-PARTICLE quantities back into the snapshot
                             # (distinct from the group catalogue, which is per halo): the local
                             # velocity dispersion, the local total/DM density and the smoothing
                             # length used to estimate them. Present only when SUBFIND ran and
                             # wrote them back, so like every other field here they are optional.
                             #
-                            # DELIBERATELY RAW. Every other comoving→physical factor in this
-                            # reader is applied explicitly a few hundred lines below, and these
-                            # four are absent from that block on purpose: the correct exponents
-                            # depend on how the run stores them, which cannot be settled without
-                            # reading the datasets' own a_scaling/h_scaling/to_cgs attributes on
-                            # a real snapshot. Guessing would repeat the :T-in-Kelvin bug — a
-                            # silent factor-of-two at z ≈ 3.4 for a velocity if √a were applied
-                            # wrongly. They are therefore returned exactly as stored, and the
-                            # docstring says so.
+                            # NO per-column comoving factor, and that is now VERIFIED rather than
+                            # provisional. Read off a real TNG-style snapshot (FilB-Zoom4 032),
+                            # the datasets' own attributes are:
+                            #
+                            #   dataset            a_scaling  h_scaling  to_cgs
+                            #   SubfindVelDisp        0.0        0.0     1.0e5      (= Velocities')
+                            #   SubfindDensity       -3.0        2.0     6.7699e-22 (= Density's)
+                            #   SubfindDMDensity     -3.0        2.0     6.7699e-22 (= Density's)
+                            #   SubfindHsml           1.0       -1.0     3.085678e21(= Coordinates')
+                            #
+                            # Mera folds a/h into the UNIT SYSTEM (unit_l = ul0·a/h,
+                            # unit_d = ud0·h²/a³) rather than into the columns, so a raw column
+                            # whose attributes match Density or Coordinates converts correctly
+                            # with no extra work — checked numerically: identical raw values give
+                            # identical g/cm³ as :rho and identical kpc as :x.
+                            #
+                            # The one that matters is SubfindVelDisp. Velocities carry
+                            # a_scaling = 0.5 and Mera applies the √a explicitly a few hundred
+                            # lines below; SubfindVelDisp carries a_scaling = 0, i.e. it is
+                            # ALREADY a physical velocity. It must therefore stay out of that
+                            # block — applying √a at a = 0.2276 would divide by 2.096 and turn a
+                            # 387.9 km/s dispersion into 185.1. A test pins this by asserting the
+                            # ratio to :vx is exactly √a.
                             ("SubfindVelDisp",   :subfind_veldisp),
                             ("SubfindDensity",   :subfind_density),
                             ("SubfindDMDensity", :subfind_dmdensity),

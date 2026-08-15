@@ -24,8 +24,9 @@ unchanged.
     (`PartType0`, e.g. AREPO/TNG) the cell fields present in the file are read as columns —
     `Density→:rho`, `InternalEnergy→:u`, `ElectronAbundance→:ne`, `GFM_Metallicity→:metallicity`,
     `StarFormationRate→:sfr`, `NeutralHydrogenAbundance→:nh`, `Machnumber→:mach`,
-    the SUBFIND per-particle set `SubfindVelDisp/Density/DMDensity/Hsml→:subfind_*` (returned
-    **raw**, no comoving factor — see the [AREPO page](arepo_reader.md)), the `MagneticField`
+    the SUBFIND per-particle set `SubfindVelDisp/Density/DMDensity/Hsml→:subfind_*` (note
+    `:subfind_veldisp` is the local **dark-matter** dispersion, not the gas dispersion — see
+    the [AREPO page](arepo_reader.md)), the `MagneticField`
     vector→`:bx,:by,:bz` (MHD, physical Gauss) — and `:volume = mass/ρ` is derived;
     [`getvar`](@ref) adds `:T`, `:p`, `:cs` (temperature from `:u`+`:ne`, with a neutral-primordial μ
     fallback when `:ne` is absent).

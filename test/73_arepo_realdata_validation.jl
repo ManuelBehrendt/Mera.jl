@@ -17,7 +17,7 @@ const REF = (
     aexp        = 0.22762315212396259,
     boxlen      = 75000.0,
     sfr_log_a   = 0.2276232,     # nearest sfr.txt row to the snapshot
-    sfr_log_val = 2413.970,      # its column 2, M⊙/yr
+    sfr_log_val = 2421.628,      # its RAW COLUMN 3 (:sfr_total), M⊙/yr
     sfr_snap    = 2421.629,      # sum(getvar(gas,:sfr)) over ALL gas, M⊙/yr
     nH_thresh   = 0.1065,        # min n_H among cells with SFR>0, cm^-3
     n_sfcells   = 12_397_569,
@@ -130,13 +130,18 @@ else
         @test issorted(a) || t.restarts > 0
         i = argmin(abs.(a .- REF.aexp))
         @test isapprox(a[i], REF.sfr_log_a; atol=1e-6)
-        logval = t.cols[3][i]                                # column 2, 0-based
-        @test isapprox(logval, REF.sfr_log_val; rtol=0.02)
+        logval = t.cols[3][i]                                # raw column 3, exposed as :sfr_total
+        @test logval === t.sfr_total[i]                      # the named accessor is that column
+        @test isapprox(logval, REF.sfr_log_val; rtol=1e-4)
         # cross-check against the snapshot's own SFR field (already M⊙/yr — do NOT rescale)
         gas = getparticles(info; families=[0], vars=[:sfr], verbose=false)
         snapsum = sum(getvar(gas, :sfr))
         @test isapprox(snapsum, REF.sfr_snap; rtol=0.02)
-        @test isapprox(logval, snapsum; rtol=0.05)           # the headline agreement
+        # The headline agreement. Measured at 2.7e-7 relative, so a 5 % tolerance was loose
+        # enough to hide a real regression in the parser or the column mapping. sfr.txt has no
+        # header, so this independent physical cross-check IS the verification of the guessed
+        # column naming, even though colnames_verified is false.
+        @test isapprox(logval, snapsum; rtol=1e-4)
         gas = nothing; GC.gc()
     end
 
