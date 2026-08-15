@@ -49,8 +49,27 @@ Returns a NamedTuple with one entry per catalogue field (e.g. `GroupMassType`, `
 number of groups) — checked against the header's `Ngroups_Total`, so a partial download is an
 error rather than a silently short catalogue.
 
-Masses are in the file's own units (10¹⁰ M⊙/h for TNG); divide by `info.H0/100` and multiply by
-1e10 for M⊙. `fields` restricts which datasets are read.
+Values come back **exactly as stored** — no unit conversion is applied, unlike snapshot
+quantities read through [`getvar`](@ref). That keeps the arrays checkable against `h5dump` or
+`illustris_python`, but it means converting is yours to do.
+
+**Use `info.scale`; do not hardcode the factors.** The catalogue's units *are* the run's code
+units, so the existing scale factors already convert them:
+
+```julia
+gc = getgroups(info)
+vec(sum(gc.GroupMassType, dims=2)) .* info.scale.Msol   # M⊙
+gc.Group_R_Crit200                  .* info.scale.kpc   # physical kpc
+gc.GroupPos                         .* info.scale.kpc
+```
+
+Writing `.* 1e10` instead is the common mistake and it is only **half** the conversion: the
+catalogue's mass unit is 10¹⁰ M⊙/**h**, so it leaves a factor `h` behind — 1.48× at h = 0.6774.
+`info.scale.Msol` is exactly `1e10/h` for a TNG-style run, derived from the header's own
+`UnitMass_in_g` and `HubbleParam` rather than assumed, so it is also right for a run that
+chose different base units.
+
+`fields` restricts which datasets are read.
 
 ```julia
 info = getinfo(33, "/path/to/TNG50-4")

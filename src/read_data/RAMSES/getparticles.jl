@@ -507,9 +507,11 @@ function getparticles( dataobject::InfoType;
     if !stars && length(data) > 0
         col_names = propertynames(data.columns)
         if :family in col_names
-            data = filter(p -> p.family != 2, data)
+            data = _subset_table(data,
+                           _mask_rows(data, (c, i) -> c.family[i] != 2))
         elseif :birth in col_names
-            data = filter(p -> p.birth <= 0.0, data)
+            data = _subset_table(data,
+                           _mask_rows(data, (c, i) -> c.birth[i] <= 0.0))
         else
             @warn "getparticles(stars=false): cannot identify stars without a :family or :birth column in the loaded vars — the star filter was skipped (all particles returned). Add :family (or :birth) to `vars` to enable it."
         end

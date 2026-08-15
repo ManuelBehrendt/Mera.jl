@@ -584,7 +584,8 @@ function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
         cell_iterator = 1
 
         if isamr
-            filtered_level = filter(p->p.level==ilevel, dataobject.data )
+            filtered_level = _subset_table(dataobject.data,
+                                     _mask_rows(dataobject.data, (c, i) ->c.level[i]==ilevel))
         else # if uniform grid
             filtered_level = dataobject.data
         end
@@ -687,7 +688,8 @@ function dataoverview(dataobject::GravDataType; verbose::Bool=true)
         cell_iterator = 1
 
         if isamr
-            filtered_level = filter(p->p.level==ilevel, dataobject.data )
+            filtered_level = _subset_table(dataobject.data,
+                                     _mask_rows(dataobject.data, (c, i) ->c.level[i]==ilevel))
         else # if uniform grid
             filtered_level = dataobject.data
         end
@@ -808,7 +810,8 @@ function dataoverview(dataobject::PartDataType; verbose::Bool=true)
         part_iterator = 1
 
         if isamr
-            filtered_level = filter(p->p.level==ilevel, dataobject.data )
+            filtered_level = _subset_table(dataobject.data,
+                                     _mask_rows(dataobject.data, (c, i) ->c.level[i]==ilevel))
         else # if uniform grid
             filtered_level = dataobject.data
         end

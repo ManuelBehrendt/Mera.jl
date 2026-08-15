@@ -213,12 +213,13 @@ function getclumps(dataobject::InfoType;
         if length(data) > 0 && !all(in(propertynames(data.columns)), (:peak_x, :peak_y, :peak_z))
             error("[Mera]: getclumps spatial range selection requires the :peak_x/:peak_y/:peak_z columns, which are not in the loaded `vars`. Include them (or load all columns) to use xrange/yrange/zrange.")
         end
-        data = filter(p->       p.peak_x >=  ranges[1] * boxlen &&
-                                p.peak_x <=  ranges[2] * boxlen  &&
-                                p.peak_y >=  ranges[3] * boxlen  &&
-                                p.peak_y <=  ranges[4] * boxlen  &&
-                                p.peak_z >=  ranges[5] * boxlen  &&
-                                p.peak_z <=  ranges[6] * boxlen, data)
+        data = _subset_table(data,
+                       _mask_rows(data, (c, i) ->       c.peak_x[i] >=  ranges[1] * boxlen &&
+                                c.peak_x[i] <=  ranges[2] * boxlen  &&
+                                c.peak_y[i] >=  ranges[3] * boxlen  &&
+                                c.peak_y[i] <=  ranges[4] * boxlen  &&
+                                c.peak_z[i] >=  ranges[5] * boxlen  &&
+                                c.peak_z[i] <=  ranges[6] * boxlen))
     end
 
     printtablememory(data, verbose)
