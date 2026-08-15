@@ -567,6 +567,29 @@ end
         t = getlogs(info, :sn; dedupe=:none, verbose=false)
         @test t.restarts == 4          # backward STEPS: rows 4, 9, 10, 11
         @test t.restart_events == 2    # turnarounds: at row 4 and at row 9
+
+        # ...and WHERE. `restart_at` indexes the PARSED rows (before dedupe), so it names
+        # exactly the rows that step back; `restart_a` is the scale factor there, which is
+        # what survives deduplication and what you would mark on a plot.
+        @test t.restart_at == [4, 9, 10, 11]
+        @test length(t.restart_at) == t.restarts
+        @test issorted(t.restart_at) && allunique(t.restart_at)
+        @test t.restart_a == as[t.restart_at]                  # the a-values at those rows
+        @test all(i -> t.cols[1][i] < t.cols[1][i-1], t.restart_at)   # each really is a step back
+        # the first index of each maximal descent — one per event, so as many as restart_events
+        firsts = [i for i in t.restart_at if !(i-1 in t.restart_at)]
+        @test length(firsts) == t.restart_events
+        @test firsts == [4, 9]
+
+        # a monotonic file reports no locations at all
+        p3 = joinpath(dir, "metals_gas.txt")
+        open(p3, "w") do io
+            for i in 1:20
+                Mera.Printf.@printf(io, "%.6e %.6e %.6e\n", 0.1 + 0.01i, Float64(i), 0.0)
+            end
+        end
+        mono = getlogs(info, :metals_gas; dedupe=:none, verbose=false)
+        @test mono.restarts == 0 && isempty(mono.restart_at) && isempty(mono.restart_a)
     end
 
     @testset "22. performance logs stay untouched by the defaults (regression guard)" begin

@@ -234,13 +234,24 @@ function _parse_log_table(p::String, name::Symbol, guess::Vector{Symbol};
     # Note this counts the rows Mera actually PARSED. A `wc -l`-style count over the raw file
     # can differ by one, because a truncated final row is dropped here but is still a line
     # there — which is the likeliest explanation for a naive count reading one higher.
+    #
+    # `restarts`/`restart_events` say a run WAS resumed; `restart_at`/`restart_a` say WHERE.
+    # That is the part you need to check whether a discontinuity in a physics curve sits exactly
+    # on a resume boundary (an artifact of the restart) or between them (probably real).
+    # Indices refer to the PARSED rows, i.e. before `dedupe` removes anything — after
+    # `dedupe=:last` the series is monotonic by construction and has no backward steps left to
+    # point at. `restart_a` records the scale factor at each one, which stays meaningful in
+    # either frame and is what you would actually plot a marker at.
     restarts = 0
     restart_events = 0
+    restart_at = Int[]
+    restart_a  = Float64[]
     if ncol >= 1 && nrows > 1
         a = cols[1]
         @inbounds for i in 2:nrows
             if a[i] < a[i-1]
                 restarts += 1
+                push!(restart_at, i); push!(restart_a, a[i])
                 (i == 2 || a[i-1] >= a[i-2]) && (restart_events += 1)   # start of a descent
             end
         end
@@ -289,7 +300,7 @@ function _parse_log_table(p::String, name::Symbol, guess::Vector{Symbol};
 
     nt = (; name=name, path=p, cols=cols, colnames=names_used, colnames_verified=verified,
             ncols=ncol, nrows=nrows, truncated=truncated, restarts=restarts,
-            restart_events=restart_events)
+            restart_events=restart_events, restart_at=restart_at, restart_a=restart_a)
     # also expose each column by name, so t.a / t.sfr_total work directly
     return merge(nt, NamedTuple{Tuple(names_used)}(Tuple(cols)))
 end
@@ -341,7 +352,7 @@ Read the **run-time logs** of an AREPO/GADGET run. `which` is
 Each table is a `NamedTuple` of plain `Vector{Float64}` columns:
 
     (name, path, cols, colnames, colnames_verified, ncols, nrows, truncated,
-     restarts, restart_events)
+     restarts, restart_events, restart_at, restart_a)
 
 plus each column under its name, so `t.a` and `t.sfr_total` work directly and go straight
 into `lines!`, [`pdf`](@ref) or [`profile`](@ref).
@@ -407,6 +418,23 @@ Keywords:
     two agree in the ordinary case; they diverge only when consecutive rows keep decreasing.
     Both count the rows Mera actually parsed, so a `wc -l`-style count over the raw file can
     read one higher — a truncated final row is dropped here but is still a line there.
+
+    Those two say a run *was* resumed. `restart_at` and `restart_a` say **where**:
+
+    - `restart_at` — the row indices at which the scale factor steps back, in the **parsed**
+      rows, i.e. *before* `dedupe` removes anything. (After `dedupe=:last` the series is
+      monotonic by construction, so there is nothing left to point at.)
+    - `restart_a` — the scale factor at each of those rows. This one stays meaningful after
+      deduplication and is what you would mark on a plot.
+
+    This is the part worth having when a physics curve shows a discontinuity: a jump sitting
+    exactly on a resume boundary is an artifact of the restart, a jump between them is not.
+
+    ```julia
+    t = getlogs(info, :sfr)
+    vlines!(ax, t.restart_a)            # where the run was resumed
+    t.restarts == length(t.restart_at)  # always true
+    ```
 
 Missing files are normal (they depend on the build) and are skipped, not an error.
 Use [`loglist`](@ref) to see what is there before reading.

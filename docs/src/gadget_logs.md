@@ -96,6 +96,23 @@ t.restarts                                # backward STEPS (rows below their pre
 t.restart_events                          # turnarounds (maximal descending runs)
 ```
 
+`restarts` and `restart_events` say a run *was* resumed. `restart_at` and `restart_a` say
+**where** — the row indices of each backward step, and the scale factor there:
+
+```julia
+t = getlogs(info, :sfr)
+t.restart_a            # e.g. [0.28, 0.37] — the run was resumed at these scale factors
+vlines!(ax, t.restart_a)
+```
+
+That is the part worth having when a physics curve shows a discontinuity: a jump sitting
+exactly on a resume boundary is an artifact of the restart, a jump between them is not.
+Without it you can tell *that* a run restarted but not *where*, so you cannot make that check.
+
+`restart_at` indexes the **parsed** rows, i.e. before `dedupe` removes anything — after
+`dedupe=:last` the series is monotonic by construction and has no backward steps left to point
+at. `restart_a` is the one that stays meaningful either way, which is why it is the one to plot.
+
 Both counts are reported because "how many restarts" stops being obvious once a descent
 covers more than one row. A restart that simply re-emits an earlier block gives one step and
 one event, so they agree in the ordinary case. They also count only the rows Mera **parsed**,
