@@ -151,8 +151,22 @@ definition of "the halo").
 
 !!! note "Catalogue arrays are `(n_groups, k)`"
     Row = group, column = component: `gc.GroupPos[i, :]` is group `i`'s position, **not**
-    `gc.GroupPos[:, i]`. Catalogue units are the raw GADGET ones — positions in ckpc/h, masses in
-    `1e10 M⊙/h` — so they are neither Mera code units nor physical units until you convert.
+    `gc.GroupPos[:, i]`. Catalogue values come back **exactly as stored** — no conversion is
+    applied, unlike snapshot quantities read through `getvar`. That keeps them checkable against
+    `h5dump` or `illustris_python`, but converting is yours to do.
+
+    **Use `info.scale`, don't hardcode the factors.** The catalogue's units *are* the run's code
+    units, so the scale factors you already have convert them:
+
+    ```julia
+    vec(sum(gc.GroupMassType, dims=2)) .* info.scale.Msol   # M⊙
+    gc.Group_R_Crit200                  .* info.scale.kpc   # physical kpc
+    ```
+
+    Writing `.* 1e10` is the common mistake and is only **half** the conversion — the catalogue's
+    mass unit is `1e10 M⊙/`**h**, so it leaves a factor `h` behind (1.48× at h = 0.6774).
+    `info.scale.Msol` is exactly `1e10/h` here, derived from the header's own `UnitMass_in_g` and
+    `HubbleParam` rather than assumed.
 
 #### Loading one group's particles
 
