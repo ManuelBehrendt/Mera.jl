@@ -28,6 +28,32 @@ replacement wherever the predicate can be written as a columnwise boolean.
     return IndexedTables.table(map(col -> col[idx], IndexedTables.columns(t)); copy=false)
 end
 
+"""
+    _mask_rows(t, pred) -> Vector{Bool}
+
+Evaluate a row predicate over a table WITHOUT materialising a `NamedTuple` per row.
+
+`pred(c, i)` receives the table's column NamedTuple `c` and a row index, so it reads
+`c.cx[i]` where the row-wise form read `p.cx`. The arithmetic is written out identically —
+this is a loop over columns, not a broadcast rewrite — so results are bit-for-bit what
+`filter(p -> …, t)` produced, while skipping the per-row NamedTuple that made the row-wise
+form cost ~80 allocations per row on a wide table (see [`_subset_table`](@ref)).
+
+Pair with `_subset_table` to replace a `filter`:
+
+    sub = _subset_table(t, _mask_rows(t, (c,i) -> c.level[i] > 5))
+"""
+@inline function _mask_rows(t, pred::F) where {F}
+    c = IndexedTables.columns(t)
+    n = length(first(c))
+    keep = Vector{Bool}(undef, n)
+    @inbounds for i in 1:n
+        keep[i] = pred(c, i)
+    end
+    return keep
+end
+
+
 
 """
     createconstants!(info::InfoType) -> InfoType

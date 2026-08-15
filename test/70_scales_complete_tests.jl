@@ -60,3 +60,44 @@
         @test_throws ErrorException Mera._check_unit_factor(Inf, :kpc)
     end
 end
+
+# ---------------------------------------------------------------------------------
+# Row-wise `filter(p -> …, table)` falls off a cliff at 11 columns: StructArrays has to
+# materialise a NamedTuple per row and Julia stops inlining it, costing ~50-100
+# allocations PER ROW. Measured: 10 cols -> 0.001/row, 11 -> 50.8, 16 -> 68.8.
+#
+# This is invisible on the :spiral_clumps fixture, which has exactly 10 columns and sits
+# just under the cliff — so the region tests cannot catch a regression here. Real data
+# does: a RAMSES MHD run carries ~16 columns (level, cx/cy/cz, rho, v, p, metallicity and
+# six B faces), and AREPO gas 12. Hence a synthetic wide table, checked directly.
+# ---------------------------------------------------------------------------------
+@testset "wide tables: row selection stays O(1) per row" begin
+    IT = Mera.IndexedTables
+    n = 20_000
+    mk(k) = IT.table(NamedTuple{Tuple(Symbol("c", i) for i in 1:k)}(
+                     Tuple(rand(n) .* 100 for _ in 1:k)); copy=false)
+
+    for k in (10, 16)                       # one below the cliff, one well above
+        d = mk(k)
+        pred_row(p) = p.c1 > 10 && p.c2 > 10
+        want = filter(pred_row, d)          # the reference: what the row-wise form gives
+        got  = Mera._subset_table(d, Mera._mask_rows(d, (c, i) -> c.c1[i] > 10 && c.c2[i] > 10))
+        # same rows, same order, same type — this is the correctness half
+        @test length(got) == length(want)
+        @test typeof(got) == typeof(want)
+        for col in propertynames(IT.columns(want))
+            @test IT.columns(got)[col] == IT.columns(want)[col]
+        end
+        # ...and the performance half: constant allocations, not proportional to rows
+        f() = Mera._subset_table(d, Mera._mask_rows(d, (c, i) -> c.c1[i] > 10 && c.c2[i] > 10))
+        f(); GC.gc()
+        r = @timed f()
+        @test Base.gc_alloc_count(r.gcstats) / n < 1.0
+    end
+
+    # the cliff itself, so the premise stays documented and checkable
+    d16 = mk(16)
+    g() = filter(p -> p.c1 > 10 && p.c2 > 10, d16)
+    g(); GC.gc(); rg = @timed g()
+    @test Base.gc_alloc_count(rg.gcstats) / n > 5.0    # row-wise really is expensive here
+end

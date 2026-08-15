@@ -81,64 +81,68 @@ function subregioncuboid(dataobject::RtDataType;
                     # Cell-based selection: include cells that overlap with the range
                     # A cell at index (cx, cy, cz) spans from (cx-1, cy-1, cz-1) to (cx, cy, cz) in grid units;
                     # its centre is (cx-0.5, cy-0.5, cz-0.5) — the projection-kernel convention
-                    sub_data = filter(p->begin
-                        level_factor = 2^p.level
+                    sub_data = _subset_table(dataobject.data,
+                                       _mask_rows(dataobject.data, (c, i) ->begin
+                        level_factor = 2^c.level[i]
                         # Cell boundaries in physical coordinates
-                        cell_xmin = (p.cx - 1.0) / level_factor
-                        cell_xmax = p.cx / level_factor
-                        cell_ymin = (p.cy - 1.0) / level_factor
-                        cell_ymax = p.cy / level_factor
-                        cell_zmin = (p.cz - 1.0) / level_factor
-                        cell_zmax = p.cz / level_factor
+                        cell_xmin = (c.cx[i] - 1.0) / level_factor
+                        cell_xmax = c.cx[i] / level_factor
+                        cell_ymin = (c.cy[i] - 1.0) / level_factor
+                        cell_ymax = c.cy[i] / level_factor
+                        cell_zmin = (c.cz[i] - 1.0) / level_factor
+                        cell_zmax = c.cz[i] / level_factor
                         
                         # Check for overlap: cell overlaps if its max > range_min AND its min < range_max
                         (cell_xmax > xmin && cell_xmin < xmax) &&
                         (cell_ymax > ymin && cell_ymin < ymax) &&
                         (cell_zmax > zmin && cell_zmin < zmax)
-                    end, dataobject.data)
+                    end))
                 else
                     # Point-based selection: include cells whose centers lie within the range
-                    sub_data = filter(p->begin
-                        level_factor = 2^p.level
-                        cell_x = (p.cx - 0.5) / level_factor
-                        cell_y = (p.cy - 0.5) / level_factor
-                        cell_z = (p.cz - 0.5) / level_factor
+                    sub_data = _subset_table(dataobject.data,
+                                       _mask_rows(dataobject.data, (c, i) ->begin
+                        level_factor = 2^c.level[i]
+                        cell_x = (c.cx[i] - 0.5) / level_factor
+                        cell_y = (c.cy[i] - 0.5) / level_factor
+                        cell_z = (c.cz[i] - 0.5) / level_factor
                         
                         cell_x >= xmin && cell_x <= xmax &&
                         cell_y >= ymin && cell_y <= ymax &&
                         cell_z >= zmin && cell_z <= zmax
-                    end, dataobject.data)
+                    end))
                 end
             else # for uniform grid
                 if cell == true
                     # Cell-based selection for uniform grid
-                    sub_data = filter(p->begin
+                    sub_data = _subset_table(dataobject.data,
+                                       _mask_rows(dataobject.data, (c, i) ->begin
                         level_factor = 2^lmax
                         # Cell boundaries in physical coordinates
-                        cell_xmin = (p.cx - 1.0) / level_factor
-                        cell_xmax = p.cx / level_factor
-                        cell_ymin = (p.cy - 1.0) / level_factor
-                        cell_ymax = p.cy / level_factor
-                        cell_zmin = (p.cz - 1.0) / level_factor
-                        cell_zmax = p.cz / level_factor
+                        cell_xmin = (c.cx[i] - 1.0) / level_factor
+                        cell_xmax = c.cx[i] / level_factor
+                        cell_ymin = (c.cy[i] - 1.0) / level_factor
+                        cell_ymax = c.cy[i] / level_factor
+                        cell_zmin = (c.cz[i] - 1.0) / level_factor
+                        cell_zmax = c.cz[i] / level_factor
                         
                         # Check for overlap
                         (cell_xmax > xmin && cell_xmin < xmax) &&
                         (cell_ymax > ymin && cell_ymin < ymax) &&
                         (cell_zmax > zmin && cell_zmin < zmax)
-                    end, dataobject.data)
+                    end))
                 else
                     # Point-based selection for uniform grid
-                    sub_data = filter(p->begin
+                    sub_data = _subset_table(dataobject.data,
+                                       _mask_rows(dataobject.data, (c, i) ->begin
                         level_factor = 2^lmax
-                        cell_x = (p.cx - 0.5) / level_factor
-                        cell_y = (p.cy - 0.5) / level_factor
-                        cell_z = (p.cz - 0.5) / level_factor
+                        cell_x = (c.cx[i] - 0.5) / level_factor
+                        cell_y = (c.cy[i] - 0.5) / level_factor
+                        cell_z = (c.cz[i] - 0.5) / level_factor
                         
                         cell_x >= xmin && cell_x <= xmax &&
                         cell_y >= ymin && cell_y <= ymax &&
                         cell_z >= zmin && cell_z <= zmax
-                    end, dataobject.data)
+                    end))
                 end
 
             end
@@ -147,64 +151,68 @@ function subregioncuboid(dataobject::RtDataType;
             if isamr
                 if cell == true
                     # Inverse cell-based selection: include cells that do NOT overlap with the range
-                    sub_data = filter(p->begin
-                        level_factor = 2^p.level
+                    sub_data = _subset_table(dataobject.data,
+                                       _mask_rows(dataobject.data, (c, i) ->begin
+                        level_factor = 2^c.level[i]
                         # Cell boundaries in physical coordinates
-                        cell_xmin = (p.cx - 1.0) / level_factor
-                        cell_xmax = p.cx / level_factor
-                        cell_ymin = (p.cy - 1.0) / level_factor
-                        cell_ymax = p.cy / level_factor
-                        cell_zmin = (p.cz - 1.0) / level_factor
-                        cell_zmax = p.cz / level_factor
+                        cell_xmin = (c.cx[i] - 1.0) / level_factor
+                        cell_xmax = c.cx[i] / level_factor
+                        cell_ymin = (c.cy[i] - 1.0) / level_factor
+                        cell_ymax = c.cy[i] / level_factor
+                        cell_zmin = (c.cz[i] - 1.0) / level_factor
+                        cell_zmax = c.cz[i] / level_factor
                         
                         # No overlap: cell_max <= range_min OR cell_min >= range_max
                         (cell_xmax <= xmin || cell_xmin >= xmax) ||
                         (cell_ymax <= ymin || cell_ymin >= ymax) ||
                         (cell_zmax <= zmin || cell_zmin >= zmax)
-                    end, dataobject.data)
+                    end))
                 else
                     # Inverse point-based selection: include cells whose centers lie outside the range
-                    sub_data = filter(p->begin
-                        level_factor = 2^p.level
-                        cell_x = (p.cx - 0.5) / level_factor
-                        cell_y = (p.cy - 0.5) / level_factor
-                        cell_z = (p.cz - 0.5) / level_factor
+                    sub_data = _subset_table(dataobject.data,
+                                       _mask_rows(dataobject.data, (c, i) ->begin
+                        level_factor = 2^c.level[i]
+                        cell_x = (c.cx[i] - 0.5) / level_factor
+                        cell_y = (c.cy[i] - 0.5) / level_factor
+                        cell_z = (c.cz[i] - 0.5) / level_factor
                         
                         cell_x < xmin || cell_x > xmax ||
                         cell_y < ymin || cell_y > ymax ||
                         cell_z < zmin || cell_z > zmax
-                    end, dataobject.data)
+                    end))
                 end
             else # for uniform grid
                 if cell == true
                     # Inverse cell-based selection for uniform grid
-                    sub_data = filter(p->begin
+                    sub_data = _subset_table(dataobject.data,
+                                       _mask_rows(dataobject.data, (c, i) ->begin
                         level_factor = 2^lmax
                         # Cell boundaries in physical coordinates
-                        cell_xmin = (p.cx - 1.0) / level_factor
-                        cell_xmax = p.cx / level_factor
-                        cell_ymin = (p.cy - 1.0) / level_factor
-                        cell_ymax = p.cy / level_factor
-                        cell_zmin = (p.cz - 1.0) / level_factor
-                        cell_zmax = p.cz / level_factor
+                        cell_xmin = (c.cx[i] - 1.0) / level_factor
+                        cell_xmax = c.cx[i] / level_factor
+                        cell_ymin = (c.cy[i] - 1.0) / level_factor
+                        cell_ymax = c.cy[i] / level_factor
+                        cell_zmin = (c.cz[i] - 1.0) / level_factor
+                        cell_zmax = c.cz[i] / level_factor
                         
                         # No overlap condition
                         (cell_xmax <= xmin || cell_xmin >= xmax) ||
                         (cell_ymax <= ymin || cell_ymin >= ymax) ||
                         (cell_zmax <= zmin || cell_zmin >= zmax)
-                    end, dataobject.data)
+                    end))
                 else
                     # Inverse point-based selection for uniform grid
-                    sub_data = filter(p->begin
+                    sub_data = _subset_table(dataobject.data,
+                                       _mask_rows(dataobject.data, (c, i) ->begin
                         level_factor = 2^lmax
-                        cell_x = (p.cx - 0.5) / level_factor
-                        cell_y = (p.cy - 0.5) / level_factor
-                        cell_z = (p.cz - 0.5) / level_factor
+                        cell_x = (c.cx[i] - 0.5) / level_factor
+                        cell_y = (c.cy[i] - 0.5) / level_factor
+                        cell_z = (c.cz[i] - 0.5) / level_factor
                         
                         cell_x < xmin || cell_x > xmax ||
                         cell_y < ymin || cell_y > ymax ||
                         cell_z < zmin || cell_z > zmax
-                    end, dataobject.data)
+                    end))
                 end
             end
 
@@ -343,25 +351,25 @@ function subregioncylinder(dataobject::RtDataType;
 
     if inverse == false
         if isamr
-            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift, cell) <= radius_shift &&
-                                get_height_cylinder(p.cz, p.level, cz_shift, cell) <= height_shift,
-                                dataobject.data)
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell) <= radius_shift &&
+                                get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) <= height_shift))
         else # for uniform grid
-            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift, cell) <= radius_shift &&
-                                get_height_cylinder(p.cz, lmax, cz_shift, cell) <= height_shift,
-                                dataobject.data)
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell) <= radius_shift &&
+                                get_height_cylinder(c.cz[i], lmax, cz_shift, cell) <= height_shift))
         end
 
     else # inverse == true
         ranges = dataobject.ranges
         if isamr
-            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift, cell) > radius_shift ||
-                                get_height_cylinder(p.cz, p.level, cz_shift, cell) > height_shift,
-                                dataobject.data)
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell) > radius_shift ||
+                                get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) > height_shift))
         else # for uniform grid
-            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift, cell) > radius_shift ||
-                                get_height_cylinder(p.cz, lmax, cz_shift, cell) > height_shift,
-                                dataobject.data)
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell) > radius_shift ||
+                                get_height_cylinder(c.cz[i], lmax, cz_shift, cell) > height_shift))
         end
     end
     
@@ -461,20 +469,20 @@ function subregionsphere(dataobject::RtDataType;
 
     if inverse == false
         if isamr
-            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift, cell) <= radius_shift,
-                                dataobject.data)
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell) <= radius_shift))
         else # for uniform grid
-            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift, cell) <= radius_shift,
-                                dataobject.data)
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell) <= radius_shift))
         end
     else # inverse == true
         ranges = dataobject.ranges
         if isamr
-            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift, cell) > radius_shift,
-                                dataobject.data)
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell) > radius_shift))
         else # for uniform grid
-            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift, cell) > radius_shift,
-                                dataobject.data)
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell) > radius_shift))
         end
     end
 

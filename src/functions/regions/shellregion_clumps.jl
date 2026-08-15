@@ -30,27 +30,27 @@ function shellregioncylinder(dataobject::ClumpDataType;
 
 
     if inverse == false
-        sub_data = filter(p-> sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2)
+        sub_data = _subset_table(dataobject.data,
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
                                     >= ( radius_in_shift*boxlen )  &&
 
-                              sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2)
+                              sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
                                     <= ( radius_out_shift*boxlen ) &&
 
-                            abs(p.peak_z - cz_shift*boxlen) <= ( height_shift*boxlen),
-                                dataobject.data)
+                            abs(c.peak_z[i] - cz_shift*boxlen) <= ( height_shift*boxlen)))
     elseif inverse == true
-        sub_data = filter(p-> sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2)
+        sub_data = _subset_table(dataobject.data,
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
                                     < ( radius_in_shift*boxlen )  ||
 
-                              sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2)
+                              sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
                                     > ( radius_out_shift*boxlen ) ||
 
-                            abs(p.peak_z - cz_shift*boxlen) > ( height_shift*boxlen),
-                                dataobject.data)
+                            abs(c.peak_z[i] - cz_shift*boxlen) > ( height_shift*boxlen)))
         ranges = dataobject.ranges
     end
 
@@ -95,28 +95,28 @@ function shellregionsphere(dataobject::ClumpDataType;
     ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift = prep_spherical_shellranges(dataobject.info, center, radius_in, radius_out, range_unit, verbose)
 
     if inverse == false
-        sub_data = filter(p-> sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2+
-                                    (p.peak_z -  cz_shift*boxlen)^2 )
+        sub_data = _subset_table(dataobject.data,
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
+                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
                                     >= ( radius_in_shift*boxlen ) &&
 
-                                sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2+
-                                    (p.peak_z -  cz_shift*boxlen)^2 )
-                                    <= ( radius_out_shift*boxlen ),
-                                dataobject.data)
+                                sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
+                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                                    <= ( radius_out_shift*boxlen )))
 
     elseif inverse == true
-        sub_data = filter(p-> sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2+
-                                    (p.peak_z -  cz_shift*boxlen)^2 )
+        sub_data = _subset_table(dataobject.data,
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
+                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
                                     < ( radius_in_shift*boxlen ) ||
 
-                                sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2+
-                                    (p.peak_z -  cz_shift*boxlen)^2 )
-                                    > ( radius_out_shift*boxlen ),
-                                dataobject.data)
+                                sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
+                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                                    > ( radius_out_shift*boxlen )))
         ranges = dataobject.ranges
     end
 

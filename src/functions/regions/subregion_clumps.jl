@@ -27,19 +27,21 @@ function subregioncuboid(dataobject::ClumpDataType;
             zrange[1] === missing && zrange[2] === missing)
 
           if inverse == false
-              sub_data = filter(p->   p.peak_x >=  xmin * boxlen  &&
-                                      p.peak_x <=  xmax * boxlen  &&
-                                      p.peak_y >=  ymin * boxlen  &&
-                                      p.peak_y <=  ymax * boxlen  &&
-                                      p.peak_z >=  zmin * boxlen  &&
-                                      p.peak_z <=  zmax * boxlen, dataobject.data)
+              sub_data = _subset_table(dataobject.data,
+                                 _mask_rows(dataobject.data, (c, i) ->   c.peak_x[i] >=  xmin * boxlen  &&
+                                      c.peak_x[i] <=  xmax * boxlen  &&
+                                      c.peak_y[i] >=  ymin * boxlen  &&
+                                      c.peak_y[i] <=  ymax * boxlen  &&
+                                      c.peak_z[i] >=  zmin * boxlen  &&
+                                      c.peak_z[i] <=  zmax * boxlen))
           elseif inverse == true
-              sub_data = filter(p->   (p.peak_x <  xmin * boxlen  ||
-                                      p.peak_x >  xmax * boxlen)  ||
-                                      (p.peak_y <  ymin * boxlen  ||
-                                      p.peak_y >  ymax * boxlen)  ||
-                                      (p.peak_z <  zmin * boxlen  ||
-                                      p.peak_z >  zmax * boxlen), dataobject.data)
+              sub_data = _subset_table(dataobject.data,
+                                 _mask_rows(dataobject.data, (c, i) ->   (c.peak_x[i] <  xmin * boxlen  ||
+                                      c.peak_x[i] >  xmax * boxlen)  ||
+                                      (c.peak_y[i] <  ymin * boxlen  ||
+                                      c.peak_y[i] >  ymax * boxlen)  ||
+                                      (c.peak_z[i] <  zmin * boxlen  ||
+                                      c.peak_z[i] >  zmax * boxlen)))
               ranges = dataobject.ranges
           end
 
@@ -92,17 +94,17 @@ function subregioncylinder(dataobject::ClumpDataType;
 
 
     if inverse == false
-        sub_data = filter(p-> sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2)
+        sub_data = _subset_table(dataobject.data,
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
                                     <= ( radius_shift*boxlen )  &&
-                            abs(p.peak_z - cz_shift*boxlen) <= ( height_shift*boxlen),
-                                dataobject.data)
+                            abs(c.peak_z[i] - cz_shift*boxlen) <= ( height_shift*boxlen)))
     elseif inverse == true
-        sub_data = filter(p-> sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2)
+        sub_data = _subset_table(dataobject.data,
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
                                     > ( radius_shift*boxlen )  ||
-                            abs(p.peak_z - cz_shift*boxlen) > ( height_shift*boxlen),
-                                dataobject.data)
+                            abs(c.peak_z[i] - cz_shift*boxlen) > ( height_shift*boxlen)))
         ranges = dataobject.ranges
     end
 
@@ -147,17 +149,17 @@ function subregionsphere(dataobject::ClumpDataType;
     ranges, cx_shift, cy_shift, cz_shift, radius_shift = prepranges(dataobject.info, center, radius, height, range_unit, verbose)
 
     if inverse == false
-        sub_data = filter(p-> sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2+
-                                    (p.peak_z -  cz_shift*boxlen)^2 )
-                                    <= ( radius_shift*boxlen ),
-                                dataobject.data)
+        sub_data = _subset_table(dataobject.data,
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
+                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                                    <= ( radius_shift*boxlen )))
     elseif inverse == true
-        sub_data = filter(p-> sqrt( (p.peak_x -  cx_shift*boxlen)^2 +
-                                    (p.peak_y -  cy_shift*boxlen )^2+
-                                    (p.peak_z -  cz_shift*boxlen)^2 )
-                                    > ( radius_shift*boxlen ),
-                                dataobject.data)
+        sub_data = _subset_table(dataobject.data,
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
+                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
+                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                                    > ( radius_shift*boxlen )))
         ranges = dataobject.ranges
     end
 
