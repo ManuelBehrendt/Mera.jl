@@ -114,6 +114,12 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
     correctly with no extra step — `getvar(gas, :subfind_density, :g_cm3)` and
     `getvar(gas, :subfind_hsml, :kpc)` are right as they stand.
 
+    `:subfind_density` is a **neighbour-smoothed** estimate, so it does not equal the cell's own
+    `:rho` and should not be used as a drop-in for it. In clumpy star-forming gas the kernel
+    biases toward the dense neighbours: measured on an AREPO zoom, the median **per-cell ratio**
+    `subfind_density / rho` is about **7**. (The ratio of the two medians is 5.3 — a different
+    and weaker statistic, since the distribution is strongly skewed. Quote the per-cell one.)
+
     The exception worth knowing: `Velocities` carry `a_scaling = 0.5` and Mera applies that
     `√a`, but `SubfindVelDisp` carries `a_scaling = 0` and must **not** get it. Applying it at
     z ≈ 3.4 would divide by 2.1 and turn a 388 km/s dispersion into 185.

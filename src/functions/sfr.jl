@@ -173,6 +173,24 @@ s.sfr_mean                         # lifetime-averaged SFR  M⊙/yr
 s.mass_field                       # which mass field was used (e.g. :minit or :mass)
 ```
 
+!!! note "Switching to an initial-mass column moves the old bins far more than the young ones"
+    Stellar mass loss has barely begun at 10 Myr and is substantial over a stellar lifetime, so
+    changing `mass_field` from `:mass` to a stored initial mass is **strongly age-dependent**.
+    Measured on an AREPO run (7.4 M star particles):
+
+    | quantity | `:minit` vs `:mass` |
+    |---|---:|
+    | SFR(< 10 Myr) | **+4.2 %** |
+    | Σ mass over all stars (the lifetime mean) | **+30.6 %** |
+
+    So a history recomputed with `:minit` shifts a little at the young end and a lot at the old
+    end. That is physics, not a bug — `:mass` is the *present* mass, already reduced by
+    feedback and winds, and SFR is defined from the mass that actually formed.
+
+    This became visible on GADGET/AREPO only once `GFM_InitialMass` was mapped to `:minit`;
+    before that `:auto` was forced to fall back to `:mass`. `mass_field` in the returned
+    NamedTuple always says which was used, and `mass=:mass` reproduces the old numbers exactly.
+
 See also [`sfr`](@ref) for the full star-formation history SFR(t).
 """
 function sfr_snapshot(p::PartDataType; windows=[5.0, 10.0, 100.0], time_unit::Symbol=:Myr,
