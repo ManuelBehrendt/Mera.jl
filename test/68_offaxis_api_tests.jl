@@ -171,14 +171,38 @@
     if DATA_AVAILABLE
         @testset "binning: omitting it really is :overlap" begin
             gas = load_test_hydro(:spiral_clumps)
-            w = (los=[1,1,1], res=32, center=[:bc], verbose=false, show_progress=false)
-            m_default = projection(gas, :sd, :Msol_pc2; w...)
-            m_overlap = projection(gas, :sd, :Msol_pc2; binning=:overlap, w...)
-            @test m_default.maps[:sd] == m_overlap.maps[:sd]
-            # and a preview kernel genuinely differs while conserving the same total
-            m_cic = projection(gas, :sd, :Msol_pc2; binning=:cic, w...)
-            @test m_cic.maps[:sd] != m_default.maps[:sd]
-            @test isapprox(sum(m_cic.maps[:sd]), sum(m_default.maps[:sd]); rtol=1e-6)
+            cell = gas.boxlen / 2^gas.lmax                     # 3.125 on this fixture
+            w32 = (los=[1,1,1], res=32, center=[:bc], verbose=false, show_progress=false)
+            m_default = projection(gas, :sd, :Msol_pc2; w32...)
+            m_overlap = projection(gas, :sd, :Msol_pc2; binning=:overlap, w32...)
+            @test m_default.maps[:sd] == m_overlap.maps[:sd]   # the API claim: omitting it IS :overlap
+
+            # Whether a FOOTPRINT kernel differs from a CENTRE kernel depends on whether the grid
+            # resolves the cells, and this test used to get that backwards.
+            #
+            # res=32 gives a pixel of exactly the cell size, so every cell falls inside one pixel
+            # and the footprint deposit reduces EXACTLY to the centre deposit — :overlap and :cic
+            # agree to 2.96e-16 relative. The old assertion here was `m_cic != m_default`, which
+            # therefore could not hold... except that at >= 2 threads :overlap picks up ~1.7e-13
+            # of threaded-reduction noise, which made `!=` true by accident. Single-threaded it
+            # failed. The kernels were never the thing being measured.
+            @test gas.boxlen / 32 >= cell                      # pixel >= cell: sub-pixel regime
+            m_cic32 = projection(gas, :sd, :Msol_pc2; binning=:cic, w32...)
+            @test isapprox(m_cic32.maps[:sd], m_default.maps[:sd]; rtol=1e-12)
+
+            # Resolve the cells and the kernels genuinely part company — this is the real claim,
+            # and it is thread-count independent because it is a physical difference, not noise.
+            w64 = (los=[1,1,1], res=64, center=[:bc], verbose=false, show_progress=false)
+            m_def64 = projection(gas, :sd, :Msol_pc2; w64...)
+            m_cic64 = projection(gas, :sd, :Msol_pc2; binning=:cic, w64...)
+            @test gas.boxlen / 64 < cell                       # pixel < cell: cells span pixels
+            reldiff = maximum(abs.(m_cic64.maps[:sd] .- m_def64.maps[:sd])) /
+                      maximum(abs.(m_def64.maps[:sd]))
+            @test reldiff > 0.1                                # measured ~1.17, not 1e-16
+
+            # both kernels conserve the total at either resolution
+            @test isapprox(sum(m_cic32.maps[:sd]), sum(m_default.maps[:sd]); rtol=1e-6)
+            @test isapprox(sum(m_cic64.maps[:sd]), sum(m_def64.maps[:sd]);   rtol=1e-6)
         end
     end
 
