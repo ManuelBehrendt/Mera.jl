@@ -380,17 +380,25 @@ Generates specialized code for each weighting scheme at compile time.
                 error("Volume weighting only supported for HydroDataType")
             end
         end
-    else # :no weighting
+    elseif weighting == :no
         return quote
             # Generate simple velocity averages
             unit_factor = $unit_factor_expr
-            
+
             vx_data = getvar(dataobject, :vx, mask=mask)
             vy_data = getvar(dataobject, :vy, mask=mask)
             vz_data = getvar(dataobject, :vz, mask=mask)
-            
+
             (mean(vx_data) * unit_factor, mean(vy_data) * unit_factor, mean(vz_data) * unit_factor)
         end
+    else
+        # Anything unrecognised used to fall through to the UNWEIGHTED branch, so a typo
+        # (`weighting=:masss`) silently returned a different quantity — and a bulk velocity is
+        # now the rest frame that `getvar(..., vcenter=:auto)` subtracts, where a wrong frame
+        # propagates into every angular momentum and rotation curve derived from it.
+        return :(error("bulk_velocity: weighting=:", $(QuoteNode(weighting)),
+                       " is not recognised. Use :mass (default), :volume (HydroDataType only) ",
+                       "or :no for an unweighted mean."))
     end
 end
 
