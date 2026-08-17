@@ -29,6 +29,24 @@ replacement wherever the predicate can be written as a columnwise boolean.
 end
 
 """
+    _subset_table_keyed(t, keep::AbstractVector{Bool})
+
+As [`_subset_table`](@ref), but carrying the **primary key** over.
+
+`t[findall(keep)]` preserves the pkey, so the `getvar` masking paths — which used it — must too,
+or a masked call would hand back a differently-keyed table than an unmasked one. `findall`
+returns ascending indices and the table was already sorted by its key, so the subset is still
+sorted and this costs no re-sort.
+"""
+@inline function _subset_table_keyed(t, keep::AbstractVector{Bool})
+    idx  = findall(keep)
+    cols = map(col -> col[idx], IndexedTables.columns(t))
+    pk   = collect(IndexedTables.pkeynames(t))
+    return isempty(pk) ? IndexedTables.table(cols; copy=false) :
+                         IndexedTables.table(cols; pkey=pk, copy=false)
+end
+
+"""
     _mask_rows(t, pred) -> Vector{Bool}
 
 Evaluate a row predicate over a table WITHOUT materialising a `NamedTuple` per row.
@@ -723,6 +741,23 @@ function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject
     gravitydata.used_descriptors = dataobject.used_descriptors
     gravitydata.scale = dataobject.scale
     return gravitydata
+end
+
+# RT was the one data kind without a constructor here, which surfaced when the masked getvar
+# paths stopped using `deepcopy` — `deepcopy` needs no per-type method, so nothing had ever
+# required one.
+function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::RtDataType)
+    rtdata = RtDataType()
+    rtdata.data = data
+    rtdata.info = dataobject.info
+    rtdata.lmin = dataobject.lmin
+    rtdata.lmax = dataobject.lmax
+    rtdata.boxlen = dataobject.boxlen
+    rtdata.ranges = dataobject.ranges
+    rtdata.selected_rtvars = dataobject.selected_rtvars
+    rtdata.used_descriptors = dataobject.used_descriptors
+    rtdata.scale = dataobject.scale
+    return rtdata
 end
 
 function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::ClumpDataType)

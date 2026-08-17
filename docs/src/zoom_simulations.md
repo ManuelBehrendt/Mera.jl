@@ -15,16 +15,28 @@ part = getparticles(info, families=[1,2,3])        # collisionless only
 c = contamination(part, halo_pos, r200; range_unit=:kpc)
 
 c.clean            # false ⇒ do not quote anything from this region
+c.conclusive       # false ⇒ "clean" only means nothing was FOUND — see below
 c.d_over_radius    # nearest boundary particle, in units of the radius
 c.n_lowres         # how many are actually inside
 c.families         # which PartTypes were classified high-res vs boundary
 ```
 
+!!! danger "Read `conclusive` with `clean`"
+    If the loaded data contains no low-resolution particle **at all**, `clean` is `true` because
+    nothing was found — which is not the same as nothing being there. A selection that is too
+    small, or a `search_radius` that does not reach the boundary, produces exactly this. When
+    `conclusive` is `false`, widen the selection before believing the answer.
+
 [`contamination`](@ref) **derives** which families are boundary rather than assuming
-`PartType2` and `PartType3`: a collisionless family has one mass for all its members, the
-lightest such family is the high-resolution one, and anything more than `ratio`× heavier
-(default 2) is boundary. Zoom setups number their types differently often enough that
-hard-coding it is a real source of wrong answers.
+`PartType2` and `PartType3`. Among the collisionless candidates (`1,2,3` by default — gas,
+stars and black holes are excluded as *baryonic*, not by mass, since a black-hole seed
+outweighs a high-resolution DM particle), the lightest **median** mass is the high-resolution
+family, and any family whose **lightest** member exceeds `ratio ×` that median is boundary.
+
+Testing the minimum rather than a single table mass matters: multi-level zoom ICs give
+successive boundary shells *different and varying* masses, so such a family has no `MassTable`
+entry at all. A rule of "must have one mass" drops it silently — on a production run that
+misclassified 933 435 boundary particles as baryonic and under-counted the contamination.
 
 Two numbers make the check:
 

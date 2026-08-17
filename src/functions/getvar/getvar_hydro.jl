@@ -86,11 +86,13 @@ function get_data(  dataobject::HydroDataType,
     if length(mask) > 1
         # Filter the IndexedTables data first to process only masked rows
         # This gives true O(masked_cells) performance instead of O(total_cells)
-        mask_indices = findall(mask)
-        masked_data = dataobject.data[mask_indices]
-        # Create a temporary dataobject with filtered data for recursive calls
-        filtered_dataobject = deepcopy(dataobject)
-        filtered_dataobject.data = masked_data
+        masked_data = _subset_table_keyed(dataobject.data, mask)
+        # Columnar selection + shared metadata, not `t[indices]` + `deepcopy`. The deepcopy
+        # duplicated the WHOLE table and was discarded on the next line, and row indexing
+        # materialises a NamedTuple per row (the >10-column inlining cliff). Together they cost
+        # ~460 allocations per particle and made the documented `bulk_velocity(halo, mask=...)`
+        # idiom 200-350x slower than the unmasked path on 25M rows.
+        filtered_dataobject = construct_datatype(masked_data, dataobject)
         use_mask_in_recursion = [false]  # Don't apply mask in recursive calls since data is pre-filtered
     else
         filtered_dataobject = dataobject

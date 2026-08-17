@@ -12,29 +12,49 @@
 # over the inter-halo medium were biased until this was caught.
 # ====================================================================================
 
+# Code units per unit of `range_unit`. Positions come out of getvar in CODE units, so both the
+# centre and the radius must be brought into that same space — see the note at the call site.
+function _range_unit_factor(dataobject, range_unit::Symbol)
+    range_unit === :standard && return Float64(dataobject.boxlen)
+    return 1.0 / getfield(dataobject.scale, range_unit)
+end
+
 # Which families are low-resolution? Derived, not hard-coded: type numbering varies between
 # zooms, so assuming "2 and 3" is exactly the kind of guess this library refuses to make.
 #
-# A collisionless family has ONE mass for all its members (it comes from the header MassTable
-# rather than a per-particle array). Among those, the lightest is the high-resolution family
-# and anything meaningfully heavier is boundary.
-function _classify_families(fam::AbstractVector, mass::AbstractVector; ratio::Real=2.0)
-    fams = sort!(unique(fam))
-    mtab = Dict{Int,Vector{Float64}}()
-    for f in fams
-        f == 0 && continue                        # PartType0 is gas/cells, never a boundary family
-        m = unique(@view mass[fam .== f])
-        mtab[Int(f)] = sort!(collect(Float64.(m)))
+# The rule is about the MASS DISTRIBUTION, not about a single table mass. An earlier version
+# required a family to have exactly ONE mass ("it comes from the header MassTable"), which
+# silently dropped a real boundary family: multi-level zoom ICs give successive boundary shells
+# DIFFERENT and varying masses, so `MassTable[3] == 0` and PartType3's 933 435 boundary
+# particles were classified as baryonic and ignored. That under-counted contamination, and a
+# run whose boundary particles were all variable-mass would have reported perfectly clean.
+#
+# `candidates` is which PartTypes may be collisionless at all. In the GADGET-HDF5 family that
+# Mera reads, 0 is gas, 4 is stars and 5 is black holes — the same convention the reader itself
+# relies on to map GFM_* fields. They are excluded because they are baryonic, NOT because of
+# their mass: a black hole seed is heavier than a high-resolution DM particle and would
+# otherwise be flagged as boundary. Which of the remaining types is high-res versus boundary
+# is what gets derived.
+function _classify_families(fam::AbstractVector, mass::AbstractVector;
+                            ratio::Real=2.0, candidates=(1, 2, 3))
+    fams = sort!(unique(Int.(fam)))
+    cand = [f for f in fams if f in candidates]
+    stats = Dict{Int,NamedTuple}()
+    for f in cand
+        m = Float64.(@view mass[fam .== f])
+        isempty(m) && continue
+        stats[f] = (min = minimum(m), med = median(m), n = length(m), ndistinct = length(unique(m)))
     end
-    # constant-mass ⇒ collisionless. Stars and black holes carry per-particle masses and are
-    # excluded automatically, without needing to know which type number they were given.
-    coll = [f for (f, m) in mtab if length(m) == 1]
-    isempty(coll) && return (highres = nothing, lowres = Int[], masses = mtab)
-    sort!(coll)
-    mlight  = minimum(mtab[f][1] for f in coll)
-    highres = coll[argmin([mtab[f][1] for f in coll])]
-    lowres  = sort!([f for f in coll if mtab[f][1] > ratio * mlight])
-    return (highres = highres, lowres = lowres, masses = mtab)
+    isempty(stats) && return (highres = nothing, lowres = Int[], masses = Dict{Int,Vector{Float64}}(),
+                              stats = stats)
+    # lightest candidate by MEDIAN mass — robust to a family with a few outliers
+    highres = argmin(f -> stats[f].med, keys(stats))
+    mhi = stats[highres].med
+    # a family is boundary when even its LIGHTEST member is well above the high-res mass, so a
+    # variable-mass boundary shell qualifies on its whole distribution rather than on one value
+    lowres = sort!([f for f in keys(stats) if f != highres && stats[f].min > ratio * mhi])
+    masses = Dict{Int,Vector{Float64}}(f => [stats[f].min, stats[f].med] for f in keys(stats))
+    return (highres = highres, lowres = lowres, masses = masses, stats = stats)
 end
 
 """
@@ -50,18 +70,27 @@ Returns a NamedTuple:
 
 | field | meaning |
 |---|---|
-| `clean` | `true` only if no low-resolution particle lies inside `radius` **and** the high-resolution family has a single mass. **Check this one.** |
+| `clean` | `true` only if no low-resolution particle lies inside `radius` **and** the high-resolution family has a single mass. **Check this one** — together with `conclusive`. |
+| `conclusive` | `false` if the loaded data contains **no** low-resolution particle at all. Then `clean=true` means "none found", not "none present". |
 | `n_lowres` | how many low-resolution particles are inside `radius` — nonzero invalidates the region |
-| `d_nearest` | distance from `center` to the nearest low-resolution particle, in `range_unit` |
+| `n_lowres_seen` | how many were found anywhere in the loaded data |
+| `d_nearest` | distance from `center` to the nearest low-resolution particle, **in `range_unit`** |
 | `d_over_radius` | `d_nearest / radius` — the headline number, e.g. 2.85 means "cleared by 2.85×" |
 | `mass_fraction_lowres` | low-resolution share of the collisionless mass inside `radius` |
 | `distinct_masses` | number of distinct high-resolution masses inside `radius`; must be 1 |
-| `families` | `(highres, lowres, masses)` — which PartTypes were classified as what |
+| `families` | `(highres, lowres, derived, masses, stats)` — `lowres` is what was **used** (so an explicit override is reflected), `derived` what the automatic rule found |
 
-Families are **derived, not assumed**: a collisionless family has one mass for all its members,
-the lightest such family is the high-resolution one, and anything more than `ratio`× heavier is
-boundary. Zooms number their types differently, so hard-coding "PartType2 and 3" is wrong often
-enough to matter. Override with `lowres_families=[2,3]` when you know better.
+Families are **derived, not assumed**. Among `candidate_families` (default `(1,2,3)` — the
+collisionless types in the GADGET-HDF5 convention Mera's reader already follows, so gas, stars
+and black holes are excluded as *baryonic* rather than by mass), the family with the lightest
+median mass is the high-resolution one, and any family whose **lightest** member exceeds
+`ratio ×` that median is boundary.
+
+Testing the minimum rather than a single table mass is deliberate: multi-level zoom ICs give
+successive boundary shells **different and varying** masses, so a per-particle-mass boundary
+family has no `MassTable` entry at all. Classifying on "has one mass" dropped a real
+933 435-particle boundary family on a production run. Override with `lowres_families=[2,3]`, or
+widen `candidate_families` for a run that numbers its types differently.
 
 ```julia
 part = getparticles(info, families=[1,2,3])          # collisionless only
@@ -83,6 +112,7 @@ See also [`getparticles`](@ref).
 function contamination(dataobject::PartDataType, center::Array{<:Any,1}, radius::Real;
                        range_unit::Symbol=:standard,
                        lowres_families=:auto,
+                       candidate_families=(1, 2, 3),
                        ratio::Real=2.0,
                        verbose::Bool=true)
 
@@ -92,19 +122,25 @@ function contamination(dataobject::PartDataType, center::Array{<:Any,1}, radius:
         "told apart. Load it with getparticles(info) — :family is one of the base columns.")
 
     cen = center_in_standardnotation(dataobject.info, center, range_unit)
-    # radius arrives in range_unit; work in code units, report back in range_unit
-    sc  = range_unit === :standard ? 1.0 : getfield(dataobject.scale, range_unit)
-    r   = radius / sc
+    # ONE factor, used in both directions: code units per unit of `range_unit`. The centre and
+    # the radius must travel the same path — they did not, and with range_unit=:standard the
+    # radius stayed a box FRACTION while the distances were in code units. The search region
+    # collapsed by a factor boxlen and the function reported a contaminated halo as CLEAN.
+    # A safety check that fails toward "fine" is worse than no check, so this is deliberately
+    # a single expression rather than two.
+    f = _range_unit_factor(dataobject, range_unit)
+    r = radius * f
 
     fam  = collect(IndexedTables.select(dataobject.data, :family))
     mass = collect(getvar(dataobject, :mass))
-    cls  = _classify_families(fam, mass; ratio=ratio)
+    cls  = _classify_families(fam, mass; ratio=ratio, candidates=candidate_families)
 
     lowfams = lowres_families === :auto ? cls.lowres : sort!(collect(Int, lowres_families))
     cls.highres === nothing && error(
-        "contamination: no constant-mass (collisionless) family found, so the high-resolution " *
-        "family cannot be identified. Load the dark-matter families, e.g. " *
-        "getparticles(info, families=[1,2,3]), or pass lowres_families=[…] explicitly.")
+        "contamination: none of the candidate collisionless families $(candidate_families) is " *
+        "present, so the high-resolution family cannot be identified. Load them, e.g. " *
+        "getparticles(info, families=[1,2,3]), or pass candidate_families=/lowres_families= " *
+        "explicitly if this run numbers its types differently.")
 
     x = getvar(dataobject, :x, center=cen)
     y = getvar(dataobject, :y, center=cen)
@@ -114,8 +150,9 @@ function contamination(dataobject::PartDataType, center::Array{<:Any,1}, radius:
     islow  = [f in lowfams for f in fam]
     inside = d .<= r
 
-    n_lowres  = count(islow .& inside)
-    d_nearest = any(islow) ? minimum(d[islow]) : Inf
+    n_lowres    = count(islow .& inside)
+    n_lowres_seen = count(islow)                 # anywhere in the loaded data, not just inside
+    d_nearest   = n_lowres_seen > 0 ? minimum(d[islow]) : Inf
 
     m_in      = mass[inside]
     coll_in   = [f == cls.highres || f in lowfams for f in fam[inside]]
@@ -127,34 +164,54 @@ function contamination(dataobject::PartDataType, center::Array{<:Any,1}, radius:
     distinct  = length(unique(mass[hires_in]))
 
     clean = (n_lowres == 0) && (distinct <= 1)
+    # "no boundary particle was found" and "no boundary particle exists" are not the same
+    # statement, and only one of them is reassuring. If the loaded data contains no low-res
+    # particle at all, `clean` is uninformative rather than good news — say so instead of
+    # letting a too-small search region read as a clean halo.
+    conclusive = n_lowres_seen > 0
 
     if verbose
         println("[Mera]: zoom contamination — high-res family PartType$(cls.highres), " *
                 "low-res $(isempty(lowfams) ? "none" : join("PartType" .* string.(lowfams), ", "))")
         println("        nearest low-res particle: ",
-                isfinite(d_nearest) ? "$(round(d_nearest * sc, digits=4)) $(range_unit)" *
+                isfinite(d_nearest) ? "$(round(d_nearest / f, digits=4)) $(range_unit)" *
                                       "  =  $(round(d_nearest / r, digits=3)) x radius"
                                     : "none in the loaded data")
         println("        inside radius: $n_lowres low-res particle(s), " *
                 "mass fraction $(round(frac_low, sigdigits=3)), " *
                 "distinct high-res masses $distinct")
-        clean || printstyled("        NOT CLEAN — quantities computed over this region are " *
-                             "affected by boundary particles.\n"; color=:red, bold=true)
+        if !conclusive
+            printstyled("        INCONCLUSIVE — no low-resolution particle anywhere in the " *
+                        "loaded data.\n        clean=true here means \"none found\", not " *
+                        "\"none present\": widen the selection\n        (or search_radius=) " *
+                        "before treating this region as uncontaminated.\n";
+                        color=:yellow, bold=true)
+        elseif !clean
+            printstyled("        NOT CLEAN — quantities computed over this region are " *
+                        "affected by boundary particles.\n"; color=:red, bold=true)
+        end
     end
 
     return (clean = clean,
+            conclusive = conclusive,
             n_lowres = n_lowres,
-            d_nearest = d_nearest * sc,
+            n_lowres_seen = n_lowres_seen,
+            d_nearest = d_nearest / f,
             d_over_radius = d_nearest / r,
             mass_fraction_lowres = frac_low,
             distinct_masses = distinct,
-            families = cls)
+            # `lowres` is what was ACTUALLY used, so an explicit `lowres_families=` override is
+            # visible in the result rather than being contradicted by it. The auto-derived list
+            # is kept alongside as `derived` so the two can be compared.
+            families = (highres = cls.highres, lowres = lowfams, derived = cls.lowres,
+                        masses = cls.masses, stats = cls.stats))
 end
 
 function contamination(info::InfoType, center::Array{<:Any,1}, radius::Real;
                        range_unit::Symbol=:standard,
                        search_radius::Union{Nothing,Real}=nothing,
                        lowres_families=:auto,
+                       candidate_families=(1, 2, 3),
                        ratio::Real=2.0,
                        verbose::Bool=true)
 
@@ -171,7 +228,7 @@ function contamination(info::InfoType, center::Array{<:Any,1}, radius::Real;
                         show_progress=false)
     res = contamination(part, center, radius;
                         range_unit=range_unit, lowres_families=lowres_families,
-                        ratio=ratio, verbose=verbose)
+                        candidate_families=candidate_families, ratio=ratio, verbose=verbose)
     if verbose && !isfinite(res.d_nearest)
         println("        (searched a cube of half-width $(sr) $(range_unit); pass " *
                 "search_radius= to widen it)")

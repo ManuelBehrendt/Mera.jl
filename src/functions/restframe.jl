@@ -37,15 +37,20 @@ function _vframe_hint(dataobject, vars, vcenter)
     # (:vϕ_cylinder2 → :vϕ_cylinder). The boost is already in the columns by then, so hinting
     # would tell the user they forgot something they did not forget.
     haskey(dataobject.used_descriptors, :vframe) && return nothing
-    for v in vars
-        v in _VFRAME_RELATIVE_VARS || continue
-        hint(Symbol("vframe_", v),
-             "getvar(:$v) has no `vcenter` — velocities are in the BOX frame.",
-             "`center=` fixes the origin; `vcenter=` fixes the frame, and they are separate.",
-             "For an object with bulk motion pass vcenter=:auto, or vcenter=bulk_velocity(obj).",
-             "Harmless if the object is already at rest in the box; on a halo streaming at",
-             "~200 km/s this shifted |J| by 34 % and its direction by ~5 degrees.")
-    end
+    named = filter(in(_VFRAME_RELATIVE_VARS), vars)
+    isempty(named) && return nothing
+    # ONE key for the whole session, not one per field. Keying per field meant a single
+    # getvar(obj, [:lx,:ly,:lz]) emitted SIX messages — the three asked for plus :hx/:hy/:hz,
+    # which getvar computes internally and the user never wrote, so they could not be connected
+    # to anything. The outer call always fires before any recursion, so the surviving message
+    # names a field the caller actually requested.
+    hint(:vframe,
+         "getvar($(join(":" .* string.(named), ", "))) has no `vcenter` — " *
+         "velocities are in the BOX frame.",
+         "`center=` fixes the origin; `vcenter=` fixes the frame, and they are separate.",
+         "For an object with bulk motion pass vcenter=:auto, or vcenter=bulk_velocity(obj).",
+         "Harmless if the object is already at rest in the box; on a halo streaming at",
+         "~200 km/s this shifted |J| by 34 % and its direction by ~5 degrees.")
     return nothing
 end
 

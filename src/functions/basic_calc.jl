@@ -331,10 +331,11 @@ Generates specialized code for each weighting scheme at compile time.
             # Generate fused mass-weighted velocity calculation
             unit_factor = $unit_factor_expr
             
-            mass_data = getvar(dataobject, :mass, mask=mask)
-            vx_data = getvar(dataobject, :vx, mask=mask)
-            vy_data = getvar(dataobject, :vy, mask=mask)
-            vz_data = getvar(dataobject, :vz, mask=mask)
+            # ONE masked getvar, not four. Each masked call materialises the whole masked
+            # table, so asking four times built it four times — the dominant cost of the
+            # documented `bulk_velocity(halo, mask=...)` idiom.
+            _d = getvar(dataobject, [:mass, :vx, :vy, :vz], mask=mask)
+            mass_data = _d[:mass]; vx_data = _d[:vx]; vy_data = _d[:vy]; vz_data = _d[:vz]
             
             total_mass = sum(mass_data)
             total_mass > 0 || error("bulk_velocity: total mass is zero (empty selection or all-zero masses)")
@@ -355,10 +356,8 @@ Generates specialized code for each weighting scheme at compile time.
                 isamr = checkuniformgrid(dataobject, dataobject.lmax)
                 if isamr
                     # Volume-weighted calculation
-                    vol_data = getvar(dataobject, :volume, mask=mask)
-                    vx_data = getvar(dataobject, :vx, mask=mask)
-                    vy_data = getvar(dataobject, :vy, mask=mask)
-                    vz_data = getvar(dataobject, :vz, mask=mask)
+                    _d = getvar(dataobject, [:volume, :vx, :vy, :vz], mask=mask)
+                    vol_data = _d[:volume]; vx_data = _d[:vx]; vy_data = _d[:vy]; vz_data = _d[:vz]
                     
                     total_volume = sum(vol_data)
                     total_volume > 0 || error("bulk_velocity: total volume is zero (empty selection)")
@@ -370,9 +369,8 @@ Generates specialized code for each weighting scheme at compile time.
                     )
                 else
                     # Fall back to simple average for uniform grid
-                    vx_data = getvar(dataobject, :vx, mask=mask)
-                    vy_data = getvar(dataobject, :vy, mask=mask)
-                    vz_data = getvar(dataobject, :vz, mask=mask)
+                    _d = getvar(dataobject, [:vx, :vy, :vz], mask=mask)
+                    vx_data = _d[:vx]; vy_data = _d[:vy]; vz_data = _d[:vz]
                     
                     (mean(vx_data) * unit_factor, mean(vy_data) * unit_factor, mean(vz_data) * unit_factor)
                 end
@@ -385,9 +383,8 @@ Generates specialized code for each weighting scheme at compile time.
             # Generate simple velocity averages
             unit_factor = $unit_factor_expr
 
-            vx_data = getvar(dataobject, :vx, mask=mask)
-            vy_data = getvar(dataobject, :vy, mask=mask)
-            vz_data = getvar(dataobject, :vz, mask=mask)
+            _d = getvar(dataobject, [:vx, :vy, :vz], mask=mask)
+            vx_data = _d[:vx]; vy_data = _d[:vy]; vz_data = _d[:vz]
 
             (mean(vx_data) * unit_factor, mean(vy_data) * unit_factor, mean(vz_data) * unit_factor)
         end

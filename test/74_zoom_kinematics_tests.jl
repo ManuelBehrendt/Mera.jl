@@ -8,7 +8,11 @@
 
 # A minimal AREPO-like info: a scale where NO unit factor is 1, so a dropped or doubled
 # conversion cannot pass by coincidence (scale.kpc == 1 has hidden real bugs in this repo).
-function _zoom_info(; boxlen::Float64=1.0)
+# boxlen is deliberately NOT 1. With boxlen == 1 a radius expressed as a box fraction and the
+# same radius in code units are numerically identical, which is exactly why the contamination
+# unit bug (a :standard radius never scaled to code units) passed every test here while
+# reporting a contaminated halo as CLEAN on real data.
+function _zoom_info(; boxlen::Float64=100.0)
     info = Mera.InfoType()
     info.boxlen    = boxlen
     info.constants = Mera.createconstants()
@@ -76,18 +80,29 @@ end
     # ==========================================================================
     # A rigidly rotating ring about +z, centred at `cen`, with every particle given the same
     # additional bulk velocity `drift`. Angular momentum is then known in closed form.
+    # `cen` and `R` are box FRACTIONS (what a caller passes with range_unit=:standard); the
+    # columns are built in CODE units, so both are scaled by boxlen here. Velocities use the
+    # code-unit radius too, or v = Ω × r would not hold and the closed-form Lz would be wrong.
+    _codeR(info, R) = R * info.boxlen
+    # A bulk motion ~10 % of the rotation speed — the regime a streaming halo is actually in.
+    # It MUST scale with the geometry: Lz grows as boxlen² while the spurious [Σm(r−r₀)]×v₀
+    # term grows only as boxlen¹, so a drift fixed in absolute terms silently stops being a
+    # meaningful perturbation as soon as the box is not of order unity.
+    _drift(info; R=0.2, Ω=3.0) = [-0.37, 0.21, 0.44] .* (Ω * R * info.boxlen / 10)
     function _rotator(info; n=64, R=0.2, Ω=3.0, cen=[0.5,0.5,0.5], drift=[0.,0.,0.], m=2.0)
+        bl = info.boxlen
+        Rc = R * bl;  cc = cen .* bl
         θ  = range(0, 2π, length=n+1)[1:n]
-        x  = cen[1] .+ R .* cos.(θ);  y = cen[2] .+ R .* sin.(θ);  z = fill(cen[3], n)
-        vx = -Ω .* R .* sin.(θ) .+ drift[1]      # v = Ω ẑ × (r − r₀)  +  v₀
-        vy =  Ω .* R .* cos.(θ) .+ drift[2]
+        x  = cc[1] .+ Rc .* cos.(θ);  y = cc[2] .+ Rc .* sin.(θ);  z = fill(cc[3], n)
+        vx = -Ω .* Rc .* sin.(θ) .+ drift[1]     # v = Ω ẑ × (r − r₀)  +  v₀
+        vy =  Ω .* Rc .* cos.(θ) .+ drift[2]
         vz = fill(drift[3], n)
         return _zoom_particles(info; x=x, y=y, z=z, vx=vx, vy=vy, vz=vz, mass=fill(m, n))
     end
 
     @testset "bulk_velocity recovers the frame" begin
         info  = _zoom_info()
-        drift = [-0.37, 0.21, 0.44]
+        drift = _drift(info)
         p     = _rotator(info; drift=drift)
 
         # the rotation averages to zero around a closed ring, so the mean IS the drift
@@ -114,12 +129,13 @@ end
         info = _zoom_info()
         n, R, Ω, m = 64, 0.2, 3.0, 2.0
         cen   = [0.5, 0.5, 0.5]
-        drift = [-0.37, 0.21, 0.44]
+        drift = _drift(info)
 
         rest   = _rotator(info; n=n, R=R, Ω=Ω, cen=cen, m=m)                 # v₀ = 0
         moving = _rotator(info; n=n, R=R, Ω=Ω, cen=cen, m=m, drift=drift)    # same, boosted
 
-        Lz_true = n * m * Ω * R^2          # Σ m (x v_y − y v_x) for a rigid ring
+        Rc = _codeR(info, R)               # the ring radius in CODE units
+        Lz_true = n * m * Ω * Rc^2         # Σ m (x v_y − y v_x) for a rigid ring
 
         # the reference object: no boost, so box frame == rest frame
         @test sum(getvar(rest, :lz; center=cen)) ≈ Lz_true   rtol=1e-10
@@ -141,14 +157,16 @@ end
                     vy=collect(IndexedTables.select(moving.data, :vy))[keep],
                     vz=collect(IndexedTables.select(moving.data, :vz))[keep],
                     mass=fill(m, length(keep)))
-        Lz_arc = length(keep) * m * Ω * R^2
+        Lz_arc = length(keep) * m * Ω * Rc^2
 
         box  = sum(getvar(part, :lz; center=cen))
         @test !isapprox(box, Lz_arc; rtol=1e-3)              # silently wrong, as advertised
 
         # the analytic size of the error: [Σ m (r − r₀)] × v₀, z-component
-        sx = sum(m .* (collect(IndexedTables.select(part.data, :x)) .- cen[1]))
-        sy = sum(m .* (collect(IndexedTables.select(part.data, :y)) .- cen[2]))
+        # cen is a box fraction; the columns are code units, so compare against cen*boxlen
+        cc = cen .* info.boxlen
+        sx = sum(m .* (collect(IndexedTables.select(part.data, :x)) .- cc[1]))
+        sy = sum(m .* (collect(IndexedTables.select(part.data, :y)) .- cc[2]))
         @test box - Lz_arc ≈ sx * drift[2] - sy * drift[1]    rtol=1e-9
 
         # Passing the KNOWN boost removes exactly the spurious term and nothing else.
@@ -173,7 +191,7 @@ end
     @testset "vcenter= reaches every velocity-derived field" begin
         info  = _zoom_info()
         cen   = [0.5, 0.5, 0.5]
-        drift = [-0.37, 0.21, 0.44]
+        drift = _drift(info)
         rest   = _rotator(info; cen=cen)
         moving = _rotator(info; cen=cen, drift=drift)
 
@@ -205,7 +223,7 @@ end
 
     @testset "vcenter= defaults to current behaviour and refuses bad input" begin
         info = _zoom_info()
-        p    = _rotator(info; drift=[-0.37, 0.21, 0.44])
+        p    = _rotator(info; drift=_drift(info))
 
         # the whole point: omitting it, or passing an exact zero, must not change any answer
         base = getvar(p, :lz; center=[0.5,0.5,0.5])
@@ -223,13 +241,26 @@ end
 
     @testset "the box-frame hint fires once, and not misleadingly" begin
         info = _zoom_info()
-        p    = _rotator(info; drift=[-0.37, 0.21, 0.44])
+        p    = _rotator(info; drift=_drift(info))
         cen  = [0.5, 0.5, 0.5]
         # forgetting the frame says so, once
         Mera.reset_hints()
         out = capture_stdout() do; getvar(p, :lz; center=cen); end
         @test occursin("[Mera] Hint:", out) && occursin("BOX frame", out)
         @test !occursin("BOX frame", capture_stdout() do; getvar(p, :lz; center=cen); end)
+
+        # ONE message per session, naming only fields the caller wrote. Keying the hint per
+        # field made a single getvar([:lx,:ly,:lz]) emit SIX — the three requested plus the
+        # internal :hx/:hy/:hz, which the user never wrote and could not place.
+        Mera.reset_hints()
+        out3 = capture_stdout() do; getvar(p, [:lx,:ly,:lz]; center=cen); end
+        @test count(_ -> true, eachmatch(r"\[Mera\] Hint:", out3)) == 1
+        @test !occursin(":hx", out3) && !occursin(":hy", out3) && !occursin(":hz", out3)
+        @test occursin(":lx", out3)                       # names what was actually asked for
+
+        # a second quantity in the same session stays silent rather than repeating
+        @test !occursin("BOX frame",
+                        capture_stdout() do; getvar(p, :vr_sphere; center=cen); end)
 
         # supplying it must stay silent — including for a field that recomputes another
         # frame-relative field underneath (:vϕ_cylinder2 → :vϕ_cylinder), which would
@@ -253,22 +284,34 @@ end
     # A synthetic zoom: a high-resolution family (PartType1, one mass) inside the region, and
     # a heavier boundary family (PartType3, 43x) placed at a known distance — the mass ratio
     # and the ~2–3 R200c clearance both mirror the real AREPO run.
+    # `cen` and `radius` are returned as box FRACTIONS — what a caller passes with
+    # range_unit=:standard — while the columns are built in CODE units (× boxlen). Keeping the
+    # two spaces distinct is the whole point: it is what makes a missing boxlen factor visible.
+    # `m_lo_spread` gives the boundary family PER-PARTICLE masses, so it has no single table
+    # mass — the case that used to be misclassified as baryonic and silently dropped.
     function _zoom_snapshot(info; d_boundary=2.85, radius=0.05, n_hi=200, n_lo=30,
-                            m_hi=1.0, m_lo=43.0, lo_family=3, contaminate=0)
-        cen = [0.5, 0.5, 0.5]
+                            m_hi=1.0, m_lo=43.0, lo_family=3, contaminate=0,
+                            m_lo_spread=0.0)
+        bl  = info.boxlen
+        cen = [0.5, 0.5, 0.5];  cc = cen .* bl
+        rc  = radius * bl
         θ = range(0, 2π, length=n_hi+1)[1:n_hi]
-        r = radius .* range(0.05, 0.9, length=n_hi)
-        x = cen[1] .+ r .* cos.(θ);  y = cen[2] .+ r .* sin.(θ);  z = fill(cen[3], n_hi)
-        m = fill(m_hi, n_hi);        f = fill(1, n_hi)
+        r = rc .* range(0.05, 0.9, length=n_hi)
+        x = cc[1] .+ r .* cos.(θ);  y = cc[2] .+ r .* sin.(θ);  z = fill(cc[3], n_hi)
+        m = fill(m_hi, n_hi);       f = fill(1, n_hi)
         # boundary shell at d_boundary × radius
-        φ = range(0, 2π, length=n_lo+1)[1:n_lo]
-        R = d_boundary * radius
-        append!(x, cen[1] .+ R .* cos.(φ)); append!(y, cen[2] .+ R .* sin.(φ))
-        append!(z, fill(cen[3], n_lo))
-        append!(m, fill(m_lo, n_lo));       append!(f, fill(lo_family, n_lo))
+        if n_lo > 0
+            φ = range(0, 2π, length=n_lo+1)[1:n_lo]
+            R = d_boundary * rc
+            append!(x, cc[1] .+ R .* cos.(φ)); append!(y, cc[2] .+ R .* sin.(φ))
+            append!(z, fill(cc[3], n_lo))
+            mlo = m_lo_spread == 0 ? fill(m_lo, n_lo) :
+                  m_lo .* (1 .+ m_lo_spread .* range(-1, 1, length=n_lo))
+            append!(m, mlo);        append!(f, fill(lo_family, n_lo))
+        end
         # optionally push some boundary particles INSIDE the radius
         for k in 1:contaminate
-            push!(x, cen[1] + 0.3radius*k/max(contaminate,1)); push!(y, cen[2]); push!(z, cen[3])
+            push!(x, cc[1] + 0.3rc*k/max(contaminate,1)); push!(y, cc[2]); push!(z, cc[3])
             push!(m, m_lo); push!(f, lo_family)
         end
         p = _zoom_particles(info; x=x, y=y, z=z,
@@ -311,10 +354,12 @@ end
 
     @testset "contamination: family classification is derived, not hard-coded" begin
         info = _zoom_info()
-        # a zoom that numbers its boundary family 5 rather than 2/3 — hard-coding would miss it
-        S = _zoom_snapshot(info; lo_family=5, d_boundary=1.7)
+        # a zoom whose boundary family is PartType2 rather than the classic 3 — which of the
+        # collisionless types is high-res and which is boundary is derived from mass, so
+        # neither numbering is privileged
+        S = _zoom_snapshot(info; lo_family=2, d_boundary=1.7)
         c = contamination(S.part, S.center, S.radius; verbose=false)
-        @test c.families.lowres == [5]
+        @test c.families.lowres == [2]
         @test c.d_over_radius ≈ 1.7  rtol=1e-9
 
         # a boundary family only 1.5x heavier is NOT flagged at the default 2x threshold,
@@ -324,21 +369,74 @@ end
         @test contamination(T.part, T.center, T.radius; ratio=1.2, verbose=false
                             ).families.lowres == [3]
 
-        # an explicit override is honoured
-        @test contamination(S.part, S.center, S.radius;
-                            lowres_families=[5], verbose=false).families.lowres == [5]
+        # an explicit override is honoured, and REPORTED: families.lowres is what was used,
+        # families.derived is what the automatic rule would have picked
+        o = contamination(S.part, S.center, S.radius; lowres_families=[5], verbose=false)
+        @test o.families.lowres  == [5]        # what the caller asked for
+        @test o.families.derived == [2]        # what the rule found on its own
+
+        # A VARIABLE-MASS boundary family must still be caught. Multi-level zoom ICs give
+        # successive boundary shells different masses, so such a family has no MassTable entry
+        # at all — the old "must have exactly one mass" rule dropped a real 933 435-particle
+        # boundary family as if it were baryonic, under-counting contamination.
+        V = _zoom_snapshot(info; lo_family=2, d_boundary=1.9, m_lo=43.0, m_lo_spread=0.35)
+        cV = contamination(V.part, V.center, V.radius; verbose=false)
+        @test length(unique(getvar(V.part, :mass))) > 2       # genuinely variable masses
+        @test cV.families.lowres == [2]                       # …and still classified boundary
+        @test cV.d_over_radius ≈ 1.9  rtol=1e-9
+
+        # PartType5 is excluded as BARYONIC (black holes), not by mass — a BH seed is heavier
+        # than a high-res DM particle and would otherwise be flagged as a boundary family.
+        B = _zoom_snapshot(info; lo_family=5, d_boundary=1.7, m_lo=43.0)
+        @test isempty(contamination(B.part, B.center, B.radius; verbose=false).families.lowres)
+        # …but a run that really does use type 5 for boundary can say so, and then it is found
+        @test contamination(B.part, B.center, B.radius; verbose=false,
+                            candidate_families=(1,2,3,5)).families.lowres == [5]
+    end
+
+    @testset "contamination says so when it found nothing to conclude from" begin
+        info = _zoom_info()
+        # a snapshot with NO low-resolution family present at all
+        S = _zoom_snapshot(info; d_boundary=2.85, n_lo=0)
+        c = contamination(S.part, S.center, S.radius; verbose=false)
+        @test c.n_lowres_seen == 0
+        @test !c.conclusive                     # "none found" is not "none present"
+        @test c.clean                           # …clean is still true, but must not be read alone
+        out = capture_stdout() do; contamination(S.part, S.center, S.radius); end
+        @test occursin("INCONCLUSIVE", out)
+
+        # whereas a real clean halo, with boundary particles visible further out, IS conclusive
+        T = _zoom_snapshot(info; d_boundary=2.85)
+        ct = contamination(T.part, T.center, T.radius; verbose=false)
+        @test ct.clean && ct.conclusive && ct.n_lowres_seen > 0
     end
 
     @testset "contamination: units and refusals" begin
         info = _zoom_info()
         S = _zoom_snapshot(info; d_boundary=2.85)
 
-        # d_over_radius is dimensionless, so it must not depend on the unit the radius is in
+        # THE REGRESSION THAT MATTERED. :standard takes box fractions, :kpc takes kpc; both
+        # describe the SAME physical sphere, so every dimensionless answer must agree. It did
+        # not: the :standard radius was never scaled to code units, the search region collapsed
+        # by a factor boxlen, and a contaminated halo came back clean=true. A safety check that
+        # fails toward "fine" is the one failure direction that must never survive.
+        kpc_per_code = info.scale.kpc
         a = contamination(S.part, S.center, S.radius; verbose=false)
-        b = contamination(S.part, S.center .* info.scale.kpc, S.radius * info.scale.kpc;
+        b = contamination(S.part, S.center .* info.boxlen .* kpc_per_code,
+                          S.radius * info.boxlen * kpc_per_code;
                           range_unit=:kpc, verbose=false)
+        @test a.clean == b.clean
+        @test a.n_lowres == b.n_lowres
         @test a.d_over_radius ≈ b.d_over_radius  rtol=1e-10
-        @test b.d_nearest ≈ a.d_nearest * info.scale.kpc  rtol=1e-10
+        @test a.mass_fraction_lowres ≈ b.mass_fraction_lowres  rtol=1e-10
+
+        # d_nearest is reported in the unit that was asked for, not in code units
+        @test a.d_nearest ≈ S.radius * 2.85                       rtol=1e-9   # box fractions
+        @test b.d_nearest ≈ a.d_nearest * info.boxlen * kpc_per_code rtol=1e-9  # kpc
+
+        # and :standard genuinely finds the boundary shell rather than reporting an empty region
+        @test a.d_over_radius ≈ 2.85  rtol=1e-9
+        @test a.conclusive
 
         # no :family column ⇒ say so, rather than silently treating everything as one family
         nofam = _zoom_particles(info; x=[0.5,0.6], y=[0.5,0.5], z=[0.5,0.5], mass=[1.0,1.0])
