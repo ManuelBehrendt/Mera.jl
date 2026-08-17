@@ -153,6 +153,21 @@ function get_data(dataobject::PartDataType,
                 vars_dict[i] = T_over_mu .* (4 / (1 + 3XH)) .* selected_unit
             end
 
+        elseif i == :cellsize
+            # For a moving mesh the RESOLUTION is the cell size, and it varies by orders of
+            # magnitude within one snapshot — so this is the natural x-axis of any convergence
+            # argument. It is V^(1/3) of the Voronoi cell, unit-aware like any other length, so
+            # the comoving→physical conversion happens once here instead of in every notebook.
+            #
+            # Take the median OF THIS FIELD — `phase(gas, :rho, :T, :cellsize; cstat=:median)` —
+            # rather than cube-rooting a median volume. The two are not identical: the cube root
+            # is monotonic, so it commutes with order statistics (odd-sized bins), but the median
+            # of an even-sized bin AVERAGES the two middle values, and averaging does not commute
+            # with a nonlinear map. For V = k³, k = 1…8: median(V)^(1/3) = 4.5549 vs
+            # median(V^(1/3)) = 4.5. Small, but not zero, and it is only ever zero by luck.
+            selected_unit = getunit(dataobject, i, vars, units)
+            vars_dict[i] = (getvar(filtered_dataobject, :volume, mask=use_mask_in_recursion) .^ (1/3)) .* selected_unit
+
         elseif i == :p || i == :pressure
             # ideal-gas pressure p = (γ-1)·ρ·u
             selected_unit = getunit(dataobject, i, vars, units)
