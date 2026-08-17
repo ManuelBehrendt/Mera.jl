@@ -218,6 +218,7 @@ export
     rotationcurve,
     velocitydispersion,
     contamination,
+    groupinfo,
     localdispersion,
     profiletimeseries,
     quicklook,

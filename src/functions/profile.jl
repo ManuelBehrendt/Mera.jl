@@ -721,6 +721,31 @@ convenience wrapper; see the profiles tutorial for the manual recipe.
 Returns `x` (bin centres), `edges`, `count`, `sigma` (total), `sigma_components` (`nbins × n`) and
 `mean_components` (`nbins × n`) with the `components` order, and `neff` (Kish — small ⇒ noisy σ).
 
+**Orbital anisotropy.** Pass the spherical triad and the result also carries `sigma_r`,
+`sigma_t = √(σ_θ² + σ_φ²)` and the anisotropy parameter `beta`:
+
+```julia
+vd = velocitydispersion(part; components=(:vr_sphere, :vθ_sphere, :vϕ_sphere),
+                        rvar=:r_sphere, center=cen)
+vd.beta            # 1 − σ_t²/(2σ_r²):  0 isotropic, →1 radial, <0 tangential
+```
+
+`sigma` alone is direction-averaged and hides this. The fields appear **only** for the spherical
+triad: β is defined against the spherical radius, and computing it from the cylindrical `R`
+would give a different quantity that still looks like a plausible β.
+
+!!! warning "β is blind to sign"
+    It is built from variances, so it says *how anisotropic*, never *which way*. Inner-halo
+    radial bias is feedback-driven outflow just as readily as it is infall. Read `beta`
+    together with the mean radial velocity in `mean_components` — that is what carries the sign.
+
+!!! note "Dispersions need no rest frame; the means do"
+    Subtracting a constant boost leaves a standard deviation unchanged, so `sigma`,
+    `sigma_components` and `beta` are the same in any frame — no `vcenter` is needed or
+    accepted here. `mean_components` is *not*: for an object with bulk motion those means are
+    box-frame. Get the frame from `bulk_velocity` and subtract it, or compute the means through
+    [`getvar`](@ref) with `vcenter=`.
+
 **Thermal & total dispersion (`thermal=true`).** The kinematic σ above is *turbulent* (bulk) motion
 only. Set `thermal=true` to also fold in the gas thermal motion and report the quantity an observer
 measures as a line width. It adds, per bin:
@@ -769,6 +794,7 @@ function velocitydispersion(dataobject; rvar::Symbol=:r_cylinder,
     base = (x=p.x, edges=p.edges, count=p.count, neff=p.fields[comps[1]].neff,
             sigma=σtot, sigma_components=σmat, mean_components=μmat, components=comps,
             weight=_wprov(weight), rvar=rvar, vunit=vunit, xunit=xunit, source=:data)
+    base = merge(base, _anisotropy(comps, σmat))
     thermal || return base
     # ---- thermal + total dispersion (σ_total = √(σ_turb,1D² + σ_th²)) and the Mach number ----
     # σ_turb here is the 1-D turbulent dispersion √(Σσ_i²/n); combined with the 1-D thermal speed
@@ -784,6 +810,27 @@ function velocitydispersion(dataobject; rvar::Symbol=:r_cylinder,
     mach = σt1d ./ pcs.mean
     return merge(base, (sigma_turb_1d=σt1d, sigma_thermal=σth, sigma_total=σtotal,
                         mach=mach, cs=pcs.mean, T=pT.mean, mu=Float64(mu)))
+end
+
+# Orbital anisotropy β = 1 − σ_t²/(2σ_r²), from the per-component dispersions already computed.
+#
+# No second-moment tensor is needed: σ_r² = r̂ᵀCr̂ IS the variance of v_r, and
+# tr(C) − σ_r² = σ_θ² + σ_φ². So the spherical triad gives β directly.
+#
+# Only the SPHERICAL triad qualifies. β is defined against the spherical radius; substituting
+# the cylindrical R gives a different quantity that would still look like a plausible β, so the
+# fields are simply absent for other component sets rather than being computed wrongly.
+function _anisotropy(comps, σmat)
+    ir = findfirst(==(:vr_sphere), comps)
+    iθ = findfirst(==(:vθ_sphere), comps)
+    iφ = findfirst(==(:vϕ_sphere), comps)
+    (ir === nothing || iθ === nothing || iφ === nothing) && return NamedTuple()
+    σr = σmat[:, ir]
+    σt = sqrt.(σmat[:, iθ] .^ 2 .+ σmat[:, iφ] .^ 2)
+    # purely tangential orbits drive σ_r → 0 and β → −∞; return that rather than a NaN or a
+    # clamped number, so an unphysically empty radial channel is visible instead of plausible
+    β  = [ r > 0 ? 1 - (t^2) / (2r^2) : (t > 0 ? -Inf : NaN) for (r, t) in zip(σr, σt) ]
+    return (sigma_r = σr, sigma_t = σt, beta = β)
 end
 
 # 1-D thermal velocity dispersion √(k_B T / (μ m_H)) of a tracer of mean molecular weight `mu`

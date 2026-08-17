@@ -188,6 +188,54 @@ particle-based; feed the result to [`getparticles`](@ref).
 the defaults treat the run as dimensionless. Supply the run's CGS `unit_length`/`unit_density`/
 `unit_velocity` (and note the `h` factors) for physical conversions.
 """
+# Cosmology and unit scales from a GADGET/AREPO HDF5 `Header`. Factored out of the snapshot
+# reader because the GROUP CATALOGUE files carry the same Header fields — which is exactly what
+# lets `getgroups(path, snap)` work on a snapshot-free output. Returns the scale factor `a`.
+function _gadget_header_cosmology!(info::InfoType, h; unit_length::Real=1.0,
+                                   unit_density::Real=1.0, unit_velocity::Real=1.0)
+    boxlen = Float64(_gadget_attr(h, "BoxSize", 1.0))
+    time   = Float64(_gadget_attr(h, "Time", 0.0))
+    hub    = Float64(_gadget_attr(h, "HubbleParam", 1.0))
+    info.ndim = 3
+    info.levelmin = 1; info.levelmax = 1               # particle code: no grid levels
+    info.boxlen = boxlen == 0 ? 1.0 : boxlen
+    info.time = time
+    # GADGET/AREPO HDF5 headers carry no adiabatic index, so supply the monatomic ideal-gas
+    # value these codes assume — the same default the PLUTO, Chombo and Athena++ readers use.
+    info.gamma = 5/3
+    # cosmological? — real cosmological runs carry ΩΛ > 0 and use Time as the scale factor a;
+    # idealised/non-cosmological AREPO runs set Ω = 0 and use Time as a physical time (a = 1).
+    # ΩΛ = 0 cosmology (Einstein–de-Sitter) is caught by Time ≡ 1/(1+z) self-consistency.
+    om = Float64(_gadget_attr(h, "Omega0", 0.0)); ol = Float64(_gadget_attr(h, "OmegaLambda", 0.0))
+    cosmo = ol > 0.0
+    if !cosmo && om > 0.0 && haskey(h, "Redshift") && time > 0.0
+        zred = Float64(read(h["Redshift"]))
+        cosmo = zred > 0.0 && isapprox(time, 1.0 / (1.0 + zred); rtol=1e-3)
+    end
+    a = cosmo ? (time == 0.0 ? 1.0 : time) : 1.0
+    info.aexp = a
+    info.H0 = hub * 100; info.omega_m = om; info.omega_l = ol
+    info.omega_k = 0.0; info.omega_b = Float64(_gadget_attr(h, "OmegaBaryon", 0.0))
+    # base CGS units from the Header (UnitLength/Mass/Velocity_in_*; a kwarg ≠ 1.0 overrides),
+    # then apply the comoving→physical factors so getvar returns *physical* quantities:
+    #   length ∝ a/h,  density ∝ h²/a³,  mass = ρ·l³ ∝ 1/h.
+    # The velocity √a factor is applied to the velocity columns at read instead — InternalEnergy
+    # is also a velocity² but is stored a-free, so it must not inherit an a from unit_v here.
+    hul = Float64(_gadget_attr(h, "UnitLength_in_cm", 0.0))
+    huv = Float64(_gadget_attr(h, "UnitVelocity_in_cm_per_s", 0.0))
+    hum = Float64(_gadget_attr(h, "UnitMass_in_g", 0.0))
+    hfac = hub > 0 ? hub : 1.0
+    ul0 = (unit_length   == 1.0 && hul > 0)            ? hul         : Float64(unit_length)
+    uv0 = (unit_velocity == 1.0 && huv > 0)            ? huv         : Float64(unit_velocity)
+    ud0 = (unit_density  == 1.0 && hum > 0 && hul > 0) ? hum / hul^3 : Float64(unit_density)
+    info.unit_l = ul0 * a / hfac
+    info.unit_v = uv0
+    info.unit_d = ud0 * hfac^2 / a^3
+    info.unit_m = info.unit_d * info.unit_l^3
+    info.unit_t = info.unit_l / info.unit_v
+    return a
+end
+
 function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_density::Real=1.0,
                         unit_velocity::Real=1.0, verbose::Bool=true)
     fns = _gadget_files(output, path)
@@ -195,54 +243,15 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
     info = InfoType(); info.descriptor = _external_descriptor()
     h5open(fn, "r") do f
         h = attributes(f["Header"])
-        boxlen = Float64(_gadget_attr(h, "BoxSize", 1.0))
         npart  = _gadget_npart_total(h)
-        time   = Float64(_gadget_attr(h, "Time", 0.0))
-        hub    = Float64(_gadget_attr(h, "HubbleParam", 1.0))
         nfsp   = Int(_gadget_attr(h, "NumFilesPerSnapshot", 1))
         nfsp > 1 && length(fns) != nfsp && @warn "GADGET: the header expects $nfsp snapshot " *
             "chunks but $(length(fns)) file(s) were found — reading what is present."
         info.output = output; info.path = abspath(path); info.simcode = _gadget_subcode(f)
-        info.Narraysize = 0; info.ndim = 3
-        info.levelmin = 1; info.levelmax = 1               # particle code: no grid levels
-        info.boxlen = boxlen == 0 ? 1.0 : boxlen
-        info.time = time
-        # GADGET/AREPO HDF5 headers carry no adiabatic index, so supply the monatomic ideal-gas
-        # value these codes assume — the same default the PLUTO, Chombo and Athena++ readers use.
-        # Without this the field stays uninitialised: it held subnormals near 1e-314 that differed
-        # between processes, and `getvar_hydro` uses info.gamma for :cs, so it was one routing
-        # change away from silently wrong sound speeds.
-        info.gamma = 5/3
-        # cosmological? — real cosmological runs carry ΩΛ > 0 and use Time as the scale factor a;
-        # idealised/non-cosmological AREPO runs set Ω = 0 and use Time as a physical time (a = 1).
-        # ΩΛ = 0 cosmology (Einstein–de-Sitter) is caught by Time ≡ 1/(1+z) self-consistency.
-        om = Float64(_gadget_attr(h, "Omega0", 0.0)); ol = Float64(_gadget_attr(h, "OmegaLambda", 0.0))
-        cosmo = ol > 0.0
-        if !cosmo && om > 0.0 && haskey(h, "Redshift") && time > 0.0
-            zred = Float64(read(h["Redshift"]))
-            cosmo = zred > 0.0 && isapprox(time, 1.0 / (1.0 + zred); rtol=1e-3)
-        end
-        a = cosmo ? (time == 0.0 ? 1.0 : time) : 1.0
-        info.aexp = a
-        info.H0 = hub * 100; info.omega_m = om; info.omega_l = ol
-        info.omega_k = 0.0; info.omega_b = Float64(_gadget_attr(h, "OmegaBaryon", 0.0))
-        # base CGS units from the Header (UnitLength/Mass/Velocity_in_*; a kwarg ≠ 1.0 overrides),
-        # then apply the comoving→physical factors so getvar returns *physical* quantities:
-        #   length ∝ a/h,  density ∝ h²/a³,  mass = ρ·l³ ∝ 1/h.
-        # The velocity √a factor is applied to the velocity columns at read instead — InternalEnergy
-        # is also a velocity² but is stored a-free, so it must not inherit an a from unit_v here.
-        hul = Float64(_gadget_attr(h, "UnitLength_in_cm", 0.0))
-        huv = Float64(_gadget_attr(h, "UnitVelocity_in_cm_per_s", 0.0))
-        hum = Float64(_gadget_attr(h, "UnitMass_in_g", 0.0))
-        hfac = hub > 0 ? hub : 1.0
-        ul0 = (unit_length   == 1.0 && hul > 0)            ? hul         : Float64(unit_length)
-        uv0 = (unit_velocity == 1.0 && huv > 0)            ? huv         : Float64(unit_velocity)
-        ud0 = (unit_density  == 1.0 && hum > 0 && hul > 0) ? hum / hul^3 : Float64(unit_density)
-        info.unit_l = ul0 * a / hfac
-        info.unit_v = uv0
-        info.unit_d = ud0 * hfac^2 / a^3
-        info.unit_m = info.unit_d * info.unit_l^3
-        info.unit_t = info.unit_l / info.unit_v
+        info.Narraysize = 0
+        a = _gadget_header_cosmology!(info, h; unit_length=unit_length,
+                                      unit_density=unit_density, unit_velocity=unit_velocity)
+        time = info.time
         info.hydro = false; info.gravity = false; info.particles = true
         info.rt = false; info.clumps = false; info.sinks = false
         info.variable_list = Symbol[]; info.nvarh = 0

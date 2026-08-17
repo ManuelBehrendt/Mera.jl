@@ -928,10 +928,17 @@ end
             @test sum(mm ./ V .* V) ≈ sum(mm)                  # rho*V closure on the window
             @test !isapprox(sum(V .* TK)/sum(V), sum(mm .* TK)/sum(mm); rtol=1e-3)
 
-            # AMR-only concepts must be absent rather than fabricated
-            for q in (:level, :cellsize)
-                @test_throws KeyError getvar(g, q)
-            end
+            # AMR-only concepts must be absent rather than fabricated. :level is one: a Voronoi
+            # mesh has no refinement hierarchy, so there is nothing to report.
+            @test_throws KeyError getvar(g, :level)
+
+            # :cellsize is NOT AMR-only, and used to be grouped with :level here. On a moving
+            # mesh the resolution IS the cell size — V^(1/3) is well defined per cell and is the
+            # natural x-axis of a convergence argument, so it is served rather than refused.
+            cs = getvar(g, :cellsize)
+            @test cs ≈ V .^ (1/3)                     rtol=1e-12
+            @test all(cs .> 0)
+            @test getvar(g, :cellsize, :pc) ≈ cs .* g.info.scale.pc  rtol=1e-12
 
             # (6b) density-threshold clumpfind must WORK on AREPO gas. The guard used to refuse
             # field=:rho for any PartDataType, on the assumption that particles are collisionless;

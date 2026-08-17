@@ -189,6 +189,24 @@ so pointing `getinfo` at the snapshot is enough. A **partial** catalogue is an e
 answer: `getgroups` compares the groups it read against the header's `Ngroups_Total` and refuses if
 they disagree — an incomplete download otherwise yields a perfectly plausible-looking mass function.
 
+### When there is no snapshot
+
+Catalogues are small and snapshots are not, so a run routinely keeps far more of the former —
+37 catalogues against 10 snapshots is a normal ratio. Halo tracking and merger trees need
+exactly the outputs where the particle data is gone. Since the catalogue files carry their own
+`Header` (`Time`, `Redshift`, `BoxSize`, `HubbleParam`, `Omega0`, `OmegaLambda`), nothing is
+actually missing:
+
+```julia
+gc   = getgroups("/path/to/output", 33)      # no snapdir_033 required
+info = groupinfo("/path/to/output", 33)      # …and the matching InfoType, if you want the scales
+gc.Group_R_Crit200 .* info.scale.kpc
+```
+
+[`groupinfo`](@ref) runs the same unit machinery as [`getinfo`](@ref), so `info.scale.*`
+converts catalogue values identically. Fields that describe particle data are left at their
+defaults — there is no snapshot to describe.
+
 !!! note "Two conventions worth knowing"
     **No offsets file is needed.** `illustris_python` reads a separate
     `postprocessing/offsets/offsets_NNN.hdf5`, which the public API does not serve. It is

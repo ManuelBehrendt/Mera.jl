@@ -133,7 +133,7 @@
                                   :bmag, :pmag, :beta, :v_alfven, :e_magnetic,# need magnetic field
                                   :mach_alfven, :mach_fast, :mach_slow]),     # need magnetic field
                 :gravity  => Set{Symbol}(),
-                :particle => Set([:T, :Temp, :Temperature, :cs, :p, :volume,      # AREPO/GADGET GAS
+                :particle => Set([:T, :Temp, :Temperature, :cs, :p, :volume, :cellsize,  # AREPO/GADGET GAS
                                   # ^ these need the gas columns :u/:rho that PartType0 carries.
                                   #   A RAMSES particle file is stars/DM and has neither, so
                                   #   getvar correctly refuses — that is a missing column, not

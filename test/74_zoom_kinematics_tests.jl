@@ -344,4 +344,60 @@ end
         nofam = _zoom_particles(info; x=[0.5,0.6], y=[0.5,0.5], z=[0.5,0.5], mass=[1.0,1.0])
         @test_throws ErrorException contamination(nofam, [0.5,0.5,0.5], 0.1; verbose=false)
     end
+
+    # ==========================================================================
+    # getgroups / groupinfo without a snapshot
+    # ==========================================================================
+    # Runs routinely keep more catalogues than snapshots (37 vs 10 on the run this came from),
+    # and merger trees need exactly the case where the snapshot is absent. The catalogue files
+    # carry their own Header, so only the entry point was missing.
+    @testset "getgroups works on a catalogue-only output" begin
+        dir = mktempdir()
+        gdir = joinpath(dir, "groups_033"); mkpath(gdir)
+        Mera.HDF5.h5open(joinpath(gdir, "fof_subhalo_tab_033.0.hdf5"), "w") do f
+            hg = Mera.HDF5.create_group(f, "Header")
+            at = Mera.HDF5.attributes(hg)
+            at["BoxSize"] = 35000.0
+            at["Ngroups_Total"] = Int32(3);  at["Ngroups_ThisFile"] = Int32(3)
+            at["Time"] = 0.227623;           at["Redshift"] = 3.3934
+            at["HubbleParam"] = 0.6774
+            at["Omega0"] = 0.3089;           at["OmegaLambda"] = 0.6911
+            at["UnitLength_in_cm"] = 3.085678e21
+            at["UnitMass_in_g"] = 1.989e43
+            at["UnitVelocity_in_cm_per_s"] = 1.0e5
+            gg = Mera.HDF5.create_group(f, "Group")
+            # (ntypes, ngroups) as the catalogue stores it; the reader permutedims it to
+            # (ngroups, ntypes). Written in this shape rather than as an adjoint, which HDF5
+            # refuses outright ("different stride than Array").
+            gg["GroupMassType"] = Float32[1 4 7; 2 5 8; 0 0 0; 0 0 0; 3 6 9; 0 0 0]
+            gg["Group_R_Crit200"] = Float32[100.0, 200.0, 300.0]
+            gg["GroupPos"] = Float32[1 2 3; 4 5 6; 7 8 9]
+        end
+
+        # NO snapshot anywhere: getinfo cannot work here, which is the whole point
+        info = groupinfo(dir, 33; verbose=false)
+        @test info.output == 33
+        @test info.aexp ≈ 0.227623   rtol=1e-9        # cosmological: Time IS the scale factor
+        @test info.H0 ≈ 67.74        rtol=1e-9
+        @test info.omega_m ≈ 0.3089  rtol=1e-9
+
+        # the units are the real ones, not placeholders: length carries a/h
+        @test info.unit_l ≈ 3.085678e21 * 0.227623 / 0.6774  rtol=1e-9
+        @test info.scale.kpc > 0 && isfinite(info.scale.Msol)
+        # The a and h factors cancel in the mass: unit_m = unit_d·unit_l³ = UnitMass_in_g/h.
+        # So scale.Msol is 1e10/h here — exactly the 1.48x that `.* 1e10` leaves behind.
+        @test info.scale.Msol ≈ 1e10 / 0.6774  rtol=1e-3
+
+        gc = getgroups(dir, 33; verbose=false)
+        @test gc.n == 3
+        @test size(gc.GroupMassType) == (3, 6)
+        @test gc.Group_R_Crit200 ≈ Float32[100, 200, 300]
+
+        # and the two spellings agree
+        gc2 = getgroups(groupinfo(dir, 33; verbose=false); verbose=false)
+        @test gc2.n == gc.n
+        @test gc2.Group_R_Crit200 == gc.Group_R_Crit200
+
+        rm(dir; recursive=true, force=true)
+    end
 end

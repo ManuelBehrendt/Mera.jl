@@ -121,6 +121,81 @@ function _group_offsets(lenType::AbstractMatrix)
 end
 
 """
+    groupinfo(path::String, snap::Int; verbose=true) -> InfoType
+
+Build an [`InfoType`](@ref) from a **group catalogue's own header**, without a snapshot.
+
+Group catalogues are routinely complete when particle data is not — a run may keep 37
+catalogues and only 10 snapshots, because catalogues are small and snapshots are not. Halo
+tracking and merger trees need exactly the missing case. The catalogue files carry `Time`,
+`Redshift`, `BoxSize`, `HubbleParam`, `Omega0` and `OmegaLambda` in their own `Header`, so
+nothing is actually absent — only the entry point was.
+
+The result carries the same unit scales [`getinfo`](@ref) would produce, so `info.scale.*`
+converts catalogue values exactly as it does for a snapshot-backed run.
+
+```julia
+info = groupinfo("/path/to/output", 33)
+gc   = getgroups(info)
+gc.Group_R_Crit200 .* info.scale.kpc
+```
+
+Fields that describe particle data (`particles_variable_list`, `levelmax`, …) are left at their
+defaults: there is no snapshot to describe.
+
+See also [`getgroups`](@ref).
+"""
+function groupinfo(path::String, snap::Int; unit_length::Real=1.0, unit_density::Real=1.0,
+                   unit_velocity::Real=1.0, verbose::Bool=true)
+    fns = _groupcat_files(snap, path)
+    fn  = first(fns)
+    info = InfoType(); info.descriptor = _external_descriptor()
+    h5open(fn, "r") do f
+        haskey(f, "Header") || error(
+            "groupinfo: $fn has no Header group, so the cosmology and units cannot be read.")
+        h = attributes(f["Header"])
+        info.output = snap; info.path = abspath(path)
+        info.simcode = "AREPO"
+        info.Narraysize = 0
+        _gadget_header_cosmology!(info, h; unit_length=unit_length,
+                                  unit_density=unit_density, unit_velocity=unit_velocity)
+        info.hydro = false; info.gravity = false; info.particles = false
+        info.rt = false; info.clumps = false; info.sinks = false
+        info.variable_list = Symbol[]; info.nvarh = 0
+        info.gravity_variable_list = Symbol[]; info.particles_variable_list = Symbol[]
+        info.rt_variable_list = Symbol[]; info.clumps_variable_list = Symbol[]
+        info.sinks_variable_list = Symbol[]
+        info.ncpu = 1
+        info.mtime = Dates.unix2datetime(round(Int, mtime(fn))); info.ctime = info.mtime
+    end
+    # same trio the snapshot reader uses, so an InfoType from a catalogue is not a lesser
+    # object: every field is defined and info.scale converts identically
+    _fill_undefined!(info); createconstants!(info); createscales!(info)
+    if verbose
+        println("[Mera]: group catalogue only (no snapshot) — output ", snap,
+                "  a = ", round(info.aexp, sigdigits=6),
+                "  z = ", round(1/info.aexp - 1, sigdigits=6))
+    end
+    return info
+end
+
+"""
+    getgroups(path::String, snap::Int; fields=:all, verbose=true)
+
+Read a group catalogue **without a snapshot**, for runs that kept more catalogues than
+snapshots. Equivalent to `getgroups(groupinfo(path, snap))`; see [`groupinfo`](@ref) for why
+this case matters and what it can and cannot tell you.
+
+```julia
+gc = getgroups("/path/to/output", 33)
+```
+"""
+function getgroups(path::String, snap::Int; verbose::Bool=true, kwargs...)
+    info = groupinfo(path, snap; verbose=verbose)
+    return getgroups_gadget(info; verbose=verbose, kwargs...)
+end
+
+"""
     getgroups(info::InfoType; kwargs...)
 
 Read the halo/group catalogue that accompanies `info`'s snapshot, dispatching to the frontend
