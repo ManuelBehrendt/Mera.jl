@@ -27,6 +27,11 @@ const REF = (
     rho_b       = 3.5520e-29,    # mean baryon density, g/cm^3
 )
 
+# The two protoclusters, for the contamination checks in section I. Centres and R200c come
+# from the FoF catalogue; `d_ref` is the measured clearance in units of R200c. Fill the
+# centres from the catalogue at run time rather than hardcoding them — see below.
+const HALO_D_REF = (halo1 = 2.85, halo2 = 2.35)
+
 const GROUP_DATASETS = [
     :GroupBHMass, :GroupBHMdot, :GroupCM, :GroupFirstSub, :GroupGasMetalFractions,
     :GroupGasMetallicity, :GroupLen, :GroupLenType, :GroupMass, :GroupMassType, :GroupNsubs,
@@ -268,6 +273,65 @@ else
         @test t.restarts == 15                                 # backward STEPS
         @test t.restart_events >= 1                            # maximal descending RUNS
         @test t.restart_events <= t.restarts
+    end
+
+    # ==========================================================================
+    # I. contamination on a real zoom
+    # ==========================================================================
+    # These exist because BOTH of the contamination bugs were unreachable from a synthetic
+    # fixture, and both were FALSE NEGATIVES — a safety check reporting a contaminated halo
+    # as clean:
+    #
+    #   * the :standard radius was never scaled to code units, so the search sphere collapsed
+    #     by a factor boxlen. Invisible offline because the fixture used boxlen = 1, where a
+    #     box fraction and a code length are numerically identical.
+    #   * boundary families with PER-PARTICLE masses were classified as baryonic and dropped.
+    #     Invisible offline because the fixture was built from the same wrong assumption as
+    #     the code — it had a single-mass boundary family, because that is what I believed a
+    #     boundary family was.
+    #
+    # A fixture written by the author of the code tests the author's model, not the code.
+    # That is what these assertions are for, and why they must run against real data.
+    @testset "I. contamination on a real zoom" begin
+        info = getinfo(REF.snap, FILB, verbose=false)
+        # Take the two most massive FoF groups rather than hardcoding positions: the
+        # catalogue is the authority on where the protoclusters are, and GroupPos /
+        # Group_R_Crit200 are COMOVING and carry h, so both need info.scale.kpc.
+        gc  = getgroups(info; fields=["GroupPos", "Group_M_Crit200", "Group_R_Crit200"],
+                        verbose=false)
+        ord = sortperm(vec(gc.Group_M_Crit200); rev=true)[1:2]
+        halos = [("halo $(i)",
+                  vec(gc.GroupPos[ord[i], :]) .* info.scale.kpc,
+                  gc.Group_R_Crit200[ord[i]]  * info.scale.kpc,
+                  d) for (i, d) in enumerate((HALO_D_REF.halo1, HALO_D_REF.halo2))]
+
+        part = getparticles(info, families=[1,2,3], vars=Symbol[],
+                            verbose=false, show_progress=false)
+        for (name, cen, r200, d_ref) in halos
+            @testset "$name" begin
+                c = contamination(part, cen, r200; range_unit=:kpc, verbose=false)
+
+                # D2: the variable-mass boundary shell (PartType3) must be classified, not
+                # dropped. With it missing this was [2], and both the count and the mass
+                # fraction were underestimates — the mass fraction by ~17 %.
+                @test Set(c.families.derived) == Set([2, 3])
+                @test c.clean == false
+                @test c.conclusive
+                @test c.d_over_radius ≈ d_ref  rtol=0.05
+
+                # D1: the two unit conventions describe the SAME physical sphere, so every
+                # dimensionless answer must agree. Before the fix :standard found nothing.
+                c_std = contamination(part, cen ./ (info.boxlen * info.scale.kpc),
+                                      r200 / (info.boxlen * info.scale.kpc);
+                                      range_unit=:standard, verbose=false)
+                @test c_std.clean == c.clean
+                @test c_std.d_over_radius        ≈ c.d_over_radius        rtol=1e-3
+                @test c_std.mass_fraction_lowres ≈ c.mass_fraction_lowres rtol=1e-3
+                # not equality: the two conversion chains put one particle either side of
+                # the sphere boundary (84812 vs 84811), which is float, not disagreement
+                @test abs(c_std.n_lowres - c.n_lowres) <= 5
+            end
+        end
     end
 end
 end

@@ -721,7 +721,9 @@ convenience wrapper; see the profiles tutorial for the manual recipe.
 Returns `x` (bin centres), `edges`, `count`, `sigma` (total), `sigma_components` (`nbins × n`) and
 `mean_components` (`nbins × n`) with the `components` order, and `neff` (Kish — small ⇒ noisy σ).
 
-**Orbital anisotropy.** Pass the spherical triad and the result also carries `sigma_r`,
+**Orbital anisotropy.** Pass the spherical triad — exactly
+`(:vr_sphere, :vθ_sphere, :vϕ_sphere)`, with Greek letters, though the ASCII spellings
+`:vtheta_sphere` / `:vphi_sphere` are accepted — and the result also carries `sigma_r`,
 `sigma_t = √(σ_θ² + σ_φ²)` and the anisotropy parameter `beta`:
 
 ```julia
@@ -738,6 +740,21 @@ would give a different quantity that still looks like a plausible β.
     It is built from variances, so it says *how anisotropic*, never *which way*. Inner-halo
     radial bias is feedback-driven outflow just as readily as it is infall. Read `beta`
     together with the mean radial velocity in `mean_components` — that is what carries the sign.
+
+!!! warning "β depends on the aperture, and can change sign with it"
+    The dispersion is taken about the mean of whatever region you bin over, so the **smoothing
+    scale is part of the measurement**. Measured on the same halo, same snapshot:
+
+    | aperture | σ_r | σ_t | β (r < 0.5 R200c) | β (1–2 R200c) |
+    |---|---|---|---|---|
+    | radial shells (this function) | 193.8 | 257.9 | **−0.190** | **−0.620** |
+    | 13.7 ckpc/h cells, about each cell's own mean | ~39 | | **+0.438** | **+0.100** |
+
+    Opposite signs, both correct. A shell contains the full spread of large-scale motion —
+    orbiting substructure, rotation — which is tangentially biased; a small cell sees only
+    local turbulence, which is radially biased because it is compressive. Comparing a β
+    against a published value means matching the **aperture**, not just the radius. Use
+    [`localdispersion`](@ref) for the small-scale variant.
 
 !!! note "Dispersions need no rest frame; the means do"
     Subtracting a constant boost leaves a standard deviation unchanged, so `sigma`,

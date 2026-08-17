@@ -929,8 +929,13 @@ end
             @test !isapprox(sum(V .* TK)/sum(V), sum(mm .* TK)/sum(mm); rtol=1e-3)
 
             # AMR-only concepts must be absent rather than fabricated. :level is one: a Voronoi
-            # mesh has no refinement hierarchy, so there is nothing to report.
-            @test_throws KeyError getvar(g, :level)
+            # mesh has no refinement hierarchy, so there is nothing to report. It used to
+            # surface as a bare KeyError naming the symbol and nothing else; it now says what
+            # IS available, which is the point of refusing in the first place.
+            lvl_err = try; getvar(g, :level); "no error"; catch e; sprint(showerror, e); end
+            @test occursin("is not a column of this object", lvl_err)
+            @test occursin("Stored columns:", lvl_err)     # says what you CAN have
+            @test occursin("list_fields", lvl_err)
 
             # :cellsize is NOT AMR-only, and used to be grouped with :level here. On a moving
             # mesh the resolution IS the cell size — V^(1/3) is well defined per cell and is the

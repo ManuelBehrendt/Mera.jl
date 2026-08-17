@@ -370,6 +370,11 @@ function get_data(dataobject::RtDataType,
     # end
 
 
+    # A name nothing matched used to surface as a bare `KeyError` from this line, naming the
+    # symbol and nothing else. Say what is valid instead.
+    for v in vars
+        haskey(vars_dict, v) || _unknown_var_error(dataobject, v)
+    end
     if length(vars)==1
             return vars_dict[vars[1]]
     else

@@ -102,8 +102,8 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
   #   :cs      = √(γ(γ-1)·u)       — NO μ term, so no optional dependency
   #   :T       = (γ-1)·u·μ·m_H/k_B — μ from :ne when present, else neutral-primordial μ≈1.22
   # `:mach` is deliberately NOT registered: it does not exist for particles at all
-  # (getvar throws KeyError). Only :mach_alfven/:mach_fast/:mach_slow do, and those need the
-  # magnetic field, which is already recorded below.
+  # (getvar refuses it — see `_unknown_var_error`). Only :mach_alfven/:mach_fast/:mach_slow
+  # do, and those need the magnetic field, which is already recorded below.
   :particle => Dict{Symbol,Vector{Symbol}}(
     :vx2=>[:vx], :vy2=>[:vy], :vz2=>[:vz],
     :v=>[:vx,:vy,:vz], :v2=>[:vx,:vy,:vz],
@@ -475,8 +475,71 @@ _call_get_data(obj, vars, units, dir, center, mask, ref_time, hydro_data) =
         get_data(obj, vars, units, dir, center, mask, ref_time) :
         get_data(obj, vars, units, dir, center, mask, ref_time; hydro_data=hydro_data)
 
+"""
+ASCII spellings of the Greek-lettered coordinate components.
+
+The canonical names carry the actual Greek letter (`:vθ_sphere`, `:vϕ_cylinder`) because that
+is what the physics is written with, but `:vtheta_sphere` is the natural thing to type and used
+to die with a bare `KeyError` from deep inside `get_data`. Both spellings now work; the
+canonical one is what comes back as a Dict key.
+"""
+const _VAR_ASCII = Dict{Symbol,Symbol}(
+    :vtheta_sphere   => :vθ_sphere,    :vphi_sphere    => :vϕ_sphere,
+    :vphi_cylinder   => :vϕ_cylinder,  :vphi_cylinder2 => :vϕ_cylinder2,
+    :ltheta_sphere   => :lθ_sphere,    :lphi_sphere    => :lϕ_sphere,
+    :lphi_cylinder   => :lϕ_cylinder,
+    :atheta_sphere   => :aθ_sphere,    :aphi_sphere    => :aϕ_sphere,
+    :aphi_cylinder   => :aϕ_cylinder,
+)
+_canon_var(v::Symbol) = get(_VAR_ASCII, v, v)
+
+# Levenshtein distance, small and allocation-light — only ever run on the error path.
+function _editdist(a::String, b::String)
+    m, n = length(a), length(b)
+    prev = collect(0:n); cur = similar(prev)
+    for (i, ca) in enumerate(a)
+        cur[1] = i
+        for (j, cb) in enumerate(b)
+            cur[j+1] = min(prev[j+1] + 1, cur[j] + 1, prev[j] + (ca == cb ? 0 : 1))
+        end
+        prev, cur = cur, prev
+    end
+    return prev[n+1]
+end
+
+"""
+    _unknown_var_error(dataobject, v)
+
+Raised when `getvar` is asked for a name nothing can compute. Replaces a bare `KeyError`
+thrown from inside `get_data`, which named the symbol and nothing else — no indication of what
+was valid, and no hint that the intended name differs only by a Greek letter.
+"""
+function _unknown_var_error(dataobject, v::Symbol)
+    kind  = _field_kind(dataobject)
+    stored = collect(propertynames(dataobject.data.columns))
+    derived = kind === :unknown ? Symbol[] : collect(keys(get(FIELD_DEPS, kind, Dict())))
+    known  = sort!(unique!(vcat(stored, derived, collect(keys(_VAR_ASCII)))))
+    sv     = String(v)
+    near   = sort!([k for k in known if _editdist(sv, String(k)) <= 3],
+                   by = k -> _editdist(sv, String(k)))
+    msg = "getvar: :$v is not a column of this object and no rule computes it."
+    if !isempty(near)
+        msg *= "\n  Did you mean: " * join(":" .* string.(first(near, 5)), ", ") * "?"
+    end
+    msg *= "\n  Stored columns: " * join(":" .* string.(sort(stored)), ", ")
+    msg *= "\n  Note the coordinate components use Greek letters — :vθ_sphere, :vϕ_cylinder — " *
+           "though the ASCII spellings (:vtheta_sphere, :vphi_cylinder) are accepted too."
+    msg *= "\n  `list_fields(obj)` reports every derived field available for this object."
+    error(msg)
+end
+
 function get_data_userfields(dataobject, vars::Array{Symbol,1}, units::Array{Symbol,1},
                              direction::Symbol, center, mask, ref_time; hydro_data=nothing)
+    # Accept the ASCII spelling of any Greek-lettered component before anything else looks at
+    # the names, so aliases work uniformly for every data kind and every code path.
+    if any(v -> haskey(_VAR_ASCII, v), vars)
+        vars = map(_canon_var, vars)
+    end
     _center_hint(vars, center)   # frame-relative quantity about the box corner? say so once
     kind = _field_kind(dataobject)
     reg  = get(USER_FIELDS, kind, nothing)

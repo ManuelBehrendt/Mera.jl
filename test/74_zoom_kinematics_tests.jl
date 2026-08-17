@@ -443,6 +443,31 @@ end
         @test_throws ErrorException contamination(nofam, [0.5,0.5,0.5], 0.1; verbose=false)
     end
 
+    @testset "ASCII spellings of the Greek components, and a useful unknown-var error" begin
+        info = _zoom_info()
+        p    = _rotator(info)
+        cen  = [0.5, 0.5, 0.5]
+
+        # :vtheta_sphere used to die with a bare KeyError from inside get_data — the natural
+        # ASCII guess for a name whose canonical form carries a Greek letter.
+        for (ascii, greek) in ((:vtheta_sphere, :vθ_sphere), (:vphi_sphere, :vϕ_sphere),
+                               (:vphi_cylinder, :vϕ_cylinder))
+            @test getvar(p, ascii; center=cen) == getvar(p, greek; center=cen)
+        end
+
+        # a multi-var request comes back keyed by the CANONICAL name, not the alias
+        d = getvar(p, [:vtheta_sphere, :vphi_sphere]; center=cen)
+        @test sort(collect(keys(d))) == sort([:vθ_sphere, :vϕ_sphere])
+
+        # and a genuinely unknown name says what is valid instead of naming a missing key
+        err = try; getvar(p, :v_theta_sphere; center=cen); "no error"
+              catch e; sprint(showerror, e); end
+        @test occursin("is not a column of this object", err)
+        @test occursin("Did you mean", err) && occursin("vtheta_sphere", err)
+        @test occursin("Greek letters", err)      # the actual cause, named
+        @test occursin("list_fields", err)        # and where to look next
+    end
+
     # ==========================================================================
     # getgroups / groupinfo without a snapshot
     # ==========================================================================
@@ -488,6 +513,13 @@ end
 
         gc = getgroups(dir, 33; verbose=false)
         @test gc.n == 3
+
+        # the two-argument form must carry the EPOCH: its reason to exist is tracking across
+        # outputs, and a catalogue with no scale factor cannot be placed in time
+        @test gc.aexp ≈ 0.227623  rtol=1e-9
+        @test gc.redshift ≈ 1/0.227623 - 1  rtol=1e-9
+        @test gc.output == 33
+        @test gc.info.scale.kpc > 0          # …and the unit machinery comes with it
         @test size(gc.GroupMassType) == (3, 6)
         @test gc.Group_R_Crit200 ≈ Float32[100, 200, 300]
 

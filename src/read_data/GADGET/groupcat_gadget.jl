@@ -183,16 +183,30 @@ end
     getgroups(path::String, snap::Int; fields=:all, verbose=true)
 
 Read a group catalogue **without a snapshot**, for runs that kept more catalogues than
-snapshots. Equivalent to `getgroups(groupinfo(path, snap))`; see [`groupinfo`](@ref) for why
-this case matters and what it can and cannot tell you.
+snapshots. See [`groupinfo`](@ref) for why this case matters.
+
+The result additionally carries the **epoch** — `aexp`, `redshift`, `output`, and the `info`
+object itself — because this entry point exists for tracking across outputs, where the scale
+factor per snapshot is exactly what you cannot do without:
 
 ```julia
 gc = getgroups("/path/to/output", 33)
+gc.aexp, gc.redshift                       # when this catalogue is from
+gc.Group_R_Crit200 .* gc.info.scale.kpc    # physical kpc
 ```
+
+Values are otherwise **exactly as stored**, as with [`getgroups_gadget`](@ref) — `GroupPos` and
+`Group_R_Crit200` are comoving and carry `h`. Use `gc.info.scale.*` to convert.
 """
 function getgroups(path::String, snap::Int; verbose::Bool=true, kwargs...)
     info = groupinfo(path, snap; verbose=verbose)
-    return getgroups_gadget(info; verbose=verbose, kwargs...)
+    gc   = getgroups_gadget(info; verbose=verbose, kwargs...)
+    # Carry the epoch on the result. Without it this entry point returns a catalogue with no
+    # way to know WHEN it is from — and its whole reason to exist is tracking across outputs,
+    # where `a` per snapshot is the one thing you cannot do without. `groupinfo` is still the
+    # route to the full unit machinery; these are the three fields you would otherwise go
+    # back for.
+    return merge(gc, (aexp = info.aexp, redshift = 1/info.aexp - 1, output = snap, info = info))
 end
 
 """
