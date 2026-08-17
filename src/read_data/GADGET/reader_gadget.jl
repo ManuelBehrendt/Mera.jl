@@ -40,7 +40,12 @@ const _GADGET_STAR_FIELDS = (("GFM_StellarFormationTime", :aform),
 
 const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("ElectronAbundance", :ne),
                             ("StarFormationRate", :sfr),
-                            ("NeutralHydrogenAbundance", :nh), ("Machnumber", :mach))
+                            ("NeutralHydrogenAbundance", :nh), ("Machnumber", :mach),
+                            # zoom runs track how much of a cell's mass came from the
+                            # high-resolution region — the gas counterpart of the
+                            # collisionless check in `contamination`. Ratio it against
+                            # :mass to get the clean fraction of a cell.
+                            ("HighResGasMass", :highresgasmass))
 
 # Fields AREPO/GADGET write for EVERY particle type, not only gas. `Potential` used to sit in
 # _GADGET_GAS_FIELDS, which had two consequences: it was discovered only when gas was requested,

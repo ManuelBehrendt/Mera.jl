@@ -217,6 +217,7 @@ export
     profile3d,
     rotationcurve,
     velocitydispersion,
+    contamination,
     localdispersion,
     profiletimeseries,
     quicklook,
@@ -514,6 +515,8 @@ include("functions/regions/shellregion_gravity.jl")
 include("functions/regions/shellregion_rt.jl")
 include("functions/regions/shellregion_particles.jl")
 include("functions/regions/shellregion_clumps.jl")
+include("functions/restframe.jl")
+include("functions/contamination.jl")
 include("functions/profile.jl")
 include("functions/quicklook.jl")
 include("functions/covering_grid.jl")

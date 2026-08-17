@@ -84,6 +84,11 @@ function getvar()
     println("     -spherical acceleration components, gravity-")
     println(":ar_sphere, :aθ_sphere, :aϕ_sphere")
     println("----------------------------------------------------------------")
+    println("Velocity-derived quantities are BOX-FRAME unless you pass vcenter=.")
+    println("center= sets the origin; vcenter= sets the frame — you need both.")
+    println("  v0 = bulk_velocity(halo)         # or vcenter=:auto")
+    println("  getvar(halo, :lz; center=c, vcenter=v0)")
+    println("----------------------------------------------------------------")
     return
 end
 
@@ -323,6 +328,8 @@ function getvar(   dataobject::DataSetType, var::Symbol;
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
+                    vcenter=nothing,
+                    vunit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
@@ -332,6 +339,8 @@ function getvar(   dataobject::DataSetType, var::Symbol;
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject);
     end
+    _vframe_hint(dataobject, [var], vcenter)
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
 
     return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time )
 end
@@ -341,6 +350,8 @@ function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
+                    vcenter=nothing,
+                    vunit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
@@ -350,6 +361,8 @@ function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject);
     end
+    _vframe_hint(dataobject, [var], vcenter)
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
 
     return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time )
 end
@@ -359,6 +372,8 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
+                    vcenter=nothing,
+                    vunit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
@@ -368,6 +383,8 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject);
     end
+    _vframe_hint(dataobject, vars, vcenter)
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
 
     return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time )
 end
@@ -378,6 +395,8 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
+                    vcenter=nothing,
+                    vunit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
@@ -388,6 +407,8 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject);
     end
+    _vframe_hint(dataobject, vars, vcenter)
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
 
     return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time )
 end
@@ -400,6 +421,8 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     units::Array{Symbol,1}=[:standard],
+                    vcenter=nothing,
+                    vunit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
@@ -411,6 +434,8 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject);
     end
+    _vframe_hint(dataobject, vars, vcenter)
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
 
     #vars = unique(vars)
     return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time )

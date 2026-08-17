@@ -86,6 +86,7 @@ if isempty(_focus)
         include("68_offaxis_api_tests.jl")  # data-free: off-axis API surface (slice alias, view-specifier error)
         include("69_config_tests.jl")  # data-free: ~/.mera.toml resolution, env precedence, legacy fallback
         include("70_scales_complete_tests.jl")  # data-free: every scale field is assigned; getunit rejects impossible factors
+        include("74_zoom_kinematics_tests.jl")       # data-free: :cellsize, bulk_velocity/vcenter=, contamination()
 
         # The analytic correctness oracles. These were included in the data-dependent tier below,
         # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and
@@ -140,7 +141,6 @@ if isempty(_focus)
         include("63_region_coverage_tests.jl")       # RT/gravity/particle sub- & shellregion paths (cell modes, inverse partitions, uniform-grid branch)
         include("72_gadget_logs_tests.jl")           # data-free: AREPO/GADGET run-time ASCII logs (sfr.txt, info.txt, …)
         include("71_info_initialization_tests.jl")   # every reader fills InfoType/scale/constants — no field left holding uninitialized memory
-        include("74_zoom_kinematics_tests.jl")       # data-free: :cellsize, bulkvelocity/vcenter=, contamination()
     end
 
     # ------------------------------------------------------------------------
