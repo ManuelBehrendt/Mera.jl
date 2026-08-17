@@ -45,7 +45,11 @@ const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("Electro
                             # high-resolution region — the gas counterpart of the
                             # collisionless check in `contamination`. Ratio it against
                             # :mass to get the clean fraction of a cell.
-                            ("HighResGasMass", :highresgasmass))
+                            ("HighResGasMass", :highresgasmass),
+                            # net cooling rate Λ_net/n_H² [erg cm³ s⁻¹] — stored AS WRITTEN,
+                            # no sign or unit reinterpretation. It is the input to the
+                            # derived :t_cool and :l_cool (see getvar_particles.jl).
+                            ("GFM_CoolingRate", :coolrate))
 
 # Fields AREPO/GADGET write for EVERY particle type, not only gas. `Potential` used to sit in
 # _GADGET_GAS_FIELDS, which had two consequences: it was discovered only when gas was requested,

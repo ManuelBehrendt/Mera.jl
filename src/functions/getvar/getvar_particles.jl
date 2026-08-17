@@ -180,6 +180,49 @@ function get_data(dataobject::PartDataType,
             selected_unit = getunit(dataobject, i, vars, units)
             vars_dict[i] = sqrt.((5/3) * (5/3 - 1) .* select(masked_data, :u)) .* selected_unit
 
+        # --- radiative cooling: t_cool and the cooling length l_cool = c_s·t_cool -------------
+        # AREPO/TNG write GFM_CoolingRate = Λ_net / n_H²  [erg cm³ s⁻¹] (Mera's :coolrate,
+        # stored exactly as written). The cooling time is the thermal energy density divided by
+        # the volumetric cooling rate:
+        #
+        #     t_cool = (ρ u) / (|Λ| n_H²)          [s]
+        #     l_cool = c_s · t_cool                [cm]
+        #
+        # l_cool is the scale on which thermal instability fragments gas — of order 100 pc in
+        # IGM conditions — so comparing it against :cellsize is what turns "we ran at higher
+        # resolution" into a measurement.
+        #
+        # THE SIGN IS NOT REINTERPRETED. The magnitude |Λ| is used, because the sign is a
+        # convention marking cooling versus net heating and getting it backwards would silently
+        # invert the physics. Cells with Λ == 0 (no net radiative loss) give t_cool = Inf, which
+        # is the correct statement — they do not cool — rather than a divide-by-zero artefact.
+        # Read the sign off :coolrate itself when you need to separate cooling from heating.
+        elseif (i in (:t_cool, :l_cool)) && !(:coolrate in column_names)
+            throw(ArgumentError(
+                "getvar: :$i is derived from the net cooling rate :coolrate " *
+                "(GFM_CoolingRate), which this object does not carry. Reload including it — " *
+                "e.g. getparticles(info; vars=[:rho, :u, :coolrate]) — or omit `vars` to load " *
+                "every gas column. Runs without a cooling module do not write it at all."))
+
+        elseif i == :t_cool || i == :l_cool
+            selected_unit = getunit(dataobject, i, vars, units)
+            sc   = dataobject.info.scale
+            rho  = select(masked_data, :rho)
+            u    = select(masked_data, :u)
+            lam  = select(masked_data, :coolrate)                 # erg cm³ s⁻¹, signed
+            nH   = rho .* sc.nH                                   # cm⁻³
+            # specific internal energy is a velocity², so it converts with cm_s², not erg/g
+            e_th = (rho .* sc.g_cm3) .* (u .* sc.cm_s^2)          # erg cm⁻³
+            # seconds, then into code time so `selected_unit` scales it like any other duration
+            t_s  = [ (isfinite(l) && l != 0) ? e / (abs(l) * n^2) : Inf
+                     for (e, l, n) in zip(e_th, lam, nH) ]
+            if i === :t_cool
+                vars_dict[i] = (t_s ./ sc.s) .* selected_unit
+            else
+                cs_cgs = sqrt.((5/3) * (5/3 - 1) .* u) .* sc.cm_s
+                vars_dict[i] = ((cs_cgs .* t_s) ./ sc.cm) .* selected_unit
+            end
+
         # Derived magnetic quantities from the gas field :bx/:by/:bz (AREPO/TNG MHD). The columns are
         # stored so B_phys = B_code·scale.Gauss — the same code convention as RAMSES-MHD — so the code
         # forms carry over verbatim: P_mag = B²/2, v_A = |B|/√ρ, E_mag = (B²/2)·V. Each reuses an

@@ -119,6 +119,28 @@ middle values, and averaging does not commute with a nonlinear map. For `V = k³
 See [Cosmological Units](cosmological_units.md) for why the comoving→physical conversion on this quantity is a
 factor of 26 in density, and why it is worth letting Mera do it.
 
+### Resolution against the *local* cooling length
+
+Comparing `:cellsize` to a literature "100 pc" is weaker than comparing it to the cooling
+length of the very same cell. Where the run wrote `GFM_CoolingRate` (Mera's `:coolrate`):
+
+```julia
+getvar(gas, :t_cool, :Myr)      # (ρu) / (|Λ| n_H²)
+getvar(gas, :l_cool, :pc)       # c_s · t_cool — where thermal instability fragments gas
+resolved = getvar(gas, :cellsize, :pc) .< getvar(gas, :l_cool, :pc)
+```
+
+`l_cool` is the scale on which thermal instability fragments gas, so `cellsize < l_cool` is the
+condition for resolving it — a measurement rather than an appeal to a published number. It runs
+from ~800 pc at `n_H = 10⁻⁴ cm⁻³` to ~8 pc at `10⁻²` (at `10⁴ K`), which is why a single global
+threshold describes the IGM badly.
+
+!!! note "The sign of `:coolrate` is not reinterpreted"
+    `:t_cool` uses `|Λ|`, because the sign is a convention marking cooling versus net heating
+    and inverting it would silently flip the physics. Read the sign off `:coolrate` itself to
+    separate the two. Cells with `Λ = 0` give `t_cool = Inf` — they do not cool — rather than a
+    divide-by-zero artefact.
+
 ## 4. Do not project the boundary particles
 
 Two separate traps.

@@ -121,6 +121,8 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :age=>[:birth], :zform=>[:birth], :formation_redshift=>[:birth], :formation_time=>[:birth],
     # AREPO/GADGET gas thermodynamics (see the note above this Dict)
     :volume=>[:rho], :cellsize=>[:volume], :p=>[:rho,:u], :cs=>[:u],
+    # radiative cooling (AREPO/TNG GFM_CoolingRate -> :coolrate)
+    :t_cool=>[:rho,:u,:coolrate], :l_cool=>[:rho,:u,:coolrate],
     :T=>[:u], :Temp=>[:u], :Temperature=>[:u],
     # gas magnetic field (AREPO/TNG): :bx/:by/:bz are stored leaves; these are the derived quantities
     :bmag=>[:bx,:by,:bz], :pmag=>[:bx,:by,:bz], :beta=>[:rho,:u,:bx,:by,:bz],

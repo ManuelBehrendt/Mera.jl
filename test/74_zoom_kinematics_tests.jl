@@ -27,7 +27,7 @@ function _zoom_particles(info; kwargs...)
     n    = length(first(values(cols)))
     names = Symbol[:id, :level]
     vals  = Any[collect(1:n), fill(1, n)]
-    for k in (:x, :y, :z, :vx, :vy, :vz, :mass, :rho, :volume)
+    for k in (:x, :y, :z, :vx, :vy, :vz, :mass, :rho, :volume, :u, :coolrate)
         haskey(cols, k) || continue
         push!(names, k); push!(vals, collect(Float64.(cols[k])))
     end
@@ -73,6 +73,58 @@ end
         @test median(vols)^(1/3) ≉ median(cs)        # n = 8: 4.5549 vs 4.5
         odd = [Float64(k)^3 for k in 1:7]
         @test median(odd)^(1/3) ≈ median(odd .^ (1/3)) rtol=1e-12
+    end
+
+    # ==========================================================================
+    # :t_cool / :l_cool — the cooling length is the IGM convergence diagnostic
+    # ==========================================================================
+    @testset ":t_cool and :l_cool from the net cooling rate" begin
+        info = _zoom_info()
+        n    = 6
+        rho  = collect(range(1.0, 3.0, length=n))
+        u    = fill(2.0, n)
+        lam  = fill(-1.0e-23, n)                 # erg cm³ s⁻¹, negative = net cooling
+        p = _zoom_particles(info; x=fill(0.5,n), y=fill(0.5,n), z=fill(0.5,n),
+                            rho=rho, mass=rho, u=u, coolrate=lam)
+
+        sc   = info.scale
+        nH   = rho .* sc.nH
+        e_th = (rho .* sc.g_cm3) .* (u .* sc.cm_s^2)
+        t_s  = e_th ./ (abs.(lam) .* nH .^ 2)          # seconds, by hand
+
+        @test getvar(p, :t_cool, :s)  ≈ t_s            rtol=1e-10
+        @test getvar(p, :t_cool, :yr) ≈ t_s ./ (sc.s / sc.yr)  rtol=1e-9
+
+        # l_cool = c_s · t_cool, with c_s the adiabatic sound speed of the same cells
+        cs_cgs = sqrt.((5/3)*(2/3) .* u) .* sc.cm_s
+        @test getvar(p, :l_cool, :cm) ≈ cs_cgs .* t_s  rtol=1e-10
+        # sc.cm and sc.pc both convert CODE length, so cm-per-pc is their ratio sc.cm/sc.pc
+        @test getvar(p, :l_cool, :pc) ≈ getvar(p, :l_cool, :cm) ./ (sc.cm / sc.pc)  rtol=1e-9
+
+        # t_cool ∝ 1/ρ at fixed u and Λ (e_th ∝ ρ, cooling ∝ ρ²), so it must FALL with density
+        tc = getvar(p, :t_cool, :yr)
+        @test issorted(tc; rev=true)
+        @test tc[1] / tc[end] ≈ (rho[end]/rho[1])  rtol=1e-9
+
+        # THE SIGN IS NOT REINTERPRETED: |Λ| is used, so flipping the sign must not change the
+        # magnitude. Which cells cool and which are net-heated is read off :coolrate itself.
+        q = _zoom_particles(info; x=fill(0.5,n), y=fill(0.5,n), z=fill(0.5,n),
+                            rho=rho, mass=rho, u=u, coolrate=-lam)
+        @test getvar(q, :t_cool, :s) ≈ getvar(p, :t_cool, :s)  rtol=1e-12
+
+        # Λ = 0 is "does not cool", which is Inf — not a divide-by-zero artefact
+        z = _zoom_particles(info; x=[0.5,0.5], y=[0.5,0.5], z=[0.5,0.5],
+                            rho=[1.0,1.0], mass=[1.0,1.0], u=[2.0,2.0],
+                            coolrate=[0.0, -1.0e-23])
+        tz = getvar(z, :t_cool, :s)
+        @test isinf(tz[1]) && isfinite(tz[2])
+
+        # registered, and refuses clearly when the column was not loaded
+        @test Set(Mera.getvar_requirements(:particles, :l_cool)) == Set([:rho, :u, :coolrate])
+        nocool = _zoom_particles(info; x=fill(0.5,n), y=fill(0.5,n), z=fill(0.5,n),
+                                 rho=rho, mass=rho, u=u)
+        err = try; getvar(nocool, :t_cool); "no error"; catch e; sprint(showerror, e); end
+        @test occursin("coolrate", err) && occursin("GFM_CoolingRate", err)
     end
 
     # ==========================================================================
