@@ -5,7 +5,7 @@
 # identification, units, safety limits and the metadata helpers against measured reference values.
 #
 # Inert without the data: point MERA_IPM_DATA at a directory containing FilB-Zoom4/output.
-using Mera, Test, Printf, Statistics
+using Mera, Test, Printf, Statistics, LinearAlgebra
 
 const IPM_PATH  = get(ENV, "MERA_IPM_DATA", "/data1/mabe/Simulations/IPM")
 const FILB      = joinpath(IPM_PATH, "FilB-Zoom4", "output")
@@ -299,10 +299,22 @@ else
         # Group_R_Crit200 are COMOVING and carry h, so both need info.scale.kpc.
         gc  = getgroups(info; fields=["GroupPos", "Group_M_Crit200", "Group_R_Crit200"],
                         verbose=false)
-        ord = sortperm(vec(gc.Group_M_Crit200); rev=true)[1:2]
+        # Most massive, then the most massive at least 1.5 cMpc/h away. Mass ranking ALONE is
+        # not the protocluster pair in general: once one halo dominates, its own massive
+        # satellite outranks the second protocluster — which is what happens on the FilF run.
+        # On FilB snap 32 both selections agree (indices 1 and 2, separation 3.96 cMpc), so
+        # this guard changes nothing here; it stops the test being silently wrong if it is ever
+        # pointed at another snapshot or simulation.
+        rank = sortperm(vec(gc.Group_M_Crit200); rev=true)
+        sep_min = 1500.0                                     # ckpc/h, i.e. code length units
+        pos(i)  = vec(gc.GroupPos[i, :])
+        second  = findfirst(i -> norm(pos(i) .- pos(rank[1])) >= sep_min, rank[2:end])
+        second === nothing && error("73: no second group at least $(sep_min) ckpc/h from the " *
+                                    "most massive one — check the catalogue or lower sep_min.")
+        ord = [rank[1], rank[1 + second]]
         halos = [("halo $(i)",
-                  vec(gc.GroupPos[ord[i], :]) .* info.scale.kpc,
-                  gc.Group_R_Crit200[ord[i]]  * info.scale.kpc,
+                  pos(ord[i]) .* info.scale.kpc,
+                  gc.Group_R_Crit200[ord[i]] * info.scale.kpc,
                   d) for (i, d) in enumerate((HALO_D_REF.halo1, HALO_D_REF.halo2))]
 
         part = getparticles(info, families=[1,2,3], vars=Symbol[],

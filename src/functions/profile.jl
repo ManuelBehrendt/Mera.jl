@@ -752,9 +752,12 @@ would give a different quantity that still looks like a plausible β.
 
     Opposite signs, both correct. A shell contains the full spread of large-scale motion —
     orbiting substructure, rotation — which is tangentially biased; a small cell sees only
-    local turbulence, which is radially biased because it is compressive. Comparing a β
-    against a published value means matching the **aperture**, not just the radius. Use
+    local turbulence, which is radially biased because it is compressive. Use
     [`localdispersion`](@ref) for the small-scale variant.
+
+    The actionable form is stronger than "match the aperture before comparing": **β has no
+    meaning at all unless the aperture is stated.** A paper reporting "β = 0.3 at R200c" is
+    incomplete until it says over what volume the dispersion was taken. State yours.
 
 !!! note "Dispersions need no rest frame; the means do"
     Subtracting a constant boost leaves a standard deviation unchanged, so `sigma`,

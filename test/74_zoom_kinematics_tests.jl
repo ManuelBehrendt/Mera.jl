@@ -106,18 +106,32 @@ end
         @test issorted(tc; rev=true)
         @test tc[1] / tc[end] ≈ (rho[end]/rho[1])  rtol=1e-9
 
-        # THE SIGN IS NOT REINTERPRETED: |Λ| is used, so flipping the sign must not change the
-        # magnitude. Which cells cool and which are net-heated is read off :coolrate itself.
+        # NEGATIVE IS NET COOLING (measured: 98.5 % of cells on a real AREPO zoom, none
+        # exactly zero). A net-HEATED cell has no cooling time and must get Inf — using |Λ|
+        # handed it a finite, entirely plausible number (median 19.4 Myr on the affected
+        # cells), i.e. a heating time wearing a cooling time's label.
         q = _zoom_particles(info; x=fill(0.5,n), y=fill(0.5,n), z=fill(0.5,n),
-                            rho=rho, mass=rho, u=u, coolrate=-lam)
-        @test getvar(q, :t_cool, :s) ≈ getvar(p, :t_cool, :s)  rtol=1e-12
+                            rho=rho, mass=rho, u=u, coolrate=-lam)          # Λ > 0
+        @test all(isinf, getvar(q, :t_cool, :s))
+        @test all(isinf, getvar(q, :l_cool, :pc))
 
-        # Λ = 0 is "does not cool", which is Inf — not a divide-by-zero artefact
-        z = _zoom_particles(info; x=[0.5,0.5], y=[0.5,0.5], z=[0.5,0.5],
-                            rho=[1.0,1.0], mass=[1.0,1.0], u=[2.0,2.0],
-                            coolrate=[0.0, -1.0e-23])
+        # Λ = 0 is likewise not a cooling cell, and must not divide by zero
+        z = _zoom_particles(info; x=fill(0.5,3), y=fill(0.5,3), z=fill(0.5,3),
+                            rho=fill(1.0,3), mass=fill(1.0,3), u=fill(2.0,3),
+                            coolrate=[0.0, -1.0e-23, 1.0e-23])
         tz = getvar(z, :t_cool, :s)
-        @test isinf(tz[1]) && isfinite(tz[2])
+        @test isinf(tz[1]) && isfinite(tz[2]) && isinf(tz[3])
+
+        # and the μ-free claim, which is why :ne is NOT an optional dependency here: u already
+        # encodes μ, so c_s = √(γ(γ-1)u) and everything downstream is identical with or without
+        # it. Only :T moves, because T is where μ enters.
+        wne = _zoom_particles(info; x=fill(0.5,n), y=fill(0.5,n), z=fill(0.5,n),
+                              rho=rho, mass=rho, u=u, coolrate=lam)
+        wne.data = IndexedTables.transform(wne.data, :ne => fill(1.16, n))
+        @test getvar(wne, :t_cool, :s)  == getvar(p, :t_cool, :s)
+        @test getvar(wne, :l_cool, :pc) == getvar(p, :l_cool, :pc)
+        @test getvar(wne, :cs, :km_s)   == getvar(p, :cs, :km_s)
+        @test getvar(wne, :T, :K)       != getvar(p, :T, :K)      # …but T does depend on μ
 
         # registered, and refuses clearly when the column was not loaded
         @test Set(Mera.getvar_requirements(:particles, :l_cool)) == Set([:rho, :u, :coolrate])

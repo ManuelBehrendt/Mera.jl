@@ -131,15 +131,44 @@ resolved = getvar(gas, :cellsize, :pc) .< getvar(gas, :l_cool, :pc)
 ```
 
 `l_cool` is the scale on which thermal instability fragments gas, so `cellsize < l_cool` is the
-condition for resolving it — a measurement rather than an appeal to a published number. It runs
-from ~800 pc at `n_H = 10⁻⁴ cm⁻³` to ~8 pc at `10⁻²` (at `10⁴ K`), which is why a single global
-threshold describes the IGM badly.
+condition for resolving it — a measurement rather than an appeal to a published number.
 
-!!! note "The sign of `:coolrate` is not reinterpreted"
-    `:t_cool` uses `|Λ|`, because the sign is a convention marking cooling versus net heating
-    and inverting it would silently flip the physics. Read the sign off `:coolrate` itself to
-    separate the two. Cells with `Λ = 0` give `t_cool = Inf` — they do not cool — rather than a
-    divide-by-zero artefact.
+!!! danger "A global `mean(cellsize < l_cool)` is not the convergence criterion"
+    It is dominated by hot diffuse gas, where `l_cool` is hundreds of kpc and any cell
+    satisfies it trivially. Measured over one IPM box (121.8 M cells):
+
+    | phase | cells | median `l_cool` | median cell | resolved |
+    |---|---|---|---|---|
+    | all | 121.8 M | 31.1 kpc | 427 pc | **88.8 %** |
+    | cold, `T < 3×10⁴ K` | 42.3 M | 3.7 kpc | 556 pc | 73.2 % |
+    | `T ~ 10⁴ K` | 28.4 M | 1.3 kpc | 416 pc | **65.1 %** |
+    | `T ~ 10⁵ K` | 16.6 M | 10.1 kpc | 432 pc | 92.5 % |
+    | WHIM, `10⁵–10⁷ K` | 63.9 M | 112.2 kpc | 415 pc | 99.5 % |
+    | hot, `T > 10⁶ K` | 19.4 M | 321.7 kpc | 400 pc | 100 % |
+
+    The 1st percentile of `l_cool` over that box is **0.17 pc**, resolved by 0.000 % of cells.
+
+    The shattering scale is the **minimum** of `l_cool`, not its local value, and that minimum
+    sits in the cold phase near `10⁴ K`. So the same run "passes" a published *resolve `l_cool`
+    at `T ~ 10⁵ K`* criterion at 92.5 % and fails a *resolve the shattering scale* criterion
+    outright — different claims, which a single 88.8 % conflates. **Restrict by phase, and
+    report the low percentiles of `l_cool` alongside.**
+
+!!! note "Net-heated cells have no cooling time"
+    Negative `:coolrate` is net cooling — measured, not assumed: 98.5 % of cells on a real
+    AREPO zoom, with none exactly zero. Cells with `Λ ≥ 0` are being net heated and get
+    `t_cool = Inf`, because a magnitude there would be a heating time wearing a cooling time's
+    label (median 19.4 Myr on the affected cells — entirely plausible, entirely wrong). Read
+    the sign off `:coolrate` to separate the populations.
+
+!!! note "Quoting `l_cool` at a temperature carries a μ assumption"
+    `l_cool` itself needs no mean molecular weight: `u` already encodes it, so
+    `c_s = √(γ(γ−1)u)` and everything downstream is μ-free — `:t_cool` and `:l_cool` are
+    bit-identical whether or not `:ne` is loaded. But *labelling* a cell by temperature is not:
+    `T = (γ−1)uμm_H/k_B`, so the same `u` reads as different `T` under ionized `μ ≈ 0.6` versus
+    neutral-primordial `μ ≈ 1.22`. A statement of the form "`l_cool` = 800 pc at `T = 10⁴ K`"
+    is therefore μ-dependent through the label, by about 30 %. Load `:ne` when binning by
+    temperature.
 
 ## 4. Do not project the boundary particles
 
