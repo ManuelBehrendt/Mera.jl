@@ -207,10 +207,18 @@ function get_data(dataobject::PartDataType,
         #
         # So a net-HEATED cell has no cooling time, and gets Inf. An earlier version used |Λ|,
         # which handed those cells a finite, entirely plausible number — measured median
-        # 19.35 Myr at T = 1.27e4 K — i.e. a heating time wearing a cooling time's label. The
-        # population is small (0.02–1.5 % by region) but it sits next to heating sources, which
-        # is precisely where someone would go looking. A sentinel belongs there, not a number.
-        # Read the sign off :coolrate itself to separate the two populations.
+        # 19.35 Myr at T = 1.27e4 K — i.e. a heating time wearing a cooling time's label.
+        #
+        # THE POPULATION IS NOT SMALL WHERE IT MATTERS. Measured over 121.8 M cells of a real
+        # inter-halo medium: 20.4 % of cells and 46.4 % of the MASS are net heated (diffuse gas
+        # held up by the UV background). With |Λ| they passed `cellsize < l_cool` 98.4 % of the
+        # time, which roughly DOUBLED the apparent resolved fraction in the cold phase — 65 %
+        # against a true 31 %. A flattering bias in the one statistic the convergence argument
+        # rests on.
+        #
+        # Inf is the honest value, but note it does NOT filter them out: Inf > anything, so a
+        # convergence statistic must select :coolrate .< 0 explicitly rather than lean on the
+        # sentinel. See the Zoom Simulations page.
         elseif (i in (:t_cool, :l_cool)) && !(:coolrate in column_names)
             throw(ArgumentError(
                 "getvar: :$i is derived from the net cooling rate :coolrate " *

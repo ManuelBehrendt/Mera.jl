@@ -177,12 +177,35 @@ condition for resolving it — a measurement rather than an appeal to a publishe
     outright — different claims, which a single 88.8 % conflates. **Restrict by phase, and
     report the low percentiles of `l_cool` alongside.**
 
-!!! note "Net-heated cells have no cooling time"
-    Negative `:coolrate` is net cooling — measured, not assumed: 98.5 % of cells on a real
-    AREPO zoom, with none exactly zero. Cells with `Λ ≥ 0` are being net heated and get
-    `t_cool = Inf`, because a magnitude there would be a heating time wearing a cooling time's
-    label (median 19.4 Myr on the affected cells — entirely plausible, entirely wrong). Read
-    the sign off `:coolrate` to separate the populations.
+!!! danger "Filter on `:coolrate .< 0` — the `Inf` sentinel does not do it for you"
+    Cells with `Λ ≥ 0` are being net **heated**: they have no cooling time, and `:t_cool`
+    returns `Inf` rather than a magnitude (a magnitude there is a heating time wearing a
+    cooling time's label). But `Inf` makes `cellsize < l_cool` **trivially true**, so a
+    convergence statistic that does not exclude them counts every heated cell as resolved.
+    The sentinel is honest about the value and actively unhelpful as a filter.
+
+    This is not a rare population. In the diffuse inter-halo medium — the medium the whole
+    question is about — it is **20.4 % of cells and 46.4 % of the mass** (measured over
+    121.8 M IPM cells; heated gas sits at `T ≈ 1.6×10⁴ K`, `n_H ≈ 7.6×10⁻⁵ cm⁻³`, held up by
+    the UV background). Including it roughly **doubles** the apparent resolved fraction where
+    it matters:
+
+    | phase | all cells | cooling cells only |
+    |---|---|---|
+    | IPM overall | 88.8 % | 86.4 % |
+    | cold, `T < 3×10⁴ K` | 73.2 % | **41.3 %** |
+    | `T ~ 10⁴ K` | 65.1 % | **31.4 %** |
+
+    So the honest figure for the phase where fragmentation happens is ~31 %, not 65 %:
+
+    ```julia
+    cooling  = getmask(gas, :coolrate, <(0))
+    resolved = getvar(gas, :cellsize, :pc) .< getvar(gas, :l_cool, :pc)
+    mean(resolved[cooling])          # …and restrict by phase as well
+    ```
+
+    Negative `:coolrate` is net cooling — measured, not assumed, with **no cells exactly
+    zero** on a real AREPO run.
 
 !!! note "Quoting `l_cool` at a temperature carries a μ assumption"
     `l_cool` itself needs no mean molecular weight: `u` already encodes it, so

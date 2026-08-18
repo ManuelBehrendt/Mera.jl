@@ -128,6 +128,26 @@ end
         @test all(isinf, getvar(q, :t_cool, :s))
         @test all(isinf, getvar(q, :l_cool, :pc))
 
+        # The sentinel is honest about the VALUE and useless as a FILTER: Inf > anything, so a
+        # `cellsize < l_cool` convergence test counts every heated cell as resolved. On a real
+        # IPM box that is 20.4 % of cells / 46.4 % of the mass, which roughly doubled the
+        # apparent resolved fraction in the cold phase. Callers must select :coolrate .< 0.
+        mixed = _zoom_particles(info; x=fill(0.5,4), y=fill(0.5,4), z=fill(0.5,4),
+                                rho=fill(1.0,4), mass=fill(1.0,4), u=fill(2.0,4),
+                                volume=fill(1.0,4),
+                                coolrate=[-1e-23, 1e-23, -1e-23, 1e-23])
+        lc = getvar(mixed, :l_cool, :pc); csz = getvar(mixed, :cellsize, :pc)
+        cooling  = getmask(mixed, :coolrate, <(0))
+        resolved = csz .< lc
+        @test count(cooling) == 2
+        @test all(isfinite, lc[cooling]) && all(isinf, lc[.!cooling])
+        # heated cells pass unconditionally, because Inf beats any cell size
+        @test all(resolved[.!cooling])
+        # here the COOLING cells are genuinely unresolved, so the naive statistic reports
+        # 50 % resolved and the honest one 0 % — the inflation, in miniature
+        @test mean(resolved) == 0.5
+        @test mean(resolved[cooling]) == 0.0
+
         # Λ = 0 is likewise not a cooling cell, and must not divide by zero
         z = _zoom_particles(info; x=fill(0.5,3), y=fill(0.5,3), z=fill(0.5,3),
                             rho=fill(1.0,3), mass=fill(1.0,3), u=fill(2.0,3),
