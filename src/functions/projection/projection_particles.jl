@@ -1,6 +1,41 @@
 
 # --- SPH-kernel deposition (for weighting=:sph: smooth Voronoi/SPH gas cells over their footprint) ---
 
+# Smoothing lengths for `weighting=:sph`, in code units, floored at one pixel.
+#
+# TWO SOURCES, in order:
+#
+#   :volume        — gas cells. h = α·(3V/4π)^⅓ resolves each Voronoi cell's own footprint.
+#   :subfind_hsml  — COLLISIONLESS particles, which have no volume. SUBFIND already computed a
+#                    local smoothing length for its density estimate, and Mera reads it for all
+#                    six PartTypes. Used AS IS: it is a smoothing length, not a radius derived
+#                    from a volume, so the α that tunes the volume form does not belong on it.
+#
+# Without either, `:sph` used to be refused outright, leaving `:mass` nearest-pixel deposition —
+# which for sparse particles is shot noise. Deposition is mass-conserving for any h (the kernel
+# is renormalised discretely), so the choice of h affects smoothness, never totals.
+#
+# A CAVEAT NO KERNEL FIXES: low-resolution zoom boundary particles begin on a LATTICE in the
+# initial conditions and, in low-density regions, have barely moved. Smoothing them produces
+# moiré — a regular interference pattern between the particle lattice and the pixel grid that
+# reads as structure. Coarsening pixels only shifts the beat frequency. See the "Zoom
+# Simulations" page: a map of boundary particles is not meaningful at any pixel size.
+function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
+    if :volume in cols
+        Vc = getcol(:volume)
+        return max.(α .* (3.0 .* Vc ./ (4 * pi)) .^ (1/3), pixsize)
+    elseif :subfind_hsml in cols
+        h = getcol(:subfind_hsml)
+        return max.(Float64.(h), pixsize)
+    end
+    throw(ArgumentError(
+        "projection (particles): weighting=:sph needs a smoothing length. Gas cells supply one " *
+        "through :volume (AREPO/GADGET); collisionless particles through :subfind_hsml " *
+        "(SubfindHsml), which SUBFIND runs write for every PartType — reload including it, " *
+        "e.g. getparticles(info; vars=[:subfind_hsml]). Without either, use weighting=:mass — " *
+        "but note that is nearest-pixel deposition, i.e. shot noise for sparse particles."))
+end
+
 # Unnormalised 2-D M4 cubic spline (the normalisation cancels under the discrete renormalisation below).
 @inline _m4kernel(q::Float64) = q < 1.0 ? 1.0 - 1.5q^2 + 0.75q^3 : (q < 2.0 ? 0.25 * (2.0 - q)^3 : 0.0)
 
@@ -1090,14 +1125,13 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         maps_mode[Symbol( string(i_var)  )] = :volume_weighted
                     end
                 elseif weighting == :sph
-                    # SPH-kernel deposition: smear each gas cell over an M4 kernel sized from its
-                    # volume (h = α·(3V/4π)^⅓, floored at one pixel), instead of depositing a point.
-                    # Resolves each Voronoi cell's footprint; mass-conserving by construction.
-                    in(:volume, propertynames(filtered_data.columns)) || throw(ArgumentError(
-                        "projection (particles): weighting=:sph needs a :volume column (e.g. AREPO/GADGET gas); use :mass for particles without one."))
-                    α = 1.5                                                            # smoothing factor (conservation-neutral; tunes smoothness)
-                    Vc = select(filtered_data, :volume)
-                    hs = max.(α .* (3.0 .* Vc ./ (4 * pi)) .^ (1/3), pixsize)          # smoothing length [code], floored at the pixel
+                    # SPH-kernel deposition: smear each point over an M4 kernel instead of
+                    # depositing it. h comes from :volume for gas cells (resolving each Voronoi
+                    # cell's footprint) or from :subfind_hsml for collisionless particles —
+                    # see `_sph_smoothing_lengths` at the top of this file, including the moiré
+                    # caveat for lattice-born boundary particles. Mass-conserving either way.
+                    hs = _sph_smoothing_lengths(propertynames(filtered_data.columns),
+                                                s -> select(filtered_data, s), pixsize)
                     xa = select(filtered_data, var_a); xb = select(filtered_data, var_b)
                     mw = length(mask) == 1 ? select(filtered_data, :mass) :
                                              select(filtered_data, :mass) .* select(filtered_data, :mask)
@@ -1182,7 +1216,12 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 if strict_projection
                     rethrow(e)
                 else
-                    println("[Mera][projection_particles] Warning: Failed to project variable '$(i_var)'. Inserting NaN map. Error type: $(typeof(e))")
+                    # Include the MESSAGE, not just the type. A refusal here is usually a caller
+                    # mistake with a specific fix ("weighting=:sph needs :subfind_hsml"), and
+                    # printing only `ArgumentError` threw that guidance away.
+                    println("[Mera][projection_particles] Warning: Failed to project variable " *
+                            "'$(i_var)'. Inserting NaN map.\n  " *
+                            first(split(sprint(showerror, e), "\n")))
                     # create placeholder NaN map
                     if !haskey(maps, Symbol(i_var))
                         maps[Symbol(i_var)] = fill(NaN, length1, length2)
@@ -1247,7 +1286,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     if strict_projection
                         rethrow(e)
                     else
-                        println("[Mera][projection_particles] Warning: Failed to compute velocity dispersion '$(ivar)'. Inserting NaN map. Error type: $(typeof(e))")
+                        println("[Mera][projection_particles] Warning: Failed to compute velocity " *
+                                "dispersion '$(ivar)'. Inserting NaN map.\n  " *
+                                first(split(sprint(showerror, e), "\n")))
                         maps[Symbol(ivar)] = fill(NaN, length1, length2)
                         maps_unit[Symbol( string(ivar)  )] = :unknown
                         maps_mode[Symbol( string(ivar)  )] = :failed
@@ -1446,12 +1487,20 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     e2 = range(y0, y1, length = ny + 1)
     if weighting === :sph || weighting === :voronoi
         cols = propertynames(dataobject.data.columns)
-        :volume in cols || throw(ArgumentError(
-            "projection (particles): weighting=:$(weighting) needs a :volume column " *
-            "(AREPO/GADGET gas); use :mass for particles without one."))
-        Vc = Float64.(getvar(dataobject, :volume)[sel])
+        # :voronoi genuinely needs the cell volume — it is a nearest-GENERATOR rule with a reach
+        # cap of (√3/2)·V^(1/3), which has no meaning for a particle that owns no cell. :sph only
+        # needs a smoothing length, and collisionless particles can supply one via :subfind_hsml.
+        if weighting === :voronoi
+            :volume in cols || throw(ArgumentError(
+                "projection (particles): weighting=:voronoi needs a :volume column " *
+                "(AREPO/GADGET gas) — it assigns each pixel to the nearest cell GENERATOR, " *
+                "which is undefined for particles that own no cell. Use :mass or, with a " *
+                ":subfind_hsml column, :sph."))
+        end
+        Vc = :volume in cols ? Float64.(getvar(dataobject, :volume)[sel]) : Float64[]
         if weighting === :sph
-            hs = max.(1.5 .* (3.0 .* Vc ./ (4 * pi)) .^ (1/3), pixsize)   # same α as the axis path
+            hs = _sph_smoothing_lengths(cols,
+                     s -> Float64.(getvar(dataobject, s)[sel]), pixsize)   # same α as the axis path
             for ivar in selected_vars
                 su, un = getunit(dataobject, ivar, selected_vars, units, uname=true)
                 if ivar in sd_names

@@ -174,10 +174,18 @@ condition for resolving it — a measurement rather than an appeal to a publishe
 
 Two separate traps.
 
-**`weighting=:sph` needs a smoothing length.** Collisionless particles have none, so
-`projection(dm, :sd)` falls back to nearest-pixel mass deposition, which is shot noise for
-sparse particles. Where the run wrote `SubfindHsml` (Mera reads it as `:subfind_hsml`, for all
-six PartTypes) that is a usable kernel size.
+**`weighting=:sph` needs a smoothing length**, and collisionless particles have no volume to
+derive one from. Where the run wrote `SubfindHsml` — Mera reads it as `:subfind_hsml`, for all
+six PartTypes — that *is* a smoothing length, and `:sph` uses it directly:
+
+```julia
+dm = getparticles(info, families=[1], vars=[:subfind_hsml])
+projection(dm, :sd; weighting=:sph)      # smoothed, and mass-conserving
+```
+
+Without it you get nearest-pixel deposition, which is shot noise for sparse particles. Note
+`:voronoi` is *not* relaxed the same way: it assigns each pixel to the nearest cell **generator**
+with a reach cap of `(√3/2)·V^(1/3)`, which has no meaning for a particle that owns no cell.
 
 **Low-resolution particles start on a lattice.** In the initial conditions they sit on a
 regular grid, and in low-density regions they have barely moved by `z ~ 3`. Projecting them

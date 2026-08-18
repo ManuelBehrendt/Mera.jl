@@ -534,6 +534,60 @@ end
         @test occursin("list_fields", err)        # and where to look next
     end
 
+    @testset "weighting=:sph works for collisionless particles via :subfind_hsml" begin
+        info = _zoom_info(boxlen=1.0)          # projection works in box fractions here
+        rng  = Random.MersenneTwister(3)
+        n    = 4000
+        base = (x = 0.5 .+ 0.08 .* randn(rng, n), y = 0.5 .+ 0.08 .* randn(rng, n),
+                z = 0.5 .+ 0.08 .* randn(rng, n))
+        mkp(extra...) = begin
+            p = _zoom_particles(info; x=base.x, y=base.y, z=base.z,
+                                vx=zeros(n), vy=zeros(n), vz=zeros(n), mass=fill(1.0, n))
+            for (k, v) in extra
+                p.data = IndexedTables.transform(p.data, k => v)
+            end
+            p
+        end
+        dm  = mkp()                                        # no volume, no hsml
+        dmh = mkp((:subfind_hsml, fill(0.02, n)))          # SUBFIND smoothing length
+
+        res = 64; pa = (1/res)^2
+        sph  = projection(dmh, :sd; weighting=:sph, res=res, verbose=false, show_progress=false)
+        pt   = projection(dmh, :sd;                 res=res, verbose=false, show_progress=false)
+
+        # deposition is mass-conserving for ANY h — the kernel is renormalised discretely — so
+        # smoothing must not move the total off the analytic n*m
+        @test sum(sph.maps[:sd]) * pa ≈ Float64(n)  rtol=1e-10
+        @test sum(sph.maps[:sd]) * pa ≈ sum(pt.maps[:sd]) * pa  rtol=1e-10
+
+        # …and it must actually smooth: fewer empty pixels than nearest-pixel deposition, which
+        # is the shot noise this exists to remove for sparse particles
+        @test count(iszero, sph.maps[:sd]) < count(iszero, pt.maps[:sd])
+
+        # without either column the refusal must name BOTH routes and the fallback. It is
+        # downgraded to a warning by the non-strict path, so assert the text reaches stdout —
+        # printing only the exception TYPE threw the actionable part away.
+        out = capture_stdout() do
+            projection(dm, :sd; weighting=:sph, res=16, verbose=false, show_progress=false)
+        end
+        @test occursin("needs a smoothing length", out)
+        @test occursin(":subfind_hsml", out) && occursin(":volume", out)
+        @test occursin("weighting=:mass", out)
+        # …and MERA_PROJECTION_STRICT=1 raises instead of warning (it is an env switch, not a
+        # keyword), so a script can opt into failing loudly
+        withenv("MERA_PROJECTION_STRICT" => "1") do
+            @test_throws ArgumentError projection(dm, :sd; weighting=:sph, res=16,
+                                                  verbose=false, show_progress=false)
+        end
+
+        # :voronoi is NOT relaxed the same way: it is a nearest-GENERATOR rule, undefined for a
+        # particle that owns no cell, so :subfind_hsml does not make it meaningful
+        vout = capture_stdout() do
+            projection(dmh, :sd; weighting=:voronoi, res=16, verbose=false, show_progress=false)
+        end
+        @test occursin("volume", vout)
+    end
+
     # ==========================================================================
     # getgroups / groupinfo without a snapshot
     # ==========================================================================
