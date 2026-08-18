@@ -33,14 +33,9 @@ average_mweighted
 wstat
 ```
 
-## Zoom simulations
-
-[`contamination`](@ref) answers the question that has to be settled before anything else in a
-zoom run is quoted: whether heavy low-resolution boundary particles have reached the region.
-See [Zoom Simulations](../zoom_simulations.md) for the full checklist.
+## IGM / structure statistics
 
 ```@docs; canonical=false
-contamination
 clumping
 ```
 

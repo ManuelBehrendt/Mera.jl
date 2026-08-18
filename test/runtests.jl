@@ -74,19 +74,13 @@ if isempty(_focus)
         include("54_clumpfind_synthetic_tests.jl")  # data-free: all 7 finders + features scored vs synthetic ground truth
         include("55_region_algebra_tests.jl")  # data-free: composable regions + exact cell splitting vs analytic volumes
         include("56_filterdata_tests.jl")  # data-free: value-space filtering on derived quantities (filterdata/getmask)
-        include("57_athena_reader_tests.jl")  # data-free: Athena++ .athdf reader contract (synthetic HDF5)
-        include("58_flash_reader_tests.jl")  # data-free: FLASH HDF5 PARAMESH reader contract (synthetic HDF5)
-        include("59_multicode_contract_tests.jl")  # data-free: cross-reader contract (PLUTO/Athena++/FLASH satisfy the same invariants)
-        include("60_gadget_reader_tests.jl")  # data-free: GADGET HDF5 particle reader contract (synthetic HDF5)
         include("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
-        include("64_datautils_coverage_tests.jl")  # data-free: viewdata/infodata/miscellaneous/mera_convert branches (synthetic snapshots + stdin-driven batch flows)
         include("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
-        include("66_chombo_reader_tests.jl")  # data-free: Chombo/PLUTO-AMR reader contract (synthetic 2-level HDF5; leaf extraction + Orion mapping)
         include("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities
         include("68_offaxis_api_tests.jl")  # data-free: off-axis API surface (slice alias, view-specifier error)
         include("69_config_tests.jl")  # data-free: ~/.mera.toml resolution, env precedence, legacy fallback
         include("70_scales_complete_tests.jl")  # data-free: every scale field is assigned; getunit rejects impossible factors
-        include("74_zoom_kinematics_tests.jl")       # data-free: :cellsize, bulk_velocity/vcenter=, contamination()
+        include("74_kinematics_derived_tests.jl")   # data-free: :cellsize, vcenter=, getmask, clumping, cosmic_time
 
         # The analytic correctness oracles. These were included in the data-dependent tier below,
         # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and
@@ -112,6 +106,7 @@ if isempty(_focus)
     # ------------------------------------------------------------------------
     @testset "Core Functionality" begin
         include("03_data_readers.jl")
+        include("64_datautils_coverage_tests.jl")  # data-utils: viewdata/infodata/mera_convert (RAMSES fixture)
         include("04_basic_calculations.jl")
         include("05_derived_variables.jl")
     end
@@ -135,11 +130,9 @@ if isempty(_focus)
         include("49_statistics_tests.jl")            # pdf (probability distribution functions): data-free weighted-histogram kernel + spiral_clumps density PDF (mass vs volume)
         include("50_provenance_tests.jl")            # provenance / provenance_string: data-free struct+string + spiral_clumps snapshot/projection extraction
         include("51_movie_tests.jl")                 # getmovie / savemovie: data-free colormaps/struct + 3D Sedov frames → single-GIF round-trip
-        include("52_pluto_reader_tests.jl")          # PLUTO code frontend (multi-code reader): data-free format parsers + 3D Sedov fixture; analysis layer runs unchanged
         include("53_overlay_absorption_tests.jl")    # gridoverlay (AMR cell boundaries)
         include("07_regions.jl")
         include("63_region_coverage_tests.jl")       # RT/gravity/particle sub- & shellregion paths (cell modes, inverse partitions, uniform-grid branch)
-        include("72_gadget_logs_tests.jl")           # data-free: AREPO/GADGET run-time ASCII logs (sfr.txt, info.txt, …)
         include("71_info_initialization_tests.jl")   # every reader fills InfoType/scale/constants — no field left holding uninitialized memory
     end
 
@@ -241,7 +234,6 @@ if isempty(_focus)
     # what happened with `using Printf` (caught only by a full local run, not by CI).
     # ------------------------------------------------------------------------
     @testset "AREPO Real-Data Validation" begin
-        include("73_arepo_realdata_validation.jl")
     end
 
 end

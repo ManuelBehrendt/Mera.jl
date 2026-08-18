@@ -14,10 +14,10 @@ end
 @testset "Reader registry" begin
 
     @testset "built-in registrations" begin
-        for code in (:ramses, :pluto, :chombo, :athena, :flash, :gadget)
-            @test haskey(Mera._READERS, code)
-        end
-        @test Mera._READERS[:gadget].simcodes == ["GADGET", "AREPO", "SWIFT", "GIZMO"]
+        # RAMSES is the only built-in on this branch; the other frontends register through the
+        # same mechanism on `multicode`, which is why the registry is tested even with one entry.
+        @test haskey(Mera._READERS, :ramses)
+        @test Mera._READERS[:ramses].simcodes == ["RAMSES"]
         # every registered simcode string resolves back to its reader
         for (s, code) in Mera._SIMCODE_TO_READER
             @test Mera._reader_by_simcode(s).code === code
@@ -27,44 +27,15 @@ end
     @testset "supports / capabilities" begin
         @test capabilities(_registry_stub_info("RAMSES")) ==
               [:info, :hydro, :particles, :gravity, :rt, :clumps]
-        @test capabilities(_registry_stub_info("PLUTO")) == [:info, :hydro, :particles]
-        # the GADGET-HDF5 family gained :groups (SUBFIND/FoF catalogue) — getgroups(info) —
-        # and :logs (the run-time ASCII files: sfr.txt, blackholes.txt, info.txt, …)
-        @test capabilities(_registry_stub_info("AREPO")) == [:info, :particles, :groups, :logs]
-        # :logs is registered only where a reader exists; RAMSES must report false rather
-        # than pretend, since its run-time files are a different set entirely
-        @test supports(_registry_stub_info("AREPO"), :logs)
+        # :logs / :groups belong to the GADGET-HDF5 family and are registered on `multicode`.
+        # RAMSES must report false rather than pretend: its run-time files are a different set.
         @test !supports(_registry_stub_info("RAMSES"), :logs)
-        @test !supports(_registry_stub_info("PLUTO"), :logs)
-        @test capabilities(_registry_stub_info("Athena++")) == [:info, :hydro]
+        @test !supports(_registry_stub_info("RAMSES"), :groups)
         # unknown simcode (e.g. from an old mera-file) falls back to RAMSES-native
         @test capabilities(_registry_stub_info("UNKNOWN_LEGACY")) ==
               capabilities(_registry_stub_info("RAMSES"))
-        @test supports(_registry_stub_info("PLUTO"), :hydro)
-        @test !supports(_registry_stub_info("PLUTO"), :gravity)
-        @test !supports(_registry_stub_info("GADGET"), :hydro)
+        @test supports(_registry_stub_info("RAMSES"), :hydro)
         @test_throws ErrorException supports(_registry_stub_info("RAMSES"), :nonsense)
-    end
-
-    @testset "fail-fast guards" begin
-        pluto = _registry_stub_info("PLUTO")
-        for (f, name) in ((getgravity, "getgravity"), (getrt, "getrt"), (getclumps, "getclumps"))
-            err = try; f(pluto); nothing; catch e; e; end
-            @test err isa ErrorException
-            @test occursin("$name is not available", err.msg)
-            @test occursin("PLUTO", err.msg)
-        end
-        # gethydro on a particle-family code errors with the getparticles hint
-        arepo = _registry_stub_info("AREPO")
-        err = try; gethydro(arepo); nothing; catch e; e; end
-        @test err isa ErrorException
-        @test occursin("gethydro is not available", err.msg)
-        @test occursin("getparticles", err.msg)   # the reader's note
-        # getparticles on a hydro-only grid code errors too
-        chombo = _registry_stub_info("CHOMBO")
-        err = try; getparticles(chombo); nothing; catch e; e; end
-        @test err isa ErrorException
-        @test occursin("getparticles is not available", err.msg)
     end
 
     @testset "dummy reader: routing, detection hook, cleanup" begin
@@ -95,9 +66,10 @@ end
             @test getinfo(output=3, path="/no/such/place/$marker", verbose=false) ===
                   (:dummy_info, 3, "/no/such/place/$marker")
 
-            # duplicate simcode registration is rejected
+            # duplicate simcode registration is rejected (RAMSES is the built-in here;
+            # on `multicode` any of the other registered codes serves the same purpose)
             @test_throws ErrorException Mera.register_reader!(:dummy2;
-                simcodes = ["PLUTO"], info = (o, p; kw...) -> nothing)
+                simcodes = ["RAMSES"], info = (o, p; kw...) -> nothing)
         finally
             Mera.unregister_reader!(:dummycode)
         end
@@ -125,7 +97,7 @@ end
         @test occursin("unknown code :nosuchcode", err.msg) && occursin(":ramses", err.msg)
 
         m = Mera.capability_matrix()
-        @test occursin("RAMSES", m) && occursin("`:pluto`", m)
+        @test occursin("RAMSES", m) && occursin("`:ramses`", m)
         # one header + one separator + one row per registered reader
         @test count(==('\n'), m) == 2 + length(Mera._READERS)
     end

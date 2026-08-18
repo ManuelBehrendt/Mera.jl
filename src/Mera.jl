@@ -98,25 +98,6 @@ export
 # data reader
     getunit,
     getinfo,
-    getinfo_pluto,
-    gethydro_pluto,
-    getparticles_pluto,
-    getinfo_chombo,
-    gethydro_chombo,
-    getinfo_athena,
-    gethydro_athena,
-    getinfo_flash,
-    gethydro_flash,
-    getinfo_gadget,
-    getparticles_gadget,
-    getgroups_gadget,
-    getgroups,
-    getlogs,
-    getlogs_gadget,
-    loglist,
-    configflags,
-    groupfields,
-    sf_threshold,
     createpath,
     gethydro,
     getgravity,
@@ -217,12 +198,10 @@ export
     profile3d,
     rotationcurve,
     velocitydispersion,
-    contamination,
     clumping,
     cosmic_time,
     lookback_time,
     age_of_universe,
-    groupinfo,
     localdispersion,
     profiletimeseries,
     quicklook,
@@ -459,13 +438,6 @@ include("read_data/RAMSES/hilbert3d.jl")
 # Data reader
 include("read_data/RAMSES/gethydro.jl")
 include("read_data/RAMSES/reader_hydro.jl")
-include("read_data/PLUTO/reader_pluto.jl")   # PLUTO frontend (static uniform Cartesian grid)
-include("read_data/PLUTO/reader_chombo.jl")  # Chombo / PLUTO-AMR frontend (HDF5)
-include("read_data/Athena/reader_athena.jl") # Athena++ frontend (HDF5 .athdf MeshBlocks)
-include("read_data/FLASH/reader_flash.jl")   # FLASH frontend (HDF5 PARAMESH leaf blocks)
-include("read_data/GADGET/reader_gadget.jl")
-include("read_data/GADGET/groupcat_gadget.jl") # GADGET/GIZMO/… frontend (HDF5 particles)
-include("read_data/GADGET/logs_gadget.jl")   # run-time ASCII logs (sfr.txt, …)
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
@@ -521,7 +493,6 @@ include("functions/regions/shellregion_rt.jl")
 include("functions/regions/shellregion_particles.jl")
 include("functions/regions/shellregion_clumps.jl")
 include("functions/restframe.jl")
-include("functions/contamination.jl")
 include("functions/clumping.jl")
 include("functions/profile.jl")
 include("functions/quicklook.jl")

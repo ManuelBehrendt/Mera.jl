@@ -103,18 +103,6 @@ makedocs(modules = [Mera],
                                                         "Hydro"     => "paraview/08_hydro_VTK_export.md",
                                                         "Particles" => "paraview/08_particles_VTK_export.md"]],
 
-                      # --- code-agnostic readers: their own top-level section, not buried under Data ---
-                      "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
-                                                       "Worked Examples" => "multicode_examples.md",
-                                                       "PLUTO"    => "pluto_reader.md",
-                                                       "Athena++" => "athena_reader.md",
-                                                       "FLASH"    => "flash_reader.md",
-                                                       "GADGET"   => "gadget_reader.md",
-                                                       "AREPO"    => "arepo_reader.md",
-                                                       "AREPO/GADGET run-time logs" => "gadget_logs.md",
-                                                       "Cosmological Units" => "cosmological_units.md",
-                                                       "Zoom Simulations"   => "zoom_simulations.md"],
-
                       # --- one home for all the formerly-scattered per-topic API pages ---
                       "API Reference" => Any[
                           "Data Inspection"     => "api/data_inspection.md",

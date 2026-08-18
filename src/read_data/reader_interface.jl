@@ -183,3 +183,23 @@ function capability_matrix()
     end
     return String(take!(io))
 end
+
+# ------------------------------------------------------------------------------------
+# Which code wrote this output?
+#
+# `getinfo(...; code=:auto)` and the time-series discovery both ask this. On this branch the
+# answer is RAMSES unless a REGISTERED frontend claims the path first — which is exactly the
+# seam the other-code readers use. Each of them adds its own signature test (a `.athdf` file,
+# a GADGET-flavoured HDF5, `grid.out` + `dbl.out`, …) on the `multicode` branch:
+#
+#     ] add https://github.com/ManuelBehrendt/Mera.jl#multicode
+#
+# Keeping the hook mechanism here, rather than a hard-coded chain, is what lets those
+# frontends attach without editing this function.
+# ------------------------------------------------------------------------------------
+function detect_simcode(path::String)
+    for rdr in _detect_hooks()
+        rdr.detect(path) && return rdr.code
+    end
+    return :ramses
+end

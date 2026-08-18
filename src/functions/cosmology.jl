@@ -443,8 +443,8 @@ The **age of the universe** at scale factor `a`, for this run's own cosmology. A
 or any array, and is vectorised over it.
 
 [`gettime`](@ref) answers for the snapshot; this answers for any epoch, which is what tracking
-across a set of outputs needs — a catalogue-only output tells you its `a`, and `a` alone is not
-a time. Use it with [`getgroups`](@ref)`(path, snap)`, whose result carries `aexp`.
+across a set of outputs needs — an output tells you its scale factor, and `a` alone is not a
+time.
 
 ```julia
 cosmic_time(info, 0.2276)                     # Gyr at the snapshot's scale factor

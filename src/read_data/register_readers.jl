@@ -1,13 +1,19 @@
 # ====================================================================================
 # Built-in reader registrations (see read_data/reader_interface.jl for the contract).
 #
-# Runs after all frontend files are included. RAMSES registers the public entry
-# points themselves: it is never called through the registry (the entry points run
-# their native body for :ramses), but registering it keeps supports/capabilities and
-# the docs capability matrix derived from one mechanism for every code.
+# RAMSES registers the public entry points themselves: it is never called through the
+# registry (the entry points run their native body for :ramses), but registering it keeps
+# supports/capabilities and the docs capability matrix derived from one mechanism.
 #
-# Detection: the built-in codes are recognised by detect_simcode's signature-file
-# chain (reader_pluto.jl); only NEW external codes need a `detect=` hook here.
+# The registry is deliberately kept even with a single reader, because it is the seam the
+# other-code frontends plug into: PLUTO, Chombo, Athena++, FLASH and the GADGET-HDF5 family
+# (GADGET / AREPO / SWIFT / GIZMO) register here on the `multicode` branch, which is
+# installable directly:
+#
+#     ] add https://github.com/ManuelBehrendt/Mera.jl#multicode
+#
+# Nothing on this branch needs to change to accommodate them — a frontend supplies its own
+# `getinfo_*` / `gethydro_*` / `getparticles_*` and calls `register_reader!`.
 # ====================================================================================
 
 function register_builtin_readers!()
@@ -16,40 +22,6 @@ function register_builtin_readers!()
         name = "RAMSES (native AMR)",
         info = getinfo, hydro = gethydro, particles = getparticles,
         gravity = getgravity, rt = getrt, clumps = getclumps)
-
-    register_reader!(:pluto;
-        simcodes = ["PLUTO"],
-        name = "PLUTO (static uniform grid)",
-        info = getinfo_pluto,
-        hydro = gethydro_pluto,
-        particles = getparticles_pluto)
-
-    register_reader!(:chombo;
-        simcodes = ["CHOMBO"],
-        name = "Chombo / PLUTO-AMR (HDF5)",
-        info = getinfo_chombo,
-        hydro = gethydro_chombo)
-
-    register_reader!(:athena;
-        simcodes = ["Athena++"],
-        name = "Athena++ (.athdf)",
-        info = getinfo_athena,
-        hydro = gethydro_athena)
-
-    register_reader!(:flash;
-        simcodes = ["FLASH"],
-        name = "FLASH (PARAMESH HDF5)",
-        info = getinfo_flash,
-        hydro = gethydro_flash)
-
-    register_reader!(:gadget;
-        simcodes = ["GADGET", "AREPO", "SWIFT", "GIZMO"],
-        name = "GADGET-HDF5 family",
-        note = "Gas in the GADGET-HDF5 family is particle data — load it with getparticles(info).",
-        info = getinfo_gadget,
-        particles = getparticles_gadget,
-        groups = getgroups_gadget,
-        logs = getlogs_gadget)
 
     return nothing
 end

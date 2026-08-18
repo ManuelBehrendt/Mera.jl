@@ -1,17 +1,21 @@
-# 74_zoom_kinematics_tests.jl  --  Zoom-simulation and rest-frame kinematics helpers (data-free)
+# 74_kinematics_derived_tests.jl  --  rest-frame kinematics + derived fields (data-free)
 # ==============================================================================
 # Everything here is built from synthetic objects — no simulation files, no MERA_TEST_DATA.
-# The features exist because a real AREPO zoom analysis produced WRONG-BUT-PLAUSIBLE numbers
-# without them (box-frame angular momentum off by 33.8 %, low-resolution boundary particles
-# reaching 2.35 R200c). The data-backed counterparts live in 73_arepo_realdata_validation.jl.
+# Several of these exist because a real cosmological zoom analysis produced WRONG-BUT-PLAUSIBLE
+# numbers without them (box-frame angular momentum off by 33.8 %).
+#
+# The code-specific counterparts — the reader frontends, contamination, getgroups and their
+# data-backed validation — live on the `multicode` branch:
+#     ] add https://github.com/ManuelBehrendt/Mera.jl#multicode
+#
+# What remains here is code-agnostic: it runs on any particle object carrying the relevant
+# columns, whichever frontend produced it.
 # ==============================================================================
 
-# A minimal AREPO-like info: a scale where NO unit factor is 1, so a dropped or doubled
-# conversion cannot pass by coincidence (scale.kpc == 1 has hidden real bugs in this repo).
-# boxlen is deliberately NOT 1. With boxlen == 1 a radius expressed as a box fraction and the
-# same radius in code units are numerically identical, which is exactly why the contamination
-# unit bug (a :standard radius never scaled to code units) passed every test here while
-# reporting a contaminated halo as CLEAN on real data.
+# A minimal info whose scale factors are all != 1, so a dropped or doubled conversion cannot
+# pass by coincidence (scale.kpc == 1 has hidden real bugs in this repo). boxlen is likewise
+# NOT 1: with boxlen == 1 a box fraction and a code length are numerically identical, which is
+# exactly how a units bug once survived every test here.
 function _zoom_info(; boxlen::Float64=100.0)
     info = Mera.InfoType()
     info.boxlen    = boxlen
@@ -40,7 +44,7 @@ function _zoom_particles(info; kwargs...)
     return p
 end
 
-@testset verbose=true "zoom + rest-frame kinematics (data-free)" begin
+@testset verbose=true "rest-frame kinematics + derived fields (data-free)" begin
 
     # ==========================================================================
     # :cellsize — for a moving mesh the resolution IS the cell size
@@ -377,170 +381,6 @@ end
         @test !haskey(p.used_descriptors, :vframe)      # the caller's object is untouched
     end
 
-    # ==========================================================================
-    # contamination — has the low-resolution boundary reached the object?
-    # ==========================================================================
-    # A synthetic zoom: a high-resolution family (PartType1, one mass) inside the region, and
-    # a heavier boundary family (PartType3, 43x) placed at a known distance — the mass ratio
-    # and the ~2–3 R200c clearance both mirror the real AREPO run.
-    # `cen` and `radius` are returned as box FRACTIONS — what a caller passes with
-    # range_unit=:standard — while the columns are built in CODE units (× boxlen). Keeping the
-    # two spaces distinct is the whole point: it is what makes a missing boxlen factor visible.
-    # `m_lo_spread` gives the boundary family PER-PARTICLE masses, so it has no single table
-    # mass — the case that used to be misclassified as baryonic and silently dropped.
-    function _zoom_snapshot(info; d_boundary=2.85, radius=0.05, n_hi=200, n_lo=30,
-                            m_hi=1.0, m_lo=43.0, lo_family=3, contaminate=0,
-                            m_lo_spread=0.0)
-        bl  = info.boxlen
-        cen = [0.5, 0.5, 0.5];  cc = cen .* bl
-        rc  = radius * bl
-        θ = range(0, 2π, length=n_hi+1)[1:n_hi]
-        r = rc .* range(0.05, 0.9, length=n_hi)
-        x = cc[1] .+ r .* cos.(θ);  y = cc[2] .+ r .* sin.(θ);  z = fill(cc[3], n_hi)
-        m = fill(m_hi, n_hi);       f = fill(1, n_hi)
-        # boundary shell at d_boundary × radius
-        if n_lo > 0
-            φ = range(0, 2π, length=n_lo+1)[1:n_lo]
-            R = d_boundary * rc
-            append!(x, cc[1] .+ R .* cos.(φ)); append!(y, cc[2] .+ R .* sin.(φ))
-            append!(z, fill(cc[3], n_lo))
-            mlo = m_lo_spread == 0 ? fill(m_lo, n_lo) :
-                  m_lo .* (1 .+ m_lo_spread .* range(-1, 1, length=n_lo))
-            append!(m, mlo);        append!(f, fill(lo_family, n_lo))
-        end
-        # optionally push some boundary particles INSIDE the radius
-        for k in 1:contaminate
-            push!(x, cc[1] + 0.3rc*k/max(contaminate,1)); push!(y, cc[2]); push!(z, cc[3])
-            push!(m, m_lo); push!(f, lo_family)
-        end
-        p = _zoom_particles(info; x=x, y=y, z=z,
-                            vx=zeros(length(x)), vy=zeros(length(x)), vz=zeros(length(x)),
-                            mass=m)
-        p.data = IndexedTables.transform(p.data, :family => f)
-        return (part = p, center = cen, radius = radius)
-    end
-
-    @testset "contamination: a clean halo" begin
-        info = _zoom_info()
-        S = _zoom_snapshot(info; d_boundary=2.85)
-        c = contamination(S.part, S.center, S.radius; verbose=false)
-
-        @test c.clean
-        @test c.n_lowres == 0
-        @test c.d_over_radius ≈ 2.85          rtol=1e-9    # the headline clearance
-        @test c.distinct_masses == 1                       # high-res family is uniform
-        @test c.mass_fraction_lowres == 0.0
-
-        # families are DERIVED from the mass table, not assumed to be 2 and 3
-        @test c.families.highres == 1
-        @test c.families.lowres  == [3]
-    end
-
-    @testset "contamination: a contaminated region is loud" begin
-        info = _zoom_info()
-        S = _zoom_snapshot(info; d_boundary=2.35, contaminate=4)
-        c = contamination(S.part, S.center, S.radius; verbose=false)
-
-        @test !c.clean                                     # the field the caller must read
-        @test c.n_lowres == 4
-        @test c.d_over_radius < 1.0                        # nearest is now inside
-        @test c.mass_fraction_lowres > 0                   # boundary mass has entered
-
-        # and it must actually SAY so rather than bury it in a NamedTuple
-        out = capture_stdout() do; contamination(S.part, S.center, S.radius); end
-        @test occursin("NOT CLEAN", out)
-    end
-
-    @testset "contamination: family classification is derived, not hard-coded" begin
-        info = _zoom_info()
-        # a zoom whose boundary family is PartType2 rather than the classic 3 — which of the
-        # collisionless types is high-res and which is boundary is derived from mass, so
-        # neither numbering is privileged
-        S = _zoom_snapshot(info; lo_family=2, d_boundary=1.7)
-        c = contamination(S.part, S.center, S.radius; verbose=false)
-        @test c.families.lowres == [2]
-        @test c.d_over_radius ≈ 1.7  rtol=1e-9
-
-        # a boundary family only 1.5x heavier is NOT flagged at the default 2x threshold,
-        # but is at ratio=1.2 — the cut is explicit rather than magic
-        T = _zoom_snapshot(info; m_lo=1.5, d_boundary=1.7)
-        @test isempty(contamination(T.part, T.center, T.radius; verbose=false).families.lowres)
-        @test contamination(T.part, T.center, T.radius; ratio=1.2, verbose=false
-                            ).families.lowres == [3]
-
-        # an explicit override is honoured, and REPORTED: families.lowres is what was used,
-        # families.derived is what the automatic rule would have picked
-        o = contamination(S.part, S.center, S.radius; lowres_families=[5], verbose=false)
-        @test o.families.lowres  == [5]        # what the caller asked for
-        @test o.families.derived == [2]        # what the rule found on its own
-
-        # A VARIABLE-MASS boundary family must still be caught. Multi-level zoom ICs give
-        # successive boundary shells different masses, so such a family has no MassTable entry
-        # at all — the old "must have exactly one mass" rule dropped a real 933 435-particle
-        # boundary family as if it were baryonic, under-counting contamination.
-        V = _zoom_snapshot(info; lo_family=2, d_boundary=1.9, m_lo=43.0, m_lo_spread=0.35)
-        cV = contamination(V.part, V.center, V.radius; verbose=false)
-        @test length(unique(getvar(V.part, :mass))) > 2       # genuinely variable masses
-        @test cV.families.lowres == [2]                       # …and still classified boundary
-        @test cV.d_over_radius ≈ 1.9  rtol=1e-9
-
-        # PartType5 is excluded as BARYONIC (black holes), not by mass — a BH seed is heavier
-        # than a high-res DM particle and would otherwise be flagged as a boundary family.
-        B = _zoom_snapshot(info; lo_family=5, d_boundary=1.7, m_lo=43.0)
-        @test isempty(contamination(B.part, B.center, B.radius; verbose=false).families.lowres)
-        # …but a run that really does use type 5 for boundary can say so, and then it is found
-        @test contamination(B.part, B.center, B.radius; verbose=false,
-                            candidate_families=(1,2,3,5)).families.lowres == [5]
-    end
-
-    @testset "contamination says so when it found nothing to conclude from" begin
-        info = _zoom_info()
-        # a snapshot with NO low-resolution family present at all
-        S = _zoom_snapshot(info; d_boundary=2.85, n_lo=0)
-        c = contamination(S.part, S.center, S.radius; verbose=false)
-        @test c.n_lowres_seen == 0
-        @test !c.conclusive                     # "none found" is not "none present"
-        @test c.clean                           # …clean is still true, but must not be read alone
-        out = capture_stdout() do; contamination(S.part, S.center, S.radius); end
-        @test occursin("INCONCLUSIVE", out)
-
-        # whereas a real clean halo, with boundary particles visible further out, IS conclusive
-        T = _zoom_snapshot(info; d_boundary=2.85)
-        ct = contamination(T.part, T.center, T.radius; verbose=false)
-        @test ct.clean && ct.conclusive && ct.n_lowres_seen > 0
-    end
-
-    @testset "contamination: units and refusals" begin
-        info = _zoom_info()
-        S = _zoom_snapshot(info; d_boundary=2.85)
-
-        # THE REGRESSION THAT MATTERED. :standard takes box fractions, :kpc takes kpc; both
-        # describe the SAME physical sphere, so every dimensionless answer must agree. It did
-        # not: the :standard radius was never scaled to code units, the search region collapsed
-        # by a factor boxlen, and a contaminated halo came back clean=true. A safety check that
-        # fails toward "fine" is the one failure direction that must never survive.
-        kpc_per_code = info.scale.kpc
-        a = contamination(S.part, S.center, S.radius; verbose=false)
-        b = contamination(S.part, S.center .* info.boxlen .* kpc_per_code,
-                          S.radius * info.boxlen * kpc_per_code;
-                          range_unit=:kpc, verbose=false)
-        @test a.clean == b.clean
-        @test a.n_lowres == b.n_lowres
-        @test a.d_over_radius ≈ b.d_over_radius  rtol=1e-10
-        @test a.mass_fraction_lowres ≈ b.mass_fraction_lowres  rtol=1e-10
-
-        # d_nearest is reported in the unit that was asked for, not in code units
-        @test a.d_nearest ≈ S.radius * 2.85                       rtol=1e-9   # box fractions
-        @test b.d_nearest ≈ a.d_nearest * info.boxlen * kpc_per_code rtol=1e-9  # kpc
-
-        # and :standard genuinely finds the boundary shell rather than reporting an empty region
-        @test a.d_over_radius ≈ 2.85  rtol=1e-9
-        @test a.conclusive
-
-        # no :family column ⇒ say so, rather than silently treating everything as one family
-        nofam = _zoom_particles(info; x=[0.5,0.6], y=[0.5,0.5], z=[0.5,0.5], mass=[1.0,1.0])
-        @test_throws ErrorException contamination(nofam, [0.5,0.5,0.5], 0.1; verbose=false)
-    end
 
     @testset "ASCII spellings of the Greek components, and a useful unknown-var error" begin
         info = _zoom_info()
@@ -760,68 +600,5 @@ end
         # non-physical scale factors are NaN rather than a plausible extrapolation
         @test isnan(cosmic_time(info, -0.1))
         @test isnan(cosmic_time(info, 0.0))
-    end
-
-    # ==========================================================================
-    # getgroups / groupinfo without a snapshot
-    # ==========================================================================
-    # Runs routinely keep more catalogues than snapshots (37 vs 10 on the run this came from),
-    # and merger trees need exactly the case where the snapshot is absent. The catalogue files
-    # carry their own Header, so only the entry point was missing.
-    @testset "getgroups works on a catalogue-only output" begin
-        dir = mktempdir()
-        gdir = joinpath(dir, "groups_033"); mkpath(gdir)
-        Mera.HDF5.h5open(joinpath(gdir, "fof_subhalo_tab_033.0.hdf5"), "w") do f
-            hg = Mera.HDF5.create_group(f, "Header")
-            at = Mera.HDF5.attributes(hg)
-            at["BoxSize"] = 35000.0
-            at["Ngroups_Total"] = Int32(3);  at["Ngroups_ThisFile"] = Int32(3)
-            at["Time"] = 0.227623;           at["Redshift"] = 3.3934
-            at["HubbleParam"] = 0.6774
-            at["Omega0"] = 0.3089;           at["OmegaLambda"] = 0.6911
-            at["UnitLength_in_cm"] = 3.085678e21
-            at["UnitMass_in_g"] = 1.989e43
-            at["UnitVelocity_in_cm_per_s"] = 1.0e5
-            gg = Mera.HDF5.create_group(f, "Group")
-            # (ntypes, ngroups) as the catalogue stores it; the reader permutedims it to
-            # (ngroups, ntypes). Written in this shape rather than as an adjoint, which HDF5
-            # refuses outright ("different stride than Array").
-            gg["GroupMassType"] = Float32[1 4 7; 2 5 8; 0 0 0; 0 0 0; 3 6 9; 0 0 0]
-            gg["Group_R_Crit200"] = Float32[100.0, 200.0, 300.0]
-            gg["GroupPos"] = Float32[1 2 3; 4 5 6; 7 8 9]
-        end
-
-        # NO snapshot anywhere: getinfo cannot work here, which is the whole point
-        info = groupinfo(dir, 33; verbose=false)
-        @test info.output == 33
-        @test info.aexp ≈ 0.227623   rtol=1e-9        # cosmological: Time IS the scale factor
-        @test info.H0 ≈ 67.74        rtol=1e-9
-        @test info.omega_m ≈ 0.3089  rtol=1e-9
-
-        # the units are the real ones, not placeholders: length carries a/h
-        @test info.unit_l ≈ 3.085678e21 * 0.227623 / 0.6774  rtol=1e-9
-        @test info.scale.kpc > 0 && isfinite(info.scale.Msol)
-        # The a and h factors cancel in the mass: unit_m = unit_d·unit_l³ = UnitMass_in_g/h.
-        # So scale.Msol is 1e10/h here — exactly the 1.48x that `.* 1e10` leaves behind.
-        @test info.scale.Msol ≈ 1e10 / 0.6774  rtol=1e-3
-
-        gc = getgroups(dir, 33; verbose=false)
-        @test gc.n == 3
-
-        # the two-argument form must carry the EPOCH: its reason to exist is tracking across
-        # outputs, and a catalogue with no scale factor cannot be placed in time
-        @test gc.aexp ≈ 0.227623  rtol=1e-9
-        @test gc.redshift ≈ 1/0.227623 - 1  rtol=1e-9
-        @test gc.output == 33
-        @test gc.info.scale.kpc > 0          # …and the unit machinery comes with it
-        @test size(gc.GroupMassType) == (3, 6)
-        @test gc.Group_R_Crit200 ≈ Float32[100, 200, 300]
-
-        # and the two spellings agree
-        gc2 = getgroups(groupinfo(dir, 33; verbose=false); verbose=false)
-        @test gc2.n == gc.n
-        @test gc2.Group_R_Crit200 == gc.Group_R_Crit200
-
-        rm(dir; recursive=true, force=true)
     end
 end

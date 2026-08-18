@@ -2,11 +2,10 @@
 # 53_overlay_absorption_tests.jl
 #
 # gridoverlay (AMR cell-boundary segments). Data-backed on spiral_clumps
-# (RAMSES); also on the Chombo AMR fixture for the multi-level case.
+# (RAMSES). The multi-level Chombo AMR case lives on the `multicode` branch.
 # ============================================================================
 
 const OA_PATH = joinpath(SIMULATION_PATH, "RAMSES/spiral_clumps")
-const OA_CHOMBO = joinpath(SIMULATION_PATH, "CHOMBO/chombo_3d", "IsothermalSphere")
 
 @testset "gridoverlay" begin
 
@@ -35,18 +34,6 @@ if DATA_AVAILABLE && isdir(OA_PATH)
 else
     @testset "overlay/absorption (skipped: spiral_clumps unavailable)" begin
         @test_skip "spiral_clumps not found"
-    end
-end
-
-# multi-level overlay on the Chombo AMR fixture
-if DATA_AVAILABLE && isdir(OA_CHOMBO)
-    @testset "gridoverlay on AMR (Chombo): finer level covers a sub-region" begin
-        g = gethydro(getinfo(0, OA_CHOMBO, verbose=false), verbose=false)
-        coarse = gridoverlay(g; level=g.lmin == g.lmax ? g.lmin : g.lmin + 1, direction=:z)
-        fine   = gridoverlay(g; level=g.lmax, direction=:z)
-        @test !isempty(fine.segments) && !isempty(coarse.segments)
-        # the finest level only exists in a refined sub-region → smaller extent
-        @test (fine.extent[2]-fine.extent[1]) <= (coarse.extent[2]-coarse.extent[1])
     end
 end
 

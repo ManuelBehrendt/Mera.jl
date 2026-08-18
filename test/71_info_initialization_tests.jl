@@ -31,14 +31,11 @@ end
 
 @testset "InfoType initialization across codes" begin
     R = SIMULATION_PATH
+    # RAMSES only on this branch. The other frontends — and the rest of this table — are on
+    # `multicode`; the check itself is written to take any number of codes, so it needs no
+    # change when they are merged back in.
     cases = [
         ("RAMSES", () -> getinfo(300, joinpath(R, "RAMSES/mw_L10"), verbose=false)),
-        ("PLUTO",  () -> getinfo(joinpath(R, "PLUTO/pluto_sedov3d"), verbose=false)),
-        ("CHOMBO", () -> getinfo(joinpath(R, "CHOMBO/chombo_3d/IsothermalSphere"), verbose=false)),
-        ("ATHENA", () -> getinfo(joinpath(R, "ATHENA/athena_blast"), verbose=false)),
-        ("FLASH",  () -> getinfo(150, joinpath(R, "FLASH/flash_gassloshing/GasSloshing"), verbose=false)),
-        ("GADGET", () -> getinfo(joinpath(R, "GADGET/gadget_diskgalaxy/GadgetDiskGalaxy"), verbose=false)),
-        ("AREPO",  () -> getinfo(joinpath(R, "AREPO/ArepoBullet/ArepoBullet"), verbose=false)),
     ]
 
     for (code, loader) in cases

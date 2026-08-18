@@ -114,13 +114,10 @@ function _timeseries_outputs(path::String; mera_files::Bool=false, outputs=:all)
     avail = if mera_files
         _mera_output_numbers(path)
     else                                        # code-blind discovery (timeseries + getmovie)
-        code = detect_simcode(path)
-        if     code === :pluto;  pluto_output_numbers(path)        # PLUTO lists its outputs in dbl.out
-        elseif code === :athena; _athena_output_numbers(path)      # *.NNNNN.athdf
-        elseif code === :flash;  _flash_output_numbers(path)       # *_hdf5_plt_cnt_NNNN
-        elseif code === :chombo; _chombo_output_numbers(path)      # *.NNNN.*.hdf5
-        else   sort(checkoutputs(path; verbose=false).outputs)     # RAMSES
-        end
+        # RAMSES is the only frontend on this branch. The other codes list their outputs
+        # differently (PLUTO in dbl.out, Athena++ *.NNNNN.athdf, FLASH *_hdf5_plt_cnt_NNNN,
+        # Chombo *.NNNN.*.hdf5) and restore their own branches on `multicode`.
+        sort(checkoutputs(path; verbose=false).outputs)
     end
     return _select_outputs(avail, outputs)
 end

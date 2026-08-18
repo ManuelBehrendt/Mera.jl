@@ -40,27 +40,16 @@
 #   humanize/getunit/createscales paths. 28 covers construct_datatype with real
 #   data. Everything below is either a branch none of them reach, or a
 #   data-free re-anchor of a metadata path (viewdata/infodata) built on a tiny
-#   synthetic PLUTO snapshot (same recipe as 59_multicode_contract_tests.jl).
+#   a RAMSES output (the PLUTO-based variant is on the `multicode` branch).
 # ==============================================================================
 
 using JLD2
 using CodecLz4
 
-# tiny synthetic PLUTO snapshot (4^3 uniform grid, rho = 1) — the proven
-# data-free way to obtain a fully-populated InfoType/HydroDataType that
-# savedata/loaddata/viewdata/infodata accept (see 59_multicode_contract_tests.jl).
-function _du64_synth_pluto(dir)
-    gl(n) = "$n\n" * join([" $i  $((i-1)/n)  $(i/n)" for i in 1:n], "\n") * "\n"
-    write(joinpath(dir, "grid.out"), "# GEOMETRY:   CARTESIAN\n" * gl(4) * gl(4) * gl(4))
-    write(joinpath(dir, "dbl.out"), "0 0.0 1e-9 0 single_file little rho vx1 vx2 vx3 prs\n")
-    raw = zeros(Float64, 4^3 * 5); raw[1:4^3] .= 1.0
-    write(joinpath(dir, "data.0000.dbl"), reinterpret(UInt8, raw))
-end
-
 # silence expected @warn noise without requiring the Logging stdlib in test deps
 _du64_quietly(f) = Base.CoreLogging.with_logger(f, Base.CoreLogging.NullLogger())
 
-@testset "Data-utils coverage (data-free)" begin
+@testset "Data-utils coverage" begin
 
     # the verbose-print assertions below rely on per-call verbose defaults, so
     # neutralise any global override a previous test file may have left behind
@@ -69,14 +58,20 @@ _du64_quietly(f) = Base.CoreLogging.with_logger(f, Base.CoreLogging.NullLogger()
     verbose(nothing)
     showprogress(nothing)
 
-    # ---- shared fixture: PLUTO snapshot -> mera JLD2 file (output 0) ----------
-    snapdir = mktempdir()
-    _du64_synth_pluto(snapdir)
-    info = getinfo(0, snapdir, verbose=false)
-    gas  = gethydro(info, verbose=false)
+    # ---- shared fixture: a RAMSES output -> mera JLD2 file --------------------
+    # This was a synthetic PLUTO snapshot, which made the file data-free. The PLUTO frontend
+    # lives on the `multicode` branch now, so the source is a real RAMSES output instead and
+    # the file is gated on DATA_AVAILABLE. What is covered here — savedata / loaddata /
+    # viewdata / infodata / mera_convert — is reader-agnostic; only the source object changed.
+    info = getinfo(100, joinpath(SIMULATION_PATH, "RAMSES/spiral_clumps"), verbose=false)
+    gas  = gethydro(info, lmax=7, verbose=false, show_progress=false)
     merap = mktempdir()
     savedata(gas, merap; fmode=:write, verbose=false)
-    merafile = joinpath(merap, "output_00000.jld2")
+    # the mera file is named for the SOURCE snapshot's output number, so derive both rather
+    # than hardcoding 0 the way the synthetic-PLUTO fixture could
+    const_out = info.output
+    outtag    = lpad(const_out, 5, '0')
+    merafile  = joinpath(merap, "output_$(outtag).jld2")
     @test isfile(merafile)
 
     # ========================================================================
@@ -84,7 +79,7 @@ _du64_quietly(f) = Base.CoreLogging.with_logger(f, Base.CoreLogging.NullLogger()
     # ========================================================================
     @testset "viewdata" begin
         # silent keyword path returns the overview dictionary
-        ov = viewdata(0, path=merap, verbose=false)
+        ov = viewdata(const_out, path=merap, verbose=false)
         @test ov isa Dict
         @test haskey(ov, "hydro") && haskey(ov, "FileSize")
         @test ov["FileSize"][1] > 0
@@ -94,9 +89,9 @@ _du64_quietly(f) = Base.CoreLogging.with_logger(f, Base.CoreLogging.NullLogger()
 
         # positional wrapper + verbose print path (default verbose=true)
         out = capture_stdout() do
-            viewdata(0, merap)
+            viewdata(const_out, merap)
         end
-        @test occursin("Mera-file output_00000.jld2 contains:", out)
+        @test occursin("Mera-file output_$(outtag).jld2 contains:", out)
         @test occursin("Datatype: hydro", out)
         @test occursin("merafile_version: 1.0", out)
         @test occursin("Memory:", out)
@@ -105,21 +100,21 @@ _du64_quietly(f) = Base.CoreLogging.with_logger(f, Base.CoreLogging.NullLogger()
 
         # showfull=true prints the JLD2 tree
         out2 = capture_stdout() do
-            viewdata(0, path=merap, showfull=true, verbose=false)
+            viewdata(const_out, path=merap, showfull=true, verbose=false)
         end
         @test occursin("hydro", out2)
 
         # convertstat root entry (what convertdata stores) is read + reported
         statp = mktempdir()
-        cp(merafile, joinpath(statp, "output_00000.jld2"))
-        jldopen(joinpath(statp, "output_00000.jld2"), "a+") do f
+        cp(merafile, joinpath(statp, "output_$(outtag).jld2"))
+        jldopen(joinpath(statp, "output_$(outtag).jld2"), "a+") do f
             f["convertstat"] = Dict("note" => "du64-synthetic")
         end
-        ov2 = viewdata(0, path=statp, verbose=false)
+        ov2 = viewdata(const_out, path=statp, verbose=false)
         @test haskey(ov2, "convertstat")
         @test ov2["convertstat"]["note"] == "du64-synthetic"
         out3 = capture_stdout() do
-            viewdata(0, path=statp)
+            viewdata(const_out, path=statp)
         end
         @test occursin("convert stat: true", out3)
 
@@ -137,8 +132,8 @@ _du64_quietly(f) = Base.CoreLogging.with_logger(f, Base.CoreLogging.NullLogger()
         # fname kwarg plumbing
         fnp = mktempdir()
         savedata(gas, fnp; fname="du64_", fmode=:write, verbose=false)
-        @test isfile(joinpath(fnp, "du64_00000.jld2"))
-        ov4 = viewdata(0, path=fnp, fname="du64_", verbose=false)
+        @test isfile(joinpath(fnp, "du64_$(outtag).jld2"))
+        ov4 = viewdata(const_out, path=fnp, fname="du64_", verbose=false)
         @test haskey(ov4, "hydro")
     end
 
@@ -146,35 +141,35 @@ _du64_quietly(f) = Base.CoreLogging.with_logger(f, Base.CoreLogging.NullLogger()
     # data_info.jl — infodata
     # ========================================================================
     @testset "infodata" begin
-        i1 = infodata(0, path=merap, datatype=:hydro, verbose=false)
+        i1 = infodata(const_out, path=merap, datatype=:hydro, verbose=false)
         @test i1 isa Mera.InfoType
-        @test i1.simcode == "PLUTO"
+        @test i1.simcode == "RAMSES"
         @test i1.boxlen ≈ info.boxlen
         @test i1.levelmin == info.levelmin
         # constants + scales are REGENERATED on load, not deserialized stale
         @test i1.constants.pc ≈ Mera.createconstants().pc
         @test i1.scale isa Mera.ScalesType003
-        @test i1.scale.cm == info.unit_l               # unit_l = 1 (dimensionless PLUTO run)
+        @test i1.scale.cm == info.unit_l
 
         # all three positional wrappers funnel into the same load
-        i2 = infodata(0, :hydro; path=merap, verbose=false)
-        i3 = infodata(0, merap, :hydro; verbose=false)
-        i4 = infodata(0, merap; verbose=false)          # auto-detect (hydro)
+        i2 = infodata(const_out, :hydro; path=merap, verbose=false)
+        i3 = infodata(const_out, merap, :hydro; verbose=false)
+        i4 = infodata(const_out, merap; verbose=false)          # auto-detect (hydro)
         for ix in (i2, i3, i4)
             @test ix.boxlen ≈ i1.boxlen
-            @test ix.simcode == "PLUTO"
+            @test ix.simcode == "RAMSES"
         end
 
         # verbose path announces the selected datatype
         out = capture_stdout() do
-            infodata(0, path=merap)
+            infodata(const_out, path=merap)
         end
         @test occursin("Use datatype: hydro", out)
 
         # fname kwarg
         fnp = mktempdir()
         savedata(gas, fnp; fname="du64_", fmode=:write, verbose=false)
-        @test infodata(0, path=fnp, fname="du64_", verbose=false).simcode == "PLUTO"
+        @test infodata(const_out, path=fnp, fname="du64_", verbose=false).simcode == "RAMSES"
 
         # auto-detect priority for files that carry only one (non-hydro) datatype
         autod = mktempdir()
@@ -195,7 +190,7 @@ _du64_quietly(f) = Base.CoreLogging.with_logger(f, Base.CoreLogging.NullLogger()
         @test occursin("Use datatype: particles", outp)
 
         # error guards
-        @test_throws ErrorException infodata(0, path=merap, datatype=:clumps, verbose=false)
+        @test_throws ErrorException infodata(const_out, path=merap, datatype=:clumps, verbose=false)
         jldopen(joinpath(autod, "output_00020.jld2"), "w") do f
             f["mystery/info"] = 1
         end
