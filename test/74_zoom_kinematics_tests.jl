@@ -672,6 +672,38 @@ end
         @test_throws ArgumentError clumping(uni; grid=-1.0, verbose=false)
     end
 
+    @testset "getmask(obj, region): geometry as a composable mask" begin
+        F = synthetic_clumps(lmax=5)
+        sph  = Sphere(0.25, center=[:bc], range_unit=:standard)
+        cub  = Cuboid(xrange=[-0.2,0.2], yrange=[-0.2,0.2], zrange=[-0.2,0.2],
+                      center=[:bc], range_unit=:standard)
+
+        # THE CONTRACT: a mask and a subregion must never disagree about which rows are in.
+        # `subregion(split=false)` is the centre-inside test a mask expresses; the default
+        # split=true admits boundary cells fractionally, which a Bool mask cannot represent.
+        for (obj, kind) in ((F.gas, "hydro"), (F.particles, "particles")), r in (sph, cub)
+            m = getmask(obj, r)
+            s = subregion(obj, r, split=false, verbose=false)
+            @test count(m) == length(s.data)
+            @test m isa BitVector && length(m) == length(obj.data)
+        end
+
+        # …and the masked reduction equals the subregion reduction exactly, not approximately
+        m = getmask(F.gas, sph)
+        @test msum(F.gas, :Msol, mask=m) == msum(subregion(F.gas, sph, split=false,
+                                                           verbose=false), :Msol)
+
+        # composes with region algebra …
+        both = getmask(F.gas, sph | Sphere(0.15, center=[0.8,0.5,0.5], range_unit=:standard))
+        @test count(both) >= count(m)
+        @test count(getmask(F.gas, !sph)) == length(F.gas.data) - count(m)
+
+        # … and with value-space conditions through plain broadcasting
+        hot = getmask(F.gas, :rho, >(5.0))
+        @test count(m .& hot) <= min(count(m), count(hot))
+        @test all((m .& hot) .<= m)
+    end
+
     # ==========================================================================
     # getgroups / groupinfo without a snapshot
     # ==========================================================================

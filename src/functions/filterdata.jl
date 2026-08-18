@@ -111,6 +111,64 @@ getmask(obj, quantity::Symbol, pred; unit::Symbol=:standard) =
     BitVector(pred.(_qvals(obj, quantity, unit)))
 
 """
+    getmask(obj, region::AbstractRegion) -> BitVector
+
+A **geometric** selection mask: `true` for the rows inside `region`
+([`Sphere`](@ref), [`Cylinder`](@ref), [`Cuboid`](@ref), the shells, and anything built from
+them with `&`/`|`/`!`/`-`).
+
+`subregion`/`shellregion` return a new *object*; this returns the mask itself, so geometry
+composes with the `mask=` keyword that `getvar`, `projection`, `profile`, `phase`, `msum` and
+the statistics already accept — and with value-space conditions, via `&`:
+
+```julia
+inner = getmask(gas, Sphere(r200, center=halo_pos, range_unit=:kpc))
+msum(gas, :Msol, mask=inner)
+profile(gas, :r_sphere, :T; mask = inner & getmask(gas, :T, >(1e4); unit=:K))
+```
+
+It uses the same containment test and AABB pruning as `subregion`, so a mask and a subregion
+always agree on which rows are in. Hand-rolling the radius arithmetic instead is where the
+`ckpc/h`-versus-normalised-centre confusion bites — `range_unit` is handled here once.
+
+Cells straddling the boundary are **in or out** by their centre; a mask has no room for the
+fractional membership `subregion(..., cell=true)` computes. Use `subregion` when the edge
+matters.
+"""
+function getmask(obj, region::AbstractRegion)
+    data = obj.data
+    cols = propertynames(IndexedTables.columns(data))
+    _, contains = _prepare(region, obj)
+    _blo, _bhi = _bbox(region, obj)
+    blo1, blo2, blo3 = Float64(_blo[1]), Float64(_blo[2]), Float64(_blo[3])
+    bhi1, bhi2, bhi3 = Float64(_bhi[1]), Float64(_bhi[2]), Float64(_bhi[3])
+    keep = Vector{Bool}(undef, length(data))
+
+    if :cx in cols
+        # CELL data. The centre is (cx-0.5)·Δ on the level lattice — NOT getvar(:x), which is
+        # still on cx·Δ. Using getvar here put every cell half a cell off and disagreed with
+        # `subregion` on the same sphere (64 rows against 103). Reuse subregion's own loop so
+        # the two can never diverge; `split=false` gives the centre-inside test a mask needs.
+        isamr = :level in cols
+        frac  = Vector{Float64}(undef, length(data))
+        _fracloop!(frac, (nx,ny,nz,h) -> (contains(nx,ny,nz) ? 1.0 : 0.0), contains,
+                   IndexedTables.select(data, :cx), IndexedTables.select(data, :cy),
+                   IndexedTables.select(data, :cz),
+                   isamr ? IndexedTables.select(data, :level) : nothing,
+                   isamr, Int(obj.lmax), false, false,
+                   blo1, blo2, blo3, bhi1, bhi2, bhi3)
+        @inbounds for i in eachindex(frac); keep[i] = frac[i] > 0.5; end
+    else
+        # PARTICLE / clump data: absolute positions, normalised by boxlen inside the loop.
+        _keeploop!(keep, contains,
+                   IndexedTables.select(data, :x), IndexedTables.select(data, :y),
+                   IndexedTables.select(data, :z), Float64(obj.boxlen), false,
+                   blo1, blo2, blo3, bhi1, bhi2, bhi3)
+    end
+    return BitVector(keep)
+end
+
+"""
     filterdata(obj, condition...; verbose=true) -> same-type Mera object
     filterdata(obj, quantity, predicate; unit=:standard, verbose=true) -> same-type Mera object
 
