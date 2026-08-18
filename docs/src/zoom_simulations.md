@@ -170,6 +170,29 @@ condition for resolving it — a measurement rather than an appeal to a publishe
     is therefore μ-dependent through the label, by about 30 %. Load `:ne` when binning by
     temperature.
 
+### Clumping, and the number papers actually quote
+
+`C = ⟨n²⟩/⟨n⟩²` measures how much of the mass sits in how little of the volume — the standard
+IGM convergence statistic, and one where two people can compute different numbers from the same
+snapshot without either being wrong:
+
+```julia
+clumping(gas)                                # cell-by-cell, volume-weighted
+clumping(gas; grid=13.7, grid_unit=:kpc)     # fixed grid — the published form
+clumping(gas; mask=getvar(gas,:cellsize,:pc) .< 500)   # resolution-restricted
+```
+
+!!! danger "Cell-by-cell and fixed-grid C are different quantities"
+    A Voronoi mesh spanning six decades in density gives enormous weight to its smallest cells;
+    a fixed grid does not. Measured on one IPM box: **12 800** cell-by-cell against **2 276**
+    over well-resolved cells only — a factor 5.6 from the resolution cut alone. Published
+    values are almost always fixed-grid, so **quote the grid size with the number**.
+
+Weighting matters too, and not in the obvious direction. `:mass` weighting does *not* simply
+give a bigger `C`: for a two-phase medium whose mass sits overwhelmingly in the dense phase the
+weighted distribution is *narrow*, so `C → 1`. Equal volumes at `n = 1` and `99` give `C = 1.96`
+volume-weighted but `1.01` mass-weighted. Neither approximates the other.
+
 ## 4. Do not project the boundary particles
 
 Two separate traps.

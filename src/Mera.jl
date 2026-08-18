@@ -218,6 +218,7 @@ export
     rotationcurve,
     velocitydispersion,
     contamination,
+    clumping,
     groupinfo,
     localdispersion,
     profiletimeseries,
@@ -518,6 +519,7 @@ include("functions/regions/shellregion_particles.jl")
 include("functions/regions/shellregion_clumps.jl")
 include("functions/restframe.jl")
 include("functions/contamination.jl")
+include("functions/clumping.jl")
 include("functions/profile.jl")
 include("functions/quicklook.jl")
 include("functions/covering_grid.jl")

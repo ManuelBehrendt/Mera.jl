@@ -588,6 +588,77 @@ end
         @test occursin("volume", vout)
     end
 
+    @testset "clumping: C = <n²>/<n>², and cell-vs-grid are different quantities" begin
+        info = _zoom_info(boxlen=1.0)
+
+        # A uniform medium is C = 1 exactly, whatever the weighting — the one value that
+        # cannot be produced by a units or weighting mistake.
+        nu = 24
+        uni = _zoom_particles(info; x=fill(0.5,nu), y=fill(0.5,nu), z=fill(0.5,nu),
+                              rho=fill(2.0,nu), mass=fill(2.0,nu), volume=fill(1.0,nu))
+        for w in (:volume, :mass, :none)
+            @test clumping(uni; weight=w, verbose=false).C ≈ 1.0  rtol=1e-12
+        end
+
+        # Two equal-VOLUME phases at densities a and b: the volume-weighted C is known in
+        # closed form, C = <n²>/<n>² = ((a²+b²)/2) / ((a+b)/2)².
+        a, b = 1.0, 99.0
+        n2 = 40
+        rho2 = [i <= n2÷2 ? a : b for i in 1:n2]
+        two = _zoom_particles(info; x=fill(0.5,n2), y=fill(0.5,n2), z=fill(0.5,n2),
+                              rho=rho2, mass=rho2, volume=fill(1.0,n2))
+        Cexp = ((a^2 + b^2)/2) / (((a + b)/2)^2)
+        @test clumping(two; weight=:volume, verbose=false).C ≈ Cexp  rtol=1e-12
+
+        # …and MASS weighting is NOT simply larger. It answers a different question, and for a
+        # two-phase medium whose mass sits overwhelmingly in the dense phase the weighted
+        # distribution is NARROW, so C tends toward 1 — here 1.01 against 1.96.
+        Cm = clumping(two; weight=:mass, verbose=false).C
+        @test Cm < Cexp
+        @test Cm ≈ 1.0  atol=0.02
+
+        # mean_n is reported in cm^-3, i.e. it went through the unit system
+        r = clumping(two; weight=:volume, verbose=false)
+        @test r.mean_n ≈ ((a + b)/2) * info.scale.nH  rtol=1e-12
+
+        # --- the grid path -------------------------------------------------------------
+        # Sub-grid structure must AVERAGE AWAY. A PAIR of cells sits at each lattice point,
+        # separated by L/50 — far closer than the bin, so both land in the same bin whatever
+        # the grid anchors on — with different densities but the same pair mass everywhere.
+        # Cell-by-cell that is C > 1; binned it is exactly 1. The cell-vs-grid distinction
+        # in its purest form.
+        L = 0.25
+        xs = Float64[]; ys = Float64[]; zs = Float64[]; ms = Float64[]; vs = Float64[]
+        for ix in 0:3, iy in 0:3, iz in 0:3, k in 1:2
+            off = (k == 1 ? -L/50 : L/50)
+            push!(xs, (ix + 0.5) * L + off)
+            push!(ys, (iy + 0.5) * L)
+            push!(zs, (iz + 0.5) * L)
+            push!(ms, k == 1 ? 1.0 : 3.0)                  # 4.0 per bin, always
+            push!(vs, 0.5)                                 # equal volumes -> n = 2 and 6
+        end
+        gp = _zoom_particles(info; x=xs, y=ys, z=zs, rho=ms ./ vs, mass=ms, volume=vs)
+
+        cell = clumping(gp; weight=:volume, verbose=false)
+        gcl  = clumping(gp; grid=L, verbose=false)
+        @test cell.C ≈ ((2.0^2 + 6.0^2)/2) / (((2.0 + 6.0)/2)^2)  rtol=1e-12   # = 1.25
+        @test gcl.grid_cells == 64                 # 4x4x4 — the pairs never straddle a bin
+        @test gcl.C ≈ 1.0    rtol=1e-12            # every bin holds the same mass
+        @test gcl.C < cell.C                       # …so the sub-bin structure is gone
+        @test gcl.grid ≈ L   rtol=1e-12
+        @test gcl.empty_fraction == 0.0
+
+        # a grid finer than the cells measures the deposition, not the gas — warn, loudly
+        @test_logs (:warn,) match_mode=:any clumping(gp; grid=0.02, verbose=false)
+
+        # …and an absurd grid is REFUSED before allocating, rather than dying in the allocator
+        @test_throws ArgumentError clumping(gp; grid=1e-6, verbose=false)
+
+        # refuse a weighting that does not exist rather than silently picking one
+        @test_throws ArgumentError clumping(uni; weight=:bogus, verbose=false)
+        @test_throws ArgumentError clumping(uni; grid=-1.0, verbose=false)
+    end
+
     # ==========================================================================
     # getgroups / groupinfo without a snapshot
     # ==========================================================================

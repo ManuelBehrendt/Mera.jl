@@ -41,6 +41,7 @@ See [Zoom Simulations](../zoom_simulations.md) for the full checklist.
 
 ```@docs; canonical=false
 contamination
+clumping
 ```
 
 ## Time & stellar ages
