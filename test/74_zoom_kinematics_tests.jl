@@ -73,6 +73,19 @@ end
         @test median(vols)^(1/3) ≉ median(cs)        # n = 8: 4.5549 vs 4.5
         odd = [Float64(k)^3 for k in 1:7]
         @test median(odd)^(1/3) ≈ median(odd .^ (1/3)) rtol=1e-12
+
+        # A Voronoi cell has no single size. Mera derives THREE lengths from the same V, and
+        # they differ by up to 1.6x — pin the conventions so they cannot drift apart silently,
+        # and so the published-"cell radius" conversion stays documented in executable form.
+        @test cs ≈ vols .^ (1/3)                           rtol=1e-12   # cube side (this field)
+        sph_h   = 1.5 .* (3 .* vols ./ (4π)) .^ (1/3)                   # :sph smoothing length
+        vor_r   = (sqrt(3)/2) .* vols .^ (1/3)                          # :voronoi reach cap
+        sphere  = (3 .* vols ./ (4π)) .^ (1/3)                          # sphere-equiv RADIUS
+        @test sph_h[1]  / cs[1] ≈ 1.5 * (3/(4π))^(1/3)     rtol=1e-12   # 0.9306
+        @test all(isapprox.(sph_h ./ cs, 0.9306; rtol=1e-3))
+        @test vor_r[1]  / cs[1] ≈ sqrt(3)/2                rtol=1e-12
+        # the one a reader is most likely to conflate with :cellsize
+        @test sphere[1] / cs[1] ≈ 0.6204                   rtol=1e-3
     end
 
     # ==========================================================================

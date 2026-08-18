@@ -116,6 +116,29 @@ monotonic, so it commutes with order statistics — but an even-sized median *av
 middle values, and averaging does not commute with a nonlinear map. For `V = k³, k = 1…8`:
 `median(V)^(1/3) = 4.5549` against `median(V^(1/3)) = 4.5`.
 
+!!! warning "`:cellsize` is the cube-equivalent side — papers often quote the sphere radius"
+    A Voronoi cell is an irregular polyhedron with **no single size**. The only well-defined
+    quantity is its volume `V = m/ρ`; every "size" is a nominal length derived from it, and the
+    conventions differ by up to 1.6×:
+
+    | quantity | formula | × `V^(1/3)` |
+    |---|---|---|
+    | **`:cellsize`** | `V^(1/3)` — side of the equal-volume **cube** | 1.000 |
+    | SPH smoothing `h` (`weighting=:sph`) | `1.5·(3V/4π)^(1/3)` | 0.931 |
+    | `:voronoi` reach cap | `(√3/2)·V^(1/3)` — cube centre-to-corner | 0.866 |
+    | sphere-equivalent **radius** | `(3V/4π)^(1/3)` | 0.620 |
+
+    `:cellsize` is the cube side deliberately: it is what compares to a Cartesian grid spacing
+    `Δx`, which is what makes `cellsize < l_cool` a meaningful test. AREPO papers frequently
+    quote the **sphere-equivalent radius** instead, which is `0.62 ×` this — a 383 pc
+    `:cellsize` is a 238 pc "cell radius". Check which one a published number means.
+
+    Two AREPO-specific caveats: it is an *equivalent* size, saying nothing about shape (cells
+    elongate in shear and squash in compression); and because AREPO refines to constant target
+    **mass**, `cellsize ∝ ρ^(-1/3)`, so the distribution stays narrow — 400–560 pc across every
+    phase in the table above — even where density spans six decades. Cell size is therefore a
+    poor proxy for anything density-dependent.
+
 See [Cosmological Units](cosmological_units.md) for why the comoving→physical conversion on this quantity is a
 factor of 26 in density, and why it is worth letting Mera do it.
 

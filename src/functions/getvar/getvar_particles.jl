@@ -161,6 +161,15 @@ function get_data(dataobject::PartDataType,
             # argument. It is V^(1/3) of the Voronoi cell, unit-aware like any other length, so
             # the comoving→physical conversion happens once here instead of in every notebook.
             #
+            # V^(1/3) is the side of the EQUAL-VOLUME CUBE, chosen because that is the quantity
+            # comparable to a Cartesian grid spacing Δx. A Voronoi cell has no single size, and
+            # this file derives three different lengths from the same V:
+            #   V^(1/3)              = 1.000·V^(1/3)   this field
+            #   1.5·(3V/4π)^(1/3)    = 0.931·V^(1/3)   the :sph smoothing length
+            #   (√3/2)·V^(1/3)       = 0.866·V^(1/3)   the :voronoi reach cap (cube half-diagonal)
+            # AREPO papers often quote the SPHERE-equivalent radius (3V/4π)^(1/3) = 0.620·V^(1/3)
+            # instead, so a published "cell radius" is 0.62× this number, not equal to it.
+            #
             # Take the median OF THIS FIELD — `phase(gas, :rho, :T, :cellsize; cstat=:median)` —
             # rather than cube-rooting a median volume. The two are not identical: the cube root
             # is monotonic, so it commutes with order statistics (odd-sized bins), but the median
