@@ -404,3 +404,88 @@ gas overdensity `getvar(hydro, :overdensity)`.
 function mean_baryon_density(info::InfoType; unit::Symbol=:g_cm3, z::Real=redshift(info))
     return info.omega_b * _rho_crit0_times_1pz3(info, z, unit)
 end
+
+# ------------------------------------------------------------------------------------
+# Cosmic time at an ARBITRARY scale factor
+#
+# `gettime(info)` answers for the snapshot; tracking across outputs needs t(a) for a set of
+# scale factors, and rewriting the closed-form flat-ΛCDM solution per notebook is how small
+# inconsistencies get in. Everything here goes through the same E(a) the rest of this file
+# uses, so it cannot drift from `cosmology()`.
+#
+# The integrand 1/(a·E(a)) → √(a/Ωm) as a → 0 (matter domination), so it vanishes at the origin
+# and a cumulative trapezoid from 0 is well behaved — no lower cutoff, and no missing first
+# slice the way an integration starting at a_min would have.
+#
+# n is large because this must agree with `cosmology()`, which integrates the same quantity by
+# Simpson: at n = 4000 the two differed in the fifth digit (1.872101 vs 1.872119 Gyr), and two
+# answers to the same question from one library should not disagree at a level a user can see.
+# ------------------------------------------------------------------------------------
+function _age_table(om::Float64, ol::Float64, ok::Float64; n::Int=40_000)
+    a = collect(range(0.0, 1.0, length=n))
+    f = [x <= 0.0 ? 0.0 : 1.0 / (x * _Efunc(x, om, ol, ok)) for x in a]
+    age = zeros(Float64, n)
+    @inbounds for i in 2:n
+        age[i] = age[i-1] + 0.5 * (f[i] + f[i-1]) * (a[i] - a[i-1])
+    end
+    return a, age                                    # age in units of the Hubble time 1/H0
+end
+
+_age_over_tH_vec(info::InfoType, av) = begin
+    ag, age = _age_table(info.omega_m, info.omega_l, info.omega_k)
+    [(!isfinite(x) || x <= 0.0) ? NaN : _interp_sorted(ag, age, Float64(x)) for x in av]
+end
+
+"""
+    cosmic_time(info::InfoType, a; unit=:Gyr)
+
+The **age of the universe** at scale factor `a`, for this run's own cosmology. Accepts a scalar
+or any array, and is vectorised over it.
+
+[`gettime`](@ref) answers for the snapshot; this answers for any epoch, which is what tracking
+across a set of outputs needs — a catalogue-only output tells you its `a`, and `a` alone is not
+a time. Use it with [`getgroups`](@ref)`(path, snap)`, whose result carries `aexp`.
+
+```julia
+cosmic_time(info, 0.2276)                     # Gyr at the snapshot's scale factor
+cosmic_time(info, [gc.aexp for gc in cats])   # …across every catalogue
+```
+
+See also [`lookback_time`](@ref), [`age_of_universe`](@ref).
+"""
+function cosmic_time(info::InfoType, a; unit::Symbol=:Gyr)
+    H0_cgs = info.H0 * 1.0e5 / info.constants.Mpc                # 1/s
+    fac    = _time_unit_factor(info, unit)                       # seconds → unit
+    scalar = !(a isa AbstractArray)
+    out    = _age_over_tH_vec(info, scalar ? [a] : a) ./ H0_cgs .* fac
+    return scalar ? out[1] : out
+end
+
+"""
+    lookback_time(info::InfoType, a; unit=:Gyr, from=1.0)
+
+Time elapsed **between** scale factor `a` and `from` — by default `from = 1.0`, i.e. the
+standard lookback time from the present day. Pass `from = info.aexp` to measure back from the
+snapshot instead. Scalar or array.
+
+```julia
+lookback_time(info, 0.2276)                  # Gyr since z = 3.39, from today
+lookback_time(info, 0.1,  from=info.aexp)    # …from this snapshot instead
+```
+"""
+function lookback_time(info::InfoType, a; unit::Symbol=:Gyr, from::Real=1.0)
+    t_from = cosmic_time(info, Float64(from); unit=unit)
+    t_a    = cosmic_time(info, a; unit=unit)
+    return t_from .- t_a
+end
+
+"""
+    age_of_universe(info::InfoType; unit=:Gyr)
+
+The age of the universe **today** (`a = 1`) for this run's cosmology — `cosmic_time(info, 1)`.
+
+A natural sanity check on a run's cosmological parameters, and one people otherwise compute by
+hand: a Planck-like ΛCDM gives ≈ 13.8 Gyr, so a value far from it means the parameters read
+from the header are not what you assumed.
+"""
+age_of_universe(info::InfoType; unit::Symbol=:Gyr) = cosmic_time(info, 1.0; unit=unit)

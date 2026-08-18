@@ -704,6 +704,44 @@ end
         @test all((m .& hot) .<= m)
     end
 
+    @testset "cosmic_time / lookback_time / age_of_universe at arbitrary a" begin
+        info = Mera.InfoType(); info.constants = Mera.createconstants()
+        info.H0 = 67.74; info.omega_m = 0.3089; info.omega_l = 0.6911; info.omega_k = 0.0
+        info.aexp = 0.22762315212396259; info.boxlen = 1.0
+        info.scale = Mera.createscales(info.constants.kpc, 1e-24, 1e15, 1e40, info.constants)
+
+        # A Planck-like ΛCDM must give ~13.8 Gyr. This is the check that catches a header whose
+        # parameters are not what you assumed, and it is why the function exists.
+        @test age_of_universe(info) ≈ 13.8027  rtol=1e-4
+
+        # It must agree with the EXISTING integrator in this library. Two answers to the same
+        # question from one package disagreeing at a visible level is its own kind of bug — at
+        # the first grid I tried they differed in the fifth digit.
+        c = cosmology(info)
+        @test cosmic_time(info, info.aexp)   ≈ c.age_Gyr       rtol=1e-5
+        @test lookback_time(info, info.aexp) ≈ c.lookback_Gyr  rtol=1e-5
+
+        # vectorised over a, and monotone — time runs forward with the scale factor
+        av = [0.0477, 0.1, 0.2276, 0.2503]        # the span of one run's 37 catalogues
+        t  = cosmic_time(info, av)
+        @test length(t) == length(av) && issorted(t)
+        @test all(0 .< t .< age_of_universe(info))
+        @test cosmic_time(info, av[3]) ≈ t[3]  rtol=1e-12      # scalar == elementwise
+
+        # lookback is measured from `from`, and the two conventions differ by construction
+        @test lookback_time(info, av) ≈ age_of_universe(info) .- t   rtol=1e-10
+        @test lookback_time(info, 0.1; from=info.aexp) ≈
+              cosmic_time(info, info.aexp) - cosmic_time(info, 0.1)  rtol=1e-10
+        @test lookback_time(info, info.aexp; from=info.aexp) ≈ 0.0   atol=1e-12
+
+        # units are honoured, not assumed
+        @test cosmic_time(info, 0.5, unit=:Myr) ≈ cosmic_time(info, 0.5) * 1000  rtol=1e-6
+
+        # non-physical scale factors are NaN rather than a plausible extrapolation
+        @test isnan(cosmic_time(info, -0.1))
+        @test isnan(cosmic_time(info, 0.0))
+    end
+
     # ==========================================================================
     # getgroups / groupinfo without a snapshot
     # ==========================================================================

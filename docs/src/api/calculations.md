@@ -51,6 +51,17 @@ gettime
 printtime
 ```
 
+[`gettime`](@ref) answers for the snapshot. For **any** epoch — which is what tracking across a
+set of outputs needs, since a catalogue-only output knows its `a` and `a` alone is not a time —
+use `cosmic_time`. All three go through the same `E(a)` as [`cosmology`](@ref), so they cannot
+drift from it.
+
+```@docs; canonical=false
+cosmic_time
+lookback_time
+age_of_universe
+```
+
 For star particles, [`stellar_age`](@ref) converts a RAMSES `:birth` time and
 [`age_from_aform`](@ref) converts a GADGET/AREPO/TNG `GFM_StellarFormationTime`. The latter
 preserves the negative `aform` that marks TNG wind particles as `NaN` rather than silently
