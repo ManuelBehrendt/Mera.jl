@@ -20,17 +20,13 @@ budgets and structure finding, all through one unified, multiple-dispatch API.
 > ### Released and upcoming 1.x versions are **RAMSES-only**
 >
 > Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development for
-> **version 2.0**, on the `multicode` branch. It is not part of any 1.x release. To try it:
+> **version 2.0**, on the `multicode` branch. It is not part of any 1.x release.
+> For collaborators to try it:
 >
 > ```julia
 > using Pkg
 > Pkg.add(url="https://github.com/ManuelBehrendt/Mera.jl", rev="multicode")
 > ```
->
-> The analysis layer is code-blind, so everything below works the same there — the other frontends
-> add readers, plus `getgroups` (FoF/SUBFIND catalogues), the run-time-log readers and a
-> zoom-contamination check. Expect rougher edges: those readers are newer, narrower, and tested
-> mainly against synthetic fixtures rather than a broad range of real runs.
 
 *Coverage is measured by the maintainer on a local run (the RAMSES test datasets are too large for
 GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see **Testing** below.*
@@ -169,7 +165,7 @@ using Pkg
 Pkg.add("Mera")            # RAMSES (1.x)
 ```
 
-For the in-development multi-code version (2.0, see the note at the top):
+For collaborators, the in-development multi-code version (2.0, see the note at the top):
 
 ```julia
 Pkg.add(url="https://github.com/ManuelBehrendt/Mera.jl", rev="multicode")
@@ -225,10 +221,7 @@ Write the analysis once; it works on every data type.
 **1.x — RAMSES.** Continued depth on the RAMSES path: analysis, performance and documentation.
 
 **2.0 — multiple simulation codes.** AREPO, GADGET, PLUTO, Athena++, FLASH and Chombo behind the
-same API, developed on the `multicode` branch. The analysis layer is already code-blind, so the work
-is mostly in the readers and in the conventions they must agree on (units, cell geometry, what
-counts as a "cell"). The major version reserves room for whatever that agreement turns out to
-require.
+same API, developed on the `multicode` branch.
 
 MERA is actively developed and its priorities are driven by user needs. Have a feature request, a
 RAMSES variant to support, or a gap to report? Please
