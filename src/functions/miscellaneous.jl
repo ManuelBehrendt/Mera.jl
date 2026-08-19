@@ -650,6 +650,97 @@ function getunit(dataobject::InfoType, unit::Symbol; uname::Bool=false)
     end
 end
 
+# ------------------------------------------------------------------------------------
+# Dimension checking for units
+#
+# `getvar` multiplies by whatever factor a unit names, so asking for a MASS in :pc3 (a volume)
+# returned a finite, plausible, meaningless number. That is the general form of the :pc_3 bug:
+# the factor was wrong there, but even with it correct, applying an inverse-volume unit to a
+# volume is nonsense the code happily performed.
+#
+# The dimension of each unit is DERIVED, not declared. Build the scale table four times —
+# once nominal, then with unit_l, unit_d and unit_t each doubled — and read off how every field
+# responds. A field scaling as 2^n in unit_l carries length^n. Exponents are stored DOUBLED so
+# the half-integer ones (Gauss ~ L^-1/2) stay exact integers. This cannot be mistagged, and a
+# unit added to `createscales` later is classified with no further work.
+#
+# A quantity's dimension is given by naming a CANONICAL UNIT for it rather than writing
+# exponents by hand — `:volume => :cm3` is checkable at a glance in a way that `(6,0,0)` is not.
+#
+# IT FAILS OPEN. A quantity that is not in the table, or a unit outside the scale struct, is
+# allowed through exactly as before. Only a pair where BOTH sides are known and DISAGREE is
+# rejected, so growing the table can never break a call that works today.
+#
+# IT IS APPLIED AT THE `getvar` BOUNDARY ONLY (see get_data_userfields), never inside `getunit`.
+# getunit is shared with projection, profile and flux, and those TRANSFORM the dimension:
+# projecting a density integrates it along the line of sight, so `projection(gas, :rho,
+# unit=:Msol_pc2)` is a surface density and entirely correct — the first version of this check
+# rejected it. `getvar` is the one caller where the unit must describe the quantity as it
+# stands.
+#
+# KNOWN LIMITATION: temperature and specific energy share a signature, because kT/m is a
+# velocity squared in code units — :K and :J_kg are indistinguishable here. This catches the
+# gross confusions (a volume unit on a mass), not that one.
+# ------------------------------------------------------------------------------------
+const _UNIT_DIMS_CACHE = Ref{Union{Nothing,Dict{Symbol,NTuple{3,Int}}}}(nothing)
+
+function _unit_dims()
+    cached = _UNIT_DIMS_CACHE[]
+    cached === nothing || return cached
+    c = createconstants()
+    mk(l, d, t) = createscales(l, d, t, 1e40, c)
+    L, D, T = c.kpc, 1e-24, 1e15
+    s0, sL, sD, sT = mk(L,D,T), mk(2L,D,T), mk(L,2D,T), mk(L,D,2T)
+    out = Dict{Symbol,NTuple{3,Int}}()
+    for f in propertynames(s0)
+        a = getfield(s0, f)
+        (isfinite(a) && a != 0) || continue
+        e(s) = round(Int, 2 * log(getfield(s, f) / a) / log(2.0))
+        out[f] = (e(sL), e(sD), e(sT))
+    end
+    _UNIT_DIMS_CACHE[] = out
+    return out
+end
+
+"""
+Canonical unit per quantity — the quantity's dimension is that unit's dimension.
+
+Deliberately partial: these are the quantities where a wrong unit has actually caused trouble.
+Anything absent is unchecked, exactly as before.
+"""
+const _QTY_REF_UNIT = Dict{Symbol,Symbol}(
+    :volume => :cm3,        :cellsize => :cm,
+    :mass   => :g,          :rho      => :g_cm3,
+    :T => :K, :Temp => :K, :Temperature => :K,
+    :cs => :cm_s, :sound_speed => :cm_s,
+    :vx => :cm_s, :vy => :cm_s, :vz => :cm_s, :v => :cm_s,
+    :vr_sphere => :cm_s, :vθ_sphere => :cm_s, :vϕ_sphere => :cm_s,
+    :vr_cylinder => :cm_s, :vϕ_cylinder => :cm_s,
+    :x => :cm, :y => :cm, :z => :cm,
+    :r_sphere => :cm, :r_cylinder => :cm,
+    :jeanslength => :cm, :l_cool => :cm,
+    :t_cool => :s, :age => :s, :freefall_time => :s,
+    :p => :Ba, :pressure => :Ba,
+    :sd => :g_cm2, :surfacedensity => :g_cm2,
+)
+
+function _check_unit_dimension(quantity::Union{Nothing,Symbol}, unit::Symbol)
+    quantity === nothing && return nothing
+    ref = get(_QTY_REF_UNIT, quantity, nothing)
+    ref === nothing && return nothing                     # quantity untagged -> allow
+    dims = _unit_dims()
+    du = get(dims, unit, nothing);  du === nothing && return nothing
+    dq = get(dims, ref,  nothing);  dq === nothing && return nothing
+    du == dq && return nothing
+    ok = sort!([string(k) for (k, v) in dims if v == dq])
+    throw(ArgumentError(
+        "getunit: :$unit has the wrong dimension for :$quantity.\n" *
+        "  :$quantity is measured in the same units as :$ref; :$unit is not one of those.\n" *
+        "  Valid here: " * join(":" .* first(ok, 10), ", ") *
+        (length(ok) > 10 ? ", … (" * string(length(ok)) * " in total)" : "") * ", :standard.\n" *
+        "  Mind the naming: :pc3 is pc³ but :pc_3 is pc⁻³, and :Msol_pc3 is M⊙ per pc³."))
+end
+
 """
     _resolve_unit(scale, unit) -> Float64
 
