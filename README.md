@@ -23,6 +23,14 @@ budgets and structure finding, all through one unified, multiple-dispatch API.
 > **version 2.0**, on the `multicode` branch. It is not part of any 1.x release.
 > For collaborators to try it:
 >
+> In the Julia REPL, press `]` for the package manager:
+>
+> ```julia-repl
+> pkg> add https://github.com/ManuelBehrendt/Mera.jl#multicode
+> ```
+>
+> or from a script:
+>
 > ```julia
 > using Pkg
 > Pkg.add(url="https://github.com/ManuelBehrendt/Mera.jl", rev="multicode")
@@ -160,16 +168,32 @@ See the [documentation](https://manuelbehrendt.github.io/Mera.jl/stable/) for wo
 
 ## Installation
 
+In the Julia REPL, press `]` to enter the package manager (backspace leaves it again):
+
+```julia-repl
+pkg> add Mera
+```
+
+or, equivalently, from a script:
+
 ```julia
 using Pkg
-Pkg.add("Mera")            # RAMSES (1.x)
+Pkg.add("Mera")
 ```
 
-For collaborators, the in-development multi-code version (2.0, see the note at the top):
+For collaborators, the in-development multi-code version (2.0, see the note at the top) is
+installed from the branch — note the `#multicode` suffix in the `pkg>` form:
+
+```julia-repl
+pkg> add https://github.com/ManuelBehrendt/Mera.jl#multicode
+```
 
 ```julia
+using Pkg
 Pkg.add(url="https://github.com/ManuelBehrendt/Mera.jl", rev="multicode")
 ```
+
+To go back to the released version afterwards, `pkg> free Mera` (or `pkg> add Mera`).
 
 **Requirements**: Julia 1.10 or newer — **1.12+ recommended**, for the faster compiler and the
 current GC. **Platforms**: macOS (incl. Apple Silicon), Linux, Windows.
