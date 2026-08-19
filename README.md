@@ -11,16 +11,26 @@
 [![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-**MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for
+**MERA** reads and analyzes astrophysical simulation output natively in Julia. It is built for
 [RAMSES](https://github.com/ramses-organisation/ramses) — multi-resolution AMR grids, particles,
-gravity, clumps and radiative-transfer fields loaded into memory-efficient tables — and now reading
-**AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 140+
+gravity, clumps and radiative-transfer fields loaded into memory-efficient tables. It computes 140+
 physics-derived quantities on demand and provides conservation-correct projections, profiles, flux
-budgets and structure finding — all through one unified, multiple-dispatch API.
+budgets and structure finding, all through one unified, multiple-dispatch API.
 
-Coverage is deepest for RAMSES, which is the only code with gravity, radiative-transfer and clump
-support. The others provide gas; AREPO and GADGET additionally provide particles and SUBFIND halo
-catalogues.
+> ### Released and upcoming 1.x versions are **RAMSES-only**
+>
+> Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development for
+> **version 2.0**, on the `multicode` branch. It is not part of any 1.x release. To try it:
+>
+> ```julia
+> using Pkg
+> Pkg.add(url="https://github.com/ManuelBehrendt/Mera.jl", rev="multicode")
+> ```
+>
+> The analysis layer is code-blind, so everything below works the same there — the other frontends
+> add readers, plus `getgroups` (FoF/SUBFIND catalogues), the run-time-log readers and a
+> zoom-contamination check. Expect rougher edges: those readers are newer, narrower, and tested
+> mainly against synthetic fixtures rather than a broad range of real runs.
 
 *Coverage is measured by the maintainer on a local run (the RAMSES test datasets are too large for
 GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see **Testing** below.*
@@ -156,7 +166,13 @@ See the [documentation](https://manuelbehrendt.github.io/Mera.jl/stable/) for wo
 
 ```julia
 using Pkg
-Pkg.add("Mera")
+Pkg.add("Mera")            # RAMSES (1.x)
+```
+
+For the in-development multi-code version (2.0, see the note at the top):
+
+```julia
+Pkg.add(url="https://github.com/ManuelBehrendt/Mera.jl", rev="multicode")
 ```
 
 **Requirements**: Julia 1.10 or newer — **1.12+ recommended**, for the faster compiler and the
@@ -165,8 +181,8 @@ current GC. **Platforms**: macOS (incl. Apple Silicon), Linux, Windows.
 **Tested on every push**: Julia 1.10 (the minimum supported), 1.11 and 1.12 on Linux, macOS **and
 Windows** — every supported version on every supported platform, nine jobs. CI runners have no
 access to simulation data, so they run the data-free
-tiers — the synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file
-round-trips. The full suite runs against real snapshots locally.
+tiers — the analytic conservation oracles, the reader registry, the IO layer, the derived-field
+registry and the mera-file round-trips. The full suite runs against real snapshots locally.
 
 ## One name, many types — multiple dispatch
 
@@ -205,6 +221,14 @@ Write the analysis once; it works on every data type.
 - In the REPL, `?getvar` shows the docstring and `getvar()` (no args) prints the full derived-quantity catalogue
 
 ## Roadmap
+
+**1.x — RAMSES.** Continued depth on the RAMSES path: analysis, performance and documentation.
+
+**2.0 — multiple simulation codes.** AREPO, GADGET, PLUTO, Athena++, FLASH and Chombo behind the
+same API, developed on the `multicode` branch. The analysis layer is already code-blind, so the work
+is mostly in the readers and in the conventions they must agree on (units, cell geometry, what
+counts as a "cell"). The major version reserves room for whatever that agreement turns out to
+require.
 
 MERA is actively developed and its priorities are driven by user needs. Have a feature request, a
 RAMSES variant to support, or a gap to report? Please
