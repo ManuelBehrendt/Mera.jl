@@ -110,6 +110,65 @@ end
 end
 
 
+# getunit(dataobject, quantity, vars, units) only reads dataobject.info.scale
+struct _DimCheckStub; info; end
+_dimcheck_stub(info) = _DimCheckStub(info)
+
+@testset "unit dimensions are derived, and checked when both sides are known" begin
+    # `getvar` multiplies by whatever factor a unit names, so :mass in :pc3 returned a finite,
+    # plausible, meaningless number. Unit dimensions are DERIVED by doubling unit_l/unit_d/unit_t
+    # and reading how each scale field responds, so they cannot be mistagged; quantities name a
+    # canonical unit instead of raw exponents.
+    d = Mera._unit_dims()
+    @test length(d) > 120                         # essentially the whole scale struct
+    # lengths, volumes and their inverse must come out distinct — this is the pc3/pc_3 case
+    @test d[:pc] == d[:kpc] == d[:cm]
+    @test d[:pc3] == d[:cm3] == d[:kpc3]
+    @test d[:pc] != d[:pc3] != d[:pc_3]
+    @test d[:pc_3] == d[:cm_3]
+    @test d[:g] == d[:Msol]                       # masses agree
+    @test d[:g] != d[:cm3]                        # …and are not volumes
+
+    # every canonical unit named for a quantity must actually exist in the derived table,
+    # or the check would silently never fire for it
+    for (q, ref) in Mera._QTY_REF_UNIT
+        @test haskey(d, ref)
+    end
+
+    info = Mera.InfoType(); info.boxlen = 1.0
+    info.constants = Mera.createconstants()
+    info.scale = Mera.createscales(3.7 * info.constants.kpc, 1e-24, 1e15, 1e40, info.constants)
+
+    # WRONG dimension -> rejected
+    @test_throws ArgumentError Mera._check_unit_dimension(:volume, :pc_3)
+    @test_throws ArgumentError Mera._check_unit_dimension(:mass,   :pc3)
+    @test_throws ArgumentError Mera._check_unit_dimension(:volume, :Msol)
+    @test_throws ArgumentError Mera._check_unit_dimension(:cellsize, :pc3)
+    # RIGHT dimension -> silent
+    for (q, u) in ((:volume,:pc3), (:volume,:cm3), (:cellsize,:pc), (:mass,:Msol),
+                   (:rho,:g_cm3), (:rho,:nH), (:T,:K), (:cs,:km_s), (:x,:kpc))
+        @test Mera._check_unit_dimension(q, u) === nothing
+    end
+    # FAILS OPEN: an untagged quantity, or a unit outside the struct, is allowed through as
+    # before — so the table can grow without ever breaking a call that works today
+    @test Mera._check_unit_dimension(:some_untagged_quantity, :pc3) === nothing
+    @test Mera._check_unit_dimension(nothing, :pc3) === nothing
+    @test Mera._check_unit_dimension(:volume, :a_unit_that_does_not_exist) === nothing
+
+    # THE CHECK MUST NOT REACH PROJECTION. Projecting a density integrates it along the line of
+    # sight, so `projection(gas, :rho, unit=:Msol_pc2)` is a surface density and correct; with
+    # mode=:sum, `:sd` in `:Msol` is a total mass. The first version of this check lived in
+    # getunit — shared with projection/profile/flux — and rejected both. It now sits at the
+    # getvar boundary only. getunit itself must stay permissive:
+    @test getunit(info, :Msol_pc2) ≈ info.scale.Msol_pc2
+    @test Mera.getunit(_dimcheck_stub(info), :rho, [:rho], [:Msol_pc2]) ≈ info.scale.Msol_pc2
+
+    err = try; Mera._check_unit_dimension(:mass, :pc3); "none"; catch e; sprint(showerror, e); end
+    @test occursin("wrong dimension for :mass", err)
+    @test occursin(":Msol", err)                  # says what IS valid
+    @test occursin("pc_3", err)                   # and repeats the naming trap
+end
+
 @testset "wide tables: row selection stays O(1) per row" begin
     IT = Mera.IndexedTables
     n = 20_000

@@ -542,6 +542,16 @@ function get_data_userfields(dataobject, vars::Array{Symbol,1}, units::Array{Sym
     if any(v -> haskey(_VAR_ASCII, v), vars)
         vars = map(_canon_var, vars)
     end
+    # Reject a unit whose DIMENSION is wrong for its quantity — here rather than in `getunit`,
+    # because getunit is shared with projection/profile/flux and projection legitimately changes
+    # the dimension (∫ρ dl is a surface density). At this boundary the unit must describe the
+    # quantity as it stands. Fails open on anything untagged; see _check_unit_dimension.
+    if !isempty(units)
+        for (i, v) in enumerate(vars)
+            u = length(units) >= i ? units[i] : units[1]
+            u === :standard || _check_unit_dimension(v, u)
+        end
+    end
     _center_hint(vars, center)   # frame-relative quantity about the box corner? say so once
     kind = _field_kind(dataobject)
     reg  = get(USER_FIELDS, kind, nothing)
