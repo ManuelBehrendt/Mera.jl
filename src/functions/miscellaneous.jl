@@ -331,9 +331,17 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.Lsol      = scale.erg_s / constants.Lsol                              # [L☉] Solar luminosity
     scale.Lsun      = scale.Lsol                                                 # Alternative notation
     
-    # Particle number densities (corrected)
+    # Particle number densities.
+    #
+    # `X_3` means X⁻³ here (an inverse volume), NOT "per X³" — the underscore carries a negative
+    # exponent, unlike `Msol_pc3` where it means "per". The invariant is `scale.X_3 == 1/scale.X3`,
+    # which is now asserted in the scales tests for every such pair.
+    #
+    # pc_3 was `cm_3 / pc^3`, i.e. divided where it must multiply, leaving it wrong by pc⁶ ≈
+    # 8.6e110. It was found because `getvar(gas, :volume, :pc_3)` returned 5.5e-119 pc³ for cells
+    # whose real volume is 6.6e7 pc³ — finite, positive, and it plotted without complaint.
     scale.cm_3      = 1. / (unit_l^3)                                            # [cm⁻³] Number density
-    scale.pc_3      = scale.cm_3 / (pc^3)                                        # [pc⁻³] Number density  
+    scale.pc_3      = scale.cm_3 * (pc^3)                                        # [pc⁻³] Number density
     scale.n_e       = scale.nH                                                   # [e⁻/cm³] Electron density (assuming full ionization)
     
     # Cooling and heating rates
@@ -621,7 +629,7 @@ function getunit(dataobject, quantity::Symbol, vars::Array{Symbol,1}, units::Arr
             return 1., unit
         end
     else
-        factor = haskey(USER_UNITS, unit) ? USER_UNITS[unit] : getfield(dataobject.info.scale, unit)
+        factor = _resolve_unit(dataobject.info.scale, unit)
         _check_unit_factor(factor, unit)
         return uname == false ? factor : (factor, unit)
     end
@@ -636,10 +644,36 @@ function getunit(dataobject::InfoType, unit::Symbol; uname::Bool=false)
             return 1., unit
         end
     else
-        factor = haskey(USER_UNITS, unit) ? USER_UNITS[unit] : getfield(dataobject.scale, unit)
+        factor = _resolve_unit(dataobject.scale, unit)
         _check_unit_factor(factor, unit)
         return uname == false ? factor : (factor, unit)
     end
+end
+
+"""
+    _resolve_unit(scale, unit) -> Float64
+
+Look up `unit`'s conversion factor, raising a USEFUL error when it is not a unit at all.
+
+This was a bare `getfield(scale, unit)`, so a typo surfaced as
+`FieldError: type ScalesType003 has no field :pc_e3` — the symbol and nothing else. `getvar`'s
+FIELD namespace has said "did you mean…" since the ASCII-alias work; the UNIT namespace should
+behave the same way, and did not.
+"""
+function _resolve_unit(scale, unit::Symbol)
+    haskey(USER_UNITS, unit) && return USER_UNITS[unit]
+    known = propertynames(scale)
+    unit in known && return getfield(scale, unit)
+    su = String(unit)
+    near = sort!([k for k in known if _editdist(su, String(k)) <= 3],
+                 by = k -> _editdist(su, String(k)))
+    msg = "getunit: :$unit is not a known unit."
+    isempty(near) || (msg *= "\n  Did you mean: " * join(":" .* string.(first(near, 6)), ", ") * "?")
+    msg *= "\n  Note the naming: :pc3 is pc\u00b3 (a volume) while :pc_3 is pc\u207b\u00b3 (an " *
+           "inverse volume), and :Msol_pc3 is M\u2609 per pc\u00b3 — the underscore is a negative " *
+           "exponent on a bare unit and \"per\" in a compound one."
+    msg *= "\n  `propertynames(info.scale)` lists every unit; custom ones go in `USER_UNITS`."
+    throw(ArgumentError(msg))
 end
 
 """

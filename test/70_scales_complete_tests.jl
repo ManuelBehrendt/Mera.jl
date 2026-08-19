@@ -71,6 +71,45 @@ end
 # does: a RAMSES MHD run carries ~16 columns (level, cx/cy/cz, rho, v, p, metallicity and
 # six B faces), and AREPO gas 12. Hence a synthetic wide table, checked directly.
 # ---------------------------------------------------------------------------------
+@testset "X_N means X^-N, and equals 1/X^N" begin
+    # `scale.pc_3` was `cm_3 / pc^3` — divided where it must multiply — leaving it wrong by
+    # pc^6 ~ 8.6e110. Nothing caught it because the result is finite and positive:
+    # getvar(gas, :volume, :pc_3) returned 5.5e-119 for cells of ~6.6e7 pc^3 and plotted
+    # without complaint. This property covers every such pair at once.
+    c = Mera.createconstants()
+    for ul in (3.7 * c.kpc, c.kpc, 100 * c.pc)          # not a single scale, so no luck
+        s = Mera.createscales(ul, 1e-24, 1e15, 1e40, c)
+        names = string.(collect(propertynames(s)))
+        pairs = 0
+        for nm in names
+            m = match(r"^(.+)_(\d)$", nm)
+            m === nothing && continue
+            partner = m.captures[1] * m.captures[2]
+            partner in names || continue
+            pairs += 1
+            @test getfield(s, Symbol(nm)) ≈ 1 / getfield(s, Symbol(partner)) rtol=1e-12
+        end
+        @test pairs >= 2                                 # cm_3/cm3 and pc_3/pc3 at least
+    end
+end
+
+@testset "an unknown unit is refused, with a usable message" begin
+    # The FIELD namespace has said "did you mean" for a while; the UNIT namespace raised a
+    # bare FieldError naming the symbol and nothing else.
+    info = Mera.InfoType(); info.boxlen = 1.0
+    info.constants = Mera.createconstants()
+    info.scale = Mera.createscales(3.7 * info.constants.kpc, 1e-24, 1e15, 1e40, info.constants)
+    @test_throws ArgumentError getunit(info, :pc_e3)
+    @test_throws ArgumentError getunit(info, :not_a_unit_at_all)
+    err = try; getunit(info, :pc_e3); "no error"; catch e; sprint(showerror, e); end
+    @test occursin("is not a known unit", err)
+    @test occursin("Did you mean", err) && occursin(":pc3", err)
+    @test occursin("underscore", err)              # the _3 vs 3 convention, named
+    # a real unit still resolves
+    @test getunit(info, :pc3) ≈ info.scale.pc3
+end
+
+
 @testset "wide tables: row selection stays O(1) per row" begin
     IT = Mera.IndexedTables
     n = 20_000

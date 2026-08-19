@@ -74,6 +74,19 @@ end
         odd = [Float64(k)^3 for k in 1:7]
         @test median(odd)^(1/3) ≈ median(odd .^ (1/3)) rtol=1e-12
 
+        # THE CROSS-QUANTITY INVARIANT: volume in u³ must equal cellsize in u, cubed, for every
+        # length unit u. One property covers the whole length-unit table for these two, and it
+        # is what would have caught `getvar(gas, :volume, :pc_3)` returning 5.5e-119 pc³ for
+        # cells of 6.6e7 pc³ — finite, positive, and it plotted without complaint.
+        for u in (:pc, :kpc, :Mpc, :cm, :m, :km)
+            u3 = Symbol(string(u), "3")
+            @test getvar(p, :volume, u3) ≈ getvar(p, :cellsize, u) .^ 3  rtol=1e-6
+        end
+        # …and an inverse-volume unit is a DIFFERENT unit, not an alias: :pc_3 == 1/:pc3
+        @test info.scale.pc_3 ≈ 1 / info.scale.pc3  rtol=1e-12
+        # a misspelling is refused rather than silently resolved
+        @test_throws ArgumentError getvar(p, :volume, :pc_e3)
+
         # A Voronoi cell has no single size. Mera derives THREE lengths from the same V, and
         # they differ by up to 1.6x — pin the conventions so they cannot drift apart silently,
         # and so the published-"cell radius" conversion stays documented in executable form.
