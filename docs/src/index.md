@@ -8,11 +8,18 @@
 
 Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`, `getrt` and `getclumps` readers, because it writes those to separate files. Where another code stores the same physics inside its snapshot — Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`, Athena++ six-ray radiation — the reader maps it to the canonical field, so `getvar(gas, :gpot)` works there too. AREPO and GADGET add particles and FoF group catalogues (`getgroups`; subhalos are not read).
 
-The other readers are newer and narrower than the RAMSES one, and tested against synthetic fixtures
-rather than a broad range of real runs — see [how mature is each reader](multicode.md#How-mature-is-each-reader?)
-for what each one implements and how far it has been exercised. Widening that is mostly reader work
-rather than core work, because the analysis layer is code-blind, so
-[contributions and bug reports](multicode.md#Help-us-widen-this) move it forward quickly.
+Frontends for other simulation codes — PLUTO, Chombo, Athena++, FLASH and the GADGET-HDF5
+family (GADGET / AREPO / SWIFT / GIZMO) — are in active development on the `multicode` branch
+and are not part of this release:
+
+```julia
+] add https://github.com/ManuelBehrendt/Mera.jl#multicode
+```
+
+They are newer and narrower than the RAMSES reader and tested mainly against synthetic
+fixtures. Widening that is mostly reader work rather than core work, because the analysis layer
+is code-blind, so [contributions and bug reports](https://github.com/ManuelBehrendt/Mera.jl/issues)
+move it forward quickly.
 
 ![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.png)
 

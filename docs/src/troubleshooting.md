@@ -35,8 +35,8 @@ info = getinfo(path, code=:pluto)     # :pluto, :chombo, :athena, :flash, :gadge
 
 If that works, detection failed rather than the file being missing — please
 [report it](https://github.com/ManuelBehrendt/Mera.jl/issues) with your directory listing,
-since detection is meant to handle it. See [Multi-code support](multicode.md) for what each
-reader looks for.
+since detection is meant to handle it. This release reads RAMSES; the frontends for other
+codes are on the `multicode` branch (`] add https://github.com/ManuelBehrendt/Mera.jl#multicode`).
 
 ## The tutorials point at a folder I don't have
 
@@ -202,5 +202,5 @@ export MERA_QUIET=1
 - [`provenance`](@ref) reports the Mera version, output and simulation code behind a result,
   which is the first thing to include in a bug report.
 - Reader support differs by simulation code — see
-  [how mature is each reader](multicode.md#How-mature-is-each-reader?) before assuming a gap
+  the `multicode` branch before assuming a gap
   is a bug.

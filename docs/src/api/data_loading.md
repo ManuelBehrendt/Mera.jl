@@ -1,8 +1,7 @@
 # Data Loading API Reference
 
-Docstrings for reading simulation output into memory. The narrative guides are
-[Load by Selection](../02_hydro_Load_Selections.md) for the spatial and level keywords, and
-[Multi-code support](../multicode.md) for other simulation codes.
+Docstrings for reading simulation output into memory. The narrative guide is
+[Load by Selection](../02_hydro_Load_Selections.md), for the spatial and level keywords.
 
 All of these take the [`InfoType`](@ref) returned by [`getinfo`](@ref) and accept the same
 selection keywords (`xrange`/`yrange`/`zrange`, `center`, `range_unit`, `lmax`), so you read
@@ -16,25 +15,20 @@ getparticles
 getgravity
 getclumps
 getrt
-getgroups
 ```
 
-Coverage differs by code: only RAMSES writes gravity, RT and clumps to separate files, so
-only RAMSES has all six. See [how mature is each reader](../multicode.md#How-mature-is-each-reader?).
+## Other simulation codes
 
-## Code-specific entry points
+Frontends for PLUTO, Chombo, Athena++, FLASH and the GADGET-HDF5 family (GADGET / AREPO /
+SWIFT / GIZMO) — together with their code-specific entry points, the FoF/SUBFIND catalogue
+reader `getgroups`, and the run-time-log readers — live on the `multicode` branch:
 
-The loaders above dispatch to these automatically; call them directly only when you want to
-bypass detection.
-
-```@docs; canonical=false
-getinfo_pluto
-gethydro_pluto
-getparticles_pluto
-getinfo_chombo
-gethydro_chombo
-getgroups_gadget
+```julia
+] add https://github.com/ManuelBehrendt/Mera.jl#multicode
 ```
+
+They register through the same reader registry the loaders above dispatch through, so nothing
+in this API changes when they are present.
 
 ## Related
 
