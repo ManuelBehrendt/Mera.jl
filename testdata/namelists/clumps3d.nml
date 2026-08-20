@@ -1,0 +1,110 @@
+! clumps3d.nml — Mera test fixture: AMR hydro + CLUMP FINDER with a KNOWN clump count
+!
+! Not derived from an upstream namelist: RAMSES ships no self-contained 3-D clump-finder test
+! (mergertree.nml is a 69-output cosmological run needing external initial conditions). This is
+! built to make the answer knowable in advance.
+!
+! DESIGN — the oracle is the construction itself. Four dense, well-separated top-hat blobs are
+! placed at KNOWN positions in a uniform ambient medium:
+!
+!     ambient    d = 1     p = 1
+!     4 blobs    d = 100   p = 1      (pressure equilibrium -> no expansion)
+!     static_gas = .true.             (nothing moves at all, so every snapshot is identical
+!                                      and the clump finder must return the same answer each time)
+!     density_threshold = 10          (between ambient and blob density)
+!
+! so the finder MUST return exactly 4 clumps, centred on the placed positions, with a total clump
+! mass equal to 4 x (blob volume x 100). A test asserting "4" is asserting a fact about the input,
+! not a number copied from a previous run — which is what makes this a real oracle rather than a
+! golden master. Failure modes it catches: a broken getclumps reader, wrong clump column mapping,
+! or unit errors in clump mass/position.
+!
+! Blob centres (box units, boxlen = 1): (0.25,0.25,0.25) (0.75,0.25,0.25)
+!                                       (0.25,0.75,0.25) (0.25,0.25,0.75)
+! separated by 0.5 in one axis each — far enough apart that no saddle merges them.
+!
+! Refinement is on the density gradient so only the blobs refine; the ambient stays at levelmin,
+! which is what keeps the fixture small.
+!
+! MEASURED (RAMSES 2026.05, 8 ranks): 4 outputs, 79 MB, 3 s.
+!   RAMSES reports "Total mass [code units] in  4 listed clumps = 1.52588E+00"
+!   Mera getclumps returns N = 4 in EVERY snapshot, columns
+!     (:index,:halo,:lev,:parent,:ncell,:peak_x,:peak_y,:peak_z,...)
+!   total clump mass 1.5259 vs the ideal 4 x 0.16^3 x 100 = 1.6384 (93 %); the shortfall is the
+!   density_threshold trimming blob-edge cells plus grid discretisation. Assert within ~10 %.
+!
+! HOW TO ASSERT THE PEAK POSITIONS. Every clump peak was offset from its blob centre by exactly
+! 0.0523 box units — the SAME offset for all four, i.e. systematic, not scatter. That is correct:
+! with a TOP-HAT blob every cell has d = 100, so the density peak is degenerate and the finder
+! picks a deterministic cell inside the blob. A test must therefore assert that each peak lies
+! WITHIN the blob (offset < the half-width 0.08), not that it equals the centre. Use exp_region
+! < 10 for a smooth super-Gaussian profile if a unique peak is ever wanted.
+!
+! Run:  mpirun -np 8 <build>/bin/ramses3d clumps3d.nml > run.log 2>&1
+
+&RUN_PARAMS
+hydro=.true.
+poisson=.true.
+clumpfind=.true.
+static_gas=.true.
+nrestart=0
+nremap=0
+ncontrol=1
+nsubcycle=10*1
+verbose=.false.
+/
+
+&AMR_PARAMS
+levelmin=5
+levelmax=7
+ngridmax=200000
+nexpand=1
+boxlen=1.0
+/
+
+&INIT_PARAMS
+nregion=5
+region_type(1)='square'
+region_type(2)='square'
+region_type(3)='square'
+region_type(4)='square'
+region_type(5)='square'
+x_center=0.5,0.25,0.75,0.25,0.25
+y_center=0.5,0.25,0.25,0.75,0.25
+z_center=0.5,0.25,0.25,0.25,0.75
+length_x=10.0,0.16,0.16,0.16,0.16
+length_y=10.0,0.16,0.16,0.16,0.16
+length_z=10.0,0.16,0.16,0.16,0.16
+exp_region=10.0,10.0,10.0,10.0,10.0
+d_region=1.0,100.0,100.0,100.0,100.0
+u_region=0.0,0.0,0.0,0.0,0.0
+v_region=0.0,0.0,0.0,0.0,0.0
+w_region=0.0,0.0,0.0,0.0,0.0
+p_region=1.0,1.0,1.0,1.0,1.0
+/
+
+&OUTPUT_PARAMS
+noutput=3
+tout=0.01,0.02,0.03
+/
+
+&HYDRO_PARAMS
+gamma=1.6666667
+courant_factor=0.8
+scheme='muscl'
+slope_type=1
+/
+
+&REFINE_PARAMS
+err_grad_d=0.1
+interpol_var=0
+interpol_type=2
+/
+
+&CLUMPFIND_PARAMS
+ivar_clump=1
+density_threshold=10.0
+relevance_threshold=2.0
+saddle_threshold=5.0
+clinfo=.true.
+/
