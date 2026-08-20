@@ -40,8 +40,10 @@
 !
 ! Measure the radius from the IONISED VOLUME, not the outermost ionised cell:
 !     V_ion = sum(volume[xHII > 0.5]);  one octant  =>  r = (6 V_ion / pi)^(1/3)
-! Through gethydro the ionisation fractions arrive as UNNAMED passive scalars — with NIONS=3 and
-! pure hydrogen (X=1, Y=0), :scalar_00 is xHII.
+! The ionisation fractions are stored as passive hydro scalars, but Mera names them: use
+! getvar(gas, :xHII) (also :xHeII, :xHeIII), which resolves the column through the RT descriptor's
+! iIons. It returns exactly :scalar_00 here, but going through the name is what exercises that
+! mapping — and it keeps working if the species layout changes.
 !
 ! Run:  mpirun -np 8 <build>/bin/ramses3d_rt stromgren3d.nml > run.log 2>&1
 

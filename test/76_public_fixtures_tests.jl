@@ -140,7 +140,10 @@ else
             info = getinfo(n, P, verbose=false)
             info.time > 0 || continue
             gas = gethydro(info, verbose=false, show_progress=false)
-            xHII = getvar(gas, :scalar_00)          # RT ionisation arrives as a passive scalar
+            # Mera maps the RT ionisation fractions to semantic names via the RT descriptor's
+            # iIons, so ask for :xHII rather than the raw passive scalar :scalar_00 — this also
+            # exercises that mapping, which the scalar column would not.
+            xHII = getvar(gas, :xHII)
             vol  = getvar(gas, :volume, :kpc3)
             ion  = xHII .> 0.5
             any(ion) || continue

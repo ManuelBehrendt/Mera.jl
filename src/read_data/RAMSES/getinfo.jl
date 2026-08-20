@@ -574,9 +574,12 @@ function readparticlesfile1!(dataobject::InfoType)
             line = readline(f)
 
             # check for header version
-            if occursin("Total", String(line))   # =< stable_18_09
+            # Boundary verified by building both releases and reading the headers they emit:
+            # stable_17_09 writes "Total number of particles" (version 0); stable_18_09 ALREADY
+            # writes the Family header (version 1). The changeover is AT 18_09, not after it.
+            if occursin("Total", String(line))   # < stable_18_09
                 version = 0
-            elseif occursin("Family", String(line)) # > stable_18_09
+            elseif occursin("Family", String(line)) # >= stable_18_09
                 version = 1
             else
                 version =-1

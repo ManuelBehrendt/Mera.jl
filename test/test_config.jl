@@ -210,7 +210,7 @@ const PUBLIC_FIXTURES = Dict(
         outputs = 7, boxlen = 15.0,
         # r(t) = r_S (1 - exp(-t/t_rec))^(1/3); alpha_B must use the MEASURED ionised-gas T
         oracle = (Ndot = 5.0e48, nH = 1.0e-3, ratio_scatter = 0.05),
-        note = "source at the origin, reflecting boundaries (one octant); ionisation is :scalar_00",
+        note = "source at the origin, reflecting boundaries (one octant); ionisation via getvar(:xHII)",
     ),
     :legacy_particles3d => (
         path = joinpath(PUBLIC_PATH, "legacy_particles3d"),
