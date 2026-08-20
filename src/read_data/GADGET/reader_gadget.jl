@@ -179,19 +179,6 @@ function _gadget_npart_total(h)
     return lo .+ hi .* Int64(2)^32
 end
 
-"""
-    getinfo_gadget(output::Int, path::String; unit_length=1.0, unit_density=1.0,
-                   unit_velocity=1.0, verbose=true) -> InfoType
-
-Read GADGET HDF5 snapshot metadata for `output` in `path` (a directory holding the
-`snap…_NNN.hdf5` file — or its `snap…_NNN.K.hdf5` chunks / a `snapdir_NNN/` chunk directory —
-or a snapshot file itself) into a Mera `InfoType` (`simcode = "GADGET"`). GADGET is
-particle-based; feed the result to [`getparticles`](@ref).
-
-**Units.** GADGET data is in **code units** (commonly length kpc/h, mass 10¹⁰ M⊙/h, velocity km/s);
-the defaults treat the run as dimensionless. Supply the run's CGS `unit_length`/`unit_density`/
-`unit_velocity` (and note the `h` factors) for physical conversions.
-"""
 # Cosmology and unit scales from a GADGET/AREPO HDF5 `Header`. Factored out of the snapshot
 # reader because the GROUP CATALOGUE files carry the same Header fields — which is exactly what
 # lets `getgroups(path, snap)` work on a snapshot-free output. Returns the scale factor `a`.
@@ -240,6 +227,37 @@ function _gadget_header_cosmology!(info::InfoType, h; unit_length::Real=1.0,
     return a
 end
 
+"""
+    getinfo_gadget(output::Int, path::String; unit_length=1.0, unit_density=1.0,
+                   unit_velocity=1.0, verbose=true) -> InfoType
+
+Read GADGET/AREPO HDF5 snapshot metadata (the `Header` group) for snapshot `output` in `path`
+into a Mera `InfoType`. `path` may be a directory holding the `snap…_NNN.hdf5` file — or its
+`snap…_NNN.K.hdf5` chunks, or a `snapdir_NNN/` chunk directory — or a snapshot file itself.
+`simcode` is set from the file (`"GADGET"` or `"AREPO"`). Feed the result to
+[`getparticles`](@ref) or [`getparticles_gadget`](@ref).
+
+Everything is particle data: `particles = true`, and hydro/gravity/RT/clumps are all `false`
+even for AREPO, whose gas cells arrive as `PartType0` rather than as an AMR grid. The advertised
+`particles_variable_list` is built from the fields actually present in the file, so a snapshot
+without magnetic fields simply does not offer `:bx`/`:by`/`:bz`. `:volume` and `:T` appear as
+derived fields when `Density` and `InternalEnergy` are stored.
+
+**Units.** Read from the header (`UnitLength_in_cm`, `UnitMass_in_g`,
+`UnitVelocity_in_cm_per_s`) and corrected for `h` and the scale factor `a`, so a standard
+cosmological snapshot is dimensionally correct without any keyword. The `unit_length`,
+`unit_density` and `unit_velocity` keywords (in **CGS**) override the header, for the runs that
+do not record it:
+
+```julia
+info = getinfo_gadget(99, path)              # header units, h- and a-corrected
+gas  = getparticles(info)
+getvar(gas, :mass, :Msol)
+```
+
+A multi-chunk snapshot is read as a whole; if the header's `NumFilesPerSnapshot` disagrees with
+the number of files found, Mera warns and reads what is present rather than failing.
+"""
 function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_density::Real=1.0,
                         unit_velocity::Real=1.0, verbose::Bool=true)
     fns = _gadget_files(output, path)
