@@ -1,0 +1,96 @@
+! legacy_particles3d.nml — Mera test fixture: the LEGACY (pversion = 0) particle format
+!
+! *** THIS ONE MUST BE RUN WITH AN OLD RAMSES, NOT 2026.05 ***
+!
+! Build it from the `stable_17_09` BRANCH of github.com/ramses-organisation/ramses:
+!     RAMSES_SRC=<clone of stable_17_09> BUILD_DIR=/tmp/rbuild_17_09 NDIMS=3 MPI=1 \
+!         bash build_ramses.sh
+! It still compiles with gfortran 15 given the -fallow-argument-mismatch / -fallow-invalid-boz
+! flags that build_ramses.sh applies (verified 2026-08).
+!
+! WHY. Mera's particle reader branches on the header signature (src/read_data/RAMSES/getinfo.jl):
+!     "Total"  in header_*.txt  ->  version 0   the LEGACY layout
+!     "Family" in header_*.txt  ->  version 1   the modern layout
+! MEASURED BOUNDARY — the code comment in getinfo.jl says "=< stable_18_09" for Total, which is
+! off by one release: stable_17_09 writes "Total number of particles" (version 0), while
+! stable_18_09 ALREADY writes the Family header (version 1). This fixture therefore needs 17_09.
+! Every fixture generated with 2026.05 exercises version 1 only. This one is the regression guard
+! for version 0 — the path currently covered only by a 14 GB private simulation. A modern RAMSES
+! cannot emit it; an old one can, and the old one still builds.
+!
+! THE ORACLE IS THE INPUT FILE. Particles come from a hand-written ascii file (make_legacy_
+! particles.sh): a 4x4x4 lattice, zero velocity, DISTINCT masses m_i = 1e-3 * i, total 2.08
+! exactly. With no gravity and no motion, Mera must read back exactly 64 particles at exactly
+! those positions with exactly those masses, in every snapshot. Nothing is copied from a previous
+! run, so this is a real oracle and not a golden master.
+!
+! NOTE ON COORDINATES: load_ascii adds boxlen/2 to each position, so the file holds coordinates
+! relative to the BOX CENTRE while Mera reports them in [0, boxlen].
+!
+! Prepare and run:
+!     bash make_legacy_particles.sh > ic_part      # the name MUST be ic_part
+!     mpirun -np 4 /tmp/rbuild_17_09/bin/ramses3d legacy_particles3d.nml > run.log 2>&1
+!
+! MEASURED (RAMSES stable_17_09, 4 ranks): 3 outputs, 6.6 MB, < 1 s.
+!   header_*.txt begins "Total number of particles / 64"      -> Mera reports pversion = 0
+!   getparticles returns 64 rows with the LEGACY column set
+!       (:x,:y,:z,:id,:vx,:vy,:vz,:mass,:birth)
+!   versus the MODERN set from a 2026.05 fixture
+!       (:level,:x,:y,:z,:id,:family,:tag,:vx,:vy,:vz,:mass,:birth)
+!   total mass 2.080000000000000, identical to the ascii input; per-particle max|diff| = 6.9e-18
+!   positions recover the 4x4x4 lattice at x in {0.125,0.375,0.625,0.875} (shifted by boxlen/2)
+
+&RUN_PARAMS
+hydro=.true.
+pic=.true.
+poisson=.false.
+static=.true.
+nrestart=0
+nremap=0
+ncontrol=1
+nsubcycle=10*1
+verbose=.false.
+/
+
+&AMR_PARAMS
+levelmin=5
+levelmax=5
+ngridmax=50000
+npartmax=10000
+nexpand=1
+boxlen=1.0
+/
+
+&INIT_PARAMS
+filetype='ascii'
+initfile(1)='.'
+nregion=1
+region_type(1)='square'
+x_center=0.5
+y_center=0.5
+z_center=0.5
+length_x=10.0
+length_y=10.0
+length_z=10.0
+exp_region=10.0
+d_region=1.0
+u_region=0.0
+v_region=0.0
+w_region=0.0
+p_region=1.0
+/
+
+&OUTPUT_PARAMS
+noutput=2
+tout=0.01,0.02
+/
+
+&HYDRO_PARAMS
+gamma=1.6666667
+courant_factor=0.8
+scheme='muscl'
+slope_type=1
+/
+
+&REFINE_PARAMS
+/
