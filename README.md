@@ -257,6 +257,11 @@ RAMSES variant to support, or a gap to report? Please
 MERA ships a tiered suite: data-free **smoke/oracle** tests that run on the full CI Julia matrix
 (1.10 / 1.11 / 1.12), and **data-backed** integration tests run locally against real RAMSES output.
 
+The data-free tier needs **no simulation data at all** — 1637 assertions in ~2.5 minutes, including
+every analytic correctness oracle (conservation, surface-integral budget, weighted statistics,
+structure-finder profiles). [`test/README.md`](test/README.md) documents the tiers, what "synthetic"
+means in each, and which simulation backs which test.
+
 ```bash
 # smoke/oracle tests only (what CI runs)
 MERA_SMOKE_ONLY=1 julia --project -e 'using Pkg; Pkg.test("Mera")'
