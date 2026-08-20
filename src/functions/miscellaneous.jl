@@ -56,6 +56,17 @@ little, but the saving dominates: 1.5–4.5x faster end to end on 2M rows, and 2
 
     For a subset the caller keeps — `subregion`, `shellregion`, the readers — use the copying
     [`_subset_table`](@ref) instead, or a 1000-row region would pin a 25M-row table in memory.
+
+!!! danger "`idx` MUST stay ascending — this is a safety invariant, not an optimisation"
+    If the rows handed to `IndexedTables.table(...; pkey=pk)` are not already in key order it
+    sorts them IN PLACE, and with view columns that sort writes straight through into `t`. Fed
+    a deliberately rotated index vector, this corrupted 258 of 500 rows of the caller's data.
+
+    Two things keep that from happening, and both must hold: `keep` is a `Bool` mask, so
+    `findall` returns ascending indices; and `t` was already sorted by its key, so an ascending
+    subset of it is still sorted. Do NOT change this to take an index vector directly, and do
+    not reorder `idx` — with the copying [`_subset_table`](@ref) that would merely have been
+    wrong, here it silently damages the source table.
 """
 @inline function _subset_table_keyed(t, keep::AbstractVector{Bool})
     idx  = findall(keep)
