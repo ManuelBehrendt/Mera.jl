@@ -15,10 +15,6 @@ else
 
 @testset verbose=true "public fixtures: analytic oracles" begin
 
-    # minimum-image separation on a periodic axis — plain Euclidean distance is WRONG when the
-    # object of interest sits at a box corner, which is where RAMSES puts these explosions
-    _mi(d, L) = min(abs(d), L - abs(d))
-
     # least-squares slope of y on x
     function _slope(x, y)
         n = length(x)
@@ -36,9 +32,10 @@ else
             info = getinfo(n, P, verbose=false)
             gas  = gethydro(info, verbose=false, show_progress=false)
             rho  = getvar(gas, :rho)
-            x = getvar(gas, :x, :standard); y = getvar(gas, :y, :standard); z = getvar(gas, :z, :standard)
-            L = f.boxlen
-            r = sqrt.(_mi.(x, L) .^ 2 .+ _mi.(y, L) .^ 2 .+ _mi.(z, L) .^ 2)  # blast is at the ORIGIN
+            # The blast sits at the ORIGIN, i.e. a box corner, so the direct separation is the
+            # long way round for anything past the half-box: use the periodic radius. With
+            # :r_sphere instead, the fitted exponent comes out 1.41 rather than 0.375.
+            r = getvar(gas, :r_sphere_periodic, center=[0., 0., 0.], center_unit=:standard)
             shell = rho .> 1.5                       # ambient is 1; the shock compresses it
             push!(ts, info.time)
             push!(Rs, any(shell) ? maximum(r[shell]) : NaN)
@@ -162,6 +159,26 @@ else
         # a drifting ratio would mean the time dependence is wrong.
         @test maximum(ratios) - minimum(ratios) < f.oracle.ratio_scatter
         @test 0.8 < sum(ratios)/length(ratios) < 1.2
+    end
+
+    # ------------------------------------------------------------------ periodic radii
+    @testset "periodic radii agree with minimum-image on every data type" begin
+        f = PUBLIC_FIXTURES[:sedov3d_grav_part]; L = f.boxlen
+        mi(d, l) = min(abs(d), l - abs(d))          # independent reference implementation
+        info = getinfo(3, f.path, verbose=false)
+        for obj in (gethydro(info, verbose=false, show_progress=false),
+                    getgravity(info, verbose=false, show_progress=false),
+                    getparticles(info, verbose=false, show_progress=false))
+            x = getvar(obj, :x, :standard); y = getvar(obj, :y, :standard); z = getvar(obj, :z, :standard)
+            rs = getvar(obj, :r_sphere_periodic,   center=[0.,0.,0.], center_unit=:standard)
+            rc = getvar(obj, :r_cylinder_periodic, center=[0.,0.,0.], center_unit=:standard)
+            @test rs ≈ sqrt.(mi.(x, L) .^ 2 .+ mi.(y, L) .^ 2 .+ mi.(z, L) .^ 2)
+            @test rc ≈ sqrt.(mi.(x, L) .^ 2 .+ mi.(y, L) .^ 2)
+            # never longer than the half-diagonal: that is the whole point
+            @test maximum(rs) <= L * sqrt(3) / 2 + 1e-12
+            # and for a centre at a corner it must DIFFER from the direct radius
+            @test rs != getvar(obj, :r_sphere, center=[0.,0.,0.], center_unit=:standard)
+        end
     end
 
     # ------------------------------------------------------------------ legacy particle format

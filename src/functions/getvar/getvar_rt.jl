@@ -321,6 +321,28 @@ function get_data(dataobject::RtDataType,
             z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
             vars_dict[:r_sphere] = @. sqrt(x^2 + y^2 + z^2) * selected_unit
 
+        # Periodic (minimum-image) radii. :r_sphere / :r_cylinder measure the DIRECT separation
+        # from `center`; RAMSES boxes are periodic, so for a centre within half a box of a face
+        # the true nearest separation wraps around and the direct one is the long way round.
+        # These variants wrap each component into [-boxlen/2, +boxlen/2] first. Use them when the
+        # centre sits near a boundary — e.g. an explosion at the origin, which is where several of
+        # RAMSES's own test problems put it.
+        elseif i == :r_sphere_periodic
+            selected_unit = getunit(dataobject, :r_sphere_periodic, vars, units)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+            vars_dict[:r_sphere_periodic] = @. sqrt(_minimum_image(x, boxlen)^2 +
+                                                    _minimum_image(y, boxlen)^2 +
+                                                    _minimum_image(z, boxlen)^2) * selected_unit
+
+        elseif i == :r_cylinder_periodic
+            selected_unit = getunit(dataobject, :r_cylinder_periodic, vars, units)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            vars_dict[:r_cylinder_periodic] = @. sqrt(_minimum_image(x, boxlen)^2 +
+                                                      _minimum_image(y, boxlen)^2) * selected_unit
+
         # Azimuthal angle - dimensionless/radians by default
         elseif i == :ϕ
             selected_unit = getunit(dataobject, :ϕ, vars, units)
