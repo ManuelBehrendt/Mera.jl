@@ -347,10 +347,14 @@ function _profileNd(x, w, ys, yvars, nbins::Int, xrange, scale::Symbol, quantile
     return merge(head, (fields=fld, yvars=collect(Symbol.(yvars))), extra)
 end
 
-_weights(dataobject, weight::Symbol, n) =
-    weight === :none ? ones(Float64, n) : Float64.(getvar(dataobject, weight))
+# `unit` defaults to :standard = CODE UNITS, which is what this always did. Passing e.g. :Msol
+# makes the accumulated histogram come back in that unit instead — without it, phase(weight=:mass)
+# returns H in code mass (1e10 Msol/h on a TNG-style run), which is a colour bar mislabelled by
+# ~10 dex if you assume Msol.
+_weights(dataobject, weight::Symbol, n, unit::Symbol=:standard) =
+    weight === :none ? ones(Float64, n) : Float64.(getvar(dataobject, weight, unit))
 # a raw per-cell weight vector (length-checked against the full data length, before masking)
-_weights(dataobject, weight::AbstractVector, n) =
+_weights(dataobject, weight::AbstractVector, n, unit::Symbol=:standard) =
     length(weight) == n ? Float64.(collect(weight)) :
     throw(ArgumentError("weight vector length $(length(weight)) ≠ data length $n"))
 # provenance label for the returned `weight` field (don't embed a whole weight vector)
@@ -516,7 +520,8 @@ end
 """
     phase(dataobject, xvar, yvar [, cvar]; weight=:mass, nbins=(100,100), xrange=nothing,
           yrange=nothing, xscale=:linear, yscale=:linear, xunit=:standard, yunit=:standard,
-          cunit=:standard, center=[:bc], center_unit=:standard, mask=[false]) -> NamedTuple
+          cunit=:standard, weight_unit=:standard, center=[:bc], center_unit=:standard,
+          mask=[false]) -> NamedTuple
 
 **2D phase diagram** — the summed `weight` in bins of (`xvar`, `yvar`) (e.g. a mass-weighted
 density–temperature diagram, `phase(gas, :rho, :T; xscale=:log, yscale=:log)`). With a third field
@@ -527,25 +532,37 @@ selects a richer per-bin reduction of `cvar` in addition to `mean`: `:std`, `:me
 also returns a per-bin weighted `quantiles` array (`nbx × nby × length(quantiles)`) at the
 `quantiles` levels (with `qlevels`).
 
+!!! warning "`H` is in `weight_unit`, which defaults to CODE UNITS"
+    `weight_unit` is the unit the weight is summed in, and like every other `*unit` it defaults
+    to `:standard` = code units. On a simulation whose code mass is not solar (e.g. 10¹⁰ M⊙/h)
+    a `weight=:mass` colour bar labelled "M⊙" is then wrong by that factor — 10.17 dex in one
+    reported case. Pass the unit you want to plot in, and read it back from `.weight_unit`:
+    ```julia
+    ph = phase(gas, :rho, :T; xscale=:log, yscale=:log, weight_unit=:Msol)
+    ph.weight, ph.weight_unit          # (:mass, :Msol)  -> label the colour bar from these
+    ```
+    With `weight=:none` the returned `weight_unit` is `:count` (`H` counts cells), and with a
+    caller-supplied weight vector it is `:unknown` (the unit is whatever you passed in).
+
 # Returns
 A `NamedTuple` with `xedges`, `yedges` (bin edges), `H` (the `nbx × nby` summed-weight grid),
-`xvar`/`yvar`, `weight`, `xunit`/`yunit`, and `source=:data`. With `normalize`, also `fraction`/`pdf`.
-With a `cvar`: `mean` (and, for a non-`:mean` `cstat`, the corresponding `std`/`median`/`min`/`max`/
-`quantiles`/`custom` grids), plus `cvar`/`cunit`.
+`xvar`/`yvar`, `weight`, `weight_unit`, `xunit`/`yunit`, and `source=:data`. With `normalize`, also
+`fraction`/`pdf`. With a `cvar`: `mean` (and, for a non-`:mean` `cstat`, the corresponding
+`std`/`median`/`min`/`max`/`quantiles`/`custom` grids), plus `cvar`/`cunit`.
 """
 function phase(dataobject, xvar::Symbol, yvar::Symbol, cvar=nothing; weight::Union{Symbol,AbstractVector}=:mass,
         nbins=(100,100), xrange=nothing, yrange=nothing, xscale::Symbol=:linear, yscale::Symbol=:linear,
         xedges=nothing, yedges=nothing, normalize::Symbol=:none, cstat=:mean, quantiles=[0.16,0.5,0.84],
         xunit::Symbol=:standard, yunit::Symbol=:standard, cunit::Symbol=:standard,
         center=[:bc], range_unit::Symbol=:standard, center_unit=nothing, mask=[false],
-        xbinsize=nothing, ybinsize=nothing)
+        xbinsize=nothing, ybinsize=nothing, weight_unit::Symbol=:standard)
     cu = center_unit === nothing ? range_unit : center_unit  # `center_unit` is the clearer alias of `range_unit`
     xbsz = _resolve_binsize(xbinsize, dataobject.info, xunit, xscale)   # physical bin widths → axis units
     ybsz = _resolve_binsize(ybinsize, dataobject.info, yunit, yscale)
     nbx, nby = nbins isa Tuple ? (nbins[1], nbins[2]) : (nbins, nbins)
     x = Float64.(getvar(dataobject, xvar, xunit, center=center, center_unit=cu))
     y = Float64.(getvar(dataobject, yvar, yunit, center=center, center_unit=cu))
-    w = _weights(dataobject, weight, length(x))
+    w = _weights(dataobject, weight, length(x), weight_unit)
     skip = check_mask(dataobject, mask, false)
     sel = skip ? trues(length(x)) : collect(Bool.(mask))
     x = x[sel]; y = y[sel]; w = w[sel]
@@ -553,7 +570,8 @@ function phase(dataobject, xvar::Symbol, yvar::Symbol, cvar=nothing; weight::Uni
          Float64.(getvar(dataobject, cvar, cunit, center=center, center_unit=cu))[sel]
     return _phase2d(x, y, w, cv, nbx, nby, xrange, yrange, xscale, yscale;
                     xedges=xedges, yedges=yedges, normalize=normalize, cstat=cstat, quantiles=quantiles,
-                    xbinsize=xbsz, ybinsize=ybsz)
+                    xbinsize=xbsz, ybinsize=ybsz,
+                    weight=_wprov(weight), weight_unit=weight_unit)
 end
 
 """
@@ -564,7 +582,9 @@ end
 
 # Returns
 The same fields as the data [`phase`](@ref) method (`xedges`, `yedges`, `H`, the `cstat` grids when
-a `cvar` is given, and `fraction`/`pdf` when normalized), with `source=:map`.
+a `cvar` is given, and `fraction`/`pdf` when normalized), with `source=:map`. `weight_unit` is
+`:count` for `:none`/`:area` (`H` counts pixels) and `:unknown` for a map key, whose unit the map
+does not record.
 """
 function phase(m::DataMapsType, xvar::Symbol, yvar::Symbol, cvar=nothing; weight::Union{Symbol,AbstractVector}=:none,
         nbins=(100,100), xrange=nothing, yrange=nothing, xscale::Symbol=:linear, yscale::Symbol=:linear,
@@ -583,10 +603,14 @@ function phase(m::DataMapsType, xvar::Symbol, yvar::Symbol, cvar=nothing; weight
     cv = cvar === nothing ? nothing : mapvec(cvar)
     fin = isfinite.(x) .& isfinite.(y) .& isfinite.(w)
     cv === nothing || (fin = fin .& isfinite.(cv))
+    # `:area` weights pixels equally, exactly like `:none` → H is a pixel count. Any other map key
+    # carries the map's own unit, which the map does not record → :unknown rather than a wrong guess.
+    wu = (weight === :none || weight === :area) ? :count : :unknown
     return _phase2d(x[fin], y[fin], w[fin], cv === nothing ? nothing : cv[fin],
                     nbx, nby, xrange, yrange, xscale, yscale;
                     xedges=xedges, yedges=yedges, normalize=normalize, cstat=cstat, quantiles=quantiles,
-                    xbinsize=_mapbs(xbinsize), ybinsize=_mapbs(ybinsize))
+                    xbinsize=_mapbs(xbinsize), ybinsize=_mapbs(ybinsize),
+                    weight=_wprov(weight), weight_unit=wu)
 end
 
 # per-bin statistics of a colour field `cv` over precomputed FLAT member-index lists — dimension-
@@ -632,7 +656,7 @@ end
 
 function _phase2d(x, y, w, cv, nbx, nby, xrange, yrange, xscale, yscale;
         xedges=nothing, yedges=nothing, normalize::Symbol=:none, cstat=:mean, quantiles=[0.16,0.5,0.84],
-        xbinsize=nothing, ybinsize=nothing)
+        xbinsize=nothing, ybinsize=nothing, weight=nothing, weight_unit=:standard)
     normalize in (:none, :sum, :pdf) ||
         throw(ArgumentError("normalize must be :none, :sum or :pdf (got :$normalize)"))
     xe = xedges === nothing ? _bin_edges(x, xrange, xscale, nbx; binsize=xbinsize) : collect(float.(xedges))
@@ -648,7 +672,12 @@ function _phase2d(x, y, w, cv, nbx, nby, xrange, yrange, xscale, yscale;
         cv === nothing || (CW[bx, by] += cv[i] * w[i])
         needmembers && push!(members[(by-1)*nbx + bx], i)
     end
-    extra = NamedTuple()
+    # What IS `H`? Without this the caller cannot label a colour bar: with weight=:mass it is a
+    # mass in `weight_unit` (:standard = code units), with weight=:none it is a cell count.
+    extra = (weight = weight,
+             weight_unit = weight === :none  ? :count :      # equal weights -> H counts cells
+                           weight === :vector ? :unknown :   # caller-supplied vector, unit is theirs
+                           weight_unit)
     if normalize !== :none
         tot = sum(H); frac = tot > 0 ? H ./ tot : fill(NaN, size(H))
         extra = merge(extra, (fraction=frac,))
@@ -1039,6 +1068,7 @@ end
 
 # core 3D binning: summed weight in bins of (x,y,z), optional weighted mean of cv, + normalization.
 function _phase3d(x, y, z, w, cv, nbx, nby, nbz, xrange, yrange, zrange, xscale, yscale, zscale;
+        weight=nothing, weight_unit::Symbol=:standard,
         xbinsize=nothing, ybinsize=nothing, zbinsize=nothing,
         xedges=nothing, yedges=nothing, zedges=nothing, normalize::Symbol=:none,
         cstat=:mean, quantiles=[0.16,0.5,0.84])
@@ -1058,7 +1088,12 @@ function _phase3d(x, y, z, w, cv, nbx, nby, nbz, xrange, yrange, zrange, xscale,
         cv === nothing || (CW[bx, by, bz] += cv[i] * w[i])
         needmembers && push!(members[bx + (by-1)*nbx + (bz-1)*nbx*nby], i)   # column-major linear index
     end
-    extra = NamedTuple()
+    # What IS `H`? Without this the caller cannot label a colour bar: with weight=:mass it is a
+    # mass in `weight_unit` (:standard = code units), with weight=:none it is a cell count.
+    extra = (weight = weight,
+             weight_unit = weight === :none  ? :count :      # equal weights -> H counts cells
+                           weight === :vector ? :unknown :   # caller-supplied vector, unit is theirs
+                           weight_unit)
     if normalize !== :none
         tot = sum(H); frac = tot > 0 ? H ./ tot : fill(NaN, size(H))
         extra = merge(extra, (fraction=frac,))
@@ -1089,7 +1124,10 @@ the per-bin weighted **mean** of `cvar`. `normalize=:sum` adds `fraction = H/ΣH
 and `nbins` is an integer or a 3-tuple. Marginalizing one axis (`sum(H; dims=3)`) recovers the
 corresponding [`phase`](@ref).
 
-Returns `xedges`, `yedges`, `zedges`, `H` (and `mean` with `cvar`; `fraction`/`pdf` if normalized).
+Returns `xedges`, `yedges`, `zedges`, `H` (and `mean` with `cvar`; `fraction`/`pdf` if normalized),
+plus `weight`/`weight_unit`. As in [`phase`](@ref), `H` is the summed weight in `weight_unit`,
+which defaults to `:standard` = **code units** — pass e.g. `weight_unit=:Msol` to sum in solar
+masses instead of relabelling afterwards.
 """
 function profile3d(dataobject, xvar::Symbol, yvar::Symbol, zvar::Symbol, cvar=nothing;
         weight::Union{Symbol,AbstractVector}=:mass, nbins=(50,50,50),
@@ -1097,7 +1135,8 @@ function profile3d(dataobject, xvar::Symbol, yvar::Symbol, zvar::Symbol, cvar=no
         xscale::Symbol=:linear, yscale::Symbol=:linear, zscale::Symbol=:linear,
         xunit::Symbol=:standard, yunit::Symbol=:standard, zunit::Symbol=:standard, cunit::Symbol=:standard,
         center=[:bc], range_unit::Symbol=:standard, center_unit=nothing, normalize::Symbol=:none, mask=[false],
-        xbinsize=nothing, ybinsize=nothing, zbinsize=nothing, cstat=:mean, quantiles=[0.16,0.5,0.84])
+        xbinsize=nothing, ybinsize=nothing, zbinsize=nothing, cstat=:mean, quantiles=[0.16,0.5,0.84],
+        weight_unit::Symbol=:standard)
     cu = center_unit === nothing ? range_unit : center_unit  # `center_unit` is the clearer alias of `range_unit`
     xbsz = _resolve_binsize(xbinsize, dataobject.info, xunit, xscale)
     ybsz = _resolve_binsize(ybinsize, dataobject.info, yunit, yscale)
@@ -1106,7 +1145,7 @@ function profile3d(dataobject, xvar::Symbol, yvar::Symbol, zvar::Symbol, cvar=no
     x = Float64.(getvar(dataobject, xvar, xunit, center=center, center_unit=cu))
     y = Float64.(getvar(dataobject, yvar, yunit, center=center, center_unit=cu))
     z = Float64.(getvar(dataobject, zvar, zunit, center=center, center_unit=cu))
-    w = _weights(dataobject, weight, length(x))
+    w = _weights(dataobject, weight, length(x), weight_unit)
     skip = check_mask(dataobject, mask, false)
     sel = skip ? trues(length(x)) : collect(Bool.(mask))
     x = x[sel]; y = y[sel]; z = z[sel]; w = w[sel]
@@ -1114,5 +1153,6 @@ function profile3d(dataobject, xvar::Symbol, yvar::Symbol, zvar::Symbol, cvar=no
          Float64.(getvar(dataobject, cvar, cunit, center=center, center_unit=cu))[sel]
     return _phase3d(x, y, z, w, cv, nb[1], nb[2], nb[3],
                     xrange, yrange, zrange, xscale, yscale, zscale; normalize=normalize,
-                    xbinsize=xbsz, ybinsize=ybsz, zbinsize=zbsz, cstat=cstat, quantiles=quantiles)
+                    xbinsize=xbsz, ybinsize=ybsz, zbinsize=zbsz, cstat=cstat, quantiles=quantiles,
+                    weight=_wprov(weight), weight_unit=weight_unit)
 end

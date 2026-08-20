@@ -88,6 +88,19 @@ Pk = pdf(gas, :rho; norm=:peak)              # peak = 1 (compare shapes)
 # plot: lines(log10.(P.centers), P.pdf)
 ```
 
+!!! warning "`sum(P.pdf)` is not 1 — and should not be"
+    With the default `norm=:density` the result is a probability **density in log₁₀ space**,
+    not per-bin probability mass. `sum(P.pdf)` is `1/Δlog₁₀` (e.g. `10.64` for 60 bins over
+    ~5.6 dex) — it is `sum(P.pdf) * Δlog₁₀` that equals `1.000000`:
+    ```julia
+    P = pdf(gas, :rho)
+    dlog10 = diff(log10.(P.edges))
+    sum(P.pdf)              # 10.6376  — NOT 1, this is a density
+    sum(P.pdf .* dlog10)    # 1.000000
+    ```
+    Use `norm=:probability` if you want bins that sum to 1. The density form is the one to
+    plot and to fit a log-normal to, because it does not change when you change `bins`.
+
 !!! note
     `pdf` is also exported by `Distributions.jl`; if you `using` both, call `Mera.pdf`.
 """
