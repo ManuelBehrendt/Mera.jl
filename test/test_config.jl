@@ -154,6 +154,75 @@ const DATASETS = Dict(
     # The PLUTO and Chombo fixture entries live on the `multicode` branch, with their readers.
 )
 
+# ---------------------------------------------------------------------------------------------
+# PUBLIC fixtures — generated from the namelists in `testdata/`, not from private simulations.
+#
+# Every one is reproducible from a text file plus a RAMSES build (see testdata/README.md), and
+# every one carries an ANALYTIC ORACLE: the expected answer follows from the setup, so a test
+# asserts physics rather than a number recorded from a previous run. They are small enough to
+# publish, which is what makes the data-backed tier verifiable by someone who is not the
+# maintainer. `RAMSES_VERSION` is the release each was generated with — legacy_particles needs an
+# OLD RAMSES, because a modern one cannot emit the pversion=0 particle header.
+# ---------------------------------------------------------------------------------------------
+const PUBLIC_PATH = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC")
+const PUBLIC_AVAILABLE = isdir(PUBLIC_PATH)
+
+const PUBLIC_FIXTURES = Dict(
+    :sedov3d_amr => (
+        path = joinpath(PUBLIC_PATH, "sedov3d_amr"),
+        ramses_version = "2026.05",
+        outputs = 7, boxlen = 0.5, ncpu = 8,
+        # Sedov-Taylor: R(t) = xi (E t^2 / rho)^(1/5)  =>  d(logR)/d(logt) = 2/5
+        oracle = (sedov_exponent = 0.4, tolerance = 0.10),
+        note = "explosion at the ORIGIN; use MINIMUM-IMAGE distances (periodic box)",
+    ),
+    :mhdtube3d => (
+        path = joinpath(PUBLIC_PATH, "mhdtube3d"),
+        ramses_version = "2026.05",
+        outputs = 6, boxlen = 2.0,
+        # div B = dBx/dx = 0 for a tube along x  =>  Bx == A_region == 1 exactly, everywhere
+        oracle = (bx_constant = 1.0, tolerance = 1e-12),
+        note = "the six B faces are columns (:bx_left/...); :bx is a DERIVED getvar quantity",
+    ),
+    :sedov3d_grav_part => (
+        path = joinpath(PUBLIC_PATH, "sedov3d_grav_part"),
+        ramses_version = "2026.05",
+        outputs = 7, boxlen = 0.5,
+        # MC tracers are neither created nor destroyed
+        oracle = (npart = 124990, mass_total = 0.12499),
+        note = "hydro + gravity + particles in one run; tracers need nparttot in &AMR_PARAMS",
+    ),
+    :clumps3d => (
+        path = joinpath(PUBLIC_PATH, "clumps3d"),
+        ramses_version = "2026.05",
+        outputs = 4, boxlen = 1.0,
+        # four blobs placed by construction -> the finder must recover four
+        oracle = (nclumps = 4,
+                  blob_centres = [(0.25,0.25,0.25), (0.75,0.25,0.25),
+                                  (0.25,0.75,0.25), (0.25,0.25,0.75)],
+                  blob_halfwidth = 0.08,
+                  mass_ideal = 4 * 0.16^3 * 100),
+        note = "top-hat blobs have a DEGENERATE density peak: assert the peak is INSIDE the blob",
+    ),
+    :stromgren3d => (
+        path = joinpath(PUBLIC_PATH, "stromgren3d"),
+        ramses_version = "2026.05",
+        outputs = 7, boxlen = 15.0,
+        # r(t) = r_S (1 - exp(-t/t_rec))^(1/3); alpha_B must use the MEASURED ionised-gas T
+        oracle = (Ndot = 5.0e48, nH = 1.0e-3, ratio_scatter = 0.05),
+        note = "source at the origin, reflecting boundaries (one octant); ionisation is :scalar_00",
+    ),
+    :legacy_particles3d => (
+        path = joinpath(PUBLIC_PATH, "legacy_particles3d"),
+        ramses_version = "stable_17_09",       # NOT 2026.05 — see testdata/namelists/
+        outputs = 3, boxlen = 1.0,
+        # the ascii input file IS the oracle: 4x4x4 lattice, m_i = 1e-3 * i
+        oracle = (pversion = 0, npart = 64, mass_total = 2.08,
+                  x_positions = [0.125, 0.375, 0.625, 0.875]),
+        note = "guards the pversion=0 particle header; stable_18_09 already writes the Family form",
+    ),
+)
+
 # Test tolerances
 const RTOL_PHYSICS = 0.01       # 1% for physics calculations
 const RTOL_CONSERVATION = 0.05  # 5% for conservation (AMR boundary effects)
