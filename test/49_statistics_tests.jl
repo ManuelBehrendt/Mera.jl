@@ -48,6 +48,25 @@ end
     @test_throws ErrorException Mera._weighted_pdf(v, w; kw..., norm=:bogus)
 end
 
+# The default `norm=:density` with `logbins` is a density per dex, so `sum(pdf) != 1` — it is
+# `sum(pdf .* Δlog10)` that is 1. Easy to misread as a normalization bug; pin it, including the
+# bin-count independence that is the whole point of the density form.
+@testset "log-density normalization: sum(pdf)·Δlog10 == 1, not sum(pdf) (data-free)" begin
+    v = 10 .^ collect(LinRange(-2, 3, 20_001))          # 5 dex, uniform in log10
+    w = ones(length(v))
+    for bins in (30, 60, 240)
+        r = Mera._weighted_pdf(v, w; bins=bins, logbins=true, norm=:density)
+        dlog10 = diff(log10.(r.edges))
+        @test sum(r.pdf .* dlog10) ≈ 1 rtol=1e-6         # unit area in log10 space
+        @test !isapprox(sum(r.pdf), 1; rtol=1e-2)        # the raw sum is 1/Δlog10, i.e. bins/5
+        @test sum(r.pdf) ≈ bins / 5 rtol=1e-3
+        # a flat log-distribution ⇒ flat density at 1/5 per dex, independent of `bins`
+        @test sum(r.pdf) / bins ≈ 0.2 rtol=1e-3
+    end
+    # :probability is the per-bin mass form for callers who do want sum == 1
+    @test sum(Mera._weighted_pdf(v, w; bins=60, logbins=true, norm=:probability).pdf) ≈ 1 rtol=1e-6
+end
+
 # ------------------------------------------------------------------ PART B
 if DATA_AVAILABLE && isdir(ST_PATH)
     g = gethydro(getinfo(100, ST_PATH, verbose=false), verbose=false, show_progress=false)

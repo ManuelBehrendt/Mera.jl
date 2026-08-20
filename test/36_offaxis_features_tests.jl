@@ -133,6 +133,28 @@ end
         @test isapprox(sum(phc.H), mtot; rtol=1e-12) && any(isfinite, phc.mean)
     end
 
+    @testset "phase: H is labelled — weight/weight_unit and the weight_unit rescale" begin
+        kw = (nbins=(30,30), xscale=:log, yscale=:log)
+        pc = phase(gas, :rho, :T; weight=:mass, kw...)                  # default = code units
+        pm = phase(gas, :rho, :T; weight=:mass, weight_unit=:Msol, kw...)
+        @test pc.weight === :mass && pc.weight_unit === :standard
+        @test pm.weight === :mass && pm.weight_unit === :Msol
+        # H really is summed in that unit — the ratio is exactly the scale factor, so a colour
+        # bar can be labelled from .weight_unit instead of being assumed solar
+        @test isapprox(sum(pm.H) / sum(pc.H), gas.info.scale.Msol; rtol=1e-10)
+        @test isapprox(sum(pm.H), mtot * gas.info.scale.Msol; rtol=1e-12)
+        # provenance for the non-getvar weights
+        @test phase(gas, :rho, :T; weight=:none, kw...).weight_unit === :count
+        @test isapprox(sum(phase(gas, :rho, :T; weight=:none, kw...).H), length(gas.data))
+        wv = ones(length(gas.data))
+        @test phase(gas, :rho, :T; weight=wv, kw...).weight_unit === :unknown
+        # same contract in 3D
+        p3 = Mera.profile3d(gas, :rho, :T, :r_cylinder; weight=:mass, weight_unit=:Msol,
+                            nbins=(10,10,10), xscale=:log, yscale=:log)
+        @test p3.weight === :mass && p3.weight_unit === :Msol
+        @test isapprox(sum(p3.H), mtot * gas.info.scale.Msol; rtol=1e-10)
+    end
+
     @testset "profile Tier-1: density / cumulative / statistic / sem / edges" begin
         kw = (weight=:mass, center=[:bc], range_unit=:kpc, xunit=:kpc)
         # shell-volume density: Σ(density·shell_volume) reconstructs the binned mass exactly
