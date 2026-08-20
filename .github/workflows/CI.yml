@@ -1,9 +1,11 @@
 name: CI
 on:
   push:
-    branches: [master, main]
+    # `multicode` is the 2.0.0-DEV line (master + the non-RAMSES frontends). It is never
+    # registered, but users install it by URL, so it needs the same smoke run as master.
+    branches: [master, main, multicode]
   pull_request:
-    branches: [master, main]
+    branches: [master, main, multicode]
 
 # Opt JS-based actions into Node.js 24 ahead of GitHub's forced switch (2026-06-16).
 env:
