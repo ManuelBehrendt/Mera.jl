@@ -87,6 +87,7 @@ if isempty(_focus)
         include("69_config_tests.jl")  # data-free: ~/.mera.toml resolution, env precedence, legacy fallback
         include("70_scales_complete_tests.jl")  # data-free: every scale field is assigned; getunit rejects impossible factors
         include("74_zoom_kinematics_tests.jl")       # data-free: :cellsize, bulk_velocity/vcenter=, contamination()
+        include("75_mask_equivalence_tests.jl")      # data-free metamorphic: getvar(mask=m) == getvar()[m] on every data type
 
         # The analytic correctness oracles. These were included in the data-dependent tier below,
         # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and
