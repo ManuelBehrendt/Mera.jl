@@ -37,6 +37,51 @@ else
         return f
     end
 
+    # ---------------------------------------------------------------- baselines
+    # The diagnostics above are only useful as regression detectors if something COMPARES them.
+    # Committed baselines in test/baselines/ are the reference; the check below is deliberately
+    # tight (rtol 1e-6), because with the same fixture and the same code these numbers are
+    # deterministic. That is the point: a pass/fail threshold at +-10 % would never notice the
+    # Sedov exponent creeping 0.375 -> 0.361 over a year, and this will.
+    #
+    # After INTENTIONALLY changing a fixture or an algorithm, refresh with:
+    #     MERA_UPDATE_BASELINES=1 julia --project -e 'using Pkg; Pkg.test()'
+    # and commit the diff — reviewing that diff is the moment to decide whether the change was
+    # meant. A missing baseline is reported, not failed, so a fresh fixture can be added first.
+    BASELINE_DIR = joinpath(@__DIR__, "baselines")
+    UPDATE_BASELINES = get(ENV, "MERA_UPDATE_BASELINES", "0") == "1"
+
+    _numeric(x) = tryparse(Float64, x)
+
+    function _compare_baseline(name::AbstractString; rtol=1e-6, atol=1e-12)
+        cur = joinpath(RESULTS_DIR,  name * ".csv")
+        ref = joinpath(BASELINE_DIR, name * ".csv")
+        isfile(cur) || return (:missing_current, "no diagnostics written for $name")
+        if UPDATE_BASELINES
+            mkpath(BASELINE_DIR); cp(cur, ref; force=true)
+            return (:updated, ref)
+        end
+        isfile(ref) || return (:missing_baseline, "no baseline for $name (set MERA_UPDATE_BASELINES=1 to create)")
+        a = readlines(cur); b = readlines(ref)
+        length(a) == length(b) || return (:fail, "row count $(length(a)) != baseline $(length(b))")
+        a[1] == b[1] || return (:fail, "header changed:\n  now: $(a[1])\n  was: $(b[1])")
+        for i in 2:length(a)
+            ca = split(a[i], ','); cb = split(b[i], ',')
+            length(ca) == length(cb) || return (:fail, "line $i: column count differs")
+            for j in eachindex(ca)
+                na = _numeric(ca[j]); nb = _numeric(cb[j])
+                if na === nothing || nb === nothing
+                    ca[j] == cb[j] || return (:fail, "line $i col $j: '$(ca[j])' != '$(cb[j])'")
+                elseif isnan(na) || isnan(nb)
+                    isnan(na) == isnan(nb) || return (:fail, "line $i col $j: NaN mismatch")
+                elseif !isapprox(na, nb; rtol=rtol, atol=atol)
+                    return (:fail, "line $i col $j: $na != $nb (baseline), rel diff $(abs(na-nb)/max(abs(nb),eps()))")
+                end
+            end
+        end
+        return (:ok, "")
+    end
+
     # least-squares slope of y on x
     function _slope(x, y)
         n = length(x)
@@ -289,6 +334,24 @@ else
                ("n_particles", length(p.data), f.oracle.npart),
                ("total_mass", sum(getvar(p, :mass)), f.oracle.mass_total),
                ("max_mass_diff", maximum(abs.(sort(getvar(p, :mass)) .- sort([1e-3*k for k in 1:f.oracle.npart]))), 0.0)])
+    end
+    # ------------------------------------------------------------------ regression vs baselines
+    @testset "diagnostics match the committed baselines" begin
+        names = ["sedov3d_amr", "sedov3d_amr_summary", "mhdtube3d", "stromgren3d",
+                 "clumps3d", "sedov3d_grav_part", "sedov3d_amr_mera", "legacy_particles3d"]
+        for nm in names
+            status, msg = _compare_baseline(nm)
+            if status === :ok
+                @test true
+            elseif status === :updated
+                @info "baseline updated" file=msg
+            elseif status === :missing_baseline
+                @info "no baseline yet — run with MERA_UPDATE_BASELINES=1 to create it" fixture=nm
+            else
+                @error "diagnostics drifted from the baseline" fixture=nm detail=msg
+                @test status === :ok
+            end
+        end
     end
 end
 
