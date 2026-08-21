@@ -181,6 +181,31 @@ else
         end
     end
 
+    # ------------------------------------------------------------------ mera files (JLD2)
+    @testset "sedov3d_amr_mera: loaddata reproduces gethydro exactly" begin
+        f = PUBLIC_FIXTURES[:sedov3d_amr_mera]
+        R = PUBLIC_FIXTURES[:sedov3d_amr].path        # the RAMSES original
+        M = f.path                                     # its mera-file conversion
+        outs = sort(checkoutputs(R, verbose=false).outputs)
+        @test length(outs) == f.outputs
+        for n in outs
+            gr = gethydro(getinfo(n, R, verbose=false), verbose=false, show_progress=false)
+            gm = loaddata(n, M, :hydro, verbose=false)
+            # No reference numbers: the two readers are compared against each other, so this
+            # cannot drift the way a golden master would.
+            @test length(gm.data) == length(gr.data)
+            @test propertynames(Mera.columns(gm.data)) == propertynames(Mera.columns(gr.data))
+            @test gm.info.time == gr.info.time
+            @test gm.boxlen == gr.boxlen
+            for q in (:rho, :vx, :vy, :vz, :p)
+                @test getvar(gm, q) == getvar(gr, q)          # bit-for-bit, not approx
+            end
+            # derived quantities must agree too — the scales survived the round trip
+            @test getvar(gm, :T, :K) == getvar(gr, :T, :K)
+            @test msum(gm, :Msol) == msum(gr, :Msol)
+        end
+    end
+
     # ------------------------------------------------------------------ legacy particle format
     @testset "legacy_particles3d: the pversion=0 header and its column set" begin
         f = PUBLIC_FIXTURES[:legacy_particles3d]; P = f.path

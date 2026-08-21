@@ -212,6 +212,14 @@ const PUBLIC_FIXTURES = Dict(
         oracle = (Ndot = 5.0e48, nH = 1.0e-3, ratio_scatter = 0.05),
         note = "source at the origin, reflecting boundaries (one octant); ionisation via getvar(:xHII)",
     ),
+    :sedov3d_amr_mera => (
+        path = joinpath(PUBLIC_PATH, "sedov3d_amr_mera"),
+        ramses_version = "2026.05",            # converted from the sedov3d_amr fixture
+        outputs = 7, boxlen = 0.5,
+        # the oracle is a ROUND TRIP: loaddata must reproduce gethydro exactly
+        oracle = (source = "sedov3d_amr",),
+        note = "mera-file (JLD2) path; regenerate with testdata/make_mera_files.jl, no RAMSES needed",
+    ),
     :legacy_particles3d => (
         path = joinpath(PUBLIC_PATH, "legacy_particles3d"),
         ramses_version = "stable_17_09",       # NOT 2026.05 — see testdata/namelists/
