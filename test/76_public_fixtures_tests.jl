@@ -67,8 +67,12 @@ else
         ok = findall(i -> ts[i] > 0 && isfinite(Rs[i]) && Rs[i] > 0, eachindex(ts))
         @test length(ok) >= 5
         slope = _slope(log10.(ts[ok]), log10.(Rs[ok]))
+        # the fitted line needs the least-squares INTERCEPT too — anchoring it on the first point
+        # instead puts the curve 0.36 % off the actual fit, which is visible in a plot
+        lx = log10.(ts[ok]); ly = log10.(Rs[ok])
+        intercept = (sum(ly) - slope * sum(lx)) / length(lx)
         _diag("sedov3d_amr", ["time", "R_measured", "R_powerlaw_fit", "mass"],
-              [(ts[i], Rs[i], isfinite(Rs[i]) && ts[i] > 0 ? Rs[ok][1] * (ts[i]/ts[ok][1])^slope : NaN, masses[i])
+              [(ts[i], Rs[i], ts[i] > 0 ? 10^(slope * log10(ts[i]) + intercept) : NaN, masses[i])
                for i in eachindex(ts)])
         _diag("sedov3d_amr_summary", ["quantity", "measured", "theory"],
               [("sedov_exponent", slope, f.oracle.sedov_exponent),
