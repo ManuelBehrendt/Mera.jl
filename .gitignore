@@ -163,3 +163,7 @@ scripts/mirror_paths_to_pages.py
 scripts/run_notebooks.sh
 scripts/check_doc_examples.py
 scripts/__pycache__/
+
+# Oracle diagnostics written by test/76_public_fixtures_tests.jl (measured vs theory,
+# for inspection and for CI to upload as an artifact). Generated output, never committed.
+test/results/

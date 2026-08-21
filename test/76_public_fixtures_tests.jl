@@ -15,6 +15,28 @@ else
 
 @testset verbose=true "public fixtures: analytic oracles" begin
 
+    # ---------------------------------------------------------------- diagnostics
+    # Each oracle writes what it MEASURED next to what theory says, as a small CSV. Numbers, not
+    # pictures, on purpose: they are dependency-free, a few KB, and DIFFABLE between runs — so a
+    # slope drifting from 0.375 to 0.361 across commits is visible, which an image cannot show.
+    # Figures can be generated from these afterwards (see testdata/make_figures.jl for the
+    # pattern). In CI this directory is what `actions/upload-artifact` would publish.
+    #
+    # Override the location with MERA_TEST_RESULTS; default test/results/ (gitignored).
+    RESULTS_DIR = get(ENV, "MERA_TEST_RESULTS", joinpath(@__DIR__, "results"))
+
+    function _diag(name::AbstractString, header::Vector{String}, rows::Vector)
+        mkpath(RESULTS_DIR)
+        f = joinpath(RESULTS_DIR, name * ".csv")
+        open(f, "w") do io
+            println(io, join(header, ","))
+            for r in rows
+                println(io, join(map(x -> x isa AbstractFloat ? string(round(x, sigdigits=10)) : string(x), r), ","))
+            end
+        end
+        return f
+    end
+
     # least-squares slope of y on x
     function _slope(x, y)
         n = length(x)
@@ -45,6 +67,12 @@ else
         ok = findall(i -> ts[i] > 0 && isfinite(Rs[i]) && Rs[i] > 0, eachindex(ts))
         @test length(ok) >= 5
         slope = _slope(log10.(ts[ok]), log10.(Rs[ok]))
+        _diag("sedov3d_amr", ["time", "R_measured", "R_powerlaw_fit", "mass"],
+              [(ts[i], Rs[i], isfinite(Rs[i]) && ts[i] > 0 ? Rs[ok][1] * (ts[i]/ts[ok][1])^slope : NaN, masses[i])
+               for i in eachindex(ts)])
+        _diag("sedov3d_amr_summary", ["quantity", "measured", "theory"],
+              [("sedov_exponent", slope, f.oracle.sedov_exponent),
+               ("mass_ratio_max_min", maximum(masses)/minimum(masses), 1.0)])
         @test isapprox(slope, f.oracle.sedov_exponent; rtol=f.oracle.tolerance)   # 0.4 +- 10%
         @test issorted(Rs[ok])                                    # the blast only ever expands
         @test maximum(masses) / minimum(masses) ≈ 1 rtol=1e-10    # closed box: mass conserved
@@ -55,11 +83,14 @@ else
         f = PUBLIC_FIXTURES[:mhdtube3d]; P = f.path
         outs = sort(checkoutputs(P, verbose=false).outputs)
         @test length(outs) == f.outputs
+        diag = []
         for n in outs
             info = getinfo(n, P, verbose=false)
             gas  = gethydro(info, verbose=false, show_progress=false)
             bxl = getvar(gas, :bx_left); bxr = getvar(gas, :bx_right)
             bxc = getvar(gas, :bx)                        # DERIVED, not a column
+            push!(diag, (info.time, maximum(abs.(bxc .- 1.0)), maximum(abs.(bxl .- 1.0)),
+                         minimum(getvar(gas, :by)), maximum(getvar(gas, :by)), maximum(abs.(getvar(gas, :bz)))))
             # For a tube varying only along x, div B = dBx/dx = 0 => Bx is constant everywhere,
             # on both faces and at the centre, for all time. Exact, resolution independent.
             @test maximum(abs.(bxl .- f.oracle.bx_constant)) < f.oracle.tolerance
@@ -70,6 +101,8 @@ else
             @test all(isfinite, getvar(gas, :by))
             @test maximum(abs.(getvar(gas, :bz))) == 0.0   # no z-field was ever introduced
         end
+        # the interesting column is bx_dev: it should sit at the machine-epsilon floor forever
+        _diag("mhdtube3d", ["time", "bx_dev_centre", "bx_dev_face", "by_min", "by_max", "bz_absmax"], diag)
     end
 
     # ------------------------------------------------------------------ gravity + particles
@@ -86,6 +119,8 @@ else
             L = f.boxlen
             escaped += count(@. (x < 0) | (x > L) | (y < 0) | (y > L) | (z < 0) | (z > L))
         end
+        _diag("sedov3d_grav_part", ["snapshot", "n_particles", "total_tracer_mass"],
+              [(k, counts[k], pmass[k]) for k in eachindex(counts)])
         # MC tracers are neither created nor destroyed
         @test length(unique(counts)) == 1
         @test counts[1] == f.oracle.npart
@@ -124,6 +159,14 @@ else
             @test length(unique(round.(px, digits=3))) >= 2
         end
         c = getclumps(getinfo(2, P, verbose=false), verbose=false)
+        let px = getvar(c, :peak_x), py = getvar(c, :peak_y), pz = getvar(c, :peak_z)
+            rows = []
+            for (bx, by, bz) in f.oracle.blob_centres
+                d, j = findmin([sqrt((px[k]-bx)^2 + (py[k]-by)^2 + (pz[k]-bz)^2) for k in eachindex(px)])
+                push!(rows, (bx, by, bz, px[j], py[j], pz[j], d))
+            end
+            _diag("clumps3d", ["placed_x","placed_y","placed_z","peak_x","peak_y","peak_z","offset"], rows)
+        end
         # the density threshold trims blob-edge cells, so expect to recover most of the mass
         @test 0.85 * f.oracle.mass_ideal < sum(getvar(c, :mass_cl)) < 1.05 * f.oracle.mass_ideal
     end
@@ -132,7 +175,7 @@ else
     @testset "stromgren3d: the I-front follows r_S (1 - exp(-t/t_rec))^(1/3)" begin
         f = PUBLIC_FIXTURES[:stromgren3d]; P = f.path
         kpc = 3.08568025e21; Myr = 3.1556926e13
-        ratios = Float64[]
+        ratios = Float64[]; curve = []
         for n in sort(checkoutputs(P, verbose=false).outputs)
             info = getinfo(n, P, verbose=false)
             info.time > 0 || continue
@@ -151,8 +194,12 @@ else
             aB   = 2.59e-13 * (Tion / 1e4)^(-0.7)
             rS   = ((3 * f.oracle.Ndot / (4pi * aB * f.oracle.nH^2))^(1/3)) / kpc
             trec = 1 / (aB * f.oracle.nH) / Myr
-            push!(ratios, R / (rS * (1 - exp(-info.time / trec))^(1/3)))
+            pred = rS * (1 - exp(-info.time / trec))^(1/3)
+            push!(ratios, R / pred)
+            push!(curve, (info.time, R, pred, R/pred, Tion, rS, trec))
         end
+        _diag("stromgren3d", ["time_Myr", "r_measured_kpc", "r_analytic_kpc", "ratio",
+                              "T_ionised_K", "r_S_kpc", "t_rec_Myr"], curve)
         @test length(ratios) >= 5
         # The SHAPE of the law is the strong statement: the measured/analytic ratio must be the
         # same at every time. A constant offset is resolution (the front is smeared over ~1 cell);
@@ -188,6 +235,7 @@ else
         M = f.path                                     # its mera-file conversion
         outs = sort(checkoutputs(R, verbose=false).outputs)
         @test length(outs) == f.outputs
+        rt = []
         for n in outs
             gr = gethydro(getinfo(n, R, verbose=false), verbose=false, show_progress=false)
             gm = loaddata(n, M, :hydro, verbose=false)
@@ -197,13 +245,17 @@ else
             @test propertynames(Mera.columns(gm.data)) == propertynames(Mera.columns(gr.data))
             @test gm.info.time == gr.info.time
             @test gm.boxlen == gr.boxlen
+            dmax = 0.0
             for q in (:rho, :vx, :vy, :vz, :p)
                 @test getvar(gm, q) == getvar(gr, q)          # bit-for-bit, not approx
+                dmax = max(dmax, maximum(abs.(getvar(gm, q) .- getvar(gr, q))))
             end
+            push!(rt, (n, length(gr.data), length(gm.data), dmax))
             # derived quantities must agree too — the scales survived the round trip
             @test getvar(gm, :T, :K) == getvar(gr, :T, :K)
             @test msum(gm, :Msol) == msum(gr, :Msol)
         end
+        _diag("sedov3d_amr_mera", ["output", "rows_ramses", "rows_merafile", "max_abs_diff"], rt)
     end
 
     # ------------------------------------------------------------------ legacy particle format
@@ -228,6 +280,11 @@ else
         @test isapprox(sort(getvar(p, :mass)), sort([1e-3 * k for k in 1:f.oracle.npart]); rtol=1e-10)
         @test sort(unique(round.(getvar(p, :x, :standard), digits=6))) ≈ f.oracle.x_positions
         @test all(iszero, getvar(p, :vx))      # placed at rest, no gravity: nothing may move
+        _diag("legacy_particles3d", ["quantity", "measured", "expected"],
+              [("pversion", info.descriptor.pversion, f.oracle.pversion),
+               ("n_particles", length(p.data), f.oracle.npart),
+               ("total_mass", sum(getvar(p, :mass)), f.oracle.mass_total),
+               ("max_mass_diff", maximum(abs.(sort(getvar(p, :mass)) .- sort([1e-3*k for k in 1:f.oracle.npart]))), 0.0)])
     end
 end
 
