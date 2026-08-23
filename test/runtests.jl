@@ -89,6 +89,7 @@ if isempty(_focus)
         include("74_zoom_kinematics_tests.jl")       # data-free: :cellsize, bulk_velocity/vcenter=, contamination()
         include("75_mask_equivalence_tests.jl")      # data-free metamorphic: getvar(mask=m) == getvar()[m] on every data type
         include("76_amrex_reader_tests.jl")          # data-free: AMReX/BoxLib container + Quokka layer (synthetic 2-level plotfile; geometry, leaves, temperature cascade, particles)
+        include("77_jamr_cli_tests.jl")              # data-free: the `jamr` command line (parsing, window arithmetic, field resolution, figures when matplotlib is present)
 
         # The analytic correctness oracles. These were included in the data-dependent tier below,
         # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and
