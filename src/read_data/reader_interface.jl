@@ -27,6 +27,7 @@ struct SimReader
     detect::Union{Function,Nothing}  # path::String -> Bool (auto-detection hook; optional)
     priority::Int                 # detection order for the hooks (lower runs first)
     note::String                  # shown in unsupported-capability errors (may be "")
+    select_vars::Bool             # `gethydro(info, vars=…)` reaches the frontend (see below)
     funcs::Dict{Symbol,Function}  # capability => entry function
 end
 
@@ -55,11 +56,18 @@ A capability left `nothing` marks the code as not supporting it — the public e
 points then raise a clear error, `supports` returns `false`, and the docs capability
 matrix shows a gap. `detect` (optional) is tried by `detect_simcode` before the
 built-in detection chain.
+
+`select_vars=true` declares that the `hydro` entry point implements COLUMN SELECTION, i.e.
+accepts `vars=[…]` and reads only what those columns need. `gethydro` then forwards the
+user's `vars`; by default it refuses a `vars=` it cannot honour rather than silently
+returning every variable. Only claim this when the reader really reads less — a format
+whose records interleave every field cannot.
 """
 function register_reader!(code::Symbol; simcodes::Vector{String},
                           name::String=String(code),
                           detect::Union{Function,Nothing}=nothing,
                           priority::Int=100, note::String="",
+                          select_vars::Bool=false,
                           info::Union{Function,Nothing}=nothing,
                           hydro::Union{Function,Nothing}=nothing,
                           particles::Union{Function,Nothing}=nothing,
@@ -78,7 +86,7 @@ function register_reader!(code::Symbol; simcodes::Vector{String},
         owner = get(_SIMCODE_TO_READER, s, code)
         owner === code || error("register_reader!: simcode \"$s\" is already registered to :$owner.")
     end
-    _READERS[code] = SimReader(code, name, simcodes, detect, priority, note, funcs)
+    _READERS[code] = SimReader(code, name, simcodes, detect, priority, note, select_vars, funcs)
     for s in simcodes
         _SIMCODE_TO_READER[s] = code
     end
