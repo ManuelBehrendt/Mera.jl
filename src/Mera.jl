@@ -107,6 +107,25 @@ export
     gethydro_athena,
     getinfo_flash,
     gethydro_flash,
+    getinfo_amrex,
+    gethydro_amrex,
+    getparticles_amrex,
+    getinfo_quokka,
+    gethydro_quokka,
+    getparticles_quokka,
+    amrex_meta,
+    amrex_domain,
+    amrex_extent,
+    amrex_extrema,
+    amrex_provenance,
+    amrex_plotfile,
+    amrex_output_numbers,
+    amrex_particle_types,
+    amrex_field_spec,
+    quokka_varmap,
+    quokka_particle_units,
+    read_amrex_header,
+    read_quokka_metadata,
     getinfo_gadget,
     getparticles_gadget,
     getgroups_gadget,
@@ -463,6 +482,8 @@ include("read_data/PLUTO/reader_pluto.jl")   # PLUTO frontend (static uniform Ca
 include("read_data/PLUTO/reader_chombo.jl")  # Chombo / PLUTO-AMR frontend (HDF5)
 include("read_data/Athena/reader_athena.jl") # Athena++ frontend (HDF5 .athdf MeshBlocks)
 include("read_data/FLASH/reader_flash.jl")   # FLASH frontend (HDF5 PARAMESH leaf blocks)
+include("read_data/AMReX/reader_amrex.jl")   # AMReX/BoxLib plotfile container (Header + FABs)
+include("read_data/AMReX/reader_quokka.jl")  # Quokka layer on top of the AMReX container
 include("read_data/GADGET/reader_gadget.jl")
 include("read_data/GADGET/groupcat_gadget.jl") # GADGET/GIZMO/… frontend (HDF5 particles)
 include("read_data/GADGET/logs_gadget.jl")   # run-time ASCII logs (sfr.txt, …)

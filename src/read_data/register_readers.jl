@@ -42,6 +42,30 @@ function register_builtin_readers!()
         info = getinfo_flash,
         hydro = gethydro_flash)
 
+    # AMReX family. Quokka is registered FIRST and detected first (priority 10): a Quokka
+    # plotfile is an AMReX plotfile plus `metadata.yaml`, so the generic reader would also
+    # claim it — and would then miss the units. Both declare `select_vars`: a FAB stores its
+    # components as contiguous blocks, so `gethydro(info, vars=[:rho])` really does read only
+    # a fraction of the file, which matters on a 30 GB production plotfile.
+    register_reader!(:quokka;
+        simcodes = ["Quokka"],
+        name = "Quokka (AMReX plotfile)",
+        detect = _is_quokka_tree, priority = 10,
+        select_vars = true,
+        info = getinfo_quokka,
+        hydro = gethydro_quokka,
+        particles = getparticles_quokka)
+
+    register_reader!(:amrex;
+        simcodes = ["AMReX"],
+        name = "AMReX / BoxLib plotfile",
+        note = "Units are not recorded in a bare AMReX plotfile — pass unit_length=/unit_density=/unit_velocity= to getinfo for physical conversions.",
+        detect = _is_amrex_tree, priority = 20,
+        select_vars = true,
+        info = getinfo_amrex,
+        hydro = gethydro_amrex,
+        particles = getparticles_amrex)
+
     register_reader!(:gadget;
         simcodes = ["GADGET", "AREPO", "SWIFT", "GIZMO"],
         name = "GADGET-HDF5 family",
