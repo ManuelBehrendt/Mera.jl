@@ -1312,3 +1312,375 @@ function getparticles_amrex(info::InfoType;
                        ph.num_particles, ", fields ", join(string.(outnames), ", "))
     return p
 end
+
+# ------------------------------------------------------------------------------------
+# Streaming: one box at a time, never the whole plotfile
+# ------------------------------------------------------------------------------------
+#
+# `gethydro` builds a cell table, which is the right answer until the table stops fitting.
+# A 1024×1024×8192 Quokka plotfile is 8.6e9 leaf cells: the index columns alone are 137 GB
+# and six components add another 412 GB, so there is no machine on which "load it, then
+# reduce it" is the plan. The reduction has to happen while the data is still on disk.
+#
+# `amrex_foreach_box` is that: it hands the caller one box at a time — the requested
+# columns, dense over the box, with the leaf/window mask already applied — and forgets it
+# again. Peak memory is one box per worker, whatever the file's size.
+# `amrex_project` is the reduction this was written for.
+
+"""
+    AMReXBoxChunk
+
+One box of a plotfile, as [`amrex_foreach_box`](@ref) hands it over.
+
+* `box` / `prob_domain` — the integer index box and its level's index space. The box's
+  first cell sits at global 0-based index `box.lo[d] - prob_domain.lo[d]` on axis `d`
+  of the level-`mera_level` lattice; [`amrex_box_origin`](@ref) returns that triple.
+* `dims`, `cellsize` — the box's shape and its cell size in code units.
+* `mask` — which of those cells count: leaf cells (not covered by a finer level) that also
+  fall inside the requested window. `n` is `count(mask)`.
+* `cols` — the requested columns, each a `Vector{Float64}` of `prod(dims)` values in
+  AMReX's own `i`-fastest order, dense over the WHOLE box (masked cells included), so a
+  kernel can work on them without a gather.
+"""
+struct AMReXBoxChunk
+    level::Int
+    mera_level::Int
+    box::AMReXBox
+    prob_domain::AMReXBox
+    dims::NTuple{3,Int}
+    cellsize::Float64
+    mask::BitArray{3}
+    n::Int
+    cols::NamedTuple
+end
+
+"""
+    amrex_box_origin(chunk) -> NTuple{3,Int}
+
+The global 0-based index of a chunk's first cell on its level's lattice.
+"""
+amrex_box_origin(c::AMReXBoxChunk) =
+    ntuple(d -> c.box.lo[d] - c.prob_domain.lo[d], 3)
+
+# The schedule `amrex_foreach_box` and `amrex_project` share: which boxes to open, and
+# which of their cells count.
+function _amrex_schedule(pf::AMReXPlotfile, ranges, fullbox::Bool)
+    out = Tuple{Int,Int,BitArray{3},Int}[]      # (level index, box index, mask, count)
+    nboxtot = 0
+    for (li, lv) in enumerate(pf.levels)
+        finer = li < length(pf.levels) ? pf.levels[li+1] : nothing
+        ref = li < length(pf.levels) ? pf.ref_ratio[li] : 2
+        for (bi, b) in enumerate(lv.boxes)
+            nboxtot += 1
+            if !fullbox
+                x0, x1, y0, y1, z0, z1 = _amrex_box_bbox(b, lv.prob_domain, lv.mera_level)
+                (x1 >= ranges[1] && x0 <= ranges[2] && y1 >= ranges[3] && y0 <= ranges[4] &&
+                 z1 >= ranges[5] && z0 <= ranges[6]) || continue
+            end
+            mask = finer === nothing ? trues(_boxdims(b)...) : .!_amrex_covered_mask(b, finer, ref)
+            fullbox || _amrex_apply_range!(mask, b, lv.prob_domain, lv.mera_level, ranges)
+            n = count(mask)
+            n == 0 && continue
+            push!(out, (li, bi, mask, n))
+        end
+    end
+    return out, nboxtot
+end
+
+# Read one box's requested components and run the spec's closures over them.
+function _amrex_box_columns(pf::AMReXPlotfile, li::Int, bi::Int, needed::Vector{Int},
+                            spec::AMReXFieldSpec, outsyms::Vector{Symbol})
+    lv = pf.levels[li]; b = lv.boxes[bi]
+    nx, ny, nz = _boxdims(b); ncell = nx * ny * nz
+    comp = Dict{Int,Vector{Float64}}()
+    open(lv.files[bi], "r") do io
+        fh = _read_amrex_fab_header(io, lv.offsets[bi], pf.ndim)
+        ghost = fh.box.lo != b.lo || fh.box.hi != b.hi
+        gx = b.lo[1] - fh.box.lo[1]; gy = b.lo[2] - fh.box.lo[2]; gz = b.lo[3] - fh.box.lo[3]
+        for ci in needed
+            arr = _read_amrex_fab_comp(io, fh, ci)
+            if ghost                                  # trim the ghost shell, keep i-fastest
+                v = Vector{Float64}(undef, ncell)
+                k2 = 0
+                @inbounds for k in 1:nz, j in 1:ny, i in 1:nx
+                    k2 += 1
+                    v[k2] = arr[gx+i, gy+j, gz+k]
+                end
+                comp[ci] = v
+            else
+                comp[ci] = vec(arr)
+            end
+        end
+    end
+    return NamedTuple{Tuple(outsyms)}(Tuple(spec.compute[s](comp) for s in outsyms))
+end
+
+"""
+    amrex_foreach_box(f, info; vars=:all, xrange, yrange, zrange, center, range_unit,
+                      max_threads=1, verbose=true) -> Int
+
+Stream an AMReX/Quokka plotfile one box at a time, calling `f(chunk::AMReXBoxChunk)` for
+each. Returns the number of boxes visited.
+
+This is the escape hatch for files that do not fit: `gethydro` builds a table of every
+leaf cell, which stops being possible somewhere below a billion cells, while this reads
+one box, hands it over, and releases it. Peak memory is one box per worker — a few hundred
+MB — no matter how large the plotfile is.
+
+`vars` and the spatial window behave exactly as in [`gethydro_amrex`](@ref): only the FAB
+components the requested columns depend on are read, and only boxes that intersect the
+window are opened.
+
+`max_threads > 1` runs `f` concurrently on different boxes, so **`f` must then be thread
+safe** — accumulate into per-task state and combine afterwards, as [`amrex_project`](@ref)
+does. The default of 1 keeps the naive use correct.
+
+```julia
+# total mass, without ever holding the cells
+totals = zeros(Threads.nthreads())
+amrex_foreach_box(info; vars=[:rho], max_threads=8) do c
+    dv = c.cellsize^3
+    s = 0.0
+    for (i, m) in enumerate(c.mask); m && (s += c.cols.rho[i]); end
+    totals[Threads.threadid()] += s * dv
+end
+sum(totals) * info.scale.Msol
+```
+"""
+function amrex_foreach_box(f::Function, info::InfoType;
+                           vars::Union{Symbol,Vector{Symbol}}=:all,
+                           xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
+                           center=[0., 0., 0.], range_unit::Symbol=:standard,
+                           max_threads::Int=1, verbose::Bool=true)
+    m = amrex_meta(info)
+    pf = read_amrex_header(m[:plotfile]::String)
+    _amrex_check_geometry(pf)
+    spec = _amrex_rebuild_spec(info, pf)
+    outsyms = (vars === :all || vars == [:all]) ? copy(spec.outputs) : Symbol[Symbol(v) for v in vars]
+    for s in outsyms
+        s in spec.outputs || error("[Mera] AMReX: :$s is not a column of this plotfile " *
+            "(have: " * join(":" .* string.(spec.outputs), ", ") * ").")
+    end
+    needed = sort!(unique!(reduce(vcat, [spec.deps[s] for s in outsyms]; init=Int[])))
+    ranges, fullbox = _external_ranges(info, xrange, yrange, zrange, center, range_unit)
+    sched, nboxtot = _amrex_schedule(pf, ranges, fullbox)
+    verbose && println("[Mera]: AMReX streaming ", basename(pf.dir), " → ", length(sched), "/",
+                       nboxtot, " boxes, ", length(needed), "/", length(pf.fields),
+                       " stored components, ", length(outsyms), " column(s)")
+
+    nthr = max(1, min(max_threads, Threads.nthreads()))
+    function run(idx)
+        li, bi, mask, n = sched[idx]
+        lv = pf.levels[li]
+        cols = _amrex_box_columns(pf, li, bi, needed, spec, outsyms)
+        f(AMReXBoxChunk(lv.level, lv.mera_level, lv.boxes[bi], lv.prob_domain,
+                        _boxdims(lv.boxes[bi]), info.boxlen / 2.0^lv.mera_level,
+                        mask, n, cols))
+        return nothing
+    end
+    if nthr > 1 && length(sched) > 1
+        # Contiguous slices rather than @threads, so a task's identity (and therefore any
+        # per-task buffer the caller keys on) is stable across the I/O inside `run`.
+        chunks = [idx:nthr:length(sched) for idx in 1:nthr]
+        @sync for c in chunks
+            Threads.@spawn for idx in c; run(idx); end
+        end
+    else
+        for idx in eachindex(sched); run(idx); end
+    end
+    return length(sched)
+end
+
+# ------------------------------------------------------------------------------------
+# Streaming projection
+# ------------------------------------------------------------------------------------
+
+# How a level's cells map onto the output pixels of one transverse axis.
+#   cpp > 1  : `cpp` cells per pixel — they share it, so each contributes 1/cpp of the area
+#   ppc > 1  : `ppc` pixels per cell — the cell covers them all, each at full value
+struct _PixMap
+    cpp::Int          # cells per pixel (1 when pixels are finer)
+    ppc::Int          # pixels per cell (1 when cells are finer)
+end
+
+function _pixmap(ncell_level::Int, npix::Int, axisname::String)
+    if ncell_level >= npix
+        ncell_level % npix == 0 || error(
+            "[Mera] amrex_project: $(ncell_level) cells along $axisname do not divide into " *
+            "$(npix) pixels — some pixels would collect more cells than others. Choose a " *
+            "resolution that divides the cell count.")
+        return _PixMap(ncell_level ÷ npix, 1)
+    end
+    npix % ncell_level == 0 || error(
+        "[Mera] amrex_project: $(npix) pixels along $axisname are not a whole multiple of " *
+        "the $(ncell_level) cells there.")
+    return _PixMap(1, npix ÷ ncell_level)
+end
+
+"""
+    amrex_project(kernel, info; direction=:z, nx=nothing, res=nothing, vars,
+                  weight=nothing, xrange, yrange, zrange, center, range_unit,
+                  max_threads=Threads.nthreads(), verbose=true, show_progress=true)
+
+A line-of-sight projection computed **while streaming**, for plotfiles too large to load.
+
+`kernel(cols::NamedTuple) -> Vector{Float64}` is evaluated per box on the columns named in
+`vars` (each a flat `Vector{Float64}` over the whole box, `i`-fastest) and returns one
+value per cell. With `weight = nothing` the result is the unweighted line integral
+`∫ q dl` — a column density when `q` is a mass density. With a second kernel `weight`, it
+is the weighted average `∫ q w dl / ∫ w dl`.
+
+The map is **conservative**: a cell contributes `q · dl · (its footprint ∩ the pixel) /
+(pixel area)`, so a cell finer than a pixel contributes its area share and a cell coarser
+than a pixel fills every pixel it covers. Cell and pixel counts must divide one another on
+each transverse axis (an error says so when they do not).
+
+Resolution: `nx` follows the convention of yt-based tooling — the buffer is the domain's
+cell counts scaled by `nx / domain_dimensions[1]`. `res = (n0, n1)` sets the two transverse
+sizes directly. With neither, one pixel per level-0 cell.
+
+The output frame is always the **full transverse domain**; `xrange`/`yrange`/`zrange`
+select which cells contribute (a depth cut along the line of sight, say), not the frame.
+
+Returns a `NamedTuple`:
+
+* `image` — `(n0, n1)`, first index along the first transverse axis (`x`,`x`,`y` for
+  `direction = :z`, `:y`, `:x` respectively), second along the other;
+* `bounds` — `[p0_lo, p0_hi, p1_lo, p1_hi]` in code units, in the **simulation's own**
+  coordinates (`domain_left_edge` added back);
+* `axes` — the two transverse axis symbols;
+* `weight_sum` — the denominator map when `weight` was given, else `nothing`;
+* `ncells`, `nboxes`, `bytes_read`, `seconds`.
+
+```julia
+# neutral column density: ρ where the gas is barely ionised
+img = amrex_project(info; direction=:x, nx=1024, vars=[:rho, :xe]) do c
+    c.rho .* (c.xe .< 0.05)
+end
+```
+"""
+function amrex_project(kernel::Function, info::InfoType;
+                       direction::Symbol=:z,
+                       nx::Union{Nothing,Int}=nothing,
+                       res::Union{Nothing,Tuple{Int,Int}}=nothing,
+                       vars::Union{Symbol,Vector{Symbol}}=:all,
+                       weight::Union{Nothing,Function}=nothing,
+                       xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
+                       center=[0., 0., 0.], range_unit::Symbol=:standard,
+                       max_threads::Int=Threads.nthreads(),
+                       verbose::Bool=true, show_progress::Bool=true)
+    direction in (:x, :y, :z) || error("[Mera] amrex_project: direction must be :x, :y or :z.")
+    m = amrex_meta(info)
+    pf = read_amrex_header(m[:plotfile]::String)
+    _amrex_check_geometry(pf)
+    dlo = m[:domain_left_edge]::Vector{Float64}
+    n0dom = m[:domain_dimensions]::Vector{Int}
+
+    los = direction === :x ? 1 : direction === :y ? 2 : 3
+    tr  = Tuple(d for d in 1:3 if d != los)                      # the two image axes
+    axn = (:x, :y, :z)
+
+    npix = if res !== nothing
+        res
+    elseif nx !== nothing
+        s = nx / n0dom[1]
+        (max(1, round(Int, n0dom[tr[1]] * s)), max(1, round(Int, n0dom[tr[2]] * s)))
+    else
+        (n0dom[tr[1]], n0dom[tr[2]])
+    end
+
+    # per-level pixel mapping for both transverse axes
+    pixmaps = Dict{Int,NTuple{2,_PixMap}}()
+    for lv in pf.levels
+        f = 2^(lv.mera_level - pf.levelmin)
+        pixmaps[lv.mera_level] = (_pixmap(n0dom[tr[1]] * f, npix[1], String(axn[tr[1]])),
+                                  _pixmap(n0dom[tr[2]] * f, npix[2], String(axn[tr[2]])))
+    end
+
+    nthr = max(1, min(max_threads, Threads.nthreads()))
+    nums = [zeros(Float64, npix...) for _ in 1:nthr]
+    dens = weight === nothing ? nothing : [zeros(Float64, npix...) for _ in 1:nthr]
+    ncells = Threads.Atomic{Int}(0)
+    nbytes = Threads.Atomic{Int}(0)
+    ndone  = Threads.Atomic{Int}(0)
+
+    vsyms = vars === :all ? :all : Symbol[Symbol(v) for v in vars]
+    t0 = time()
+    # Each task owns one accumulator; `slot` is derived from the spawn order, not from
+    # `threadid()`, which is not stable across the I/O inside the callback.
+    slots = Dict{Task,Int}()
+    slotlock = ReentrantLock()
+    function slot_of()
+        lock(slotlock) do
+            get!(slots, current_task(), length(slots) + 1)
+        end
+    end
+
+    nboxes = amrex_foreach_box(info; vars=vsyms, xrange=xrange, yrange=yrange, zrange=zrange,
+                               center=center, range_unit=range_unit, max_threads=nthr,
+                               verbose=verbose) do c
+        si = min(slot_of(), nthr)
+        num = nums[si]; den = dens === nothing ? nothing : dens[si]
+        q = kernel(c.cols)
+        w = weight === nothing ? nothing : weight(c.cols)
+        pm = pixmaps[c.mera_level]
+        _amrex_accumulate!(num, den, q, w, c, tr, pm, npix)
+        Threads.atomic_add!(ncells, c.n)
+        Threads.atomic_add!(nbytes, prod(c.dims) * 8 * length(c.cols))
+        d = Threads.atomic_add!(ndone, 1) + 1
+        (verbose && show_progress && d % 32 == 0) &&
+            println("[Mera]:   ", d, " boxes, ", round(time() - t0, digits=1), " s")
+        nothing
+    end
+
+    num = reduce(+, nums)
+    den = dens === nothing ? nothing : reduce(+, dens)
+    image = den === nothing ? num : [d > 0 ? n / d : 0.0 for (n, d) in zip(num, den)]
+
+    dx0 = (pf.dx[1])[1]
+    bounds = Float64[dlo[tr[1]], dlo[tr[1]] + n0dom[tr[1]] * dx0,
+                     dlo[tr[2]], dlo[tr[2]] + n0dom[tr[2]] * dx0]
+    dt = time() - t0
+    verbose && println("[Mera]: amrex_project ", direction, " → ", npix[1], "×", npix[2],
+                       " pixels from ", ncells[], " cells in ", nboxes, " boxes, ",
+                       round(nbytes[] / 2^30, digits=2), " GiB, ", round(dt, digits=1), " s")
+    return (image=image, weight_sum=den, bounds=bounds, axes=(axn[tr[1]], axn[tr[2]]),
+            direction=direction, npix=npix, ncells=ncells[], nboxes=nboxes,
+            bytes_read=nbytes[], seconds=dt)
+end
+
+# Scatter one box's per-cell values into the projection buffers.
+function _amrex_accumulate!(num::Matrix{Float64}, den::Union{Nothing,Matrix{Float64}},
+                            q::Vector{Float64}, w::Union{Nothing,Vector{Float64}},
+                            c::AMReXBoxChunk, tr::NTuple{2,Int}, pm::NTuple{2,_PixMap},
+                            npix::NTuple{2,Int})
+    nx, ny, nz = c.dims
+    o = amrex_box_origin(c)
+    dl = c.cellsize
+    a0, a1 = tr
+    m0, m1 = pm
+    # dl × (cell footprint ∩ pixel) / (pixel area). With `cpp` cells sharing a pixel the
+    # share is 1/(cpp0·cpp1); with a cell covering `ppc` pixels each gets the whole value.
+    fac = dl / (m0.cpp * m1.cpp)
+    idx = 0
+    @inbounds for k in 1:nz, j in 1:ny, i in 1:nx
+        idx += 1
+        c.mask[i, j, k] || continue
+        g = (o[1] + i - 1, o[2] + j - 1, o[3] + k - 1)
+        p0 = fld(g[a0], m0.cpp); p1 = fld(g[a1], m1.cpp)
+        v = q[idx] * fac
+        wv = w === nothing ? 0.0 : w[idx] * fac
+        for b1 in 0:(m1.ppc - 1), b0 in 0:(m0.ppc - 1)
+            i0 = p0 * m0.ppc + b0 + 1
+            i1 = p1 * m1.ppc + b1 + 1
+            (1 <= i0 <= npix[1] && 1 <= i1 <= npix[2]) || continue
+            if den === nothing
+                num[i0, i1] += v
+            else
+                num[i0, i1] += v * (w === nothing ? 1.0 : w[idx])
+                den[i0, i1] += wv
+            end
+        end
+    end
+    return nothing
+end
