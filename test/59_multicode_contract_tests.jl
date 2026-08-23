@@ -9,6 +9,10 @@
 
 import Mera.HDF5: h5open, attributes, FixedString
 
+# The AMReX fixture writer is shared with test/76 and test/77; `runtests.jl` runs them all
+# in one session, and a second `include` would redefine its structs.
+isdefined(@__MODULE__, :write_amrex_plotfile) || include("fixtures_amrex.jl")
+
 # ---- minimal synthetic snapshots (all boxlen 1; rho = 1) ---------------------------------------
 
 # PLUTO uniform: a 4³ static grid (grid.out + dbl.out + data.0000.dbl)
@@ -57,6 +61,21 @@ function _synth_flash(dir)
         f["unknown names"] = reshape(["dens"], 1, 1)
         f["bounding box"] = bbox; f["refine level"] = rlev; f["node type"] = ntyp; f["dens"] = dens
     end
+end
+
+# AMReX plotfile: a 4³ base grid (one box) with a level-1 patch over the (2,2,2)…(3,3,3)
+# octant, i.e. the same "coarse grid + one refined region" shape as the FLASH fixture.
+# `metadata.yaml` makes it a Quokka run; `_synth_amrex(d; quokka=false)` gives the generic one.
+function _synth_amrex(dir; quokka::Bool=true)
+    names = quokka ? ["gasDensity", "x-GasMomentum", "y-GasMomentum", "z-GasMomentum"] :
+                     ["density", "xmom", "ymom", "zmom"]
+    l0 = AMReXTestLevel([((0,0,0), (3,3,3))], (0,0,0), (3,3,3))
+    l1 = AMReXTestLevel([((4,4,4), (7,7,7))], (0,0,0), (7,7,7))
+    write_amrex_plotfile(joinpath(dir, "plt00000"), names, [l0, l1];
+                         domain_lo=(0.0, 0.0, 0.0), domain_hi=(1.0, 1.0, 1.0),
+                         time=0.0, ref_ratio=[2],
+                         value=(n, x, y, z) -> startswith(n, "gasDensity") || n == "density" ? 1.0 : 0.0,
+                         metadata=(quokka ? "quokka_version: 25.03\nunits:\n  unit_length: 1\n  unit_mass: 1\n  unit_time: 1\n" : nothing))
 end
 
 # ---- the universal contract every reader must satisfy ------------------------------------------
@@ -110,6 +129,15 @@ end
         info = getinfo(0, d, verbose=false); @test info.simcode == "FLASH"
         _assert_contract("FLASH (AMR)", info; uniform=false)
     end
+    let d = mktempdir(); _synth_amrex(d; quokka=true)
+        info = getinfo(0, d, verbose=false); @test info.simcode == "Quokka"
+        _assert_contract("Quokka (AMReX plotfile, AMR)", info; uniform=false)
+    end
+    let d = mktempdir(); _synth_amrex(d; quokka=false)
+        # the same container without metadata.yaml must fall through to the generic reader
+        info = getinfo(0, d, verbose=false); @test info.simcode == "AMReX"
+        _assert_contract("AMReX / BoxLib (AMR)", info; uniform=false)
+    end
 end
 
 # Output-number discovery (filename-only) powers timeseries/getmovie across codes.
@@ -126,5 +154,17 @@ end
     let d = mktempdir()
         touch(joinpath(d, "data.0003.3d.hdf5")); touch(joinpath(d, "data.0007.3d.hdf5"))
         @test Mera._chombo_output_numbers(d) == [3, 7]
+    end
+    let d = mktempdir()
+        # AMReX needs the real thing: a plotfile is a DIRECTORY with a HyperCLaw Header, and
+        # the scan must skip both non-plotfile directories and the `.old.` copies AMReX
+        # leaves behind when a run is restarted.
+        function put(name)
+            src = mktempdir(); _synth_amrex(src; quokka=false)
+            mv(joinpath(src, "plt00000"), joinpath(d, name))
+        end
+        put("plt00007"); put("plt00003"); put("plt00009.old.4")
+        mkpath(joinpath(d, "chk00005"))                     # a checkpoint, not a plotfile
+        @test amrex_output_numbers(d) == [3, 7]
     end
 end
