@@ -258,6 +258,29 @@ Scaling stops at 16 threads and 32 is slightly *worse*, which is the interesting
 job is bound by the filesystem, not by the CPU. See the striping note below — those files
 sit on a single OST, and ~2.4 GiB/s is that OST's ceiling, not the code's.
 
+### Parallelise across plotfiles, not inside one
+
+The ceiling above is **per file**, so the way to go faster is more files at once, not more
+threads on one. Same 96 GiB of work, eight distinct snapshots so every read is cold, one
+exclusive node:
+
+| | wall | effective |
+| --- | ---: | ---: |
+| 4 plotfiles sequentially, 16 threads each | 79 s | 1.22 GiB/s |
+| 4 plotfiles concurrently, 4 threads each | **31 s** | **3.10 GiB/s** |
+
+**2.5× faster for the same 32 cores.** Each plotfile's data lives on its own OST, so four
+files are served by four OSTs while sixteen threads on one file still queue behind one.
+Threads are still worth having — one thread reaches only 0.45 GiB/s, well under a single
+OST's ~2.4 GiB/s — but the useful range is about 4 to 8 per snapshot, with the rest of the
+node spent on other snapshots.
+
+So for a campaign over many snapshots, run something like 8 concurrent jobs at 4 threads
+each rather than one job at 32, which is the shape `dump_weighted_projection.py` already
+uses. Neither script needs changing for this: both take one plotfile and are independent,
+so `for p in $PLOTS; do ... & done; wait` is the whole story, and the chunked reading means
+8 concurrent jobs at 4 threads hold roughly 8 × 4 × 6 × 32 MB ≈ 6 GB between them.
+
 ### Where the time goes
 
 Running the same 24 GiB snapshot twice on one core on a fresh node — once cold, once with
@@ -309,12 +332,30 @@ perturbed value. Totals came out low by 4.9e-7 and 1.4e-6 relative.
 * *Not the accumulator slot registry.* Instrumenting it shows exactly 16 distinct tasks
   claiming 16 slots, with the `min(slot, nthr)` clamp never engaging — and replacing the
   registry with `task_local_storage` did **not** fix it.
+* *Not `_amrex_accumulate!` itself.* Driving it from a harness that streams with
+  `amrex_foreach_box` and supplies per-task buffers is deterministic over five runs, and
+  stays deterministic when the harness is grown to match `amrex_project`'s callback
+  exactly — the `pixmaps` dictionary lookup, the atomics, the kernel as a closure, the
+  range keywords, all of it.
+
+The contradiction is not resolved: with the accumulators instrumented, every failing run
+still reports 16 buffers, 128 boxes and the full cell count, which should leave no way to
+lose an update. Something in `amrex_project` differs from a harness that replicates it
+line for line, and I did not find what.
 
 **Where it is.** `amrex_foreach_box` is sound: a caller that streams with it and
 accumulates into its own `task_local_storage` buffers reproduces yt exactly at 16 threads,
 on both the 24 GiB test case (three runs bit-identical) and the full 384 GiB production
 plotfile (0 of 5 257 377 pixels wrong). The defect is in `amrex_project`'s own
 accumulation. Beyond that I could not localise it, and I did not ship a guessed fix.
+
+**A trap for whoever fixes it.** Rewriting the accumulators over `task_local_storage`
+looks like the obvious repair and is not sufficient, and a *fixed* storage key makes
+things worse: at `max_threads = 1` the boxes run on the calling task, whose storage
+survives the call, so a second invocation in the same session finds a buffer that is not
+in the new accumulator list and returns an image missing everything — observed as one run
+in three coming back essentially empty. If you go this route the key must be per call
+(`gensym()`), and that still leaves the 16-thread loss.
 
 **Workaround, and what is shipped.** `max_threads = 1` is exact — 0 of 5 257 377 pixels
 wrong, identical totals — at 830.6 s against 294.9 s. `quokka_neutral_projection_mera.jl`

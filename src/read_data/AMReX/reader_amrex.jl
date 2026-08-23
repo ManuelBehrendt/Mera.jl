@@ -1535,9 +1535,20 @@ A line-of-sight projection computed **while streaming**, for plotfiles too large
 
     `amrex_foreach_box` itself is *not* implicated — a caller that streams with it and
     accumulates into its own `task_local_storage` buffers reproduces yt exactly at 16
-    threads on the same data. The defect is in this function's accumulation path, and it
-    is not simply the slot registry: replacing that with `task_local_storage` here did not
-    fix it. `scripts/quokka_neutral_projection_mera.jl` is a working example of the
+    threads on the same data. Nor is [`_amrex_accumulate!`](@ref): a harness that drives it
+    over `amrex_foreach_box` with per-task buffers stays deterministic even when grown to
+    match this function's callback exactly (the `pixmaps` lookup, the atomics, the kernel
+    as a closure, the range keywords). Yet every failing run here still reports one buffer
+    per task, every box visited and the full cell count — which should leave no way to lose
+    an update. The mechanism is not identified.
+
+    Rewriting the accumulators over `task_local_storage` is *not* the fix, and a fixed
+    storage key makes it worse: at `max_threads = 1` the boxes run on the caller, whose
+    storage outlives the call, so a second invocation reuses a buffer that is not in the
+    new accumulator list and returns a near-empty image. Any such attempt needs a per-call
+    key (`gensym()`), and the 16-thread loss survives it regardless.
+
+    `scripts/quokka_neutral_projection_mera.jl` is a working example of the
     streaming-plus-own-accumulator route, and reproduces the bug in ~30 s on
     `sigma50-box4kpc` at `max_threads = 16`.
 
