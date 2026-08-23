@@ -15,11 +15,13 @@ It is done, it agrees with yt to within one floating-point ulp, and it takes **3
 ## Contents
 
 - [Files](#files)
+- [Two routes: standalone and through Mera](#two-routes-standalone-and-through-mera)
 - [What "neutral" means here](#what-neutral-means-here)
 - [How to run it](#how-to-run-it)
 - [The figure](#the-figure)
 - [Validation against yt](#validation-against-yt)
 - [Benchmark](#benchmark)
+- [A thread-safety bug in `amrex_project`](#a-thread-safety-bug-in-amrex_project)
 - [Two things worth knowing](#two-things-worth-knowing)
 - [Limits](#limits)
 
@@ -32,6 +34,8 @@ It is done, it agrees with yt to within one floating-point ulp, and it takes **3
 | `scripts/quokka_neutral_projection.jl` | The projection. Streams the plotfile, writes the HDF5 cache. Needs only `HDF5`. |
 | `scripts/quokka_neutral_projection.sh` | Launcher — pins the Andes julia and the `libgfortran` that `HDF5_jll` needs. |
 | `scripts/render_projection.py` | Renders a cache to a figure. Needs only `h5py`, `numpy`, `matplotlib`. |
+| `scripts/quokka_neutral_projection_mera.jl` | The same projection through Mera's Quokka frontend (`getinfo` + `amrex_foreach_box`). |
+| `scripts/quokka_neutral_projection_mera.sh` | Its launcher — uses `$MERA_DEV`, since `--project=.` cannot load Mera. |
 
 Outputs from the production run:
 
@@ -44,6 +48,46 @@ raw-slices/run2.v2/sigma50-1pc/proj-nx1024/cache-mera/
 Written to a **new** `cache-mera/` directory, so nothing under the existing `cache/`
 (the yt results) was touched. The two figures in this report are copies under
 `assets/neutral_projection/`.
+
+---
+
+## Two routes: standalone and through Mera
+
+There are two scripts computing the same number, and both are kept on purpose.
+
+`quokka_neutral_projection.jl` parses the AMReX container itself. It was written first,
+because `julia --project=.` cannot load Mera at all on this machine — the tracked
+`Manifest.toml` pins `ArrayInterface v3.1.32`, which fails to precompile on Julia 1.11
+(`too many parameters for type AbstractTriangular`) and takes `Images`, and therefore
+Mera, down with it. It needs only `HDF5`, streams z-slabs, and reuses preallocated buffers
+so the projection loop allocates nothing.
+
+`quokka_neutral_projection_mera.jl` goes through the frontend, in the side environment
+`AMREX_QUOKKA_REPORT.md` documents (`--project=$MERA_DEV`, which has this checkout
+`Pkg.develop`ed into it). `getinfo` detects Quokka and reads `metadata.yaml`;
+`amrex_foreach_box` streams the plotfile a box at a time; and the kernel gets Mera
+*columns* — `:rho, :Etot, :vx, :vy, :vz, :temperature` — rather than FAB component
+indices. `AMReXFieldSpec` works out that those six columns need six of the eight stored
+components, which is the same saving the standalone script hand-picks, but derived rather
+than hard-coded.
+
+It deliberately does **not** call `amrex_project`, the frontend's own projection, which
+would be the natural choice. See [the thread-safety bug](#a-thread-safety-bug-in-amrex_project).
+
+| | standalone | through Mera |
+|---|---|---|
+| dependencies | `HDF5` | Mera (needs `$MERA_DEV`) |
+| production run, 1 node | **229.7 s** (32 threads) | 294.9 s (16 workers) |
+| peak memory | ~8 GB | ~30 GB |
+| AMR levels | single only | single only (see the bug) |
+| agreement with yt | 1.17e-15 | 1.57e-15 |
+
+Mera's reader materialises whole components per box and then the derived columns on top —
+about 1.6 GB per box per worker on this plotfile, so ~820 GB of allocation churn over 512
+boxes, against a standalone loop that allocates nothing. That is most of the 1.3× and all
+of the memory difference. What it buys is that the physics is written against named
+columns instead of component indices, and that the same script would work on any AMReX
+code Mera has a name table for.
 
 ---
 
@@ -84,6 +128,14 @@ OUT=.../raw-slices/run2.v2/sigma50-1pc/proj-nx1024/cache-mera/plt1553770-neutral
 
 srun -A ast236 -p batch -N 1 -n 1 -c 32 --exclusive -t 1:00:00 \
   bash -c "JULIA_THREADS=32 scripts/quokka_neutral_projection.sh $PLT --nx 1024 --out $OUT"
+```
+
+The Mera route is the same command shape, in the side environment:
+
+```bash
+srun -A ast236 -p batch -N 1 -n 1 -c 32 --exclusive -t 1:00:00 \
+  bash -c "JULIA_THREADS=32 scripts/quokka_neutral_projection_mera.sh $PLT \
+           --nx 1024 --threads 16 --out ${OUT%.h5}-mera.h5"
 ```
 
 Then render — as many times as you like, from the cache, in about a minute each:
@@ -131,6 +183,18 @@ comparison of the same quantity on the same data, not a sanity check.
 | pixels differing by > 1e-9 | 0 of 33 619 | 0 of 5 257 377 |
 | zero / non-zero pattern | identical | identical |
 | total Σ over the image | agrees to 5e-14 | agrees to all 10 printed digits |
+
+The Mera route was then checked against **both**, on the production plotfile:
+
+| `quokka_neutral_projection_mera.jl`, 16 workers | vs yt | vs standalone |
+| --- | --- | --- |
+| max relative difference | 1.57e-15 | 1.31e-15 |
+| pixels differing by > 1e-9 | 0 of 5 257 377 | 0 of 5 257 377 |
+| zero / non-zero pattern | identical | identical |
+| total Σ | identical to 10 printed digits | identical to 10 printed digits |
+
+Three independent implementations — yt's Python, a hand-rolled AMReX reader, and Mera's
+frontend — agreeing to one ulp on 5.26 million pixels.
 
 At nx=1024 each pixel is one sightline of 1024 cells summed in a different order than yt
 sums it, and the difference is a single ulp. At nx=256 four cells share a pixel, so there
@@ -225,6 +289,55 @@ Nothing here scales with plotfile size, so the same command works on a 5 TB snap
 
 ---
 
+## A thread-safety bug in `amrex_project`
+
+Writing the Mera version was supposed to be a straight call to `amrex_project`, the
+frontend's own streaming projection. It is not usable with more than one thread.
+
+**What happens.** Two identical 16-worker runs over `plt1553770` disagreed with yt on
+**15** and on **81** pixels — and the two sets of bad pixels had **no overlap at all**.
+Every difference was a *loss*: a whole cell's contribution to a pixel missing, not a
+perturbed value. Totals came out low by 4.9e-7 and 1.4e-6 relative.
+
+**What it is not.** Three explanations were tested and ruled out:
+
+* *Not rounding near the threshold.* The dropped cells have `x_e` between −0.012 and
+  −0.020, nowhere near the 0.05 cut. No rounding could reclassify them.
+* *Not FMA contraction* in `e_int = E_tot − ½ρv²`, even though that difference is
+  catastrophically cancelled (`e_int/E_tot` down to 7e-5 in these cells). Recomputing with
+  and without `fma` flips nothing.
+* *Not the accumulator slot registry.* Instrumenting it shows exactly 16 distinct tasks
+  claiming 16 slots, with the `min(slot, nthr)` clamp never engaging — and replacing the
+  registry with `task_local_storage` did **not** fix it.
+
+**Where it is.** `amrex_foreach_box` is sound: a caller that streams with it and
+accumulates into its own `task_local_storage` buffers reproduces yt exactly at 16 threads,
+on both the 24 GiB test case (three runs bit-identical) and the full 384 GiB production
+plotfile (0 of 5 257 377 pixels wrong). The defect is in `amrex_project`'s own
+accumulation. Beyond that I could not localise it, and I did not ship a guessed fix.
+
+**Workaround, and what is shipped.** `max_threads = 1` is exact — 0 of 5 257 377 pixels
+wrong, identical totals — at 830.6 s against 294.9 s. `quokka_neutral_projection_mera.jl`
+therefore uses `amrex_foreach_box` plus its own accumulator, which costs the level-aware
+pixel mapping (so it, like the standalone script, handles a single uniform level only).
+`amrex_project` now carries a `!!! warning` saying all of this.
+
+**Reproducer**, about 30 s a run on the login node:
+
+```bash
+P=.../hpc/run2.v2/sigma50-box4kpc/run1/plt0007269
+for k in a b c; do
+  JULIA_THREADS=32 scripts/quokka_neutral_projection_mera.sh $P --nx 256 \
+      --threads 16 --out /tmp/rep_$k.h5 --force
+done   # then diff the images; they should be identical and are not
+```
+
+Fixing this is worthwhile: the conservative per-level pixel mapping in `amrex_project` is
+the part neither of my scripts has, and it is what would make this work on refined
+plotfiles.
+
+---
+
 ## Two things worth knowing
 
 **Boltzmann's constant is not the modern one.** Quokka's `metadata.yaml` reports
@@ -248,10 +361,11 @@ at no cost to the writer.
 
 ## Limits
 
-- **Single level only.** These are uniform-grid TallBox runs (`finest_level = 0`); the
-  script errors clearly rather than silently mis-handling a refined plotfile. Adding level
-  masking would mean carrying the fine-covers-coarse logic that `reader_amrex.jl` already
-  has.
+- **Single level only**, in *both* scripts. These are uniform-grid TallBox runs
+  (`finest_level = 0`); the standalone script errors clearly rather than silently
+  mis-handling a refined plotfile. The Mera script inherits the restriction only because
+  it had to do its own accumulation — `amrex_project` already has the conservative
+  per-level mapping, and once it is thread-safe that limitation goes away.
 - **Full-domain bounds.** There is no `--center`/`--width`; the projection always covers
   the whole box. The reference run used full bounds too, so this matched what was needed.
 - **`--nx` must tile the domain.** Cells per pixel has to be an integer power of two along

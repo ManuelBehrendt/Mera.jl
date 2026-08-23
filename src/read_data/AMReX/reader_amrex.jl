@@ -1524,6 +1524,23 @@ end
 
 A line-of-sight projection computed **while streaming**, for plotfiles too large to load.
 
+!!! warning "Not thread-safe: pass `max_threads = 1`"
+    With `max_threads > 1` this loses scattered cell contributions and the result is not
+    reproducible. Two identical 16-thread runs over a 1024×1024×8192 Quokka plotfile
+    disagreed with yt on 15 and on 81 pixels respectively, with **no overlap** between the
+    two sets, each time dropping a whole cell's contribution to a pixel rather than
+    perturbing it; the totals were low by 5e-7 and 1e-6 relative. `max_threads = 1` is
+    exact (checked against yt over 5.26 million pixels: max relative difference 1.3e-15,
+    identical totals), at roughly 2.4× the wall time.
+
+    `amrex_foreach_box` itself is *not* implicated — a caller that streams with it and
+    accumulates into its own `task_local_storage` buffers reproduces yt exactly at 16
+    threads on the same data. The defect is in this function's accumulation path, and it
+    is not simply the slot registry: replacing that with `task_local_storage` here did not
+    fix it. `scripts/quokka_neutral_projection_mera.jl` is a working example of the
+    streaming-plus-own-accumulator route, and reproduces the bug in ~30 s on
+    `sigma50-box4kpc` at `max_threads = 16`.
+
 `kernel(cols::NamedTuple) -> Vector{Float64}` is evaluated per box on the columns named in
 `vars` (each a flat `Vector{Float64}` over the whole box, `i`-fastest) and returns one
 value per cell. With `weight = nothing` the result is the unweighted line integral
