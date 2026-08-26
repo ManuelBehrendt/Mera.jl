@@ -79,6 +79,13 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         env:
           MERA_TEST_DATA: ${{ github.workspace }}/testdata/fixtures
+          # MERA_SMOKE_ONLY=1 is REQUIRED here, not a contradiction. The maintainer-local tier
+          # (spiral_clumps, mw_L10, ...) is gated on DATA_AVAILABLE, which is merely
+          # isdir(MERA_TEST_DATA) — so pointing that at the downloaded fixtures would make the
+          # runner try to open datasets that are not published, and the job would fail on its
+          # first run. The public-fixture oracles are NOT affected: 76/77 sit in the always-run
+          # block and guard themselves on PUBLIC_AVAILABLE, which the download satisfies.
+          MERA_SMOKE_ONLY: "1"
           JULIA_NUM_THREADS: "4"
         run: julia --project -e 'using Pkg; Pkg.test("Mera")'
 

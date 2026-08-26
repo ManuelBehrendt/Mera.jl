@@ -107,7 +107,10 @@ done
 if [ ! -f "$DEST/README.md" ]; then
     if curl -fsSL --retry 2 -o "$TMP/docs.tar.gz" \
         "$BASE_URL/RAMSES-PUBLIC-docs.tar.gz" 2>/dev/null; then
-        verify "$TMP/docs.tar.gz" "RAMSES-PUBLIC-docs.tar.gz" && tar -xzf "$TMP/docs.tar.gz" -C "$DEST"
+        # a checksum failure here must not pass silently: it means the archive is not what
+        # SHA256SUMS describes, which is exactly the case a verified download exists to catch
+        verify "$TMP/docs.tar.gz" "RAMSES-PUBLIC-docs.tar.gz" || exit 1
+        tar -xzf "$TMP/docs.tar.gz" -C "$DEST"
     fi
 fi
 
