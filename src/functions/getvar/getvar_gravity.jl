@@ -99,6 +99,13 @@ function get_data(dataobject::GravDataType,
             end
 
         # quantities that are derived from the variables in the data table
+        # :level is a STORED column on AMR output only. On a uniform grid every cell sits at
+        # levelmin, so RAMSES writes no level information and the column is absent — getvar then
+        # failed with "no rule computes it", which breaks code written against AMR data when it is
+        # handed uniform output. Supply the constant instead. Guarded on !isamr so that a genuinely
+        # missing level on AMR data still raises rather than being silently invented.
+        elseif i == :level && !isamr
+            vars_dict[:level] = fill(lmax, length(masked_data))
         elseif i == :cellsize
             selected_unit = getunit(dataobject, :cellsize, vars, units)
             if isamr
