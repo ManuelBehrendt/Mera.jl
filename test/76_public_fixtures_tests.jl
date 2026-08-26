@@ -335,6 +335,60 @@ else
                ("total_mass", sum(getvar(p, :mass)), f.oracle.mass_total),
                ("max_mass_diff", maximum(abs.(sort(getvar(p, :mass)) .- sort([1e-3*k for k in 1:f.oracle.npart]))), 0.0)])
     end
+    # ------------------------------------------------------------------ Mera vs RAMSES's own log
+    @testset "cell counts agree with what RAMSES itself reported" begin
+        # The oracles above check that the CHAIN produces sensible physics; a reader error of a few
+        # percent could hide inside their tolerances. This one isolates the reader: RAMSES writes its
+        # own AMR bookkeeping to run.log ("Level L has G grids"), independently of Mera. A grid holds
+        # 2^ndim = 8 cells, and a cell is refined exactly when it hosts a grid one level up, so
+        #
+        #     leaf cells at level L  =  8 * G(L) - G(L+1)
+        #
+        # must equal what getvar(:level) reports, exactly, with no physics assumed. If Mera dropped
+        # cells, misassigned a level, or mishandled a domain boundary, this fails and the analytic
+        # oracles would not necessarily notice.
+        function _log_levels(logfile)
+            blocks = Dict{Int,Dict{Int,Int}}(); cur = Dict{Int,Int}()
+            for ln in eachline(logfile)
+                m = match(r"^\s*Level\s+(\d+)\s+has\s+(\d+)\s+grids", ln)
+                if m !== nothing
+                    cur[parse(Int, m[1])] = parse(Int, m[2])
+                elseif (ms = match(r"^\s*Main step=\s*(\d+)", ln)) !== nothing
+                    blocks[parse(Int, ms[1])] = copy(cur); empty!(cur)
+                end
+            end
+            blocks
+        end
+        # nstep_coarse links an output to its log block; Mera's InfoType does not expose it, so read
+        # it from RAMSES's own info file — which is the right source here anyway.
+        function _coarse_step(p, n)
+            f = joinpath(p, "output_" * lpad(n,5,"0"), "info_" * lpad(n,5,"0") * ".txt")
+            m = match(r"nstep_coarse\s*=\s*(\d+)", read(f, String))
+            m === nothing ? nothing : parse(Int, m[1])
+        end
+
+        checked = 0
+        for key in (:sedov3d_amr, :sedov3d_grav_part, :clumps3d, :mhdtube3d)
+            P = PUBLIC_FIXTURES[key].path
+            logf = joinpath(P, "run.log")
+            isfile(logf) || continue
+            blocks = _log_levels(logf)
+            for n in sort(checkoutputs(P, verbose=false).outputs)
+                step = _coarse_step(P, n)
+                (step === nothing || !haskey(blocks, step)) && continue   # step 0: written before the first log block
+                G   = blocks[step]
+                gas = gethydro(getinfo(n, P, verbose=false), verbose=false, show_progress=false)
+                lev = getvar(gas, :level)
+                for L in sort(collect(keys(G)))
+                    @test count(==(L), lev) == 8*G[L] - get(G, L+1, 0)
+                end
+                @test length(gas.data) == sum(8*G[L] - get(G, L+1, 0) for L in keys(G))
+                checked += 1
+            end
+        end
+        @test checked >= 20        # guard: the loop must actually have compared something
+    end
+
     # ------------------------------------------------------------------ regression vs baselines
     @testset "diagnostics match the committed baselines" begin
         names = ["sedov3d_amr", "sedov3d_amr_summary", "mhdtube3d", "stromgren3d",
