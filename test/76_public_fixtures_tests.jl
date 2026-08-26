@@ -344,6 +344,20 @@ else
             @test q.boxlen == s.boxlen
             @test "sinks" in string.(collect(keys(viewdata(n, store, verbose=false))))
         end
+
+        # convertdata is the bulk path: a sink simulation converted wholesale must not silently
+        # lose its catalogue, either in the default datatype set or when asked for explicitly.
+        mktempdir() do store
+            convertdata(n, path=f.path, fpath=store, verbose=false, show_progress=false)
+            @test "sinks" in string.(collect(keys(viewdata(n, store, verbose=false))))
+            q = loaddata(n, store, :sinks, verbose=false)
+            @test length(q.data) == length(s.data)
+            @test getvar(q, :msink) == getvar(s, :msink)
+        end
+        mktempdir() do store
+            convertdata(n, [:sinks], path=f.path, fpath=store, verbose=false, show_progress=false)
+            @test "sinks" in string.(collect(keys(viewdata(n, store, verbose=false))))
+        end
     end
 
     @testset "legacy_particles3d: the pversion=0 header and its column set" begin
