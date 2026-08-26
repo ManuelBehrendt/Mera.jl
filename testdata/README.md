@@ -150,15 +150,14 @@ To regenerate, clone `github.com/ramses-organisation/ramses` at tag **2026.05**,
 `FLAGS:` line in each test's `config.txt`, and run the namelist unmodified. The comparison uses
 RAMSES's own reduction from `tests/visu/visu_ramses.py :: check_solution` — snap values within
 1e-14 of the mean to the mean, `log10(|x|)` for density/pressure/total_energy/temperature and
-`|x|` otherwise, exact summation — at their 3e-13 tolerance. See the testsets in
+`|x|` otherwise, exact summation — at each test's own published tolerance. See the testsets in
 `test/76_public_fixtures_tests.jl`.
 
 Two practical notes. `smbh-bondi` sets `foutput=1` and writes 15 outputs (~3.8 GB); only the
-referenced snapshot 15 is kept, and rerunning the namelist reproduces the rest. And nine of its
-reference values are bitwise `0.0` — the sink's velocity and spin components, zero by symmetry —
-where ours come out at 1e-17..1e-24; that noise depends on the MPI decomposition and the compiler
-(np=1 aborts inside RAMSES's own sink broadcast), so those nine are asserted against an absolute
-floor and the other 31 against the published relative tolerance.
+referenced snapshot 15 is kept, and rerunning the namelist reproduces the rest. And the acceptance
+tolerance is not uniform: `check_solution` defaults to 3e-13, which `abc-flow`, `sedov3d` and
+`smbh-bondi` use, while `plot-rt-dirac.py` passes `tolerance={"all": 8.0e-11}` for `rt-dirac`. Each
+fixture records its own in `test_config.jl`; we currently meet all of them with margin.
 
 Everything else the suite uses is either a third-party public dataset (the yt project's
 `ramses_mhd_128`, `ramses_mhd_amr` and `yt_cosmo`) or a maintainer-local run — see

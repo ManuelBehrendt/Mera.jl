@@ -39,8 +39,10 @@ oracle** — something theory fixes independently of Mera.
 
 These three are **not ours**. They are configurations from RAMSES's own test suite, run
 unmodified, so the reference solutions the RAMSES developers validate their solver against apply
-directly — 100 published quantities checked 1:1, using their reduction
-(`tests/visu/visu_ramses.py :: check_solution`) at their own 3e-13 tolerance.
+directly — 87 published quantities here, and 100 counting `sedov3d_amr`'s 13, checked 1:1
+using their reduction
+(`tests/visu/visu_ramses.py :: check_solution`) at each test's own published tolerance
+(3e-13 by default; 8e-11 for rt-dirac).
 
 | archive | RAMSES test | quantities |
 |---|---|---|

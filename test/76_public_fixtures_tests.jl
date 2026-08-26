@@ -680,21 +680,20 @@ else
                       elseif k == "unit_l"; info.unit_l
                       elseif k == "unit_t"; info.unit_t
                       elseif k == "sink_nsinks"; Float64(length(sinks.data))
-                      elseif startswith(k, "sink_")
-                          # check_solution treats sink vector COMPONENTS specially: a component
-                          # below 2e-14 of the vector norm is zeroed before the sum, so that a
-                          # numerically-zero component cannot drift the total.
-                          col = Symbol(k[6:end])
-                          v   = Float64.(getvar(sinks, col))
-                          if col in (:lx, :ly, :lz, :vx, :vy, :vz, :vx_gas, :vy_gas, :vz_gas)
-                              base = String(col) in ("lx","ly","lz") ? "l" :
-                                     endswith(String(col), "_gas") ? "v_gas" : "v"
-                              comps = base == "l"     ? (:lx, :ly, :lz) :
-                                      base == "v_gas" ? (:vx_gas, :vy_gas, :vz_gas) : (:vx, :vy, :vz)
-                              nrm = sqrt.(sum(Float64.(getvar(sinks, c)).^2 for c in comps))
-                              v = [abs(x) < 2e-14 * max(n, 1e-30) ? 0.0 : x for (x, n) in zip(v, nrm)]
-                          end
-                          _reduce(v)
+                        elseif startswith(k, "sink_")
+                            # check_solution zeroes the sink velocity/spin components below a
+                            # threshold before summing. That threshold is a FLAT ABSOLUTE 2e-14,
+                            # not a fraction of the vector norm: the normalisation branch is
+                            # guarded by key.endswith("_x"), and these keys end in "lx"/"vx",
+                            # never "_x", so norms[key] keeps its initial 1.0. Porting it as a
+                            # RELATIVE threshold left our ~1e-17 values unzeroed and made nine
+                            # published zeros look unreproducible; with the flat floor they match.
+                            col = Symbol(k[6:end])
+                            v   = Float64.(getvar(sinks, col))
+                            if col in (:lx, :ly, :lz, :vx, :vy, :vz, :vx_gas, :vy_gas, :vz_gas)
+                                v = [abs(x) < 2e-14 ? 0.0 : x for x in v]
+                            end
+                            _reduce(v)
                       elseif haskey(VARMAP, k)
                           q = VARMAP[k]
                           v = if q === :level && info.levelmin == info.levelmax
@@ -708,21 +707,12 @@ else
                       end
                 @test got !== nothing            # every reference quantity must be reachable
                 got === nothing && continue
-                # Nine of smbh-bondi's reference values are bitwise 0.0: the sink's velocity and
-                # spin components, zero by symmetry for a sink at rest at the box centre. Ours come
-                # out at 1e-17..1e-24 instead — floating-point noise whose exact value depends on
-                # the MPI decomposition and the compiler (checked at np=1/2/4/8; np=1 aborts inside
-                # RAMSES's own sink broadcast). RAMSES's comparator scores 0-vs-nonzero as an
-                # infinite error, so those nine are asserted against an ABSOLUTE floor and the other
-                # 31 against the published 3e-13 relative tolerance.
-                if expected == 0.0
-                    @test abs(got) < 1e-12
-                else
-                    @test isapprox(got, expected; rtol=3e-13)    # RAMSES's own acceptance tolerance
-                    worst = max(worst, abs(got-expected)/abs(expected))
-                end
+                # RAMSES's comparator scores 0-vs-nonzero as an INFINITE error, so a published
+                # zero must be reproduced EXACTLY — which the faithful reduction above does.
+                @test isapprox(got, expected; rtol = f.oracle.tolerance)
+                expected == 0.0 || (worst = max(worst, abs(got-expected)/abs(expected)))
             end
-            @test worst < 1e-12
+            @test worst < f.oracle.tolerance
         end
     end
 

@@ -261,14 +261,14 @@ const PUBLIC_FIXTURES = Dict(
         path = joinpath(PUBLIC_PATH, "ramses_abc_flow"),
         ramses_version = "2026.05",
         outputs = 2, boxlen = 1.0,
-        oracle = (snapshot = 2, source = "tests/mhd/abc-flow", nquantities = 22),
+        oracle = (snapshot = 2, source = "tests/mhd/abc-flow", nquantities = 22, tolerance = 3e-13),
         note = "3-D MHD; the reference covers all six face-centred B components",
     ),
     :ramses_rt_dirac => (
         path = joinpath(PUBLIC_PATH, "ramses_rt_dirac"),
         ramses_version = "2026.05",
         outputs = 2, boxlen = 5.0,
-        oracle = (snapshot = 2, source = "tests/rt/rt-dirac", nquantities = 25),
+        oracle = (snapshot = 2, source = "tests/rt/rt-dirac", nquantities = 25, tolerance = 8e-11),
         note = "3-D RT + MHD; the reference includes the passive ionisation scalars",
     ),
     :sinks3d => (
@@ -284,7 +284,7 @@ const PUBLIC_FIXTURES = Dict(
         ramses_version = "2026.05",
         outputs = 1, boxlen = 1.0,
         # 24 of the 40 published quantities are sink_*, so this is the reference check for getsinks
-        oracle = (snapshot = 15, source = "tests/sink/smbh-bondi", nquantities = 40, nsink = 24),
+        oracle = (snapshot = 15, source = "tests/sink/smbh-bondi", nquantities = 40, nsink = 24, tolerance = 3e-13),
         note = "only the REFERENCED snapshot 15 is kept; foutput=1 writes 15 outputs, rerun the namelist for the rest",
     ),
     :legacy_particles3d => (

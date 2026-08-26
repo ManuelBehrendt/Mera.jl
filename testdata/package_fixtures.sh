@@ -34,9 +34,12 @@ for f in "${FIXTURES[@]}"; do
         echo "    MISSING, skipped: $f" >&2
         continue
     fi
-    # --exclude keeps macOS metadata out of a public artifact
+    # --exclude keeps macOS metadata out of a public artifact.
+    # gzip -n suppresses the timestamp gzip would otherwise write into its header: without it,
+    # repacking unchanged data yields a different checksum every time and SHA256SUMS stops
+    # meaning "this is the same data".
     tar --exclude='.DS_Store' --exclude='._*' \
-        -czf "$OUTDIR/$f.tar.gz" -C "$ROOT" "$f"
+        -cf - -C "$ROOT" "$f" | gzip -n -6 > "$OUTDIR/$f.tar.gz"
     printf "    %-22s %s\n" "$f" "$(du -h "$OUTDIR/$f.tar.gz" | awk '{print $1}')"
 done
 
@@ -46,7 +49,7 @@ for m in README.md OVERVIEW.ipynb Project.toml; do
     [ -f "$ROOT/$m" ] && META+=("$m")
 done
 if [ ${#META[@]} -gt 0 ]; then
-    tar --exclude='.DS_Store' -czf "$OUTDIR/RAMSES-PUBLIC-docs.tar.gz" -C "$ROOT" "${META[@]}"
+    tar --exclude='.DS_Store' -cf - -C "$ROOT" "${META[@]}" | gzip -n -6 > "$OUTDIR/RAMSES-PUBLIC-docs.tar.gz"
     printf "    %-22s %s\n" "RAMSES-PUBLIC-docs" "$(du -h "$OUTDIR/RAMSES-PUBLIC-docs.tar.gz" | awk '{print $1}')"
 fi
 

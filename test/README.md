@@ -155,12 +155,19 @@ the strongest tier in the suite: the numbers being matched were published by som
 Source: `github.com/ramses-organisation/ramses`, tag **2026.05**. The comparison uses RAMSES's own
 reduction from `tests/visu/visu_ramses.py :: check_solution` — snap values within 1e-14 of the mean
 to the mean, `log10(|x|)` for density/pressure/total_energy/temperature and `|x|` otherwise, exact
-summation — at their own **3e-13** tolerance. 100 published quantities are checked 1:1.
+summation — at each test's own published tolerance. These three contribute 87 quantities; with
+the 13 of `sedov3d_amr` (asserted in its own testset above) that is 100 checked 1:1.
 
-One documented deviation: nine of `smbh-bondi`'s values are bitwise `0.0` (the sink's velocity and
-spin, zero by symmetry) where ours land at 1e-17..1e-24. That noise depends on the MPI
-decomposition and compiler, so those nine are asserted against an absolute floor. The reasoning is
-recorded at the assertion in `76_public_fixtures_tests.jl`.
+All of them are reproduced exactly, including nine of `smbh-bondi`'s that are published as
+bitwise `0.0` — the sink's velocity and spin, zero by symmetry. Those need care: `check_solution`
+zeroes such components below a threshold before summing, and that threshold is a flat absolute
+2e-14 rather than a fraction of the vector norm, because its normalisation branch tests
+`key.endswith("_x")` and these keys end in `lx`/`vx`. Porting it as a relative threshold leaves
+~1e-17 values unzeroed and makes those nine look unreproducible.
+
+The acceptance tolerance is per test, not uniform: `check_solution` defaults to 3e-13, and
+`plot-rt-dirac.py` passes `tolerance={"all": 8.0e-11}` for `rt-dirac`. Each fixture records its own
+in `test_config.jl`.
 
 ### 3. Third-party public datasets
 
