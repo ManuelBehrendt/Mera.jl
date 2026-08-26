@@ -620,6 +620,7 @@ mutable struct FileNamesType
     rt_descriptor::String
     rt_descriptor_v0::String
     clumps::String
+    sinks::String
     timer::String
     header::String
     namelist::String
@@ -912,6 +913,42 @@ mutable struct PartDataType <: HydroPartType
     used_descriptors::Dict{Any,Any}
     scale::ScalesType003  # Updated to current type
     PartDataType() = new()
+end
+
+
+"""
+Mutable Struct: Contains the RAMSES sink-particle catalogue and the simulation metadata
+
+```julia
+mutable struct SinkDataType <: ContainMassDataSetType
+    data
+    info::InfoType
+    boxlen::Float64
+    ranges::Array{Float64,1}
+    selected_sinkvars::Array{Symbol,1}
+    used_descriptors::Dict{Any,Any}
+    scale::ScalesType003
+end
+```
+
+Sinks are written by RAMSES as a single CSV per output (`sink_NNNNN.csv`), not as one file per
+CPU like the AMR data — the catalogue is small and global. The file carries TWO header lines: the
+column names, and the dimensional formula of each column in terms of `m`, `l` and `t`
+(e.g. `l t**-1` for a velocity). Mera keeps those formulas in `used_descriptors[:units]` so the
+physical meaning of every column survives the read.
+
+Load with [`getsinks`](@ref).
+"""
+mutable struct SinkDataType <: ContainMassDataSetType
+# exported
+    data
+    info::InfoType
+    boxlen::Float64
+    ranges::Array{Float64,1}
+    selected_sinkvars::Array{Symbol,1}
+    used_descriptors::Dict{Any,Any}
+    scale::ScalesType003
+    SinkDataType() = new()
 end
 
 

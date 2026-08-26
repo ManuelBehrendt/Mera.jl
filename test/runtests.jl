@@ -83,6 +83,7 @@ if isempty(_focus)
         include("74_kinematics_derived_tests.jl")   # data-free: :cellsize, vcenter=, getmask, clumping, cosmic_time
         include("75_mask_equivalence_tests.jl")     # data-free metamorphic: getvar(mask=m) == getvar()[m] on every data type
         include("76_public_fixtures_tests.jl")     # analytic oracles on the reproducible public RAMSES fixtures (self-guarded)
+        include("77_sinks_tests.jl")            # data-free: the sink-particle reader (synthetic csv is the oracle)
 
         # The analytic correctness oracles. These were included in the data-dependent tier below,
         # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and

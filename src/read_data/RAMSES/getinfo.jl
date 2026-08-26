@@ -72,12 +72,7 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", code::S
     readrtfile1!(info)      # rt overview
     readclumpfile1!(info)   # clumps overview
 
-    # todo: check for sinks
-    info.sinks = false
-    info.sinks_variable_list = Symbol[]
-    info.descriptor.sinks = Symbol[]
-    info.descriptor.usesinks = false
-    info.descriptor.sinksfile = false
+    readsinkfile1!(info)    # sinks overview
 
 
 
@@ -849,6 +844,35 @@ function readclumpfile1!(dataobject::InfoType)
     dataobject.descriptor.clumpsfile = false
 
 
+
+    return dataobject
+end
+
+
+# Sinks are written as ONE csv per output (sink_NNNNN.csv), not one file per cpu like the AMR
+# data. The first header line carries the column names, the second the dimensional formula of each
+# column (m / l / t), which is kept so the meaning of every column survives into getsinks.
+function readsinkfile1!(dataobject::InfoType)
+    sink_files = false
+    header = Symbol[]
+    if isfile(dataobject.fnames.sinks)
+        sink_files = true
+        for l in readlines(dataobject.fnames.sinks)
+            st = strip(l)
+            if startswith(st, "#")
+                header = Symbol.(strip.(split(strip(replace(st, r"^#" => "")), ",")))
+                break
+            end
+        end
+    end
+
+    dataobject.sinks                = sink_files
+    dataobject.sinks_variable_list  = header
+
+    # descriptor
+    dataobject.descriptor.sinks     = header
+    dataobject.descriptor.usesinks  = false
+    dataobject.descriptor.sinksfile = sink_files
 
     return dataobject
 end
