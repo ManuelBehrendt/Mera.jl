@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `switching_to_mera.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/switching_to_mera.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 If you already post-process simulations — with a Python analysis package, your group's own
 scripts, or the simulation code's tools — this page maps the concepts you know onto Mera and
 walks one complete workflow end to end. For the Julia language itself (Python/MATLAB/IDL →
@@ -57,9 +58,8 @@ AVALON = get(ENV, "MERA_AVALON", "/Volumes/FASTStorage/Simulations/AVALONpaper/A
 info = infodata(390, AVALON, verbose=false);                   # metadata only — instant
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -68,7 +68,6 @@ info = infodata(390, AVALON, verbose=false);                   # metadata only �
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 ```
-
 
 `info` already knows everything about the snapshot (levels, box size, which files exist,
 the unit system) without touching the heavy data. Loading is the explicit step — and the place
@@ -86,10 +85,11 @@ usedmemory(gas)
 ```
 148195224 cells in memory, levels 6-13
 Memory used: 12.146 GB
-
-(12.145861289463937, "GB")
 ```
 
+```
+(12.145861289463937, "GB")
+```
 
 Derived quantities are computed on demand from the loaded columns — with units as
 symbols (every available scale is listed by `viewfields(info.scale)`):
@@ -106,7 +106,6 @@ T  range: (11.0, 5.45e8) K
 cs range: (0.341, 2400.0) km/s
 ```
 
-
 Geometric and value-based selection compose, and each result is again a full Mera
 object — `getvar`, `projection`, `profile` all work on it unchanged:
 
@@ -122,7 +121,6 @@ println("cold gas mass: ", round(msum(cold, :Msol), sigdigits=4), " Msol")
 disk: 104072571 cells;  cold disk: 86950432 cells
 cold gas mass: 4.116e9 Msol
 ```
-
 
 Maps and profiles close the loop — a face-on surface-density map of the cold disk and
 its radial profile:
@@ -145,9 +143,7 @@ hidedecorations!(ax)
 fig
 ```
 
-
-![](switching_to_mera_files/switching_to_mera_9_0.png)
-
+![](switching_to_mera_files/switching_to_mera_10_1.png)
 
 ```julia
 out = mktempdir()                                   # any existing folder
@@ -162,7 +158,6 @@ println("round-trip ok: ", length(back.data) == length(cold.data), "  (",
 ```
 round-trip ok: true  (4060.3 MB on disk)
 ```
-
 
 ## Differences to expect, honestly
 

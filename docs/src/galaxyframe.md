@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `galaxyframe.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/galaxyframe.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 "Find the centre, then rotate to face-on / edge-on" is a ritual every disk-galaxy analysis
 repeats by hand. [`center_of`](@ref) and [`face_on`](@ref) / [`edge_on`](@ref) do it from
 the data: the centre from the mass distribution, the orientation from the **gas angular
@@ -25,9 +26,8 @@ gas  = gethydro(info);
 println("cells loaded : ", length(gas.data))
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -35,9 +35,7 @@ println("cells loaded : ", length(gas.data))
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 [Mera]: 2026-08-03T11:52:25.491
-
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -61,7 +59,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -75,24 +73,19 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
 [Mera]: Get hydro data: 2026-08-03T11:52:28.149
-
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
-
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.86 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -105,10 +98,8 @@ Creating Table from 28320979 cells with max 4 threads...
 ✓ Table created in 42.044 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
-
 cells loaded : 28320979
 ```
-
 
 ## Finding the centre
 
@@ -129,7 +120,6 @@ center_of (:com,  fraction) : [0.50001, 0.50046, 0.50044]
 center_of (:densest)        : [0.49658, 0.50244, 0.50146]
 center_of (:com,  kpc)      : [24.0003, 24.022, 24.0212]
 ```
-
 
 For `:standard` the result is a **box fraction (0–1)** — the convention that
 [`projection`](@ref), [`subregion`](@ref) and `getvar(…; center=…)` expect — so it feeds
@@ -160,13 +150,11 @@ GalaxyFrame:
   los  = [-0.0004, -0.0002, 1.0]
   up   = [-1.0, 0.0, -0.0004]
   |angmom| = 160.2
-
 los    : [-0.0004, -0.0002, 1.0]
 up     : [-1.0, 0.0, -0.0004]
 center : [0.50001, 0.50046, 0.50044]  [standard]
 angmom : [-0.06597, -0.03328, 160.2]
 ```
-
 
 ```julia
 eo = edge_on(gas)
@@ -185,12 +173,10 @@ GalaxyFrame:
   los  = [-0.0, 1.0, 0.0002]
   up   = [-0.0004, -0.0002, 1.0]
   |angmom| = 160.2
-
 edge-on los : [-0.0, 1.0, 0.0002]
 edge-on up  : [-0.0004, -0.0002, 1.0]
 los_faceon · los_edgeon = -0.0
 ```
-
 
 Why it works without subtracting the bulk velocity: angular momentum measured about the
 **centre of mass** cancels any net translation, because ``\sum_i m_i \mathbf{r}_i = 0``
@@ -223,40 +209,30 @@ fig
 
 ```
 [Mera]: 2026-08-03T11:53:58.646
-
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Selected var(s)=(:sd,) 
+Selected var(s)=(:sd,)
 Weighting      = :mass
 Off-axis LOS   = [-0.0004, -0.0002, 1.0]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-
 [Mera]: 2026-08-03T11:54:09.266
-
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Selected var(s)=(:sd,) 
+Selected var(s)=(:sd,)
 Weighting      = :mass
 Off-axis LOS   = [-0.0, 1.0, 0.0002]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-
 face-on Sigma extrema : (0.0, 200.81405317206742)
 edge-on Sigma extrema : (0.0, 6539.3160386012305)
 ```
 
-
-![](galaxyframe_files/galaxyframe_10_1.png)
-
+![](galaxyframe_files/galaxyframe_11_9.png)
 
 ## Several galaxies, mergers, cosmological boxes
 
@@ -303,7 +279,6 @@ GalaxyFrame:
   |angmom| = 160.2
 aperture-framed center [kpc] : [24.0003, 24.022, 24.0212]
 ```
-
 
 ## Options
 

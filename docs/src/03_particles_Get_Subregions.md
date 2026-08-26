@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `03_particles_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/03_particles_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 On an AMR grid a region boundary is a *choice*. A cell straddling the edge can
 be kept whole, judged by its centre, or split by volume fraction, and the
 [hydro page](03_hydro_Get_Subregions.md) is largely about the consequences of
@@ -74,12 +75,10 @@ println("particle mass  : ", round(minimum(getvar(stars, :mass, :Msol)), sigdigi
 println("ages           : ", round(minimum(age), digits=1), " – ",
         round(maximum(age), digits=1), " Myr")
 println("box            : ", round(stars.boxlen * kpc, sigdigits=4), " kpc")
-
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -87,7 +86,6 @@ println("box            : ", round(stars.boxlen * kpc, sigdigits=4), " kpc")
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.9.0 | Julia 1.12.7 | 4 threads
-
 particles      : 508939   columns: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)
 with birth = 0 : 0 (dark matter, if any)
 total mass     : 5.8044e9 Msol
@@ -95,7 +93,6 @@ particle mass  : 4910.0 – 22700.0 Msol
 ages           : 0.0 – 531.0 Myr
 box            : 48.0 kpc
 ```
-
 
 Every particle loaded here carries a non-zero birth time — this population is
 stars. Their combined mass, $5.8 \times 10^9\,M_\odot$, is worth remembering:
@@ -139,13 +136,11 @@ sd_bar!(pos) = Colorbar(pos; colormap=:inferno, colorrange=SDLIM,
 pos(o) = (getvar(o, :x, :kpc, center=[:bc]),
           getvar(o, :y, :kpc, center=[:bc]),
           getvar(o, :z, :kpc, center=[:bc]))
-
 ```
 
 ```
 pos (generic function with 1 method)
 ```
-
 
 ```julia
 p_face = sproj(stars)
@@ -167,12 +162,9 @@ lines!(axe, [-12., 12., 12., -12., -12.], [-2., -2., 2., 2., -2.];
 text!(axe, -11.5, 2.4; text="Cylinder(12, 2)", color=:cyan, fontsize=11)
 sd_bar!(fig[1, 3])
 fig
-
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_5_0.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_6_1.png)
 
 ## 2. One Sphere, and Arithmetic That Cannot Drift
 
@@ -196,18 +188,15 @@ println()
 println("count residual : ", length(s_in.data) + length(s_out.data) - N)
 println("mass  residual : ", (msum(s_in, :Msol) + msum(s_out, :Msol)) / M - 1,
         "   (floating-point summation only)")
-
 ```
 
 ```
 all particles      : 508939   5.804426e9 Msol
 inside  Sphere(10) : 419529   4.7852795e9
 outside Sphere(10) : 89410    1.0191465e9
-
 count residual : 0
 mass  residual : 1.5543122344752192e-15   (floating-point summation only)
 ```
-
 
 The counts close on the nose — they are integers, and every particle is
 classified exactly once. The mass residual is a few units in the last place:
@@ -282,7 +271,6 @@ text!(ax2, 19.5, 115; text="N = 100  →  10 % uncertainty", color=:grey, fontsi
       align=(:right, :bottom))
 axislegend(ax2; position=:lb, framevisible=false)
 fig
-
 ```
 
 ```
@@ -298,14 +286,11 @@ shell [kpc]   N        M [Msol]     ≈ 1/√N
 14.0 – 15.0   4500     5.113e7      1.5 %
 16.0 – 17.0   1484     1.685e7      2.6 %
 18.0 – 19.0   652      7.405e6      3.9 %
-
 thinnest bin, 1.00 kpc shells : N = 408  →  5.0 %
 thinnest bin, 0.25 kpc shells : N = 71  →  11.9 %
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_10_1.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_11_4.png)
 
 Inside 6 kpc each shell holds tens of thousands of particles and the mass is
 good to a fraction of a percent. Even the outermost 1-kpc shell still holds a
@@ -365,7 +350,6 @@ for (k, (name, reg)) in enumerate(gallery)
 end
 rowgap!(fig.layout, 4); colgap!(fig.layout, 8)
 fig
-
 ```
 
 ```
@@ -377,9 +361,7 @@ CylindricalShell(6, 10, 2)    145216   28.6 % of the stellar mass
 Cylinder(8, 2) tilted 40°     229964   45.2 % of the stellar mass
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_13_1.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_14_6.png)
 
 Every panel is the same edge-on view of the same population; grey is
 everything, orange is what the region kept. The tilted cylinder is the one to
@@ -418,18 +400,15 @@ println("off-plane fraction of the inner stellar mass : ",
 println("counts partition exactly : ",
         length(s_halo.data) + length(subregion(s_ball, Cylinder(15., 2.), verbose=false).data)
         == length(s_ball.data))
-
 ```
 
 ```
 Sphere(15)                 : 502097   5.7267e9 Msol
   ∩ disc slab              : 489072   5.5788e9
   minus the slab (@region) : 13101    1.4881e8
-
 off-plane fraction of the inner stellar mass : 2.6 %
 counts partition exactly : true
 ```
-
 
 The last line is the particle version of the hydro page's ledger check, and it
 is worth making a habit of: a composite and its complement, applied to the
@@ -470,17 +449,14 @@ println("  older than 300 Myr        : ", rpad(length(old.data), 9),
         round(msum(old, :Msol), sigdigits=5))
 println()
 println("region∘filter == filter∘region : ", length(young.data) == length(young2.data))
-
 ```
 
 ```
 annulus 4–12 kpc, |z| < 2 : 286724   3.2728e9 Msol
   younger than 50 Myr    : 45119    5.2864e8
   older than 300 Myr        : 65342    7.4213e8
-
 region∘filter == filter∘region : true
 ```
-
 
 ```julia
 p_young = sproj(young)
@@ -496,12 +472,9 @@ ax2 = Axis(fig[1, 2], title="older than 300 Myr — a smooth, settled disc",
 show_sd!(ax2, p_old; decorate=true); limits!(ax2, -14, 14, -14, 14)
 sd_bar!(fig[1, 3])
 fig
-
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_20_0.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_21_1.png)
 
 Same region, same units, same colour scale — and two different galaxies. The
 young population traces the structure the gas has *right now*: clumpy, knotted,
@@ -548,7 +521,6 @@ in a sphere : 1707 particles
 …of which tracers: 1707
 :family column survived the subregion: true
 ```
-
 
 The region kept a subset of rows and every column came with it, `:family` included — so a type mask
 built on the subregion is as valid as one built on the whole box. Region, value condition and
@@ -599,7 +571,6 @@ scatter!(ax, r_ann, vo; color=:firebrick, markersize=8)
 axislegend(ax; position=:rb, framevisible=false)
 ylims!(ax, 0, nothing)
 fig
-
 ```
 
 ```
@@ -612,9 +583,7 @@ fig
 at 7.5 kpc :  young 191.2 km/s (N=2396)   old 166.7 km/s (N=7878)
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_26_1.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_27_4.png)
 
 The gap between the two curves is the drift: about 25 km/s at 7.5 kpc, where
 the young stars are turning at 191 km/s and the older ones at 167. It is a
@@ -652,7 +621,6 @@ for (o, c, l) in ((dyoung, :dodgerblue, "age < 50 Myr"), (dold, :firebrick, "age
 end
 axislegend(ax; position=:rt, framevisible=false)
 fig
-
 ```
 
 ```
@@ -660,9 +628,7 @@ RMS height, age < 50 Myr : 0.295 kpc  (N=68020)
 RMS height, age > 300 Myr   : 0.871 kpc  (N=103448)
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_28_1.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_29_2.png)
 
 A factor of three in RMS height between the two populations — 0.3 kpc against
 0.87 kpc — in the same cylinder, from the same three lines of selection code.
@@ -697,7 +663,6 @@ println("classic :sphere  : ", rpad(length(classic.data), 9), round(msum(classic
 println("value-type Sphere: ", rpad(length(value_t.data), 9), round(msum(value_t, :Msol), sigdigits=8))
 println("identical        : ", length(classic.data) == length(value_t.data) &&
                                msum(classic, :Msol) == msum(value_t, :Msol))
-
 ```
 
 ```
@@ -705,7 +670,6 @@ classic :sphere  : 419529   4.7852795e9
 value-type Sphere: 419529   4.7852795e9
 identical        : true
 ```
-
 
 ## 9. Practical Guidance
 

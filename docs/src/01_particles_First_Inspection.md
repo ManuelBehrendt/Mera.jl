@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `01_particles_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_particles_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 This notebook provides a comprehensive introduction to loading and analyzing particle simulation data using Mera.jl. You'll learn the fundamentals of working with RAMSES particle data and its relationship to AMR (Adaptive Mesh Refinement) structures.
 
 ## Learning Objectives
@@ -123,9 +124,8 @@ using Mera
 info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -133,9 +133,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.9.0 | Julia 1.12.7 | 4 threads
-
 [Mera]: 2026-08-26T20:36:13.215
-
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -159,7 +157,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -174,7 +172,6 @@ makefile:         true
 patchfile:        true
 =======================================================
 ```
-
 
 ### Understanding Particle Properties
 
@@ -216,7 +213,6 @@ Let's examine the complete structure of the particle information object to under
 viewfields(info.part_info)
 ```
 
-
 ```
 [Mera]: Particle overview
 ===============================
@@ -239,7 +235,6 @@ other_tracer2	= 0
 gas_tracer	= 0
 ```
 
-
 ## Loading Particle Data
 
 Now that we understand our simulation's structure and variable organization, let's load the actual particle data. We'll use Mera's powerful data loading capabilities to read both the particle positions and properties, along with their associated AMR grid structure.
@@ -256,7 +251,7 @@ The `getparticles()` function is the primary tool for loading particle data from
 ### Loading Complete Particle Dataset
 
 Now let's load the AMR and particle data from all files. This will read:
-- **Full simulation box** - All spatial regions  
+- **Full simulation box** - All spatial regions
 - **All particle families** - All particle types present in the files
 - **All available variables** - Complete particle properties and positions
 - **Associated AMR structure** - Grid information for spatial analysis
@@ -267,16 +262,13 @@ particles = getparticles(info);
 
 ```
 [Mera]: Get particle data: 2026-08-26T20:36:19.186
-
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
-
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
@@ -284,7 +276,6 @@ Found 5.445150e+05 particles
 Memory used for data table :38.428720474243164 MB
 -------------------------------------------------------
 ```
-
 
 ### Memory Usage Analysis
 
@@ -298,7 +289,6 @@ usedmemory(particles);
 Memory used: 38.449 MB
 ```
 
-
 ## Understanding Data Types
 
 The loaded data object is now of type `PartDataType`, which is specifically designed for particle simulation data:
@@ -310,7 +300,6 @@ typeof(particles)
 ```
 PartDataType
 ```
-
 
 ### Type Hierarchy
 
@@ -325,16 +314,14 @@ supertype( ContainMassDataSetType )
 DataSetType
 ```
 
-
 ```julia
 # HydroDataType is a subtype of the combined HydroPartType, useful for functions that can handle hydro and particle data
-supertype( PartDataType ) 
+supertype( PartDataType )
 ```
 
 ```
 HydroPartType
 ```
-
 
 ```julia
 supertype( HydroPartType )
@@ -343,7 +330,6 @@ supertype( HydroPartType )
 ```
 ContainMassDataSetType
 ```
-
 
 ![TypeHierarchy](./assets/TypeHierarchy.png)
 
@@ -355,21 +341,16 @@ The particle data is stored in an **IndexedTables** table format, with user-sele
 viewfields(particles)
 ```
 
-
 ```
 data ==> IndexedTables: (:level, :x, :y, :z, :id, :family, :tag, :vx, :vy, :vz, :mass, :birth)
-
 info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
-
 lmin	= 6
 lmax	= 10
 boxlen	= 48.0
 ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
 selected_partvars	= [:level, :x, :y, :z, :id, :family, :tag, :vx, :vy, :vz, :mass, :birth]
-
 scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :nG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
 ```
-
 
 ### Convenient Data Access
 
@@ -395,7 +376,6 @@ propertynames(particles)
 (:data, :info, :lmin, :lmax, :boxlen, :ranges, :selected_partvars, :used_descriptors, :scale)
 ```
 
-
 ## Data Analysis and Exploration
 
 Now that we have loaded our particle data, let's explore its structure and properties in detail. This section demonstrates the key analysis functions available in Mera.jl.
@@ -416,7 +396,9 @@ amr_overview = amroverview(particles)
 
 ```
 Counting...
+```
 
+```
 Table with 5 rows, 2 columns:
 level  particles
 ────────────────
@@ -426,7 +408,6 @@ level  particles
 9      0
 10     0
 ```
-
 
 ### Statistical Data Analysis
 
@@ -442,7 +423,9 @@ data_overview = dataoverview(particles)
 
 ```
 Calculating...
+```
 
+```
 Table with 5 rows, 23 columns:
 Columns:
 #   colname     type
@@ -471,7 +454,6 @@ Columns:
 22  birth_min   Any
 23  birth_max   Any
 ```
-
 
 ### Working with IndexedTables
 
@@ -503,13 +485,12 @@ level  mass_min    mass_max    birth_min  birth_max
 10     8.00221e-7  2.00055e-6  0.0951753  29.9032
 ```
 
-
 ### Unit Conversion Example
 
 Extract birth time data from a specific column and convert it to physical units (Myr). The `column()` function retrieves data from a specific table column, maintaining the order consistent with the table structure:
 
 ```julia
-column(data_overview, :birth_min) * info.scale.Myr 
+column(data_overview, :birth_min) * info.scale.Myr
 ```
 
 ```
@@ -520,7 +501,6 @@ column(data_overview, :birth_min) * info.scale.Myr
  82.98342559299353
   1.419158337486011
 ```
-
 
 ### In-Place Unit Conversion
 
@@ -544,7 +524,6 @@ level  mass_min    mass_max    birth_min  birth_max
 9      8.00221e-7  8.00221e-7  5.56525    329.92
 10     8.00221e-7  2.00055e-6  0.0951753  445.886
 ```
-
 
 ## Data Structure Deep Dive
 
@@ -604,7 +583,6 @@ Columns:
 12  birth    Float64
 ```
 
-
 ### Focused Data Examination
 
 For a more detailed view of specific columns, we can select key fields to understand the particle organization better:
@@ -643,7 +621,6 @@ level  x        y        z        birth
 10     38.0953  22.8757  24.0231  9.20251
 ```
 
-
 ## Particle Families and Tracers
 
 RAMSES tags every particle with a **family code** saying what it represents. Mera exposes it as the
@@ -676,7 +653,6 @@ end
 family 2 : 544515 particles
 ```
 
-
 ### Selecting by particle type
 
 `getparticlemask` builds a boolean mask from a name, a family code, or a `(family=…, tag=…)` pair.
@@ -698,7 +674,6 @@ clouds   -> 0
 tracer   -> 0
 gas      -> 0
 ```
-
 
 ### Where the selection happens — and why it matters for memory
 
@@ -728,28 +703,22 @@ println("particles in the region: ", length(subset.data))
 
 ```
 [Mera]: Get particle data: 2026-08-26T20:36:31.357
-
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass) 
-
+Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.368130e+05 particles
 Memory used for data table :33.78953266143799 MB
 -------------------------------------------------------
-
 particles in the region: 536813
 ```
-
 
 ### Tracers in practice
 
@@ -779,7 +748,6 @@ tracer mask    : 124990
 gas-tracer mask: 124990
 star mask      : 0
 ```
-
 
 Every particle here is family `0` — a gas tracer. Because tracers are advected with the flow and
 never created or destroyed, their **count and total mass are invariant** between snapshots; that
@@ -828,7 +796,3 @@ Now that you understand particle data fundamentals, you can explore:
 - **Multi-physics analysis**: Combining particle data with hydro and gravity data
 - **Time series analysis**: Working with multiple simulation outputs to study evolution
 - **Performance optimization**: Advanced techniques for large-scale particle data processing
-
-```julia
-
-```

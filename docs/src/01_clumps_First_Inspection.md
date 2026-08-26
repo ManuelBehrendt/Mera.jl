@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `01_clumps_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_clumps_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 This notebook provides a comprehensive introduction to loading and analyzing clump structure data using Mera.jl. You'll learn the fundamentals of working with RAMSES clump data and understanding clump hierarchies and properties.
 
 ## Learning Objectives
@@ -128,9 +129,8 @@ using Mera
 info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -138,9 +138,7 @@ info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 [Mera]: 2026-08-03T10:23:09.305
-
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -164,9 +162,9 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Npart:    5.091500e+05 
-- Nstars:   5.066030e+05 
-- Ndm:      2.547000e+03 
+- Npart:    5.091500e+05
+- Nstars:   5.066030e+05
+- Ndm:      2.547000e+03
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
 rt:            false
@@ -181,7 +179,6 @@ makefile:         true
 patchfile:        true
 =======================================================
 ```
-
 
 ### Understanding Clump Properties
 
@@ -220,18 +217,15 @@ clumps = getclumps(info);
 
 ```
 [Mera]: Get clump data: 2026-08-03T10:23:11.708
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Read 12 colums: 
+Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
-
 
 ### Memory Usage Analysis
 
@@ -245,7 +239,6 @@ usedmemory(clumps);
 Memory used: 349.0 KB
 ```
 
-
 ## Understanding Data Types
 
 The loaded data object is now of type `ClumpDataType`, which is specifically designed for clump structure data:
@@ -257,7 +250,6 @@ typeof(clumps)
 ```
 ClumpDataType
 ```
-
 
 ### Type Hierarchy
 
@@ -272,7 +264,6 @@ supertype( ContainMassDataSetType )
 DataSetType
 ```
 
-
 Which in turn is a sub-type of the general `DataSetType`:
 
 ```julia
@@ -282,7 +273,6 @@ supertype( ClumpDataType )
 ```
 ContainMassDataSetType
 ```
-
 
 ![TypeHierarchy](./assets/TypeHierarchy.png)
 
@@ -294,19 +284,14 @@ The clump data is stored in an **IndexedTables** table format, with clump variab
 viewfields(clumps)
 ```
 
-
 ```
 data ==> IndexedTables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
-
 info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
-
 boxlen	= 48.0
 ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
 selected_clumpvars	= [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-
 scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :nG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
 ```
-
 
 ### Convenient Data Access
 
@@ -330,7 +315,6 @@ propertynames(clumps)
 ```
 (:data, :info, :boxlen, :ranges, :selected_clumpvars, :used_descriptors, :scale)
 ```
-
 
 ## Data Analysis and Exploration
 
@@ -376,7 +360,6 @@ Columns:
 13  relevance  Any
 ```
 
-
 ### Working with IndexedTables
 
 When dealing with tables containing many columns, only a summary view is typically displayed. To access specific columns, use the `select()` function.
@@ -404,7 +387,6 @@ extrema  index   peak_x   peak_y   peak_z   mass_cl
 "max"    2147.0  38.1738  35.7056  25.4634  0.860755
 ```
 
-
 ### Unit Conversion Example
 
 Extract mass data from a specific column and convert it to solar masses. The `select()` function retrieves data from specific table columns, maintaining the order consistent with the table structure:
@@ -418,7 +400,6 @@ select(data_overview, :mass_cl) * info.scale.Msol
  312073.3187055649
       8.605166312657958e8
 ```
-
 
 ### In-Place Unit Conversion
 
@@ -439,7 +420,6 @@ extrema  index   peak_x   peak_y   peak_z   mass_cl
 "min"    4.0     10.292   9.93604  22.1294  3.12073e5
 "max"    2147.0  38.1738  35.7056  25.4634  8.60517e8
 ```
-
 
 ## Data Structure Deep Dive
 
@@ -500,7 +480,6 @@ Columns:
 12  relevance  Float64
 ```
 
-
 ### Focused Data Examination
 
 For a more detailed view of specific columns, we can select key fields to understand the clump organization better:
@@ -539,7 +518,6 @@ index   peak_x   peak_y   peak_z   mass_cl
 2147.0  25.1953  9.93604  23.9897  0.0294943
 ```
 
-
 ## Summary and Next Steps
 
 ### What You've Learned
@@ -572,7 +550,3 @@ Now that you understand clump data fundamentals, you can explore:
 - **Multi-physics analysis**: Combining clump data with hydro, particle, and gravity data
 - **Statistical analysis**: Advanced statistical methods for clump population studies
 - **Performance optimization**: Advanced techniques for large-scale clump data processing
-
-```julia
-
-```
