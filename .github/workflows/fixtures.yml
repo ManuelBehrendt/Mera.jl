@@ -11,10 +11,14 @@ name: Fixtures
 # in history forever.
 
 on:
-  push:
-    branches: [master, main, multicode]
-  pull_request:
-    branches: [master, main, multicode]
+  # NOTE: the push/pull_request triggers are deliberately absent until the `testdata-v1` release
+  # exists. This job's first step downloads the fixture archives from it, so wiring it to every
+  # push before the assets are uploaded would guarantee a red run that says nothing about the code.
+  # Restore them once the release is published:
+  #   push:
+  #     branches: [master, main, multicode]
+  #   pull_request:
+  #     branches: [master, main, multicode]
   schedule:
     # nightly, for the job that also pulls the 165 MB Bondi fixture
     - cron: '0 3 * * *'
