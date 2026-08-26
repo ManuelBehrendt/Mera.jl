@@ -868,6 +868,25 @@ Final Statistics:
 
 ```
 
+### What survives the round trip
+
+A mera file stores the data **table**, not a reduced summary, so every column comes back exactly as
+it was read from RAMSES — including the ones that identify *what* a particle is. `:family` and
+`:tag` are ordinary columns and are written and read back unchanged, so particle-type selection
+works identically on a mera file and on the original output:
+
+```julia
+parts = loaddata(3, "path/to/mera_files", :particles)
+getparticlemask(parts, :tracer)      # same result as on the RAMSES output
+getmask(parts, :family, ==(2.0))     # :family behaves like any other quantity
+```
+
+This is worth knowing before converting a large run: the conversion is lossless for selection
+purposes, so you do not have to keep the original output around in order to separate dark matter
+from stars, or tracers from either. The same applies to the values themselves — a round trip
+reproduces the RAMSES read bit-for-bit, which is one of the properties Mera's own test suite
+asserts on every snapshot of a public fixture.
+
 ## Compression
 
 Mera files are LZ4-compressed. This build runs on JLD2 0.6, whose compression is provided by
