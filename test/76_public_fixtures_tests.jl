@@ -308,6 +308,44 @@ else
     end
 
     # ------------------------------------------------------------------ legacy particle format
+    @testset "sinks3d: the catalogue survives a mera-file round trip" begin
+        # Sinks must store like every other data type. This exercises four separate pieces at once:
+        # the savedata dispatch, the JLD2 rconvert registration, the cuboid subregion method that
+        # loaddata always calls, and the viewdata datatype list. A hand-built InfoType cannot cover
+        # it — JLD2 serialises the whole info object — so it belongs here, with a real fixture.
+        f = PUBLIC_FIXTURES[:sinks3d]
+        n = last(sort(checkoutputs(f.path, verbose=false).outputs))
+        info = getinfo(n, f.path, verbose=false)
+        @test info.sinks
+        s = getsinks(info, verbose=false)
+        @test length(s.data) == f.oracle.nsink
+        @test getvar(s, :msink)[1] ≈ f.oracle.msink_last
+        # the sink accretes: its mass must grow between the two snapshots
+        first_s = getsinks(getinfo(first(sort(checkoutputs(f.path, verbose=false).outputs)),
+                                   f.path, verbose=false), verbose=false)
+        @test getvar(first_s, :msink)[1] ≈ f.oracle.msink_first
+        @test getvar(s, :msink)[1] > getvar(first_s, :msink)[1]
+
+        mktempdir() do store
+            savedata(s, store, :write, verbose=false)
+            q = loaddata(n, store, :sinks, verbose=false)
+
+            @test q isa Mera.SinkDataType
+            @test length(q.data) == length(s.data)
+            @test propertynames(Mera.columns(q.data)) == propertynames(Mera.columns(s.data))
+            for col in propertynames(Mera.columns(s.data))
+                @test getvar(q, col) == getvar(s, col)
+            end
+            # RAMSES's dimensional formulas are the only record of what each column means
+            @test q.used_descriptors[:units] == s.used_descriptors[:units]
+            # derived quantities must behave identically on a loaded object
+            @test getvar(q, :v)    == getvar(s, :v)
+            @test getvar(q, :mass) == getvar(s, :mass)
+            @test q.boxlen == s.boxlen
+            @test "sinks" in string.(collect(keys(viewdata(n, store, verbose=false))))
+        end
+    end
+
     @testset "legacy_particles3d: the pversion=0 header and its column set" begin
         f = PUBLIC_FIXTURES[:legacy_particles3d]; P = f.path
         info = getinfo(2, P, verbose=false)
@@ -463,6 +501,190 @@ else
         _diag("sedov3d_vs_ramses_reference", ["quantity", "mera", "ramses_reference", "rel_diff"],
               [(k, got[k], RAMSES_REF[k], abs(got[k]-RAMSES_REF[k])/abs(RAMSES_REF[k]))
                for k in sort(collect(keys(RAMSES_REF)))])
+    end
+
+    # ------------------------- more of RAMSES's own reference solutions
+    @testset "RAMSES reference solutions: 3-D MHD and 3-D RT" begin
+        # Same idea as the sedov3d test above, on two further configurations from RAMSES's own
+        # suite, run UNCHANGED so their published *-ref.dat applies directly:
+        #   tests/mhd/abc-flow   — 3-D MHD, 22 quantities including all six face-centred B components
+        #   tests/rt/rt-dirac    — 3-D RT + MHD, 25 quantities including the ionisation scalars
+        #   tests/sink/smbh-bondi — Bondi accretion onto a sink, 40 quantities of which 24 are
+        #                           sink_*; this is the reference check for the getsinks reader
+        # (github.com/ramses-organisation/ramses, tag 2026.05). Reduction and tolerance are theirs.
+        VARMAP = Dict(
+            "density"=>:rho, "pressure"=>:p,
+            "velocity_x"=>:vx, "velocity_y"=>:vy, "velocity_z"=>:vz,
+            "B_x_left"=>:bx_left, "B_y_left"=>:by_left, "B_z_left"=>:bz_left,
+            "B_x_right"=>:bx_right, "B_y_right"=>:by_right, "B_z_right"=>:bz_right,
+            "x"=>:x, "y"=>:y, "z"=>:z, "dx"=>:cellsize, "level"=>:level,
+            "scalar_00"=>:scalar_00, "scalar_01"=>:scalar_01, "scalar_02"=>:scalar_02)
+        LOGVARS  = ("density", "pressure", "total_energy", "temperature")
+        CODEUNIT = Set([:x, :y, :z, :cellsize])
+
+        function _reduce(v; lg=false)
+            av = sum(BigFloat.(v)) / length(v); acc = BigFloat(0)
+            for x in v
+                d = (av == 0) ? BigFloat(x) : (abs(BigFloat(x)-av)/abs(av) < 1e-14 ? av : BigFloat(x))
+                acc += lg ? log10(abs(d)) : abs(d)
+            end
+            Float64(acc)
+        end
+
+        REFS = Dict(
+            :ramses_abc_flow => Dict(
+            "B_x_left" => 2151.8261555056447,
+            "B_x_right" => 2151.8261555056447,
+            "B_y_left" => 2151.8261555056447,
+            "B_y_right" => 2151.8261555056447,
+            "B_z_left" => 1732.6273991687347,
+            "B_z_right" => 1732.6273991687347,
+            "boxlen" => 1.0,
+            "density" => 0.0,
+            "dx" => 1024.0,
+            "level" => 163840.0,
+            "ncells" => 32768.0,
+            "pressure" => -5770.850793588042,
+            "time" => 10.0002839766129,
+            "unit_d" => 1.0,
+            "unit_l" => 1.0,
+            "unit_t" => 1.0,
+            "velocity_x" => 26517.929522210132,
+            "velocity_y" => 26517.929522210132,
+            "velocity_z" => 26517.929522210132,
+            "x" => 16384.0,
+            "y" => 16384.0,
+            "z" => 16384.0),
+            :ramses_rt_dirac => Dict(
+            "B_x_left" => 1251996.6570127856,
+            "B_x_right" => 1251996.6570127856,
+            "B_y_left" => 17511.01194378448,
+            "B_y_right" => 17511.01194378448,
+            "B_z_left" => 17511.011943784484,
+            "B_z_right" => 17511.011943784484,
+            "boxlen" => 5.0,
+            "density" => 74785.30573283574,
+            "dx" => 3372.5,
+            "level" => 134736.0,
+            "ncells" => 25040.0,
+            "pressure" => 60657.773338845785,
+            "scalar_00" => 1328.8861928320375,
+            "scalar_01" => 1183.2046747546242,
+            "scalar_02" => 0.13518196801207522,
+            "time" => 0.0300067273482061,
+            "unit_d" => 2.1842105e-24,
+            "unit_l" => 3.08567758e+18,
+            "unit_t" => 31556926000000.0,
+            "velocity_x" => 5781.899375602917,
+            "velocity_y" => 5681.095364911749,
+            "velocity_z" => 5681.095364911754,
+            "x" => 62600.0,
+            "y" => 62600.0,
+            "z" => 62600.0),
+            :ramses_smbh_bondi => Dict(
+            "boxlen" => 1.0,
+            "density" => -4194497.424801786,
+            "dx" => 16384.0,
+            "level" => 14680064.0,
+            "ncells" => 2097152.0,
+            "pressure" => -16970166.649505418,
+            "sink_acc_rate" => 0.00011536428047,
+            "sink_cs**2" => 0.00011182954377,
+            "sink_del_mass" => 3.4689314105e-06,
+            "sink_dmfsink" => 3.4689314105e-06,
+            "sink_etherm" => 0.00016774431558,
+            "sink_id" => 1.0,
+            "sink_level" => 7.0,
+            "sink_lx" => 0.0,
+            "sink_ly" => 0.0,
+            "sink_lz" => 0.0,
+            "sink_mbh" => 0.041,
+            "sink_msink" => 0.041003468931,
+            "sink_nsinks" => 1.0,
+            "sink_rho_gas" => 0.018390260998,
+            "sink_tform" => 0.0,
+            "sink_vx" => 0.0,
+            "sink_vx_gas" => 0.0,
+            "sink_vy" => 0.0,
+            "sink_vy_gas" => 0.0,
+            "sink_vz" => 0.0,
+            "sink_vz_gas" => 0.0,
+            "sink_x" => 0.5,
+            "sink_y" => 0.5,
+            "sink_z" => 0.5,
+            "time" => 0.0519374922797957,
+            "unit_d" => 1.66e-24,
+            "unit_l" => 3.085677581282e+21,
+            "unit_t" => 31556926000000.0,
+            "velocity_x" => 17044.247755023604,
+            "velocity_y" => 17044.247755023604,
+            "velocity_z" => 17044.247755023604,
+            "x" => 1048576.0,
+            "y" => 1048576.0,
+            "z" => 1048576.0),
+        )
+
+        for (key, ref) in REFS
+            f = PUBLIC_FIXTURES[key]
+            isdir(f.path) || continue
+            info = getinfo(f.oracle.snapshot, f.path, verbose=false)
+            gas  = gethydro(info, verbose=false, show_progress=false)
+            sinks = any(startswith("sink_"), keys(ref)) ? getsinks(info, verbose=false) : nothing
+            @test length(ref) == f.oracle.nquantities
+
+            worst = 0.0
+            for (k, expected) in ref
+                got = if     k == "ncells"; Float64(length(gas.data))
+                      elseif k == "boxlen"; info.boxlen
+                      elseif k == "time";   info.time
+                      elseif k == "unit_d"; info.unit_d
+                      elseif k == "unit_l"; info.unit_l
+                      elseif k == "unit_t"; info.unit_t
+                      elseif k == "sink_nsinks"; Float64(length(sinks.data))
+                      elseif startswith(k, "sink_")
+                          # check_solution treats sink vector COMPONENTS specially: a component
+                          # below 2e-14 of the vector norm is zeroed before the sum, so that a
+                          # numerically-zero component cannot drift the total.
+                          col = Symbol(k[6:end])
+                          v   = Float64.(getvar(sinks, col))
+                          if col in (:lx, :ly, :lz, :vx, :vy, :vz, :vx_gas, :vy_gas, :vz_gas)
+                              base = String(col) in ("lx","ly","lz") ? "l" :
+                                     endswith(String(col), "_gas") ? "v_gas" : "v"
+                              comps = base == "l"     ? (:lx, :ly, :lz) :
+                                      base == "v_gas" ? (:vx_gas, :vy_gas, :vz_gas) : (:vx, :vy, :vz)
+                              nrm = sqrt.(sum(Float64.(getvar(sinks, c)).^2 for c in comps))
+                              v = [abs(x) < 2e-14 * max(n, 1e-30) ? 0.0 : x for (x, n) in zip(v, nrm)]
+                          end
+                          _reduce(v)
+                      elseif haskey(VARMAP, k)
+                          q = VARMAP[k]
+                          v = if q === :level && info.levelmin == info.levelmax
+                                  fill(Float64(info.levelmin), length(gas.data))
+                              else
+                                  q in CODEUNIT ? getvar(gas, q, :standard) : Float64.(getvar(gas, q))
+                              end
+                          _reduce(v; lg = k in LOGVARS)
+                      else
+                          nothing
+                      end
+                @test got !== nothing            # every reference quantity must be reachable
+                got === nothing && continue
+                # Nine of smbh-bondi's reference values are bitwise 0.0: the sink's velocity and
+                # spin components, zero by symmetry for a sink at rest at the box centre. Ours come
+                # out at 1e-17..1e-24 instead — floating-point noise whose exact value depends on
+                # the MPI decomposition and the compiler (checked at np=1/2/4/8; np=1 aborts inside
+                # RAMSES's own sink broadcast). RAMSES's comparator scores 0-vs-nonzero as an
+                # infinite error, so those nine are asserted against an ABSOLUTE floor and the other
+                # 31 against the published 3e-13 relative tolerance.
+                if expected == 0.0
+                    @test abs(got) < 1e-12
+                else
+                    @test isapprox(got, expected; rtol=3e-13)    # RAMSES's own acceptance tolerance
+                    worst = max(worst, abs(got-expected)/abs(expected))
+                end
+            end
+            @test worst < 1e-12
+        end
     end
 
     # ------------------------------------------------------------------ regression vs baselines

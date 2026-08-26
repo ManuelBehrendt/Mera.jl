@@ -220,6 +220,39 @@ const PUBLIC_FIXTURES = Dict(
         oracle = (source = "sedov3d_amr",),
         note = "mera-file (JLD2) path; regenerate with testdata/make_mera_files.jl, no RAMSES needed",
     ),
+    # RAMSES's OWN test configurations, run unchanged. Their *-ref.dat files are the reference
+    # solutions the RAMSES developers validate their solver against, so reproducing them checks
+    # Mera against numbers that are not ours.
+    :ramses_abc_flow => (
+        path = joinpath(PUBLIC_PATH, "ramses_abc_flow"),
+        ramses_version = "2026.05",
+        outputs = 2, boxlen = 1.0,
+        oracle = (snapshot = 2, source = "tests/mhd/abc-flow", nquantities = 22),
+        note = "3-D MHD; the reference covers all six face-centred B components",
+    ),
+    :ramses_rt_dirac => (
+        path = joinpath(PUBLIC_PATH, "ramses_rt_dirac"),
+        ramses_version = "2026.05",
+        outputs = 2, boxlen = 5.0,
+        oracle = (snapshot = 2, source = "tests/rt/rt-dirac", nquantities = 25),
+        note = "3-D RT + MHD; the reference includes the passive ionisation scalars",
+    ),
+    :sinks3d => (
+        path = joinpath(PUBLIC_PATH, "sinks3d"),
+        ramses_version = "2026.05",
+        outputs = 2, boxlen = 250.0,
+        # one sink forms and then accretes: its mass must GROW between the two snapshots
+        oracle = (nsink = 1, msink_first = 4079.0, msink_last = 110972.77176),
+        note = "sink catalogue is a csv per output; the mera-file round trip is tested on this fixture",
+    ),
+    :ramses_smbh_bondi => (
+        path = joinpath(PUBLIC_PATH, "ramses_smbh_bondi"),
+        ramses_version = "2026.05",
+        outputs = 1, boxlen = 1.0,
+        # 24 of the 40 published quantities are sink_*, so this is the reference check for getsinks
+        oracle = (snapshot = 15, source = "tests/sink/smbh-bondi", nquantities = 40, nsink = 24),
+        note = "only the REFERENCED snapshot 15 is kept; foutput=1 writes 15 outputs, rerun the namelist for the rest",
+    ),
     :legacy_particles3d => (
         path = joinpath(PUBLIC_PATH, "legacy_particles3d"),
         ramses_version = "stable_17_09",       # NOT 2026.05 — see testdata/namelists/

@@ -98,6 +98,7 @@ table exactly.
 | `mhdtube3d` | `namelists/mhdtube3d.nml` | MHD (nvarh=11); oracle div B = 0 => Bx == 1 |
 | `stromgren3d` | `namelists/stromgren3d.nml` | RT, uniform grid (nvarh=8); I-front law |
 | `legacy_particles3d` | `namelists/legacy_particles3d.nml` + `make_legacy_particles.sh` | **stable_17_09**: pversion=0 header, ncpu=1 |
+| `sinks3d` | `namelists/sinks3d.nml` | sink catalogue (`sink_NNNNN.csv`); accretion between snapshots; mera-file round trip |
 | `sedov3d_amr_mera` | `make_mera_files.jl` | mera-file (JLD2) round trip; no RAMSES run needed |
 | `timeseries_sedov3d` | `namelists/sedov3d.nml` | the original multi-snapshot fixture |
 
@@ -105,9 +106,36 @@ Between them: both the multi-file (ncpu=8) and single-file (ncpu=1) reader paths
 grids, three `nvarh` layouts (5 / 8 / 11), every data type Mera reads, and both the legacy and
 modern on-disk formats.
 
+## RAMSES's own test configurations, run unchanged
+
+Three fixtures are not ours: they are configurations from RAMSES's own test suite, run **without
+any modification** so that the `*-ref.dat` files the RAMSES developers validate their solver
+against apply directly. Reproducing those numbers checks Mera against a reference that owes
+nothing to our own measurements.
+
+| fixture | RAMSES test | reference quantities |
+|---|---|---|
+| `ramses_abc_flow` | `tests/mhd/abc-flow` | 22 — 3-D MHD, all six face-centred B components |
+| `ramses_rt_dirac` | `tests/rt/rt-dirac` | 25 — 3-D RT + MHD, incl. the passive ionisation scalars |
+| `ramses_smbh_bondi` | `tests/sink/smbh-bondi` | 40 — Bondi accretion; **24 are `sink_*`**, the reference check for `getsinks` |
+
+To regenerate, clone `github.com/ramses-organisation/ramses` at tag **2026.05**, build with the
+`FLAGS:` line in each test's `config.txt`, and run the namelist unmodified. The comparison uses
+RAMSES's own reduction from `tests/visu/visu_ramses.py :: check_solution` — snap values within
+1e-14 of the mean to the mean, `log10(|x|)` for density/pressure/total_energy/temperature and
+`|x|` otherwise, exact summation — at their 3e-13 tolerance. See the testsets in
+`test/76_public_fixtures_tests.jl`.
+
+Two practical notes. `smbh-bondi` sets `foutput=1` and writes 15 outputs (~3.8 GB); only the
+referenced snapshot 15 is kept, and rerunning the namelist reproduces the rest. And nine of its
+reference values are bitwise `0.0` — the sink's velocity and spin components, zero by symmetry —
+where ours come out at 1e-17..1e-24; that noise depends on the MPI decomposition and the compiler
+(np=1 aborts inside RAMSES's own sink broadcast), so those nine are asserted against an absolute
+floor and the other 31 against the published relative tolerance.
+
 Everything else the suite uses is either a third-party public dataset (the yt project's
 `ramses_mhd_128`, `ramses_mhd_amr` and `yt_cosmo`) or a maintainer-local run — see
 [`../test/README.md`](../test/README.md). Replacing the maintainer-local runs with purpose-built
-fixtures generated here is planned; the standard RAMSES test problems (Sedov, Orszag-Tang,
-Strömgren, Bondi accretion, driven turbulence) cover the same code paths and come with analytic
-solutions to assert against.
+fixtures generated here is planned. Sedov, Strömgren and Bondi accretion are already covered
+above; Orszag-Tang and driven turbulence remain, and further RAMSES configurations with published
+references (`mhd/ponomarenko-dynamo`, `turb/driving`, `sink/center-SN`) can be added the same way.
