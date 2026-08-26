@@ -106,6 +106,14 @@ Between them: both the multi-file (ncpu=8) and single-file (ncpu=1) reader paths
 grids, three `nvarh` layouts (5 / 8 / 11), every data type Mera reads, and both the legacy and
 modern on-disk formats.
 
+## Attribution
+
+These fixtures are produced by, and partly copied from, **RAMSES** (Copyright CEA and Romain
+Teyssier), which is governed by the **CeCILL** licence — not Mera's MIT. Three archives
+redistribute RAMSES namelists verbatim, six of ours are derived from RAMSES configurations, and
+the reference values come from RAMSES's own `*-ref.dat` files. See [`NOTICE.md`](NOTICE.md) for
+the per-file provenance and the citations to give.
+
 ## Publishing and fetching the fixtures
 
 The generated fixtures are published as **assets on the `testdata-v1` release**, not committed to

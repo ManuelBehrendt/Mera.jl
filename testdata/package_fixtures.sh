@@ -45,7 +45,7 @@ done
 
 # the human-readable material that travels with the fixture set
 META=()
-for m in README.md OVERVIEW.ipynb Project.toml; do
+for m in README.md OVERVIEW.ipynb Project.toml NOTICE.md RAMSES-LICENSE.txt; do
     [ -f "$ROOT/$m" ] && META+=("$m")
 done
 if [ ${#META[@]} -gt 0 ]; then

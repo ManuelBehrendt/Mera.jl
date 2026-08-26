@@ -55,6 +55,15 @@ Source: <https://github.com/ramses-organisation/ramses>, tag **2026.05**.
 `RAMSES-PUBLIC-docs.tar.gz` holds the README, the `OVERVIEW.ipynb` notebook and a `Project.toml`
 for exploring the set interactively.
 
+## Attribution and licence
+
+Mera.jl is MIT-licensed, but this data is not entirely ours. It is produced by **RAMSES**
+(Copyright CEA and Romain Teyssier), governed by the **CeCILL** licence
+(<http://www.cecill.info>), and three of these archives redistribute RAMSES namelists unmodified.
+`RAMSES-PUBLIC-docs.tar.gz` carries `NOTICE.md` and RAMSES's licence text; please cite
+Teyssier (2002) — and Rosdahl et al. (2013) for the RT fixtures — if you use these in published
+work.
+
 ## Provenance and integrity
 
 `testdata/SHA256SUMS` is committed in the repository and lists the checksum of every archive here.
