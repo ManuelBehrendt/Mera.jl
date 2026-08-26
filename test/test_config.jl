@@ -230,9 +230,21 @@ const PUBLIC_FIXTURES = Dict(
         path = joinpath(PUBLIC_PATH, "stromgren3d"),
         ramses_version = "2026.05",
         outputs = 7, boxlen = 15.0,
-        # r(t) = r_S (1 - exp(-t/t_rec))^(1/3); alpha_B must use the MEASURED ionised-gas T
-        oracle = (Ndot = 5.0e48, nH = 1.0e-3, ratio_scatter = 0.05),
-        note = "source at the origin, reflecting boundaries (one octant); ionisation via getvar(:xHII)",
+        # The namelist's OWN analytic oracle, at the case-B rate for T = 1e4 K, together with the
+        # r/r_S sampling its header documents for the six output times. Those are external numbers:
+        # reproducing them checks the whole law, not one radius.
+        oracle = (Ndot = 5.0e48, nH = 1.0e-3,
+                  r_S_kpc = 5.393, t_rec_Myr = 122.4,
+                  r_over_rS = [0.4285, 0.6014, 0.7290, 0.8550, 0.9548, 0.9944],
+                  # 32^3 puts ~11 cells across r_S, which the namelist says measures the front
+                  # to ~10 %; the measured ratio runs 0.91 -> 1.11 as the front becomes resolved
+                  ratio_band = 0.12,
+                  # A PHYSICAL photoionised temperature. This assertion exists because its absence
+                  # let a mu bug stand: getvar(:T, :K) hardwires mu = 1/0.76, but this fixture is
+                  # pure hydrogen (X=1), so ionised gas has mu ~ 0.5 and :K overstated T by 2.6x,
+                  # reporting a 30 kK HII region. Use :T_rt, which uses the local ionisation mu.
+                  T_ionised_K = (8_000.0, 20_000.0)),
+        note = "source at the origin, reflecting boundaries (one octant); ionisation via getvar(:xHII); temperature MUST come from :T_rt, not :T",
     ),
     :sedov3d_amr_mera => (
         path = joinpath(PUBLIC_PATH, "sedov3d_amr_mera"),
