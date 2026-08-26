@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `01_sinks_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_sinks_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 This notebook introduces loading and inspecting **sink particles** with Mera.jl. Sinks are
 RAMSES's accreting point masses — they stand in for objects too small or too dense to resolve on
 the grid: protostars, star clusters, and black holes. Unlike hydro cells they have no volume and
@@ -49,11 +50,11 @@ using Mera
 info = getinfo(2, "$MERA_EXAMPLES/RAMSES-PUBLIC/sinks3d");
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
-
-
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (3), incompatible header (1), dep missing source (1), mismatched flags (4))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (6), incompatible header (2), dep missing source (2), mismatched flags (8))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -61,10 +62,8 @@ info = getinfo(2, "$MERA_EXAMPLES/RAMSES-PUBLIC/sinks3d");
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.9.0 | Julia 1.12.7 | 4 threads
-
-[Mera]: 2026-08-26T19:15:28.685
-
-
+[Mera]: 2026-08-26T22:46:22.278
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 Code: RAMSES
 output [2] summary:
 mtime: 2026-08-26T17:10:54.345
@@ -88,7 +87,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Ncloud:   2.109000e+03 
+- Ncloud:   2.109000e+03
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -103,7 +102,6 @@ makefile:         true
 patchfile:        true
 =======================================================
 ```
-
 
 ### Does this simulation have sinks?
 
@@ -121,7 +119,6 @@ sinks present : true
 columns       : [:id, :msink, :x, :y, :z, :vx, :vy, :vz, :lx, :ly, :lz, :tform, :acc_rate, :del_mass, :rho_gas, Symbol("cs**2"), :etherm, :vx_gas, :vy_gas, :vz_gas, :mbh, :dmfsink, :level]
 ```
 
-
 ## Loading Sink Data
 
 `getsinks` reads the whole catalogue. There is no `lmax` or region argument needed for a first
@@ -132,17 +129,14 @@ sinks = getsinks(info);
 ```
 
 ```
-[Mera]: Get sink data: 2026-08-26T19:15:34.335
-
+[Mera]: Get sink data: 2026-08-26T22:46:25.723
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 250.0 [pc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [pc] :: 250.0 [pc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 250.0 [pc]
-
 Number of sinks: 1
 Columns: [:id, :msink, :x, :y, :z, :vx, :vy, :vz, :lx, :ly, :lz, :tform, :acc_rate, :del_mass, :rho_gas, Symbol("cs**2"), :etherm, :vx_gas, :vy_gas, :vz_gas, :mbh, :dmfsink, :level]
 ```
-
 
 ### Memory Usage
 
@@ -156,7 +150,6 @@ usedmemory(sinks);
 ```
 Memory used: 38.777 KB
 ```
-
 
 ## Understanding Data Types
 
@@ -172,7 +165,6 @@ typeof(sinks)
 Mera.SinkDataType
 ```
 
-
 ```julia
 propertynames(sinks)
 ```
@@ -180,7 +172,6 @@ propertynames(sinks)
 ```
 (:data, :info, :boxlen, :ranges, :selected_sinkvars, :used_descriptors, :scale)
 ```
-
 
 ### The catalogue
 
@@ -221,7 +212,6 @@ Columns:
 23  level     Float64
 ```
 
-
 ## Units: what RAMSES records, and why it matters
 
 The sink file carries **two** header lines: the column names, and the *dimensional formula* of
@@ -249,7 +239,6 @@ rho_gas    -> m l**-3
 level      -> 1
 ```
 
-
 ## Working with `getvar`
 
 `getvar` behaves exactly as it does for the other data types: name a quantity, optionally name a
@@ -269,7 +258,6 @@ sink mass in Msol      : [2720.9435998212302]
 position in kpc        : [0.12500000000008102]
 cs^2                   : [388.34039079]
 ```
-
 
 ### Derived quantities
 
@@ -308,7 +296,6 @@ spin magnitude      : [3.42197967047916e-11]
 radius from box centre [kpc] : [0.0]
 ```
 
-
 ## Selections
 
 ### Selected columns
@@ -322,23 +309,21 @@ sinks_small.data
 ```
 
 ```
-[Mera]: Get sink data: 2026-08-26T19:15:36.415
-
+[Mera]: Get sink data: 2026-08-26T22:46:27.697
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 250.0 [pc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [pc] :: 250.0 [pc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 250.0 [pc]
-
 Number of sinks: 1
 Columns: [:id, :msink, :x, :y, :z]
+```
 
-
+```
 Table with 1 rows, 5 columns:
 id   msink      x      y      z
 ───────────────────────────────────
 1.0  1.10973e5  125.0  125.0  125.0
 ```
-
 
 ### Spatial selection
 
@@ -353,21 +338,16 @@ println("sinks inside the region: ", length(sinks_region.data))
 ```
 
 ```
-[Mera]: Get sink data: 2026-08-26T19:15:36.783
-
+[Mera]: Get sink data: 2026-08-26T22:46:28.047
 center: [0.5, 0.5, 0.5] ==> [125.0 [pc] :: 125.0 [pc] :: 125.0 [pc]]
-
 domain:
 xmin::xmax: 0.1 :: 0.9  	==> 25.0 [pc] :: 225.0 [pc]
 ymin::ymax: 0.1 :: 0.9  	==> 25.0 [pc] :: 225.0 [pc]
 zmin::zmax: 0.1 :: 0.9  	==> 25.0 [pc] :: 225.0 [pc]
-
 Number of sinks: 1
 Columns: [:id, :msink, :x, :y, :z, :vx, :vy, :vz, :lx, :ly, :lz, :tform, :acc_rate, :del_mass, :rho_gas, Symbol("cs**2"), :etherm, :vx_gas, :vy_gas, :vz_gas, :mbh, :dmfsink, :level]
-
 sinks inside the region: 1
 ```
-
 
 ## Watching a sink accrete
 
@@ -392,6 +372,72 @@ output 1  t = 0.0  M = 100.01 Msol  acc_rate = 0.0
 output 2  t = 0.275  M = 2720.94 Msol  acc_rate = 702600.0
 ```
 
+## Regions on a loaded catalogue
+
+The `xrange`/`yrange`/`zrange` arguments above select *while loading*. Once a catalogue is in
+memory, `subregion` applies the same shapes — `:cuboid`, `:cylinder`, `:sphere` — that the other
+data types use, so a sink catalogue can be narrowed in exactly the same idiom as hydro or
+particle data. Under `range_unit=:standard` radii and centres are fractions of the box.
+
+```julia
+# centre a small sphere on the sink itself, then on an empty corner of the box
+c = [getvar(sinks, :x)[1], getvar(sinks, :y)[1], getvar(sinks, :z)[1]] ./ sinks.boxlen
+
+near = subregion(sinks, :sphere, radius=0.01, center=c, range_unit=:standard, verbose=false)
+far  = subregion(sinks, :sphere, radius=0.01, center=[0.01, 0.01, 0.01],
+                 range_unit=:standard, verbose=false)
+
+println("sphere on the sink   : ", length(near.data), " sink(s)")
+println("sphere in a corner   : ", length(far.data),  " sink(s)")
+```
+
+```
+sphere on the sink   : 1 sink(s)
+sphere in a corner   : 0 sink(s)
+```
+
+## Storing sinks in mera files
+
+Sink catalogues are stored like every other Mera data type. `savedata` writes one into a mera
+file (JLD2), `loaddata` reads it back, and `viewdata` lists it alongside the hydro, gravity,
+particle, clump and RT groups.
+
+This matters less for size than for self-containment: a mera file that holds the gas but not the
+sinks is not a complete record of the snapshot. RAMSES's dimensional formulas travel with the
+catalogue, so a loaded object knows what its columns mean without the original output directory.
+
+```julia
+store = mktempdir()
+savedata(sinks, store, :write, verbose=false)
+
+sinks_back = loaddata(2, store, :sinks, verbose=false)
+
+println("rows            : ", length(sinks_back.data))
+println("masses identical: ", getvar(sinks_back, :msink) == getvar(sinks, :msink))
+println("units preserved : ", sinks_back.used_descriptors[:units] == sinks.used_descriptors[:units])
+println("groups in file  : ", collect(keys(viewdata(2, store, verbose=false))))
+```
+
+```
+rows            : 1
+masses identical: true
+units preserved : true
+groups in file  : Any["FileSize", "sinks"]
+```
+
+`convertdata` converts a whole snapshot in one call, and includes the sink catalogue in its
+default set — so converting a simulation that has sinks does not quietly leave them behind.
+
+```julia
+store2 = mktempdir()
+convertdata(2, path="$MERA_EXAMPLES/RAMSES-PUBLIC/sinks3d", fpath=store2,
+            verbose=false, show_progress=false)
+println("groups written : ", collect(keys(viewdata(2, store2, verbose=false))))
+```
+
+```
+groups written : Any["convertstat", "particles", "FileSize", "gravity", "sinks", "hydro"]
+```
 
 ## A note on empty catalogues
 
@@ -409,3 +455,4 @@ stellar objects spawned by a sink. Mera does not read that file yet.
 - [Particles: First Inspection](01_particles_First_Inspection.md) — the other point-mass data type
 - [Clumps: First Inspection](01_clumps_First_Inspection.md) — the other catalogue-style reader
 - [Basic Calculations](04_multi_Basic_Calculations.md) — combining data types
+- [Mera Files](07_multi_Mera_Files.md) — storing and reloading whole snapshots
