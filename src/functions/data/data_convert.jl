@@ -49,6 +49,8 @@ return statistics_dictionary
 ### Optional Keywords:
 - **`datatypes`:** Array of datatypes to convert. 
   - Default: `[missing]` → converts all available data (:hydro, :gravity, :particles, :clumps)
+  - Sink catalogues are NOT included: they are a few hundred bytes and this helper targets the
+    bulk grid/particle data. Store them directly with `savedata(getsinks(info), path, :append)`.
   - Examples: `[:hydro, :particles]`, `[:hydro]`, `:particles`
   
 - **`path`:** Path to RAMSES simulation folders (default: `"./"`).

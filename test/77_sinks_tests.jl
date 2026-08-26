@@ -33,8 +33,18 @@
         info.simcode   = "RAMSES"
         info.levelmin  = 6; info.levelmax = 6
         info.fnames    = Mera.FileNamesType()
+        # every field is an undefined reference until getinfo fills it; JLD2 cannot serialise those,
+        # so give the ones we do not use an empty name
+        for fld in fieldnames(Mera.FileNamesType)
+            setfield!(info.fnames, fld, "")
+        end
         info.fnames.sinks = joinpath(dir, "sink_00001.csv")
         info.descriptor = Mera.DescriptorType()
+        # getinfo sets these on the real path; this helper calls readsinkfile1! directly
+        info.descriptor.usesinks = false
+        info.descriptor.sinks    = Symbol[]
+        info.output = 1
+        info.path   = dir
         Mera.readsinkfile1!(info)
         return info
     end
@@ -117,6 +127,32 @@
             s = getsinks(info, verbose=false)
             @test length(s.data) == 0
             @test propertynames(Mera.columns(s.data))[1:2] == (:id, :msink)
+        end
+    end
+
+    # The savedata/loaddata round trip needs a REAL InfoType: JLD2 serialises the whole info
+    # object, and a hand-built one has undefined fields. That test lives with the fixtures, in
+    # 76_public_fixtures_tests.jl ("sinks3d: the catalogue survives a mera-file round trip").
+
+    @testset "region selection on a sink catalogue" begin
+        mktempdir() do d
+            s = getsinks(_sink_info(d, SINK_CSV), verbose=false)
+            # sink 1 sits at (10,20,20), sink 2 at (30,40,0), in a boxlen=100 box;
+            # under :standard, ranges and radii are FRACTIONS of boxlen
+            cube = subregion(s, :cuboid, xrange=[0., 0.2], yrange=[0., 0.3], zrange=[0., 0.3],
+                             range_unit=:standard, verbose=false)
+            @test getvar(cube, :id) == [1.0]
+            inv = subregion(s, :cuboid, xrange=[0., 0.2], yrange=[0., 0.3], zrange=[0., 0.3],
+                            range_unit=:standard, inverse=true, verbose=false)
+            @test getvar(inv, :id) == [2.0]
+
+            # a sphere of radius 5 about sink 1 catches it and nothing else
+            sph = subregion(s, :sphere, radius=0.05, center=[0.1, 0.2, 0.2],
+                            range_unit=:standard, verbose=false)
+            @test getvar(sph, :id) == [1.0]
+            # the object stays usable afterwards
+            @test sph.boxlen == s.boxlen
+            @test sph.used_descriptors[:units] == s.used_descriptors[:units]
         end
     end
 

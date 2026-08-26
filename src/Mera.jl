@@ -484,6 +484,7 @@ include("functions/regions/subregion_gravity.jl")
 include("functions/regions/subregion_rt.jl")
 include("functions/regions/subregion_particles.jl")
 include("functions/regions/subregion_clumps.jl")
+include("functions/regions/subregion_sinks.jl")
 # ============================================
 
 # Shellregion

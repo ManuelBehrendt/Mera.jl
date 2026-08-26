@@ -82,7 +82,7 @@ return
 
 #### Arguments
 ##### Required:
-- **`dataobject`:** needs to be of type: "HydroDataType", "PartDataType", "GravDataType", "ClumpDataType", "RtDataType"
+- **`dataobject`:** needs to be of type: "HydroDataType", "PartDataType", "GravDataType", "ClumpDataType", "RtDataType", "SinkDataType"
 - **`fmode`:** nothing is written/appended by default to avoid overwriting files by accident. Need: fmode=:write (new file, or overwrite an existing file); fmode=:append adds a further datatype to an existing file. Re-appending a datatype that is already stored in the file is not supported and raises an error (existing datatypes are not overwritten in place).
 ##### Predefined/Optional Keywords:
 - **`path`:** path to save the file; default is local path.
@@ -324,6 +324,12 @@ function check_datasource(dataobject::DataSetType)
         datatype = :rt
         use_descriptor = dataobject.info.descriptor.usert
         descriptor_names = dataobject.info.descriptor.rt
+    elseif typeof(dataobject) == SinkDataType
+        datatype = :sinks
+        use_descriptor = dataobject.info.descriptor.usesinks
+        descriptor_names = dataobject.info.descriptor.sinks
+    else
+        error("[Mera]: savedata does not know how to store a $(typeof(dataobject)).")
     end
 
     return datatype, use_descriptor, descriptor_names

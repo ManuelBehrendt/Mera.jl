@@ -1563,6 +1563,6 @@ function _mera_rconvert(::Type{T}, nt::NamedTuple) where {T}
 end
 
 for T in (FileNamesType, GridInfoType, PartInfoType, CompilationInfoType, DescriptorType, InfoType,
-          HydroDataType, GravDataType, RtDataType, PartDataType, ClumpDataType)
+          HydroDataType, GravDataType, RtDataType, PartDataType, ClumpDataType, SinkDataType)
     @eval JLD2.rconvert(::Type{$T}, nt::NamedTuple) = _mera_rconvert($T, nt)
 end

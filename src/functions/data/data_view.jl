@@ -33,7 +33,7 @@ return overview (dictionary)
 #### Arguments
 ##### Required:
 - **`output`:** output number
-- **`datatype`:** :hydro, :particles, :gravity, :clumps or :rt
+- **`datatype`:** :hydro, :particles, :gravity, :clumps, :rt or :sinks
 
 ##### Predefined/Optional Keywords:
 - **`path`:** the path to the output JLD2 file relative to the current folder or absolute path
@@ -81,7 +81,7 @@ function viewdata(output::Int;
     ikeys = Dict() # information keys
     vkeys = Dict() # versions keys
     for rname in fkeys
-        if rname != "_types" && rname in string.([:hydro, :gravity, :particles, :clumps, :rt])
+        if rname != "_types" && rname in string.([:hydro, :gravity, :particles, :clumps, :rt, :sinks])
             try
                 ilink = rname * "/information"
                 ifk = JLD2.load(fpath, ilink)
@@ -103,7 +103,7 @@ function viewdata(output::Int;
     viewoutput = Dict()
     convertstat = false
     for rname in fkeys
-        if rname != "_types" && rname in string.([:hydro, :gravity, :particles, :clumps, :rt])
+        if rname != "_types" && rname in string.([:hydro, :gravity, :particles, :clumps, :rt, :sinks])
             idata = Dict()
             vdata = Dict()
             for i in get(ikeys, rname, String[])          # empty if the datatype was skipped above
