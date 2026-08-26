@@ -15,6 +15,16 @@ filterdata
 getmask
 ```
 
+## Particle-type selection
+
+Particles carry a RAMSES **family** code, so a subset can be selected by what the particles *are*
+rather than by a value: dark matter, stars, sinks/clouds, debris, or tracers (RAMSES's test
+particles, which follow the flow without acting back on it).
+
+```@docs; canonical=false
+getparticlemask
+```
+
 ## Conditions
 
 ```@docs; canonical=false

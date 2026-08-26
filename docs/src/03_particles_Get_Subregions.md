@@ -86,7 +86,7 @@ println("box            : ", round(stars.boxlen * kpc, sigdigits=4), " kpc")
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
+Mera v1.9.0 | Julia 1.12.7 | 4 threads
 
 particles      : 508939   columns: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)
 with birth = 0 : 0 (dark matter, if any)
@@ -513,6 +513,47 @@ independent operations on the same object. The
 [Masking & Filtering page](05_multi_Masking_Filtering.md) treats the value side
 in full, including how to combine conditions with `&`, `|`, and `!`.
 
+### Place, State — and Type
+
+The two axes above are *where* a particle is and *what its values are*. There is a third: **what a
+particle is**. RAMSES tags each one with a family code — dark matter, star, sink-cloud, debris, or
+a tracer (a test particle, advected by the flow without acting back on it). `getparticlemask` turns
+that tag into a mask, and it survives a region: subset first, select the type afterwards, or the
+other way round.
+
+The galaxy on this page cannot show it. Written in the **legacy** particle format, it has no
+`:family` column — every particle here is a star, which is why §6 selects on `:age` instead. The
+compact public run below carries Monte-Carlo tracers, so the composition can be shown directly.
+
+```julia
+tracer_run = "$MERA_EXAMPLES/RAMSES-PUBLIC/sedov3d_grav_part"
+if isdir(tracer_run)
+    tp   = getparticles(getinfo(3, tracer_run, verbose=false), verbose=false, show_progress=false)
+    core = subregion(tp, Sphere(0.15; range_unit=:standard), verbose=false)
+
+    println("whole box   : ", length(tp.data),   " particles, families ",
+            Int.(sort(unique(getvar(tp, :family)))))
+    println("in a sphere : ", length(core.data), " particles")
+    println("…of which tracers: ", count(getparticlemask(core, :tracer, verbose=false)))
+    println(":family column survived the subregion: ",
+            :family in propertynames(Mera.columns(core.data)))
+else
+    println("fixture not installed: ", tracer_run)
+end
+```
+
+```
+whole box   : 124990 particles, families [0]
+in a sphere : 1707 particles
+…of which tracers: 1707
+:family column survived the subregion: true
+```
+
+
+The region kept a subset of rows and every column came with it, `:family` included — so a type mask
+built on the subregion is as valid as one built on the whole box. Region, value condition and
+particle type compose in any order, and none of them is a special case.
+
 ## 7. Profiles That Regions Make Easy
 
 Two profiles, both built the same way: a stack of `CylindricalShell` annuli,
@@ -562,11 +603,17 @@ fig
 ```
 
 ```
+[Mera] Hint: getvar(:vϕ_cylinder) has no `vcenter` — velocities are in the BOX frame.
+             `center=` fixes the origin; `vcenter=` fixes the frame, and they are separate.
+             For an object with bulk motion pass vcenter=:auto, or vcenter=bulk_velocity(obj).
+             Harmless if the object is already at rest in the box; on a halo streaming at
+             ~200 km/s this shifted |J| by 34 % and its direction by ~5 degrees.
+             (shown once per session; verbose(false) silences Mera's messages)
 at 7.5 kpc :  young 191.2 km/s (N=2396)   old 166.7 km/s (N=7878)
 ```
 
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_23_1.png)
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_26_1.png)
 
 
 The gap between the two curves is the drift: about 25 km/s at 7.5 kpc, where
@@ -614,7 +661,7 @@ RMS height, age > 300 Myr   : 0.871 kpc  (N=103448)
 ```
 
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_25_1.png)
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_28_1.png)
 
 
 A factor of three in RMS height between the two populations — 0.3 kpc against

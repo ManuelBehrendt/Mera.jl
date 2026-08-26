@@ -74,7 +74,7 @@ println("clumps         : ", length(clumps.data))
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
+Mera v1.9.0 | Julia 1.12.7 | 4 threads
 
 gas cells      : 849332
 star particles : 508939
@@ -143,6 +143,12 @@ condition                         cells     mass share
 Above(:rho, 1, :nH)               10126     79.8 %
 Below(:T, 2e4, :K)                33569     37.0 %
 Above(:cs, 20, :km_s)             652583    44.6 %
+[Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
+             `center=` fixes the origin; `vcenter=` fixes the frame, and they are separate.
+             For an object with bulk motion pass vcenter=:auto, or vcenter=bulk_velocity(obj).
+             Harmless if the object is already at rest in the box; on a halo streaming at
+             ~200 km/s this shifted |J| by 34 % and its direction by ~5 degrees.
+             (shown once per session; verbose(false) silences Mera's messages)
 Above(:mach, 1)                   520858    94.5 %
 [Mera] Hint: getvar(:r_cylinder) has no `center` — it is measured about the box CORNER.
              Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.
@@ -336,6 +342,84 @@ The mask must be as long as the object's row count, which is why it belongs to
 the object it came from — `getmask(gas, …)` cannot be passed to a particle
 function. Mixing them is the one mistake worth watching for.
 
+### Selecting by what a particle *is*
+
+Everything above selects on a **value** — a density, an age, a speed. Particles also carry a
+**type**: RAMSES tags each one with a family code saying whether it is dark matter, a star, a
+sink-cloud marker, debris, or a tracer. `getparticlemask` turns that into the same kind of
+`Vector{Bool}` the rest of this page uses, so type and value conditions combine freely:
+
+```julia
+young_stars = getparticlemask(parts, :stars) .& getmask(parts, Below(:age, 100, unit=:Myr))
+```
+
+| family | code |
+|---|---|
+| dark matter | 1 |
+| star | 2 |
+| cloud / sink | 3 |
+| debris | 4 |
+| other | 5 |
+| tracer (test particle) | ≤ 0 |
+
+The galaxy used on this page was written in the **legacy** particle format, which has no `:family`
+column at all. There `getparticlemask` falls back to `:birth` and offers only `:stars`
+(`birth != 0`) and `:dm` (`birth == 0`) — which is why the age conditions above are the natural
+way to work with it.
+
+```julia
+# what this dataset supports
+for sel in (:stars, :dm, :tracer)
+    n = try count(getparticlemask(particles, sel, verbose=false)) catch e; "unavailable (legacy format)" end
+    println(rpad(string(sel), 8), " -> ", n)
+end
+```
+
+```
+stars    -> 508939
+dm       -> 0
+tracer   -> unavailable (legacy format)
+```
+
+
+On a run written in the modern format the `:family` column is present, and then the type is just
+another quantity: `getmask` and `filterdata` work on it exactly as they do on density or age. The
+small public test simulation below carries Monte-Carlo **tracers** — test particles advected by the
+flow without acting back on it — so every selection route can be shown at once.
+
+```julia
+tracer_run = "$MERA_EXAMPLES/RAMSES-PUBLIC/sedov3d_grav_part"
+if isdir(tracer_run)
+    tp = getparticles(getinfo(3, tracer_run, verbose=false), verbose=false, show_progress=false)
+    println("families present            : ", Int.(sort(unique(getvar(tp, :family)))))
+    println("getparticlemask(:tracer)    : ", count(getparticlemask(tp, :tracer, verbose=false)))
+    println("getmask(:family, ==(0))     : ", count(getmask(tp, :family, ==(0.0))))
+    println("filterdata(:family, ==(0))  : ", length(filterdata(tp, :family, ==(0.0)).data), " rows")
+    # type and place compose, like everything else on this page
+    core = subregion(tp, Sphere(0.15; range_unit=:standard), verbose=false)
+    println("tracers inside a sphere     : ", count(getparticlemask(core, :tracer, verbose=false)),
+            " of ", length(core.data), " particles in the region")
+else
+    println("fixture not installed: ", tracer_run)
+end
+```
+
+```
+families present            : [0]
+getparticlemask(:tracer)    : 124990
+getmask(:family, ==(0))     : 124990
+Filter: PartDataType
+Selected rows: 124990 / 124990
+filterdata(:family, ==(0))  : 124990 rows
+tracers inside a sphere     : 1707 of 1707 particles in the region
+```
+
+
+Three routes to the same rows — a named type, a value condition on `:family`, and a filtered
+object — and the type survives a `subregion`, so *where* and *what* compose in either order. The
+same holds through a mera-file round trip: `:family` and `:tag` are ordinary columns and are
+written and read back unchanged.
+
 ## 6. Seeing What a Filter Keeps
 
 A condition is easier to trust when you can see it. Three filters on the same
@@ -365,7 +449,11 @@ prj(d; kw...) = projection(d, :sd, :Msol_pc2; direction=:z, center=[:bc], range_
 
 ```
 
+
 ```
+[ Info: Mera v1.9.0
+
+
 prj (generic function with 1 method)
 ```
 
@@ -397,7 +485,7 @@ densest 1%    : 8494     2.433e10 Msol  = 78.6 % of the box
 ```
 
 
-![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_20_1.png)
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_25_1.png)
 
 
 Three views of one simulation, on one colour scale. The cold phase is
@@ -471,7 +559,7 @@ fig
 ```
 
 
-![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_25_0.png)
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_30_0.png)
 
 
 ```julia
