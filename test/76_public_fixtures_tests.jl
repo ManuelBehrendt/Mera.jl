@@ -389,10 +389,87 @@ else
         @test checked >= 20        # guard: the loop must actually have compared something
     end
 
+    # ------------------------------------------------------------------ vs RAMSES's own reference
+    @testset "sedov3d reproduces the RAMSES developers' reference solution" begin
+        # The strongest validation in this file: the numbers below are NOT ours. They are the
+        # reference solution shipped by the RAMSES project itself, at
+        #     tests/hydro/sedov3d/sedov3d-ref.dat   (github.com/ramses-organisation/ramses, tag 2026.05)
+        # against which RAMSES validates its own hydro solver. The sedov3d_amr fixture is that test
+        # configuration with only &OUTPUT_PARAMS changed (extra snapshots), so its LAST snapshot is
+        # the state the reference describes.
+        #
+        # Reproducing them requires Mera to read positions, cell sizes, levels and all hydro
+        # variables correctly — an external check that owes nothing to our own measurements.
+        #
+        # The reduction is RAMSES's, from tests/visu/visu_ramses.py :: check_solution:
+        #   1. snap values within 1e-14 relative of the mean to the mean (their noise filter)
+        #   2. log10(|x|) for density and pressure, |x| otherwise
+        #   3. exact summation (they use math.fsum; BigFloat here removes summation-order effects)
+        # RAMSES's own acceptance tolerance for this comparison is 3e-13.
+        RAMSES_REF = Dict(
+            "boxlen"     =>  5.0000000000000000e-01,
+            "density"    => -4.4239860796476358e+02,
+            "dx"         =>  1.5795312500000000e+02,
+            "level"      =>  3.3161000000000000e+04,
+            "ncells"     =>  7.0710000000000000e+03,
+            "pressure"   => -2.3191684899996708e+04,
+            "time"       =>  9.9118075453356394e-03,
+            "velocity_x" =>  2.0808749433537787e+03,
+            "velocity_y" =>  2.0808749433537787e+03,
+            "velocity_z" =>  2.0808749433537787e+03,
+            "x"          =>  1.3331484375000000e+03,
+            "y"          =>  1.3331484375000000e+03,
+            "z"          =>  1.3331484375000000e+03,
+        )
+
+        function _ramses_reduce(v::AbstractVector{<:Real}; islog::Bool=false)
+            av = sum(BigFloat.(v)) / length(v)
+            acc = BigFloat(0)
+            for x in v
+                d = (av == 0) ? BigFloat(x) :
+                    (abs(BigFloat(x) - av)/abs(av) < 1e-14 ? av : BigFloat(x))
+                acc += islog ? log10(abs(d)) : abs(d)
+            end
+            Float64(acc)
+        end
+
+        P    = PUBLIC_FIXTURES[:sedov3d_amr].path
+        n    = last(sort(checkoutputs(P, verbose=false).outputs))
+        info = getinfo(n, P, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+
+        got = Dict(
+            "ncells"     => Float64(length(gas.data)),
+            "boxlen"     => info.boxlen,
+            "time"       => info.time,
+            "level"      => _ramses_reduce(Float64.(getvar(gas, :level))),
+            "dx"         => _ramses_reduce(getvar(gas, :cellsize, :standard)),
+            "x"          => _ramses_reduce(getvar(gas, :x, :standard)),
+            "y"          => _ramses_reduce(getvar(gas, :y, :standard)),
+            "z"          => _ramses_reduce(getvar(gas, :z, :standard)),
+            "velocity_x" => _ramses_reduce(getvar(gas, :vx)),
+            "velocity_y" => _ramses_reduce(getvar(gas, :vy)),
+            "velocity_z" => _ramses_reduce(getvar(gas, :vz)),
+            "density"    => _ramses_reduce(getvar(gas, :rho); islog=true),
+            "pressure"   => _ramses_reduce(getvar(gas, :p);   islog=true),
+        )
+
+        for k in sort(collect(keys(RAMSES_REF)))
+            @test isapprox(got[k], RAMSES_REF[k]; rtol=3e-13)
+        end
+        # measured: worst relative deviation 2.2e-16, i.e. one machine epsilon
+        worst = maximum(abs(got[k] - RAMSES_REF[k]) / abs(RAMSES_REF[k]) for k in keys(RAMSES_REF))
+        @test worst < 1e-14
+        _diag("sedov3d_vs_ramses_reference", ["quantity", "mera", "ramses_reference", "rel_diff"],
+              [(k, got[k], RAMSES_REF[k], abs(got[k]-RAMSES_REF[k])/abs(RAMSES_REF[k]))
+               for k in sort(collect(keys(RAMSES_REF)))])
+    end
+
     # ------------------------------------------------------------------ regression vs baselines
     @testset "diagnostics match the committed baselines" begin
         names = ["sedov3d_amr", "sedov3d_amr_summary", "mhdtube3d", "stromgren3d",
-                 "clumps3d", "sedov3d_grav_part", "sedov3d_amr_mera", "legacy_particles3d"]
+                 "clumps3d", "sedov3d_grav_part", "sedov3d_amr_mera", "legacy_particles3d",
+                 "sedov3d_vs_ramses_reference"]
         for nm in names
             status, msg = _compare_baseline(nm)
             if status === :ok
