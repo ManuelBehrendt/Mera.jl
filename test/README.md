@@ -102,6 +102,25 @@ declared in [`test_config.jl`](test_config.jl), which records for each one what 
 oracle it is asserted against, and any trap worth knowing. They fall into four classes by
 **provenance** — which matters, because it determines what a failure means.
 
+**Getting them.** Nothing needs configuring by hand: the fixtures are published as assets on the
+`testdata-v1` release, and one script finds or fetches them.
+
+```bash
+./testdata/fetch_fixtures.sh --small     # ~130 MB: everything except the Bondi run
+./testdata/fetch_fixtures.sh             # everything, ~296 MB
+julia --project -e 'using Pkg; Pkg.test("Mera")'
+```
+
+It resolves in this order and downloads only as a last resort — `$MERA_TEST_DATA`, then the
+maintainer's external drive (override with `FIXTURE_EXTERNAL_ROOT`), then `testdata/fixtures/`
+inside this checkout, which is also where downloads land. Every archive is verified against the
+committed `testdata/SHA256SUMS` before it is unpacked. `test_config.jl` resolves the same three
+locations, so the suite finds whatever the script left.
+
+The fixtures are release **assets**, not repository files: Mera is a registered package, so
+anything committed to the tree would be downloaded by every `Pkg.add("Mera")` and would remain in
+git history permanently.
+
 ### 1. Purpose-built public fixtures — generated from committed namelists
 
 The main tier. Each is a small RAMSES run produced from a namelist in

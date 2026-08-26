@@ -1,0 +1,93 @@
+name: Fixtures
+
+# The data-backed tier. CI.yml runs only the data-free tests (MERA_SMOKE_ONLY=1) because the
+# runners have no simulation data; this workflow supplies that data by downloading the public
+# fixtures published as release assets, so the reader -> getvar -> region -> projection chain and
+# the RAMSES reference solutions are exercised on every push too, not only on the maintainer's
+# laptop.
+#
+# The fixtures live as assets on the `testdata-v1` tag, NOT in the git tree: Mera is a registered
+# package, so anything committed here would be downloaded by every Pkg.add("Mera") and would stay
+# in history forever.
+
+on:
+  push:
+    branches: [master, main, multicode]
+  pull_request:
+    branches: [master, main, multicode]
+  schedule:
+    # nightly, for the job that also pulls the 165 MB Bondi fixture
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  fixtures:
+    # `small` on every push (~130 MB); the nightly run adds ramses_smbh_bondi (165 MB), whose
+    # 40 published reference quantities are the most expensive to fetch and the least likely to
+    # regress from an ordinary code change.
+    name: Data-backed (${{ matrix.set }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - set: small
+            flag: --small
+          - set: full
+            flag: --all
+    steps:
+      - uses: actions/checkout@v5
+
+      # Skip the expensive `full` set unless this is the nightly run or a manual dispatch.
+      - name: Should this set run?
+        id: gate
+        run: |
+          if [ "${{ matrix.set }}" = "full" ] && \
+             [ "${{ github.event_name }}" != "schedule" ] && \
+             [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: julia-actions/setup-julia@v2
+        if: steps.gate.outputs.run == 'true'
+        with:
+          version: '1.12'
+      - uses: julia-actions/cache@v2
+        if: steps.gate.outputs.run == 'true'
+      - uses: julia-actions/julia-buildpkg@v1
+        if: steps.gate.outputs.run == 'true'
+
+      # Cache the unpacked fixtures on the SHA256SUMS content: when the manifest changes the
+      # fixtures changed, so the key changes and they are re-fetched.
+      - name: Cache fixtures
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/cache@v4
+        with:
+          path: testdata/fixtures
+          key: fixtures-${{ matrix.set }}-${{ hashFiles('testdata/SHA256SUMS') }}
+
+      - name: Fetch fixtures
+        if: steps.gate.outputs.run == 'true'
+        run: ./testdata/fetch_fixtures.sh ${{ matrix.flag }}
+
+      - name: Data-backed tests
+        if: steps.gate.outputs.run == 'true'
+        env:
+          MERA_TEST_DATA: ${{ github.workspace }}/testdata/fixtures
+          JULIA_NUM_THREADS: "4"
+        run: julia --project -e 'using Pkg; Pkg.test("Mera")'
+
+      # The measured diagnostics: what each oracle actually got, next to what theory says.
+      # Useful on a failure, and the artifact a reviewer can inspect without running anything.
+      - name: Upload diagnostics
+        if: steps.gate.outputs.run == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{ matrix.set }}
+          path: test/results/
+          if-no-files-found: ignore

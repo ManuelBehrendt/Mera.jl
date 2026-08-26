@@ -3,10 +3,32 @@
 # This file defines paths, datasets, and tolerances for all tests.
 
 # Simulation data path
-# Override with the MERA_TEST_DATA environment variable to point at a
-# different location (useful for CI, reviewers, or alternative drives).
-const SIMULATION_PATH = get(ENV, "MERA_TEST_DATA",
-                            "/Volumes/FASTStorage/Simulations/Mera-Tests")
+# ---------------------------------------------------------------------------
+# Resolved in the same order as testdata/fetch_fixtures.sh, so the suite finds the fixtures
+# wherever they happen to be and nobody has to configure anything by hand:
+#
+#   1. $MERA_TEST_DATA               — an explicit override, honoured even when it does not
+#                                      exist, so a typo shows up as a warning instead of being
+#                                      silently replaced by some other directory
+#   2. the maintainer's external drive
+#   3. testdata/fixtures/            — inside this checkout, where fetch_fixtures.sh downloads to
+#
+# A candidate only counts if it actually contains RAMSES-PUBLIC; an empty directory left behind
+# by an interrupted download must not shadow a working one.
+const _EXTERNAL_ROOT = "/Volumes/FASTStorage/Simulations/Mera-Tests"
+
+function _resolve_simulation_path()
+    explicit = get(ENV, "MERA_TEST_DATA", "")
+    isempty(explicit) || return explicit
+    for cand in (_EXTERNAL_ROOT,
+                 normpath(joinpath(@__DIR__, "..", "testdata", "fixtures")),
+                 normpath(joinpath(pwd(), "testdata", "fixtures")))
+        isdir(joinpath(cand, "RAMSES-PUBLIC")) && return cand
+    end
+    return _EXTERNAL_ROOT      # nothing found: report against the documented default
+end
+
+const SIMULATION_PATH = _resolve_simulation_path()
 const DATA_AVAILABLE = isdir(SIMULATION_PATH)
 
 # Smoke-only mode: run only data-independent tiers (Aqua + units).

@@ -167,3 +167,8 @@ scripts/__pycache__/
 # Oracle diagnostics written by test/76_public_fixtures_tests.jl (measured vs theory,
 # for inspection and for CI to upload as an artifact). Generated output, never committed.
 test/results/
+
+# Public test fixtures downloaded by testdata/fetch_fixtures.sh. These are release ASSETS, never
+# repository files: Mera is registered, so anything committed here ships in every Pkg.add tarball
+# and stays in git history forever. Only testdata/SHA256SUMS is tracked.
+testdata/fixtures/

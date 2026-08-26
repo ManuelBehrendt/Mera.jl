@@ -106,6 +106,33 @@ Between them: both the multi-file (ncpu=8) and single-file (ncpu=1) reader paths
 grids, three `nvarh` layouts (5 / 8 / 11), every data type Mera reads, and both the legacy and
 modern on-disk formats.
 
+## Publishing and fetching the fixtures
+
+The generated fixtures are published as **assets on the `testdata-v1` release**, not committed to
+this repository: Mera is registered, so tree contents ship in every `Pkg.add("Mera")` tarball and
+persist in git history.
+
+| script | what it does |
+|---|---|
+| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `SHA256SUMS` (~296 MB total) |
+| `fetch_fixtures.sh [--small\|--all\|<names>]` | finds them on disk, or downloads and verifies them |
+| `SHA256SUMS` | **committed**: the integrity link between this repo and the published assets |
+
+To publish a new set:
+
+```bash
+testdata/package_fixtures.sh /path/to/staging
+cp /path/to/staging/SHA256SUMS testdata/SHA256SUMS      # and commit it
+gh release create testdata-v1 --title 'Test fixtures v1' --notes-file testdata/RELEASE_NOTES.md
+gh release upload testdata-v1 /path/to/staging/*.tar.gz
+```
+
+Bump the tag (`testdata-v2`, via `FIXTURE_TAG`) when a fixture changes, so an older checkout keeps
+resolving the assets its committed `SHA256SUMS` describes.
+
+`.github/workflows/fixtures.yml` runs the data-backed tier on this: the `--small` set on every
+push, and the full set including the 165 MB Bondi fixture nightly.
+
 ## RAMSES's own test configurations, run unchanged
 
 Three fixtures are not ours: they are configurations from RAMSES's own test suite, run **without
