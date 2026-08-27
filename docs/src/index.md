@@ -145,18 +145,19 @@ while the full suite runs against real snapshots locally.
 
 ## Ambient Study Music
 
-**Ambient Study Music**, by MERA, inspired by astrophysics. Twenty-three tracks, each named after
-an astronomical object: Andromeda, the Crab Nebula, Sagittarius A*, Proxima Centauri, Titan, and
-so on. Written alongside the package, and meant for long sessions with data.
+**Ambient Study Music**, by MERA, inspired by astrophysics. Eighteen tracks, each named after an
+astronomical object. Written alongside the package, and meant for long sessions with data.
 
 ```@raw html
-<ul>
-<li><a href="https://open.spotify.com/album/4WiGfc2nQAj02jeJRY0dTn" target="_blank" rel="noopener noreferrer">Spotify</a></li>
-<li><a href="https://music.apple.com/de/album/ambient-study-music/6805943329?l=en-GB" target="_blank" rel="noopener noreferrer">Apple Music</a></li>
-<li><a href="https://youtube.com/playlist?list=OLAK5uy_mlavbfbMJji-L-Z49pyTUVQtP7aWr_MqM" target="_blank" rel="noopener noreferrer">YouTube</a></li>
-</ul>
 <p align="center">
   <img src="assets/ambient_study_music.jpg" alt="Ambient Study Music" width="330" style="border-radius: 6px;">
+</p>
+<p align="center">
+  <a href="https://open.spotify.com/album/4WiGfc2nQAj02jeJRY0dTn" target="_blank" rel="noopener noreferrer">Spotify</a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://music.apple.com/de/album/ambient-study-music/6805943329?l=en-GB" target="_blank" rel="noopener noreferrer">Apple Music</a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://youtube.com/playlist?list=OLAK5uy_mlavbfbMJji-L-Z49pyTUVQtP7aWr_MqM" target="_blank" rel="noopener noreferrer">YouTube</a>
 </p>
 ```
 

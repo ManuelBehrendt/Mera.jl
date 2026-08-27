@@ -301,14 +301,20 @@ published.
 
 ## Ambient Study Music
 
-<img src="docs/src/assets/ambient_study_music.jpg" alt="Ambient Study Music" width="240" align="right">
+Written alongside Mera: **Ambient Study Music**, eighteen tracks named after astronomical objects,
+inspired by astrophysics.
 
-Written alongside Mera: **Ambient Study Music**, twenty-three tracks named after astronomical
-objects, inspired by astrophysics.
+<p align="center">
+  <img src="docs/src/assets/ambient_study_music.jpg" alt="Ambient Study Music" width="300">
+</p>
 
-[Spotify](https://open.spotify.com/album/4WiGfc2nQAj02jeJRY0dTn) ·
-[Apple Music](https://music.apple.com/de/album/ambient-study-music/6805943329?l=en-GB) ·
-[YouTube](https://youtube.com/playlist?list=OLAK5uy_mlavbfbMJji-L-Z49pyTUVQtP7aWr_MqM)
+<p align="center">
+  <a href="https://open.spotify.com/album/4WiGfc2nQAj02jeJRY0dTn">Spotify</a>
+  &nbsp;·&nbsp;
+  <a href="https://music.apple.com/de/album/ambient-study-music/6805943329?l=en-GB">Apple Music</a>
+  &nbsp;·&nbsp;
+  <a href="https://youtube.com/playlist?list=OLAK5uy_mlavbfbMJji-L-Z49pyTUVQtP7aWr_MqM">YouTube</a>
+</p>
 
 ## Get involved
 
