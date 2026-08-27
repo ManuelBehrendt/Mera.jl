@@ -48,7 +48,10 @@ done
 
 # the human-readable material that travels with the fixture set
 META=()
-for m in README.md OVERVIEW.ipynb Project.toml NOTICE.md RAMSES-LICENSE.txt; do
+# The OVERVIEW notebook and its Project.toml are deliberately NOT shipped: they are a Julia
+# environment plus 2 MB of stored figures, and the fixtures are ordinary RAMSES outputs that need
+# no notebook to be useful. The README carries the getting-started example instead.
+for m in README.md NOTICE.md RAMSES-LICENSE.txt; do
     [ -f "$ROOT/$m" ] && META+=("$m")
 done
 if [ ${#META[@]} -gt 0 ]; then

@@ -52,8 +52,8 @@ using their reduction
 
 Source: <https://github.com/ramses-organisation/ramses>, tag **2026.05**.
 
-`RAMSES-PUBLIC-docs.tar.gz` holds the README, the `OVERVIEW.ipynb` notebook and a `Project.toml`
-for exploring the set interactively.
+`RAMSES-PUBLIC-docs.tar.gz` holds the README, the third-party `NOTICE.md` and RAMSES's licence.
+
 
 ## Attribution and licence
 
