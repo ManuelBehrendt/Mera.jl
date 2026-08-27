@@ -1,3 +1,8 @@
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 01_gravity_First_Inspection.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+
 !!! note "Renaming is not wired up yet"
     You can assign into `info.descriptor.gravity`, but nothing reads it: `usegravity` is set to
     `false` when the simulation is read, and the branch that would honour custom names is not
