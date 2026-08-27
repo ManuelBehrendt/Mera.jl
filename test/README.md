@@ -193,6 +193,31 @@ progressively being replaced by them, because a reviewer cannot obtain them.
 | `rt_stromgren` | RAMSES-RT Strömgren sphere | superseded by `stromgren3d` |
 | `timeseries_sedov3d` | 3-D Sedov, ~13 outputs, plus the same converted to mera `.jld2` | multi-snapshot `timeseries()` on both code paths |
 
+## A note on unit scales
+
+Six of the eleven fixtures have `unit_l = unit_d = unit_t = 1` — `clumps3d`, `legacy_particles3d`,
+`mhdtube3d`, `ramses_abc_flow`, `sedov3d_amr` and `sedov3d_grav_part`. That degeneracy is worth
+naming, because a scale of 1 makes a unit-conversion bug invisible: every conversion is the
+identity, so a wrong factor and a right one agree.
+
+It is not fixable for four of them and does not need fixing for the corpus as a whole:
+
+- `ramses_abc_flow`, `sedov3d_amr` and `sedov3d_grav_part` take their units from RAMSES's own test
+  configurations. Changing them would invalidate the published reference solutions, which is the
+  entire point of those fixtures.
+- The remaining four fixtures carry real scales — `stromgren3d` and `ramses_smbh_bondi` in kpc,
+  `sinks3d` and `ramses_rt_dirac` in pc — and that is where the unit paths are actually exercised:
+  - `unit_d`, `unit_l` and `unit_t` are themselves among the **published reference quantities**
+    matched exactly for `rt-dirac` and `smbh-bondi`, so Mera reading a scale wrongly fails there;
+  - the Strömgren oracle converts volumes to `:kpc3` and temperatures to Kelvin and then has to
+    land on `r_S = 5.393 kpc` and `t_rec = 122.4 Myr`, values documented independently in the
+    fixture's own namelist. A broken `scale.kpc3` or `scale.K` cannot reach them.
+
+So unit conversion is covered by construction rather than by a dedicated test, and by fixtures
+whose expected values come from outside this repository. Adding non-trivial units to the three
+fixtures that are ours to change (`clumps3d`, `mhdtube3d`, `legacy_particles3d`) would broaden
+that, at the cost of re-running them and regenerating their baselines.
+
 ## Baselines: guarding against silent drift
 
 An analytic oracle catches a *wrong* answer. It does not catch an answer that is still inside

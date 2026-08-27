@@ -189,6 +189,13 @@ const DATASETS = Dict(
 const PUBLIC_PATH = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC")
 const PUBLIC_AVAILABLE = isdir(PUBLIC_PATH)
 
+# NOTE ON UNIT SCALES. Six of these fixtures have unit_l = unit_d = unit_t = 1, which makes every
+# unit conversion the identity and so hides conversion bugs. Four of them cannot change: their
+# units come from RAMSES's own test configurations, and altering them would invalidate the
+# published reference solutions. Unit coverage comes instead from the fixtures that do carry real
+# scales — unit_d/unit_l/unit_t are themselves reference quantities for rt-dirac and smbh-bondi,
+# and the Stromgren oracle must convert to :kpc3 and Kelvin to reach the r_S and t_rec its namelist
+# documents. See "A note on unit scales" in test/README.md.
 const PUBLIC_FIXTURES = Dict(
     :sedov3d_amr => (
         path = joinpath(PUBLIC_PATH, "sedov3d_amr"),
