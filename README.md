@@ -301,9 +301,10 @@ published.
 
 ## Ambient Study Music
 
+<img src="docs/src/assets/ambient_study_music.jpg" alt="Ambient Study Music album cover" width="220" align="right">
+
 Written alongside Mera: **Ambient Study Music**, twenty-three tracks named after astronomical
-objects. Previously bundled with the documentation, now published instead, which keeps 153 MB of
-audio out of every `Pkg.add`.
+objects, inspired by astrophysics.
 
 [Spotify](https://open.spotify.com/album/4WiGfc2nQAj02jeJRY0dTn) ·
 [Apple Music](https://music.apple.com/de/album/ambient-study-music/6805943329?l=en-GB) ·

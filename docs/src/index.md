@@ -145,13 +145,13 @@ while the full suite runs against real snapshots locally.
 
 ## Ambient Study Music
 
-The documentation used to carry an in-page player for a set of ambient tracks written alongside
-Mera. The album is now published, so the audio no longer ships with the package, which keeps a
-data-analysis download free of 153 MB of music.
+```@raw html
+<img src="assets/ambient_study_music.jpg" alt="Ambient Study Music album cover" width="300" align="right" style="margin: 0 0 1em 1.5em; border-radius: 6px;">
+```
 
 **Ambient Study Music**, by MERA, inspired by astrophysics. Twenty-three tracks, each named after
 an astronomical object: Andromeda, the Crab Nebula, Sagittarius A*, Proxima Centauri, Titan, and
-so on.
+so on. Written alongside the package, and meant for long sessions with data.
 
 - [Spotify](https://open.spotify.com/album/4WiGfc2nQAj02jeJRY0dTn)
 - [Apple Music](https://music.apple.com/de/album/ambient-study-music/6805943329?l=en-GB)
