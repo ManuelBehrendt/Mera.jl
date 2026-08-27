@@ -19,9 +19,12 @@ on:
   #     branches: [master, main, multicode]
   #   pull_request:
   #     branches: [master, main, multicode]
-  schedule:
-    # nightly, for the job that also pulls the 165 MB Bondi fixture
-    - cron: '0 3 * * *'
+  # The nightly schedule is disabled for the same reason as the push trigger: this job's first
+  # step downloads the fixture archives from the testdata-v1 release, which does not exist yet, so
+  # it failed every morning and said nothing about the code. Restore it with the push triggers
+  # once the assets are uploaded:
+  #   schedule:
+  #     - cron: '0 3 * * *'
   workflow_dispatch:
 
 env:
