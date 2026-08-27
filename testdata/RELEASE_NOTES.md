@@ -1,4 +1,4 @@
-# Mera.jl public test simulations — v1
+# Mera.jl public test simulations, v1
 
 Small RAMSES simulation outputs used by the Mera.jl test suite. They are published as **release
 assets rather than repository files**: Mera is a registered package, so anything committed to the
@@ -22,7 +22,7 @@ and skips the download entirely if the test simulations are already on disk.
 
 Generated from namelists committed in [`testdata/namelists/`](../testdata/), so every one is
 reproducible from first principles given RAMSES itself. Each is checked against an **analytic
-oracle** — something theory fixes independently of Mera.
+oracle**, meaning something theory fixes independently of Mera.
 
 | archive | what it exercises | oracle |
 |---|---|---|
@@ -39,16 +39,16 @@ oracle** — something theory fixes independently of Mera.
 
 These three are **not ours**. They are configurations from RAMSES's own test suite, run
 unmodified, so the reference solutions the RAMSES developers validate their solver against apply
-directly — 87 published quantities here, and 100 counting `sedov3d_amr`'s 13, checked 1:1
+directly. That is 87 published quantities here, or 100 counting `sedov3d_amr`'s 13, checked 1:1
 using their reduction
 (`tests/visu/visu_ramses.py :: check_solution`) at each test's own published tolerance
 (3e-13 by default; 8e-11 for rt-dirac).
 
 | archive | RAMSES test | quantities |
 |---|---|---|
-| `ramses_abc_flow` | `tests/mhd/abc-flow` | 22 — 3-D MHD, all six face-centred B components |
-| `ramses_rt_dirac` | `tests/rt/rt-dirac` | 25 — 3-D RT + MHD, incl. ionisation scalars |
-| `ramses_smbh_bondi` | `tests/sink/smbh-bondi` | 40 — Bondi accretion; 24 are `sink_*` |
+| `ramses_abc_flow` | `tests/mhd/abc-flow` | 22, covering 3-D MHD and all six face-centred B components |
+| `ramses_rt_dirac` | `tests/rt/rt-dirac` | 25, covering 3-D RT with MHD, including the ionisation scalars |
+| `ramses_smbh_bondi` | `tests/sink/smbh-bondi` | 40 for Bondi accretion, of which 24 are `sink_*` |
 
 Source: <https://github.com/ramses-organisation/ramses>, tag **2026.05**.
 
@@ -61,7 +61,7 @@ Mera.jl is MIT-licensed, but this data is not entirely ours. It is produced by *
 (Copyright CEA and Romain Teyssier), governed by the **CeCILL** licence
 (<http://www.cecill.info>), and three of these archives redistribute RAMSES namelists unmodified.
 `RAMSES-PUBLIC-docs.tar.gz` carries `NOTICE.md` and RAMSES's licence text; please cite
-Teyssier (2002) — and Rosdahl et al. (2013) for the RT test simulations — if you use these in published
+Teyssier (2002), and Rosdahl et al. (2013) for the RT test simulations, if you use these in published
 work.
 
 ## Provenance and integrity
