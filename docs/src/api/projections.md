@@ -143,3 +143,10 @@ show_threading_info
 
 ---
 *For complete function documentation, see the [Complete API Reference](../api.md).*
+
+## Function Reference
+
+```@docs
+projection
+project
+```

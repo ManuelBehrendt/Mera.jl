@@ -30,3 +30,12 @@ Functions for notifications and progress tracking.
 
 ---
 *For complete function documentation, see the [Complete API Reference](../api.md).*
+
+## Function Reference
+
+```@docs
+notifyme
+bell
+timed_notify
+send_results
+```

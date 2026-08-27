@@ -39,3 +39,10 @@ see the [Mera-Files API](mera_files.md).
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Covering Grid
+
+```@docs
+covering_grid
+covering_grid_memory
+```

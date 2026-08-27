@@ -74,3 +74,16 @@ from a simulation's own unit system.
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Galaxy Frame, Star Formation, and Distributions
+
+```@docs
+center_of
+face_on
+edge_on
+sfr_snapshot
+depletion_time
+timeseries
+pdf
+getvar_optional
+```

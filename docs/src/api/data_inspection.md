@@ -59,3 +59,17 @@ Provenance — which Mera version, output and simulation code produced a result 
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Function Reference
+
+```@docs
+getextent
+getpositions
+getvelocities
+capabilities
+supports
+provenance
+provenance_string
+quicklook
+quicklookplot
+```
