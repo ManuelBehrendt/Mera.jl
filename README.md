@@ -301,7 +301,7 @@ published.
 
 ## Ambient Study Music
 
-<img src="docs/src/assets/ambient_study_music.jpg" alt="Ambient Study Music album cover" width="220" align="right">
+<img src="docs/src/assets/ambient_study_music.jpg" alt="Ambient Study Music" width="240" align="right">
 
 Written alongside Mera: **Ambient Study Music**, twenty-three tracks named after astronomical
 objects, inspired by astrophysics.
