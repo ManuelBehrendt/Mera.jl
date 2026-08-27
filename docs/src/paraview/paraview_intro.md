@@ -1,3 +1,8 @@
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: paraview_intro.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+
 # Introduction
 
 !!! tip "Run it yourself"

@@ -1,3 +1,8 @@
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 15_multi_Profiles_Phase.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+
 # Profiles & phase diagrams — a step-by-step guide
 
 !!! tip "Run it yourself"

@@ -1,3 +1,8 @@
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 08_particles_VTK_export.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+
 # Particles: Export Selected Variables to VTK
 
 !!! tip "Run it yourself"

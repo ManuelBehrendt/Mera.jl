@@ -1,3 +1,8 @@
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 06_offaxis_Projection.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+
 ## 0. Off-axis projection — what this page gives you
 
 Title + scope card. Prose:

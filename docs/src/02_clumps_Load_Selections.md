@@ -1,3 +1,8 @@
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 02_clumps_Load_Selections.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+
 # Clump Data: Load Selected Variables and Spatial Ranges
 
 !!! tip "Run it yourself"

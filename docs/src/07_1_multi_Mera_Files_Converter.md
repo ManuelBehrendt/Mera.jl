@@ -1,3 +1,8 @@
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 07_1_multi_Mera_Files_Converter.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+
 # MERA/JLD2 File Converter - Multithreaded
 
 !!! tip "Run it yourself"

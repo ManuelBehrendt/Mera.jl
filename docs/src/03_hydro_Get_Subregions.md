@@ -1,3 +1,8 @@
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 03_hydro_Get_Subregions.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+
 # 3. Hydro: Sub-Regions — One Galaxy, One Mass Budget
 
 !!! tip "Run it yourself"

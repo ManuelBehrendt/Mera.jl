@@ -172,3 +172,15 @@ test/results/
 # repository files: Mera is registered, so anything committed here ships in every Pkg.add tarball
 # and stays in git history forever. Only testdata/SHA256SUMS is tracked.
 testdata/fixtures/
+
+# ── ambient music, published separately ──────────────────────────────────────
+# The albums are on the streaming services; the audio no longer ships with the
+# package. 153 MB of MP3s were downloaded by every Pkg.add("Mera") to serve a
+# player in the docs. Files stay on the working drive, out of the repository.
+docs/src/assets/music/
+docs/src/assets/music_player.js
+docs/src/assets/enhanced_music_player.js
+docs/src/assets/music_bar.html
+docs/src/assets/popup_music_player.html
+docs/src/assets/music_notice.js
+docs/src/assets/persistent_frame.html
