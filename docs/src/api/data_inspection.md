@@ -73,3 +73,15 @@ provenance_string
 quicklook
 quicklookplot
 ```
+
+## Simulation Build Information
+
+RAMSES records how the binary that produced an output was built. These print
+that record back, which is what you need when a result has to be traced to a
+specific code version.
+
+```@docs
+makefile
+patchfile
+timerfile
+```
