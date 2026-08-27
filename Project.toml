@@ -1,6 +1,6 @@
 name = "Mera"
 uuid = "02f895e8-fdb1-4346-8fe6-c721699f5126"
-version = "1.9.0"
+version = "1.8.0"
 authors = ["Manuel Behrendt"]
 
 [deps]
