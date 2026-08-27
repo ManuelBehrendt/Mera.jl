@@ -31,7 +31,7 @@ for d in "$ROOT"/*/; do
 done
 
 # the docs archive is built from the loose files in the fixture root
-for m in README.md OVERVIEW.ipynb Project.toml NOTICE.md RAMSES-LICENSE.txt; do
+for m in README.md NOTICE.md RAMSES-LICENSE.txt; do
     [ -f "$ROOT/$m" ] || continue
     src=$(stat -f '%m' "$ROOT/$m"); arc=$(stat -f '%m' "$OUT/RAMSES-PUBLIC-docs.tar.gz" 2>/dev/null || echo 0)
     [ "$src" -gt "$arc" ] && { echo "  STALE: $m changed after the docs archive was packaged"; stale=1; }

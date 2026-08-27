@@ -48,9 +48,11 @@ done
 
 # the human-readable material that travels with the fixture set
 META=()
-# The OVERVIEW notebook and its Project.toml are deliberately NOT shipped: they are a Julia
-# environment plus 2 MB of stored figures, and the fixtures are ordinary RAMSES outputs that need
-# no notebook to be useful. The README carries the getting-started example instead.
+# FUTURE WORK: an overview notebook. One was written and then set aside — it brings a Julia
+# environment and ~2 MB of stored figures along with it, and the fixtures are ordinary RAMSES
+# outputs that need no notebook to be useful. The README carries a getting-started example
+# instead. If a notebook is revived later, add it (and its Project.toml) back to this list.
+# The earlier draft is parked at $MERA_TEST_DATA/_parked/overview_notebook/.
 for m in README.md NOTICE.md RAMSES-LICENSE.txt; do
     [ -f "$ROOT/$m" ] && META+=("$m")
 done

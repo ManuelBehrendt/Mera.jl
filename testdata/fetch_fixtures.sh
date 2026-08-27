@@ -103,7 +103,7 @@ for f in "${WANT[@]}" ; do
     tar -xzf "$TMP/$f.tar.gz" -C "$DEST"
 done
 
-# the README / OVERVIEW notebook that documents the set
+# the README, NOTICE and licence that document the set
 if [ ! -f "$DEST/README.md" ]; then
     if curl -fsSL --retry 2 -o "$TMP/docs.tar.gz" \
         "$BASE_URL/RAMSES-PUBLIC-docs.tar.gz" 2>/dev/null; then
