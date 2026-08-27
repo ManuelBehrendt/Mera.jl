@@ -3,7 +3,6 @@
 /* Placeholder for existing custom functionality */
 /* This file ensures compatibility with the current build system */
 
-/* The ambient music player is loaded separately via ambient_music_player.js */
 
 console.log('MERA.jl documentation loaded successfully');
 
