@@ -7,13 +7,13 @@
 #
 #   PART A (data-dependent, inside `if DATA_AVAILABLE`)
 #     * bell()                         -- audio helper with documented audio-failure fallback
-#     * simple_base64encode()          -- basic + empty-string sanity
+#     * Mera.simple_base64encode()          -- basic + empty-string sanity
 #     * checkoutputs / checksimulations -- output-numbering helpers
 #     * printtime()                    -- verbose/silent mode via capture_stdout
 #
 #   PART B (data-free, always runs)
 #     * System info command helpers (5 OS-aware command-string functions)
-#     * simple_base64encode extended (RFC 4648 test vectors)
+#     * Mera.simple_base64encode extended (RFC 4648 test vectors)
 #     * Progress trackers (create / update without Zulip)
 #     * optimize_image_for_zulip (non-existent / small file)
 #     * Zulip messaging stack (when ~/zulip.txt credentials present):
@@ -96,7 +96,7 @@ if DATA_AVAILABLE
         @test outcome in (:ok, :audio_unavailable)
     end
 
-    @testset "simple_base64encode() basic" begin
+    @testset "Mera.simple_base64encode() basic" begin
         @test Mera.simple_base64encode("test string") isa String
         @test Mera.simple_base64encode("test string") != ""
         @test Mera.simple_base64encode("")  == ""
@@ -175,8 +175,8 @@ end
 # adaptation must be correct; we spot-check the command on macOS/Linux.
 @testset "System info command helpers" begin
 
-    @testset "get_system_info_command()" begin
-        cmd = get_system_info_command()
+    @testset "Mera.get_system_info_command()" begin
+        cmd = Mera.get_system_info_command()
         @test cmd isa String && length(cmd) > 10
         if Sys.isapple()
             @test contains(cmd, "vm_stat") || contains(cmd, "uname")
@@ -185,8 +185,8 @@ end
         end
     end
 
-    @testset "get_memory_info_command()" begin
-        cmd = get_memory_info_command()
+    @testset "Mera.get_memory_info_command()" begin
+        cmd = Mera.get_memory_info_command()
         @test cmd isa String && length(cmd) > 10
         if Sys.isapple()
             @test contains(cmd, "vm_stat")
@@ -195,30 +195,30 @@ end
         end
     end
 
-    @testset "get_disk_info_command()" begin
-        cmd = get_disk_info_command()
+    @testset "Mera.get_disk_info_command()" begin
+        cmd = Mera.get_disk_info_command()
         @test cmd isa String
         @test contains(cmd, "df") || contains(cmd, "wmic")
     end
 
-    @testset "get_network_info_command()" begin
-        @test get_network_info_command() isa String
-        @test length(get_network_info_command()) > 10
+    @testset "Mera.get_network_info_command()" begin
+        @test Mera.get_network_info_command() isa String
+        @test length(Mera.get_network_info_command()) > 10
     end
 
-    @testset "get_process_info_command()" begin
-        @test get_process_info_command() isa String
-        @test length(get_process_info_command()) > 10
+    @testset "Mera.get_process_info_command()" begin
+        @test Mera.get_process_info_command() isa String
+        @test length(Mera.get_process_info_command()) > 10
     end
 end
 
 # ----------------------------------------------------------------------------
-# B.2  simple_base64encode RFC 4648 test vectors
+# B.2  Mera.simple_base64encode RFC 4648 test vectors
 # ----------------------------------------------------------------------------
 # Standard test vectors from RFC 4648 § 10.  These uniquely identify
 # the encoding -- any deviation (wrong padding, wrong alphabet) breaks
 # them.
-@testset "simple_base64encode RFC 4648 vectors" begin
+@testset "Mera.simple_base64encode RFC 4648 vectors" begin
     @test Mera.simple_base64encode("f")      == "Zg=="
     @test Mera.simple_base64encode("fo")     == "Zm8="
     @test Mera.simple_base64encode("foo")    == "Zm9v"

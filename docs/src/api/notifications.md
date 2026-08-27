@@ -39,3 +39,21 @@ bell
 timed_notify
 send_results
 ```
+
+## Progress Tracking
+
+A tracker reports long-running work as it goes, rather than only at the end.
+Create one, update it inside the loop, and complete it when the work is done.
+
+```@docs
+create_progress_tracker
+update_progress!
+complete_progress!
+```
+
+## Utilities
+
+```@docs
+safe_execute
+optimize_image_for_zulip
+```

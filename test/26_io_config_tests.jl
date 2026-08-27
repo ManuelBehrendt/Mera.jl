@@ -32,7 +32,7 @@
 #   - show_mera_config       output formatting
 #   - reset_mera_io          configuration round-trip
 #   - mera_io_status         current settings reporting
-#   - enhanced_fortran_read  basic invocation
+#   - Mera.enhanced_fortran_read  basic invocation
 #   - clear_mera_cache! / show_mera_cache_stats  cache lifecycle
 #   - get_simulation_characteristics  heuristic dataset size / shape report
 #   - recommend_buffer_size  auto-recommendation for a given sim
@@ -195,22 +195,22 @@ end
             @test contains(output, "empty") || contains(output, "0 entries") || contains(output, "cache")
         end
 
-        @testset "enhanced_fortran_read with cache" begin
+        @testset "Mera.enhanced_fortran_read with cache" begin
             mktempdir() do dir
                 test_file = joinpath(dir, "test.dat")
                 write(test_file, "test data")
 
                 read_fn(path) = read(path, String)
 
-                result = enhanced_fortran_read(test_file, read_fn, use_cache=true)
+                result = Mera.enhanced_fortran_read(test_file, read_fn, use_cache=true)
                 @test result == "test data"
 
                 # Second read should hit cache
-                result2 = enhanced_fortran_read(test_file, read_fn, use_cache=true)
+                result2 = Mera.enhanced_fortran_read(test_file, read_fn, use_cache=true)
                 @test result2 == "test data"
 
                 # Read without cache
-                result3 = enhanced_fortran_read(test_file, read_fn, use_cache=false)
+                result3 = Mera.enhanced_fortran_read(test_file, read_fn, use_cache=false)
                 @test result3 == "test data"
             end
             redirect_stdout(devnull) do

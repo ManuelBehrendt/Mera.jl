@@ -212,7 +212,7 @@ end
         # ====================================================================
         # enhanced_io.jl -- cache hit/miss/invalidation semantics
         # ====================================================================
-        @testset "enhanced_fortran_read cache semantics" begin
+        @testset "Mera.enhanced_fortran_read cache semantics" begin
             redirect_stdout(devnull) do
                 clear_mera_cache!()
             end
@@ -223,16 +223,16 @@ end
                 counting_read(p) = (calls[] += 1; read(p, String))
 
                 # Miss then hit: reader invoked exactly once
-                @test enhanced_fortran_read(fpath, counting_read) == "v1"
+                @test Mera.enhanced_fortran_read(fpath, counting_read) == "v1"
                 @test calls[] == 1
                 @test haskey(Mera.MERA_INFO_CACHE, fpath)
-                @test enhanced_fortran_read(fpath, counting_read) == "v1"
+                @test Mera.enhanced_fortran_read(fpath, counting_read) == "v1"
                 @test calls[] == 1                     # served from cache
 
                 # Stale entry (file newer than cached mtime) -> re-read
                 write(fpath, "v2")
                 Mera.MERA_INFO_CACHE[fpath][:mtime] -= 3600.0
-                @test enhanced_fortran_read(fpath, counting_read) == "v2"
+                @test Mera.enhanced_fortran_read(fpath, counting_read) == "v2"
                 @test calls[] == 2
                 @test Mera.MERA_INFO_CACHE[fpath][:data] == "v2"  # re-cached
 
@@ -241,24 +241,24 @@ end
                 write(fpath2, "raw")
                 calls2 = Ref(0)
                 counting_read2(p) = (calls2[] += 1; read(p, String))
-                @test enhanced_fortran_read(fpath2, counting_read2, use_cache=false) == "raw"
-                @test enhanced_fortran_read(fpath2, counting_read2, use_cache=false) == "raw"
+                @test Mera.enhanced_fortran_read(fpath2, counting_read2, use_cache=false) == "raw"
+                @test Mera.enhanced_fortran_read(fpath2, counting_read2, use_cache=false) == "raw"
                 @test calls2[] == 2
                 @test !haskey(Mera.MERA_INFO_CACHE, fpath2)
 
                 # A `nothing` result is returned but never cached
                 fpath3 = joinpath(dir, "empty.dat")
                 write(fpath3, "")
-                @test enhanced_fortran_read(fpath3, p -> nothing) === nothing
+                @test Mera.enhanced_fortran_read(fpath3, p -> nothing) === nothing
                 @test !haskey(Mera.MERA_INFO_CACHE, fpath3)
 
                 # Error paths: EOFError warns+rethrows, others error+rethrow
                 @test_logs (:warn, r"EOFError") match_mode=:any begin
-                    @test_throws EOFError enhanced_fortran_read(
+                    @test_throws EOFError Mera.enhanced_fortran_read(
                         fpath3, p -> throw(EOFError()), use_cache=false)
                 end
                 @test_logs (:error, r"Enhanced file reading failed") match_mode=:any begin
-                    @test_throws ErrorException enhanced_fortran_read(
+                    @test_throws ErrorException Mera.enhanced_fortran_read(
                         fpath3, p -> error("boom"), use_cache=false)
                 end
 
@@ -410,11 +410,11 @@ end  # @testset "I/O optimization layer coverage (65)"
     rdr = p -> (calls[] += 1; "data")
     redirect_stdout(devnull) do; Mera.clear_mera_cache!(); end
     withenv("MERA_CACHE_ENABLED" => "false") do
-        enhanced_fortran_read(fn, rdr); enhanced_fortran_read(fn, rdr)
+        Mera.enhanced_fortran_read(fn, rdr); Mera.enhanced_fortran_read(fn, rdr)
     end
     @test calls[] == 2                                   # no caching: reader ran twice
     withenv("MERA_CACHE_ENABLED" => "true") do
-        enhanced_fortran_read(fn, rdr); enhanced_fortran_read(fn, rdr)
+        Mera.enhanced_fortran_read(fn, rdr); Mera.enhanced_fortran_read(fn, rdr)
     end
     @test calls[] == 3                                   # cached on the second read
     redirect_stdout(devnull) do; Mera.clear_mera_cache!(); end
