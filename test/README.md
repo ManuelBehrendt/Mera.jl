@@ -121,6 +121,13 @@ The fixtures are release **assets**, not repository files: Mera is a registered 
 anything committed to the tree would be downloaded by every `Pkg.add("Mera")` and would remain in
 git history permanently.
 
+**What is actually under test.** RAMSES is not being validated here; Mera is. Each fixture is an
+input whose correct output is known for a reason independent of Mera: a closed-form law, a number
+published by the RAMSES developers, or an input file written by hand. A discrepancy therefore
+points at Mera. That is how the Strömgren oracle located a wrong mean molecular weight in
+`getvar(:T, :K)`. The archive's own `README.md`, shipped with the data, sets this out in full
+under "Why these exist".
+
 ### 1. Purpose-built public fixtures — generated from committed namelists
 
 The main tier. Each is a small RAMSES run produced from a namelist in
