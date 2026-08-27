@@ -58,7 +58,7 @@ function show_map(M; logscale=false, cmap="inferno", clabel="", ttl="")
     xlabel("x [pixel]"); ylabel("y [pixel]"); tight_layout()
 end
 
-path = "$MERA_EXAMPLES/RAMSES/rt_stromgren"
+path = "$MERA_EXAMPLES/RAMSES-PUBLIC/stromgren3d"   # published test simulation, see its README
 info = getinfo(3, path)                 # prints the simulation overview incl. the RT block
 rt   = getrt(info, verbose=false)       # → RtDataType, like gethydro
 p    = projection(rt, :Np_total, verbose=false, show_progress=false)
@@ -74,21 +74,24 @@ show_map(p.maps[:Np_total]; logscale=true,
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-03T11:14:10.150
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[ Info: Precompiling PyPlot [d330b81b-6aea-500a-939a-2ce795aea3ee](cache misses: incompatible header (5))
+[ Info: Precompiling PyPlot [d330b81b-6aea-500a-939a-2ce795aea3ee] (cache misses: incompatible header (10))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[Mera]: 2026-08-27T20:47:49.846
 Code: RAMSES
 output [3] summary:
-mtime: 2026-06-01T21:54:33.519
-ctime: 2026-06-01T21:54:33.519
+mtime: 2026-08-20T16:57:42.963
+ctime: 2026-08-20T16:57:42.963
 =======================================================
-simulation time: 20.02 [Myr]
+simulation time: 30.01 [Myr]
 boxlen: 15.0 [kpc]
-ncpu: 1
+ncpu: 8
 ndim: 3
 cosmological:  false
 -------------------------------------------------------
 amr:           true
-level(s): 6 - 7 --> cellsize(s): 234.38 [pc] - 117.19 [pc]
+level of uniform grid: 5 --> cellsize(s): 468.75 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  8  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01, :scalar_02)
@@ -106,18 +109,18 @@ photon group energies [eV]: [18.85, 35.08, 65.67]
 -------------------------------------------------------
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&AMR_PARAMS", "&OUTPUT_PARAMS", "&BOUNDARY_PARAMS", "&RT_PARAMS", "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin", "&UNITS_PARAMS", "&RUN_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&AMR_PARAMS", "&OUTPUT_PARAMS", "&BOUNDARY_PARAMS", "&RT_PARAMS", "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin", "&UNITS_PARAMS", "&RUN_PARAMS", "! the Sedov fixture the boundaries here are NOT periodic (see &BOUNDARY_PARAMS), so plain", "&HYDRO_PARAMS", "! Run:  mpirun -np 8 <build>/bin/ramses3d_rt stromgren3d.nml > run.log 2>&1", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.69  s/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 (62.87 ms/it)
 ✓ File processing complete! Combining results...
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_4_10.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_4_14.png)
 
 **Takeaway:** `getinfo → getrt → projection → show_map` already reveals the ionized sphere.
 Everything below varies *what* we put through this same pipeline.
@@ -164,7 +167,7 @@ Np1 = getvar(rt, :Np1)                 # one photon group, code units
 ```
 
 ```
-(Np1_min = 3.065945823640658e-50, Np1_max = 0.0041809294396080166)
+(Np1_min = 1.9695717303063266e-49, Np1_max = 0.0010425690408447943)
 ```
 
 ## A first physics hook: radial fall-off
@@ -218,7 +221,7 @@ show_map(psub.maps[:Np_total]; logscale=true, clabel=L"$\log_{10}\,N_p^{\rm tota
 ```
 
 ```
-(full_cells = length(rt.data), sphere_cells = length(sub.data), shell_cells = length(shell.data)) = (full_cells = 262144, sphere_cells = 45080, shell_cells = 66320)
+(full_cells = length(rt.data), sphere_cells = length(sub.data), shell_cells = length(shell.data)) = (full_cells = 32768, sphere_cells = 6176, shell_cells = 8864)
 ```
 
 ![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_13_3.png)
@@ -266,8 +269,8 @@ quiver(xs, ys, u[ys, xs], v[ys, xs], color="cyan", pivot="mid", alpha=0.9);
 ```
 
 ```
-maximum(getvar(rt, :reducedflux1)) = 0.9927071564466189
-maximum(getvar(rt, :Fmag1)) = 0.0005397420584191681
+maximum(getvar(rt, :reducedflux1)) = 0.9888163855508687
+maximum(getvar(rt, :Fmag1)) = 0.0001338306154295702
 ```
 
 ![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_16_2.png)
@@ -328,22 +331,21 @@ gas = gethydro(info, verbose=false, show_progress=false)
 ```
 
 ```
-HydroDataType(Table with 262144 rows, 12 columns:
+HydroDataType(Table with 32768 rows, 11 columns:
 Columns:
 #   colname    type
 ──────────────────────
-1   level      Int64
-2   cx         Int64
-3   cy         Int64
-4   cz         Int64
-5   rho        Float64
-6   vx         Float64
-7   vy         Float64
-8   vz         Float64
-9   p          Float64
-10  scalar_00  Float64
-11  scalar_01  Float64
-12  scalar_02  Float64, InfoType(3, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/info_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/amr_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/hydro_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/grav_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/part_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/rt_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/info_rt_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/clump_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/timer_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/header_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren/output_00003/patches.txt"), "RAMSES", Dates.DateTime("2026-06-01T21:54:33.519"), Dates.DateTime("2026-06-01T21:54:33.519"), 1, 3, 6, 7, 15.0, 20.0180922235345, 1.0, 1.0, 1.0, 0.0, 0.0, 0.045, 3.08568025e21, 1.66e-24, 4.877090903692205e40, 9.77813951206781e7, 3.1556926e13, 1.4, true, 8, 5, 12, [:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01, :scalar_02], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], [:Np1, :Fx1, :Fy1, :Fz1, :Np2, :Fx2, :Fy2, :Fz2, :Np3, :Fx3, :Fy3, :Fz3], Symbol[], Symbol[], DescriptorType(1, [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01, :scalar_02], ["d", "d", "d", "d", "d", "d", "d", "d"], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 1, Dict{Any, Any}(:g_star => 1.6, :T2_star => 0.0, :nRTvar => 12, :nIons => 3, :group_egy => [18.85, 35.08, 65.67], :rt_c_frac => 0.01, :unit_pf => 9.77813951206781e7, :n_star => 0.1, :X_fraction => 1.0, :unit_np => 1.0…), Dict{Any, Any}(:L0_eV => [13.6, 24.59, 54.42], 2 => Dict{Symbol, Any}(:cse_cm2 => [5.04e-19, 0.0, 0.0], :egy_eV => 35.08, :csn_cm2 => [5.69e-19, 0.0, 0.0]), :spec2group => [1, 2, 3], :L1_eV => [24.59, 54.42, 0.0], 3 => Dict{Symbol, Any}(:cse_cm2 => [7.46e-20, 0.0, 0.0], :egy_eV => 65.67, :csn_cm2 => [7.89e-20, 0.0, 0.0]), 1 => Dict{Symbol, Any}(:cse_cm2 => [2.78e-18, 0.0, 0.0], :egy_eV => 18.85, :csn_cm2 => [3.0e-18, 0.0, 0.0])), false, true, Symbol[], false, false, Symbol[], false, false), true, false, false, true, false, false, true, Dict{Any, Any}("&COOLING_PARAMS" => Dict{Any, Any}("cooling" => ".true."), "&AMR_PARAMS" => Dict{Any, Any}("levelmax" => "7", "ngridmax" => "500000", "boxlen" => "15.\t\t\t!  1 kpc", "levelmin" => "6", "nexpand" => "1"), "&OUTPUT_PARAMS" => Dict{Any, Any}("delta_tout" => "10.", "tend" => "30."), "&BOUNDARY_PARAMS" => Dict{Any, Any}("nboundary" => "6", "jbound_min" => "0, 0, -1,  1, -1, -1", "kbound_max" => "0, 0,  0,  0, -1,  1", "bound_type" => "1, 2,  1,  2,  1,  2", "ibound_max" => "-1, 1,  1,  1,  1,  1", "ibound_min" => "-1, 1, -1, -1, -1, -1", "jbound_max" => "0, 0, -1,  1,  1,  1", "kbound_min" => "0, 0,  0,  0, -1,  1"), "&RT_PARAMS" => Dict{Any, Any}("rt_source_type" => "3*'point'", "&RT_GROUPS\t\t\t! Blackbody at T" => "1d5 Kelvin", "rt_flux_scheme" => "'glf'", "rt_w_source" => "3*0", "rt_c_fraction" => "0.01", "rt_v_source" => "3*0", "rt_src_z_center" => "3*0.", "rt_src_length_y" => "3*1.0", "rt_src_length_z" => "3*1.0", "rt_courant_factor" => "0.8"…), "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin" => Dict{Any, Any}("group_csn(2,:)" => "5.69d-19, 0.,0.   ! pck 2-> HI, HeI, HeII", "group_egy" => "18.85, 35.079, 65.666", "group_cse(2,:)" => "5.04d-19, 0.,0.   ! pck 2-> HI, HeI, HeII", "spec2group" => "1,2,3             ! HI, HeI, HeII -> pck", "group_cse(1,:)" => "2.78d-18, 0.,0.   ! pck 1-> HI, HeI, HeII", "group_csn(3,:)" => "7.89d-20, 0.,0.   ! pck 3-> HI, HeI, HeII", "group_csn(1,:)" => "3.00d-18, 0.,0.   ! pck 1-> HI, HeI, HeII", "group_cse(3,:)" => "7.46d-20, 0.,0.   ! pck 3-> HI, HeI, HeII"), "&UNITS_PARAMS" => Dict{Any, Any}("units_density" => "1.66d-24", "units_time" => "3.1556926d13", "units_length" => "3.08568025d21"), "&RUN_PARAMS" => Dict{Any, Any}("nsubcycle" => "10*1", "rt" => ".true.", "verbose" => ".false.", "nremap" => "0", "nrestart" => "0", "hydro" => ".true."), "&HYDRO_PARAMS" => Dict{Any, Any}("slope_type" => "2", "gamma" => "1.4", "courant_factor" => "0.8", "riemann" => "'hllc'", "scheme" => "'muscl'"), "&INIT_PARAMS" => Dict{Any, Any}("x_center" => "7.5", "region_type(1)" => "'square'", "y_center" => "7.5", "nregion" => "1", "length_z" => "100.0", "length_x" => "100.0", "z_center" => "7.5", "d_region" => "1d-3\t\t   \t  ! 1e-3 hydrogen atoms per cc", "var_region(1,1)" => "1e-6", "length_y" => "100.0"…)…), false, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "", "# Do we want a debug build? 1=Yes, 0=No", "DEBUG = 0", "# Do we want to test coverage?", "GCOV = 0", "# Compiler flavor: GNU or INTEL"  …  "\t\$(FC) -O0 -c write_patch.f90 -o \$@", "%.o:%.F", "\t\$(F90) \$(FFLAGS) -c \$^ -o \$@ \$(LIBS_OBJ) \$(LIBS_OBJ_TURB)", "%.o:%.f90", "\t\$(F90) \$(FFLAGS) -c \$^ -o \$@ \$(LIBS_OBJ) \$(LIBS_OBJ_TURB)", "FORCE:", "#############################################################################", "clean:", "\trm -f *.o *.\$(MOD) *.i", "#############################################################################"], ["", "     seconds         %    STEP (rank=      1)", "       9.589       1.7    coarse levels           ", "       2.531       0.5    refine                  ", "     205.885      36.7    radiative transfer      ", "       3.515       0.6    courant                 ", "       1.144       0.2    hydro - set unew        ", "     247.685      44.2    hydro - godunov         ", "       1.360       0.2    hydro - set uold        ", "      59.112      10.5    cooling                 ", "       1.032       0.2    hydro - ghostzones      ", "      28.067       5.0    flag                    ", "     560.623     100.0    TOTAL"], ["no patches", " "]), true, true, true, 0, ScalesType003(0.0010000008648732505, 1.0000008648732506, 1000.0008648732505, 1.0000008648732505e6, 3261.5665977832837, 2.0626498462588077e23, 3.08568025e16, 3.08568025e19, 3.08568025e21, 3.0856802499999998e22, 3.08568025e25, 1.0000025946219956e-9, 1.0000025946219957, 1.0000025946219956e9, 1.0000025946219955e18, 3.4695947530005516e10, 8.775594075372522e69, 2.9380065684892807e49, 2.93800656848928e58, 2.93800656848928e64, 2.93800656848928e67, 2.93800656848928e76, 0.02451901990607664, 0.02451901990607664, 1.66e-24, 24.51904111192109, 24.51904111192109, 0.005122229215, 0.0009999786422288134, 0.9999786422288134, 999978.6422288134, 3.1556926e13, 3.1556926e16, 2.4519083523665e7, 2.4519083523665e7, 8.166322132032091e12, 2.5694187983395264e10, 4.877090903692205e40, 977.813951206781, 977813.951206781, 9.77813951206781e7, 0.76, 4.663084755571995e56, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.5125985224777243e8, 1.5125985224777243e8, 1.587159404469864e-8, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 6.925149861946208e31, 6.831698820714928e65, 3.3774585398403183e72, 3.3774585398403183e65, 1.1495748770830706e8, 1.1495748770830705e9, 1.380649e-16, 1.4715262056331354e70, 1.4715262056331354e70, 1.4715262056331355e71, 0.0004465963871398189, 446.5963871398189, 446.5963871398189, 446596.3871398189, 4.465963871398189e-8, 2.9104685816882255e68, 2.9104685816882255e65, 2.9104685816882256e62, 1.4776739520104065e43, 3.860172288428439e9, 3.860172288428439e9, 3.4036683604631933e-65, 1.1584988366605846e-120, 0.76, 302.98265527339925, 5.0295120775384285e-22, 5.0295120775384285e-22, 50.295120775384284, 50295.12077538428, 5.0295120775384285e7, 3.08568025e21, 3.08568025e21, 3.0985716137458414e-6, 3.098571613745841e-8, 3.0985716137458415e-11, 3.09843657823729e-9, 9.56120123174617e15, 9.56120123174617e8, 956120.123174617, 1.5871594044698644e-8, 4.663084755571996e56, 5.143628878818097e-30, 1.004177802851038e-27, 3.08568025e21, 4.877090903692205e40, 3.1556926e13, 1.0, 4.8e-322, 4.84e-322, 4.9e-322, 4.94e-322, 5.0e-322, 5.04e-322, 5.1e-322, 5.14e-322, 5.2e-322, 5.24e-322, 5.3e-322, 4.4e-322, 4.15e-322, 9.56120123174617e15, 3.8e-322, 3.08568025e21, 4.877090903692205e40, 4.877090903692205e40, 3.1556926e13, 4.663084755571995e56, 4.663084755571995e56, 1.0, 2.08e-322, 1.9e-322, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.08568025e21, 3.08568025e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(500000, 982, 3, 3, 3, 7, 6, 46443, [0.0, 1.6777216e7], Bool[0]), PartInfoType(0.0, 10.000213582273508, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 06/01/26-23:43:16", " /Applications/Xcode.app/Contents/Developer/usr/bin/make EXEC", " ", " ", " HEAD"), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 6, 7, 15.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7, 8], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :scalar_00, 7 => :scalar_01, 2 => :vx, 8 => :scalar_02, 3 => :vy, 1 => :rho), 0.0, 0.0, ScalesType003(0.0010000008648732505, 1.0000008648732506, 1000.0008648732505, 1.0000008648732505e6, 3261.5665977832837, 2.0626498462588077e23, 3.08568025e16, 3.08568025e19, 3.08568025e21, 3.0856802499999998e22, 3.08568025e25, 1.0000025946219956e-9, 1.0000025946219957, 1.0000025946219956e9, 1.0000025946219955e18, 3.4695947530005516e10, 8.775594075372522e69, 2.9380065684892807e49, 2.93800656848928e58, 2.93800656848928e64, 2.93800656848928e67, 2.93800656848928e76, 0.02451901990607664, 0.02451901990607664, 1.66e-24, 24.51904111192109, 24.51904111192109, 0.005122229215, 0.0009999786422288134, 0.9999786422288134, 999978.6422288134, 3.1556926e13, 3.1556926e16, 2.4519083523665e7, 2.4519083523665e7, 8.166322132032091e12, 2.5694187983395264e10, 4.877090903692205e40, 977.813951206781, 977813.951206781, 9.77813951206781e7, 0.76, 4.663084755571995e56, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.5125985224777243e8, 1.5125985224777243e8, 1.587159404469864e-8, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 6.925149861946208e31, 6.831698820714928e65, 3.3774585398403183e72, 3.3774585398403183e65, 1.1495748770830706e8, 1.1495748770830705e9, 1.380649e-16, 1.4715262056331354e70, 1.4715262056331354e70, 1.4715262056331355e71, 0.0004465963871398189, 446.5963871398189, 446.5963871398189, 446596.3871398189, 4.465963871398189e-8, 2.9104685816882255e68, 2.9104685816882255e65, 2.9104685816882256e62, 1.4776739520104065e43, 3.860172288428439e9, 3.860172288428439e9, 3.4036683604631933e-65, 1.1584988366605846e-120, 0.76, 302.98265527339925, 5.0295120775384285e-22, 5.0295120775384285e-22, 50.295120775384284, 50295.12077538428, 5.0295120775384285e7, 3.08568025e21, 3.08568025e21, 3.0985716137458414e-6, 3.098571613745841e-8, 3.0985716137458415e-11, 3.09843657823729e-9, 9.56120123174617e15, 9.56120123174617e8, 956120.123174617, 1.5871594044698644e-8, 4.663084755571996e56, 5.143628878818097e-30, 1.004177802851038e-27, 3.08568025e21, 4.877090903692205e40, 3.1556926e13, 1.0, 4.8e-322, 4.84e-322, 4.9e-322, 4.94e-322, 5.0e-322, 5.04e-322, 5.1e-322, 5.14e-322, 5.2e-322, 5.24e-322, 5.3e-322, 4.4e-322, 4.15e-322, 9.56120123174617e15, 3.8e-322, 3.08568025e21, 4.877090903692205e40, 4.877090903692205e40, 3.1556926e13, 4.663084755571995e56, 4.663084755571995e56, 1.0, 2.08e-322, 1.9e-322, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.08568025e21, 3.08568025e21, 1.0, 1.0, 1.0, 57.29577951308232))
+1   cx         Int64
+2   cy         Int64
+3   cz         Int64
+4   rho        Float64
+5   vx         Float64
+6   vy         Float64
+7   vz         Float64
+8   p          Float64
+9   scalar_00  Float64
+10  scalar_01  Float64
+11  scalar_02  Float64, InfoType(3, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/info_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/amr_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/hydro_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/grav_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/part_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/rt_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/info_rt_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/clump_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/sink_00003.csv", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/timer_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/header_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/patches.txt"), "RAMSES", Dates.DateTime("2026-08-20T16:57:42.963"), Dates.DateTime("2026-08-20T16:57:42.963"), 8, 3, 5, 5, 15.0, 30.006753312671, 1.0, 1.0, 1.0, 0.0, 0.0, 0.045, 3.08568025e21, 1.66e-24, 4.877090903692205e40, 9.77813951206781e7, 3.1556926e13, 1.4, true, 8, 5, 12, [:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01, :scalar_02], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], [:Np1, :Fx1, :Fy1, :Fz1, :Np2, :Fx2, :Fy2, :Fz2, :Np3, :Fx3, :Fy3, :Fz3], Symbol[], Symbol[], DescriptorType(1, [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01, :scalar_02], ["d", "d", "d", "d", "d", "d", "d", "d"], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 1, Dict{Any, Any}(:g_star => 1.6, :T2_star => 0.0, :nRTvar => 12, :nIons => 3, :group_egy => [18.85, 35.08, 65.67], :rt_c_frac => 0.01, :unit_pf => 9.77813951206781e7, :n_star => 0.1, :X_fraction => 1.0, :unit_np => 1.0…), Dict{Any, Any}(:L0_eV => [13.6, 24.59, 54.42], 2 => Dict{Symbol, Any}(:cse_cm2 => [5.04e-19, 0.0, 0.0], :egy_eV => 35.08, :csn_cm2 => [5.69e-19, 0.0, 0.0]), :spec2group => [1, 2, 3], :L1_eV => [24.59, 54.42, 0.0], 3 => Dict{Symbol, Any}(:cse_cm2 => [7.46e-20, 0.0, 0.0], :egy_eV => 65.67, :csn_cm2 => [7.89e-20, 0.0, 0.0]), 1 => Dict{Symbol, Any}(:cse_cm2 => [2.78e-18, 0.0, 0.0], :egy_eV => 18.85, :csn_cm2 => [3.0e-18, 0.0, 0.0])), false, true, Symbol[], false, false, Symbol[], false, false), true, false, false, true, false, false, true, Dict{Any, Any}("&COOLING_PARAMS" => Dict{Any, Any}("cooling" => ".true."), "&AMR_PARAMS" => Dict{Any, Any}("levelmax" => "5", "ngridmax" => "50000", "boxlen" => "15.\t\t\t!  1 kpc", "levelmin" => "5", "nexpand" => "1"), "&OUTPUT_PARAMS" => Dict{Any, Any}("noutput" => "6", "tout" => "10.,30.,60.,120.,250.,500."), "&BOUNDARY_PARAMS" => Dict{Any, Any}("nboundary" => "6", "jbound_min" => "0, 0, -1,  1, -1, -1", "kbound_max" => "0, 0,  0,  0, -1,  1", "bound_type" => "1, 2,  1,  2,  1,  2", "ibound_max" => "-1, 1,  1,  1,  1,  1", "ibound_min" => "-1, 1, -1, -1, -1, -1", "jbound_max" => "0, 0, -1,  1,  1,  1", "kbound_min" => "0, 0,  0,  0, -1,  1"), "&RT_PARAMS" => Dict{Any, Any}("rt_source_type" => "3*'point'", "&RT_GROUPS\t\t\t! Blackbody at T" => "1d5 Kelvin", "rt_flux_scheme" => "'glf'", "rt_w_source" => "3*0", "rt_c_fraction" => "0.01", "rt_v_source" => "3*0", "rt_src_z_center" => "3*0.", "rt_src_length_y" => "3*1.0", "rt_src_length_z" => "3*1.0", "rt_courant_factor" => "0.8"…), "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin" => Dict{Any, Any}("group_csn(2,:)" => "5.69d-19, 0.,0.   ! pck 2-> HI, HeI, HeII", "group_egy" => "18.85, 35.079, 65.666", "group_cse(2,:)" => "5.04d-19, 0.,0.   ! pck 2-> HI, HeI, HeII", "spec2group" => "1,2,3             ! HI, HeI, HeII -> pck", "group_cse(1,:)" => "2.78d-18, 0.,0.   ! pck 1-> HI, HeI, HeII", "group_csn(3,:)" => "7.89d-20, 0.,0.   ! pck 3-> HI, HeI, HeII", "group_csn(1,:)" => "3.00d-18, 0.,0.   ! pck 1-> HI, HeI, HeII", "group_cse(3,:)" => "7.46d-20, 0.,0.   ! pck 3-> HI, HeI, HeII"), "&UNITS_PARAMS" => Dict{Any, Any}("units_density" => "1.66d-24", "units_time" => "3.1556926d13", "units_length" => "3.08568025d21"), "&RUN_PARAMS" => Dict{Any, Any}("static_gas" => ".true.", "nsubcycle" => "10*1", "rt" => ".true.", "verbose" => ".false.", "nremap" => "0", "nrestart" => "0", "hydro" => ".true."), "! the Sedov fixture the boundaries here are NOT periodic (see &BOUNDARY_PARAMS), so plain" => Dict{Any, Any}(), "&HYDRO_PARAMS" => Dict{Any, Any}("slope_type" => "2", "gamma" => "1.4", "courant_factor" => "0.8", "riemann" => "'hllc'", "scheme" => "'muscl'")…), false, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "", "# Do we want a debug build? 1=Yes, 0=No", "DEBUG = 0", "# Do we want to test coverage?", "GCOV = 0", "# Compiler flavor: GNU or INTEL"  …  "\t\$(FC) -O0 -c write_patch.f90 -o \$@", "%.o:%.F", "\t\$(F90) \$(FFLAGS_BASE) \$(FFLAGS_OPT) -c \$^ -o \$@ \$(LIBS_OBJ) \$(LIBS_OBJ_TURB)", "%.o:%.f90", "\t\$(F90) \$(FFLAGS_BASE) \$(FFLAGS_OPT) -c \$^ -o \$@ \$(LIBS_OBJ) \$(LIBS_OBJ_TURB)", "FORCE:", "#############################################################################", "clean:", "\trm -f *.o *.\$(MOD) *.i", "#############################################################################"], [" --------------------------------------------------------------------", "", "     minimum       average       maximum  standard dev        std/av       %   rmn   rmx  TIMER", "       0.018         0.019         0.023         0.002         0.086     0.5     2   1    coarse levels           ", "       0.005         0.008         0.009         0.001         0.156     0.2     1   2    particles               ", "       0.028         0.028         0.029         0.000         0.002     0.7     2   1    io                      ", "       2.637         3.312         3.422         0.255         0.077    78.7     1   5    radiative transfer      ", "       0.102         0.103         0.104         0.001         0.006     2.5     1   3    courant                 ", "       0.025         0.026         0.027         0.000         0.017     0.6     5   2    hydro - set unew        ", "       0.600         0.710         1.386         0.256         0.360    16.9     5   1    cooling                 ", "       4.208     100.0    TOTAL"], ["no patches", " "]), true, true, true, 0, ScalesType003(0.0010000008648732505, 1.0000008648732506, 1000.0008648732505, 1.0000008648732505e6, 3261.5665977832837, 2.0626498462588077e23, 3.08568025e16, 3.08568025e19, 3.08568025e21, 3.0856802499999998e22, 3.08568025e25, 1.0000025946219956e-9, 1.0000025946219957, 1.0000025946219956e9, 1.0000025946219955e18, 3.4695947530005516e10, 8.775594075372522e69, 2.9380065684892807e49, 2.93800656848928e58, 2.93800656848928e64, 2.93800656848928e67, 2.93800656848928e76, 0.02451901990607664, 0.02451901990607664, 1.66e-24, 24.51904111192109, 24.51904111192109, 0.005122229215, 0.0009999786422288134, 0.9999786422288134, 999978.6422288134, 3.1556926e13, 3.1556926e16, 2.4519083523665e7, 2.4519083523665e7, 8.166322132032091e12, 2.5694187983395264e10, 4.877090903692205e40, 977.813951206781, 977813.951206781, 9.77813951206781e7, 0.76, 4.663084755571995e56, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.5125985224777243e8, 1.5125985224777243e8, 1.587159404469864e-8, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 6.925149861946208e31, 6.831698820714928e65, 3.3774585398403183e72, 3.3774585398403183e65, 1.1495748770830706e8, 1.1495748770830705e9, 1.380649e-16, 1.4715262056331354e70, 1.4715262056331354e70, 1.4715262056331355e71, 0.0004465963871398189, 446.5963871398189, 446.5963871398189, 446596.3871398189, 4.465963871398189e-8, 2.9104685816882255e68, 2.9104685816882255e65, 2.9104685816882256e62, 1.4776739520104065e43, 3.860172288428439e9, 3.860172288428439e9, 3.4036683604631933e-65, 9.999974053847366e-10, 0.76, 302.98265527339925, 5.0295120775384285e-22, 5.0295120775384285e-22, 50.295120775384284, 50295.12077538428, 5.0295120775384285e7, 3.08568025e21, 3.08568025e21, 3.0985716137458414e-6, 3.098571613745841e-8, 3.0985716137458415e-11, 3.09843657823729e-9, 9.56120123174617e15, 9.56120123174617e8, 956120.123174617, 1.5871594044698644e-8, 4.663084755571996e56, 5.143628878818097e-30, 1.004177802851038e-27, 3.08568025e21, 4.877090903692205e40, 3.1556926e13, 1.0, 1.0, 3.0985716137458414e-6, 9.77813951206781e7, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 9.56120123174617e15, 3.0985716137458414e-6, 9.77813951206781e7, 1.0, 1.5871594044698644e-8, 1.5871594044698644e-8, 4.663084755571996e56, 9.56120123174617e15, 4.663084755571995e56, 3.08568025e21, 4.877090903692205e40, 4.877090903692205e40, 3.1556926e13, 4.663084755571995e56, 4.663084755571995e56, 1.0, 5.143628878818097e-30, 1.004177802851038e-27, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.08568025e21, 3.08568025e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(50000, 736, 3, 3, 3, 5, 6, 1371, [0.0, 32768.0, 65536.0, 98304.0, 131072.0, 163840.0, 196608.0, 229376.0, 262144.0], Bool[0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 10.000213582273508, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 08/20/26-18:38:15", " /Applications/Xcode.app/Contents/Developer/usr/bin/make NGROUPS", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 5, 5, 15.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7, 8], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :scalar_00, 7 => :scalar_01, 2 => :vx, 8 => :scalar_02, 3 => :vy, 1 => :rho), 0.0, 0.0, ScalesType003(0.0010000008648732505, 1.0000008648732506, 1000.0008648732505, 1.0000008648732505e6, 3261.5665977832837, 2.0626498462588077e23, 3.08568025e16, 3.08568025e19, 3.08568025e21, 3.0856802499999998e22, 3.08568025e25, 1.0000025946219956e-9, 1.0000025946219957, 1.0000025946219956e9, 1.0000025946219955e18, 3.4695947530005516e10, 8.775594075372522e69, 2.9380065684892807e49, 2.93800656848928e58, 2.93800656848928e64, 2.93800656848928e67, 2.93800656848928e76, 0.02451901990607664, 0.02451901990607664, 1.66e-24, 24.51904111192109, 24.51904111192109, 0.005122229215, 0.0009999786422288134, 0.9999786422288134, 999978.6422288134, 3.1556926e13, 3.1556926e16, 2.4519083523665e7, 2.4519083523665e7, 8.166322132032091e12, 2.5694187983395264e10, 4.877090903692205e40, 977.813951206781, 977813.951206781, 9.77813951206781e7, 0.76, 4.663084755571995e56, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.5125985224777243e8, 1.5125985224777243e8, 1.587159404469864e-8, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 6.925149861946208e31, 6.831698820714928e65, 3.3774585398403183e72, 3.3774585398403183e65, 1.1495748770830706e8, 1.1495748770830705e9, 1.380649e-16, 1.4715262056331354e70, 1.4715262056331354e70, 1.4715262056331355e71, 0.0004465963871398189, 446.5963871398189, 446.5963871398189, 446596.3871398189, 4.465963871398189e-8, 2.9104685816882255e68, 2.9104685816882255e65, 2.9104685816882256e62, 1.4776739520104065e43, 3.860172288428439e9, 3.860172288428439e9, 3.4036683604631933e-65, 9.999974053847366e-10, 0.76, 302.98265527339925, 5.0295120775384285e-22, 5.0295120775384285e-22, 50.295120775384284, 50295.12077538428, 5.0295120775384285e7, 3.08568025e21, 3.08568025e21, 3.0985716137458414e-6, 3.098571613745841e-8, 3.0985716137458415e-11, 3.09843657823729e-9, 9.56120123174617e15, 9.56120123174617e8, 956120.123174617, 1.5871594044698644e-8, 4.663084755571996e56, 5.143628878818097e-30, 1.004177802851038e-27, 3.08568025e21, 4.877090903692205e40, 3.1556926e13, 1.0, 1.0, 3.0985716137458414e-6, 9.77813951206781e7, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 9.56120123174617e15, 3.0985716137458414e-6, 9.77813951206781e7, 1.0, 1.5871594044698644e-8, 1.5871594044698644e-8, 4.663084755571996e56, 9.56120123174617e15, 4.663084755571995e56, 3.08568025e21, 4.877090903692205e40, 4.877090903692205e40, 3.1556926e13, 4.663084755571995e56, 4.663084755571995e56, 1.0, 5.143628878818097e-30, 1.004177802851038e-27, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.08568025e21, 3.08568025e21, 1.0, 1.0, 1.0, 57.29577951308232))
 ```
 
 ## Ionization map: slice vs. column
@@ -382,7 +384,7 @@ d = getvar(gas, [:n_HII, :n_HI, :n_e])     # → Dict of arrays
 ```
 
 ```
-(n_HII_max = 0.0009728974951602914, n_HI_max = 0.001000021635805913, n_e_max = 0.0009728974951602914)
+(n_HII_max = 0.0009996398159210552, n_HI_max = 0.0009999979654335613, n_e_max = 0.0009996398159210552)
 ```
 
 ## Mock recombination emission
@@ -422,13 +424,13 @@ title("Strömgren sphere: ionization & temperature"); tight_layout();
 ```
 
 ```
-round(ifront, digits = 2) = 2.44
+round(ifront, digits = 2) = 2.61
 ```
 
 ![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_28_3.png)
 
 ```
-2.44
+2.61
 ```
 
 ## Mean molecular weight μ and the temperature
@@ -462,7 +464,7 @@ title("Ionization–temperature relation"); tight_layout();
 ![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_30_1.png)
 
 ```
-(T_const_max = 59005.52727864943, T_rt_max = 22422.814010465798)
+(T_const_max = 55977.75489365413, T_rt_max = 21275.378385872624)
 ```
 
 ## Radiation–matter rates & ionization balance
@@ -502,10 +504,10 @@ legend(loc="upper right"); title("Ionization balance (Γ·n_HI vs α·n_e·n_HII
 ```
 
 ```
-maximum(getvar(rt, :Gamma_HI)) = 4.5615961435093065e-12
-maximum(getvar(rt, :photoheating_HI)) = 5.436954544982253e-23
-round(sum(pion[core]) / sum(rec[core]), digits = 2) = 5.27
-maximum(getvar(rt, :ionization_balance, hydro_data = gas)) = 5.428058169900033e-18
+maximum(getvar(rt, :Gamma_HI)) = 1.1379022132736983e-12
+maximum(getvar(rt, :photoheating_HI)) = 1.357061014902275e-23
+round(sum(pion[core]) / sum(rec[core]), digits = 2) = 4.2
+maximum(getvar(rt, :ionization_balance, hydro_data = gas)) = 3.2746012509460365e-18
 ```
 
 ![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_32_3.png)
@@ -534,8 +536,8 @@ show_map(um.maps[:rad_energy_density]; logscale=true, cmap="magma",
 ```
 info.descriptor.rt[:group_egy] = [18.85, 35.08, 65.67]
 info.descriptor.rtPhotonGroups[1] = Dict{Symbol, Any}(:cse_cm2 => [2.78e-18, 0.0, 0.0], :egy_eV => 18.85, :csn_cm2 => [3.0e-18, 0.0, 0.0])
-maximum(getvar(rt, :rad_energy_density)) = 4.4407821448620317e-13
-extrema(getvar(rt, :Np1_cgs)) = (3.065945823640658e-50, 0.0041809294396080166)
+maximum(getvar(rt, :rad_energy_density)) = 1.1090467888595723e-13
+extrema(getvar(rt, :Np1_cgs)) = (1.9695717303063266e-49, 0.0010425690408447943)
 ```
 
 ![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_34_2.png)
@@ -568,14 +570,14 @@ println("measured front   = ", round(ifront, digits=2), " kpc   → still expand
 ```
 
 ```
-maximum(getvar(rt, :reducedflux1)) = 0.9927071564466189
-maximum(getvar(rt, :Fmag1_cgs)) = 52776.7314775328
-maximum(getvar(rt, :photon_energy_density1)) = 1.2626837355582949e-13
-extrema(getvar(gas, :xHI)) = (6.36534360656249e-5, 0.9999985964787559)
+maximum(getvar(rt, :reducedflux1)) = 0.9888163855508687
+maximum(getvar(rt, :Fmag1_cgs)) = 13086.144286562321
+maximum(getvar(rt, :photon_energy_density1)) = 3.14866584114071e-14
+extrema(getvar(gas, :xHI)) = (0.00036018407894478077, 0.9999979654335612)
 n_H              = 0.001 cm^-3
 R_S (asymptotic) = 5.39 kpc
-r_I(t=20.0 Myr) = 2.87 kpc   (t_rec = 122.0 Myr)
-measured front   = 2.44 kpc   → still expanding toward R_S
+r_I(t=30.0 Myr) = 3.24 kpc   (t_rec = 122.0 Myr)
+measured front   = 2.61 kpc   → still expanding toward R_S
 ```
 
 ## Summary — RT calls at a glance
