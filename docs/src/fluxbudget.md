@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `fluxbudget.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/fluxbudget.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 [`fluxbudget`](@ref) measures the **flux of mass, momentum, energy and metals through a surface**
 (a sphere at radius R, or a cylinder wall), with the surface-normal velocity split into separate
 **inflow** and **outflow** rates — the thin-shell estimator that galactic-feedback and gas-cycle
@@ -24,9 +25,8 @@ info = getinfo(300, joinpath(MERA_EXAMPLES, "RAMSES/mw_L10"))
 gas  = gethydro(info, verbose=false);
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -34,9 +34,7 @@ gas  = gethydro(info, verbose=false);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 [Mera]: 2026-08-03T11:42:41.099
-
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -60,7 +58,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -74,11 +72,9 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.41 ms/it)
 ✓ File processing complete! Combining results...
 ```
-
 
 ## Basic use
 
@@ -102,7 +98,6 @@ mass inflow   [Msol/yr] : -8.30065486215337e-6
 mass net      [Msol/yr] : 0.004022907841400359
 energy net    [erg/s]   : 1.2991643114304465e37
 ```
-
 
 Units per quantity: **mass** and **metals** in `Msol/yr`, **momentum** in `Msol·km/s/yr`, **energy** in
 `erg/s`. `in` sums cells moving inward (`v⊥ < 0`), `out` those moving outward; `net = in + out`. For
@@ -202,7 +197,6 @@ hot  outflow [Msol/yr] : 0.0040312084962625125
 cold+hot              : 0.0040312084962625125
 total (fb.rates)      : 0.0040312084962625125
 ```
-
 
 ## Derived diagnostics: mass loading, phase velocities, weighting
 
@@ -320,7 +314,6 @@ radii [kpc]           : [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50
 net Mdot(R) [Msol/yr] : [-0.892, 0.55, 0.009, -0.01, -0.006, 0.004, 0.001, 0.0, 0.0, 0.0]
 ```
 
-
 ![`fluxshell` makes the measured surface explicit. *Left:* the full gas of a disk galaxy, edge-on.
 *Right:* the cells `fluxbudget` actually integrates over — the R = 10 kpc spherical shell (its edge-on
 projection is a disk of radius 10 kpc, brightest where the shell cuts the dense midplane). The budget is
@@ -354,9 +347,7 @@ FluxMapType [sphere @ R=30.0, Δr=2.0]  quantity=vr [km_s]
   (72, 36) grid  (φ_deg × cosθ)
 ```
 
-
-![](fluxbudget_files/fluxbudget_9_1.png)
-
+![](fluxbudget_files/fluxbudget_10_3.png)
 
 `quantity=:vr` maps the mass-weighted mean normal velocity (inflow < 0, outflow > 0); `quantity=:mdot`
 maps each bin's mass-flux contribution (Msol/yr), and its sum equals the net flux. `fluxmap` returns the

@@ -123,6 +123,7 @@ export
     getrt,
     getparticles,
     getclumps,
+    getsinks,
     supports,
     capabilities,
 
@@ -443,6 +444,7 @@ include("functions/getvar/getvar_gravity.jl")
 include("functions/getvar/getvar_rt.jl")
 include("functions/getvar/getvar_particles.jl")
 include("functions/getvar/getvar_clumps.jl")
+include("functions/getvar/getvar_sinks.jl")
 # ============================================
 
 include("read_data/reader_interface.jl")     # multi-code reader registry (routing + capabilities)
@@ -477,6 +479,7 @@ include("read_data/RAMSES/getparticles.jl")
 include("read_data/RAMSES/reader_particles.jl")
 
 include("read_data/RAMSES/getclumps.jl")
+include("read_data/RAMSES/getsinks.jl")
 
 include("read_data/register_readers.jl")     # register all built-in frontends (after all entry points)
 # ============================================
@@ -509,6 +512,7 @@ include("functions/regions/subregion_gravity.jl")
 include("functions/regions/subregion_rt.jl")
 include("functions/regions/subregion_particles.jl")
 include("functions/regions/subregion_clumps.jl")
+include("functions/regions/subregion_sinks.jl")
 # ============================================
 
 # Shellregion

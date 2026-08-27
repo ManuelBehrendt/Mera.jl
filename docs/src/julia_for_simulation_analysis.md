@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `julia_for_simulation_analysis.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/julia_for_simulation_analysis.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 Practical Julia habits for post-processing work: reproducible environments, what compile-time
 latency is (and is not), memory discipline on laptop-scale machines, and measured
 multithreading. Nothing here is Mera-specific dogma — these are the standard patterns of the
@@ -42,9 +43,8 @@ t2 = @elapsed proj()      # pure runtime
 println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, digits=3), " s")
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -52,10 +52,8 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 first call: 12.07 s   second call: 0.042 s
 ```
-
 
 Keep one session alive while you work (REPL, Jupyter, VS Code) instead of re-launching
 `julia script.jl` per plot — relaunching pays the compile tax every time.
@@ -87,7 +85,6 @@ println("mass-weighted T (ρ>1e-24 g/cm³): ", round(mwT(rho, T, vol), sigdigits
 mass-weighted T (ρ>1e-24 g/cm³): 67870.0 K   —   590311 cells in 0.21 ms
 ```
 
-
 ## 4. Memory discipline on laptop-scale machines
 
 The levers, in the order to reach for them:
@@ -112,10 +109,11 @@ usedmemory(small)
 ```
 576 cells (windowed, lmax=6, :rho only)  vs  590311 full (lmax=7)
 Memory used: 481.366 KB
-
-(481.3662109375, "KB")
 ```
 
+```
+(481.3662109375, "KB")
+```
 
 ## 5. Multithreading, measured
 
@@ -160,9 +158,7 @@ max_threads=4  52.57 s   speedup ×2.01
 max_threads=8  52.54 s   speedup ×2.01
 ```
 
-
-![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_7_1.png)
-
+![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_3.png)
 
 The dashed line is ideal scaling; the gap to it is the serial fraction. Throttle
 individual calls (`max_threads=4`) when you run several analyses at once or share the machine.

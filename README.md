@@ -8,8 +8,14 @@
 [![CI](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI.yml)
 [![Documentation](https://img.shields.io/badge/docs-stable%20release-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/)
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
-[![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl)
+[![coverage, CI tests](https://img.shields.io/codecov/c/github/ManuelBehrendt/Mera.jl?flag=ci-smoke&label=coverage%3A%20CI%20tests&color=blue)](https://codecov.io/gh/ManuelBehrendt/Mera.jl?flags[0]=ci-smoke)
+[![coverage, full suite](https://img.shields.io/codecov/c/github/ManuelBehrendt/Mera.jl?flag=local-full&label=coverage%3A%20full%20suite)](https://codecov.io/gh/ManuelBehrendt/Mera.jl?flags[0]=local-full)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
+
+<sub>Two coverage figures, because they measure different things: **CI tests** are what a GitHub
+runner can execute without simulation data, while **full suite** adds the integration tests that
+read real RAMSES output on the maintainer's machine. See
+[the two coverage numbers](#the-two-coverage-numbers).</sub>
 
 **MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for
 [RAMSES](https://github.com/ramses-organisation/ramses) — multi-resolution AMR grids, particles,
@@ -216,9 +222,9 @@ RAMSES variant to support, or a gap to report? Please
 MERA ships a tiered suite: data-free **smoke/oracle** tests that run on the full CI Julia matrix
 (1.10 / 1.11 / 1.12), and **data-backed** integration tests run locally against real RAMSES output.
 
-The data-free tier needs **no simulation data at all** — 1637 assertions in ~2.5 minutes, including
-every analytic correctness oracle (conservation, surface-integral budget, weighted statistics,
-structure-finder profiles). [`test/README.md`](test/README.md) documents the tiers, what "synthetic"
+The data-free tier needs **no simulation data at all**, and includes every analytic correctness
+oracle: conservation, the surface-integral budget, weighted statistics and structure-finder
+profiles. [`test/README.md`](test/README.md) documents the tiers, what "synthetic"
 means in each, and which simulation backs which test.
 
 ```bash
@@ -228,6 +234,29 @@ MERA_SMOKE_ONLY=1 julia --project -e 'using Pkg; Pkg.test("Mera")'
 # full suite (requires the RAMSES test data)
 MERA_TEST_DATA=/path/to/Mera-Tests julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
+
+### The two coverage numbers
+
+The badges above report two different measurements, not one number twice.
+
+| badge | what it covers | where it runs | when |
+|---|---|---|---|
+| **coverage: CI** | the data-free tier only | GitHub Actions | every push |
+| **coverage: full** | the whole suite, data-backed tier included | maintainer's machine, with the simulation data mounted | before a release, uploaded by `scripts/run_local_coverage.sh` |
+
+Measured on 2026-08-27: the full suite covers **85.9%**, meaning 13 593 of 15 826 lines across 85
+source files, while the CI tests alone cover **31%**. The data-free tier that CI runs is 1 677
+assertions in about 2.5 minutes; with the simulation data present the same tier takes roughly 12
+minutes, because a few of its files opportunistically read every dataset they can find.
+
+They differ because the data-backed tier reads real RAMSES output, and that data is far larger than
+a hosted runner can hold. The readers, projections, region selection and mera-file round trips are
+therefore exercised only in the second number.
+
+The gap is closing. The public test simulations are published as release assets, and
+`.github/workflows/fixtures.yml` downloads them so the physics oracles and the RAMSES reference
+checks run on GitHub as well. What stays local is only what depends on simulations that are not
+published.
 
 ## Get involved
 

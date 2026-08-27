@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `statistics.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/statistics.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 [`pdf`](@ref) computes the **probability distribution function** of any [`getvar`](@ref)
 quantity over the cells (or particles) of a snapshot. The canonical use is the **density
 PDF** — the log-normal core (with a power-law high-density tail) that supersonic turbulence
@@ -20,9 +21,8 @@ info = getinfo(300, joinpath(MERA_EXAMPLES, "RAMSES/mw_L10"))
 gas  = gethydro(info, verbose=false);
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -30,9 +30,7 @@ gas  = gethydro(info, verbose=false);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 [Mera]: 2026-08-03T12:20:55.608
-
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -56,7 +54,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -70,11 +68,9 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.67 ms/it)
 ✓ File processing complete! Combining results...
 ```
-
 
 ```julia
 P  = pdf(gas, :rho)                    # mass-weighted (default)
@@ -89,7 +85,6 @@ nbins                 : 60
 sum P dln(rho) (logbins) ≈ 1 : 0.9999999999999999
 rho range             : (3.117453040888466e-9, 2.7960968598850635)
 ```
-
 
 ## What it returns
 
@@ -163,15 +158,12 @@ println("map N-PDF bins        : ", length(N.pdf))
 
 ```
 particle vx PDF bins  : 60
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.32 ms/it)
 ✓ File processing complete! Combining results...
 epot PDF bins         : 60
-
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:01
 map N-PDF bins        : 60
 ```
-
 
 !!! note "Name clash"
     `pdf` is also exported by `Distributions.jl`; if you `using` both packages, call
@@ -188,9 +180,7 @@ lines!(ax, log10.(Pv.centers), Pv.pdf, label="volume-weighted")
 axislegend(ax); fig
 ```
 
-
-![](statistics_files/statistics_6_0.png)
-
+![](statistics_files/statistics_7_1.png)
 
 ## Planned
 

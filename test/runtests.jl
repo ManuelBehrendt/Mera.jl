@@ -21,6 +21,28 @@ using Mera
 using Statistics
 
 # Load configuration and utilities
+# Progress logging. A 20 minute suite that prints nothing until the end cannot be diagnosed: a
+# coverage run once sat silent for two hours and we could not tell which file it was in, or
+# whether it was working at all. @testset prints only when it CLOSES, and everything here lives
+# inside one outer testset, so nothing structured appears until the end.
+#
+# `tinclude` announces each file with the elapsed time and flushes immediately, so the line
+# survives redirection to a log. (It cannot be called `include`: that name is already bound in
+# Main and Julia refuses to redefine it.) Set MERA_QUIET_PROGRESS=1 to silence it.
+const _SUITE_T0 = time()
+const _SUITE_QUIET = get(ENV, "MERA_QUIET_PROGRESS", "0") == "1"
+const _SUITE_N = Ref(0)
+function tinclude(f::AbstractString)
+    if !_SUITE_QUIET
+        _SUITE_N[] += 1
+        el = round(Int, time() - _SUITE_T0)
+        printstyled("\n[suite +", lpad(el ÷ 60, 3), "m", lpad(el % 60, 2, '0'), "s] (",
+                    lpad(_SUITE_N[], 2), ") ", f, "\n"; color = :cyan, bold = true)
+        flush(stdout)
+    end
+    Base.include(Main, joinpath(@__DIR__, f))
+end
+
 include("test_config.jl")
 include("test_utilities.jl")
 
@@ -35,7 +57,7 @@ if !isempty(_focus)
         for f in split(_focus, ',')
             f = strip(f)
             if isfile(joinpath(@__DIR__, f))
-                @testset verbose=true "$f" begin include(f) end
+                @testset verbose=true "$f" begin tinclude(f) end
             else
                 @warn "MERA_FOCUS: file not found, skipping" file=f
             end
@@ -54,7 +76,7 @@ if isempty(_focus)
     # ========================================================================
     @testset "Quality & Fundamentals" begin
         try
-            include("01_aqua_quality.jl")
+            tinclude("01_aqua_quality.jl")
         catch e
             if occursin("Aqua", string(e))
                 @warn "Skipping Aqua tests (not available outside Pkg.test)"
@@ -62,42 +84,43 @@ if isempty(_focus)
                 rethrow()
             end
         end
-        include("02_unit_system.jl")
-        include("22_types_tests.jl")  # data-free type system unit tests
-        include("30_doc_codeblocks.jl")  # data-free: doc ```julia blocks must parse (runs on 1.10/1.11/1.12)
-        include("31_cosmology_tests.jl")  # data-free core + optional real-cosmo block; runs on 1.10/1.11/1.12
-        include("32_rt_tests.jl")  # data-free RT API surface + optional rt_stromgren block; runs on 1.10/1.11/1.12
-        include("33_offaxis_kinematics_tests.jl")  # data-free off-axis camera kinematics (Phase A1)
-        include("42_kernel_oracle_tests.jl")  # data-free conservation + weighted-stats oracle (deposit/profile/phase kernels)
-        include("46_data_awareness_tests.jl")  # data-free descriptor/MHD detection + optional capability/descriptor/quantity-awareness blocks
-        include("47_benchmark_tests.jl")  # data-free I/O benchmark (run_benchmark/plot_results) on a temp folder
-        include("54_clumpfind_synthetic_tests.jl")  # data-free: all 7 finders + features scored vs synthetic ground truth
-        include("55_region_algebra_tests.jl")  # data-free: composable regions + exact cell splitting vs analytic volumes
-        include("56_filterdata_tests.jl")  # data-free: value-space filtering on derived quantities (filterdata/getmask)
-        include("57_athena_reader_tests.jl")  # data-free: Athena++ .athdf reader contract (synthetic HDF5)
-        include("58_flash_reader_tests.jl")  # data-free: FLASH HDF5 PARAMESH reader contract (synthetic HDF5)
-        include("59_multicode_contract_tests.jl")  # data-free: cross-reader contract (PLUTO/Athena++/FLASH satisfy the same invariants)
-        include("60_gadget_reader_tests.jl")  # data-free: GADGET HDF5 particle reader contract (synthetic HDF5)
-        include("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
-        include("64_datautils_coverage_tests.jl")  # data-free: viewdata/infodata/miscellaneous/mera_convert branches (synthetic snapshots + stdin-driven batch flows)
-        include("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
-        include("66_chombo_reader_tests.jl")  # data-free: Chombo/PLUTO-AMR reader contract (synthetic 2-level HDF5; leaf extraction + Orion mapping)
-        include("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities
-        include("68_offaxis_api_tests.jl")  # data-free: off-axis API surface (slice alias, view-specifier error)
-        include("69_config_tests.jl")  # data-free: ~/.mera.toml resolution, env precedence, legacy fallback
-        include("70_scales_complete_tests.jl")  # data-free: every scale field is assigned; getunit rejects impossible factors
-        include("74_zoom_kinematics_tests.jl")       # data-free: :cellsize, bulk_velocity/vcenter=, contamination()
-        include("75_mask_equivalence_tests.jl")      # data-free metamorphic: getvar(mask=m) == getvar()[m] on every data type
-        include("76_public_fixtures_tests.jl")       # analytic oracles on the reproducible public RAMSES fixtures (self-guarded)
+        tinclude("02_unit_system.jl")
+        tinclude("22_types_tests.jl")  # data-free type system unit tests
+        tinclude("30_doc_codeblocks.jl")  # data-free: doc ```julia blocks must parse (runs on 1.10/1.11/1.12)
+        tinclude("31_cosmology_tests.jl")  # data-free core + optional real-cosmo block; runs on 1.10/1.11/1.12
+        tinclude("32_rt_tests.jl")  # data-free RT API surface + optional rt_stromgren block; runs on 1.10/1.11/1.12
+        tinclude("33_offaxis_kinematics_tests.jl")  # data-free off-axis camera kinematics (Phase A1)
+        tinclude("42_kernel_oracle_tests.jl")  # data-free conservation + weighted-stats oracle (deposit/profile/phase kernels)
+        tinclude("46_data_awareness_tests.jl")  # data-free descriptor/MHD detection + optional capability/descriptor/quantity-awareness blocks
+        tinclude("47_benchmark_tests.jl")  # data-free I/O benchmark (run_benchmark/plot_results) on a temp folder
+        tinclude("54_clumpfind_synthetic_tests.jl")  # data-free: all 7 finders + features scored vs synthetic ground truth
+        tinclude("55_region_algebra_tests.jl")  # data-free: composable regions + exact cell splitting vs analytic volumes
+        tinclude("56_filterdata_tests.jl")  # data-free: value-space filtering on derived quantities (filterdata/getmask)
+        tinclude("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
+        tinclude("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
+        tinclude("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities
+        tinclude("68_offaxis_api_tests.jl")  # data-free: off-axis API surface (slice alias, view-specifier error)
+        tinclude("69_config_tests.jl")  # data-free: ~/.mera.toml resolution, env precedence, legacy fallback
+        tinclude("70_scales_complete_tests.jl")  # data-free: every scale field is assigned; getunit rejects impossible factors
+        tinclude("74_zoom_kinematics_tests.jl")   # data-free: :cellsize, vcenter=, getmask, clumping, cosmic_time
+        tinclude("75_mask_equivalence_tests.jl")     # data-free metamorphic: getvar(mask=m) == getvar()[m] on every data type
+        tinclude("76_public_fixtures_tests.jl")     # analytic oracles on the reproducible public RAMSES fixtures (self-guarded)
+        tinclude("77_sinks_tests.jl")            # data-free: the sink-particle reader (synthetic csv is the oracle)
+        tinclude("57_athena_reader_tests.jl")  # data-free: Athena++ .athdf reader contract (synthetic HDF5)
+        tinclude("58_flash_reader_tests.jl")  # data-free: FLASH HDF5 PARAMESH reader contract (synthetic HDF5)
+        tinclude("59_multicode_contract_tests.jl")  # data-free: cross-reader contract (PLUTO/Athena++/FLASH satisfy the same invariants)
+        tinclude("60_gadget_reader_tests.jl")  # data-free: GADGET HDF5 particle reader contract (synthetic HDF5)
+        tinclude("64_datautils_coverage_tests.jl")  # data-free: viewdata/infodata/miscellaneous/mera_convert branches (synthetic snapshots + stdin-driven batch flows)
+        tinclude("66_chombo_reader_tests.jl")  # data-free: Chombo/PLUTO-AMR reader contract (synthetic 2-level HDF5; leaf extraction + Orion mapping)
 
         # The analytic correctness oracles. These were included in the data-dependent tier below,
         # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and
         # paper/paper.md both claim they run "on every release". They were WRITTEN to be data-free:
         # 40 has no DATA_AVAILABLE gate at all, and 41/43 gate only their later AMR-backed blocks,
         # which skip cleanly when no data is present. Nothing about them needed changing.
-        include("40_clumpfind_validation_tests.jl") # analytic: Hill radius, invariance, golden master
-        include("41_covering_grid_tests.jl")        # analytic: paint + mass conservation
-        include("43_fluxbudget_tests.jl")           # analytic: the surface integral ∮ρv·dA
+        tinclude("40_clumpfind_validation_tests.jl") # analytic: Hill radius, invariance, golden master
+        tinclude("41_covering_grid_tests.jl")        # analytic: paint + mass conservation
+        tinclude("43_fluxbudget_tests.jl")           # analytic: the surface integral ∮ρv·dA
     end
 
     # ========================================================================
@@ -113,117 +136,118 @@ if isempty(_focus)
     # Core Functionality
     # ------------------------------------------------------------------------
     @testset "Core Functionality" begin
-        include("03_data_readers.jl")
-        include("04_basic_calculations.jl")
-        include("05_derived_variables.jl")
+        tinclude("03_data_readers.jl")
+        tinclude("64_datautils_coverage_tests.jl")  # data-utils: viewdata/infodata/mera_convert (RAMSES fixture)
+        tinclude("04_basic_calculations.jl")
+        tinclude("05_derived_variables.jl")
     end
 
     # ------------------------------------------------------------------------
     # Analysis Functions
     # ------------------------------------------------------------------------
     @testset "Analysis Functions" begin
-        include("06_projections.jl")
-        include("34_offaxis_invariance_tests.jl")  # off-axis conservation regression (angle × pixel size)
-        include("35_offaxis_accuracy_tests.jl")    # off-axis spatial fidelity: where the binnings differ
-        include("36_offaxis_features_tests.jl")    # LOS features: profile/phase, offaxis_slice
-        include("37_derived_fields_tests.jl")      # derived-field registry: getvar_requirements, add_field, project auto-read
-        include("38_report_tests.jl")              # composable report system (Phase 1): cards, engine, ascii/jld2
-        include("39_clumpfind_tests.jl")           # density-threshold clumpfinder (FoF 3D + connected-components 2D)
+        tinclude("06_projections.jl")
+        tinclude("34_offaxis_invariance_tests.jl")  # off-axis conservation regression (angle × pixel size)
+        tinclude("35_offaxis_accuracy_tests.jl")    # off-axis spatial fidelity: where the binnings differ
+        tinclude("36_offaxis_features_tests.jl")    # LOS features: profile/phase, offaxis_slice
+        tinclude("37_derived_fields_tests.jl")      # derived-field registry: getvar_requirements, add_field, project auto-read
+        tinclude("38_report_tests.jl")              # composable report system (Phase 1): cards, engine, ascii/jld2
+        tinclude("39_clumpfind_tests.jl")           # density-threshold clumpfinder (FoF 3D + connected-components 2D)
         # 40 / 41 / 43 moved to the data-free tier above — their analytic oracles are the
         # package's correctness anchors and must run in CI; their AMR-backed blocks self-gate.
-        include("45_sfr_tests.jl")                  # sfr / sfr_snapshot (SFH + current SFR): data-free kernel + version-robust (neg-birth & cosmological) AMR-backed
-        include("46_timeseries_tests.jl")           # timeseries (multi-snapshot reducer→table): data-free discovery/assembly + 3D Sedov RAMSES & mera-file fixtures
-        include("47_galaxyframe_tests.jl")           # auto-frame (center_of/face_on/edge_on): vector helpers data-free + spiral_clumps angular-momentum orientation
-        include("49_statistics_tests.jl")            # pdf (probability distribution functions): data-free weighted-histogram kernel + spiral_clumps density PDF (mass vs volume)
-        include("50_provenance_tests.jl")            # provenance / provenance_string: data-free struct+string + spiral_clumps snapshot/projection extraction
-        include("51_movie_tests.jl")                 # getmovie / savemovie: data-free colormaps/struct + 3D Sedov frames → single-GIF round-trip
-        include("52_pluto_reader_tests.jl")          # PLUTO code frontend (multi-code reader): data-free format parsers + 3D Sedov fixture; analysis layer runs unchanged
-        include("53_overlay_absorption_tests.jl")    # gridoverlay (AMR cell boundaries)
-        include("07_regions.jl")
-        include("63_region_coverage_tests.jl")       # RT/gravity/particle sub- & shellregion paths (cell modes, inverse partitions, uniform-grid branch)
-        include("72_gadget_logs_tests.jl")           # data-free: AREPO/GADGET run-time ASCII logs (sfr.txt, info.txt, …)
-        include("71_info_initialization_tests.jl")   # every reader fills InfoType/scale/constants — no field left holding uninitialized memory
+        tinclude("45_sfr_tests.jl")                  # sfr / sfr_snapshot (SFH + current SFR): data-free kernel + version-robust (neg-birth & cosmological) AMR-backed
+        tinclude("46_timeseries_tests.jl")           # timeseries (multi-snapshot reducer→table): data-free discovery/assembly + 3D Sedov RAMSES & mera-file fixtures
+        tinclude("47_galaxyframe_tests.jl")           # auto-frame (center_of/face_on/edge_on): vector helpers data-free + spiral_clumps angular-momentum orientation
+        tinclude("49_statistics_tests.jl")            # pdf (probability distribution functions): data-free weighted-histogram kernel + spiral_clumps density PDF (mass vs volume)
+        tinclude("50_provenance_tests.jl")            # provenance / provenance_string: data-free struct+string + spiral_clumps snapshot/projection extraction
+        tinclude("51_movie_tests.jl")                 # getmovie / savemovie: data-free colormaps/struct + 3D Sedov frames → single-GIF round-trip
+        tinclude("53_overlay_absorption_tests.jl")    # gridoverlay (AMR cell boundaries)
+        tinclude("07_regions.jl")
+        tinclude("63_region_coverage_tests.jl")       # RT/gravity/particle sub- & shellregion paths (cell modes, inverse partitions, uniform-grid branch)
+        tinclude("71_info_initialization_tests.jl")   # every reader fills InfoType/scale/constants — no field left holding uninitialized memory
+        tinclude("52_pluto_reader_tests.jl")          # PLUTO code frontend (multi-code reader): data-free format parsers + 3D Sedov fixture; analysis layer runs unchanged
+        tinclude("72_gadget_logs_tests.jl")           # data-free: AREPO/GADGET run-time ASCII logs (sfr.txt, info.txt, …)
     end
 
     # ------------------------------------------------------------------------
     # Scientific Validation
     # ------------------------------------------------------------------------
     @testset "Scientific Validation" begin
-        include("08_physics_and_contracts.jl")
-        include("09_determinism.jl")
+        tinclude("08_physics_and_contracts.jl")
+        tinclude("09_determinism.jl")
     end
 
     # ------------------------------------------------------------------------
     # I/O and Integration
     # ------------------------------------------------------------------------
     @testset "I/O and Integration" begin
-        include("10_io_export.jl")
-        include("11_error_handling.jl")
-        include("12_integration_workflows.jl")
+        tinclude("10_io_export.jl")
+        tinclude("11_error_handling.jl")
+        tinclude("12_integration_workflows.jl")
     end
 
     # ------------------------------------------------------------------------
     # Utilities & Notifications
     # ------------------------------------------------------------------------
     @testset "Utilities & Notifications" begin
-        include("13_additional_coverage.jl")
-        include("14_io_notifications.jl")
+        tinclude("13_additional_coverage.jl")
+        tinclude("14_io_notifications.jl")
     end
 
     # ------------------------------------------------------------------------
     # Clumps
     # ------------------------------------------------------------------------
     @testset "Clumps" begin
-        include("20_clump_tests.jl")
+        tinclude("20_clump_tests.jl")
     end
 
     # ------------------------------------------------------------------------
     # Previously-untested public API surfaces
     # ------------------------------------------------------------------------
     @testset "Untested API Surfaces" begin
-        include("21_untested_surfaces_tests.jl")
+        tinclude("21_untested_surfaces_tests.jl")
     end
 
     # ------------------------------------------------------------------------
     # VTK Export
     # ------------------------------------------------------------------------
     @testset "VTK Export" begin
-        include("19_vtk_export_tests.jl")
+        tinclude("19_vtk_export_tests.jl")
     end
 
     # ------------------------------------------------------------------------
     # Filter Macros
     # ------------------------------------------------------------------------
     @testset "Filter Macros" begin
-        include("25_filter_macro_tests.jl")
+        tinclude("25_filter_macro_tests.jl")
     end
 
     # ------------------------------------------------------------------------
     # I/O Configuration
     # ------------------------------------------------------------------------
     @testset "I/O Configuration" begin
-        include("26_io_config_tests.jl")
+        tinclude("26_io_config_tests.jl")
     end
 
     # ------------------------------------------------------------------------
     # Data Conversion
     # ------------------------------------------------------------------------
     @testset "Data Conversion" begin
-        include("27_data_conversion_tests.jl")
+        tinclude("27_data_conversion_tests.jl")
     end
 
     # ------------------------------------------------------------------------
     # Extended Coverage
     # ------------------------------------------------------------------------
     @testset "Extended Coverage" begin
-        include("28_coverage_boost_tests.jl")
+        tinclude("28_coverage_boost_tests.jl")
     end
 
     # ------------------------------------------------------------------------
     # Parallel Execution (requires julia -t 4)
     # ------------------------------------------------------------------------
     @testset "Parallel Execution" begin
-        include("29_parallel_execution_tests.jl")
+        tinclude("29_parallel_execution_tests.jl")
     end
 
     end  # if SMOKE_ONLY / DATA_AVAILABLE
@@ -243,7 +267,7 @@ if isempty(_focus)
     # what happened with `using Printf` (caught only by a full local run, not by CI).
     # ------------------------------------------------------------------------
     @testset "AREPO Real-Data Validation" begin
-        include("73_arepo_realdata_validation.jl")
+        tinclude("73_arepo_realdata_validation.jl")
     end
 
 end

@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `timeseries.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/timeseries.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 Most post-processing is not about one snapshot — it is about *evolution*: how a mass, a
 peak density, a star-formation rate, or a profile changes across the outputs of a run.
 Writing that loop by hand (find the outputs, load each one, handle a missing snapshot,
@@ -44,9 +45,8 @@ co = checkoutputs(run)
 println("outputs found : ", co.outputs)
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -54,12 +54,9 @@ println("outputs found : ", co.outputs)
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 Outputs - existing: 13 betw. 1:13 - missing: 0
-
 outputs found : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 ```
-
 
 ## A real example: a 3-D Sedov blast
 
@@ -109,7 +106,6 @@ output  time       mass         rho_max  ncells
 13      0.200449   6.28425e-35  18.3208  261969
 ```
 
-
 The result is an `IndexedTables` table — one row per output, with `output` and `time`
 columns added automatically (see [Physical time](#Physical-time-and-cosmological-runs) — the
 default `time` is in **Myr**; the dimensionless Sedov sim is shown here in code units).
@@ -145,10 +141,11 @@ t = [0.0, 0.0168274109063273, 0.0334922695630072, 0.0502054026812579, 0.06700141
 rho = [1.0, 2.4620841187532374, 2.7350213089012847, 2.8953918239760763, 3.037285921194034, 4.532394520680104, 5.1676847422567995, 5.674611306033254, 6.15750882977664, 6.584083574556392, 6.955331402702706, 7.268339045626411, 18.320822161297333]
 extrema(m) = (6.284249157910609e-35, 6.284249157910612e-35)
 (nc[1], nc[end]) = (32768, 261969)
-
-(32768, 261969)
 ```
 
+```
+(32768, 261969)
+```
 
 ## Masking and other Mera functions
 
@@ -189,7 +186,9 @@ timeseries: 13 snapshot(s) from "/Volumes/FASTStorage/Simulations/Mera-Tests/RAM
   [12/13] output 00012  t=0.183733818129636
   [13/13] output 00013  t=0.20044896107714
 (columns(tsm)).f_dense = [0.0, 0.0, 0.0, 0.0, 0.0024885796552046873, 0.04568311531952604, 0.140885107600832, 0.27492312592427803, 0.32419613075023884, 0.33554232939318124, 0.34071834186383704, 0.3411209721585522, 0.36393986186171234]
+```
 
+```
 13-element Vector{Float64}:
  0.0
  0.0
@@ -205,7 +204,6 @@ timeseries: 13 snapshot(s) from "/Volumes/FASTStorage/Simulations/Mera-Tests/RAM
  0.3411209721585522
  0.36393986186171234
 ```
-
 
 The same pattern covers "mass inside a sphere over time" (`subregion(d, :sphere, …)` then
 `msum`), "centre-of-mass drift" ([`center_of_mass`](@ref)), kinematics
@@ -238,7 +236,6 @@ number of frames : 3
 frame size       : (64, 64)
 peak Sigma/frame : [0.5, 1.413, 3.343]
 ```
-
 
 Laid side by side, the maps show the shell sweeping outward through the box:
 
@@ -291,7 +288,6 @@ output  time       value
 5       0.0670014  512
 ```
 
-
 Snapshots are processed **sequentially**, so the loop never multiplies memory across
 outputs; the loaders themselves respect `JULIA_NUM_THREADS` (cap it at 4 on a laptop).
 
@@ -313,9 +309,7 @@ lines!(ax3, t, Float64.(nc)); scatter!(ax3, t, Float64.(nc))
 fig
 ```
 
-
-![](timeseries_files/timeseries_13_0.png)
-
+![](timeseries_files/timeseries_14_1.png)
 
 ## From mera files
 

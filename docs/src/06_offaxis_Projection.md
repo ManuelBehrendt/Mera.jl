@@ -1,8 +1,5 @@
 ## 0. Off-axis projection — what this page gives you
 
-!!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
-
 Title + scope card. Prose:
 
 "Every map on this page comes out of **one function call**:
@@ -33,6 +30,10 @@ Then, BEFORE the code, the first of the three admitted inline caveats:
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
+
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 # MERA_EXAMPLES environment variable; every path below is built from it.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
@@ -47,12 +48,10 @@ println("cells loaded : ", length(gas.data))
 println("box length   : ", info.boxlen, " kpc")
 println("levels       : ", gas.lmin, " – ", gas.lmax)
 println("threads      : ", Threads.nthreads())
-
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -60,13 +59,11 @@ println("threads      : ", Threads.nthreads())
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 cells loaded : 590311
 box length   : 100.0 kpc
 levels       : 3 – 7
 threads      : 4
 ```
-
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -104,13 +101,11 @@ function maprow(ms, key, titles; clabel="log10 Σ  [M⊙/pc²]", cmap=:inferno,
     Colorbar(fig[1, n+1], hm, label=clabel)
     fig
 end
-
 ```
 
 ```
 maprow (generic function with 1 method)
 ```
-
 
 ```julia
 # ONE window, reused by every chapter — so the only thing that changes between cells
@@ -128,7 +123,6 @@ println("frame: ", size(fo.maps[:sd]), "  and  ", size(eo.maps[:sd]))
 
 cr = sharedrange([fo, eo], :sd)
 maprow([fo, eo], :sd, ["direction=:faceon", "direction=:edgeon"]; crange=cr)
-
 ```
 
 ```
@@ -138,9 +132,7 @@ projection centre (box fraction) = [0.5, 0.5, 0.5]
 frame: (147, 147)  and  (147, 147)
 ```
 
-
-![](06_offaxis_Projection_files/06_offaxis_Projection_4_1.png)
-
+![](06_offaxis_Projection_files/06_offaxis_Projection_5_3.png)
 
 Read the output back:
 
@@ -235,7 +227,6 @@ end
 ladder = [lad0, lad30, lad60, eo]      # i = 90 is the edge-on map from Chapter 1
 cr = sharedrange(ladder, :sd)
 maprow(ladder, :sd, ["i = 0°", "i = 30°", "i = 60°", "i = 90°"]; crange=cr)
-
 ```
 
 ```
@@ -247,9 +238,7 @@ inclination + los         → ArgumentError
 direction=:faceon + axis  → ArgumentError
 ```
 
-
-![](06_offaxis_Projection_files/06_offaxis_Projection_9_1.png)
-
+![](06_offaxis_Projection_files/06_offaxis_Projection_10_6.png)
 
 `direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight** — the two `ŵ`
 vectors agree to the last bit — but they are *not* the same image. A face-on view leaves the roll
@@ -309,7 +298,6 @@ for (nm, m) in (("xrange/yrange ±22 kpc", world), ("fov=22 :square", sq), ("fov
     println(rpad(nm, 24), " frame ", lpad(string(size(m.maps[:sd])), 12),
             "   extent [kpc] = ", round.(getextent(m, :kpc), digits=1))
 end
-
 ```
 
 ```
@@ -321,24 +309,19 @@ end
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
 [Mera]: 2026-08-07T13:10:30.749
-
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
 ymin::ymax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
-
-Selected var(s)=(:sd,) 
+Selected var(s)=(:sd,)
 Weighting      = :mass
 Off-axis LOS   = [-0.0059, 0.8781, -0.4785]  (binning=:overlap)
 Effective resolution: 334^2  →  map size: 158 x 372
-
 xrange/yrange ±22 kpc    frame   (158, 372)   extent [kpc] = [-23.6, 23.8, -54.9, 56.5]
 fov=22 :square           frame   (147, 147)   extent [kpc] = [-22.0, 22.0, -22.0, 22.0]
 fov=22 :circle           frame   (156, 161)   extent [kpc] = [-23.4, 23.3, -24.2, 24.0]
 ```
-
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -351,12 +334,9 @@ fig = maprow([world, sq, ci], :sd, ttl; crange=cr)
 lines!(contents(fig[1,1])[1], [-22,22,22,-22,-22], [-22,-22,22,22,-22],
        color=:cyan, linestyle=:dash, linewidth=2)
 fig
-
 ```
 
-
-![](06_offaxis_Projection_files/06_offaxis_Projection_15_0.png)
-
+![](06_offaxis_Projection_files/06_offaxis_Projection_16_1.png)
 
 Read the frame sizes above, not just the pictures.
 
@@ -473,7 +453,6 @@ for v in (:σx, :σy, :σz, :σ, :r_cylinder, :r_sphere, :ϕ)
     end
     println(rpad(v, 14), msg)
 end
-
 ```
 
 ```
@@ -488,7 +467,6 @@ r_cylinder    projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 r_sphere      projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 ϕ             projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 ```
-
 
 That relative error is at the floating-point floor, and it stays there at **any** viewing angle, **any** pixel size and **any** `binning` — the deposit is a partition of unity, so every cell's weight is fully accounted for somewhere on the map. Appendix B says where the systematic sweep that establishes this lives.
 
@@ -559,21 +537,18 @@ for k in (:ngp, :cic, :overlap, :exact)
     println(rpad(k, 10), rpad(string(round(100*count(iszero, A)/length(A), digits=1), " %"), 11),
             rpad(round(secs[k], digits=3), 10), round(d, digits=4))
 end
-
 ```
 
 ```
 level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
-
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
 ngp       85.7 %     0.006     1.0381
 cic       64.4 %     0.006     0.9733
 overlap   0.0 %      0.026     0.0021
 exact     0.0 %      0.09      0.0
 ```
-
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -595,12 +570,9 @@ all weight at cell centres",
 2x2 split — still no footprint",
         ":overlap @ 0.1 kpc pixels
 same pixels, footprint deposit"]; crange=cr)
-
 ```
 
-
-![](06_offaxis_Projection_files/06_offaxis_Projection_23_0.png)
-
+![](06_offaxis_Projection_files/06_offaxis_Projection_24_1.png)
 
 The totals agree and the pictures do not — which is the point, and the reason "is it
 conservative?" is the wrong question to stop at.
@@ -663,7 +635,6 @@ finite(A) = filter(isfinite, vec(Float64.(A)))
 println("edge-on   max |v_LOS| = ", round(maximum(abs, finite(keo.maps[:vlos])), digits=1), " km/s")
 println("face-on   max |v_LOS| = ", round(maximum(abs, finite(kfo.maps[:vlos])), digits=1), " km/s")
 println("median σ_LOS edge-on  = ", round(median(finite(keo.maps[:σlos])), digits=1), " km/s")
-
 ```
 
 ```
@@ -671,7 +642,6 @@ edge-on   max |v_LOS| = 516.1 km/s
 face-on   max |v_LOS| = 124.6 km/s
 median σ_LOS edge-on  = 95.1 km/s
 ```
-
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -710,12 +680,9 @@ hideydecorations!(ax2, grid=false); hideydecorations!(ax3, grid=false)
 Colorbar(fig[1,6], h2, label="log10 σ_LOS [km/s]")
 colsize!(fig.layout, 3, Fixed(14))    # spacer: keeps the v colorbar from reading as panel 2's ylabel
 fig
-
 ```
 
-
-![](06_offaxis_Projection_files/06_offaxis_Projection_28_0.png)
-
+![](06_offaxis_Projection_files/06_offaxis_Projection_29_1.png)
 
 ```julia
 # Does σ_LOS depend on how finely you pixelate? Measure it rather than assume.
@@ -728,7 +695,6 @@ for px in (0.15, 0.6, 2.4)
     v = filter(x -> isfinite(x) && x > 0, vec(Float64.(p.maps[:σlos])))
     println(rpad(px, 15), rpad(round(median(v), digits=1), 16), round(mean(v), digits=1))
 end
-
 ```
 
 ```
@@ -737,7 +703,6 @@ pxsize [kpc]   median σ_LOS    mean σ_LOS
 0.6            94.3            275.4
 2.4            102.6           274.8
 ```
-
 
 Now the result, and it is not the one the "width inside a pixel" picture suggests: a **16× change
 in `pxsize` moves the median σ_LOS by a few km/s**, and the mean barely at all. σ_LOS is set by the
@@ -781,7 +746,6 @@ pr = projection(gas, :rho, :nH; view..., fov=15, fov_unit=:kpc, aperture=:square
 println("slice frame      ", size(sl.map), "   ", round(100*count(isnan, sl.map)/length(sl.map), digits=1), " % NaN")
 println("projection frame ", size(pr.maps[:rho]))
 println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
-
 ```
 
 ```
@@ -789,7 +753,6 @@ slice frame      (120, 120)   0.0 % NaN
 projection frame (120, 120)
 slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
-
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -809,12 +772,9 @@ heatmap!(ax2, range(es[1],es[2],length=size(As,1)), range(es[3],es[4],length=siz
 hideydecorations!(ax2, grid=false)
 Colorbar(fig[1,3], h, label="log10 n_H [cm⁻³]")
 fig
-
 ```
 
-
-![](06_offaxis_Projection_files/06_offaxis_Projection_33_0.png)
-
+![](06_offaxis_Projection_files/06_offaxis_Projection_34_1.png)
 
 Two things in the left panel are the *selection* rather than the gas, and both are worth
 recognising because they show up in every `fov` projection:
@@ -851,7 +811,6 @@ for (a, f) in zip(0:90:270, frames)
     println("azimuth ", lpad(a,3), "°   frame ", size(f.maps[:sd]),
             "   extent [kpc] = ", round.(getextent(f, :kpc), digits=3))
 end
-
 ```
 
 ```
@@ -861,18 +820,14 @@ azimuth 180°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.925, 21.85
 azimuth 270°   frame (88, 88)   extent [kpc] = [-21.786, 21.995, -21.917, 21.864]
 ```
 
-
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 # The frames are already computed above; showing them is the visual half of the same claim.
 cr = sharedrange(frames, :sd)
 maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
-
 ```
 
-
-![](06_offaxis_Projection_files/06_offaxis_Projection_37_0.png)
-
+![](06_offaxis_Projection_files/06_offaxis_Projection_38_1.png)
 
 Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
 numbers say the same thing from opposite directions. That invariance is what makes the sequence
@@ -900,13 +855,11 @@ record(fig, "assets/offaxis/orbit_movie.gif", eachindex(frames); framerate=8) do
 end
 println("wrote assets/offaxis/orbit_movie.gif  (",
         round(filesize("assets/offaxis/orbit_movie.gif") / 1024, digits=1), " KB)")
-
 ```
 
 ```
 wrote assets/offaxis/orbit_movie.gif  (641.8 KB)
 ```
-
 
 ![Orbit movie — the camera sweeps azimuth at fixed inclination; the frame does not breathe.](assets/offaxis/orbit_movie.gif)
 
@@ -932,7 +885,6 @@ println("camera survives the round trip : ", fo2.los == fo.los && fo2.up == fo.u
 println(".center (box fraction)         : ", round.(fo.center, digits=3))
 println(".maps_lmax off-axis            : ", isempty(fo.maps_lmax) ? "empty (by design)" : "populated")
 println(".direction                     : ", fo.direction)
-
 ```
 
 ```
@@ -941,7 +893,6 @@ camera survives the round trip : true
 .maps_lmax off-axis            : empty (by design)
 .direction                     : offaxis
 ```
-
 
 **Troubleshooting** — six symptoms, six causes:
 
@@ -989,7 +940,6 @@ epot = pe.maps[:epot]; filled = filter(<(0), epot)
 println("gravity : maps ", collect(keys(pe.maps)))
 println("          epot over filled pixels ", round.(extrema(filled), sigdigits=4),
         "   (", count(iszero, epot), " of ", length(epot), " pixels empty)")
-
 ```
 
 ```
@@ -997,7 +947,6 @@ stars   : frame (107, 109)   los = [0.999, -0.002, -0.037]
 gravity : maps Any[:epot, :sd]
           epot over filled pixels (-0.5327, -0.03714)   (530 of 11448 pixels empty)
 ```
-
 
 ```julia
 # The same camera, pointed at a different data type. `fov` frames both identically, so the two
@@ -1039,7 +988,6 @@ Colorbar(fig[1,8], h3, label="φ [km²/s²]")
 hideydecorations!(ax2, grid=false); hideydecorations!(ax3, grid=false)
 colsize!(fig.layout, 3, Fixed(14)); colsize!(fig.layout, 6, Fixed(14))
 fig
-
 ```
 
 ```
@@ -1047,9 +995,7 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 φ along the line of sight: (-1976.0, -175.5) km²/s²
 ```
 
-
-![](06_offaxis_Projection_files/06_offaxis_Projection_47_1.png)
-
+![](06_offaxis_Projection_files/06_offaxis_Projection_48_2.png)
 
 Same keywords, same camera, three different kinds of data — and each one says something the
 others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
@@ -1105,7 +1051,6 @@ println("data_center ignored on off-axis hydro        : ",
         same(projection(gas, :sd, :Msol_pc2; inclination=35, axis=:angmom, W...),
              projection(gas, :sd, :Msol_pc2; inclination=35, axis=:angmom,
                         data_center=[0.4,0.4,0.4], data_center_unit=:standard, W...)))
-
 ```
 
 ```
@@ -1119,7 +1064,6 @@ particle nmax                                : MethodError
 particle max_threads                         : MethodError
 data_center ignored on off-axis hydro        : true
 ```
-
 
 Nothing above is hydro-specific. The camera keywords, the framing keywords and the binning
 keywords mean the same thing for every projectable data type:

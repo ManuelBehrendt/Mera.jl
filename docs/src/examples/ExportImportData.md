@@ -2,6 +2,7 @@
 
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `ExportImportData.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/examples/ExportImportData.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 This notebook presents several ways to export your data.
 
 Used libraries in this tutorial:
@@ -18,14 +19,12 @@ import Pkg; Pkg.activate("../."); Pkg.build("Mera")
   Activating project at `/Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1`
 ```
 
-
 ```julia
 using Mera
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -34,7 +33,6 @@ using Mera
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 ```
-
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -48,22 +46,18 @@ particles = getparticles(info, :mass);
 
 ```
 [Mera]: Get hydro data: 2026-08-06T10:36:44.702
-
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1,) = (:rho,) 
-
+Using var(s)=(1,) = (:rho,)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 2048
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:24 (11.79 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 4879946 cells, 1 variables
@@ -76,18 +70,14 @@ Creating Table from 4879946 cells with max 4 threads...
 ✓ Table created in 0.979 seconds
 Memory used for data table :186.1557970046997 MB
 -------------------------------------------------------
-
 [Mera]: Get particle data: 2026-08-06T10:37:14.140
-
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
-Using var(s)=(4,) = (:mass,) 
-
+Using var(s)=(4,) = (:mass,)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Processing 2048 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
@@ -95,7 +85,6 @@ Found 5.089390e+05 particles
 Memory used for data table :19.415205001831055 MB
 -------------------------------------------------------
 ```
-
 
 ```julia
 println("Cells: ", length(hydro.data))
@@ -106,7 +95,6 @@ println("Particles: ", length(particles.data))
 Cells: 4879946
 Particles: 508939
 ```
-
 
 Define a function to preview the first lines of the created ASCII files:
 
@@ -126,7 +114,6 @@ end
 ```
 viewheader (generic function with 1 method)
 ```
-
 
 ## Collect The Data For Export
 
@@ -151,7 +138,6 @@ Dict{Any, Any} with 5 entries:
   :x        => [-23.625, -23.625, -23.625, -23.625, -23.625, -23.625, -23.625, …
 ```
 
-
 ```julia
 pvals
 ```
@@ -163,7 +149,6 @@ Dict{Any, Any} with 4 entries:
   :mass => [4217.58, 4217.58, 4217.58, 4217.58, 4217.58, 4217.58, 4217.58, 4217…
   :x    => [-23.625, -23.625, -23.625, -23.625, -23.625, -23.625, -23.625, -23.…
 ```
-
 
 ## ASCII: DelimitedFiles Library
 
@@ -193,7 +178,6 @@ viewheader("simulation_hydro.csv", 5)
 -23.625000000015312,-23.625000000015312,-20.62500000001337,0.7500000000004861,6.768382184513761e-28
 ```
 
-
 Use a different syntax; save into file with header and tab-separated values:
 
 ```julia
@@ -214,7 +198,6 @@ x/kpc	y/kpc	z/kpc	cellsize/kpc	rho/g_cm3
 -23.625000000015312	-23.625000000015312	-21.375000000013856	0.7500000000004861	6.768382184513761e-28
 ```
 
-
 Write the particles data into an ASCII file with header:
 
 ```julia
@@ -234,7 +217,6 @@ x/kpc	y/kpc	z/kpc	mass/Msol
 -23.625000000015312	-23.625000000015312	-22.12500000001434	4217.583427040147
 -23.625000000015312	-23.625000000015312	-21.375000000013856	4217.583427040147
 ```
-
 
 ## ASCII: Save IndexedTables Database into a CSV-File with FileIO
 
@@ -280,7 +262,6 @@ level  x           y        z        id      mass
 14     38.1739     25.8905  23.7992  381503  1.13606e-5
 ```
 
-
 ```julia
 FileIO.save("database_partilces.csv", particles.data)
 ```
@@ -296,7 +277,6 @@ viewheader("database_partilces.csv", 5)
 6,0.2382109772356709,28.753723953405462,24.81911909925676,194252,1.1360607549574087e-5
 6,0.271365638325332,22.751224267806695,31.568145104287826,130805,1.1360607549574087e-5
 ```
-
 
 Export selected variables from the datatable:
 
@@ -322,7 +302,6 @@ viewheader("database_partilces.csv", 5)
 0.271365638325332,22.751224267806695,1.1360607549574087e-5
 ```
 
-
 ## Binary: Save Multiple Data into a JLD File
 See for documentation: https://github.com/JuliaIO/JLD.jl
 
@@ -332,8 +311,8 @@ using JLD
 
 ```julia
 jldopen("mydata.jld", "w") do file
-    write(file, "hydro", hvals ) 
-    write(file, "particles", pvals ) 
+    write(file, "hydro", hvals )
+    write(file, "particles", pvals )
 end
 ```
 
@@ -347,7 +326,6 @@ file = jldopen("mydata.jld","r")
 Julia data file version 0.1.3: mydata.jld
 ```
 
-
 ```julia
 names(file)
 ```
@@ -357,7 +335,6 @@ names(file)
  "hydro"
  "particles"
 ```
-
 
 ```julia
 hydrodata = read(file, "hydro")
@@ -372,7 +349,6 @@ Dict{Any, Any} with 5 entries:
   :cellsize => [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75  …  …
 ```
 
-
 ```julia
 particledata = read(file, "particles")
 ```
@@ -385,7 +361,6 @@ Dict{Any, Any} with 4 entries:
   :x    => [-23.625, -23.625, -23.625, -23.625, -23.625, -23.625, -23.625, -23.…
 ```
 
-
 Compare stored with original data:
 
 ```julia
@@ -396,7 +371,6 @@ hydrodata == hvals
 true
 ```
 
-
 ```julia
 particledata == pvals
 ```
@@ -404,7 +378,6 @@ particledata == pvals
 ```
 true
 ```
-
 
 ## Binary: Compress Data into a gz-File
 
@@ -431,7 +404,6 @@ Dict{Any, Any} with 5 entries:
   :cellsize => [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75  …  …
 ```
 
-
 ```julia
 hydrodata1 == hvals
 ```
@@ -439,7 +411,6 @@ hydrodata1 == hvals
 ```
 true
 ```
-
 
 Prepare variable-array:
 
@@ -462,7 +433,7 @@ varsarray = [hvals[:x] hvals[:y] hvals[:z] hvals[:cellsize] hvals[:rho]]
  -23.625   -23.625    -16.125      0.75      6.76838e-28
  -23.625   -23.625    -15.375      0.75      6.76838e-28
  -23.625   -23.625    -14.625      0.75      6.76838e-28
-   ⋮                                         
+   ⋮
   14.6953    1.94531   -0.0703125  0.046875  3.59298e-26
   14.6953    1.94531   -0.0234375  0.046875  3.80161e-26
   14.6953    1.94531    0.0234375  0.046875  4.29495e-26
@@ -476,7 +447,6 @@ varsarray = [hvals[:x] hvals[:y] hvals[:z] hvals[:cellsize] hvals[:rho]]
   14.6953    2.03906   -0.0703125  0.046875  2.57262e-26
   14.6953    2.03906   -0.0234375  0.046875  2.61481e-26
 ```
-
 
 ```julia
 fo= GzipCompressorStream( open("sample-data2.jls.gz", "w") ); serialize(fo, varsarray); close(fo)
@@ -503,7 +473,7 @@ hydrodata2 = deserialize( GzipDecompressorStream( open("sample-data2.jls.gz", "r
  -23.625   -23.625    -16.125      0.75      6.76838e-28
  -23.625   -23.625    -15.375      0.75      6.76838e-28
  -23.625   -23.625    -14.625      0.75      6.76838e-28
-   ⋮                                         
+   ⋮
   14.6953    1.94531   -0.0703125  0.046875  3.59298e-26
   14.6953    1.94531   -0.0234375  0.046875  3.80161e-26
   14.6953    1.94531    0.0234375  0.046875  4.29495e-26
@@ -518,7 +488,6 @@ hydrodata2 = deserialize( GzipDecompressorStream( open("sample-data2.jls.gz", "r
   14.6953    2.03906   -0.0234375  0.046875  2.61481e-26
 ```
 
-
 Compare original with loaded data:
 
 ```julia
@@ -528,7 +497,6 @@ hydrodata2 == varsarray
 ```
 true
 ```
-
 
 Store array with header:
 
@@ -556,7 +524,7 @@ hydrodata3 = deserialize( GzipDecompressorStream( open("sample-data3.jls.gz", "r
  -23.625     -23.625     -16.875      0.75             6.76838e-28
  -23.625     -23.625     -16.125      0.75             6.76838e-28
  -23.625     -23.625     -15.375      0.75             6.76838e-28
-   ⋮                                                   
+   ⋮
   14.6953      1.94531    -0.0703125  0.046875         3.59298e-26
   14.6953      1.94531    -0.0234375  0.046875         3.80161e-26
   14.6953      1.94531     0.0234375  0.046875         4.29495e-26
@@ -571,7 +539,6 @@ hydrodata3 = deserialize( GzipDecompressorStream( open("sample-data3.jls.gz", "r
   14.6953      2.03906    -0.0234375  0.046875         2.61481e-26
 ```
 
-
 ## Other File Formats
 - JLD2 https://github.com/JuliaIO/JLD2.jl
 - HDF5 https://github.com/JuliaIO/HDF5.jl
@@ -580,7 +547,3 @@ hydrodata3 = deserialize( GzipDecompressorStream( open("sample-data3.jls.gz", "r
 - FITS https://github.com/emmt/EasyFITS.jl
 - Matlab https://github.com/JuliaIO/MAT.jl
 - GZip https://github.com/JuliaIO/GZip.jl
-
-```julia
-
-```

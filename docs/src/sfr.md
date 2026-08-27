@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `sfr.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/sfr.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 Mera measures star formation directly from the **star particles**, in two complementary ways:
 
 * `sfr` — the **star-formation history** SFR(t): stellar mass formed per time bin, in M☉/yr.
@@ -30,9 +31,8 @@ println("particles loaded : ", length(parts.data))
 println("hydro cells      : ", length(gas.data))
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -40,9 +40,7 @@ println("hydro cells      : ", length(gas.data))
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 [Mera]: 2026-08-03T12:19:09.624
-
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -66,7 +64,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -80,42 +78,33 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
 [Mera]: Get particle data: 2026-08-03T12:19:15.216
-
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
-
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :38.428720474243164 MB
 -------------------------------------------------------
-
 [Mera]: Get hydro data: 2026-08-03T12:19:19.051
-
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
-
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.91 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -128,11 +117,9 @@ Creating Table from 28320979 cells with max 4 threads...
 ✓ Table created in 40.708 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
-
 particles loaded : 544515
 hydro cells      : 28320979
 ```
-
 
 ## Star-formation history
 
@@ -158,10 +145,11 @@ time range     [Myr] : (1.419158337486011, 421.419158337486)
 peak SFR     [M☉/yr] : 1.19558
 mean SFR     [M☉/yr] : 0.9825318181818182
 sum(s) * 20.0 * 1.0e6 = 4.32314e8
-
-4.32314e8
 ```
 
+```
+4.32314e8
+```
 
 ### SN mass-loss correction
 
@@ -177,7 +165,6 @@ println("peak SFR (eta_sn=0.2) [M☉/yr] : ", maximum(s2))
 ```
 peak SFR (eta_sn=0.2) [M☉/yr] : 1.485425
 ```
-
 
 ## Current SFR from one snapshot
 
@@ -204,7 +191,6 @@ stellar mass    [M☉]  : 4.38466e8
 mass field used       : mass
 ```
 
-
 ```julia
 # custom look-back windows
 snap2 = sfr_snapshot(parts; windows=[5.0, 10.0, 50.0, 100.0])
@@ -216,7 +202,6 @@ println("SFR per window [M☉/yr]: ", snap2.sfr)
 custom windows  [Myr] : [5.0, 10.0, 50.0, 100.0]
 SFR per window [M☉/yr]: [1.3736, 1.377, 1.164728, 1.14778]
 ```
-
 
 ## Depletion time & star-formation efficiency
 
@@ -243,7 +228,6 @@ depletion time  [Gyr]   : 0.2591244142865757
 epsilon_ff (KM)         : 0.02767352463806009
 ```
 
-
 The per-cell free-fall time is itself a `getvar` field `:freefall_time` (= √(3π/32Gρ)),
 correct in any time unit.
 
@@ -255,7 +239,6 @@ println("per-cell t_ff [Myr] range : ", extrema(tff))
 ```
 per-cell t_ff [Myr] range : (4.434042095351683, 158141.82257929075)
 ```
-
 
 ## Plot: the star-formation history
 
@@ -271,5 +254,4 @@ stairs!(ax, t, s; step=:post, color=:steelblue)
 fig
 ```
 
-
-![](sfr_files/sfr_14_0.png)
+![](sfr_files/sfr_15_1.png)

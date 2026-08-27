@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `movie.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/movie.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 [`getmovie`](@ref) projects a quantity for **every output** of a simulation and collects the
 maps into the frames of a movie; [`savemovie`](@ref) writes them to an animated GIF. It
 builds on the same machinery as [`timeseries`](@ref) (one snapshot resident at a time,
@@ -31,9 +32,8 @@ println("frame size      : ", size(m.frames[1]))
 println("output numbers  : ", m.outputs)
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -41,7 +41,6 @@ println("output numbers  : ", m.outputs)
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 temp output dir : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp
 getmovie: 13 frame(s) of :sd from "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d"
   [1/13] output 00001
@@ -61,7 +60,6 @@ frames          : 13
 frame size      : (64, 64)
 output numbers  : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 ```
-
 
 ## How it works (no scratch images)
 
@@ -137,7 +135,6 @@ savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/
 wrote GIF       : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.gif  (41062 bytes)
 ```
 
-
 ## Saving: colormap, scaling, steady brightness
 
 ```julia
@@ -169,7 +166,6 @@ println("wrote          : ", gif2, "  (", filesize(gif2), " bytes)")
 savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_gray.gif
 wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_gray.gif  (42812 bytes)
 ```
-
 
 - **`colorrange=:global`** (default) computes a single range over *all* frames, so the movie
   doesn't flicker as the peak grows. Use `:perframe` to stretch each frame independently, or
@@ -246,7 +242,6 @@ savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/
 custom tags    : density_custom.gif
 ```
 
-
 Set `annotate=false` to print the labels without drawing them on the frames.
 
 ## Save and reload the movie object
@@ -268,7 +263,6 @@ Saved MeraMovie (13 frames) → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T
 Loaded MeraMovie (13 frames) ← /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.jld2
 reloaded frames: 13  (identical: true)
 ```
-
 
 `savemovie` switches on the extension: `.gif` encodes a movie, `.jld2` persists the object.
 
@@ -316,7 +310,6 @@ moviefromframes: 13 image(s) from /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp
 assembled      : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/from_frames.gif  (556105 bytes)
 ```
 
-
 …or feed the PNGs to `ffmpeg` for an MP4:
 
 ```
@@ -338,9 +331,7 @@ Colorbar(fig[1,2], hm; label = "log10 Sigma")
 fig
 ```
 
-
-![](movie_files/movie_20_0.png)
-
+![](movie_files/movie_21_1.png)
 
 ## See also
 

@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `clumpfind.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/clumpfind.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 `clumpfind` locates **connected over-dense structures** and returns a per-clump catalog. It works
 two ways:
 
@@ -77,9 +78,8 @@ println("cells loaded : ", length(gas.data))
 println("box length   : ", gas.boxlen, " kpc")
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -87,9 +87,7 @@ println("box length   : ", gas.boxlen, " kpc")
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 [Mera]: 2026-08-03T11:31:57.365
-
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -113,9 +111,9 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Npart:    5.091500e+05 
-- Nstars:   5.066030e+05 
-- Ndm:      2.547000e+03 
+- Npart:    5.091500e+05
+- Nstars:   5.066030e+05
+- Ndm:      2.547000e+03
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
 rt:            false
@@ -129,27 +127,21 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
 [Mera]: Get hydro data: 2026-08-03T11:31:59.803
-
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2) 
-
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 2048
    Files to be processed: 1939
    Compute threads: 4
    GC threads: 4
    📍 Spatial filtering active: 109 files skipped
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:25 (13.22 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1277874 cells, 7 variables
@@ -162,11 +154,9 @@ Creating Table from 1277874 cells with max 4 threads...
 ✓ Table created in 2.605 seconds
 Memory used for data table :107.2445936203003 MB
 -------------------------------------------------------
-
 cells loaded : 1277874
 box length   : 48.0 kpc
 ```
-
 
 Select cells above 100 cm⁻³, link within 0.2 kpc, and keep clumps with ≥ 5 cells:
 
@@ -183,12 +173,10 @@ println(cat)                       # ClumpCatalog summary
 
 ```
 number of clumps : 34
-
 ClumpCatalog: 34 clumps  [3D, field=rho ≥ 100.0 nH]
   mass Msol: total 6.712e9  max 2.034e9  median 4.058e7
   largest: 487 members, mass 2.034e9
 ```
-
 
 ```julia
 # the most massive clump is a NamedTuple
@@ -210,10 +198,11 @@ c1.mass = 2.0337645080962305e9
 c1.com = (22.061102887532154, 24.038745759498653, 24.05425590948421)
 c1.peak = 86745.10109055592
 c1.radius = 0.9229258020368907
-
-0.9229258020368907
 ```
 
+```
+0.9229258020368907
+```
 
 With a Makie backend loaded, [`clumpplot`](@ref) draws the catalog directly — each clump's centre of
 mass as a marker sized by mass (and coloured by log mass), optionally over a projection background:
@@ -269,7 +258,6 @@ ThresholdFoF     : 43 clumps
 DensityWatershed : 45 clumps (saddle-split)
 ```
 
-
 ### Gravitational boundedness
 
 `boundedness=true` adds per-clump energetics (cgs) and keeps, optionally, only self-bound structures:
@@ -288,10 +276,11 @@ b1 = catb[1]
 b1.alpha_vir = 1.373366071452284
 b1.bound = true
 b1.e_grav = 7.214955930128814e56
-
-7.214955930128814e56
 ```
 
+```
+7.214955930128814e56
+```
 
 Each clump gains `e_kin` (COM-frame kinetic), `e_therm` (thermal, gas), `e_grav` (binding energy),
 `alpha_vir`, and `bound`. The potential is chosen with `egrav`: `:approx` (⅗·GM²/R, fast but biased)
@@ -327,7 +316,6 @@ println("clumps passing the validator chain: ", length(big))
 clumps passing the validator chain: 22
 ```
 
-
 ```julia
 # ≥20 members, tree-gravity self-bound (iterative unbinding), and virially bound:
 cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4);
@@ -348,31 +336,25 @@ println(cats)
 
 ```
 [Mera]: Get particle data: 2026-08-03T11:32:44.285
-
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
-Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
-
+Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
-
 Processing 1939 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 2.624670e+05 particles
 Memory used for data table :18.02324104309082 MB
 -------------------------------------------------------
-
 stellar groups found : 1
 ClumpCatalog: 1 clumps  [3D, field=mass ≥ 0.0 standard]
   mass Msol: total 2.986e9  max 2.986e9  median 2.986e9
   largest: 262102 members, mass 2.986e9
 ```
-
 
 **Choosing parameters.** `linking_length` should be a few times the local resolution — comparable to
 or larger than the finest cell size (3D AMR) or the mean interparticle separation (particles);
@@ -477,7 +459,6 @@ table columns     : (:id, :n_members, :mass, :com_x, :com_y, :com_z, :radius, :p
 search meta       : (dim = Symbol("3D"), field = :rho, threshold = 100.0, threshold_unit = :nH, linking_length = 0.2, pos_unit = :kpc, mass_unit = :Msol, n_selected = 1889, boundedness = false, deblend = false, substructure = false, unbinding = false, hierarchy = false, finder = :ThresholdFoF)
 ```
 
-
 See also [`getclumps`](@ref) to load a RAMSES-produced clump catalog instead of finding clumps
 yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment in 2D.
 
@@ -493,7 +474,6 @@ println("N(>= M_min)                   : ", first(Ngt))
 cumulative mass-function bins : 34
 N(>= M_min)                   : 34
 ```
-
 
 ```julia
 using CairoMakie
@@ -517,31 +497,24 @@ fig
 
 ```
 [Mera]: 2026-08-03T11:33:11.854
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
-
-Selected var(s)=(:sd,) 
+Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 1024^2
 Map size: 214 x 214
 Pixel size: 46.875 [pc]
 Simulation min.: 46.875 [pc]
-
 Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```
 
-
-![](clumpfind_files/clumpfind_27_1.png)
-
+![](clumpfind_files/clumpfind_28_6.png)
 
 A [`ClumpCard`](@ref) runs `clumpfind` inside a [First-Look Report](report.md) (the full catalog is
 kept in the card's `data.catalog`):
@@ -565,22 +538,17 @@ length(cat2) > 0 && println("largest region   : ", cat2[1].n_members, " pixels, 
 
 ```
 [Mera]: 2026-08-03T11:33:28.425
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
-
-Selected var(s)=(:sd,) 
+Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 481^2
 Map size: 101 x 101
 Pixel size: 99.792 [pc]
 Simulation min.: 46.875 [pc]
-
 Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
@@ -588,7 +556,6 @@ Processing mode: Sequential (single thread)
 2D regions found : 26
 largest region   : 1178 pixels, mass 5962.0
 ```
-
 
 `connectivity` is `8` (diagonals count) or `4`. For a surface-density map each region's `mass` is the
 exact area-integral `Σ value · pixel_area`; positions are in the map's extent units.

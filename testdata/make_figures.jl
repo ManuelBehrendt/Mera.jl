@@ -39,8 +39,12 @@ for (i,(n,p)) in enumerate(projs)
               title="output $(lpad(n,5,'0'))   t = $(round(Mera.gettime(p.info),digits=3))",
               xlabel="x [code]", ylabel = i==1 ? "y [code]" : "")
     hmi = heatmap!(ax,
-        range(p.extent[1],p.extent[2],length=size(m,1)),
-        range(p.extent[3],p.extent[4],length=size(m,2)),
+        # `extent` is the OUTER bound of the map, so pixel CENTRES are inset by half a pixel;
+        # range(xmin, xmax, length=n) would stretch the image by n/(n-1) and shift it by dx/2.
+        range(p.extent[1] + (p.extent[2]-p.extent[1])/size(m,1)/2,
+              p.extent[2] - (p.extent[2]-p.extent[1])/size(m,1)/2, length=size(m,1)),
+        range(p.extent[3] + (p.extent[4]-p.extent[3])/size(m,2)/2,
+              p.extent[4] - (p.extent[4]-p.extent[3])/size(m,2)/2, length=size(m,2)),
         log10.(max.(m, 1e-12)); colorrange=cr, colormap=:inferno)
     lasthm = hmi
 end

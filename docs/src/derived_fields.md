@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `derived_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/derived_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 Mera computes a large catalogue of **derived quantities** on demand through
 [`getvar`](@ref) — temperature, sound speed, Mach number, cylindrical/spherical velocities,
 specific angular momentum, Jeans length, kinetic/thermal energy, and many more. You ask for
@@ -18,9 +19,8 @@ info = getinfo(300, joinpath(MERA_EXAMPLES, "RAMSES/mw_L10"))
 gas  = gethydro(info, verbose=false);
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -28,9 +28,7 @@ gas  = gethydro(info, verbose=false);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 [Mera]: 2026-08-03T11:35:24.684
-
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -54,7 +52,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -68,11 +66,9 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.23 ms/it)
 ✓ File processing complete! Combining results...
 ```
-
 
 These derived names also work everywhere `getvar` is used internally — in
 [`projection`](@ref), [`profile`](@ref), [`phase`](@ref), and friends.
@@ -122,7 +118,6 @@ requirements :ekin    : [:rho, :vx, :vy, :vz]
 requirements [:sd,:T] : [:p, :rho]
 ```
 
-
 This is what lets the one-call verbs read **only what they need** instead of the whole hydro
 state. `project(info, :sd)` reads just `:rho`; `project(info, :sd; direction=:edgeon)` also
 pulls the velocities required to orient the disk; [`quicklook`](@ref) reads only `:rho` and
@@ -148,7 +143,6 @@ println(":vmag2 projection map : ", size(m.maps[:vmag2]))
 :vmag2 projection map : (1024, 1024)
 ```
 
-
 ### The compute kernel
 
 `compute(dataobject, deps)`:
@@ -171,51 +165,6 @@ println(":mach_custom range    : ", extrema(getvar(gas, :mach_custom)))
 ```
 :mach_custom range    : (0.0015019848658968961, 790.5001832586903)
 ```
-
-### Optional dependencies — columns that change the answer but are not required
-
-Some fields need one set of columns to work at all and merely *prefer* another. AREPO gas
-temperature is the case: `getvar(gas, :T)` throws without `:u`, but takes the mean molecular
-weight μ from the electron abundance `:ne` **when that was loaded**, and otherwise falls back
-to a neutral-primordial μ ≈ 1.22. On ionised gas the two differ by nearly a factor of two.
-
-That makes `:T` a function of the snapshot **and** of the `vars=` used at load time — and a
-single `depends_on` list cannot express it. Naming `:ne` there would make a perfectly valid
-`getparticles(…; vars=[:rho,:u])` look insufficient; leaving it out would record nothing about
-the silent change in result. So there is a second slot:
-
-```julia
-add_field(:T_custom, compute;
-          depends_on = [:u],          # required — the field cannot run without these
-          optional   = [:ne],         # improves the result when present; never demanded
-          variants   = "μ from :ne when loaded; neutral-primordial μ≈1.22 otherwise")
-```
-
-The two are reported separately, and [`getvar_requirements`](@ref) never returns the optional
-set — that is the whole point:
-
-```julia
-getvar_requirements(:particles, :T)                          # [:u]
-getvar_optional(:particles, :T)                              # [:ne]
-getvar_requirements(:particles, :T; include_optional=true)   # [:ne, :u] — only if you ask
-field_info(:T; kind=:particles).variants                     # the note above
-```
-
-The payoff is [`list_fields`](@ref) called on a **loaded object** rather than on a kind. It
-says which fields are available, what is missing, and — where it matters — which variant would
-actually run:
-
-```julia
-gas = getparticles(info; families=[0], vars=[:rho, :u])      # no :ne
-for f in list_fields(gas)
-    f.name === :T && println(f.available, "  using: ", f.using_optional, "  ", f.note)
-end
-# true  using: Symbol[]  μ from :ne when loaded; neutral-primordial μ≈1.22 otherwise
-```
-
-Load the same gas with `vars=[:rho, :u, :ne]` and `using_optional` becomes `[:ne]`. This is the
-only place that tells you which temperature you are actually looking at.
-
 
 A registered field is a first-class citizen: it flows through [`getvar`](@ref), [`projection`](@ref),
 [`profile`](@ref) and the rest, with its dependencies read and resolved automatically. For example,

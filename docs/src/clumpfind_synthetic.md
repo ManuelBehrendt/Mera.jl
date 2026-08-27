@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `clumpfind_synthetic.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/clumpfind_synthetic.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 This page is a self-contained, **data-free** worked example for the structure finder
 ([`clumpfind`](@ref)). It builds a small Mera simulation *from scratch* — a real
 `HydroDataType` + `PartDataType` on a self-consistent unit system, no RAMSES files — whose
@@ -32,9 +33,8 @@ println("particles      : ", length(particles.data))
 println("ground-truth clumps : ", length(truth))
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -42,12 +42,10 @@ println("ground-truth clumps : ", length(truth))
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 gas cells      : 51514
 particles      : 2438
 ground-truth clumps : 8
 ```
-
 
 ```julia
 # Option B — download the prebuilt dataset once (cached in `dir`), then load it:
@@ -107,7 +105,6 @@ end
 8     pos=(0.56, 0.52, 0.75)
 ```
 
-
 ## Run every finder and score it
 
 `clump_recovery` compares a finder's per-cell labelling against the known truth labels. We
@@ -140,7 +137,6 @@ end
 ```
 candidate cells above threshold : 51514
 ground-truth clumps             : 8
-
 finder            clumps  ARI     completeness  purity
 ThresholdFoF      7       0.953   1.0           0.927
 DensityWatershed  8       0.998   1.0           0.994
@@ -148,7 +144,6 @@ Dendrogram        8       0.998   1.0           0.995
 PersistenceFinder 8       0.998   1.0           0.995
 HDBSCANFinder     7       0.953   1.0           0.927
 ```
-
 
 | Finder             | clumps | ARI   | completeness | purity | notes |
 |--------------------|:------:|:-----:|:------------:|:------:|-------|
@@ -188,7 +183,6 @@ DensityWatershed clumps near G1/G2 : 2   (split)
 a FoF clump with 2 bound subclumps : true
 ```
 
-
 ## Accuracy, boundedness and the mass function
 
 ![Accuracy panel](assets/clumpfind/accuracy.png)
@@ -213,7 +207,6 @@ clumps (incl. unbound Fhot) : 7
 clumps after virial filter  : 6
 Fhot removed                : true
 ```
-
 
 ## Backgrounds & noise — telling clumps from the ISM floor
 
@@ -259,7 +252,6 @@ ThresholdFoF on ISM disk     : 2/8  (disk fuses)
 DensityWatershed on ISM disk : 8/8  (contrast wins)
 ```
 
-
 The lesson: on a structured background, prefer a **density-contrast** finder
 (`DensityWatershed`, `Dendrogram` with `min_delta`, `PersistenceFinder`, or `HDBSCANFinder`),
 or raise the threshold above the local ISM — a single absolute threshold with friends-of-friends
@@ -298,7 +290,6 @@ ll=0.0156  -> 7 clumps
 ll=0.0391  -> 7 clumps
 ```
 
-
 `test/54_clumpfind_synthetic_tests.jl` pins these trends (plateau, over-merge cliff, the
 persistence split point, and the threshold dropout).
 
@@ -320,29 +311,23 @@ fig
 
 ```
 [Mera]: 2026-08-03T11:34:04.043
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 1000.0 [pc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [pc] :: 1000.0 [pc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 1000.0 [pc]
-
-Selected var(s)=(:sd,) 
+Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 128^2
 Map size: 128 x 128
 Pixel size: 7.812 [pc]
 Simulation min.: 7.812 [pc]
-
 Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```
 
-
-![](clumpfind_synthetic_files/clumpfind_synthetic_19_1.png)
-
+![](clumpfind_synthetic_files/clumpfind_synthetic_20_7.png)
 
 ## When to use which finder
 

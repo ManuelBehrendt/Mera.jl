@@ -355,6 +355,23 @@ function get_data(dataobject::PartDataType,
                                                                   (p[bpos] - center[2] * boxlen )^2 +
                                                                   (p[cpos] - center[3] * boxlen )^2 )  )
 
+       # Periodic (minimum-image) radii. :r_sphere / :r_cylinder measure the DIRECT separation
+       # from `center`; RAMSES boxes are periodic, so for a centre within half a box of a face
+       # the true nearest separation wraps around and the direct one is the long way round.
+       # These variants wrap each component into [-boxlen/2, +boxlen/2] first.
+       elseif i == :r_sphere_periodic
+           selected_unit = getunit(dataobject, :r_sphere_periodic, vars, units)
+           vars_dict[:r_sphere_periodic] = select( masked_data, (apos, bpos, cpos)=>p->
+               selected_unit * sqrt( _minimum_image(p[apos] - center[1] * boxlen, boxlen)^2 +
+                                     _minimum_image(p[bpos] - center[2] * boxlen, boxlen)^2 +
+                                     _minimum_image(p[cpos] - center[3] * boxlen, boxlen)^2 )  )
+       
+       elseif i == :r_cylinder_periodic
+           selected_unit = getunit(dataobject, :r_cylinder_periodic, vars, units)
+           vars_dict[:r_cylinder_periodic] = select( masked_data, (apos, bpos)=>p->
+               selected_unit * sqrt( _minimum_image(p[apos] - center[1] * boxlen, boxlen)^2 +
+                                     _minimum_image(p[bpos] - center[2] * boxlen, boxlen)^2 )  )
+
        # Spherical velocity components
        elseif i == :vr_sphere
            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)

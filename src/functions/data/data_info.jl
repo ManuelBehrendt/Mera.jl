@@ -173,6 +173,7 @@ function infodata(output::Int;
         "Mera.RtDataType" => JLD2.Upgrade(RtDataType),
         "Mera.PartDataType" => JLD2.Upgrade(PartDataType),
         "Mera.ClumpDataType" => JLD2.Upgrade(ClumpDataType),
+        "Mera.SinkDataType" => JLD2.Upgrade(SinkDataType),
     )
     
     dataobject = JLD2.load(fpath, inflink, typemap=typemap)

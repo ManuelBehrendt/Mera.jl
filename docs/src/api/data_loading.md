@@ -15,6 +15,7 @@ gethydro
 getparticles
 getgravity
 getclumps
+getsinks
 getrt
 getgroups
 ```

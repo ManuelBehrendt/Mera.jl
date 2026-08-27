@@ -100,7 +100,7 @@ return dataobject
 #### Arguments
 ##### Required:
 - **`output`:** output number
-- **`datatype`:** :hydro, :particles, :gravity, :clumps or :rt
+- **`datatype`:** :hydro, :particles, :gravity, :clumps, :rt or :sinks
 ##### Predefined/Optional Keywords:
 - **`path`:** path to the file; default is local path.
 - **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.
@@ -197,6 +197,7 @@ function loaddata(output::Int; path::String="./",
         "Mera.RtDataType" => JLD2.Upgrade(RtDataType),
         "Mera.PartDataType" => JLD2.Upgrade(PartDataType),
         "Mera.ClumpDataType" => JLD2.Upgrade(ClumpDataType),
+        "Mera.SinkDataType" => JLD2.Upgrade(SinkDataType),
     )
     
     dataobject = JLD2.load(fpath, dlink, typemap=typemap)

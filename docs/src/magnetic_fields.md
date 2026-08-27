@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `magnetic_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/magnetic_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 Mera reads **RAMSES MHD** (ideal magnetohydrodynamics) outputs and exposes the magnetic field for
 analysis. RAMSES evolves **B** with a *constrained-transport* scheme, so the field is stored as the
 **six face-centred components** `B_{x,y,z}_left` and `B_{x,y,z}_right` in the ordinary hydro files
@@ -58,9 +59,8 @@ using Mera
 info = getinfo(27, joinpath(MERA_EXAMPLES, "RAMSES/ramses_mhd_128"));
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -68,12 +68,8 @@ info = getinfo(27, joinpath(MERA_EXAMPLES, "RAMSES/ramses_mhd_128"));
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 [Mera]: 2026-08-03T12:09:04.380
-
-
 [ Info: Mera: no hydro descriptor and nvarh=11 (≥11) on a 3D run — assuming a RAMSES MHD layout (B faces at 5–10, pressure at 11). If this is hydro with ≥6 passive scalars instead, the names are positional (:var6…).
-
 Code: RAMSES
 output [27] summary:
 mtime: 2026-06-17T09:26:06.094
@@ -104,7 +100,6 @@ patchfile:        false
 =======================================================
 ```
 
-
 ```julia
 gas = gethydro(info);
 
@@ -118,22 +113,18 @@ println("temperature  T [K]   : ", extrema(getvar(gas, :T, :K)))
 
 ```
 [Mera]: Get hydro data: 2026-08-03T12:09:07.782
-
 Key vars=(:cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) = (:rho, :vx, :vy, :vz, :bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right, :p) 
-
+Using var(s)=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) = (:rho, :vx, :vy, :vz, :bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right, :p)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
-
 📊 Processing Configuration:
    Total CPU files available: 4
    Files to be processed: 4
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 0.41  s/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 2097152 cells, 11 variables
@@ -146,7 +137,6 @@ Creating Table from 2097152 cells with max 4 threads...
 ✓ Table created in 4.328 seconds
 Memory used for data table :224.00138664245605 MB
 -------------------------------------------------------
-
 cells loaded         : 2097152
 thermal pressure   p : (0.13653329586664678, 1.9999999999999998)
 cell-centred Bx      : (1.0, 1.0)
@@ -154,7 +144,6 @@ cell-centred By      : (9.971840159730391e-27, 1.6525454539866162)
 cell-centred Bz      : (0.0, 0.0)
 temperature  T [K]   : (1.0812393953743894e-8, 3.1640344885858596e-8)
 ```
-
 
 ## Derived magnetic quantities
 
@@ -182,7 +171,6 @@ Alfven speed [km/s]  : (1.0e-5, 5.603087067452776e-5)
 Mach_alfven          : (6.808121583990544e-27, 0.8753825660118536)
 Mach_fast            : (3.270515795217101e-27, 0.835115020871922)
 ```
-
 
 Almost no new units were needed: `B` reuses the field-strength scales (`:Gauss`, `:muG`, `:microG`,
 `:nG`, `:Tesla`), magnetic pressure/energy-density reuse the pressure scales (`:Ba`, `:g_cm_s2`), the
@@ -214,48 +202,38 @@ fig
 
 ```
 [Mera]: 2026-08-03T12:09:32.078
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
-
-Selected var(s)=(:sd,) 
+Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 128^2
 Map size: 128 x 128
 Pixel size: 156.25 [μm]
 Simulation min.: 156.25 [μm]
-
 Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 [Mera]: 2026-08-03T12:09:33.265
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
-
-Selected var(s)=(:bx, :sd) 
+Selected var(s)=(:bx, :sd)
 Weighting      = :mass
-
 Effective resolution: 128^2
 Map size: 128 x 128
 Pixel size: 156.25 [μm]
 Simulation min.: 156.25 [μm]
-
 Available threads: 4
 Requested max_threads: 4
 Variables: 2 (bx, sd)
 Processing mode: Sequential (single thread)
 ```
 
-
-![](magnetic_fields_files/magnetic_fields_6_1.png)
-
+![](magnetic_fields_files/magnetic_fields_7_7.png)
 
 On an MHD run the [first-look dashboard](report.md) does this for you: `quicklook(output)` adds a
 face-on `|B|` panel and reports the `|B|` and plasma-β ranges automatically.

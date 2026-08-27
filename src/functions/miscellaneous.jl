@@ -77,6 +77,25 @@ little, but the saving dominates: 1.5–4.5x faster end to end on 2M rows, and 2
 end
 
 """
+    _minimum_image(d, L)
+
+Nearest separation `d` under periodic boundaries of period `L`, i.e. wrapped into
+`[-L/2, +L/2]`.
+
+RAMSES boxes are periodic, so the true distance between two points is the shortest of the
+direct separation and the ones going around the box. For a point near a face the direct
+separation is the LONG way round: with `L = 0.5`, a cell at `d = 0.45` is really `0.05` away.
+Getting this wrong is silent — every distance stays finite and plausible — and it changes
+answers qualitatively: measuring a Sedov blast at the box origin with direct distances gives a
+fitted expansion exponent of 1.41 instead of the correct 0.4.
+
+Branchless, and exact for any `d` (not just `|d| < L`).
+"""
+@inline function _minimum_image(d::Real, L::Real)
+    return d - L * round(d / L)
+end
+
+"""
     _mask_rows(t, pred) -> Vector{Bool}
 
 Evaluate a row predicate over a table WITHOUT materialising a `NamedTuple` per row.
@@ -748,6 +767,7 @@ const _QTY_REF_UNIT = Dict{Symbol,Symbol}(
     :vr_cylinder => :cm_s, :vϕ_cylinder => :cm_s,
     :x => :cm, :y => :cm, :z => :cm,
     :r_sphere => :cm, :r_cylinder => :cm,
+    :r_sphere_periodic => :cm, :r_cylinder_periodic => :cm,
     :jeanslength => :cm, :l_cool => :cm,
     :t_cool => :s, :age => :s, :freefall_time => :s,
     :p => :Ba, :pressure => :Ba,

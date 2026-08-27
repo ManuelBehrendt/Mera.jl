@@ -54,7 +54,25 @@ jobs:
         env:
           MERA_SMOKE_ONLY: "1"
           JULIA_NUM_THREADS: "4"   # exercise the threaded code paths (max_threads kwargs)
-        run: julia --project -e 'using Pkg; Pkg.test("Mera")'
+        run: julia --project -e 'using Pkg; Pkg.test("Mera"; coverage = ${{ (matrix.version == '1.12' && matrix.os == 'ubuntu-latest') && 'true' || 'false' }})'
+
+      # Coverage from ONE matrix entry only. Running it everywhere would upload the same
+      # measurement nine times and slow every job for nothing, because instrumented runs are
+      # slower. This reports the `ci-smoke` flag, meaning the data-free tier, which is all a
+      # hosted runner can execute. The `local-full` flag comes from
+      # scripts/run_local_coverage.sh on the maintainer's machine, where the simulation data is.
+      - uses: julia-actions/julia-processcoverage@v1
+        if: matrix.version == '1.12' && matrix.os == 'ubuntu-latest'
+      - name: Upload ci-smoke coverage
+        if: matrix.version == '1.12' && matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          flags: ci-smoke
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # never fail the build on an upload problem: a missing token or a Codecov outage
+          # says nothing about the code
+          fail_ci_if_error: false
 
 # Docs are built + deployed by the dedicated `documentation.yml` workflow
 # (which has `permissions: contents: write`, and builds on PRs too). A second

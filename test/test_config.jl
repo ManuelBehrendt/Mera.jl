@@ -3,10 +3,32 @@
 # This file defines paths, datasets, and tolerances for all tests.
 
 # Simulation data path
-# Override with the MERA_TEST_DATA environment variable to point at a
-# different location (useful for CI, reviewers, or alternative drives).
-const SIMULATION_PATH = get(ENV, "MERA_TEST_DATA",
-                            "/Volumes/FASTStorage/Simulations/Mera-Tests")
+# ---------------------------------------------------------------------------
+# Resolved in the same order as testdata/fetch_fixtures.sh, so the suite finds the fixtures
+# wherever they happen to be and nobody has to configure anything by hand:
+#
+#   1. $MERA_TEST_DATA               — an explicit override, honoured even when it does not
+#                                      exist, so a typo shows up as a warning instead of being
+#                                      silently replaced by some other directory
+#   2. the maintainer's external drive
+#   3. testdata/fixtures/            — inside this checkout, where fetch_fixtures.sh downloads to
+#
+# A candidate only counts if it actually contains RAMSES-PUBLIC; an empty directory left behind
+# by an interrupted download must not shadow a working one.
+const _EXTERNAL_ROOT = "/Volumes/FASTStorage/Simulations/Mera-Tests"
+
+function _resolve_simulation_path()
+    explicit = get(ENV, "MERA_TEST_DATA", "")
+    isempty(explicit) || return explicit
+    for cand in (_EXTERNAL_ROOT,
+                 normpath(joinpath(@__DIR__, "..", "testdata", "fixtures")),
+                 normpath(joinpath(pwd(), "testdata", "fixtures")))
+        isdir(joinpath(cand, "RAMSES-PUBLIC")) && return cand
+    end
+    return _EXTERNAL_ROOT      # nothing found: report against the documented default
+end
+
+const SIMULATION_PATH = _resolve_simulation_path()
 const DATA_AVAILABLE = isdir(SIMULATION_PATH)
 
 # Smoke-only mode: run only data-independent tiers (Aqua + units).
@@ -192,6 +214,13 @@ const DATASETS = Dict(
 const PUBLIC_PATH = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC")
 const PUBLIC_AVAILABLE = isdir(PUBLIC_PATH)
 
+# NOTE ON UNIT SCALES. Six of these fixtures have unit_l = unit_d = unit_t = 1, which makes every
+# unit conversion the identity and so hides conversion bugs. Four of them cannot change: their
+# units come from RAMSES's own test configurations, and altering them would invalidate the
+# published reference solutions. Unit coverage comes instead from the fixtures that do carry real
+# scales — unit_d/unit_l/unit_t are themselves reference quantities for rt-dirac and smbh-bondi,
+# and the Stromgren oracle must convert to :kpc3 and Kelvin to reach the r_S and t_rec its namelist
+# documents. See "A note on unit scales" in test/README.md.
 const PUBLIC_FIXTURES = Dict(
     :sedov3d_amr => (
         path = joinpath(PUBLIC_PATH, "sedov3d_amr"),
@@ -233,9 +262,62 @@ const PUBLIC_FIXTURES = Dict(
         path = joinpath(PUBLIC_PATH, "stromgren3d"),
         ramses_version = "2026.05",
         outputs = 7, boxlen = 15.0,
-        # r(t) = r_S (1 - exp(-t/t_rec))^(1/3); alpha_B must use the MEASURED ionised-gas T
-        oracle = (Ndot = 5.0e48, nH = 1.0e-3, ratio_scatter = 0.05),
-        note = "source at the origin, reflecting boundaries (one octant); ionisation is :scalar_00",
+        # The namelist's OWN analytic oracle, at the case-B rate for T = 1e4 K, together with the
+        # r/r_S sampling its header documents for the six output times. Those are external numbers:
+        # reproducing them checks the whole law, not one radius.
+        oracle = (Ndot = 5.0e48, nH = 1.0e-3,
+                  r_S_kpc = 5.393, t_rec_Myr = 122.4,
+                  r_over_rS = [0.4285, 0.6014, 0.7290, 0.8550, 0.9548, 0.9944],
+                  # 32^3 puts ~11 cells across r_S, which the namelist says measures the front
+                  # to ~10 %; the measured ratio runs 0.91 -> 1.11 as the front becomes resolved
+                  ratio_band = 0.12,
+                  # A PHYSICAL photoionised temperature. This assertion exists because its absence
+                  # let a mu bug stand: getvar(:T, :K) hardwires mu = 1/0.76, but this fixture is
+                  # pure hydrogen (X=1), so ionised gas has mu ~ 0.5 and :K overstated T by 2.6x,
+                  # reporting a 30 kK HII region. Use :T_rt, which uses the local ionisation mu.
+                  T_ionised_K = (8_000.0, 20_000.0)),
+        note = "source at the origin, reflecting boundaries (one octant); ionisation via getvar(:xHII); temperature MUST come from :T_rt, not :T",
+    ),
+    :sedov3d_amr_mera => (
+        path = joinpath(PUBLIC_PATH, "sedov3d_amr_mera"),
+        ramses_version = "2026.05",            # converted from the sedov3d_amr fixture
+        outputs = 7, boxlen = 0.5,
+        # the oracle is a ROUND TRIP: loaddata must reproduce gethydro exactly
+        oracle = (source = "sedov3d_amr",),
+        note = "mera-file (JLD2) path; regenerate with testdata/make_mera_files.jl, no RAMSES needed",
+    ),
+    # RAMSES's OWN test configurations, run unchanged. Their *-ref.dat files are the reference
+    # solutions the RAMSES developers validate their solver against, so reproducing them checks
+    # Mera against numbers that are not ours.
+    :ramses_abc_flow => (
+        path = joinpath(PUBLIC_PATH, "ramses_abc_flow"),
+        ramses_version = "2026.05",
+        outputs = 2, boxlen = 1.0,
+        oracle = (snapshot = 2, source = "tests/mhd/abc-flow", nquantities = 22, tolerance = 3e-13),
+        note = "3-D MHD; the reference covers all six face-centred B components",
+    ),
+    :ramses_rt_dirac => (
+        path = joinpath(PUBLIC_PATH, "ramses_rt_dirac"),
+        ramses_version = "2026.05",
+        outputs = 2, boxlen = 5.0,
+        oracle = (snapshot = 2, source = "tests/rt/rt-dirac", nquantities = 25, tolerance = 8e-11),
+        note = "3-D RT + MHD; the reference includes the passive ionisation scalars",
+    ),
+    :sinks3d => (
+        path = joinpath(PUBLIC_PATH, "sinks3d"),
+        ramses_version = "2026.05",
+        outputs = 2, boxlen = 250.0,
+        # one sink forms and then accretes: its mass must GROW between the two snapshots
+        oracle = (nsink = 1, msink_first = 4079.0, msink_last = 110972.77176),
+        note = "sink catalogue is a csv per output; the mera-file round trip is tested on this fixture",
+    ),
+    :ramses_smbh_bondi => (
+        path = joinpath(PUBLIC_PATH, "ramses_smbh_bondi"),
+        ramses_version = "2026.05",
+        outputs = 1, boxlen = 1.0,
+        # 24 of the 40 published quantities are sink_*, so this is the reference check for getsinks
+        oracle = (snapshot = 15, source = "tests/sink/smbh-bondi", nquantities = 40, nsink = 24, tolerance = 3e-13),
+        note = "only the REFERENCED snapshot 15 is kept; foutput=1 writes 15 outputs, rerun the namelist for the rest",
     ),
     :legacy_particles3d => (
         path = joinpath(PUBLIC_PATH, "legacy_particles3d"),

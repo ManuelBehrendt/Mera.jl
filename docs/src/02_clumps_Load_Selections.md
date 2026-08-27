@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `02_clumps_Load_Selections.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/02_clumps_Load_Selections.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 This notebook provides a comprehensive guide to selective clump data loading and spatial filtering in Mera.jl. You'll learn advanced techniques for efficiently loading only the clump data you need from large clump-finding simulations.
 
 ## Learning Objectives
@@ -33,7 +34,7 @@ clumps = getclumps(info, :mass_cl)                             # Single variable
 
 # Common clump variable categories
 # Structural: :index, :lev, :parent, :ncell
-# Position: :peak_x, :peak_y, :peak_z  
+# Position: :peak_x, :peak_y, :peak_z
 # Physical: :mass_cl, :rho_av, Symbol("rho-"), Symbol("rho+")
 # Kinematics: :vx, :vy, :vz
 # Analysis: :relevance
@@ -43,7 +44,7 @@ clumps = getclumps(info, :mass_cl)                             # Single variable
 ```julia
 # RAMSES standard notation (domain: [0:1]³)
 clumps = getclumps(info, xrange=[0.2, 0.8],         # X-range filter
-                         yrange=[0.2, 0.8],         # Y-range filter  
+                         yrange=[0.2, 0.8],         # Y-range filter
                          zrange=[0.4, 0.6])         # Z-range filter
 
 # Center-relative coordinates (RAMSES units)
@@ -104,9 +105,8 @@ using Mera
 info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -114,9 +114,7 @@ info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-
 [Mera]: 2026-08-05T15:58:06.355
-
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -140,9 +138,9 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Npart:    5.091500e+05 
-- Nstars:   5.066030e+05 
-- Ndm:      2.547000e+03 
+- Npart:    5.091500e+05
+- Nstars:   5.066030e+05
+- Ndm:      2.547000e+03
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
 rt:            false
@@ -157,7 +155,6 @@ makefile:         true
 patchfile:        true
 =======================================================
 ```
-
 
 ## Variable Selection Techniques
 
@@ -194,18 +191,15 @@ clumps = getclumps(info);
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:08.661
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Read 12 colums: 
+Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
-
 
 ```julia
 clumps.data
@@ -230,7 +224,6 @@ Columns:
 12  relevance  Float64
 ```
 
-
 **Important Note:** Column names should be preserved as they are used by internal functions. Future updates will support descriptor file variable names for enhanced flexibility.
 
 ### Selecting Multiple Variables
@@ -245,18 +238,15 @@ clumps = getclumps(info, vars=[ :index, :lev, :parent, :ncell, :peak_x, :peak_y,
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:10.270
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Read 7 colums: 
+Read 7 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]
 Memory used for data table :35.9912109375 KB
 -------------------------------------------------------
 ```
-
 
 **Alternative:** Use positional arguments without the keyword. The following order must be preserved: InfoType object, then variables:
 
@@ -266,18 +256,15 @@ clumps = getclumps(info, [ :index, :lev, :parent, :ncell, :peak_x, :peak_y, :pea
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:10.464
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Read 7 colums: 
+Read 7 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]
 Memory used for data table :35.9912109375 KB
 -------------------------------------------------------
 ```
-
 
 ```julia
 clumps.data
@@ -313,7 +300,6 @@ index   lev  parent  ncell   peak_x   peak_y   peak_z
 2147.0  0.0  2147.0  1535.0  25.1953  9.93604  23.9897
 ```
 
-
 **Extended Selection:** Load more than the default columns from clump file headers. The order must still be consistent with the header structure:
 
 ```julia
@@ -322,18 +308,15 @@ clumps = getclumps(info, vars=[  :index, :lev, :parent, :ncell, :peak_x, :peak_y
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:10.724
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Read 15 colums: 
+Read 15 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance, :vx, :vy, :vz]
 Memory used for data table :76.9365234375 KB
 -------------------------------------------------------
 ```
-
 
 ```julia
 clumps.data
@@ -361,13 +344,12 @@ Columns:
 15  vz         Float64
 ```
 
-
 ## Spatial Range Selection Techniques
 
 Spatial filtering is essential for focusing clump analysis on specific regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different clump analysis needs.
 
 **Available Coordinate Systems:**
-- **RAMSES Standard:** Normalized domain [0:1]³ 
+- **RAMSES Standard:** Normalized domain [0:1]³
 - **Center-Relative:** Coordinates relative to specified points
 - **Physical Units:** Real astronomical units (kpc, pc, etc.)
 - **Box-Centered:** Convenient shortcuts for simulation center
@@ -387,26 +369,23 @@ The RAMSES standard provides a normalized coordinate system that simplifies nume
 **Clump Analysis Applications:** This notation is particularly useful for comparing clump distributions with grid-based data and analyzing hierarchical structure relationships.
 
 ```julia
-clumps = getclumps(info, 
-                    xrange=[0.2,0.8], 
-                    yrange=[0.2,0.8], 
-                    zrange=[0.4,0.6]); 
+clumps = getclumps(info,
+                    xrange=[0.2,0.8],
+                    yrange=[0.2,0.8],
+                    zrange=[0.4,0.6]);
 ```
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:11.129
-
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-
-Read 12 colums: 
+Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
-
 
 **Range Verification:** The loaded clump data ranges are stored in the `ranges` field using RAMSES standard notation (domain: [0:1]³):
 
@@ -424,35 +403,30 @@ clumps.ranges
  0.6
 ```
 
-
 ### Center-Relative Coordinate Selection
 
 Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing clump distributions around specific massive objects, galaxies, or regions of interest:
 
 ```julia
-clumps = getclumps(info, 
-                    xrange=[-0.3, 0.3], 
-                    yrange=[-0.3, 0.3], 
-                    zrange=[-0.1, 0.1], 
-                    center=[0.5, 0.5, 0.5]); 
+clumps = getclumps(info,
+                    xrange=[-0.3, 0.3],
+                    yrange=[-0.3, 0.3],
+                    zrange=[-0.1, 0.1],
+                    center=[0.5, 0.5, 0.5]);
 ```
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:11.784
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-
-Read 12 colums: 
+Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
-
 
 ### Physical Unit Coordinate System
 
@@ -467,34 +441,30 @@ Working with physical units provides intuitive scale references for astronomical
 The following example demonstrates kiloparsec (kpc) coordinate selection for clump analysis:
 
 ```julia
-clumps = getclumps(info, 
-                    xrange=[2.,22.], 
-                    yrange=[2.,22.], 
-                    zrange=[22.,26.], 
-                    range_unit=:kpc); 
+clumps = getclumps(info,
+                    xrange=[2.,22.],
+                    yrange=[2.,22.],
+                    zrange=[22.,26.],
+                    range_unit=:kpc);
 ```
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:11.849
-
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Read 12 colums: 
+Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :12.64453125 KB
 -------------------------------------------------------
 ```
-
 
 **Available Physical Units:** The `range_unit` keyword accepts various length units defined in the simulation's `scale` field:
 
 ```julia
 viewfields(info.scale) # or e.g.: clumps.info.scale
 ```
-
 
 ```
 [Mera]: Fields to scale from user/code units to selected units
@@ -635,41 +605,36 @@ rad	= 1.0
 deg	= 57.29577951308232
 ```
 
-
 **Center-Relative with Physical Units:** Combine center-relative positioning with physical unit specifications for precise clump analysis:
 
 ```julia
-clumps = getclumps(info, 
-                    xrange=[-16.,16.], 
-                    yrange=[-16.,16.], 
-                    zrange=[-2.,2.], 
-                    center=[24.,24.,24.], 
-                    range_unit=:kpc); 
+clumps = getclumps(info,
+                    xrange=[-16.,16.],
+                    yrange=[-16.,16.],
+                    zrange=[-2.,2.],
+                    center=[24.,24.,24.],
+                    range_unit=:kpc);
 ```
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:11.948
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Read 12 colums: 
+Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
-
 
 ### Box Center Coordinate Shortcuts
 
 Mera provides convenient shortcuts for box-centered coordinate systems, simplifying clump analysis focused on the simulation center.
 
 **Available Shortcuts:**
-- `:bc` or `:boxcenter` - Center coordinate for all dimensions  
+- `:bc` or `:boxcenter` - Center coordinate for all dimensions
 - Can be applied to individual dimensions selectively
 - Combines seamlessly with physical units and range specifications
 - Ideal for symmetric clump analysis around simulation center
@@ -682,84 +647,72 @@ Mera provides convenient shortcuts for box-centered coordinate systems, simplify
 - Reduces coordinate specification errors in clump filtering
 
 ```julia
-clumps = getclumps(info, 
-                    xrange=[-16.,16.], 
-                    yrange=[-16.,16.], 
-                    zrange=[-2.,2.], 
-                    center=[:boxcenter], 
-                    range_unit=:kpc); 
+clumps = getclumps(info,
+                    xrange=[-16.,16.],
+                    yrange=[-16.,16.],
+                    zrange=[-2.,2.],
+                    center=[:boxcenter],
+                    range_unit=:kpc);
 ```
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:12.026
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Read 12 colums: 
+Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
 
-
 ```julia
-clumps = getclumps(info, 
-                    xrange=[-16.,16.], 
-                    yrange=[-16.,16.], 
-                    zrange=[-2.,2.], 
-                    center=[:bc], 
-                    range_unit=:kpc); 
+clumps = getclumps(info,
+                    xrange=[-16.,16.],
+                    yrange=[-16.,16.],
+                    zrange=[-2.,2.],
+                    center=[:bc],
+                    range_unit=:kpc);
 ```
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:12.178
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Read 12 colums: 
+Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
-
 
 **Selective Dimension Centering:** Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 24 kpc:
 
 ```julia
-clumps = getclumps(info, 
-                    xrange=[-16.,16.], 
-                    yrange=[-16.,16.], 
-                    zrange=[-2.,2.], 
-                    center=[:bc, 24., :bc], 
-                    range_unit=:kpc); 
+clumps = getclumps(info,
+                    xrange=[-16.,16.],
+                    yrange=[-16.,16.],
+                    zrange=[-2.,2.],
+                    center=[:bc, 24., :bc],
+                    range_unit=:kpc);
 ```
 
 ```
 [Mera]: Get clump data: 2026-08-05T15:58:12.256
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Read 12 colums: 
+Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
-
 
 ## Summary
 
@@ -772,7 +725,7 @@ This notebook demonstrated comprehensive clump data selection techniques in Mera
 - **Syntax Variations:** Keyword and positional argument approaches for different coding styles
 - **Extensible Selection:** Supporting both subset and extended variable loading
 
-### Spatial Filtering Expertise  
+### Spatial Filtering Expertise
 - **Coordinate Systems:** RAMSES standard, physical units, center-relative, and box-centered approaches
 - **Clump Focus:** Targeting regions with significant clump populations and hierarchical structures
 - **Memory Management:** Balancing analysis needs with computational resources for clump studies
