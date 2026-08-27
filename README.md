@@ -299,6 +299,16 @@ The gap is closing. The public test simulations are published as release assets,
 checks run on GitHub as well. What stays local is only what depends on simulations that are not
 published.
 
+## Ambient Study Music
+
+Written alongside Mera: **Ambient Study Music**, twenty-three tracks named after astronomical
+objects. Previously bundled with the documentation, now published instead, which keeps 153 MB of
+audio out of every `Pkg.add`.
+
+[Spotify](https://open.spotify.com/album/4WiGfc2nQAj02jeJRY0dTn) ·
+[Apple Music](https://music.apple.com/de/album/ambient-study-music/6805943329?l=en-GB) ·
+[YouTube](https://youtube.com/playlist?list=OLAK5uy_mlavbfbMJji-L-Z49pyTUVQtP7aWr_MqM)
+
 ## Get involved
 
 - **Cite & star** — if MERA helps your research, please cite the

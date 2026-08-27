@@ -143,6 +143,20 @@ Mera does. CI runners have no simulation data, so they exercise the data-free ti
 synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file round-trips —
 while the full suite runs against real snapshots locally.
 
+## Ambient Study Music
+
+The documentation used to carry an in-page player for a set of ambient tracks written alongside
+Mera. The album is now published, so the audio no longer ships with the package, which keeps a
+data-analysis download free of 153 MB of music.
+
+**Ambient Study Music**, by MERA, inspired by astrophysics. Twenty-three tracks, each named after
+an astronomical object: Andromeda, the Crab Nebula, Sagittarius A*, Proxima Centauri, Titan, and
+so on.
+
+- [Spotify](https://open.spotify.com/album/4WiGfc2nQAj02jeJRY0dTn)
+- [Apple Music](https://music.apple.com/de/album/ambient-study-music/6805943329?l=en-GB)
+- [YouTube](https://youtube.com/playlist?list=OLAK5uy_mlavbfbMJji-L-Z49pyTUVQtP7aWr_MqM)
+
 ### About the data in these tutorials
 
 The tutorial pages analyse research-scale RAMSES simulations, several gigabytes each, which are

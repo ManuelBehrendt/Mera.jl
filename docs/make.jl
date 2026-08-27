@@ -25,7 +25,7 @@ makedocs(modules = [Mera],
 		# The search index scales with TOTAL content, not per-page size, so splitting pages
 		# would not shrink it; currently ~2.3 MiB.
 		search_size_threshold_warn = 5_000_000,   # ~4.8 MiB; default was 500 KiB
-		assets = ["assets/custom.css", "assets/custom.js", "assets/music_player.js"],
+		assets = ["assets/custom.css", "assets/custom.js"],
 		canonical = "https://manuelbehrendt.github.io/Mera.jl/",
 		footer = "© $(_YEAR) Manuel Behrendt. Built with [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) and [Julia](https://julialang.org). ",
 		collapselevel = 1,  # Optimize section collapsing for left sidebar
