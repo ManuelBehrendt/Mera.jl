@@ -1,4 +1,4 @@
-# Mera.jl public test fixtures — v1
+# Mera.jl public test simulations — v1
 
 Small RAMSES simulation outputs used by the Mera.jl test suite. They are published as **release
 assets rather than repository files**: Mera is a registered package, so anything committed to the
@@ -16,7 +16,7 @@ julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
 The script downloads only what is missing, verifies every archive against `testdata/SHA256SUMS`,
-and skips the download entirely if the fixtures are already on disk.
+and skips the download entirely if the test simulations are already on disk.
 
 ## What each one is
 
@@ -61,11 +61,11 @@ Mera.jl is MIT-licensed, but this data is not entirely ours. It is produced by *
 (Copyright CEA and Romain Teyssier), governed by the **CeCILL** licence
 (<http://www.cecill.info>), and three of these archives redistribute RAMSES namelists unmodified.
 `RAMSES-PUBLIC-docs.tar.gz` carries `NOTICE.md` and RAMSES's licence text; please cite
-Teyssier (2002) — and Rosdahl et al. (2013) for the RT fixtures — if you use these in published
+Teyssier (2002) — and Rosdahl et al. (2013) for the RT test simulations — if you use these in published
 work.
 
 ## Provenance and integrity
 
 `testdata/SHA256SUMS` is committed in the repository and lists the checksum of every archive here.
-It is the link between the code and this data: a fixture cannot be swapped without the manifest
+It is the link between the code and this data: a test simulation cannot be swapped without the manifest
 changing in a tracked commit.

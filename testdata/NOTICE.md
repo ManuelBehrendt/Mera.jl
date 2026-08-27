@@ -1,6 +1,6 @@
-# Third-party material in Mera's test fixtures
+# Third-party material in Mera's test simulations
 
-Mera.jl is MIT-licensed. These test fixtures are not entirely our own work, because they are
+Mera.jl is MIT-licensed. These test simulations are not entirely our own work, because they are
 produced by, and partly copied from, RAMSES. This file records exactly what came from where, what
 each upstream configuration is for at its origin, and how to cite it.
 
@@ -14,7 +14,7 @@ Source: <https://github.com/ramses-organisation/ramses>, tag **2026.05**.
 
 ### How to cite
 
-If these fixtures contribute to published work, cite the code and the method paper for whichever
+If these test simulations contribute to published work, cite the code and the method paper for whichever
 physics you used.
 
 | what | reference |
@@ -27,7 +27,7 @@ physics you used.
 
 ## Copied verbatim, and what each is for upstream
 
-These are RAMSES's own files, unmodified, redistributed inside the published fixture archives.
+These are RAMSES's own files, unmodified, redistributed inside the published test simulation archives.
 They remain under RAMSES's licence, not Mera's. The purpose column quotes each test's own
 `README.md` in the RAMSES repository.
 
