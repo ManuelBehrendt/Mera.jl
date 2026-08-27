@@ -143,6 +143,25 @@ Mera does. CI runners have no simulation data, so they exercise the data-free ti
 synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file round-trips —
 while the full suite runs against real snapshots locally.
 
+### About the data in these tutorials
+
+The tutorial pages analyse research-scale RAMSES simulations, several gigabytes each, which are
+not distributed. They are worked examples: read them to see what an analysis of real data looks
+like, and adapt the code to your own outputs. Running a page unchanged will not work, because the
+simulation it points at is not something you have.
+
+If you want something you can run immediately, Mera publishes a small set of test simulations,
+eleven of them, a few megabytes each. Every one carries either an analytic oracle, a law that
+follows from its own setup, or is checked against reference values published by the RAMSES
+developers. They ship with a getting-started example, and Mera's own test suite verifies the
+package against them, so you can confirm an installation behaves correctly without a large
+download. See [`testdata/README.md`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/testdata/README.md)
+in the repository for how to fetch them.
+
+Two tutorial pages already use data you can obtain: the radiative-transfer page runs on one of the
+published test simulations, and the cosmology page carries download instructions for the yt
+project's public sample dataset.
+
 ### Your First MERA Analysis
 ```julia
 # Load simulation metadata
