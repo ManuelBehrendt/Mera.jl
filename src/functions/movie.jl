@@ -40,7 +40,9 @@ end
              inclination=nothing, azimuth=nothing, position_angle=nothing, axis=nothing,
              angle_unit=:deg, center=[:boxcenter], range_unit=:standard,
              xrange=[missing,missing], yrange=[missing,missing], zrange=[missing,missing],
-             res=nothing, lmax=nothing, weighting=[:mass, missing],
+             res=nothing, lmax=nothing, pxsize=nothing, weighting=nothing,
+             fov=nothing, fov_unit=nothing, aperture=nothing, binning=nothing, nmax=nothing,
+             angles=nothing, sweep=nothing, angle_var=:azimuth,
              time_unit=:Myr, verbose=true) -> MeraMovie
 
 Project `quantity` for every output of a simulation and collect the maps into a
@@ -48,17 +50,48 @@ Project `quantity` for every output of a simulation and collect the maps into a
 loads **one snapshot at a time** (RAM-safe) and discovers outputs the same way (RAMSES or
 `mera_files`).
 
-The view is the **full [`projection`](@ref) view** and is held **fixed** across frames so the
-movie is steady. Axis-aligned by default (`direction=:z`); for an **off-axis** movie use any
+Axis-aligned by default (`direction=:z`); for an **off-axis** movie use any
 of projection's view controls — a `los`/`up` (e.g. from [`face_on`](@ref)/[`edge_on`](@ref)),
 the angles `inclination`/`azimuth` (or `theta`/`phi`, `position_angle`, with `angle_unit`),
-or `axis=:angmom` to auto-orient face-on. `res`/`lmax` and the region
-keywords cut cost per frame.
+or `axis=:angmom` to auto-orient face-on. `res`/`pxsize`/`lmax` and the region keywords cut
+cost per frame.
+
+**Hold the frame still.** Without `fov` an off-axis projection auto-fits its window to the
+rotated data, which differs from snapshot to snapshot: the object appears to zoom, only the
+first frame's extent is recorded, and a size change between snapshots stops the encode. Pass
+`fov`/`fov_unit` (with `aperture=:circle|:square`) to select a fixed sphere about `center`,
+exactly as [`rotation_sequence`](@ref) does, so every frame shares one window.
+
+**Moving the camera** — two different movies, and neither invents a frame; every one is a real
+projection from a real viewpoint:
+
+* `angles` sweeps that whole list at **every** snapshot, giving `outputs x angles` frames:
+  *orbit, then step time*. The snapshot stays resident while its angles render, trading the
+  one-snapshot-at-a-time memory profile for the extra viewpoints.
+* `sweep` advances **one** angle across the series: one frame per snapshot, each a different
+  time *and* angle, *orbit while time passes*. Give one value per output, or a `(lo, hi)` pair
+  to spread linearly over them. Memory profile unchanged.
+
+`angle_var` picks which angle they drive: `:azimuth` (default), `:inclination` or
+`:position_angle`. Setting that same angle explicitly as well is an error, not a silent
+override.
+
+`datatype=:particles` works and takes a `Symbol` weighting; the hydro `[quantity, unit]`
+spelling is accepted too. Gravity and clumps cannot be projected alone and are refused with a
+message naming the alternative.
 
 ```julia
 m  = getmovie("/data/sim", :sd)                              # face-up density movie, all outputs
 fr = face_on(gethydro(getinfo(1, "/data/sim")))             # a fixed orientation …
 m  = getmovie("/data/sim", :sd; los=fr.los, up=fr.up, center=fr.center)
+
+# a steady off-axis movie: one fixed camera frame for every snapshot
+m  = getmovie("/data/sim", :sd; inclination=60, axis=:angmom,
+              fov=15, fov_unit=:kpc, aperture=:square, pxsize=[0.5, :kpc])
+
+m  = getmovie("/data/sim", :sd; angles=0:5:355, fov=15, fov_unit=:kpc)  # a turn at each snapshot
+m  = getmovie("/data/sim", :sd; sweep=(0, 180), fov=15, fov_unit=:kpc)  # turning as it evolves
+m  = getmovie("/data/sim", :sd; datatype=:particles, fov=15, fov_unit=:kpc)   # stars, not gas
 savemovie(m, "density.gif")
 ```
 
@@ -76,6 +109,7 @@ function getmovie(path::String, quantity::Symbol;
                   res=nothing, lmax=nothing, pxsize=nothing, weighting=nothing,
                   fov=nothing, fov_unit=nothing, aperture=nothing,
                   binning=nothing, nmax=nothing,
+                  angles=nothing, sweep=nothing, angle_var::Symbol=:azimuth,
                   time_unit::Symbol=:Myr, verbose::Bool=true)
 
     # `projection` has no method for gravity or clumps on its own: gravity is only reachable as the
@@ -86,9 +120,49 @@ function getmovie(path::String, quantity::Symbol;
               "Gravity is projected as the pair projection(hydro, gravity, ...), which getmovie " *
               "does not drive; clumps have no projection.")
 
+    # Two ways to add camera motion, and they make DIFFERENT movies:
+    #   `angles` sweeps the full list at EVERY snapshot  -> outputs x angles frames ("orbit, then
+    #            step time"). The snapshot stays resident while its angles render.
+    #   `sweep`  advances ONE angle across the series    -> outputs frames, each a different time
+    #            AND angle ("orbit while time passes"). Give a vector matching the outputs, or a
+    #            (lo, hi) pair to spread linearly over them.
+    # Both are real projections from real viewpoints: no frame is interpolated.
+    angle_var in (:azimuth, :inclination, :position_angle) ||
+        error("getmovie: angle_var must be :azimuth, :inclination or :position_angle, got :$angle_var")
+    angles === nothing || sweep === nothing ||
+        error("getmovie: give `angles` (a full sweep at each snapshot) or `sweep` (one angle per " *
+              "snapshot), not both.")
+    fixed = angle_var === :azimuth ? azimuth :
+            angle_var === :inclination ? inclination : position_angle
+    (angles === nothing && sweep === nothing) || fixed === nothing ||
+        error("getmovie: `$angle_var` is set to $fixed and also driven by " *
+              "$(angles === nothing ? "`sweep`" : "`angles`"); drop one.")
+
     sel = _timeseries_outputs(path; mera_files=mera_files, outputs=outputs)
     isempty(sel) && error("getmovie: no matching outputs found in \"$path\".")
-    verbose && println("getmovie: $(length(sel)) frame(s) of :$quantity from \"$path\"")
+
+    # per-snapshot list of angle values to render
+    perout = if angles !== nothing
+        [collect(float.(angles)) for _ in sel]
+    elseif sweep !== nothing
+        vals = if length(sweep) == 2 && length(sel) != 2
+            # a (lo, hi) pair spread over the outputs; with a single output there is nothing to
+            # spread over, so take the start rather than fail inside range()
+            length(sel) == 1 ? [float(sweep[1])] :
+                collect(range(float(sweep[1]), float(sweep[2]), length=length(sel)))
+        else
+            collect(float.(sweep))
+        end
+        length(vals) == length(sel) ||
+            error("getmovie: `sweep` has $(length(vals)) values but there are $(length(sel)) " *
+                  "outputs. Give one value per output, or a (lo, hi) pair to spread over them.")
+        [[v] for v in vals]
+    else
+        [[nothing] for _ in sel]
+    end
+    nframes = sum(length, perout)
+    verbose && println("getmovie: $nframes frame(s) of :$quantity from \"$path\"" *
+                       (nframes == length(sel) ? "" : " ($(length(sel)) output(s))"))
 
     frames = Matrix{Float64}[]; outs = Int[]; times = Float64[]
     extent = Float64[]
@@ -97,17 +171,23 @@ function getmovie(path::String, quantity::Symbol;
                _timeseries_load(n, path, datatype, false, nothing;
                                 lmax=lmax, xrange=xrange, yrange=yrange, zrange=zrange,
                                 center=center, range_unit=range_unit, smallr=0.)
-        pr = _movie_project(data, quantity, unit; direction=direction, los=los, up=up,
-                            theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
-                            position_angle=position_angle, axis=axis, angle_unit=angle_unit,
-                            center=center, range_unit=range_unit,
-                            xrange=xrange, yrange=yrange, zrange=zrange, res=res,
-                            lmax=lmax, pxsize=pxsize, weighting=weighting, datatype=datatype,
-                            fov=fov, fov_unit=fov_unit, aperture=aperture,
-                            binning=binning, nmax=nmax)
-        push!(frames, Float64.(pr.maps[quantity]))
-        push!(outs, n); push!(times, gettime(data; unit=time_unit))
-        isempty(extent) && (extent = collect(Float64, pr.extent))
+        tk = gettime(data; unit=time_unit)
+        for a in perout[k]
+            az  = angle_var === :azimuth        && a !== nothing ? a : azimuth
+            inc = angle_var === :inclination    && a !== nothing ? a : inclination
+            pa  = angle_var === :position_angle && a !== nothing ? a : position_angle
+            pr = _movie_project(data, quantity, unit; direction=direction, los=los, up=up,
+                                theta=theta, phi=phi, inclination=inc, azimuth=az,
+                                position_angle=pa, axis=axis, angle_unit=angle_unit,
+                                center=center, range_unit=range_unit,
+                                xrange=xrange, yrange=yrange, zrange=zrange, res=res,
+                                lmax=lmax, pxsize=pxsize, weighting=weighting, datatype=datatype,
+                                fov=fov, fov_unit=fov_unit, aperture=aperture,
+                                binning=binning, nmax=nmax)
+            push!(frames, Float64.(pr.maps[quantity]))
+            push!(outs, n); push!(times, tk)
+            isempty(extent) && (extent = collect(Float64, pr.extent))
+        end
         data = nothing; GC.gc(false)
         verbose && println("  [$k/$(length(sel))] output $(lpad(n,5,'0'))")
     end

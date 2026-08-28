@@ -63,10 +63,12 @@ function projection()
     println("  position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact")
     println("    (:overlap/:exact integrate a cell's footprint; point particles have none,")
     println("     so on particle data they fall back to :cic)")
+    println("  thickness=, offset= (particles): project a SLAB of finite depth instead of the")
+    println("     full column, and move it along the line of sight")
     println()
     println("  line-of-sight tools (same view kwargs):")
     println("    :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)")
-    println("    slice (off-axis kwargs)       -> cutting plane ;  profile / phase -> 1D/2D reductions")
+    println("    slice (off-axis kwargs)       -> cutting plane (offset= moves it) ;  profile / phase -> 1D/2D reductions")
     println("    rotation_sequence             -> shared-FOV angle sweep (orbit movies)")
     println("    savemap/loadmap (JLD2)        -> store/restore a projection result")
     println()
@@ -465,6 +467,11 @@ end
 off-axis intent spelled out at the call site. `slice(obj, var; los=…/inclination=…/…)` dispatches
 here automatically whenever an off-axis view keyword is given, so the two are interchangeable and
 return the same `NamedTuple`.
+
+**`offset` / `offset_unit`** move the plane along the line of sight, which is what lets a
+cutting plane *travel* through an object: `offset=0` (the default) puts it through `center`,
+and sweeping `offset` produces the frames of a fly-through. `offset_unit` defaults to
+`range_unit`. The axis-aligned path spells the same idea `slice_pos`/`slice_unit`.
 
 **Prefer `slice`**: it is the one name for a cutting plane, axis-aligned or off-axis, and it is
 what the documentation uses. See [`slice`](@ref) for the full description, the view keywords, and
