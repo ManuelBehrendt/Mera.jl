@@ -1385,7 +1385,20 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                   "variable :$v (radius/angle/velocity-dispersion). Use an axis direction=:x/:y/:z.")
         end
     end
-    bin = (binning === :overlap || binning === :exact) ? :cic : binning   # points have no footprint
+    # Points have no footprint, so the two footprint kernels have nothing to integrate over and
+    # fall back to :cic. That is the right physics, but it used to happen silently: a caller asking
+    # for :exact got :cic and was told nothing, while the tutorial listed all four as if they
+    # applied. Say so once per session instead.
+    bin = binning
+    if binning === :overlap || binning === :exact
+        bin = :cic
+        hint(:particle_binning_footprint,
+             "binning=:$binning has no meaning for point particles; using :cic.",
+             ":overlap and :exact integrate a cell's footprint over the pixels it covers.",
+             "A particle is a point: it has no footprint, so there is nothing to integrate.",
+             "Use :cic (default, bilinear) or :ngp (nearest pixel) to say which you meant.";
+             verbose=verbose)
+    end
     if !(bin in (:cic, :ngp))
         throw(ArgumentError("binning must be :cic, :ngp, :overlap or :exact, got :$binning"))
     end
