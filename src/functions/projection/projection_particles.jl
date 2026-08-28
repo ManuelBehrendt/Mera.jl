@@ -755,29 +755,29 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
 
     # take values from myargs if given
-    if !(myargs.pxsize        === missing)        pxsize = myargs.pxsize end
-    if !(myargs.res           === missing)           res = myargs.res end
-    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
-    if !(myargs.direction     === missing)     direction = myargs.direction end
-    if !(myargs.los           === missing)           los = myargs.los end
-    if !(myargs.up            === missing)            up = myargs.up end
-    if !(myargs.theta         === missing)         theta = myargs.theta end
-    if !(myargs.phi           === missing)           phi = myargs.phi end
-    if !(myargs.angle_unit    === missing)    angle_unit = myargs.angle_unit end
-    if !(myargs.binning       === missing)       binning = myargs.binning end
-    if !(myargs.inclination    === missing)    inclination = myargs.inclination end
-    if !(myargs.azimuth        === missing)        azimuth = myargs.azimuth end
-    if !(myargs.position_angle === missing) position_angle = myargs.position_angle end
-    if !(myargs.axis           === missing)           axis = myargs.axis end
-    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
-    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
-    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.data_center   === missing)   data_center = myargs.data_center end
-    if !(myargs.data_center_unit === missing) data_center_unit = myargs.data_center_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
-    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
+    if !(myargs.pxsize === missing) && isequal(pxsize, [missing, missing]) pxsize = myargs.pxsize end
+    if !(myargs.res === missing) && isequal(res, missing) res = myargs.res end
+    if !(myargs.lmax === missing) && isequal(lmax, dataobject.lmax) lmax = myargs.lmax end
+    if !(myargs.direction === missing) && isequal(direction, :z) direction = myargs.direction end
+    if !(myargs.los === missing) && isequal(los, nothing) los = myargs.los end
+    if !(myargs.up === missing) && isequal(up, nothing) up = myargs.up end
+    if !(myargs.theta === missing) && isequal(theta, nothing) theta = myargs.theta end
+    if !(myargs.phi === missing) && isequal(phi, nothing) phi = myargs.phi end
+    if !(myargs.angle_unit === missing) && isequal(angle_unit, :deg) angle_unit = myargs.angle_unit end
+    if !(myargs.binning === missing) && isequal(binning, :cic) binning = myargs.binning end
+    if !(myargs.inclination === missing) && isequal(inclination, nothing) inclination = myargs.inclination end
+    if !(myargs.azimuth === missing) && isequal(azimuth, nothing) azimuth = myargs.azimuth end
+    if !(myargs.position_angle === missing) && isequal(position_angle, nothing) position_angle = myargs.position_angle end
+    if !(myargs.axis === missing) && isequal(axis, nothing) axis = myargs.axis end
+    if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+    if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+    if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+    if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.data_center === missing) && isequal(data_center, [missing, missing, missing]) data_center = myargs.data_center end
+    if !(myargs.data_center_unit === missing) && isequal(data_center_unit, :standard) data_center_unit = myargs.data_center_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) && isequal(show_progress, true) show_progress = myargs.show_progress end
 
     verbose = Mera.checkverbose(verbose)
     show_progress = Mera.checkprogress(show_progress)

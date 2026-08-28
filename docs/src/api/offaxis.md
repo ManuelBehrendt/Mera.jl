@@ -47,7 +47,7 @@ Mera.resolve_los
 
 ## Deposit kernels (internal)
 
-The three engines behind `binning=:cic`/`:ngp`, `:overlap` and `:exact` — how a rotated
+The three engines behind `binning=:cic`/`:ngp`, `:overlap` and `:exact`, how a rotated
 AMR cell becomes pixel values. The trade-offs are demonstrated visually in
 [Off-axis Projection](../06_offaxis_Projection.md).
 

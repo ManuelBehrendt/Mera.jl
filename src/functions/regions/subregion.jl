@@ -79,15 +79,15 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
     myargs::ArgumentsType=ArgumentsType() ) # all
 
     # take values from myargs if given
-    if !(myargs.direction     === missing)     direction = myargs.direction end
-    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
-    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
-    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
-    if !(myargs.radius        === missing)        radius = myargs.radius end
-    if !(myargs.height        === missing)        height = myargs.height end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.direction === missing) && isequal(direction, :z) direction = myargs.direction end
+    if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+    if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+    if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+    if !(myargs.radius === missing) && isequal(radius, 0.) radius = myargs.radius end
+    if !(myargs.height === missing) && isequal(height, 0.) height = myargs.height end
+    if !(myargs.center === missing) && isequal(center, [0.,0.,0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
 
 
     verbose = checkverbose(verbose)

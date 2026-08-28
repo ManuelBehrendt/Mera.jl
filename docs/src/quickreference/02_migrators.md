@@ -38,7 +38,7 @@ By the end of this guide, you should be able to:
 ### ✅ Start Here: Critical Syntax Differences
 **Most important changes that affect every line of code:**
 
-### ✅ Try This — Python to Julia Basics
+### ✅ Try This: Python to Julia Basics
 **Exercise**: Complete "Julia for Python Programmers" from Julia Academy  
 **Link**: https://juliaacademy.com/p/julia-for-python-programmers  
 **Goal**: Master the critical syntax differences (indexing, broadcasting, etc.)  
@@ -68,16 +68,16 @@ By the end of this guide, you should be able to:
 
 | Concept | Python | Julia | Migration Impact |
 | :-- | :-- | :-- | :-- |
-| **Indexing** | `A[0]` (0-based) | `A[1]` (1-based) | **HIGH** - Affects all array code |
-| **Slicing** | `A[1:3]` (excludes 3) | `A[2:3]` (includes 3) | **HIGH** - Range logic changes |
-| **Broadcasting** | `np.sin(A)` (ufuncs) | `sin.(A)` (explicit dot) | **MEDIUM** - Explicit broadcasting |
-| **Power** | `A**2` | `A.^2` (elementwise), `A^2` (matrix) | **MEDIUM** - Distinguish element vs matrix |
-| **String interpolation** | `f"x = {x}"` | `"x = $x"` | **LOW** - Syntax change only |
-| **Boolean operators** | `and`, `or`, `not` | `&&`, `||`, `!` | **LOW** - Direct replacements |
-| **Comments** | `# single`, `"""multi"""` | `# single`, `#= multi =#` | **LOW** - Documentation change |
-| **Imports** | `from X import Y` | `using X: Y` | **MEDIUM** - Module system differences |
-| **List comprehensions** | `[x**2 for x in lst]` | `[x^2 for x in lst]` | **LOW** - Similar syntax |
-| **Dictionary comprehensions** | `{k: v for k,v in items}` | `Dict(k => v for (k,v) in items)` | **MEDIUM** - Constructor differences |
+| **Indexing** | `A[0]` (0-based) | `A[1]` (1-based) | **HIGH**: Affects all array code |
+| **Slicing** | `A[1:3]` (excludes 3) | `A[2:3]` (includes 3) | **HIGH**: Range logic changes |
+| **Broadcasting** | `np.sin(A)` (ufuncs) | `sin.(A)` (explicit dot) | **MEDIUM**: Explicit broadcasting |
+| **Power** | `A**2` | `A.^2` (elementwise), `A^2` (matrix) | **MEDIUM**: Distinguish element vs matrix |
+| **String interpolation** | `f"x = {x}"` | `"x = $x"` | **LOW**: Syntax change only |
+| **Boolean operators** | `and`, `or`, `not` | `&&`, `||`, `!` | **LOW**: Direct replacements |
+| **Comments** | `# single`, `"""multi"""` | `# single`, `#= multi =#` | **LOW**: Documentation change |
+| **Imports** | `from X import Y` | `using X: Y` | **MEDIUM**: Module system differences |
+| **List comprehensions** | `[x**2 for x in lst]` | `[x^2 for x in lst]` | **LOW**: Similar syntax |
+| **Dictionary comprehensions** | `{k: v for k,v in items}` | `Dict(k => v for (k,v) in items)` | **MEDIUM**: Constructor differences |
 
 #### Comprehensive Python Package Ecosystem → Julia
 
@@ -669,7 +669,7 @@ end
 
 This comprehensive Python-to-Julia migration guide provides scientists and data analysts with the detailed ecosystem mappings, workflow transformations, and practical strategies needed for successful migration from Python's scientific computing environment to Julia's high-performance computing ecosystem while maintaining compatibility with existing workflows through gradual migration approaches.
 
-### ✅ Try This - Complete Python Migration Path
+### ✅ Try This: Complete Python Migration Path
 **Interactive Tutorial**: Work through the MIT "Introduction to Computational Thinking" Python-Julia comparison  
 **Link**: https://computationalthinking.mit.edu/Fall23/ (Homework 0)  
 **Goal**: Hands-on experience with real scientific computing workflows  
@@ -709,7 +709,7 @@ This comprehensive Python-to-Julia migration guide provides scientists and data 
 ### ✅ Start Here: MATLAB Advantage
 **What makes Julia easier for MATLAB users:**
 
-### ✅ Try This - MATLAB to Julia Basics
+### ✅ Try This: MATLAB to Julia Basics
 **Exercise**: Complete "MATLAB vs Julia" syntax comparison  
 **Link**: https://cheatsheets.quantecon.org/ (MATLAB-Julia section)  
 **Goal**: Master array syntax changes and mathematical functions  
@@ -1070,7 +1070,7 @@ result = expensive_function.(data)  # Broadcasting
 
 **Julia Advantages for MATLAB Users:**
 
-- **Performance**: numerical loops compile to native code — no need to push work into library calls for speed
+- **Performance**: numerical loops compile to native code, so there is no need to push work into library calls for speed
 - **Composability**: Packages work together seamlessly  
 - **Modern Language**: Better abstractions, multiple dispatch
 - **Open Source**: No licensing costs, community-driven development
@@ -1079,7 +1079,7 @@ result = expensive_function.(data)  # Broadcasting
 
 This comprehensive guide covers the essential mappings needed for MATLAB-to-Julia migration in scientific computing contexts, focusing on the functions most commonly used in research and data analysis workflows.
 
-### ✅ Try This - Complete MATLAB Migration Path
+### ✅ Try This: Complete MATLAB Migration Path
 **Structured Tutorial**: Work through the "Julia for MATLAB users" workshop  
 **Link**: https://github.com/JuliaLang/julia/wiki/Julia-for-MATLAB-users  
 **Goal**: Hands-on practice with mathematical computing patterns  
@@ -1116,7 +1116,7 @@ This comprehensive guide covers the essential mappings needed for MATLAB-to-Juli
 ### ⚠️ Start Here: Critical Index Difference
 **MOST IMPORTANT**: IDL uses 0-based indexing, Julia uses 1-based indexing. This affects every array operation and is the primary source of migration bugs.
 
-### ✅ Try This - IDL Indexing Migration
+### ✅ Try This: IDL Indexing Migration
 **Critical Exercise**: Practice index conversion with "Julia for Astronomers"  
 **Link**: https://github.com/JuliaAstro (Documentation section)  
 **Goal**: Master 0-based → 1-based indexing conversion patterns  
@@ -1150,7 +1150,7 @@ subset = data[11:20]           # Elements 11 through 20 (10 elements)
 
 | IDL Pattern | Julia Equivalent | Migration Rule |
 | :-- | :-- | :-- |
-| `for i=0, n-1 do` | `for i in 1:n` | Add 1 to start, keep count |
+| `for i=0, n-1 do` | `for i in 1:n` | Add 1 to start: keep count |
 | `data[0:n-1]` | `data[1:n]` | Shift both bounds by +1 |
 | `data[i*step:(i+1)*step-1]` | `data[i*step+1:(i+1)*step]` | Shift bounds by +1 |
 | `where(mask, count)` | `findall(mask), length(findall(mask))` | No index adjustment needed |
@@ -1638,13 +1638,13 @@ end
 
 This comprehensive guide transforms the basic IDL syntax comparison into a complete astronomical computing migration resource, providing IDL astronomers with the detailed mappings and workflows needed for successful migration to Julia while leveraging Mera.jl's capabilities for astrophysical simulation analysis.
 
-### ✅ Try This - Complete IDL Migration Path
+### ✅ Try This: Complete IDL Migration Path
 **Astronomical Computing**: Work through "Julia for Astronomical Computing"  
 **Link**: https://github.com/JuliaAstro (Examples directory)  
 **Goal**: Real astronomical data processing workflows  
 
 **Interactive Notebooks**: Explore "AstroJulia" tutorial notebooks  
-**Link**: [JuliaAstro organisation](https://github.com/JuliaAstro) — packages and their docs  
+**Link**: [JuliaAstro organisation](https://github.com/JuliaAstro), packages and their docs  
 **Focus**: FITS handling, coordinate systems, image processing
 
 **Scientific Computing**: Follow "SciML Tutorials" for differential equations  
@@ -1671,7 +1671,7 @@ This comprehensive guide transforms the basic IDL syntax comparison into a compl
 | :-- | :-- | :-- |
 | **Python** | PythonCall.jl (bidirectional) | Use `JuliaCall` from Python side |
 | **R** | JuliaCall package | `library(JuliaCall); julia_setup()` |
-| **C/C++** | Embed libjulia | Use `julia.h`, call `jl_init()` |
+| **C/C++** | Embed libjulia | Use `julia.h`: call `jl_init()` |
 | **Executable** | PackageCompiler.jl | `create_app(".", "myapp")` |
 | **Binary executable** | PackageCompiler.jl | `create_sysimage([:MyPackage], sysimage_path="mysys.so")` |
 | **From Fortran** | C interface | Call `jl_init()`, `jl_eval_string()` from Fortran via C interoperability |

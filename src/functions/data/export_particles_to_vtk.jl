@@ -66,7 +66,7 @@ function export_vtk(
 )
 
     
-    if !(myargs.verbose === missing) verbose = myargs.verbose end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
     verbose = Mera.checkverbose(verbose)
     printtime("", verbose)
 

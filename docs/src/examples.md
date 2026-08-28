@@ -5,26 +5,26 @@ Start here if you would rather read a whole workflow than a reference.
 
 ## Run without a simulation
 
-- [Clump Finding — Synthetic Example](clumpfind_synthetic.md) — builds data in memory with
+- [Clump Finding: Synthetic Example](clumpfind_synthetic.md), builds data in memory with
   known clump positions, so the finder is *scored* against ground truth rather than eyeballed.
 - [Statistics (PDFs)](statistics.md) and [Uniform Grid / Resampling](covering_grid.md) also
   run on synthetic data with nothing downloaded.
 
 ## Complete workflows
 
-- [Coming from Other Tools](switching_to_mera.md) — inspect, load, select, measure, map, in
+- [Coming from Other Tools](switching_to_mera.md): inspect, load, select, measure, map, in
   one pass, with the concept map for anyone arriving from another package.
-- [Flux Budgets](fluxbudget.md) — inflow and outflow through a surface, with the ledger closed.
-- [Time Series (multi-snapshot)](timeseries.md) — one measurement repeated across outputs.
-- [Star-Formation Rate](sfr.md) — a star-formation history from particle birth times.
-- [First Look](report.md) — the one-call census and dashboard.
+- [Flux Budgets](fluxbudget.md): inflow and outflow through a surface, with the ledger closed.
+- [Time Series (multi-snapshot)](timeseries.md): one measurement repeated across outputs.
+- [Star-Formation Rate](sfr.md): a star-formation history from particle birth times.
+- [First Look](report.md): the one-call census and dashboard.
 
 ## Short tutorials elsewhere
 
-- [Hands-On Session RUM2023](https://github.com/ManuelBehrendt/RUM2023) — density PDFs,
+- [Hands-On Session RUM2023](https://github.com/ManuelBehrendt/RUM2023): density PDFs,
   radial profiles, phase diagrams.
 - [Load from a sequence of existing simulations in a folder](examples/LoadFromExistingOutputs.md)
-- [Export/Import data — ASCII/binary files](examples/ExportImportData.md)
+- [Export/Import data: ASCII/binary files](examples/ExportImportData.md)
 
 ## The notebooks
 

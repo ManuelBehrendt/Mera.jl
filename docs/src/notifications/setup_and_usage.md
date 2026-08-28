@@ -7,7 +7,7 @@ workflows and troubleshooting.
 ## Configuration
 
 Everything lives in **one file: `~/.mera.toml`**. Print a template, save it, and
-lock it down — it holds an API key:
+lock it down, it holds an API key:
 
 ```julia
 using Mera
@@ -38,7 +38,7 @@ Mera warns if the file is readable by other users. Check what is in effect with
 
 ### Which channel should I use?
 
-Both are optional and independent — configure either, or both.
+Both are optional and independent, configure either, or both.
 
 | | **Email** | **Zulip** |
 |---|---|---|
@@ -54,7 +54,7 @@ channel: it is the only one that carries the images and captured output shown
 below.
 
 If only `[email]` is filled in, `notifyme` sends email only; only `[zulip]`,
-Zulip only; both, both; neither, it is a harmless no-op. The same script is
+Zulip only; both, both; neither: it is a harmless no-op. The same script is
 therefore portable across machines.
 
 ### Creating the Zulip bot
@@ -89,14 +89,14 @@ server    = "https://yourlab.zulipchat.com"
     `server` must start with **`https://`**. A bare domain like
     `yourlab.zulipchat.com` fails to connect.
 
-5. **Subscribe the bot** to the channels you will post to — a bot cannot post to a
+5. **Subscribe the bot** to the channels you will post to: a bot cannot post to a
    channel it is not a member of, and this is the most common reason a message silently
    fails to appear.
 
 ### Keeping the API key off disk
 
 Any value can come from an environment variable instead, which takes precedence
-over the file — useful on shared machines and in CI:
+over the file, useful on shared machines and in CI:
 
 | Variable | Replaces |
 |---|---|
@@ -115,18 +115,18 @@ Two further variables control *behaviour* rather than credentials:
 
 | Variable | Default | Effect |
 |---|---|---|
-| `MERA_ZULIP_DRY_RUN` | `false` | `true` prints what would be posted instead of posting — rehearse a pipeline without spamming a team channel |
+| `MERA_ZULIP_DRY_RUN` | `false` | `true` prints what would be posted instead of posting, rehearse a pipeline without spamming a team channel |
 | `MERA_ZULIP_TIMEOUT` | `10` | connect/read timeout in seconds; raise it on a slow link so a large attachment is not cut off |
 
 !!! note "Upgrading from the old files"
     Earlier versions read `~/email.txt`, `~/zulip.txt` and `~/bell.txt`. **Those
-    still work** — nothing breaks if you keep them. When both exist,
+    still work**, nothing breaks if you keep them. When both exist,
     `~/.mera.toml` wins. Mera also looks in `~/.config/mera/config.toml` if you
     prefer to keep `$HOME` tidy.
 
 ### Bell
 
-`bell()` needs no configuration — it plays a bundled sound through your audio
+`bell()` needs no configuration, it plays a bundled sound through your audio
 device when a long calculation finishes:
 
 ```julia
@@ -139,16 +139,16 @@ bell(:list)       # print the numbered catalogue of bundled sounds
 
 **Pick a sound** in any of these ways (first match wins):
 
-1. **by name** — `bell(:gong)` (a `Symbol` or `String`);
-2. **by number** — `bell(14)` (the position printed by `bell(:list)`; a numeric
+1. **by name**: `bell(:gong)` (a `Symbol` or `String`);
+2. **by number**: `bell(14)` (the position printed by `bell(:list)`; a numeric
    string like `bell("14")` works too);
-3. **a configured default** — `[bell] sound` in `~/.mera.toml`, or the
+3. **a configured default**: `[bell] sound` in `~/.mera.toml`, or the
    `MERA_BELL_SOUND` environment variable:
    ```toml
    [bell]
    sound = "gong"     # a name, or a number as shown by bell(:list)
    ```
-4. **the built-in fallback** — `:strum`, the original Mera sound.
+4. **the built-in fallback**: `:strum`, the original Mera sound.
 
 The **19 bundled sounds** (`bell(:list)`):
 
@@ -192,10 +192,10 @@ notifyme(msg="All plots!", attachment_folder="./plots/", max_attachments=5)
 notifyme(msg="Large dataset!", attachments=["data.csv"], max_file_size=50_000_000)
 ```
 
-- `image_path` — one image file.
-- `attachments` — a `Vector` of file paths.
-- `attachment_folder` — attach all images in a folder (up to `max_attachments`, default 10).
-- `max_file_size` — byte limit for non-image attachments (default `25_000_000` ≈ 25 MB); larger files are skipped with a warning. Images are auto-optimised (resized to ≤1024 px on the long side, ~1 MB target).
+- `image_path`: one image file.
+- `attachments`: a `Vector` of file paths.
+- `attachment_folder`: attach all images in a folder (up to `max_attachments`, default 10).
+- `max_file_size`: byte limit for non-image attachments (default `25_000_000` ≈ 25 MB); larger files are skipped with a warning. Images are auto-optimised (resized to ≤1024 px on the long side, ~1 MB target).
 
 ## Capturing output
 
@@ -219,7 +219,7 @@ notifyme("Computation done!", start_time=start)
 notifyme("Analysis finished!", include_timing=true, timing_details=true)
 ```
 
-`timed_notify` wraps this pattern — it runs a block, times it, and notifies:
+`timed_notify` wraps this pattern: it runs a block, times it, and notifies:
 
 ```julia
 timed_notify("Hydro projection",
@@ -232,7 +232,7 @@ timed_notify("Hydro projection",
 
 !!! warning "No `do` blocks"
     `timed_notify` and `safe_execute` take the block as their **second** argument, so
-    `timed_notify("name") do … end` raises a `MethodError` — Julia's `do` syntax passes
+    `timed_notify("name") do … end` raises a `MethodError`, Julia's `do` syntax passes
     the function *first*. Use `() -> …` as above.
 
 ## Exception handling
@@ -248,8 +248,8 @@ catch e
 end
 ```
 
-- `exception_context` — the exception object.
-- `include_stacktrace` — include the full trace (default `true` when an exception is provided).
+- `exception_context`: the exception object.
+- `include_stacktrace`: include the full trace (default `true` when an exception is provided).
 
 ## Option reference
 

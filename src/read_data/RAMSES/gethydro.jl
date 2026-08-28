@@ -345,13 +345,13 @@ function gethydro(dataobject::InfoType;
         # `myargs=ArgumentsType(xrange=…)` received the whole domain, and every reduction that
         # followed answered for the whole domain. Same shape as the bug already fixed in
         # getparticles (see its delegation comment).
-        if !(myargs.lmax       === missing)       lmax = myargs.lmax end
-        if !(myargs.xrange     === missing)     xrange = myargs.xrange end
-        if !(myargs.yrange     === missing)     yrange = myargs.yrange end
-        if !(myargs.zrange     === missing)     zrange = myargs.zrange end
-        if !(myargs.center     === missing)     center = myargs.center end
-        if !(myargs.range_unit === missing) range_unit = myargs.range_unit end
-        if !(myargs.verbose    === missing)    verbose = myargs.verbose end
+        if !(myargs.lmax === missing) && isequal(lmax, dataobject.levelmax) lmax = myargs.lmax end
+        if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+        if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+        if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+        if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+        if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+        if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
 
         lmax < dataobject.levelmax && @warn "gethydro: `lmax` is not applied to the " *
             "$(dataobject.simcode) reader — external readers load all leaf cells; choose the " *
@@ -374,14 +374,14 @@ function gethydro(dataobject::InfoType;
     # ═══════════════════════════════════════════════════════════════════════════
     
     # Override default parameters with values from myargs struct if provided
-    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
-    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
-    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
-    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
-    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
+    if !(myargs.lmax === missing) && isequal(lmax, dataobject.levelmax) lmax = myargs.lmax end
+    if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+    if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+    if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+    if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) && isequal(show_progress, true) show_progress = myargs.show_progress end
 
     # Validate input parameters and setup processing environment
     verbose = checkverbose(verbose)

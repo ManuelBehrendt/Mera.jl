@@ -15,7 +15,7 @@ These diagnostic tests help you **find the right number of threads for reading f
 - **Storage limits** where adding more parallel tasks stops improving performance
 - **Best performance settings** tailored to your specific storage type (traditional drives, SSDs, NVMe storage)
 
-These tests work best for **applications that spend most of their time waiting for data** (like reading files from storage) rather than doing intensive calculations. When programs wait for storage operations, you can safely use **many more parallel processes** than the standard guideline of matching the number of processor cores. **However, these tests excel at finding the right number of threads to use efficiently without covering every aspect of storage performance.**
+These tests work best for **applications that spend most of their time waiting for data** (like reading files from storage) rather than doing intensive calculations. When programs wait for storage operations: you can safely use **many more parallel processes** than the standard guideline of matching the number of processor cores. **However, these tests excel at finding the right number of threads to use efficiently without covering every aspect of storage performance.**
 
 
 ## Core Diagnostic Framework
@@ -28,13 +28,13 @@ When MERA spawns multiple threads to read files in parallel, each thread execute
 
 ### Sustained Throughput (MB/s) Test
 
-Beyond counting operations, this measures the read rate of individual files. **Note on the metric:** the reported value is the **mean per-file (single-stream) read rate** — each file's size divided by the time to read it, averaged over files — *not* the summed aggregate bandwidth of all threads reading at once. It therefore characterizes typical per-read throughput and how it degrades under concurrency (as threads contend for the storage interface), rather than total bytes/second across the device. A drop in this per-file rate as threads are added indicates the storage interface (disk connection or network filesystem) is becoming the bottleneck rather than thread-management overhead.
+Beyond counting operations, this measures the read rate of individual files. **Note on the metric:** the reported value is the **mean per-file (single-stream) read rate**, each file's size divided by the time to read it, averaged over files, *not* the summed aggregate bandwidth of all threads reading at once. It therefore characterizes typical per-read throughput and how it degrades under concurrency (as threads contend for the storage interface), rather than total bytes/second across the device. A drop in this per-file rate as threads are added indicates the storage interface (disk connection or network filesystem) is becoming the bottleneck rather than thread-management overhead.
 
 ### Latency Variability Measurement
 
 Even when your system shows good average performance, individual file operations can take very different amounts of time. When running multiple threads together, some finish their work quickly while others get delayed. The slowest threads hold up everything else when your program needs all threads to finish before moving forward.
 
-By measuring not just the average time but also how much the timing varies (like checking the slowest 5% of operations), you can see how these timing inconsistencies will slow down your overall program.
+By measuring not just the average time but also how much the timing varies (like checking the slowest 5% of operations): you can see how these timing inconsistencies will slow down your overall program.
 
 
 
@@ -44,7 +44,7 @@ Performance changes in multi-threaded file operations are both normal and expect
 
 As thread count increases, performance naturally deviates from perfect scaling because:
 
-- **Resource competition intensifies** - threads compete for shared filesystem locks, metadata structures, and disk scheduling queues
+- **Resource competition intensifies**: threads compete for shared filesystem locks, metadata structures, and disk scheduling queues
 
 - **Context switching overhead** becomes significant when too many threads compete for limited system resources
 
@@ -55,11 +55,11 @@ As thread count increases, performance naturally deviates from perfect scaling b
 
 The progression from single-thread to multi-thread performance reveals distinct operational patterns that guide optimal thread selection:
 
-- **Single-thread baseline** - shows how fast your system performs when only one task runs at a time
+- **Single-thread baseline**: shows how fast your system performs when only one task runs at a time
 
-- **Optimal parallel performance** - finds the best number of simultaneous tasks where you get maximum speed without wasting resources
+- **Optimal parallel performance**: finds the best number of simultaneous tasks where you get maximum speed without wasting resources
 
-- **Too many threads breakdown** - shows when running too many tasks at once actually slows everything down
+- **Too many threads breakdown**: shows when running too many tasks at once actually slows everything down
 
 
 
@@ -68,11 +68,11 @@ The progression from single-thread to multi-thread performance reveals distinct 
 
 Multi-modal throughput distributions provide powerful diagnostic insights. When benchmarks produce histograms with multiple distinct peaks, each peak represents a different operational state where specific bottlenecks dominate system behavior.
 
-When such a multi-peak pattern is present, the peaks can be interpreted as follows (illustrative — the exact shape depends on hardware and is not guaranteed; inspect your own histogram):
+When such a multi-peak pattern is present, the peaks can be interpreted as follows (illustrative, the exact shape depends on hardware and is not guaranteed; inspect your own histogram):
 
-- **Peak 1 (highest throughput)** - optimal sequential performance without thread interference effects
-- **Peak 2 (moderate throughput)** - effective parallel operation at the identified concurrency sweet spot
-- **Peak 3 (near-zero throughput)** - competition-induced performance collapse where additional threads become counterproductive
+- **Peak 1 (highest throughput)**: optimal sequential performance without thread interference effects
+- **Peak 2 (moderate throughput)**: effective parallel operation at the identified concurrency sweet spot
+- **Peak 3 (near-zero throughput)**: competition-induced performance collapse where additional threads become counterproductive
 
 This distribution analysis directly maps to thread count optimization, helping identify the precise point where adding more threads transitions from beneficial parallelism to harmful resource competition.
 
@@ -84,7 +84,7 @@ This distribution analysis directly maps to thread count optimization, helping i
 
 ### Basic Usage Example
 
-Both the benchmark and its plot are **built into Mera** — nothing to download. Just load Mera with any
+Both the benchmark and its plot are **built into Mera**, nothing to download. Just load Mera with any
 Makie backend and point [`run_benchmark`](@ref) at one of your output folders, then
 [`plot_results`](@ref) the returned [`IOBenchmark`](@ref):
 
@@ -174,7 +174,7 @@ cmd-line % julia -t 32 -e 'using Mera, CairoMakie; save("io.png", plot_results(r
 
 **Practical guidance:** If you see large error bars or rapidly increasing timing variability at higher thread counts, it indicates you're approaching the point where additional threads become counterproductive for overall system performance.
 
-## Reference results — laptop (2026-07)
+## Reference results: laptop (2026-07)
 
 Provenance: Apple M2 Pro (12 cores), macOS 15, Julia 1.12.3, Mera revamp/2026,
 8 Julia threads; dataset `mw_L10/output_00300` (2,570 files) on an external
@@ -188,7 +188,7 @@ Thunderbolt SSD (`FASTStorage`); `run_benchmark(dir; runs=2)`.
 | 8 | 69,872 | 2,875 |
 
 Open/close latency at 8 threads: 42.7 μs (median). IOPS keep scaling with
-concurrency while sequential throughput peaks at 2 threads and then declines —
+concurrency while sequential throughput peaks at 2 threads and then declines,
 typical external-SSD behaviour, and exactly the kind of machine profile this
 diagnostic is meant to reveal (a many-core server with parallel storage looks
 different; see the historical server results above).

@@ -6,10 +6,10 @@
 
 Concrete, reproducible figures (see the [Mera-Files Reading](../benchmarks/JLD2_reading/Mera_files_reading.md), [Server IO](../benchmarks/IO/IOperformance.md), and [Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md) benchmarks for full detail and hardware):
 
-- **Read speed:** reading a MERA `.jld2` deserializes an already-parsed table, while RAMSES reading re-parses hundreds–thousands of Fortran files and rebuilds the AMR tree every time. Fair like-for-like (same components, M2 Pro, local SSD, `mw_L10` output 300): **MERA ~2.4 s vs RAMSES ~86 s single-thread (~30–40×), and ~71 s with 8 threads (~30×)**. Larger still on networked/server filesystems.
+- **Read speed:** reading a MERA `.jld2` deserializes an already-parsed table, while RAMSES reading re-parses hundreds-thousands of Fortran files and rebuilds the AMR tree every time. Fair like-for-like (same components, M2 Pro, local SSD, `mw_L10` output 300): **MERA ~2.4 s vs RAMSES ~86 s single-thread (~30 to 40×), and ~71 s with 8 threads (~30×)**. Larger still on networked/server filesystems.
 - **Storage:** a complete MERA `.jld2` is **~62% smaller / ~2.6×** than the RAMSES output (2.16 GB vs 5.69 GB, same components).
 - **Memory:** MERA-file reading peaks **~35% lower** than single-threaded RAMSES (8.0 vs 13.0 GB). See the [Mera-Files Reading](../benchmarks/JLD2_reading/Mera_files_reading.md) benchmark for the reproducible script and methodology.
-- **Load only what you need:** spatial (`xrange/yrange/zrange`) and `lmax` filtering reduce both read time and peak memory — prefer it for targeted analysis of large datasets.
+- **Load only what you need:** spatial (`xrange/yrange/zrange`) and `lmax` filtering reduce both read time and peak memory: prefer it for targeted analysis of large datasets.
 
 ## Learning Objectives
 By the end of this guide, you should be able to:
@@ -215,7 +215,7 @@ result = similar(x)
 compute_squares!(result, x)
 ```
 
-## ✅ Check Your Understanding - Performance Mastery
+## ✅ Check Your Understanding: Performance Mastery
 Before concluding, you should now be able to:
 - [ ] Write type-stable functions for optimal performance
 - [ ] Use `@btime` and `@profile` to identify bottlenecks

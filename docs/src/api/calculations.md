@@ -51,8 +51,8 @@ gettime
 printtime
 ```
 
-[`gettime`](@ref) answers for the snapshot. For **any** epoch — which is what tracking across a
-set of outputs needs, since a catalogue-only output knows its `a` and `a` alone is not a time —
+[`gettime`](@ref) answers for the snapshot. For **any** epoch, which is what tracking across a
+set of outputs needs, since a catalogue-only output knows its `a` and `a` alone is not a time,
 use `cosmic_time`. All three go through the same `E(a)` as [`cosmology`](@ref), so they cannot
 drift from it.
 

@@ -14,10 +14,10 @@ By the end of this guide, you should be able to:
 
 > **Legend:**
 > - **[base]** = Julia Base / stdlib (no install needed)
-> - **[mera]** = Already a Mera dependency — available after `using Mera`, no install needed
+> - **[mera]** = Already a Mera dependency, available after `using Mera`, no install needed
 > - **[extra]** = Needs installation (`Pkg.add("...")`)
 
-## Essential Packages (Start Here) - 10 minutes
+## Essential Packages (Start Here): 10 minutes
 
 **Goal**: Core Julia packages every scientific computing user needs  
 **When to read**: Right after installing Julia, before starting any project
@@ -61,7 +61,7 @@ These 10 packages form the foundation of scientific Julia. Learn these first:
 
 ---
 
-## Intermediate Packages (When You're Ready) - 20 minutes  
+## Intermediate Packages (When You're Ready): 20 minutes  
 
 **Goal**: Specialized tools for common scientific computing tasks  
 **When to read**: After mastering essentials, when you need specific functionality
@@ -112,11 +112,11 @@ These packages solve common problems in scientific computing. Add them as your p
 **Goal**: Uncertainty quantification in scientific computing
 
 ### 📖 Why This Level Matters
-**Specialized solutions**: These packages solve specific problems efficiently. Don't try to learn them all at once - add them when your projects need their functionality. Each provides professional-grade tools for its domain.
+**Specialized solutions**: These packages solve specific problems efficiently. Don't try to learn them all at once, add them when your projects need their functionality. Each provides professional-grade tools for its domain.
 
 ---
 
-## Advanced Ecosystem (For Experts) - Reference
+## Advanced Ecosystem (For Experts): Reference
 
 **Goal**: Comprehensive package landscape for specialized needs  
 **When to read**: When you need highly specialized functionality or are building production systems
@@ -169,7 +169,7 @@ This comprehensive reference covers the full Julia ecosystem. Use it as a lookup
 | Knet | GPU-accelerated DL | High-performance deep learning |
 | ScikitLearn | Python ML integration | Familiar scikit-learn interface |
 
-### ✅ Check Your Understanding - Complete Package Journey
+### ✅ Check Your Understanding: Complete Package Journey
 Before moving on, you should now be able to:
 - [ ] Install and use the 10 essential packages for any Julia project
 - [ ] Identify when you need intermediate packages for specialized tasks  
@@ -194,10 +194,10 @@ Before moving on, you should now be able to:
 
 **Depending on your goals:**
 
-- **Ready to code?** → [Julia Fundamentals](04_mera_patterns.md) - Learn core programming patterns
-- **Need performance?** → [Performance Guide](05_performance.md) - Optimize your Julia code  
-- **Coming from other languages?** → [Migration Guides](02_migrators.md) - Language-specific transitions
-- **Want to explore?** → [Resources](06_resources.md) - Community, learning materials, and references
+- **Ready to code?** → [Julia Fundamentals](04_mera_patterns.md): Learn core programming patterns
+- **Need performance?** → [Performance Guide](05_performance.md): Optimize your Julia code  
+- **Coming from other languages?** → [Migration Guides](02_migrators.md): Language-specific transitions
+- **Want to explore?** → [Resources](06_resources.md): Community, learning materials, and references
 
 **Expected next reading time**: 30-120 minutes depending on your path
 

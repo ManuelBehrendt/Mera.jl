@@ -40,7 +40,7 @@ Satisfies
 ## Table macros
 
 These operate on the underlying table rather than on Mera quantities, so they see stored
-columns only — use [`filterdata`](@ref) when you need a derived quantity such as `:T` or `:v`.
+columns only: use [`filterdata`](@ref) when you need a derived quantity such as `:T` or `:v`.
 
 ```@docs; canonical=false
 @filter
