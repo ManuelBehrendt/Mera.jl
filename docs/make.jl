@@ -82,7 +82,8 @@ makedocs(modules = [Mera],
          
 		authors = "Manuel Behrendt",
 		pages = Any[ "Home"                  => "index.md",
-		              "First Look"             => "report.md",
+		              "First Look"             => "first_look.md",
+		              "Composable Reports"     => "report.md",
 		              "Getting Started"        => Any[
 		                  "First Steps"                    => "00_multi_FirstSteps.md",
 		                  "Coming from Other Tools"        => "switching_to_mera.md",
