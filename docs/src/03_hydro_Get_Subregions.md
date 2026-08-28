@@ -363,7 +363,7 @@ sph_centre = subregion(gas, Sphere(10.; center=ctr, range_unit=:kpc);
 
 # whole-cell mode = the split selection with its :fraction column removed:
 cols_keep = Tuple(filter(!=(:fraction), propertynames(Mera.columns(sph.data))))
-sph_whole = Mera.construct_datatype(Mera.select(sph.data, cols_keep), sph)
+sph_whole = construct_datatype(Mera.select(sph.data, cols_keep), sph)
 
 m_upper = msum(sph_whole,  :Msol)
 m_lower = msum(sph_centre, :Msol)
@@ -518,7 +518,7 @@ ctr_c = [:bc, :bc, 32.]                       # 8 kpc above the plane — coarse
 sph_c  = subregion(gas, Sphere(1.5; center=ctr_c, range_unit=:kpc), verbose=false)
 sph_cc = subregion(gas, Sphere(1.5; center=ctr_c, range_unit=:kpc); split=false, verbose=false)
 cols_c = Tuple(filter(!=(:fraction), propertynames(Mera.columns(sph_c.data))))
-sph_cw = Mera.construct_datatype(Mera.select(sph_c.data, cols_c), sph_c)
+sph_cw = construct_datatype(Mera.select(sph_c.data, cols_c), sph_c)
 
 mc_u, mc_l, mc_e = msum(sph_cw, :Msol), msum(sph_cc, :Msol), msum(sph_c, :Msol)
 println("gas mass inside r = 1.5 kpc, 8 kpc above the plane:")
@@ -1391,7 +1391,7 @@ next chapter's protagonists), the shape of a feedback-cleared ISM:
 ```julia
 part = getparticles(info, verbose=false, show_progress=false)
 pcols = propertynames(Mera.columns(part.data))
-:birth in pcols && (part = Mera.construct_datatype(filter(p -> p.birth > 0., part.data), part))
+:birth in pcols && (part = construct_datatype(filter(p -> p.birth > 0., part.data), part))
 println("star particles: ", length(part.data))
 
 pxs = getvar(part, :x, :kpc) .- 24.; pys = getvar(part, :y, :kpc) .- 24.

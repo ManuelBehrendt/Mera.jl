@@ -345,13 +345,7 @@ export
     update_progress!,
     complete_progress!,
     safe_execute,
-    simple_base64encode,
     optimize_image_for_zulip,
-    get_system_info_command,
-    get_memory_info_command,
-    get_disk_info_command,
-    get_network_info_command,
-    get_process_info_command,
 # adaptive I/O optimization
     get_simulation_characteristics,
     configure_adaptive_io,
@@ -369,7 +363,6 @@ export
     reset_auto_optimization!,
     show_auto_optimization_status,
 # enhanced I/O functions
-    enhanced_fortran_read,
     show_mera_cache_stats,
     clear_mera_cache!,
 # volume rendering

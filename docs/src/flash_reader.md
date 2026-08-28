@@ -131,3 +131,13 @@ FLASH data are CGS, as both assume — supply the run's units explicitly only if
 
 - [`getvar`](@ref), [`projection`](@ref), [`subregion`](@ref), [`pdf`](@ref) — the analysis that now runs on FLASH data.
 - [Reading Athena++ data](athena_reader.md) / [Reading PLUTO data](pluto_reader.md) — the sibling multi-code readers.
+
+## Function Reference
+
+The FLASH entry points, reached automatically through the generic `getinfo`
+and `gethydro` once the output has been recognised.
+
+```@docs
+getinfo_flash
+gethydro_flash
+```

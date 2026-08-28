@@ -2,13 +2,61 @@ using Documenter, Mera, Dates
 
 const _YEAR = year(now())   # keep the footer copyright current automatically
 
+# ---------------------------------------------------------------------------
+# Undocumented-export gate.
+#
+# Every exported function should appear in some `@docs` block, so that it is
+# reachable from a curated page rather than only from the autodocs dump on
+# api.md. This drifted badly once: 82 exports had no entry, and nothing
+# reported it, because `checkdocs` was off.
+#
+# Documenter's own `checkdocs` cannot exempt individual names, and a few are
+# legitimately exempt, so the gate is here instead: anything undocumented that
+# is NOT on the list below fails the build.
+#
+# Only add a name here with a reason. Removing one is always an improvement.
+const UNDOCUMENTED_OK = Set([
+    # development-only, lives in the git-ignored src/dev and never ships
+    :bubble, :bubbletimeseries,
+    # exported, deliberately left undocumented for now
+    :createconstants!,
+])
+
+let
+    exported = filter(n -> isdefined(Mera, n) && getfield(Mera, n) isa Function, names(Mera))
+    blocks = String[]
+    for (root, _, files) in walkdir(joinpath(@__DIR__, "src")), f in files
+        endswith(f, ".md") || continue
+        for m in eachmatch(r"```@docs(.*?)```"s, read(joinpath(root, f), String))
+            push!(blocks, m.captures[1])
+        end
+    end
+    haystack = join(blocks, "\n")
+    documented(n) = occursin(Regex("(^|[^A-Za-z0-9_.])" * string(n) * "(\\s|\\(|\$)", "m"), haystack)
+
+    missing_docs = sort([n for n in exported if !documented(n) && !(n in UNDOCUMENTED_OK)])
+    if !isempty(missing_docs)
+        error("""
+              $(length(missing_docs)) exported function(s) have no @docs entry on any page:
+
+                $(join(missing_docs, "\n  "))
+
+              Add each to the API page it belongs to, or, if it should not be
+              public, drop it from the export list in src/Mera.jl. To exempt one
+              deliberately, add it to UNDOCUMENTED_OK in docs/make.jl with a reason.
+              """)
+    end
+    @info "Undocumented-export gate: all $(length(exported)) exported functions documented \
+           ($(length(UNDOCUMENTED_OK)) deliberately exempt)"
+end
+
 makedocs(modules = [Mera],
          sitename = "Mera.jl",
          doctest = false,
          clean = true,
-         checkdocs = :none,
+         checkdocs = :exports,
          linkcheck = false,
-         warnonly = [:cross_references],
+         warnonly = [:cross_references, :missing_docs],
          remotes = nothing,
          format = Documenter.HTML(
 		prettyurls = get(ENV, "CI", nothing) == "true", 
@@ -130,6 +178,10 @@ makedocs(modules = [Mera],
                           "Mera-Files"          => "api/mera_files.md",
                           "Volume Rendering"    => "api/volume_rendering.md",
                           "Multi-Threading"     => "api/multithreading.md",
+                          "Cosmology"           => "api/cosmology.md",
+                          "Flux"                => "api/flux.md",
+                          "Movies"              => "api/movies.md",
+                          "Configuration"       => "api/configuration.md",
                           "Notifications"       => "api/notifications.md",
                           "Complete API"        => "api.md"],
 

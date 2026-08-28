@@ -51,3 +51,9 @@ synthetic_clumps
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Plotting
+
+```@docs
+clumpplot
+```

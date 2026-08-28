@@ -57,3 +57,14 @@ geometry, not by value. Extracting a quantity is [`getvar`](@ref), in the
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Rebuilding a Data Object
+
+Masking with a `BitArray` gives you values. Filtering the underlying table
+instead gives you rows, and `construct_datatype` wraps those rows back into a
+Mera object so the result stays usable with `getvar`, `projection` and the
+region functions. This is the pattern the masking and subregion tutorials use.
+
+```@docs
+construct_datatype
+```

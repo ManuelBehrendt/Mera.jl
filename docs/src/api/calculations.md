@@ -72,10 +72,42 @@ stellar_age
 age_from_aform
 ```
 
-## Related
+## Unit Resolution
 
-Units are resolved by [`getunit`](@ref); [`createscales`](@ref) builds the conversion factors
-from a simulation's own unit system.
+Every calculation that takes a unit argument goes through `getunit`, which
+turns that argument into the factor applied to the stored values. It is why
+these two agree:
+
+```julia
+getvar(gas, :mass, :Msol)
+getvar(gas, :mass) .* gas.info.scale.Msol
+```
+
+It is also usable directly, for a ratio between two units:
+
+```julia
+getunit(info, :cm) / getunit(info, :kpc)
+```
+
+```@docs
+getunit
+```
+
+[`createscales`](@ref) builds the conversion factors from a simulation's own
+unit system.
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Galaxy Frame, Star Formation, and Distributions
+
+```@docs
+center_of
+face_on
+edge_on
+sfr_snapshot
+depletion_time
+timeseries
+pdf
+getvar_optional
+```

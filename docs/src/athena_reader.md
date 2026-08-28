@@ -245,3 +245,13 @@ above assume — supply the run's units explicitly (see [Units](#Units)).
 
 - [Multi-code support](multicode.md) — the code-blind architecture and the sibling readers.
 - [`getvar`](@ref), [`projection`](@ref), [`subregion`](@ref), [`filterdata`](@ref), [`clumpfind`](@ref) — the analysis that runs on Athena++ data.
+
+## Function Reference
+
+The Athena++ entry points, reached automatically through the generic
+`getinfo` and `gethydro` once the output has been recognised.
+
+```@docs
+getinfo_athena
+gethydro_athena
+```

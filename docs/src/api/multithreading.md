@@ -80,3 +80,31 @@ are documented with the rest of the I/O controls in the
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Storage Benchmarks
+
+Before committing to a long run it is worth knowing what the machine's storage
+actually delivers, which is often the limit rather than the CPU.
+`run_benchmark` measures IOPS, throughput and open/close cost across thread
+counts, and `plot_results` turns the result into a figure. The plotting method
+lives in a package extension, so it becomes available once a Makie backend is
+loaded:
+
+```julia
+using Mera, CairoMakie
+
+results = run_benchmark("/path/to/simulation/folder"; runs=3)
+fig = plot_results(results)
+```
+
+```@docs
+run_benchmark
+plot_results
+```
+
+## Structure-Finder Benchmarks
+
+```@docs
+clumpfind_benchmarks
+```
+

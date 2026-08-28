@@ -187,3 +187,11 @@ All subregion functions support multiple data types through Julia's multiple dis
 
 ---
 *For complete function documentation, see the [Complete API Reference](../api.md).*
+
+## Function Reference
+
+```@docs
+subregion
+shellregion
+@region
+```

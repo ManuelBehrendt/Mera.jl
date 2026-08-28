@@ -435,3 +435,15 @@ The GADGET HDF5 layout is shared and well-documented; this frontend agrees with 
 
 - [Multi-code support](multicode.md) — the code-blind architecture and the other readers.
 - [`getparticles`](@ref), [`getvar`](@ref), [`projection`](@ref) — the particle analysis that runs on GADGET data.
+
+## Function Reference
+
+The per-code entry points. The generic `getinfo` and `getparticles` dispatch
+to these once the simulation code has been detected, so calling them directly
+is only needed when you want to bypass detection.
+
+```@docs
+getinfo_gadget
+getparticles_gadget
+groupinfo
+```

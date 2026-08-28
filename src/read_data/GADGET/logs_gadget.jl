@@ -517,6 +517,17 @@ function getlogs(info::InfoType, which::Symbol=:physics;
 end
 
 # registry entry point: same signature shape as the other capability functions
+"""
+    getlogs_gadget(info::InfoType; kwargs...)
+
+GADGET/AREPO entry point for the run-time logs, registered in the reader
+dispatch table so the generic reader interface can reach it.
+
+Equivalent to `getlogs(info, :physics; kwargs...)`: it reads the physics log,
+which is the one wanted by default. For any other log, or to list what a run
+produced, call [`getlogs`](@ref) or [`loglist`](@ref) directly. All keyword
+arguments are passed straight through.
+"""
 getlogs_gadget(info::InfoType; kwargs...) = getlogs(info, :physics; kwargs...)
 
 # ── parameters-usedvalues ────────────────────────────────────────────────────────────────

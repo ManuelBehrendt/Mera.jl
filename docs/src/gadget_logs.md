@@ -207,3 +207,18 @@ as `(1+z)³` — they are not interchangeable, and differ by percent at z ≈ 3.
 - [Reading GADGET data](gadget_reader.md) — the snapshot frontend
 - [Reading AREPO data](arepo_reader.md) — moving-mesh gas
 - [`getgroups`](@ref) — the FoF group catalogue
+
+## Function Reference
+
+A run-time log is what the code wrote while it ran, rather than a snapshot of
+the state. These read the GADGET and AREPO logs, list what a run produced, and
+pull out the values that are otherwise buried in them.
+
+```@docs
+getlogs
+getlogs_gadget
+loglist
+configflags
+groupfields
+sf_threshold
+```
