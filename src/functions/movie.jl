@@ -73,8 +73,18 @@ function getmovie(path::String, quantity::Symbol;
                   position_angle=nothing, axis=nothing, angle_unit::Symbol=:deg,
                   center=[:boxcenter], range_unit::Symbol=:standard,
                   xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
-                  res=nothing, lmax=nothing, weighting=[:mass, missing],
+                  res=nothing, lmax=nothing, pxsize=nothing, weighting=nothing,
+                  fov=nothing, fov_unit=nothing, aperture=nothing,
+                  binning=nothing, nmax=nothing,
                   time_unit::Symbol=:Myr, verbose::Bool=true)
+
+    # `projection` has no method for gravity or clumps on its own: gravity is only reachable as the
+    # hydro+gravity pair, and clumps have no projection at all. _timeseries_load will happily load
+    # either, so without this the failure was a bare MethodError from deep inside the frame loop.
+    datatype in (:hydro, :particles, :rt) ||
+        error("getmovie: datatype=:$datatype cannot be projected. Use :hydro, :particles or :rt. " *
+              "Gravity is projected as the pair projection(hydro, gravity, ...), which getmovie " *
+              "does not drive; clumps have no projection.")
 
     sel = _timeseries_outputs(path; mera_files=mera_files, outputs=outputs)
     isempty(sel) && error("getmovie: no matching outputs found in \"$path\".")
@@ -92,7 +102,9 @@ function getmovie(path::String, quantity::Symbol;
                             position_angle=position_angle, axis=axis, angle_unit=angle_unit,
                             center=center, range_unit=range_unit,
                             xrange=xrange, yrange=yrange, zrange=zrange, res=res,
-                            lmax=lmax, weighting=weighting)
+                            lmax=lmax, pxsize=pxsize, weighting=weighting, datatype=datatype,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            binning=binning, nmax=nmax)
         push!(frames, Float64.(pr.maps[quantity]))
         push!(outs, n); push!(times, gettime(data; unit=time_unit))
         isempty(extent) && (extent = collect(Float64, pr.extent))
@@ -107,17 +119,28 @@ end
 # off-axis movie exactly as `projection` would (res/lmax default to projection's own).
 function _movie_project(data, quantity, unit; direction, los, up, theta, phi, inclination,
                         azimuth, position_angle, axis, angle_unit, center, range_unit,
-                        xrange, yrange, zrange, res, lmax, weighting)
+                        xrange, yrange, zrange, res, lmax, pxsize, weighting, datatype,
+                        fov, fov_unit, aperture, binning, nmax)
+    # `weighting` is spelled differently by the two projection paths: hydro takes a
+    # [quantity, unit] pair, particles take a bare Symbol. getmovie used to hardcode the hydro
+    # form, so every particle movie died with a TypeError before a single frame was projected.
+    wdefault = datatype === :particles ? :mass : [:mass, missing]
+    w = weighting === nothing ? wdefault : weighting
+    if datatype === :particles && w isa AbstractArray
+        w = first(skipmissing(w))                       # accept the hydro spelling, use the Symbol
+    end
     kw = Dict{Symbol,Any}(:verbose => false, :show_progress => false,
                           :center => center, :range_unit => range_unit,
                           :xrange => xrange, :yrange => yrange, :zrange => zrange,
-                          :weighting => weighting, :angle_unit => angle_unit)
+                          :weighting => w, :angle_unit => angle_unit)
     # the line of sight: an explicit los/up, or angle-based off-axis, else an axis direction
     any(!isnothing, (los, theta, phi, inclination, azimuth, axis)) || (kw[:direction] = direction)
     for (name, val) in (:los => los, :up => up, :theta => theta, :phi => phi,
                         :inclination => inclination, :azimuth => azimuth,
                         :position_angle => position_angle, :axis => axis,
-                        :res => res, :lmax => lmax)
+                        :res => res, :lmax => lmax, :pxsize => pxsize,
+                        :fov => fov, :fov_unit => fov_unit, :aperture => aperture,
+                        :binning => binning, :nmax => nmax)
         val === nothing || (kw[name] = val)
     end
     return projection(data, quantity, unit; kw...)
@@ -327,7 +350,11 @@ function savemovie(m::MeraMovie, file::AbstractString="movie.gif";
     lo, hi = if colorrange isa Tuple || colorrange isa AbstractVector
         (float(colorrange[1]), float(colorrange[2]))
     else
-        allv = sort!(vcat([vec(xf(A)) for A in m.frames]...))
+        # NaN is a legitimate frame value: off-axis maps mark pixels no cell covers. sort! puts
+        # NaNs last, so a single empty pixel used to drag the upper quantile to NaN and blank the
+        # whole movie. Drop them before ranging.
+        allv = sort!(filter(isfinite, vcat([vec(xf(A)) for A in m.frames]...)))
+        isempty(allv) && error("savemovie: every frame value is NaN or infinite; nothing to scale.")
         n = length(allv)
         (allv[clamp(floor(Int, clip[1]*n) + 1, 1, n)],
          allv[clamp(ceil(Int,  clip[2]*n),     1, n)])
@@ -339,7 +366,12 @@ function savemovie(m::MeraMovie, file::AbstractString="movie.gif";
         B = xf(A); ny, nx = size(B)
         out = Array{RGB{Float64}}(undef, ny, nx)
         @inbounds for j in 1:nx, i in 1:ny
-            r, g, b = cmap(colorrange == :perframe ? _perframe_norm(B, i, j) : nrm(B[i, j]))
+            # A non-finite pixel (an off-axis map marks uncovered pixels NaN) has no place on the
+            # colour scale, and passing it through produced RGB(NaN,...) which the GIF writer
+            # rejects outright. Render it at the bottom of the scale instead.
+            v = B[i, j]
+            t = isfinite(v) ? (colorrange == :perframe ? _perframe_norm(B, i, j) : nrm(v)) : 0.0
+            r, g, b = cmap(t)
             out[i, j] = RGB(r, g, b)
         end
         return out
@@ -369,7 +401,11 @@ end
 
 # per-frame normalisation fallback (used only when colorrange==:perframe)
 function _perframe_norm(B, i, j)
-    lo, hi = extrema(B); hi > lo ? clamp((B[i,j]-lo)/(hi-lo), 0.0, 1.0) : 0.0
+    f = filter(isfinite, B)
+    isempty(f) && return 0.0
+    lo, hi = extrema(f)
+    isfinite(B[i,j]) || return 0.0
+    hi > lo ? clamp((B[i,j]-lo)/(hi-lo), 0.0, 1.0) : 0.0
 end
 
 """
