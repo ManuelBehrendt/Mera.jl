@@ -47,10 +47,16 @@ _seq_cmap(var) = var in (:T, :Temperature, :temperature) ? :inferno : :viridis
 # choose the level to read so the predicted leaf-cell count stays within `budget`;
 # full resolution if it already fits, else the coarse levels (levelmin .. levelmin+2).
 function _quicklook_level(info, budget::Int)
-    twotond = 2^info.ndim
-    predicted_full = info.grid_info.ngrid_current * twotond     # rough upper bound on leaf cells
-    predicted_full <= budget && return info.levelmax, false      # small output → read it all (exact)
-    return clamp(info.levelmin + 2, info.levelmin, info.levelmax), true   # coarse, complete, fast
+    # `ngrid_current` counts grids at levelmin, so the leaf count at level l is that scaled by
+    # 2^(ndim*(l-levelmin)); this is the same predictor `report` uses. The previous version
+    # multiplied by 2^ndim alone, i.e. evaluated it at levelmin+1, which on a level 6-10 run
+    # underestimated by 512x: the budget never triggered and quicklook read the whole hierarchy.
+    _predicted_cells(info, info.levelmax) <= budget && return info.levelmax, false   # fits → exact
+    # otherwise take the FINEST level that still fits, rather than a fixed levelmin+2
+    for l in (info.levelmax - 1):-1:info.levelmin
+        _predicted_cells(info, l) <= budget && return l, true
+    end
+    return info.levelmin, true
 end
 
 # star / dark-matter selection masks for a particle object. The NEW RAMSES particle format carries a
