@@ -41,8 +41,8 @@ output = 300;
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: wrong source (3), dep missing source (1), mismatched flags (4))
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: wrong source (6), dep missing source (2), mismatched flags (8))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (1), wrong source (2), dep missing source (1), mismatched flags (4))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), wrong source (4), dep missing source (2), mismatched flags (8))
 SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
@@ -72,7 +72,7 @@ q0 = quicklook(output; path=path, read=false);
 │ time       : 445.9 Myr  (non-cosmological)
 │ particles  : 544515 total  —  stars 544515 · DM 0
 │ (header only — call quicklook(output) to read a sample)
-└─ 0.14 s ──────────────────────────────────
+└─ 0.1 s ──────────────────────────────────
 ```
 
 Note what is already known: the box size, the AMR level range and therefore the finest cell, the
@@ -100,12 +100,12 @@ q = quicklook(output; path=path);
 ```
 
 ```
-[Mera]: quicklook output 300, reading gas: 2026-08-28T12:00:50.860
+[Mera]: quicklook output 300, reading gas: 2026-08-28T12:25:04.664
    640 CPU file(s), levels 6-8 of 10  (budgeted to ~2000000 cells)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:12 (19.48 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:12 (20.11 ms/it)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 9959076 cells
-[Mera]: quicklook output 300, reading particles: 2026-08-28T12:01:12.538
+[Mera]: quicklook output 300, reading particles: 2026-08-28T12:25:26.866
 ┌─ Mera quicklook ── output 300 (RAMSES) ───────────────
 │ box        : 48.0 kpc      levels 6–10  (finest 46.88 pc)
 │ grid       : ndim 3 · ncpu 640 · nvarh 7
@@ -117,8 +117,8 @@ Processing files: 100%|███████████████████
 │ T  range   : 30.22 … 2.41e7 K  ⚠ peaks smoothed (lower bound)
 │ star mass  : 4.385e8 M⊙        DM mass : 0.0 M⊙
 │ current SFR: 1.377 (10 Myr) · 1.148 (100 Myr) M⊙/yr
-└─ 28.14 s ──────────────────────────────────
-[Mera]: quicklook output 300 finished: 2026-08-28T12:01:18.999
+└─ 28.53 s ──────────────────────────────────
+[Mera]: quicklook output 300 finished: 2026-08-28T12:25:33.193
 ```
 
 ### What came back
@@ -140,7 +140,7 @@ q.summary
 ```
 
 ```
-(output = 300, simcode = "RAMSES", box_kpc = 48.00000000003111, levelmin = 6, levelmax = 10, finest_cell_pc = 46.87500000003038, ncpu = 640, ndim = 3, nvarh = 7, time_Myr = 445.8861174695, redshift = nothing, npart = 544515, nstars = 544515, ndm = 0, nsinks = 0, ncells = 9959076, lmax_used = 8, sampled = true, gas_mass_Msol = 7.060719565110762e9, particle_subsample = 1.0, stellar_mass_Msol = 4.38466e8, dm_mass_Msol = 0.0, sfr10 = 1.377, sfr100 = 1.14778, nH_range = (8.111842617338044e-8, 19.474166141696692), T_range_K = (30.216649542865262, 2.4096147641221385e7), bmag_range_muG = nothing, beta_range = nothing, seconds = 28.126333951950073)
+(output = 300, simcode = "RAMSES", box_kpc = 48.00000000003111, levelmin = 6, levelmax = 10, finest_cell_pc = 46.87500000003038, ncpu = 640, ndim = 3, nvarh = 7, time_Myr = 445.8861174695, redshift = nothing, npart = 544515, nstars = 544515, ndm = 0, nsinks = 0, ncells = 9959076, lmax_used = 8, sampled = true, gas_mass_Msol = 7.060719565110762e9, particle_subsample = 1.0, stellar_mass_Msol = 4.38466e8, dm_mass_Msol = 0.0, sfr10 = 1.377, sfr100 = 1.14778, nH_range = (8.111842617338044e-8, 19.474166141696692), T_range_K = (30.216649542865262, 2.4096147641221385e7), bmag_range_muG = nothing, beta_range = nothing, seconds = 28.516975164413452)
 ```
 
 ```julia
@@ -236,6 +236,43 @@ q_coarse = quicklook(output; path=path, lmax=8, datatypes=[:hydro], verbose=fals
 (cells = 9959076, level = 8, gas_mass = 7.060719565110762e9)
 ```
 
+### Gas and particles are read differently
+
+`budget` caps the **gas** read only. Particles are read in full by default, because a particle file
+is small next to the AMR hydro, and that is deliberate: it keeps the stellar and dark-matter masses
+and the SFR **exact** even when the gas read is coarse.
+
+For runs where reading every particle is itself the cost, `particle_subsample` reads only that
+fraction of the particle CPU files, skipping whole files, which cuts I/O and peak memory together.
+RAMSES load-balances its domains to roughly equal particle counts, so this reads about that
+fraction of the particles; the census, masses and SFR are then scaled by `1/fraction` and flagged
+as approximate. The same `subsample` keyword exists on `getparticles`.
+
+```julia
+q_sub = quicklook(output; path=path, datatypes=[:stars], particle_subsample=0.25, verbose=false)
+q_sub.budget
+```
+
+```
+(gas_mass_Msol = nothing, stellar_mass_Msol = 4.7834e8, dm_mass_Msol = 0.0, n_stars = 594020, n_dm = 0, sfr10 = 1.4944, sfr100 = 1.259296, sfr_mean = 1.0782870241030595, has_particles = true)
+```
+
+### How far to trust a coarse read
+
+The distinction that matters is **extensive totals versus peaks**.
+
+- **Gas mass is exact** on a coarse read. De-refinement is mass- and volume-conserving, so the
+  total does not change: measured at 0.00% error reading a third of the cells.
+- **Stellar and dark-matter mass, counts and SFR are within about 10%** under a particle subsample.
+  It is an unbiased estimate scaled by `1/fraction`, and noisier for rarer, clustered populations.
+- **nH and T ranges are lower bounds** on a coarse read. The densest and hottest gas lives in the
+  finest cells, which coarsening averages away; the maxima can read 50 to 90% low. Read at full
+  resolution when you need the true extremes.
+
+The dashboard marks all three: the read is flagged coarse, the gas mass is labelled
+mass-conserving, and the ranges say *peaks smoothed*. Each printed number carries how far to trust
+it, which is the point.
+
 ## Step 4: the thing that actually costs time on a big run
 
 Here is the part worth understanding before you wait ten minutes for something.
@@ -311,7 +348,7 @@ calibrate!(output; path=path)
 ```
 
 ```
-CostModel(0.005, 3.0e-7, 1.0e-6, 1.0e-8, 5.0e-9, 5.0e-8, 1.0e-6, Dict(:map => 17.104995878746667, :phase => 13.080789960537082, :read => 0.6956569968581084, :profile => 60.519390364315235, :scalar => 1.5509602331777592), true)
+CostModel(0.005, 3.0e-7, 1.0e-6, 1.0e-8, 5.0e-9, 5.0e-8, 1.0e-6, Dict(:map => 17.27237357100425, :phase => 14.552263320470745, :read => 0.6954596542444177, :profile => 70.87498023679414, :scalar => 1.3061654125824975), true)
 ```
 
 ```julia
@@ -320,7 +357,7 @@ estimate(plan)
 ```
 
 ```
-(per_card = [("hydro_sd_map", :map, :hydro, 1.36352e6, 1.3542230497154282), ("rho_T_phase", :phase, :hydro, 1.36352e6, 0.09336544642232948)], read_s = 2.7952277269595283, compute_s = 1.4475884961377576, total_s = 4.242816223097286, level = 8, cells = 1363520, sampled = true, calibrated = true)
+(per_card = [("hydro_sd_map", :map, :hydro, 1.36352e6, 1.3674745424646915), ("rho_T_phase", :phase, :hydro, 1.36352e6, 0.103868234676192)], read_s = 2.7944347822353457, compute_s = 1.4713427771408836, total_s = 4.265777559376229, level = 8, cells = 1363520, sampled = true, calibrated = true)
 ```
 
 If the estimate is larger than you want to wait, `downsample` reduces the plan to fit a target
