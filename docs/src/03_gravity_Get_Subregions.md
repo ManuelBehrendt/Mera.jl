@@ -1,7 +1,9 @@
+```@raw html
 <!-- GENERATED FILE. Do not edit this markdown.
      Source notebook: 03_gravity_Get_Subregions.ipynb
      Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
      Any edit here is lost the next time the docs are rendered. -->
+```
 
 # 3. Gravity: Sub-Regions of the Force Field
 

@@ -1,7 +1,9 @@
+```@raw html
 <!-- GENERATED FILE. Do not edit this markdown.
      Source notebook: 06_hydro_Projection.ipynb
      Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
      Any edit here is lost the next time the docs are rendered. -->
+```
 
 # Hydro Data Projections
 

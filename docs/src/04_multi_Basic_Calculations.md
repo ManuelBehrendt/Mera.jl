@@ -1,7 +1,9 @@
+```@raw html
 <!-- GENERATED FILE. Do not edit this markdown.
      Source notebook: 04_multi_Basic_Calculations.ipynb
      Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
      Any edit here is lost the next time the docs are rendered. -->
+```
 
 # 4. Multi-Physics Basic Calculations and Statistical Analysis
 
