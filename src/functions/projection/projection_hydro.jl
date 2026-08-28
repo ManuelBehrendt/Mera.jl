@@ -515,6 +515,18 @@ return AMRMapsType
 Give any of the following to project along an arbitrary line of sight instead of an axis.
 When none are given, the axis-aligned path above runs unchanged. **Angles are in degrees by
 default** (`angle_unit=:rad` to switch).
+There are five ways to say where the camera looks, and they are alternatives: give exactly one.
+Which to reach for:
+
+- an **object** you want face-on or inclined → `inclination`/`azimuth` with `axis=:angmom`
+- a **box-aligned** view → `direction=:x/:y/:z`
+- a direction you already hold as a **vector**, e.g. one frozen from an earlier snapshot so a time
+  series keeps a fixed orientation → `los=`
+- **spherical angles in the box frame**, the usual physics convention → `theta`/`phi`. This is the
+  same family as `los=`; `theta`/`phi` name the direction with two angles instead of three
+  components, and unlike `inclination`/`azimuth` it is measured from the box axes rather than from a
+  reference axis you choose.
+
 - **`inclination`, `azimuth`** (user-oriented; `azimuth` alias `position_angle`): tilt the view
   away from a reference `axis` by `inclination` (0°⇒down the axis, 90°⇒⟂ to it) and rotate
   around it by `azimuth`.
