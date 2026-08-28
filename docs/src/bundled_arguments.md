@@ -75,7 +75,7 @@ functions:
 
 ## A silent, reusable bundle
 
-Because the bundle includes `verbose` and `show_progress`, you can make a "quiet" preset and
+Because the bundle includes `verbose` and `show_progress`: you can make a "quiet" preset and
 apply it to a batch of calls:
 
 ```julia

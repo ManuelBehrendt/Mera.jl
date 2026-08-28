@@ -258,7 +258,7 @@ result = safe_execute("Load snapshot 300", () -> gethydro(getinfo(300, path)))
     The function is the **second** argument, so `do`-block syntax does **not** work here,
     `safe_execute("desc") do … end` raises a `MethodError`, because `do` passes the block
     as the *first* argument. Use `() -> …` as shown. Note also that `safe_execute`
-    **rethrows** after notifying: it reports failures, it does not swallow them.
+    **rethrows** after notifying: it reports failures rather than swallowing them.
 
 ## Organising a Zulip channel  *(Zulip)*
 

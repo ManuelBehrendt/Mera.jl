@@ -216,7 +216,7 @@ julia --project=. run_test_plots.jl
 
 Example measured output of these four charts for **reading original RAMSES
 files** (note the total read times are in the hundreds of seconds and scale
-with thread count, this is the RAMSES reader, *not* reading a compressed MERA
+with thread count: this is the RAMSES reader, *not* reading a compressed MERA
 file, which is far faster; see [Mera-Files Reading](../JLD2_reading/Mera_files_reading.md)):
 
 ![RAMSES reader thread scaling: total read time, speed-up, parallel efficiency, and per-component times vs thread count](ramses_reader_thread_scaling.png)
@@ -353,7 +353,7 @@ ctime: 2024-06-06T17:13:46.723
 
 !!! warning "Illustrative, not measured"
     The speedup/efficiency ranges below are **rough illustrative expectations**
-    by storage class to build intuition, they are **not measured results** from
+    by storage class to build intuition: they are **not measured results** from
     this suite, and real numbers vary widely with hardware, filesystem, file
     count, and dataset (e.g. a fast local NVMe SSD may show only ~1.2 to 1.3× from
     1→8 threads on a small output). Always run the benchmark on your own system.

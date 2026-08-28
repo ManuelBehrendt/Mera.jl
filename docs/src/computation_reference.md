@@ -72,7 +72,7 @@ and clumps. GADGET/AREPO gas particles carry their own thermodynamics from `:u`,
     *not* varied per cell or per gas phase, and RT does not change it: this mirrors RAMSES's own data
     model, where one global adiabatic index is carried and the thermal/ionization state lives in the
     pressure and the cooling, not in a spatially varying ``\gamma``. (A polytropic star-formation
-    pressure floor, if the run uses one, is already baked into the stored pressure ``p``, it does not
+    pressure floor, if the run uses one, is already baked into the stored pressure ``p``: it does not
     make ``\gamma`` a per-cell field.) So `:cs` and entropy are exact for a constant-``\gamma`` run and
     assume that single value otherwise.
 
@@ -424,7 +424,7 @@ M_\mathrm{total} = \sum_i m_i .
     | **centre test** (`split=false`, or classic `cell=false`) | keep a cell if its centre is inside | ``+0.18`` % on the same sphere, **no guaranteed sign** |
     | **whole cells** (classic API default) | keep every cell the region touches | ``+12`` % on the same sphere, a strict **upper** bound |
 
-    So the split path is not "a bit better", it is accurate to the sub-sampling, and for an
+    So the split path is not "a bit better": it is accurate to the sub-sampling, and for an
     axis-aligned box to machine precision. That is what makes adjacent regions add up and a mass
     budget balance.
 

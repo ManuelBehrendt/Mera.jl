@@ -51,7 +51,7 @@ or work through it in order ([Learning Path](#Learning-Path-and-Documentation)).
 
     Everything else in these docs: `getvar`, `subregion`, `filterdata`, `profile`,
     `savedata`, works on `gas` exactly as it does on a real snapshot. Because the clump
-    positions are known, this is also how [clump finding](clumpfind_synthetic.md) is scored
+    positions are known: this is also how [clump finding](clumpfind_synthetic.md) is scored
     against ground truth.
 
     Expect ~10 s on the first call: Julia compiles as it goes, and later calls are instant.

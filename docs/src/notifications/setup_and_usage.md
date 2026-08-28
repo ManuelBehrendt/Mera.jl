@@ -54,7 +54,7 @@ channel: it is the only one that carries the images and captured output shown
 below.
 
 If only `[email]` is filled in, `notifyme` sends email only; only `[zulip]`,
-Zulip only; both, both; neither, it is a harmless no-op. The same script is
+Zulip only; both, both; neither: it is a harmless no-op. The same script is
 therefore portable across machines.
 
 ### Creating the Zulip bot

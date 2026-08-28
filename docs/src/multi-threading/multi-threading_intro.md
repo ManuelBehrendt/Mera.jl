@@ -8,7 +8,7 @@
 !!! tip "Just getting started?"
     For a compact, measured introduction (thread-count scaling on a small fixture, the
     `max_threads` throttle, laptop-scale guidance), see
-    [Julia for Simulation Analysis](../julia_for_simulation_analysis.md), this page is the
+    [Julia for Simulation Analysis](../julia_for_simulation_analysis.md): this page is the
     full reference.
 
 **Main Takeaways**  
@@ -1876,4 +1876,4 @@ This comprehensive guide provides everything needed to harness Julia's multi-thr
 - Avoid false sharing with proper data structure design
 - Profile and benchmark before optimizing
 
-By following these patterns, you can transform single-threaded analysis scripts into high-throughput, scalable workflows that fully utilize modern multi-core processors, all within pure Julia code, no external dependencies required.
+By following these patterns: you can transform single-threaded analysis scripts into high-throughput, scalable workflows that fully utilize modern multi-core processors, all within pure Julia code, no external dependencies required.

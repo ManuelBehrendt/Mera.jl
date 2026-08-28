@@ -78,7 +78,7 @@ resolves each minor-version string to its newest patch release at run time,
 so the suite always runs against the latest `1.10.x`, `1.11.x`, and `1.12.x`.
 
 Pre-releases (e.g. `1.13`, which at time of writing is only a release
-candidate) are intentionally **not** included, they are moving targets and
+candidate) are intentionally **not** included: they are moving targets and
 upstream rc bugs would produce spurious failures. When `1.13.0` ships as
 stable, add a `'1.13'` row (and optionally drop an older series). To get
 early warning of breakage on an upcoming release, add a non-blocking `'pre'`

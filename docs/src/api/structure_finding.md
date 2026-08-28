@@ -20,7 +20,7 @@ massfunctionplot
 
 ## Validators
 
-A candidate clump is kept only if it passes every validator, they combine as an AND, and
+A candidate clump is kept only if it passes every validator: they combine as an AND, and
 membership tests are applied during the analysis while predicates are applied after,
 regardless of the order you list them in.
 

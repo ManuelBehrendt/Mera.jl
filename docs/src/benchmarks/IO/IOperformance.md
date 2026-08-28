@@ -15,7 +15,7 @@ These diagnostic tests help you **find the right number of threads for reading f
 - **Storage limits** where adding more parallel tasks stops improving performance
 - **Best performance settings** tailored to your specific storage type (traditional drives, SSDs, NVMe storage)
 
-These tests work best for **applications that spend most of their time waiting for data** (like reading files from storage) rather than doing intensive calculations. When programs wait for storage operations, you can safely use **many more parallel processes** than the standard guideline of matching the number of processor cores. **However, these tests excel at finding the right number of threads to use efficiently without covering every aspect of storage performance.**
+These tests work best for **applications that spend most of their time waiting for data** (like reading files from storage) rather than doing intensive calculations. When programs wait for storage operations: you can safely use **many more parallel processes** than the standard guideline of matching the number of processor cores. **However, these tests excel at finding the right number of threads to use efficiently without covering every aspect of storage performance.**
 
 
 ## Core Diagnostic Framework
@@ -34,7 +34,7 @@ Beyond counting operations, this measures the read rate of individual files. **N
 
 Even when your system shows good average performance, individual file operations can take very different amounts of time. When running multiple threads together, some finish their work quickly while others get delayed. The slowest threads hold up everything else when your program needs all threads to finish before moving forward.
 
-By measuring not just the average time but also how much the timing varies (like checking the slowest 5% of operations), you can see how these timing inconsistencies will slow down your overall program.
+By measuring not just the average time but also how much the timing varies (like checking the slowest 5% of operations): you can see how these timing inconsistencies will slow down your overall program.
 
 
 

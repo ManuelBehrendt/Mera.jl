@@ -5,7 +5,7 @@
     weighting, stars/gravity, profiles from 2-D maps, phase diagrams), see the
     [Profiles & phase diagrams tutorial](15_multi_Profiles_Phase.md).
 
-`profile` and `phase` are **general weighted reductions** over any `getvar` fields, they are not
+`profile` and `phase` are **general weighted reductions** over any `getvar` fields: they are not
 tied to projection or to a line of sight. A *profile* bins the data by one field; a *phase
 diagram* is a 2D weighted histogram of two fields. They work on
 
