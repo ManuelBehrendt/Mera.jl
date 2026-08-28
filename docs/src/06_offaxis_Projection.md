@@ -58,14 +58,23 @@ println("threads      : ", Threads.nthreads())
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (1), wrong source (2), dep missing source (1), mismatched flags (5))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), wrong source (4), dep missing source (2), mismatched flags (10))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (3), incompatible header (6))
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), incompatible header (12))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 cells loaded : 590311
 box length   : 100.0 kpc
 levels       : 3 – 7
@@ -133,13 +142,19 @@ maprow([fo, eo], :sd, ["direction=:faceon", "direction=:edgeon"]; crange=cr)
 ```
 
 ```
+[Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
+             `center=` fixes the origin; `vcenter=` fixes the frame, and they are separate.
+             For an object with bulk motion pass vcenter=:auto, or vcenter=bulk_velocity(obj).
+             Harmless if the object is already at rest in the box; on a halo streaming at
+             ~200 km/s this shifted |J| by 34 % and its direction by ~5 degrees.
+             (shown once per session; verbose(false) silences Mera's messages)
 line of sight  ŵ = [0.011, 0.02, -1.0]
 image up       û = [1.0, -0.0, 0.011]
 projection centre (box fraction) = [0.5, 0.5, 0.5]
 frame: (147, 147)  and  (147, 147)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_5_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_5_5.png)
 
 Read the output back:
 
@@ -315,7 +330,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-07T13:10:30.749
+[Mera]: 2026-08-28T20:19:15.315
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -551,11 +566,69 @@ level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       85.7 %     0.006     1.0381
-cic       64.4 %     0.006     0.9733
-overlap   0.0 %      0.026     0.0021
+ngp       85.7 %     0.007     1.0381
+cic       64.4 %     0.007     0.9733
+overlap   0.0 %      0.036     0.0021
 exact     0.0 %      0.09      0.0
 ```
+
+### One number is not enough: where the disagreement lives
+
+The median above says `:overlap` and `:exact` agree closely. A median hides its tail, and for a
+figure you publish the tail is the part that matters, so look at the distribution instead, split by
+how bright the pixel is.
+
+```julia
+# Reuses the projections computed above: no new reads, no new projections.
+using Statistics, Printf
+A = Float64.(kern[:overlap].maps[:sd]); B = Float64.(kern[:exact].maps[:sd])
+both = (A .> 0) .& (B .> 0)
+d = abs.(log10.(A[both]) .- log10.(B[both])); v = B[both]; peak = maximum(v)
+
+@printf("total flux  overlap/exact = %.6f\n\n", sum(A)/sum(B))
+println(rpad("pixels", 26), rpad("count", 8), rpad("median", 10), rpad("p99", 10), "max  [dex]")
+for (lo, hi, lbl) in ((0.0, 1e-3, "faint   (<0.1% of peak)"),
+                      (1e-3, 1e-1, "mid     (0.1-10%)"),
+                      (1e-1, Inf,  "bright  (>10% of peak)"))
+    s = (v ./ peak .>= lo) .& (v ./ peak .< hi)
+    any(s) || continue
+    println(rpad(lbl, 26), rpad(count(s), 8),
+            rpad(round(median(d[s]), digits=5), 10),
+            rpad(round(quantile(d[s], 0.99), digits=5), 10),
+            round(maximum(d[s]), digits=5))
+end
+```
+
+```
+total flux  overlap/exact = 0.999997
+pixels                    count   median    p99       max  [dex]
+faint   (<0.1% of peak)   14335   0.00213   0.01424   0.0691
+mid     (0.1-10%)         10110   0.00205   0.00733   0.01193
+bright  (>10% of peak)    1155    0.00278   0.01001   0.01279
+```
+
+**Do not carry these numbers to another simulation.** They are a property of *this* map: how many
+cells fall in a pixel, the viewing angle, and how sparse the outskirts are. Repeating the same
+measurement on a Milky-Way-like run at two angles and pixel sizes gave worst-case differences from
+0.058 to 0.143 dex, all different from the value above.
+
+What does carry over is the shape of the result, and it follows from how the two kernels work.
+`:exact` integrates the footprint analytically. `:overlap` samples it with `n³` sub-points, so a
+pixel's value is exact in the limit of many sub-points and noisy when few land in it. Hence:
+
+- **the total is conserved either way**, to about one part in 10⁵ or better: both kernels share out
+  every cell completely, so integrated quantities do not care which you pick
+- **the worst per-pixel disagreement is in the faintest pixels**, the ones fed by few sub-points
+- **bright structure agrees far better**, though "better" was still a few percent in one of the
+  cases measured
+- `:overlap` caps its supersampling at `nmax`, `:exact` has no cap, so cells much coarser than the
+  pixel are where `:overlap` is weakest
+
+**Which to use.** `:overlap` for interactive work, and for anything where you pay the cost many
+times over: orbit movies, parameter sweeps, time series. `:exact` for a figure that goes in a paper,
+where you render once and the runtime difference is irrelevant, and especially if you intend to
+quote a value from a faint pixel or draw contours far down the colour scale. If you are unsure,
+run the cell above on your own data and let it decide.
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -579,7 +652,7 @@ all weight at cell centres",
 same pixels, footprint deposit"]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_24_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_27_1.png)
 
 The totals agree and the pictures do not — which is the point, and the reason "is it
 conservative?" is the wrong question to stop at.
@@ -689,7 +762,7 @@ colsize!(fig.layout, 3, Fixed(14))    # spacer: keeps the v colorbar from readin
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_29_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_32_1.png)
 
 ```julia
 # Does σ_LOS depend on how finely you pixelate? Measure it rather than assume.
@@ -781,7 +854,7 @@ Colorbar(fig[1,3], h, label="log10 n_H [cm⁻³]")
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_34_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_37_1.png)
 
 Two things in the left panel are the *selection* rather than the gas, and both are worth
 recognising because they show up in every `fov` projection:
@@ -834,7 +907,7 @@ cr = sharedrange(frames, :sd)
 maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_38_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_41_1.png)
 
 Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
 numbers say the same thing from opposite directions. That invariance is what makes the sequence
@@ -1002,7 +1075,7 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 φ along the line of sight: (-1976.0, -175.5) km²/s²
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_48_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_51_2.png)
 
 Same keywords, same camera, three different kinds of data — and each one says something the
 others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
@@ -1068,7 +1141,7 @@ weighting=:voronoi off-axis (needs :volume)  : ArgumentError
 fov works on particles                       : (30, 30)
 slice(part, …)                               : MethodError
 particle nmax                                : MethodError
-particle max_threads                         : MethodError
+particle max_threads                         : NO ERROR
 data_center ignored on off-axis hydro        : true
 ```
 
