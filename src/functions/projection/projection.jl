@@ -474,7 +474,8 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
         los=nothing, theta=nothing, phi=nothing, inclination=nothing, azimuth=nothing,
         position_angle=nothing, axis=nothing, direction=:z, angle_unit::Symbol=:deg, up=nothing,
         center=[:bc], range_unit::Symbol=:standard, res::Int=256, pxsize=nothing,
-        xrange=[missing,missing], yrange=[missing,missing], mask=[false], verbose::Bool=true)
+        xrange=[missing,missing], yrange=[missing,missing], offset=nothing, offset_unit=nothing,
+        mask=[false], verbose::Bool=true)
     info = dataobject.info; boxlen = dataobject.boxlen
     Lvec = (direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L) ?
         [sum(getvar(dataobject,:lx,center=center,center_unit=range_unit)),
@@ -498,8 +499,19 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
     # half-thickness along ŵ of 0.5·csize·(|w₁|+|w₂|+|w₃|) (=0.5·csize only for an axis-aligned view,
     # up to 0.5·csize·√3 at a corner-on tilt). Omitting this factor drops cells the plane really
     # crosses on tilted views and leaves scattered interior holes.
-    sel = sel .& (abs.(zcam) .<= 0.5 .* csize .* (abs(w[1]) + abs(w[2]) + abs(w[3])))
-    xc = Float64.(xcam[sel]); yc = Float64.(ycam[sel]); zc = Float64.(abs.(zcam[sel]))
+    # `offset` slides the plane along the line of sight, which is what makes a cutting plane
+    # TRAVEL through the object. Without it the plane is pinned at the pivot: the orientation was
+    # fully parameterised but the position was not, so a sweep was impossible off-axis while the
+    # axis-aligned path had `slice_pos` all along.
+    zoff = if offset === nothing
+        0.0
+    else
+        ou  = offset_unit === nothing ? range_unit : offset_unit
+        cuw = ou === :standard ? 1.0/boxlen : getunit(info, ou)   # as _fov_selection converts fov
+        float(offset) / cuw
+    end
+    sel = sel .& (abs.(zcam .- zoff) .<= 0.5 .* csize .* (abs(w[1]) + abs(w[2]) + abs(w[3])))
+    xc = Float64.(xcam[sel]); yc = Float64.(ycam[sel]); zc = Float64.(abs.(zcam[sel] .- zoff))
     cs = Float64.(csize[sel]); vv = Float64.(vals[sel])
     pcx = Float64.(px[sel]); pcy = Float64.(py[sel]); pcz = Float64.(pz[sel])   # cell world coords (about pivot)
     pixsize = _pixsize_code(info, boxlen, res, pxsize)
@@ -526,6 +538,10 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
     # tilted view), not the oversized projected rectangle — so cells keep their real shape and large
     # border cells no longer bleed a low-value frame outward.
     rx,ry,rz = cr[1],cr[2],cr[3]; ux,uy,uz = uc[1],uc[2],uc[3]
+    # The pixel's world point lies ON THE PLANE, which `offset` moves along the line of sight:
+    # X*r + Y*u + offset*w. Without this term the piercing test below still describes the plane
+    # through the pivot, so an offset selects cells and then pierces none of them.
+    ox, oy, oz = zoff*w[1], zoff*w[2], zoff*w[3]
     pxstep = (x1-x0)/nx; pystep = (y1-y0)/ny
     tol = 0.5*pixsize                 # half-pixel slack: adjacent cells overlap by ≤1px so the
                                       # true cross-sections tile with no sub-pixel seam at level
@@ -540,7 +556,8 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
             X = x0 + (ix-0.5)*pxstep
             for iy in iy0:iy1
                 Y = y0 + (iy-0.5)*pystep
-                (abs(X*rx + Y*ux - pX) <= ht && abs(X*ry + Y*uy - pY) <= ht && abs(X*rz + Y*uz - pZ) <= ht) || continue
+                (abs(X*rx + Y*ux + ox - pX) <= ht && abs(X*ry + Y*uy + oy - pY) <= ht &&
+                 abs(X*rz + Y*uz + oz - pZ) <= ht) || continue
                 if zi < zbuf[ix,iy]; zbuf[ix,iy]=zi; vbuf[ix,iy]=vv[i]; end
             end
         end
