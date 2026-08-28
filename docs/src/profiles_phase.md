@@ -2,7 +2,7 @@
 
 !!! tip "Step-by-step tutorial"
     For a runnable walk-through (radial/vertical profiles, per-bin statistics, mass vs volume
-    weighting, stars/gravity, profiles from 2-D maps, phase diagrams), see the
+    weighting, stars/gravity, profiles from 2-D maps, phase diagrams): see the
     [Profiles & phase diagrams tutorial](15_multi_Profiles_Phase.md).
 
 `profile` and `phase` are **general weighted reductions** over any `getvar` fields: they are not
@@ -23,11 +23,11 @@ weight **inside that range**.
 
 ## What you can compute
 
-A profile is configurable along a few **independent** axes, mix and match freely.
+A profile is configurable along a few **independent** axes: mix and match freely.
 
-**Data source**, 3-D data (`profile(obj, …)`) or a projected 2-D map (`profile(m::DataMapsType, …)`).
+**Data source**: 3-D data (`profile(obj, …)`) or a projected 2-D map (`profile(m::DataMapsType, …)`).
 
-**Per-bin reduction**, with a `yvar`, every bin returns *all* of these at once:
+**Per-bin reduction**: with a `yvar`, every bin returns *all* of these at once:
 
 | reduction | field(s) | notes |
 |---|---|---|
@@ -40,11 +40,11 @@ A profile is configurable along a few **independent** axes, mix and match freely
 | **shape moments** | `skewness`, `kurtosis` | weighted; `kurtosis` is **excess** (0 for a Gaussian) |
 | custom | `custom` | `statistic = f(yview, wview)` (or `f(yview)`) |
 
-**Weighting**, `weight = :mass` · `:volume` (grid only) · `:none` (equal cells) · any field. (Should
+**Weighting**: `weight = :mass` · `:volume` (grid only) · `:none` (equal cells) · any field. (Should
 be non-negative.)
-**Binning**, `nbins` + `xrange` + `scale=:linear`/`:log`/**`:equal`** (quantile-spaced *adaptive*
+**Binning**: `nbins` + `xrange` + `scale=:linear`/`:log`/**`:equal`** (quantile-spaced *adaptive*
 bins, ~equal count per bin, robust for sparse outer radii / noisy data), or explicit `edges=[…]`.
-**Reference point**, `center` in `center_unit` (e.g. `center=[24,24,24], center_unit=:kpc`); the
+**Reference point**: `center` in `center_unit` (e.g. `center=[24,24,24], center_unit=:kpc`); the
 binning-axis unit is `xunit`, **not** `center_unit` (the axis can be any quantity). `range_unit` is
 a back-compat alias of `center_unit`.
 
@@ -159,7 +159,7 @@ ld.sigma_total, ld.mach, ld.anisotropy, ld.sigma_total_q   # scalars + (16,50,84
 
 ## Profiles from 2-D maps
 
-`profile(m::DataMapsType, var; xvar=:r, …)` bins the pixels of a [`projection`](@ref) result, a
+`profile(m::DataMapsType, var; xvar=:r, …)` bins the pixels of a [`projection`](@ref) result: a
 surface-brightness Σ(R), a column-weighted `vlos(R)` (`weight=:sd`), a σlos(R), or any map vs any map.
 It works for axis-aligned **and off-axis** maps: `xvar=:r` measures radius from the **object centre**
 (the map's `cextent`/pivot), so the profile is correctly centred for asymmetric FOVs and off-axis

@@ -14,7 +14,7 @@ export_vtk
 
 ## Related
 
-For maps you can display directly in Julia, see the [Projections API](projections.md) and
+For maps you can display directly in Julia: see the [Projections API](projections.md) and
 [Off-axis Projection API](offaxis.md). Mera's Makie support activates automatically once a
 Makie backend such as CairoMakie is loaded.
 

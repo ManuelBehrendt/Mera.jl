@@ -49,7 +49,7 @@ projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbo
 | `res` | grid cells per side instead of a physical pixel size |
 | `lmax` | cap the AMR level used; defaults to the object's own `lmax` |
 | `direction` | `:x`, `:y`, `:z` (default `:z`), or `:faceon`/`:edgeon` after [`galaxyframe`](../galaxyframe.md) |
-| `los`, `up`, `theta`, `phi`, `inclination`, `azimuth` | off-axis line of sight, see [Off-axis](offaxis.md) |
+| `los`, `up`, `theta`, `phi`, `inclination`, `azimuth` | off-axis line of sight: see [Off-axis](offaxis.md) |
 | `weighting` | how intensive quantities are averaged (see the note below) |
 | `mode` | `:standard` normalises per area; `:sum` returns the raw weighted sum |
 | `mask` | a boolean array from [`getmask`](@ref), applied before projecting |
@@ -57,7 +57,7 @@ projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbo
 | `data_center`, `data_center_unit` | origin the map axes and cylindrical/spherical quantities are measured from |
 | `xrange`, `yrange`, `zrange` | restrict the projected volume |
 | `max_threads` | cap the threads used |
-| `myargs` | pass a bundle instead of repeating keywords, see [Bundling Arguments](../bundled_arguments.md) |
+| `myargs` | pass a bundle instead of repeating keywords: see [Bundling Arguments](../bundled_arguments.md) |
 
 !!! warning "`weighting` has a different type for particles"
     Hydro, gravity and RT take an **array**: `weighting=[:mass]`, `weighting=[:volume]`, or
@@ -142,7 +142,7 @@ show_threading_info
 ```
 
 ---
-*For complete function documentation, see the [Complete API Reference](../api.md).*
+*For complete function documentation: see the [Complete API Reference](../api.md).*
 
 ## Function Reference
 

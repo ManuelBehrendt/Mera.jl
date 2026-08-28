@@ -46,11 +46,11 @@ working in comoving units.
 ![The quicklook dashboard for a **cosmological zoom**: gas surface density along z (face-on) and x, y
 (edge-on); face-on stellar and dark-matter surface density; the ρ-T phase diagram; and a text census of
 cell/particle counts, masses and SFR. The grid grows with the components present (here gas + stars +
-dark matter). Each component uses a meaningful perceptually-uniform, colorblind-safe colormap, gas
+dark matter). Each component uses a meaningful perceptually-uniform, colorblind-safe colormap: gas
 density `viridis`, stars `magma` (warm), dark matter `cividis` (the CVD-optimised cool map), ρ-T phase
 `viridis`.](assets/features/quicklook_dashboard.png)
 
-The same call on an **isolated disk galaxy** (gas + stars, no dark matter), face-on plus the two
+The same call on an **isolated disk galaxy** (gas + stars, no dark matter): face-on plus the two
 edge-on views show the disk and its thickness, and the dark-matter panel is simply omitted:
 
 ![The quicklook dashboard for an isolated disk galaxy: gas Σ face-on and edge-on (×2) in `viridis`, the
@@ -340,7 +340,7 @@ render(rep, :file; mode=:dir, prefix="r")  # report.jld2 + summary.txt + one PNG
 loadreport("r.jld2")                        # reload a saved QuickReport
 ```
 
-Plotting lives in a **package extension**, load any Makie backend (`using CairoMakie`) and `:plot`
+Plotting lives in a **package extension**: load any Makie backend (`using CairoMakie`) and `:plot`
 / `:file mode=:dir` activate. Without one, those backends print a clear "load CairoMakie" message;
 everything else (ascii / jld2 / `:file mode=:bundle`) works with no extra dependencies.
 

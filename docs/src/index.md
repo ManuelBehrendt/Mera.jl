@@ -81,7 +81,7 @@ or work through it in order ([Learning Path](#Learning-Path-and-Documentation)).
     ```
 
     The fixtures that produced the outputs shown in the tutorials are not redistributed. For a
-    public snapshot to follow along with, see the downloadable RAMSES samples linked from
+    public snapshot to follow along with: see the downloadable RAMSES samples linked from
     [Cosmological Runs](09_multi_Cosmology.md) and [Magnetic Fields](magnetic_fields.md).
 
 !!! tip "For Scientists"
@@ -139,13 +139,13 @@ backend such as CairoMakie is loaded, with nothing further to install.
 Julia 1.10 is the minimum the package supports (`julia = "1.10"` in `Project.toml`) and stays in
 CI so it keeps working. 1.12 is what we recommend running: the compiler is faster and the garbage
 collector handles the large allocations of AMR and particle analysis better, which is most of what
-Mera does. CI runners have no simulation data, so they exercise the data-free tiers, the
+Mera does. CI runners have no simulation data, so they exercise the data-free tiers: the
 synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file round-trips,
 while the full suite runs against real snapshots locally.
 
 ## Ambient Study Music
 
-**Ambient Study Music**, by MERA, inspired by astrophysics. Eighteen tracks, each named after an
+**Ambient Study Music**: by MERA, inspired by astrophysics. Eighteen tracks, each named after an
 astronomical object. Written alongside the package, and meant for long sessions with data.
 
 ```@raw html

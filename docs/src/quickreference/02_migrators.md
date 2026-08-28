@@ -1150,7 +1150,7 @@ subset = data[11:20]           # Elements 11 through 20 (10 elements)
 
 | IDL Pattern | Julia Equivalent | Migration Rule |
 | :-- | :-- | :-- |
-| `for i=0, n-1 do` | `for i in 1:n` | Add 1 to start, keep count |
+| `for i=0, n-1 do` | `for i in 1:n` | Add 1 to start: keep count |
 | `data[0:n-1]` | `data[1:n]` | Shift both bounds by +1 |
 | `data[i*step:(i+1)*step-1]` | `data[i*step+1:(i+1)*step]` | Shift bounds by +1 |
 | `where(mask, count)` | `findall(mask), length(findall(mask))` | No index adjustment needed |
@@ -1671,7 +1671,7 @@ This comprehensive guide transforms the basic IDL syntax comparison into a compl
 | :-- | :-- | :-- |
 | **Python** | PythonCall.jl (bidirectional) | Use `JuliaCall` from Python side |
 | **R** | JuliaCall package | `library(JuliaCall); julia_setup()` |
-| **C/C++** | Embed libjulia | Use `julia.h`, call `jl_init()` |
+| **C/C++** | Embed libjulia | Use `julia.h`: call `jl_init()` |
 | **Executable** | PackageCompiler.jl | `create_app(".", "myapp")` |
 | **Binary executable** | PackageCompiler.jl | `create_sysimage([:MyPackage], sysimage_path="mysys.so")` |
 | **From Fortran** | C interface | Call `jl_init()`, `jl_eval_string()` from Fortran via C interoperability |

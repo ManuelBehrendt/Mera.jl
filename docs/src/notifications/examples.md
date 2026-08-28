@@ -1,7 +1,7 @@
 # Notifications: Examples & Troubleshooting
 
 Complete, realistic Mera workflows using the notification functions. For
-configuration and the full option list, see [Setup & Usage](setup_and_usage.md).
+configuration and the full option list: see [Setup & Usage](setup_and_usage.md).
 
 !!! info "Which channel does each example use?"
     `notifyme` sends to **everything you have configured**, one call, both channels if

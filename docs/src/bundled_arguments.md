@@ -69,7 +69,7 @@ functions:
 | output | `verbose`, `show_progress`, `verbose_threads` |
 
 !!! note
-    Any function that accepts these arguments accepts the `myargs` bundle, `getinfo`,
+    Any function that accepts these arguments accepts the `myargs` bundle: `getinfo`,
     `gethydro`/`getparticles`/`getgravity`/`getclumps`/`getrt`, `subregion`/`shellregion`,
     `projection`, and the data converters.
 
@@ -87,8 +87,8 @@ gas  = gethydro(info, myargs=quiet)
 part = getparticles(info, myargs=quiet)
 ```
 
-For silencing **all** Mera calls at once (without threading a bundle through each), use the
-global switch instead, see [Verbose & progress switches](verbose_progress_switches.md).
+For silencing **all** Mera calls at once (without threading a bundle through each): use the
+global switch instead: see [Verbose & progress switches](verbose_progress_switches.md).
 
 ## Other ways to bundle: and when `myargs` is the right one
 
@@ -138,7 +138,7 @@ Rule of thumb:
 | **one** bundle spanning functions with **different** signatures | `myargs=ArgumentsType()` (tolerant) |
 | a preconfigured shorthand function | a closure, `myhydro(info; kw...) = gethydro(info; opts..., kw...)` |
 
-You can also combine them, pass a `myargs` bundle *and* splat a `NamedTuple` of extra
+You can also combine them: pass a `myargs` bundle *and* splat a `NamedTuple` of extra
 keywords in the same call.
 
 ## See also

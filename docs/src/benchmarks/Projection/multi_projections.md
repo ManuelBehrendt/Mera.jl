@@ -50,7 +50,7 @@ small-to-moderate projections a single thread is typically sufficient.
 ## Takeaways
 
 - Projection of moderate datasets is **fast** (~1 to 2 s at 1024² here) and
-  **memory-bandwidth limited**, so multithreading gives little speedup at this
+  **memory-bandwidth limited**: so multithreading gives little speedup at this
   scale, measure on your own dataset before allocating many threads to it.
 - Resolution drives both time and memory: doubling `res` roughly quadruples the
   output grid (and its memory); choose the smallest resolution that resolves

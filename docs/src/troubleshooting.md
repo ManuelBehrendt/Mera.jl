@@ -47,7 +47,7 @@ ENV["MERA_EXAMPLES"] = "/path/to/your/simulations"   # before `using Mera`
 ```
 
 If you have no simulation output at all, several pages run on synthetic data with nothing
-downloaded, see [Clump Finding](clumpfind_synthetic.md), [Statistics](statistics.md) and
+downloaded: see [Clump Finding](clumpfind_synthetic.md), [Statistics](statistics.md) and
 [Uniform Grid](covering_grid.md). `synthetic_clumps()` builds real Mera objects in memory, so
 everything downstream works exactly as on a real snapshot.
 

@@ -13,7 +13,7 @@
 
 **Main Takeaways**  
 - Julia's **composable threading** and **parallel GC** for multi-GB AMR loads, projections, and VTK exports 
-- Concurrent threading at multiple levels can saturate I/O and memory, use Mera's `max_threads` keyword to control internal concurrency  
+- Concurrent threading at multiple levels can saturate I/O and memory: use Mera's `max_threads` keyword to control internal concurrency  
 - **Benchmark** each threaded function to find your server's optimal thread counts  
 - Examples to transform your existing code into parallel workflows with minimal changes
 
@@ -868,7 +868,7 @@ end
 
 **Strategy:** Parallelize the outer loop, disable internal threading.
 
-In the examples below, `SIMPATH` is your RAMSES simulation directory, set it
+In the examples below, `SIMPATH` is your RAMSES simulation directory: set it
 once to your own path:
 
 ```julia
@@ -1834,7 +1834,7 @@ Notes:
 
  Julia's **native multi-threading** lets you utilize your available cores within pure Julia code, no external libraries, MPI, or complex setup required.
 
-**For Mera users**, this means the following functions are already internally parallelized:
+**For Mera users**: this means the following functions are already internally parallelized:
 - **AMR data loading** (`gethydro`/`getgravity`) reads levels concurrently  
 - **Particle streaming** (`getparticles`) processes files in parallel  
 - **Projection creation** (`projection`) spawns one thread per variable for hydro data

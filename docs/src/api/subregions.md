@@ -156,7 +156,7 @@ modest. Cuboids are split analytically (exact, no sampling). The figure is repro
 
 The `:fraction` carries through to [`projection`](@ref) automatically: projection takes its mass
 weight from `getvar(:mass)`, which honours `:fraction`, so a projection of a split subregion is
-**exactly region-clipped**, boundary cells are dimmed by their inside-fraction (a smooth,
+**exactly region-clipped**: boundary cells are dimmed by their inside-fraction (a smooth,
 anti-aliased edge instead of a blocky one), and a `:sd` map integrates to the exact enclosed mass.
 
 ```julia
@@ -186,7 +186,7 @@ All subregion functions support multiple data types through Julia's multiple dis
 - **GravDataType**: Gravitational field data
 
 ---
-*For complete function documentation, see the [Complete API Reference](../api.md).*
+*For complete function documentation: see the [Complete API Reference](../api.md).*
 
 ## Function Reference
 

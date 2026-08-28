@@ -80,8 +80,8 @@ so the suite always runs against the latest `1.10.x`, `1.11.x`, and `1.12.x`.
 Pre-releases (e.g. `1.13`, which at time of writing is only a release
 candidate) are intentionally **not** included: they are moving targets and
 upstream rc bugs would produce spurious failures. When `1.13.0` ships as
-stable, add a `'1.13'` row (and optionally drop an older series). To get
-early warning of breakage on an upcoming release, add a non-blocking `'pre'`
+stable: add a `'1.13'` row (and optionally drop an older series). To get
+early warning of breakage on an upcoming release: add a non-blocking `'pre'`
 (or `'nightly'`) matrix entry; `fail-fast: false` is already set so such a row
 can fail without failing the whole build.
 
@@ -166,7 +166,7 @@ The Jupyter tutorial notebooks in the documentation
 ([`Mera-Docs/version_1`](https://github.com/ManuelBehrendt/Mera.jl)) double as an
 **end-to-end, real-world workflow test tier**. Where the unit suite exercises
 functions in isolation, the notebooks run the *full analysis pipelines a user
-would actually follow*, load info → read hydro/particles/gravity/clumps →
+would actually follow*: load info → read hydro/particles/gravity/clumps →
 select regions → derive variables → project → mask/filter → save/load Mera
 files → export VTK, against the real RAMSES datasets. Two distinct kinds of
 value:

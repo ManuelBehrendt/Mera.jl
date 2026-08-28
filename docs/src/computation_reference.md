@@ -15,7 +15,7 @@ the implementation; the code lives in `src/functions/getvar/getvar_hydro.jl`,
 
 ## Which data to load
 
-Each section is marked with the data object(s) the quantity is defined on, load that type from the
+Each section is marked with the data object(s) the quantity is defined on: load that type from the
 same `info` (`getinfo`) and call `getvar` on it:
 
 | Loader | Object | Provides |
@@ -32,7 +32,7 @@ same `info` (`getinfo`) and call `getvar` on it:
 (hydro/gravity/RT). `:volume` is defined for those too, and additionally on **GADGET/AREPO gas
 particles**, where the reader stores ``V = m/\rho`` per particle, so volume weighting works on
 that family as well. The **RT ionization** quantities
-(`:xHII`, `:mu`, `:T_rt`, `:n_*`, …) are passive **hydro** scalars, request them on `gethydro` of an
+(`:xHII`, `:mu`, `:T_rt`, `:n_*`, …) are passive **hydro** scalars: request them on `gethydro` of an
 RT run, whereas the photon-group fields live on the `getrt` object.
 
 ## Thermodynamics
@@ -543,7 +543,7 @@ line width ``\sigma_\mathrm{th}=\sqrt{k_B\langle T\rangle/(\mu m_H)}`` to give t
 So `profile(gas, :r_cylinder, :vϕ_cylinder)` returns both the **mean** ``\langle v_\phi\rangle(R)``
 (the kinematic rotation curve, it keeps its sign) and the **`std`** ``\sigma_\phi(R)`` (the spread
 about it). A *projected* σ (profile a per-pixel `:σlos` map vs. radius) and a *3-D* per-bin σ answer
-different questions, see the σ note in [Profiles & Phase Diagrams](profiles_phase.md).
+different questions: see the σ note in [Profiles & Phase Diagrams](profiles_phase.md).
 
 ## Worked example: Mach number end-to-end
 
