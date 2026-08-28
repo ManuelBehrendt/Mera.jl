@@ -2,7 +2,7 @@
 
 The errors people actually hit in their first hour, with the message Mera prints and what to
 do about it. If something here is wrong or missing, please
-[open an issue](https://github.com/ManuelBehrendt/Mera.jl/issues) — that is the fastest way
+[open an issue](https://github.com/ManuelBehrendt/Mera.jl/issues), that is the fastest way
 to get it fixed for the next person.
 
 ## "File or folder does not exist"
@@ -26,14 +26,14 @@ one of them.
 
 **Are you pointing at non-RAMSES data?** Code detection falls back to RAMSES when it
 recognises nothing, so a PLUTO/Athena++/FLASH/GADGET folder that isn't detected produces this
-same RAMSES-shaped message about a missing `info_XXXXX.txt` — which is confusing, because your
+same RAMSES-shaped message about a missing `info_XXXXX.txt`, which is confusing, because your
 data has no such file and never should. Name the code explicitly to find out:
 
 ```julia
 info = getinfo(path, code=:pluto)     # :pluto, :chombo, :athena, :flash, :gadget, :ramses
 ```
 
-If that works, detection failed rather than the file being missing — please
+If that works, detection failed rather than the file being missing, please
 [report it](https://github.com/ManuelBehrendt/Mera.jl/issues) with your directory listing,
 since detection is meant to handle it. This release reads RAMSES; the frontends for other
 codes are on the `multicode` branch (`] add https://github.com/ManuelBehrendt/Mera.jl#multicode`).
@@ -47,7 +47,7 @@ ENV["MERA_EXAMPLES"] = "/path/to/your/simulations"   # before `using Mera`
 ```
 
 If you have no simulation output at all, several pages run on synthetic data with nothing
-downloaded — see [Clump Finding](clumpfind_synthetic.md), [Statistics](statistics.md) and
+downloaded, see [Clump Finding](clumpfind_synthetic.md), [Statistics](statistics.md) and
 [Uniform Grid](covering_grid.md). `synthetic_clumps()` builds real Mera objects in memory, so
 everything downstream works exactly as on a real snapshot.
 
@@ -65,7 +65,7 @@ using Pkg
 Pkg.add("CairoMakie")   # what most tutorial figures use
 ```
 
-Mera's Makie support is a package extension — it activates by itself once a backend is
+Mera's Makie support is a package extension, it activates by itself once a backend is
 loaded, with nothing else to install.
 
 ## `FieldError: type ScalesType003 has no field ...`
@@ -103,7 +103,7 @@ projection(part, :sd, weighting=:mass)      # particles
 asked for. Zoom into a small region of a big box and most of those pixels fall outside it, so
 `res=512` on a ±1100 ckpc/h window of a large box returns a **16×16** map.
 
-Set the pixel size directly instead — `pxsize` dominates over both `res` and `lmax`, and means
+Set the pixel size directly instead, `pxsize` dominates over both `res` and `lmax`, and means
 the same thing whatever the window:
 
 ```julia
@@ -122,8 +122,8 @@ The two backends split the work differently, so check which one you are on:
 - **Cell projection (hydro/gravity) parallelises over variables**, not pixels. One variable
   stays flat however many threads you give it; ask for several in one call to get the benefit.
 - **Particle projection parallelises inside a single map**, so one variable does speed up. But
-  only `:voronoi` is compute-bound and scales well — `:mass`, `:volume` and `:sph` are limited
-  by memory bandwidth and typically gain 2–4×, not 8×.
+  only `:voronoi` is compute-bound and scales well, `:mass`, `:volume` and `:sph` are limited
+  by memory bandwidth and typically gain 2 to 4×, not 8×.
 
 ```julia
 projection(gas,  [:sd, :T, :vx], :km_s)          # cells: threads over the three variables
@@ -157,13 +157,13 @@ export JULIA_NUM_THREADS=8
 ```
 
 See [Multi-Threading](multi-threading/multi-threading_intro.md). Note that more threads is
-not automatically faster — a single light projection is serial-fraction dominated and stays
+not automatically faster, a single light projection is serial-fraction dominated and stays
 flat; the measured numbers are in
 [Projection benchmarks](benchmarks/Projection/multi_projections.md).
 
 ## Out of memory on a large output
 
-`gethydro(info)` loads the whole box. Read only what you need instead — the selection happens
+`gethydro(info)` loads the whole box. Read only what you need instead, the selection happens
 during the read, so the memory is never allocated:
 
 ```julia
@@ -184,7 +184,7 @@ It isn't meant to. [`savedata`](@ref) stores the Julia object and compresses wit
 ## The first call is slow
 
 Julia compiles as it runs, so expect several seconds on the first call in a session and
-near-instant afterwards. This is normal and not a sign anything is wrong — see
+near-instant afterwards. This is normal and not a sign anything is wrong, see
 [Julia for Simulation Analysis](julia_for_simulation_analysis.md).
 
 ## Mera's load message is in my way
@@ -201,6 +201,6 @@ export MERA_QUIET=1
 - [`viewfields`](@ref) on any Mera object shows what it actually contains.
 - [`provenance`](@ref) reports the Mera version, output and simulation code behind a result,
   which is the first thing to include in a bug report.
-- Reader support differs by simulation code — see
+- Reader support differs by simulation code: see
   the `multicode` branch before assuming a gap
   is a bug.

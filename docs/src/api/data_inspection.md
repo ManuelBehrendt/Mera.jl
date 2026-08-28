@@ -7,7 +7,7 @@ object contains afterwards. The narrative guide is
 ## Before loading
 
 [`checksimulations`](@ref) answers "what runs are on this disk?" and
-[`checkoutputs`](@ref) answers "which outputs does this run have?" — both worth reaching for
+[`checkoutputs`](@ref) answers "which outputs does this run have?", both worth reaching for
 before a path error rather than after one.
 
 ```@docs; canonical=false
@@ -18,7 +18,7 @@ checkoutputs
 
 ## Inspecting an object
 
-`viewfields` works on any Mera object and is the quickest way to see what you actually have —
+`viewfields` works on any Mera object and is the quickest way to see what you actually have,
 including [`InfoType`](@ref) sub-structures such as `info.scale` and `info.fnames`.
 
 ```@docs; canonical=false
@@ -54,7 +54,7 @@ createpath
 
 ## Related
 
-Provenance — which Mera version, output and simulation code produced a result — is
+Provenance, which Mera version, output and simulation code produced a result, is
 [`provenance`](@ref), documented on the [Provenance](../provenance.md) page.
 
 ---

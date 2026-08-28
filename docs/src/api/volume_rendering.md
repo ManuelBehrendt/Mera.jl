@@ -1,6 +1,6 @@
 # VTK Export API Reference
 
-Mera does not render volumes itself. It writes VTK files, and you open those in ParaView —
+Mera does not render volumes itself. It writes VTK files, and you open those in ParaView,
 the narrative guides are [Intro](../paraview/paraview_intro.md),
 [Hydro](../paraview/08_hydro_VTK_export.md) and
 [Particles](../paraview/08_particles_VTK_export.md), which cover the ParaView side:

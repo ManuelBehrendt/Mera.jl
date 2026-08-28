@@ -1,6 +1,6 @@
 # Bundling Arguments (`myargs`)
 
-Many Mera functions share the same arguments — a spatial region, a center, a resolution, the
+Many Mera functions share the same arguments: a spatial region, a center, a resolution, the
 verbose/progress switches. Repeating them on every `gethydro`, `getparticles`, `projection`,
 `subregion`, … call is verbose and error-prone. [`ArgumentsType`](@ref) lets you fill them in
 **once** and pass the whole bundle as the single keyword `myargs=…`.
@@ -69,7 +69,7 @@ functions:
 | output | `verbose`, `show_progress`, `verbose_threads` |
 
 !!! note
-    Any function that accepts these arguments accepts the `myargs` bundle — `getinfo`,
+    Any function that accepts these arguments accepts the `myargs` bundle, `getinfo`,
     `gethydro`/`getparticles`/`getgravity`/`getclumps`/`getrt`, `subregion`/`shellregion`,
     `projection`, and the data converters.
 
@@ -88,9 +88,9 @@ part = getparticles(info, myargs=quiet)
 ```
 
 For silencing **all** Mera calls at once (without threading a bundle through each), use the
-global switch instead — see [Verbose & progress switches](verbose_progress_switches.md).
+global switch instead, see [Verbose & progress switches](verbose_progress_switches.md).
 
-## Other ways to bundle — and when `myargs` is the right one
+## Other ways to bundle: and when `myargs` is the right one
 
 Julia itself has a first-class way to bundle keyword arguments: a `NamedTuple` **splatted**
 with `;`. It works directly with Mera functions, no special type needed:
@@ -138,10 +138,10 @@ Rule of thumb:
 | **one** bundle spanning functions with **different** signatures | `myargs=ArgumentsType()` (tolerant) |
 | a preconfigured shorthand function | a closure, `myhydro(info; kw...) = gethydro(info; opts..., kw...)` |
 
-You can also combine them — pass a `myargs` bundle *and* splat a `NamedTuple` of extra
+You can also combine them, pass a `myargs` bundle *and* splat a `NamedTuple` of extra
 keywords in the same call.
 
 ## See also
 
-- [Verbose & progress switches](verbose_progress_switches.md) — global master switch for messages and progress bars.
-- [`gethydro`](@ref), [`projection`](@ref), [`subregion`](@ref) — the functions that accept `myargs`.
+- [Verbose & progress switches](verbose_progress_switches.md): global master switch for messages and progress bars.
+- [`gethydro`](@ref), [`projection`](@ref), [`subregion`](@ref): the functions that accept `myargs`.

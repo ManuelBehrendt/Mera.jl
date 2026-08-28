@@ -1,15 +1,15 @@
 # MERA.jl
 
-*High-performance analysis of astrophysical simulations in pure Julia — RAMSES natively and in full, plus AREPO, GADGET, PLUTO, Athena++, FLASH and Chombo through one unified API*
+*High-performance analysis of astrophysical simulations in pure Julia: RAMSES natively and in full, plus AREPO, GADGET, PLUTO, Athena++, FLASH and Chombo through one unified API*
 
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
-**MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for **RAMSES** — multi-resolution AMR grids, particles, gravity, clumps and radiative-transfer fields loaded into memory-efficient tables — and now reading **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 170+ physics-derived quantities on demand (across hydro, particles, gravity, RT and clumps) and provides conservation-correct projections, profiles, flux budgets and structure finding — all through one unified, multiple-dispatch API.
+**MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for **RAMSES**, multi-resolution AMR grids, particles, gravity, clumps and radiative-transfer fields loaded into memory-efficient tables, and now reading **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 170+ physics-derived quantities on demand (across hydro, particles, gravity, RT and clumps) and provides conservation-correct projections, profiles, flux budgets and structure finding, all through one unified, multiple-dispatch API.
 
-Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`, `getrt` and `getclumps` readers, because it writes those to separate files. Where another code stores the same physics inside its snapshot — Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`, Athena++ six-ray radiation — the reader maps it to the canonical field, so `getvar(gas, :gpot)` works there too. AREPO and GADGET add particles and FoF group catalogues (`getgroups`; subhalos are not read).
+Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`, `getrt` and `getclumps` readers, because it writes those to separate files. Where another code stores the same physics inside its snapshot, Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`, Athena++ six-ray radiation, the reader maps it to the canonical field, so `getvar(gas, :gpot)` works there too. AREPO and GADGET add particles and FoF group catalogues (`getgroups`; subhalos are not read).
 
-Frontends for other simulation codes — PLUTO, Chombo, Athena++, FLASH and the GADGET-HDF5
-family (GADGET / AREPO / SWIFT / GIZMO) — are in active development on the `multicode` branch
+Frontends for other simulation codes: PLUTO, Chombo, Athena++, FLASH and the GADGET-HDF5
+family (GADGET / AREPO / SWIFT / GIZMO), are in active development on the `multicode` branch
 and are not part of this release:
 
 ```julia
@@ -38,7 +38,7 @@ move it forward quickly.
 (below), jump to a task you already have in mind ([Quick Navigation](#Quick-Navigation)),
 or work through it in order ([Learning Path](#Learning-Path-and-Documentation)).*
 
-!!! note "Run something now — no data needed"
+!!! note "Run something now, no data needed"
     `synthetic_clumps()` builds real Mera objects in memory, so this works on a fresh
     install with nothing downloaded:
 
@@ -49,8 +49,8 @@ or work through it in order ([Learning Path](#Learning-Path-and-Documentation)).
     projection(gas, :sd, :Msol_pc2)       # a 128×128 surface-density map
     ```
 
-    Everything else in these docs — `getvar`, `subregion`, `filterdata`, `profile`,
-    `savedata` — works on `gas` exactly as it does on a real snapshot. Because the clump
+    Everything else in these docs: `getvar`, `subregion`, `filterdata`, `profile`,
+    `savedata`, works on `gas` exactly as it does on a real snapshot. Because the clump
     positions are known, this is also how [clump finding](clumpfind_synthetic.md) is scored
     against ground truth.
 
@@ -61,7 +61,7 @@ or work through it in order ([Learning Path](#Learning-Path-and-Documentation)).
     [Uniform Grid](covering_grid.md) also run on synthetic data.
 
     **With a snapshot of your own:** [Get Started](00_multi_FirstSteps.md) ·
-    [Coming from Other Tools](switching_to_mera.md). Both load a simulation output — set
+    [Coming from Other Tools](switching_to_mera.md). Both load a simulation output, set
     `ENV["MERA_EXAMPLES"]` to your simulation folder first, or grab one of the public RAMSES
     samples linked from [Cosmological Runs](09_multi_Cosmology.md).
 
@@ -132,15 +132,15 @@ Pkg.add("PyPlot")       # only the projection pages that import it
 Mera's Makie support ships as a package extension: it activates by itself once a Makie
 backend such as CairoMakie is loaded, with nothing further to install.
 
-**Requirements**: Julia 1.10 or newer — **1.12+ recommended** — and 8GB+ RAM  
+**Requirements**: Julia 1.10 or newer, **1.12+ recommended**, and 8GB+ RAM  
 **Platforms**: macOS (including Apple Silicon), Linux, Windows  
-**Tested on every push**: Julia 1.10 / 1.11 / 1.12 × Linux, macOS and Windows — nine jobs
+**Tested on every push**: Julia 1.10 / 1.11 / 1.12 × Linux, macOS and Windows, nine jobs
 
 Julia 1.10 is the minimum the package supports (`julia = "1.10"` in `Project.toml`) and stays in
 CI so it keeps working. 1.12 is what we recommend running: the compiler is faster and the garbage
 collector handles the large allocations of AMR and particle analysis better, which is most of what
-Mera does. CI runners have no simulation data, so they exercise the data-free tiers — the
-synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file round-trips —
+Mera does. CI runners have no simulation data, so they exercise the data-free tiers, the
+synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file round-trips,
 while the full suite runs against real snapshots locally.
 
 ## Ambient Study Music
@@ -199,7 +199,7 @@ proj = projection(gas, :rho, direction=:z)
 - **Julia-Native Performance**: JIT compilation delivers native performance for numerical computations without Python overhead
 - **Memory-Efficient AMR Processing**: Handle TB-scale simulations with selective loading and IndexedTables.jl backend
 - **Multi-Threaded I/O Optimization**: Comprehensive benchmarking framework for optimal thread configuration
-- **Extensive Physics Variables**: 82 hydro and 47 particle quantities, plus gravity, RT and clumps (Jeans mass, Mach numbers, virial parameters) — `getvar()` lists them all
+- **Extensive Physics Variables**: 82 hydro and 47 particle quantities, plus gravity, RT and clumps (Jeans mass, Mach numbers, virial parameters), all listed by `getvar()`
 - **Advanced AMR Projections**: Mass-conserving projections with proper AMR boundary handling
 - **Professional Visualization Pipeline**: VTK export preserving AMR structure for ParaView/VisIt
 - **Compressed Data Storage**: MERA-Files with LZ4/Zlib/Bzip2 compression for efficient time-series analysis
@@ -209,7 +209,7 @@ proj = projection(gas, :rho, direction=:z)
 
 ## Why Julia + Multiple Dispatch?
 
-MERA showcases Julia's **multiple dispatch** – the same function works differently based on data type, automatically choosing the correct method:
+MERA showcases Julia's **multiple dispatch**: the same function works differently based on data type, automatically choosing the correct method:
 
 ```julia
 # One function name, different physics
@@ -254,19 +254,19 @@ before it.*
 | **[Advanced Testing](advanced_features/testing_guide.md)** | MERA's testing framework | Developers, contributors |
 
 ### 📚 **Reference Materials**
-- **[Complete API](api.md)** - All functions and types
-- **[Coming from Other Tools](switching_to_mera.md)** - Concept mapping and a worked workflow
-- **[Julia for Python/MATLAB/IDL users](quickreference/02_migrators.md)** - Learning Julia the language
-- **[Examples](examples.md)** - Real-world workflows
-- **[Miscellaneous](Miscellaneous.md)** - Bundled arguments, verbose switches, misc features
+- **[Complete API](api.md)**: All functions and types
+- **[Coming from Other Tools](switching_to_mera.md)**: Concept mapping and a worked workflow
+- **[Julia for Python/MATLAB/IDL users](quickreference/02_migrators.md)**: Learning Julia the language
+- **[Examples](examples.md)**: Real-world workflows
+- **[Miscellaneous](Miscellaneous.md)**: Bundled arguments, verbose switches, misc features
 
 
 ## Community & Support
 
 ### 🤝 **Get Involved**
-- **[GitHub Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions)** - Ask questions, share tips, get help
-- **[Show & Tell](https://github.com/ManuelBehrendt/Mera.jl/discussions/categories/show-and-tell)** - Share your scientific results and visualizations
-- **[Report Issues](https://github.com/ManuelBehrendt/Mera.jl/issues)** - Bug reports and feature requests
+- **[GitHub Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions)**: Ask questions, share tips, get help
+- **[Show & Tell](https://github.com/ManuelBehrendt/Mera.jl/discussions/categories/show-and-tell)**: Share your scientific results and visualizations
+- **[Report Issues](https://github.com/ManuelBehrendt/Mera.jl/issues)**: Bug reports and feature requests
 
 ### 💡 **Quick Help**
 - **REPL Help**: `?getinfo` for function docs, `methods(getinfo)` for available methods  

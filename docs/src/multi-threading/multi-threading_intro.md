@@ -8,12 +8,12 @@
 !!! tip "Just getting started?"
     For a compact, measured introduction (thread-count scaling on a small fixture, the
     `max_threads` throttle, laptop-scale guidance), see
-    [Julia for Simulation Analysis](../julia_for_simulation_analysis.md) — this page is the
+    [Julia for Simulation Analysis](../julia_for_simulation_analysis.md), this page is the
     full reference.
 
 **Main Takeaways**  
 - Julia's **composable threading** and **parallel GC** for multi-GB AMR loads, projections, and VTK exports 
-- Concurrent threading at multiple levels can saturate I/O and memory—use Mera's `max_threads` keyword to control internal concurrency  
+- Concurrent threading at multiple levels can saturate I/O and memory, use Mera's `max_threads` keyword to control internal concurrency  
 - **Benchmark** each threaded function to find your server's optimal thread counts  
 - Examples to transform your existing code into parallel workflows with minimal changes
 
@@ -163,7 +163,7 @@ projection(gas, [:sd, :T, :vx, :vy, :vz, :σ, :σx, :σy, :σz], :km_s)
 [projection(gas, v, :km_s) for v in (:sd, :T, :vx, :vy, :vz, :σ, :σx, :σy, :σz)]
 ```
 
-Measured on an M2 Pro (12 cores) with `mw_L10` output 300, 28.3M cells — the numbers behind
+Measured on an M2 Pro (12 cores) with `mw_L10` output 300, 28.3M cells, the numbers behind
 this are in [Projection benchmarks](../benchmarks/Projection/multi_projections.md):
 
 | Threads | single-var `:sd` | 10 vars |
@@ -173,20 +173,20 @@ this are in [Projection benchmarks](../benchmarks/Projection/multi_projections.m
 | 4 | 1.58 s | 13.3 s |
 | 8 | 1.62 s | 12.9 s |
 
-A single light projection is **serial-fraction dominated and stays flat** — that is expected,
+A single light projection is **serial-fraction dominated and stays flat**, that is expected,
 not a misconfiguration. The ten-variable case gains about 1.6× and then saturates. Reading is
 usually I/O bound, so it saturates once the storage does; see
 [Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md).
 
 !!! note "Particle projection splits differently"
     The particle backend parallelises *inside* one map rather than across variables, so a
-    single-variable particle projection does speed up — unlike the cell case above. `:voronoi`
+    single-variable particle projection does speed up, unlike the cell case above. `:voronoi`
     splits the pixels (bitwise identical to serial at any thread count); `:mass`, `:volume` and
     `:sph` split the particles into chunks with per-thread accumulators reduced in a fixed order.
 
     This matters most on the particle-based codes (GADGET, AREPO, SWIFT, GIZMO), where the gas
     is particles too, so *every* projection takes this path. `:voronoi` is compute-bound and
-    scales well; the deposition schemes are memory-bandwidth bound and gain roughly 2–4×. Costs
+    scales well; the deposition schemes are memory-bandwidth bound and gain roughly 2 to 4×. Costs
     per scheme are documented on the `multicode` branch, with the GADGET/AREPO reader.
 
 ## 2 Setting Up Julia for Threading
@@ -354,7 +354,7 @@ julia --threads=32,4 --gcthreads=16
     julia -e "println(\"Detected CPUs: \", Sys.CPU_THREADS)"
     ```
     
-    **Never use `julia -t auto` on shared nodes** - it may claim all 64+ cores!
+    **Never use `julia -t auto` on shared nodes**: it may claim all 64+ cores!
 
 ## 3 Choosing a thread count
 
@@ -384,11 +384,11 @@ Do you have multiple independent tasks?
 ### When NOT to Use Threading
 
 **❌ Threading Won't Help:**
-- **Single small calculations** - Threading overhead > benefit
-- **Memory-starved systems** - Will make GC worse
-- **Single snapshot + single variable** - Already optimized
-- **Network bottlenecked I/O** - May actually slow things down
-- **Thread-unsafe external libraries** - Will cause crashes
+- **Single small calculations**: Threading overhead > benefit
+- **Memory-starved systems**: Will make GC worse
+- **Single snapshot + single variable**: Already optimized
+- **Network bottlenecked I/O**: May actually slow things down
+- **Thread-unsafe external libraries**: Will cause crashes
 
 **⚖️ Cost-Benefit Analysis:**
 ```
@@ -518,7 +518,7 @@ end
 - `max_threads = 1`: Run completely serially
 - `max_threads = N`: Optimize for N concurrent operations
 
-**The Real Benefit**: `max_threads` isn't about preventing Julia from breaking - it's about optimizing for the physical realities of large scientific datasets, storage systems, and memory hierarchies.  
+**The Real Benefit**: `max_threads` isn't about preventing Julia from breaking, it's about optimizing for the physical realities of large scientific datasets, storage systems, and memory hierarchies.  
 
 
 ## 5 Benchmarking & Performance Tuning
@@ -571,7 +571,7 @@ benchmark_export_vtk(gas, "./benchmark_temp")
 ```
 
 **What the measurement actually looks like.** These are real numbers from
-[Projection benchmarks](../benchmarks/Projection/multi_projections.md) — Apple M2 Pro
+[Projection benchmarks](../benchmarks/Projection/multi_projections.md), Apple M2 Pro
 (12 cores), Julia 1.12.3, `mw_L10` output 300 hydro (28.3M cells):
 
 | Threads | single-var `:sd` (median) | multi-var, 10 vars (median) |
@@ -582,7 +582,7 @@ benchmark_export_vtk(gas, "./benchmark_temp")
 | 8 | 1.62 s | 12.9 s |
 
 Note what this does **not** show: a single light projection is serial-fraction dominated and
-stays flat at every thread count. Threads pay off when there is enough independent work —
+stays flat at every thread count. Threads pay off when there is enough independent work,
 here the ten-variable projection gains about 1.6× and then saturates. Expect that shape
 rather than linear scaling, and measure your own case before provisioning threads.
 
@@ -868,7 +868,7 @@ end
 
 **Strategy:** Parallelize the outer loop, disable internal threading.
 
-In the examples below, `SIMPATH` is your RAMSES simulation directory — set it
+In the examples below, `SIMPATH` is your RAMSES simulation directory, set it
 once to your own path:
 
 ```julia
@@ -1832,7 +1832,7 @@ Notes:
 
 ### 1.1 Why Multi-Threading Matters for Scientists
 
- Julia's **native multi-threading** lets you utilize your available cores within pure Julia code—no external libraries, MPI, or complex setup required.
+ Julia's **native multi-threading** lets you utilize your available cores within pure Julia code, no external libraries, MPI, or complex setup required.
 
 **For Mera users**, this means the following functions are already internally parallelized:
 - **AMR data loading** (`gethydro`/`getgravity`) reads levels concurrently  
@@ -1852,7 +1852,7 @@ This architectural advantage is crucial for scientific computing where you might
 
 ### 1.3 Parallel Garbage Collection
 
-Julia 1.10+ introduces **parallel garbage collection**—the GC's mark phase runs on multiple threads, dramatically reducing pause times for allocation-heavy applications. This is especially important when processing large RAMSES datasets that create many temporary objects.
+Julia 1.10+ introduces **parallel garbage collection**, the GC's mark phase runs on multiple threads, dramatically reducing pause times for allocation-heavy applications. This is especially important when processing large RAMSES datasets that create many temporary objects.
 
 ## Summary
 
@@ -1860,7 +1860,7 @@ This comprehensive guide provides everything needed to harness Julia's multi-thr
 
 **Key Takeaways:**
 1. **Understand resource contention** and use `max_threads` to control it
-2. **Choose your parallelization level** - outer loops or inner kernels, not both uncontrolled
+2. **Choose your parallelization level**: outer loops or inner kernels, not both uncontrolled
 3. **Benchmark systematically** to find optimal thread counts for your hardware  
 4. **Monitor GC performance** and tune for large dataset processing
 5. **Transform existing tutorials** with minimal code changes for immediate benefits
@@ -1876,4 +1876,4 @@ This comprehensive guide provides everything needed to harness Julia's multi-thr
 - Avoid false sharing with proper data structure design
 - Profile and benchmark before optimizing
 
-By following these patterns, you can transform single-threaded analysis scripts into high-throughput, scalable workflows that fully utilize modern multi-core processors—all within pure Julia code, no external dependencies required.
+By following these patterns, you can transform single-threaded analysis scripts into high-throughput, scalable workflows that fully utilize modern multi-core processors, all within pure Julia code, no external dependencies required.

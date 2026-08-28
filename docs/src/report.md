@@ -2,10 +2,10 @@
 
 Two complementary ways to get a first impression of a simulation output:
 
-* [`quicklook`](@ref) — a **fixed, one-call dashboard** (fast, budgeted): surface-density maps along
-  each axis (plus stellar & dark-matter maps when particles are present), the ρ–T phase diagram, and a
+* [`quicklook`](@ref), a **fixed, one-call dashboard** (fast, budgeted): surface-density maps along
+  each axis (plus stellar & dark-matter maps when particles are present), the ρ-T phase diagram, and a
   global census of cells, particles, masses and SFR.
-* [`report`](@ref) — the **composable** form: you choose which **cards** (projections, phase diagrams,
+* [`report`](@ref), the **composable** form: you choose which **cards** (projections, phase diagrams,
   profiles, star-formation history, scalar totals/fractions, cross-datatype ratios) across **any**
   datatype, with a cost/runtime estimate beforehand and a wall-time budget.
 
@@ -13,9 +13,9 @@ Use `quicklook` for the instant overview; reach for `report` when you want to ch
 
 ---
 
-## `quicklook` — the one-call dashboard
+## `quicklook`: the one-call dashboard
 
-[`quicklook`](@ref) reads the header for instant facts and — unless you ask for header-only — does a
+[`quicklook`](@ref) reads the header for instant facts and, unless you ask for header-only, does a
 single *budgeted* read to build the dashboard and print a compact summary:
 
 ```julia
@@ -38,35 +38,35 @@ q = quicklook(80; path="/sim/cosmo")   # the cosmological zoom shown below
 └─ 25.93 s ──────────────────────────────────
 ```
 
-For a cosmological run the reported time is the **age of the universe** at the snapshot —
-11.93 Gyr at ``z = 0.1426`` here — not RAMSES' raw conformal `info.time`, which is negative
+For a cosmological run the reported time is the **age of the universe** at the snapshot,
+11.93 Gyr at ``z = 0.1426`` here, not RAMSES' raw conformal `info.time`, which is negative
 and not an age. See [Cosmological Runs](09_multi_Cosmology.md) for the conversion and for
 working in comoving units.
 
 ![The quicklook dashboard for a **cosmological zoom**: gas surface density along z (face-on) and x, y
-(edge-on); face-on stellar and dark-matter surface density; the ρ–T phase diagram; and a text census of
+(edge-on); face-on stellar and dark-matter surface density; the ρ-T phase diagram; and a text census of
 cell/particle counts, masses and SFR. The grid grows with the components present (here gas + stars +
-dark matter). Each component uses a meaningful perceptually-uniform, colorblind-safe colormap — gas
-density `viridis`, stars `magma` (warm), dark matter `cividis` (the CVD-optimised cool map), ρ–T phase
+dark matter). Each component uses a meaningful perceptually-uniform, colorblind-safe colormap, gas
+density `viridis`, stars `magma` (warm), dark matter `cividis` (the CVD-optimised cool map), ρ-T phase
 `viridis`.](assets/features/quicklook_dashboard.png)
 
-The same call on an **isolated disk galaxy** (gas + stars, no dark matter) — face-on plus the two
+The same call on an **isolated disk galaxy** (gas + stars, no dark matter), face-on plus the two
 edge-on views show the disk and its thickness, and the dark-matter panel is simply omitted:
 
 ![The quicklook dashboard for an isolated disk galaxy: gas Σ face-on and edge-on (×2) in `viridis`, the
-face-on stellar disk in `magma`, the ρ–T phase diagram, and the census. With no dark-matter particles,
+face-on stellar disk in `magma`, the ρ-T phase diagram, and the census. With no dark-matter particles,
 no DM panel is shown.](assets/features/quicklook_isolated.png)
 
 ### What you get
 
 The call returns a [`QuickLookResult`](@ref):
 
-* `q.summary` — header facts and estimates (box, levels, finest cell, time/redshift, the cell &
+* `q.summary`: header facts and estimates (box, levels, finest cell, time/redshift, the cell &
   particle census, masses, density/temperature ranges, read time).
-* `q.maps` — surface-density projections: gas along each axis (`q.maps.z`/`.x`/`.y`, each an
+* `q.maps`, surface-density projections: gas along each axis (`q.maps.z`/`.x`/`.y`, each an
   `AMRMapsType` with `.maps[:sd]`), plus face-on `q.maps.stars` / `q.maps.dm` when particles are present.
-* `q.phase` — the ρ–T phase histogram (`q.phase.H`, `q.phase.xedges`, `q.phase.yedges`).
-* `q.budget` — the **global snapshot budget**: `gas_mass_Msol`, and (with particles) `stellar_mass_Msol`,
+* `q.phase`: the ρ-T phase histogram (`q.phase.H`, `q.phase.xedges`, `q.phase.yedges`).
+* `q.budget`, the **global snapshot budget**: `gas_mass_Msol`, and (with particles) `stellar_mass_Msol`,
   `dm_mass_Msol`, `n_stars`, `n_dm`, and the current SFR (`sfr10`, `sfr100`, `sfr_mean`,
   see [`sfr_snapshot`](@ref)).
 
@@ -75,11 +75,11 @@ The call returns a [`QuickLookResult`](@ref):
 By default the dashboard shows every component present, with the three gas projections. Two keywords
 trim it to exactly what you want (and skip the reads you don't need):
 
-* `datatypes` — any subset of `[:hydro, :stars, :dm]`. `[:hydro]` shows gas only; `[:stars]` or `[:dm]`
+* `datatypes`: any subset of `[:hydro, :stars, :dm]`. `[:hydro]` shows gas only; `[:stars]` or `[:dm]`
   show that population's face-on Σ **and skip the gas read entirely** (faster). The census and panels
   adapt to whatever was read.
-* `directions` — any subset of `[:z, :x, :y]` for the gas maps (`:z` = face-on, `:x`/`:y` = edge-on).
-  `directions=[:z]` gives a single face-on map — the most compact dashboard.
+* `directions`: any subset of `[:z, :x, :y]` for the gas maps (`:z` = face-on, `:x`/`:y` = edge-on).
+  `directions=[:z]` gives a single face-on map, the most compact dashboard.
 
 ```julia
 quicklook(300; path="/sim", directions=[:z])                 # one gas projection (compact)
@@ -89,13 +89,13 @@ quicklook(300; path="/sim", datatypes=[:dm])                 # dark-matter map o
 quicklook(300; path="/sim", datatypes=[:hydro, :stars], directions=[:z, :x])  # face-on + one edge-on
 ```
 
-### Budgeted reading — fast on big outputs
+### Budgeted reading: fast on big outputs
 
 `quicklook` reads **gas and particles differently**, so it stays quick on large simulations:
 
-* `read=false` — **header only** (sub-second): box, levels, finest cell, ncpu, fields, time/redshift,
-  the particle census — no field data read.
-* `budget` — a **gas** cell-count cap (default `2_000_000`). If the full output is predicted larger,
+* `read=false`, **header only** (sub-second): box, levels, finest cell, ncpu, fields, time/redshift,
+  the particle census, no field data read.
+* `budget`: a **gas** cell-count cap (default `2_000_000`). If the full output is predicted larger,
   only the coarse AMR levels are read (spatially complete, lower resolution); the result is flagged
   `sampled=true` and gas-derived numbers are labelled approximate. `lmax` overrides the choice.
 * **Particles** are read in *full* by default (a particle file is tiny next to the AMR hydro), which
@@ -109,21 +109,21 @@ quicklook(300; path="/sim/mw", budget=500_000)    # cap the gas read on a huge o
 !!! note "How accurate is a coarse/subsampled quicklook?"
     The fast estimates are reliable for **extensive totals** but not for **peak** quantities:
 
-    * **Gas mass — exact** even on a coarse read: de-refinement is mass/volume-conserving, so the total
+    * **Gas mass, exact** even on a coarse read: de-refinement is mass/volume-conserving, so the total
       is unchanged (measured 0.00% error reading ⅓ of the cells).
-    * **Stellar / dark-matter mass, counts, SFR — within ~10%** under a particle subsample (an unbiased
+    * **Stellar / dark-matter mass, counts, SFR: within ~10%** under a particle subsample (an unbiased
       estimate scaled by 1/fraction; noisier for rarer, clustered sub-populations).
-    * **nH / T ranges — lower bounds** on a coarse read: the densest, hottest gas lives in the finest
-      cells, which coarsening averages away (the maxima can read 50–90% low). For the true extremes,
+    * **nH / T ranges, lower bounds** on a coarse read: the densest, hottest gas lives in the finest
+      cells, which coarsening averages away (the maxima can read 50 to 90% low). For the true extremes,
       read at full resolution.
 
     The dashboard marks the coarse read (`⚠`), labels gas mass *mass-conserving*, and flags the ranges
-    as *peaks smoothed* — so each number says how far to trust it.
+    as *peaks smoothed*, so each number says how far to trust it.
 
-#### Very large particle runs — `particle_subsample`
+#### Very large particle runs: `particle_subsample`
 
 For runs where even reading all particle positions is the cost, `particle_subsample` reads only ~that
-fraction of the particle **CPU files** — skipping whole files, so it cuts both I/O and peak memory.
+fraction of the particle **CPU files**, skipping whole files, so it cuts both I/O and peak memory.
 RAMSES load-balances its domains to ~equal particles per CPU, so this reads ~that fraction of the
 particles; the census, masses and SFR are then scaled up by `1/fraction` and flagged ⚠ approximate
 (an unbiased estimate for the total, noisier for rarer/clustered sub-populations):
@@ -138,8 +138,8 @@ extensive quantities by `1/subsample` for whole-snapshot estimates. For a locali
 
 ### Plotting
 
-[`quicklookplot`](@ref) renders the multi-panel dashboard — gas Σ along x/y/z, face-on stellar &
-dark-matter Σ (when present), the ρ–T phase diagram, and a text census — with colorblind-safe
+[`quicklookplot`](@ref) renders the multi-panel dashboard, gas Σ along x/y/z, face-on stellar &
+dark-matter Σ (when present), the ρ-T phase diagram, and a text census, with colorblind-safe
 colormaps (needs a Makie backend):
 
 ```julia
@@ -151,11 +151,11 @@ CairoMakie.save("quicklook.png", fig)
 
 ---
 
-## `report` — composable cards
+## `report`: composable cards
 
 `report` turns a simulation output into **one composable first-look summary**: you pick which
-quantities and Mera functions to combine — projections, phase diagrams, profiles, star-formation
-history, scalar totals or fractions, cross-datatype ratios — across **any** datatype (hydro,
+quantities and Mera functions to combine: projections, phase diagrams, profiles, star-formation
+history, scalar totals or fractions, cross-datatype ratios, across **any** datatype (hydro,
 particles, gravity, RT, clumps), and render the result as a text dashboard, a plot grid, or a
 saved file. Before it runs you get a **cost/runtime estimate**, and an optional **budget** keeps it
 within a wall-time target.
@@ -164,8 +164,8 @@ within a wall-time target.
 report(400; path="/sim")          # default: Σ map + ρ–T phase + disk ρ(R) profile + SFR history (ascii)
 ```
 
-The no-argument default is the `quicklook` figures (gas Σ map · ρ–T phase · cylindrical density
-profile) **plus a star-formation-history card** — matching the star formation quicklook headlines in
+The no-argument default is the `quicklook` figures (gas Σ map · ρ-T phase · cylindrical density
+profile) **plus a star-formation-history card**, matching the star formation quicklook headlines in
 its census; the SFR card skips gracefully on an output without star particles. To compose your own,
 list **cards**:
 
@@ -183,7 +183,7 @@ report(400; path="/sim", output=:ascii, cards=[
 ```
 
 `report` reads **each datatype once** (with only the variables the cards actually need, via
-[`getvar_requirements`](@ref)), computes every card, and returns a [`QuickReport`](@ref) — which you
+[`getvar_requirements`](@ref)), computes every card, and returns a [`QuickReport`](@ref), which you
 can re-render or analyse further. With a Makie backend loaded, `render(rep, :plot)` lays the cards out
 as a figure grid:
 
@@ -194,15 +194,15 @@ fig = render(rep, :plot; ncols=2)
 CairoMakie.save("report.png", fig)
 ```
 
-![A rendered composable report (isolated disk galaxy): the four cards above — a face-on gas
-surface-density map, the ρ–T phase diagram, a cylindrical-radius density profile (log y-axis,
-showing the exponential disk and its outer break), and the star-formation history — laid out as a
+![A rendered composable report (isolated disk galaxy): the four cards above, a face-on gas
+surface-density map, the ρ-T phase diagram, a cylindrical-radius density profile (log y-axis,
+showing the exponential disk and its outer break), and the star-formation history, laid out as a
 2×2 grid by `render(rep, :plot)`.](assets/features/report_cards.png)
 
 ### The cards
 
 Each card names a **datatype** (first argument), a **quantity**, optional **unit**, and card-specific
-options. Any name `getvar` understands works — including your own [`add_field`](@ref) fields.
+options. Any name `getvar` understands works, including your own [`add_field`](@ref) fields.
 
 Resolution on a `ProjectionCard` is set either by `pxsize=[value, unit]` (physical size of a
 pixel) or by `res` (pixels per side); `pxsize` wins when both are given. Budget mode scales
@@ -230,7 +230,7 @@ ScalarCard(:hydro, :mass; fraction=true, mask = o -> getvar(o,:T,:K).<1e4) # fra
 #### Profiles: geometry & axis scale
 
 A `ProfileCard`'s `geometry` sets the radial coordinate. For a **disk galaxy** use
-`xvar=:r_cylinder, geometry=:cylindrical` — radius in the disk plane — which is the default in the
+`xvar=:r_cylinder, geometry=:cylindrical`, radius in the disk plane, which is the default in the
 quicklook trio; a **halo/spheroid** is better with `:r_sphere, geometry=:spherical`. `yscale` controls
 the plotted y-axis: `:log` (log₁₀), `:identity` (linear), or `:auto` (log when the profile is positive
 and spans ≳ 1.5 decades, e.g. density). So the default density profile is cylindrical with a log y-axis.
@@ -245,7 +245,7 @@ ProfileCard(:hydro, :r_cylinder, :vz;  geometry=:cylindrical, weight=:mass, ysca
 
 `SFRCard` (and the standalone [`sfr`](@ref)) build the star-formation history from the star particles
 (`birth ≠ 0`): `mode=:none` gives M⊙/yr, `mode=:probability` the normalised SFH. For a single-number
-**current SFR** from one snapshot use [`sfr_snapshot`](@ref) — the stellar mass formed within a recent
+**current SFR** from one snapshot use [`sfr_snapshot`](@ref), the stellar mass formed within a recent
 window divided by that window (e.g. 5/10/100 Myr), plus the lifetime mean. Both prefer a stored
 **initial-mass** field when present (`mass=:auto`), since the current particle mass underestimates the
 formed mass after stellar mass loss. Outputs without stars yield zeros, not an error.
@@ -266,7 +266,7 @@ end
 
 #### Off-axis maps & custom fields
 
-Projection cards take the same view controls as [`projection`](@ref) — `direction=:faceon`/`:edgeon`
+Projection cards take the same view controls as [`projection`](@ref), `direction=:faceon`/`:edgeon`
 tilt the map to the disk (the report automatically reads the velocities needed to orient it):
 
 ```julia
@@ -286,18 +286,18 @@ ProfileCard(:hydro, :r_cylinder, :vmag; weight=:mass, nbins=40)            # use
 ### Datatypes & graceful skipping
 
 Scalar and profile cards work on **hydro, particles, gravity, and clumps**; projection cards work on
-**hydro and particles** (gravity/RT projection needs hydro pairing). A card is **skipped with a note**
-— never an error — when its datatype is absent from the output, or when it needs a variable that
+**hydro and particles** (gravity/RT projection needs hydro pairing). A card is **skipped with a note**,
+never an error, when its datatype is absent from the output, or when it needs a variable that
 isn't stored (e.g. an RT `:xHII` card on a non-RT run). So a "kitchen-sink" plan runs unchanged on a
 hydro-only output.
 
 !!! note "Radiative-transfer (RT) outputs"
     On an **RT** simulation the standard quantities are shown correctly: RAMSES stores the radiative-
     transfer fields (photon densities, fluxes, ionization fractions) in *separate* files read by
-    [`getrt`](@ref), so they are **not** part of `nvarh` — `quicklook` and the hydro cards read the
-    usual gas variables (`:rho`, `:vx…`, `:p`) and derive `:sd`, `:T`, the ρ–T phase and the budget
+    [`getrt`](@ref), so they are **not** part of `nvarh`, `quicklook` and the hydro cards read the
+    usual gas variables (`:rho`, `:vx…`, `:p`) and derive `:sd`, `:T`, the ρ-T phase and the budget
     exactly as on a non-RT run. The RT fields themselves are not in the `quicklook` dashboard, but a
-    `report` can include them directly with an **RT projection card** — the engine reads the RT data via
+    `report` can include them directly with an **RT projection card**, the engine reads the RT data via
     [`getrt`](@ref), and an `RtDataType` projects its photon fields (mass-weighting auto-falls back to
     volume, since RT carries no mass):
 
@@ -320,7 +320,7 @@ preview(plan)        # prints a per-card cells/time table + total
 estimate(plan)       # the same numbers as a NamedTuple
 ```
 
-The model **self-calibrates** — every real `report` learns this machine's timing; `calibrate!(400; path="/sim")`
+The model **self-calibrates**, every real `report` learns this machine's timing; `calibrate!(400; path="/sim")`
 runs a quick active calibration. Keep a run within a wall-time target with the **budget**, which drops
 the read level first, then shrinks resolution/bins:
 
@@ -340,7 +340,7 @@ render(rep, :file; mode=:dir, prefix="r")  # report.jld2 + summary.txt + one PNG
 loadreport("r.jld2")                        # reload a saved QuickReport
 ```
 
-Plotting lives in a **package extension** — load any Makie backend (`using CairoMakie`) and `:plot`
+Plotting lives in a **package extension**, load any Makie backend (`using CairoMakie`) and `:plot`
 / `:file mode=:dir` activate. Without one, those backends print a clear "load CairoMakie" message;
 everything else (ascii / jld2 / `:file mode=:bundle`) works with no extra dependencies.
 
@@ -382,7 +382,7 @@ clump_mass_fraction
 
 ## See also
 
-* [Derived Fields & add_field](derived_fields.md) — register custom quantities usable as cards.
-* [Off-axis Projection](06_offaxis_Projection.md) — `:faceon`/`:edgeon` and arbitrary lines of sight.
-* [Profiles & Phase Diagrams](15_multi_Profiles_Phase.md) — the profile/phase tools behind the cards.
-* [Star-Formation Rate](sfr.md) — the standalone `sfr` / `sfr_snapshot` and the cosmological handling.
+* [Derived Fields & add_field](derived_fields.md): register custom quantities usable as cards.
+* [Off-axis Projection](06_offaxis_Projection.md): `:faceon`/`:edgeon` and arbitrary lines of sight.
+* [Profiles & Phase Diagrams](15_multi_Profiles_Phase.md): the profile/phase tools behind the cards.
+* [Star-Formation Rate](sfr.md): the standalone `sfr` / `sfr_snapshot` and the cosmological handling.

@@ -10,7 +10,7 @@
 
 
 **Modern astrophysics simulations generate massive volumes of data that require efficient processing.**  
-In simulations that run on multiple CPU cores—often producing numerous related output files—loading the resulting RAMSES files can become a significant bottleneck, slowing down your workflow.  
+In simulations that run on multiple CPU cores, often producing numerous related output files, loading the resulting RAMSES files can become a significant bottleneck, slowing down your workflow.  
 This guide demonstrates how to leverage multithreaded file loading in **Mera** to significantly accelerate your data analysis process.
 
 
@@ -53,11 +53,11 @@ Your benchmark results show GC time as a percentage of total execution time. Thi
 
 ## Common Performance Barriers
 
-- **Storage speed limits** - a spinning disk (HDD) effectively serves one request at a time; SSD/NVMe handle many concurrent requests, so this barrier is far weaker on flash storage
+- **Storage speed limits**: a spinning disk (HDD) effectively serves one request at a time; SSD/NVMe handle many concurrent requests, so this barrier is far weaker on flash storage
 
-- **File system overhead** - opening the many RAMSES files (one per CPU domain per component — often hundreds to thousands of files; particle files in particular are only KB-scale, while hydro/AMR/gravity files are several MB each) creates extra metadata work, especially on networked/parallel filesystems
+- **File system overhead**, opening the many RAMSES files (one per CPU domain per component: often hundreds to thousands of files; particle files in particular are only KB-scale, while hydro/AMR/gravity files are several MB each) creates extra metadata work, especially on networked/parallel filesystems
 
-- **Memory pressure** - too many threads can trigger heavy garbage collection, stealing CPU cycles from actual work
+- **Memory pressure**: too many threads can trigger heavy garbage collection, stealing CPU cycles from actual work
 
 
 
@@ -216,7 +216,7 @@ julia --project=. run_test_plots.jl
 
 Example measured output of these four charts for **reading original RAMSES
 files** (note the total read times are in the hundreds of seconds and scale
-with thread count — this is the RAMSES reader, *not* reading a compressed MERA
+with thread count, this is the RAMSES reader, *not* reading a compressed MERA
 file, which is far faster; see [Mera-Files Reading](../JLD2_reading/Mera_files_reading.md)):
 
 ![RAMSES reader thread scaling: total read time, speed-up, parallel efficiency, and per-component times vs thread count](ramses_reader_thread_scaling.png)
@@ -353,9 +353,9 @@ ctime: 2024-06-06T17:13:46.723
 
 !!! warning "Illustrative, not measured"
     The speedup/efficiency ranges below are **rough illustrative expectations**
-    by storage class to build intuition — they are **not measured results** from
+    by storage class to build intuition, they are **not measured results** from
     this suite, and real numbers vary widely with hardware, filesystem, file
-    count, and dataset (e.g. a fast local NVMe SSD may show only ~1.2–1.3× from
+    count, and dataset (e.g. a fast local NVMe SSD may show only ~1.2 to 1.3× from
     1→8 threads on a small output). Always run the benchmark on your own system.
 
 ### Typical Results by Hardware Configuration
@@ -419,7 +419,7 @@ ctime: 2024-06-06T17:13:46.723
 If you completed all steps above, your benchmarking environment is ready and you can confidently analyze RAMSES file reading performance with Mera.jl!
 
 
-## Reference results — laptop (2026-07)
+## Reference results: laptop (2026-07)
 
 Provenance: Apple M2 Pro (12 cores), Julia 1.12.3, Mera revamp/2026, 8 compute +
 8 GC threads; `mw_L10` output 300 (28.3M cells) on an external Thunderbolt SSD;
@@ -433,7 +433,7 @@ Provenance: Apple M2 Pro (12 cores), Julia 1.12.3, Mera revamp/2026, 8 compute +
 | **total** | **49.2 s** |
 
 GC accounts for ~9% of the hydro read. Compare the MERA-files page: the same
-snapshot re-loads from its converted JLD2 file in ~1.2–1.4 s (warm) — the
+snapshot re-loads from its converted JLD2 file in ~1.2 to 1.4 s (warm), the
 motivation for converting any snapshot you touch more than once.
 
 Run it yourself: `run_reading_benchmark(OUTPUT, "path/to/simulation")` in a

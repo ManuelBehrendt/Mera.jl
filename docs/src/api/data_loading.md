@@ -21,8 +21,8 @@ getrt
 ## Other simulation codes
 
 Frontends for PLUTO, Chombo, Athena++, FLASH and the GADGET-HDF5 family (GADGET / AREPO /
-SWIFT / GIZMO) — together with their code-specific entry points, the FoF/SUBFIND catalogue
-reader `getgroups`, and the run-time-log readers — live on the `multicode` branch:
+SWIFT / GIZMO), together with their code-specific entry points, the FoF/SUBFIND catalogue
+reader `getgroups`, and the run-time-log readers, live on the `multicode` branch:
 
 ```julia
 ] add https://github.com/ManuelBehrendt/Mera.jl#multicode

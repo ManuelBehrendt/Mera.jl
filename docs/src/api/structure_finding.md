@@ -1,8 +1,8 @@
 # Structure Finding API Reference
 
-Docstrings for finding structures in loaded data — clumps, and expanding bubbles. The
+Docstrings for finding structures in loaded data, clumps, and expanding bubbles. The
 narrative guides are [Clump Finding](../clumpfind.md) and
-[Clump Finding — Synthetic Example](../clumpfind_synthetic.md), which scores the finder
+[Clump Finding, Synthetic Example](../clumpfind_synthetic.md), which scores the finder
 against known ground truth.
 
 This is distinct from [`getclumps`](@ref), which reads a clump catalogue RAMSES already
@@ -20,7 +20,7 @@ massfunctionplot
 
 ## Validators
 
-A candidate clump is kept only if it passes every validator — they combine as an AND, and
+A candidate clump is kept only if it passes every validator, they combine as an AND, and
 membership tests are applied during the analysis while predicates are applied after,
 regardless of the order you list them in.
 
@@ -43,7 +43,7 @@ CellLinkedList
 ## Testing without data
 
 [`synthetic_clumps`](@ref) builds real Mera objects in memory with known clump positions, so
-the finder can be scored rather than eyeballed — and it needs no simulation output.
+the finder can be scored rather than eyeballed, and it needs no simulation output.
 
 ```@docs; canonical=false
 synthetic_clumps
