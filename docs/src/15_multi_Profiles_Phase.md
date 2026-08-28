@@ -192,7 +192,7 @@ rcd = rotationcurve(parts; mask=getparticlemask(parts,:dm;    verbose=false), op
 vtot = sqrt.(rcg.v_circ.^2 .+ rcs.v_circ.^2 .+ rcd.v_circ.^2)       # spherical-estimate total
 # EXACT curve from the solved gravity field: v = √(R·|a_R|), a_R = radial acceleration (all matter)
 pa  = profile(grav, :r_cylinder, :ar_cylinder; weight=:volume, unit=:cm_s2, nbins=50, xrange=(0.3,25), center=ctr, range_unit=:kpc, xunit=:kpc)
-Rcm = pa.x .* (Mera.getunit(info,:cm)/Mera.getunit(info,:kpc))
+Rcm = pa.x .* (getunit(info,:cm)/getunit(info,:kpc))
 vexact = sqrt.(Rcm .* abs.(pa.mean)) ./ 1e5                        # km/s
 fig = Figure(size=(1500,430))
 ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="v_circ [km/s]", title="rotation curve by component")

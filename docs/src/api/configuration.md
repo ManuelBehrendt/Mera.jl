@@ -37,11 +37,5 @@ createconstants
 createscales
 ```
 
-Unit resolution itself goes through `getunit`, which turns the unit argument of
-a `getvar` call into the factor applied to the stored values. It is the reason
-`getvar(gas, :mass, :Msol)` and `getvar(gas, :mass) .* gas.info.scale.Msol`
-agree.
-
-```@docs
-getunit
-```
+Unit resolution itself goes through [`getunit`](@ref), documented with the
+calculations that use it.
