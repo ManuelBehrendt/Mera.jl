@@ -61,6 +61,8 @@ function projection()
     println("  direction=:faceon / :edgeon   (disk from L)")
     println("  los=[lx,ly,lz]   or   theta=, phi=")
     println("  position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact")
+    println("    (:overlap/:exact integrate a cell's footprint; point particles have none,")
+    println("     so on particle data they fall back to :cic)")
     println()
     println("  line-of-sight tools (same view kwargs):")
     println("    :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)")
@@ -378,6 +380,9 @@ end
 # FOV (xrange/yrange or a prior subregion's ranges); `win=nothing` auto-fits. `csize_all` are the
 # per-cell sizes (code units) for ALL cells. Returns `(x0,x1,y0,y1, sel)` with `sel` narrowed to the
 # (expanded) frame. Mirrors the inline logic in projection_hydro.jl `projection_offaxis`.
+# Camera-frame helper. Used by the out-of-tree modules under dev/ (loscubes, offaxis_eval,
+# synthobs), not by the package's own projection path: keep it even though a search of src/
+# alone makes it look unused.
 function _offaxis_frame(x_cam, y_cam, sel, csize_all, cr, uc, pixsize, win)
     ar = abs(cr[1]) + abs(cr[2]) + abs(cr[3])
     au = abs(uc[1]) + abs(uc[2]) + abs(uc[3])
@@ -424,6 +429,7 @@ function _offaxis_view(info, boxlen, xrange, yrange, zrange, center, range_unit,
 end
 
 # Restrict `sel` to cells inside the requested world-space sub-box (coords about the box pivot).
+# Also called from dev/ (loscubes, synthobs) as well as from here.
 function _offaxis_boxmask!(sel, px, py, pz, half, full)
     full[1] || (sel .= sel .& (abs.(px) .<= half[1]))
     full[2] || (sel .= sel .& (abs.(py) .<= half[2]))
@@ -436,6 +442,9 @@ end
 #   • a SUMMED quantity (e.g. a mass cube channel): accum = the quantity, wt = ones  → g = Σ quantity;
 #   • a WEIGHTED MEAN (e.g. ⟨v_los⟩): accum = the field, wt = mass → g/w = Σ(field·mass)/Σmass.
 # (named `accum`/`wt` rather than values/weights so the asymmetric meaning of the two grids is explicit.)
+# Kernel dispatch for :overlap / :exact. The package's projection path calls the two kernels
+# directly, so this wrapper exists for the out-of-tree dev/ modules. Searching src/ alone makes
+# it look dead; it is not.
 function _offaxis_deposit!(g, w, xc, yc, csize, accum, wt, cr, uc, wv, ext, res, binning, max_threads; nmax::Int=64)
     if binning === :overlap
         deposit_rotated_cells_overlap!(g, w, xc, yc, csize, accum, wt, cr, uc, ext, res; nmax=nmax, max_threads=max_threads)

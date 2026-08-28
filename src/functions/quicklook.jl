@@ -1,5 +1,5 @@
 # =====================================================================================
-#  quicklook — a first impression of a RAMSES output in seconds
+#  quicklook — a first impression of a RAMSES output, header-only or from a budgeted read
 # -------------------------------------------------------------------------------------
 #  One call: header facts (zero read) → an optional budgeted/coarse partial read →
 #  a face-on surface-density map, a ρ–T phase diagram, a global snapshot budget and
@@ -46,11 +46,40 @@ _seq_cmap(var) = var in (:T, :Temperature, :temperature) ? :inferno : :viridis
 
 # choose the level to read so the predicted leaf-cell count stays within `budget`;
 # full resolution if it already fits, else the coarse levels (levelmin .. levelmin+2).
+# Estimate the leaf-cell count from the hydro files on disk.
+#
+# RAMSES puts no leaf-cell total in the info file. `ngrid_current` looks like one but is not: it
+# reads 21305 on a 640-CPU MW run and 25604 on a small spiral run whose true size is ~100x smaller,
+# so it carries almost no signal about how big a read will be. The bytes on disk do: 2.87 GB of
+# hydro versus 0.04 GB for those same two runs. Dividing by nvarh*8 lands within a small factor of
+# the leaf count, which is all a budget decision needs. Costs one stat per CPU file, no read.
+function _quicklook_cells_ondisk(info)
+    dir = dirname(info.fnames.hydro)
+    stem = basename(info.fnames.hydro)                      # e.g. "hydro_00300."
+    bytes = 0
+    try
+        for f in readdir(dir)
+            startswith(f, stem) && (bytes += filesize(joinpath(dir, f)))
+        end
+    catch
+        return nothing                                       # unreadable → fall back to the header
+    end
+    bytes == 0 && return nothing
+    return bytes / (max(info.nvarh, 1) * 8)
+end
+
 function _quicklook_level(info, budget::Int)
-    twotond = 2^info.ndim
-    predicted_full = info.grid_info.ngrid_current * twotond     # rough upper bound on leaf cells
-    predicted_full <= budget && return info.levelmax, false      # small output → read it all (exact)
-    return clamp(info.levelmin + 2, info.levelmin, info.levelmax), true   # coarse, complete, fast
+    est = _quicklook_cells_ondisk(info)
+    if est === nothing                                       # no hydro files to measure
+        return info.levelmax, false
+    end
+    est <= budget && return info.levelmax, false             # whole output fits → read it exactly
+    # Cell counts roughly octuple per level, so drop levels until the estimate fits, and take the
+    # finest one that does.
+    for l in (info.levelmax - 1):-1:info.levelmin
+        est * 8.0^(l - info.levelmax) <= budget && return l, true
+    end
+    return info.levelmin, true
 end
 
 # star / dark-matter selection masks for a particle object. The NEW RAMSES particle format carries a
@@ -91,13 +120,21 @@ end
               particle_subsample=1.0, datatypes=[:hydro,:stars,:dm], directions=[:z,:x,:y],
               verbose=true) -> QuickLookResult
 
-**A first impression of a simulation output in seconds.** Reads the header for instant facts (box,
+**A first impression of a simulation output.** Reads the header for instant facts (box,
 levels, finest cell, time/redshift, and the cell & particle census) and — unless `read=false` — does a
 single **budgeted** hydro read (only the coarse AMR levels when the full output would exceed `budget`
 cells), then builds surface-density projections along **each axis** (`.maps.x/.y/.z` — face-on plus the
 two edge-on views), a ρ–T phase diagram, a **global snapshot budget** (gas / stellar / dark-matter mass
 and the current SFR), and prints a compact dashboard. On an **MHD run** it additionally reads the
 magnetic field and adds a face-on `|B|` map (`.maps.bmag`, μG) plus `|B|` and plasma-β ranges.
+
+**How long it takes.** `read=false` returns immediately whatever the run size: it touches no data.
+A reading call is dominated by the number of per-CPU files, not by the box size, because every one
+of them has to be opened. On a 640-CPU output that is tens of seconds; on a run with several
+thousand CPU domains, expect minutes. The reader threads over those files, so `julia -t N` helps,
+and progress is printed as it goes. `budget` and `lmax` reduce the cells taken from each file but
+not the number of files opened; only a spatial range does that, by skipping the CPU domains that
+fall outside it (see `gethydro`'s `xrange`/`yrange`/`zrange`).
 
 * `budget` — cell-count cap; if the full output is predicted larger, only coarse levels are read and
   the result is flagged `sampled=true` (estimates labelled APPROXIMATE). `lmax` overrides the choice.
@@ -106,8 +143,11 @@ magnetic field and adds a face-on `|B|` map (`.maps.bmag`, μG) plus `|B|` and p
 * `datatypes` — which components to show, any subset of `[:hydro, :stars, :dm]` (default all that are
   present). `[:hydro]` reads gas only; `[:stars]` or `[:dm]` skip the gas read entirely (faster); the
   panels and census adapt to what was read.
-* `directions` — which gas projection axes, any subset of `[:z, :x, :y]` (`:z` = face-on for a disk in
-  the xy-plane; `:x`, `:y` = the two edge-on views). Use `directions=[:z]` for a single, compact map.
+* `directions` — which projection axes, any subset of `[:z, :x, :y]` (`:z` = face-on for a disk in
+  the xy-plane; `:x`, `:y` = the two edge-on views). Applies to the gas maps and to the stellar and
+  dark-matter maps alike. Use `directions=[:z]` for a single, compact map per component.
+  The face-on map keeps the bare key (`q.maps.stars`); edge-on views are `q.maps.stars_x` / `.stars_y`
+  (and `dm_x` / `dm_y`).
 * `particle_subsample` — for **very large particle runs**, read only ~this fraction of the particle
   CPU files (e.g. `0.1`); RAMSES balances ~equal particles per CPU, so this reads ~that fraction of
   particles (skipping whole files → cuts I/O & memory). The particle census, masses and SFR are then
@@ -156,11 +196,12 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     end
 
     # SELECTION: which components to show (`datatypes` ⊆ {:hydro,:stars,:dm}) and, for the gas,
-    # which projection axes (`directions` ⊆ {:z,:x,:y}; :z = face-on for a disk in the xy-plane).
+    # which projection axes (`directions` ⊆ {:z,:x,:y}; :z = face-on for a disk in the xy-plane),
+    # applied to the gas maps and the particle maps alike.
     # `datatypes=[:hydro]` reads gas only; `[:stars]` / `[:dm]` skip the gas read entirely (fast);
-    # `directions=[:z]` gives a single face-on gas map (a compact dashboard).
+    # `directions=[:z]` gives a single face-on map per component (a compact dashboard).
     want = (hydro = :hydro in datatypes, stars = :stars in datatypes, dm = :dm in datatypes)
-    gasdirs = Symbol[d for d in (:z, :x, :y) if d in directions]   # keep z, x, y order
+    dirs = Symbol[d for d in (:z, :x, :y) if d in directions]   # keep z, x, y order
     psub = clamp(float(particle_subsample), 1e-6, 1.0); pscale = 1.0 / psub
     maps = NamedTuple(); ph = nothing
     n = 0; luse = info.levelmax; sampled = false
@@ -173,17 +214,28 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     if want.hydro && info.hydro
         luse, sampled = lmax === nothing ? _quicklook_level(info, budget) :
                         (clamp(Int(lmax), info.levelmin, info.levelmax), Int(lmax) < info.levelmax)
+        # Say what is about to happen BEFORE the read, not after it. On a large run this is a
+        # multi-minute pass over thousands of per-CPU files, and a silent terminal is
+        # indistinguishable from a hang. The reader's own progress bar follows this line.
+        if verbose
+            printtime("quicklook output $output, reading gas: ", true)
+            println("   $(info.ncpu) CPU file(s), levels $(info.levelmin)-$luse of $(info.levelmax)" *
+                    (sampled ? "  (budgeted to ~$budget cells)" : "  (full resolution)"))
+        end
         # MHD run? then also read the magnetic field so the dashboard can show a |B| map + β stats.
         is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
         qlreq  = is_mhd ? [:sd, :T, :rho, :bmag] : [:sd, :T, :rho]
         qlvars = getvar_requirements(:hydro, qlreq)                # read only the needed vars (else full)
         gas = (!isempty(qlvars) && all(in(info.variable_list), qlvars)) ?
-              gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=false) :
-              gethydro(info, lmax=luse, verbose=false, show_progress=false)
+              gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=verbose) :
+              gethydro(info, lmax=luse, verbose=false, show_progress=verbose)
         n = length(gas.data)
         pj(dir) = projection(gas, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
                              verbose=false, show_progress=false)
-        for d in gasdirs; maps = merge(maps, NamedTuple{(d,)}((pj(d),))); end
+        verbose && !isempty(dirs) &&
+            println("   projecting $(length(dirs)) gas map(s) [$(join(dirs, ", "))] " *
+                    "and the phase diagram from $n cells")
+        for d in dirs; maps = merge(maps, NamedTuple{(d,)}((pj(d),))); end
         ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
                    xunit=:nH, yunit=:K)
         gas_mass = sum(getvar(gas, :mass, :Msol))
@@ -203,7 +255,8 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     parts = nothing
     if info.particles && (want.stars || want.dm)
         try
-            parts = getparticles(info; subsample=psub, verbose=false, show_progress=false)
+            verbose && printtime("quicklook output $output, reading particles: ", true)
+            parts = getparticles(info; subsample=psub, verbose=false, show_progress=verbose)
         catch e
             verbose && @warn "quicklook: particle read failed; skipping particle maps & budget" exception=e
         end
@@ -211,14 +264,22 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     bud = _quicklook_budget(gas_mass, parts; pscale=pscale)
     if parts !== nothing
         star_mask, dm_mask = _star_dm_masks(parts)                 # family-aware (legacy: birth≠0 / ==0)
-        function ppj(mask)                                          # face-on Σ; scale up if subsampled
-            pm = projection(parts, :sd, :Msol_pc2; direction=:z, center=[:bc], res=res,
+        function ppj(mask, dir)                                     # Σ along `dir`; scale up if subsampled
+            pm = projection(parts, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
                             mask=mask, verbose=false, show_progress=false)
             psub < 1.0 && (pm.maps[:sd] .*= pscale)
             pm
         end
-        want.stars && any(star_mask) && (maps = merge(maps, (stars = ppj(star_mask),))) # stellar surface density
-        want.dm    && any(dm_mask)   && (maps = merge(maps, (dm    = ppj(dm_mask),)))    # dark-matter surface density
+        # `directions` applies to the particle maps as well as the gas ones. The face-on view keeps the
+        # bare key (`stars`, `dm`) so existing code reading q.maps.stars is unaffected; the edge-on views
+        # are added as `stars_x` / `stars_y` (likewise `dm_x` / `dm_y`) only when asked for.
+        pkey(base, d) = d === :z ? base : Symbol(base, "_", d)
+        for (wanted, mask, base) in ((want.stars, star_mask, :stars), (want.dm, dm_mask, :dm))
+            (wanted && any(mask)) || continue
+            for d in dirs
+                maps = merge(maps, NamedTuple{(pkey(base, d),)}((ppj(mask, d),)))
+            end
+        end
     end
 
     # particle counts: prefer the budget's exact read counts (header part_info is not always populated)
@@ -232,6 +293,9 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                             nH_range=nH_range, T_range_K=T_range,
                             bmag_range_muG=bmag_range, beta_range=beta_range, seconds=time()-t0))
     verbose && _quicklook_print(summary, t0)
+    # a closing timestamp: on a long run the dashboard scrolls up, and this is what tells you
+    # the call actually returned rather than still working
+    verbose && printtime("quicklook output $output finished: ", true)
     return QuickLookResult(info, info.levelmin, info.levelmax, luse, n, sampled, mapsout, ph, bud, summary)
 end
 
