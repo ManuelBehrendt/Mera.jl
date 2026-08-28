@@ -173,16 +173,27 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     if want.hydro && info.hydro
         luse, sampled = lmax === nothing ? _quicklook_level(info, budget) :
                         (clamp(Int(lmax), info.levelmin, info.levelmax), Int(lmax) < info.levelmax)
+        # Say what is about to happen BEFORE the read, not after it. On a large run this is a
+        # multi-minute pass over thousands of per-CPU files, and a silent terminal is
+        # indistinguishable from a hang. The reader's own progress bar follows this line.
+        if verbose
+            printtime("quicklook output $output, reading gas: ", true)
+            println("   $(info.ncpu) CPU file(s), levels $(info.levelmin)-$luse of $(info.levelmax)" *
+                    (sampled ? "  (budgeted to ~$budget cells)" : "  (full resolution)"))
+        end
         # MHD run? then also read the magnetic field so the dashboard can show a |B| map + β stats.
         is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
         qlreq  = is_mhd ? [:sd, :T, :rho, :bmag] : [:sd, :T, :rho]
         qlvars = getvar_requirements(:hydro, qlreq)                # read only the needed vars (else full)
         gas = (!isempty(qlvars) && all(in(info.variable_list), qlvars)) ?
-              gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=false) :
-              gethydro(info, lmax=luse, verbose=false, show_progress=false)
+              gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=verbose) :
+              gethydro(info, lmax=luse, verbose=false, show_progress=verbose)
         n = length(gas.data)
         pj(dir) = projection(gas, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
                              verbose=false, show_progress=false)
+        verbose && !isempty(gasdirs) &&
+            println("   projecting $(length(gasdirs)) gas map(s) [$(join(gasdirs, ", "))] " *
+                    "and the phase diagram from $n cells")
         for d in gasdirs; maps = merge(maps, NamedTuple{(d,)}((pj(d),))); end
         ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
                    xunit=:nH, yunit=:K)
@@ -203,7 +214,8 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     parts = nothing
     if info.particles && (want.stars || want.dm)
         try
-            parts = getparticles(info; subsample=psub, verbose=false, show_progress=false)
+            verbose && printtime("quicklook output $output, reading particles: ", true)
+            parts = getparticles(info; subsample=psub, verbose=false, show_progress=verbose)
         catch e
             verbose && @warn "quicklook: particle read failed; skipping particle maps & budget" exception=e
         end
@@ -232,6 +244,9 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                             nH_range=nH_range, T_range_K=T_range,
                             bmag_range_muG=bmag_range, beta_range=beta_range, seconds=time()-t0))
     verbose && _quicklook_print(summary, t0)
+    # a closing timestamp: on a long run the dashboard scrolls up, and this is what tells you
+    # the call actually returned rather than still working
+    verbose && printtime("quicklook output $output finished: ", true)
     return QuickLookResult(info, info.levelmin, info.levelmax, luse, n, sampled, mapsout, ph, bud, summary)
 end
 
