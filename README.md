@@ -92,7 +92,7 @@ using CairoMakie
 fig = quicklookplot(q)
 ```
 
-## 30-second quickstart
+## Quickstart
 
 ```julia
 using Mera

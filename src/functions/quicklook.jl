@@ -1,5 +1,5 @@
 # =====================================================================================
-#  quicklook — a first impression of a RAMSES output in seconds
+#  quicklook — a first impression of a RAMSES output, header-only or from a budgeted read
 # -------------------------------------------------------------------------------------
 #  One call: header facts (zero read) → an optional budgeted/coarse partial read →
 #  a face-on surface-density map, a ρ–T phase diagram, a global snapshot budget and
@@ -120,13 +120,21 @@ end
               particle_subsample=1.0, datatypes=[:hydro,:stars,:dm], directions=[:z,:x,:y],
               verbose=true) -> QuickLookResult
 
-**A first impression of a simulation output in seconds.** Reads the header for instant facts (box,
+**A first impression of a simulation output.** Reads the header for instant facts (box,
 levels, finest cell, time/redshift, and the cell & particle census) and — unless `read=false` — does a
 single **budgeted** hydro read (only the coarse AMR levels when the full output would exceed `budget`
 cells), then builds surface-density projections along **each axis** (`.maps.x/.y/.z` — face-on plus the
 two edge-on views), a ρ–T phase diagram, a **global snapshot budget** (gas / stellar / dark-matter mass
 and the current SFR), and prints a compact dashboard. On an **MHD run** it additionally reads the
 magnetic field and adds a face-on `|B|` map (`.maps.bmag`, μG) plus `|B|` and plasma-β ranges.
+
+**How long it takes.** `read=false` returns immediately whatever the run size: it touches no data.
+A reading call is dominated by the number of per-CPU files, not by the box size, because every one
+of them has to be opened. On a 640-CPU output that is tens of seconds; on a run with several
+thousand CPU domains, expect minutes. The reader threads over those files, so `julia -t N` helps,
+and progress is printed as it goes. `budget` and `lmax` reduce the cells taken from each file but
+not the number of files opened; only a spatial range does that, by skipping the CPU domains that
+fall outside it (see `gethydro`'s `xrange`/`yrange`/`zrange`).
 
 * `budget` — cell-count cap; if the full output is predicted larger, only coarse levels are read and
   the result is flagged `sampled=true` (estimates labelled APPROXIMATE). `lmax` overrides the choice.
