@@ -33,8 +33,20 @@ pass **explicitly** still wins over the bundle, so you can share a base bundle a
 call:
 
 ```julia
-projection(gas, :sd, :Msun_pc2, myargs=myargs, res=512)   # res=512 overrides the bundle
+projection(gas, :sd, :Msun_pc2, myargs=myargs, pxsize=[50., :pc])   # 50 pc, not the bundle's 100
 ```
+
+Override with the *same* keyword the bundle sets. Passing a different one that
+means the same thing does not work: the bundle above sets `pxsize`, and
+`pxsize` takes precedence over `res`, so adding `res=512` to that call would be
+ignored rather than overriding anything.
+
+!!! note "One edge case"
+    Mera decides that you passed a value explicitly by seeing that it differs
+    from the function's own default. So passing a value that *equals* the
+    default, `verbose=true` where `true` is already the default, does not
+    override a bundle that sets it to `false`. Leave such a field out of the
+    bundle if you want to vary it per call.
 
 See the current contents of a bundle with [`viewfields`](@ref):
 
