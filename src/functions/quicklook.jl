@@ -106,8 +106,11 @@ magnetic field and adds a face-on `|B|` map (`.maps.bmag`, μG) plus `|B|` and p
 * `datatypes` — which components to show, any subset of `[:hydro, :stars, :dm]` (default all that are
   present). `[:hydro]` reads gas only; `[:stars]` or `[:dm]` skip the gas read entirely (faster); the
   panels and census adapt to what was read.
-* `directions` — which gas projection axes, any subset of `[:z, :x, :y]` (`:z` = face-on for a disk in
-  the xy-plane; `:x`, `:y` = the two edge-on views). Use `directions=[:z]` for a single, compact map.
+* `directions` — which projection axes, any subset of `[:z, :x, :y]` (`:z` = face-on for a disk in
+  the xy-plane; `:x`, `:y` = the two edge-on views). Applies to the gas maps and to the stellar and
+  dark-matter maps alike. Use `directions=[:z]` for a single, compact map per component.
+  The face-on map keeps the bare key (`q.maps.stars`); edge-on views are `q.maps.stars_x` / `.stars_y`
+  (and `dm_x` / `dm_y`).
 * `particle_subsample` — for **very large particle runs**, read only ~this fraction of the particle
   CPU files (e.g. `0.1`); RAMSES balances ~equal particles per CPU, so this reads ~that fraction of
   particles (skipping whole files → cuts I/O & memory). The particle census, masses and SFR are then
@@ -156,11 +159,12 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     end
 
     # SELECTION: which components to show (`datatypes` ⊆ {:hydro,:stars,:dm}) and, for the gas,
-    # which projection axes (`directions` ⊆ {:z,:x,:y}; :z = face-on for a disk in the xy-plane).
+    # which projection axes (`directions` ⊆ {:z,:x,:y}; :z = face-on for a disk in the xy-plane),
+    # applied to the gas maps and the particle maps alike.
     # `datatypes=[:hydro]` reads gas only; `[:stars]` / `[:dm]` skip the gas read entirely (fast);
-    # `directions=[:z]` gives a single face-on gas map (a compact dashboard).
+    # `directions=[:z]` gives a single face-on map per component (a compact dashboard).
     want = (hydro = :hydro in datatypes, stars = :stars in datatypes, dm = :dm in datatypes)
-    gasdirs = Symbol[d for d in (:z, :x, :y) if d in directions]   # keep z, x, y order
+    dirs = Symbol[d for d in (:z, :x, :y) if d in directions]   # keep z, x, y order
     psub = clamp(float(particle_subsample), 1e-6, 1.0); pscale = 1.0 / psub
     maps = NamedTuple(); ph = nothing
     n = 0; luse = info.levelmax; sampled = false
@@ -191,10 +195,10 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
         n = length(gas.data)
         pj(dir) = projection(gas, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
                              verbose=false, show_progress=false)
-        verbose && !isempty(gasdirs) &&
-            println("   projecting $(length(gasdirs)) gas map(s) [$(join(gasdirs, ", "))] " *
+        verbose && !isempty(dirs) &&
+            println("   projecting $(length(dirs)) gas map(s) [$(join(dirs, ", "))] " *
                     "and the phase diagram from $n cells")
-        for d in gasdirs; maps = merge(maps, NamedTuple{(d,)}((pj(d),))); end
+        for d in dirs; maps = merge(maps, NamedTuple{(d,)}((pj(d),))); end
         ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
                    xunit=:nH, yunit=:K)
         gas_mass = sum(getvar(gas, :mass, :Msol))
@@ -223,14 +227,22 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     bud = _quicklook_budget(gas_mass, parts; pscale=pscale)
     if parts !== nothing
         star_mask, dm_mask = _star_dm_masks(parts)                 # family-aware (legacy: birth≠0 / ==0)
-        function ppj(mask)                                          # face-on Σ; scale up if subsampled
-            pm = projection(parts, :sd, :Msol_pc2; direction=:z, center=[:bc], res=res,
+        function ppj(mask, dir)                                     # Σ along `dir`; scale up if subsampled
+            pm = projection(parts, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
                             mask=mask, verbose=false, show_progress=false)
             psub < 1.0 && (pm.maps[:sd] .*= pscale)
             pm
         end
-        want.stars && any(star_mask) && (maps = merge(maps, (stars = ppj(star_mask),))) # stellar surface density
-        want.dm    && any(dm_mask)   && (maps = merge(maps, (dm    = ppj(dm_mask),)))    # dark-matter surface density
+        # `directions` applies to the particle maps as well as the gas ones. The face-on view keeps the
+        # bare key (`stars`, `dm`) so existing code reading q.maps.stars is unaffected; the edge-on views
+        # are added as `stars_x` / `stars_y` (likewise `dm_x` / `dm_y`) only when asked for.
+        pkey(base, d) = d === :z ? base : Symbol(base, "_", d)
+        for (wanted, mask, base) in ((want.stars, star_mask, :stars), (want.dm, dm_mask, :dm))
+            (wanted && any(mask)) || continue
+            for d in dirs
+                maps = merge(maps, NamedTuple{(pkey(base, d),)}((ppj(mask, d),)))
+            end
+        end
     end
 
     # particle counts: prefer the budget's exact read counts (header part_info is not always populated)

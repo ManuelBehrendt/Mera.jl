@@ -143,11 +143,15 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
     lbl = Dict(:z     => ("Gas Σ (face-on)",        "x [kpc]", "y [kpc]"),
                :x     => ("Gas Σ (edge-on, x)",     "y [kpc]", "z [kpc]"),
                :y     => ("Gas Σ (edge-on, y)",     "x [kpc]", "z [kpc]"),
-               :stars => ("Stars Σ (face-on)",      "x [kpc]", "y [kpc]"),
-               :dm    => ("Dark matter Σ (face-on)","x [kpc]", "y [kpc]"),
+               :stars   => ("Stars Σ (face-on)",          "x [kpc]", "y [kpc]"),
+               :stars_x => ("Stars Σ (edge-on, x)",       "y [kpc]", "z [kpc]"),
+               :stars_y => ("Stars Σ (edge-on, y)",       "x [kpc]", "z [kpc]"),
+               :dm      => ("Dark matter Σ (face-on)",    "x [kpc]", "y [kpc]"),
+               :dm_x    => ("Dark matter Σ (edge-on, x)", "y [kpc]", "z [kpc]"),
+               :dm_y    => ("Dark matter Σ (edge-on, y)", "x [kpc]", "z [kpc]"),
                :bmag  => ("|B| (face-on)",          "x [kpc]", "y [kpc]"))
     specs = Any[]
-    for k in (:z, :x, :y, :stars, :dm, :bmag)
+    for k in (:z, :x, :y, :stars, :stars_x, :stars_y, :dm, :dm_x, :dm_y, :bmag)
         haskey(m, k) && push!(specs, (m[k], lbl[k]..., k))
     end
     havephase = q.phase !== nothing
