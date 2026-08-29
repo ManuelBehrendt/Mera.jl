@@ -1,3 +1,6 @@
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 ```@raw html
 <!-- GENERATED FILE. Do not edit this markdown.
      Source notebook: 06_offaxis_Projection.ipynb
@@ -37,10 +40,6 @@ Then, BEFORE the code, the first of the three admitted inline caveats:
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
-
-!!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
-
 # MERA_EXAMPLES environment variable; every path below is built from it.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
