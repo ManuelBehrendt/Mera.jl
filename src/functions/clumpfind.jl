@@ -1861,7 +1861,7 @@ load_clumps(filename::AbstractString) = JLD2.load(filename, "catalog")
 
 # =====================================================================================
 #  Plotting — provided by the Makie package extension (MeraMakieExt), same core-stub
-#  pattern as quicklookplot / fluxmapplot: the stub dispatches to a function the extension
+#  pattern as quicklookplot: the stub dispatches to a function the extension
 #  fills in once a Makie backend is loaded.
 # =====================================================================================
 """
