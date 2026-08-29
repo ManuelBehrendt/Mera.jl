@@ -1706,13 +1706,17 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     footprint = (binning === :overlap || binning === :exact)
     csize = footprint ? Float64.(cellsize_all[sel]) : Float64[]
 
-    # line-of-sight velocity v·ŵ (code units) — for the off-axis kinematics :vlos / :σlos.
-    # ŵ is the viewing direction (cam_w); v is the cell/particle velocity. This is the genuine
-    # observable component along the chosen line of sight, available at any angle.
+    # Line-of-sight velocity for the off-axis kinematics :vlos / :σlos (code units).
+    #
+    # SIGN: cam_w points OUT of the image, toward the observer, so v·ŵ > 0 is gas moving toward
+    # us. Observational work uses the opposite sign, where a positive radial velocity means
+    # RECEDING (redshifted), so we negate here and :vlos matches the convention of the papers it
+    # will be compared against. Do not "simplify" this minus away: it inverts every rotation
+    # curve. σlos is a width and is unaffected by the sign.
     vlossel = Float64[]
     if (:vlos in selected_vars) || (:σlos in selected_vars)
         vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
-        vlossel = Float64.((vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+        vlossel = Float64.(-(vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
     end
     # requested unit symbol for a variable (aligned with selected_vars; default :standard)
     req_unit(iv) = (k = findfirst(==(iv), selected_vars);

@@ -1516,11 +1516,13 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     massv = Float64.(getvar(dataobject, :mass)[sel])
     ones_w = ones(Float64, length(xc))
 
-    # line-of-sight velocity v·ŵ (code units) for off-axis kinematics :vlos / :σlos
+    # Line-of-sight velocity for off-axis kinematics :vlos / :σlos (code units).
+    # Negated for the same reason as in the hydro path: cam_w points toward the observer, while
+    # observational work counts a positive radial velocity as RECEDING. See projection_hydro.jl.
     vlossel = Float64[]
     if (:vlos in selected_vars) || (:σlos in selected_vars)
         vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
-        vlossel = Float64.((vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+        vlossel = Float64.(-(vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
     end
     req_unit(iv) = (k = findfirst(==(iv), selected_vars);
                     (k !== nothing && length(units) >= k) ? units[k] : :standard)

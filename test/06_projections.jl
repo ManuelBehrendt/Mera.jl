@@ -2074,12 +2074,14 @@ end
             w = pv.los
             vxk = getvar(hydro,:vx,:km_s); vyk = getvar(hydro,:vy,:km_s); vzk = getvar(hydro,:vz,:km_s)
             mm  = getvar(hydro,:mass)
-            vlos_glob = sum(mm .* (vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3])) / sum(mm)
+            # NOTE the minus: ŵ (pv.los) points toward the observer, but :vlos follows the
+            # observational convention where POSITIVE means receding, so the map is -(v·ŵ).
+            vlos_glob = -sum(mm .* (vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3])) / sum(mm)
             sdm = projection(hydro,:sd,direction=:edgeon,center=[:bc],verbose=false,show_progress=false).maps[:sd]
             map_mean = sum(pv.maps[:vlos] .* sdm) / sum(sdm)        # column-mass-weighted map mean
             @test isapprox(map_mean, vlos_glob; rtol=1e-4)
             # σ_los oracle: the global second moment about the global mean (mass-weighted)
-            σ_glob = sqrt(sum(mm .* (vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3] .- vlos_glob).^2) / sum(mm))
+            σ_glob = sqrt(sum(mm .* (.-(vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3]) .- vlos_glob).^2) / sum(mm))
             # the map dispersion is per-pixel; its column-mass-weighted RMS incl. the bulk velocity
             # spread must bracket the global σ (sanity: same order, both > 0)
             @test σ_glob > 0 && maximum(ps.maps[:σlos]) > 0

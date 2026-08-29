@@ -8,26 +8,32 @@
      Any edit here is lost the next time the docs are rendered. -->
 ```
 
-## 0. Off-axis projection — what this page gives you
+## 0. Off-axis projection, what this page gives you
 
-Title + scope card. Prose:
+Every map on this page comes out of one function call:
 
-"Every map on this page comes out of **one function call**:
-`projection(obj, var, unit; <view>, <framing>, <binning>, <pxsize>)`.
-Off-axis adds exactly one thing to the [axis-aligned page](06_hydro_Projection.md): **orientation**. Everything you already know — `center`, `range_unit`, `pxsize`, `weighting`, units — works unchanged."
+`projection(obj, var, unit; <view>, <framing>, <binning>, <pxsize>)`
 
-**Five knobs** table (one row each, no elaboration — each gets a chapter):
+Off-axis adds exactly one thing to the [axis-aligned page](06_hydro_Projection.md): orientation.
+Everything you already know, `center`, `range_unit`, `pxsize`, `weighting` and units, works
+unchanged.
+
+There are five knobs. Each one gets its own chapter below.
+
 | knob | keywords | chapter |
 |---|---|---|
-| view | `direction` · `inclination`/`azimuth`/`axis` · `los` · `theta`/`phi` | 1, 3 |
-| framing | `fov`/`fov_unit`/`aperture` · `xrange`/`yrange`/`zrange`+`center` | 4 |
-| quantity | `var`/`unit` lists · `weighting` | 5 |
-| placement | `binning` (the default is already the accurate one) | 6 |
+| view | `direction`, `inclination`/`azimuth`/`axis`, `los` | 1, 3 |
+| framing | `fov`/`fov_unit`/`aperture`, `xrange`/`yrange`/`zrange` with `center` | 4 |
+| quantity | `var`/`unit` lists, `weighting` | 5 |
+| placement | `binning`, where the default is already the accurate one | 6 |
 | output | `m.maps`, `getextent`, camera metadata | 1, 10 |
 
-**Contract line, stated up front and honestly:** one dataset (`RAMSES/spiral_clumps` output 100, ~590 k cells, levels 5–7, 100 kpc box), 13 code cells, 20 hydro `projection` calls, 9 figures. Measured end-to-end wall clock at `julia -t 8`: ****≈ 90 s** end-to-end at `julia -t 8` (19 code cells, ~30 hydro `projection` calls)**.
+Everything on this page uses one dataset, `RAMSES/spiral_clumps` output 100: about 590 thousand
+cells, levels 5 to 7, in a 100 kpc box. The page runs 36 projection calls across 25 code cells and
+draws 8 figures.
 
-Pointer: full limitations table is Appendix A; nothing on this page is a forward reference to it.
+The limitations are collected in Appendix A at the end, so nothing on this page points forward to
+them.
 
 ## 1. Your first off-axis view
 
@@ -164,8 +170,8 @@ no vanishing point and no perspective, so nothing in the image gets larger by be
 Mera reduces whatever view you specified to a single unit vector **ŵ**, the line of sight, and
 completes it to a right-handed orthonormal camera basis **(r̂, û, ŵ)** — image x, image y, and the
 viewing direction. Those are the three vectors you read back as `m.cam_right`, `m.up`, `m.los`.
-`ŵ` points *into* the image, away from you; Chapter 7 turns that convention into a sign you can
-check.
+`ŵ` points *out of* the image, toward you: the observer stands on the `+ŵ` side, and the camera
+looks along `-ŵ`. Chapter 7 turns that into a sign you can check.
 
 A pixel value is then the integral of the requested quantity along the parallel ray through that
 pixel, over the whole depth of the selected data. That single sentence explains most of what
@@ -690,7 +696,18 @@ The obvious next worry is that σ_LOS is then an artefact of how finely you pixe
 measures whether it is.
 
 !!! warning "Sign convention"
-    `ŵ` points **into** the image, away from the observer, so `v·ŵ > 0` is **receding** (redshifted). A sign flip inverts a rotation curve and nothing else in the figure changes, so check it: on an edge-on map, `:vlos` must be **antisymmetric about the minor axis**. If it is not, your `center` is off the object (Chapter 1).
+    `:vlos` is `v·ŵ`, and `ŵ` points **out of** the image toward the observer. So `v·ŵ > 0` is gas
+    moving **toward you**, which is blueshifted, and `v·ŵ < 0` is receding.
+
+    Note that this is the opposite of the usual astronomical radial velocity, where positive means
+    receding. If you want the astronomical sign, negate the map.
+
+    You can rederive it: the map's first axis runs along `m.cam_right`, its second along `m.up`, and
+    `cam_right × up = los`, so the image is what an observer on the `+ŵ` side sees.
+
+    A sign flip inverts a rotation curve and changes nothing else in the figure, so check the shape
+    too: on an edge-on map `:vlos` must be **antisymmetric about the minor axis**. If it is not, your
+    `center` is off the object (Chapter 1).
 
 ```julia
 kin = (center=[:bc], fov=15, fov_unit=:kpc, aperture=:square,
