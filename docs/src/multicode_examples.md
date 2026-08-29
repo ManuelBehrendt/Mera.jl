@@ -1,9 +1,5 @@
 # Other Simulation Codes — Worked Examples
 
-!!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `multicode_examples.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/multicode_examples.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
-
-
 !!! note "Executed notebook"
     This page loads PLUTO / Chombo / Athena++ / FLASH / GADGET and the AREPO/IllustrisTNG
     gas workflow end-to-end — real snapshots, real outputs. See
