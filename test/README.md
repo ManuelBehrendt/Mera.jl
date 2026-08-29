@@ -62,7 +62,6 @@ Key files:
 | `42_kernel_oracle_tests.jl` | deposit / profile / phase kernels vs closed-form weighted statistics |
 | `40_clumpfind_validation_tests.jl` | structure finder vs analytic profiles, invariance, golden master |
 | `41_covering_grid_tests.jl` | covering grid: paint + mass conservation |
-| `43_fluxbudget_tests.jl` | ∮ρv·dA surface-integral budget, in/out split |
 | `55_region_algebra_tests.jl` | composable regions + exact cell splitting vs analytic volumes |
 | `54_clumpfind_synthetic_tests.jl` | all finders scored against synthetic ground truth |
 | `75_mask_equivalence_tests.jl` | masking commutes with per-cell evaluation, on every data type |

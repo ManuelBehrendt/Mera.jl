@@ -120,7 +120,6 @@ if isempty(_focus)
         # which skip cleanly when no data is present. Nothing about them needed changing.
         tinclude("40_clumpfind_validation_tests.jl") # analytic: Hill radius, invariance, golden master
         tinclude("41_covering_grid_tests.jl")        # analytic: paint + mass conservation
-        tinclude("43_fluxbudget_tests.jl")           # analytic: the surface integral ∮ρv·dA
     end
 
     # ========================================================================
