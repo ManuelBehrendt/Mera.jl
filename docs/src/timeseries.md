@@ -60,7 +60,7 @@ println("outputs found : ", co.outputs)
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
 Outputs - existing: 13 betw. 1:13 - missing: 0
 outputs found : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 ```
@@ -244,6 +244,16 @@ frame size       : (64, 64)
 peak Sigma/frame : [0.5, 1.413, 3.343]
 ```
 
+That stack of maps is what a movie is made of. Two ways to go from here:
+
+* hand it to a `MeraMovie` and then [`savemovie`](@ref), which writes the GIF
+* or skip the loop entirely: [`getmovie`](@ref) does exactly this reduction for you, with the
+  frame bookkeeping already wired up, and adds camera motion across the series (`angles` for a
+  turn at each snapshot, `sweep` for turning as time passes)
+
+`timeseries` remains the escape hatch for a frame `getmovie` cannot produce, because the reducer
+can return anything: a [`slice`](@ref), a profile, a scalar. `getmovie` only makes projections.
+
 Laid side by side, the maps show the shell sweeping outward through the box:
 
 ![Column-density projection of the Sedov blast at outputs 1, 7 and 13: a uniform box, then an expanding shell, then a strong shock structure.](assets/timeseries/blast_montage.png)
@@ -316,7 +326,7 @@ lines!(ax3, t, Float64.(nc)); scatter!(ax3, t, Float64.(nc))
 fig
 ```
 
-![](timeseries_files/timeseries_14_1.png)
+![](timeseries_files/timeseries_15_1.png)
 
 ## From mera files
 

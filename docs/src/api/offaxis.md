@@ -20,6 +20,11 @@ offaxis_slice
 
 ## Sequences, storage & export
 
+[`rotation_sequence`](@ref) varies the **angle** on one snapshot, with a fixed frame so the object
+cannot drift between frames. To vary **time** instead, or both at once, see
+[`getmovie`](movies.md), which takes `angles` for a full turn at each snapshot and `sweep` for one
+moving angle across a series.
+
 ```@docs; canonical=false
 rotation_sequence
 savemap

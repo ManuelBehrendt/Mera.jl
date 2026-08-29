@@ -145,7 +145,7 @@ projection centre (box fraction) = [0.5, 0.5, 0.5]
 frame: (147, 147)  and  (147, 147)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_5_5.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_5_4.png)
 
 Read the output back:
 
@@ -321,7 +321,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-29T04:12:37.413
+[Mera]: 2026-08-29T04:23:14.924
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -558,9 +558,9 @@ level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
 ngp       85.7 %     0.006     1.0381
-cic       64.4 %     0.006     0.9733
+cic       64.4 %     0.016     0.9733
 overlap   0.0 %      0.026     0.0021
-exact     0.0 %      0.089     0.0
+exact     0.0 %      0.115     0.0
 ```
 
 ### One number is not enough: where the disagreement lives
@@ -861,6 +861,40 @@ Every offset fills the frame, and the density changes with depth: the plane real
 through the object rather than being re-drawn in place. `offset=0` returns exactly what omitting
 the keyword returns.
 
+### The two slice movies
+
+Sweeping `offset` at a fixed orientation gives a **travelling** plane: the camera holds still and
+the cut moves through the object. Sweeping an angle at a fixed offset gives a **rotating** plane:
+the cut stays put and turns.
+
+One thing to get right for either: **pin `xrange`/`yrange`**. `slice` has no `fov`, so without a
+window it auto-fits to the cells it painted, and that footprint changes as the plane moves or
+turns. The frames then differ in size, which makes them useless as a movie. A fixed window makes
+every frame the same shape.
+
+```julia
+win = (xrange=[-15,15], yrange=[-15,15], range_unit=:kpc, pxsize=[0.5,:kpc], verbose=false)
+
+travelling = [slice(gas, :rho, :nH; view..., win..., offset=o, offset_unit=:kpc).map
+              for o in -10:5:10]
+rotating   = [slice(gas, :rho, :nH; inclination=a, azimuth=30, axis=:angmom,
+                    center=[:bc], win...).map for a in 0:30:150]
+
+println("travelling: ", length(travelling), " frames, all ",
+        all(size(m) == size(travelling[1]) for m in travelling) ? "the same size" : "DIFFERENT sizes")
+println("rotating  : ", length(rotating), " frames, all ",
+        all(size(m) == size(rotating[1]) for m in rotating) ? "the same size" : "DIFFERENT sizes")
+```
+
+```
+travelling: 5 frames, all the same size
+rotating  : 6 frames, all the same size
+```
+
+Either stack goes straight into a `MeraMovie` and then [`savemovie`](@ref). For projections
+rather than slices, [`getmovie`](@ref) does the loop for you and adds camera motion over a whole
+series of snapshots (`angles`, `sweep`).
+
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 As = log10.(replace(Float64.(sl.map), 0.0 => NaN))
@@ -881,7 +915,7 @@ Colorbar(fig[1,3], h, label="log10 n_H [cm⁻³]")
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_40_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_43_1.png)
 
 Two things in the left panel are the *selection* rather than the gas, and both are worth
 recognising because they show up in every `fov` projection:
@@ -934,7 +968,7 @@ cr = sharedrange(frames, :sd)
 maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_44_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_47_1.png)
 
 Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
 numbers say the same thing from opposite directions. That invariance is what makes the sequence
@@ -1156,7 +1190,7 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 φ along the line of sight: (-1976.0, -175.5) km²/s²
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_57_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_60_2.png)
 
 Same keywords, same camera, three different kinds of data — and each one says something the
 others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
