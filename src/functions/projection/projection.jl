@@ -57,9 +57,10 @@ function projection()
     println()
     println("==============[off-axis views]:==================")
     println("project along ANY line of sight (degrees by default):")
-    println("  inclination=, azimuth=, axis=(:z|:angmom|vector)")
+    println("  inclination=, azimuth=, axis=(:x|:y|:z|:angmom|:L|[ax,ay,az])")
     println("  direction=:faceon / :edgeon   (disk from L)")
-    println("  los=[lx,ly,lz]   or   theta=, phi=")
+    println("  los=[lx,ly,lz]")
+    println("  theta=, phi=   (deprecated in 1.8: azimuth = phi + 90 for axis=:z)")
     println("  position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact")
     println("    (:overlap/:exact integrate a cell's footprint; point particles have none,")
     println("     so on particle data they fall back to :cic)")
@@ -218,7 +219,7 @@ function _resolve_axis(axis, L)
         n = norm(L); n > 0 || throw(ArgumentError("angular-momentum vector L is zero"))
         return collect(float.(L)) ./ n
     end
-    throw(ArgumentError("axis must be a 3-vector, :x/:y/:z or :angmom, got :$axis"))
+    throw(ArgumentError("axis must be a 3-vector, :x/:y/:z, or :angmom (alias :L), got :$axis"))
 end
 
 # deterministic orthonormal basis (e1,e2) spanning the plane ⟂ ahat
@@ -260,9 +261,10 @@ in `angle_unit` (**`:deg`** by default, or `:rad`):
 1. explicit `los` 3-vector,
 2. **`inclination`/`azimuth`** — tilt the view away from a reference `axis` by `inclination`
    (0 ⇒ looking straight down the axis, 90° ⇒ perpendicular to it) and rotate around the axis
-   by `azimuth`. `axis` defaults to the box `:z`; use `:x`/`:y`/`:z`, a 3-vector, or `:angmom`
+   by `azimuth`. `axis` defaults to the box `:z`; use `:x`/`:y`/`:z`, a 3-vector, or `:angmom` (alias `:L`)
    (the object's angular momentum `L`, for disks). The reference axis is kept pointing "up".
-3. spherical angles `(theta, phi)` about the box axes (`los=[sinθcosφ, sinθsinφ, cosθ]`),
+3. spherical angles `(theta, phi)` about the box axes (`los=[sinθcosφ, sinθsinφ, cosθ]`).
+   **Deprecated in 1.8, removed in 2.0.** Use `inclination`/`azimuth`, see the note below,
 4. preset `direction`: `:x`/`:y`/`:z`, `:faceon` (look along `L`), `:edgeon` (⟂ `L`, up = `L̂`).
 
 `:faceon`/`:edgeon` and `axis=:angmom` need the pre-computed `L`; the projection wiring supplies
@@ -325,6 +327,18 @@ function resolve_los(; los=nothing, theta=nothing, phi=nothing,
 
     # (3) spherical angles about the box axes
     if theta !== nothing || phi !== nothing
+        # Deprecated in 1.8, to be removed in 2.0. `inclination`/`azimuth` does everything this
+        # pair does and more: any reference axis (including :angmom), plus a defined image "up".
+        # Still fully supported here, so existing scripts keep running unchanged. The hint gives
+        # the conversion, not just the replacement, because the two do NOT share a zero point:
+        # swapping the names without the +90 silently rotates the figure by a quarter turn.
+        hint(:theta_phi_deprecated,
+             "`theta`/`phi` is deprecated in Mera 1.8 and will be removed in 2.0.",
+             "Use `inclination`/`azimuth`. They do not start from the same angle:",
+             "    inclination = theta,   azimuth = phi + 90      (for axis=:z)",
+             "`inclination`/`azimuth` also takes any reference `axis`, such as :angmom for the",
+             "object's angular momentum, and it sets the image up direction, so the roll of the",
+             "picture is defined rather than chosen automatically.")
         th = theta === nothing ? 0.0 : float(theta)
         ph = phi   === nothing ? 0.0 : float(phi)
         return _los_from_angles(th, ph, angle_unit), up

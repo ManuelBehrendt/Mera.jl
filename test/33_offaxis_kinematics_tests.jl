@@ -136,6 +136,33 @@ isortho(r, u, w) = isapprox(dot(r, u), 0; atol=1e-12) &&
         @test Mera.resolve_los(theta=60, phi=30)[2] === nothing
     end
 
+    # theta/phi keeps working in 1.8; it only warns. The point of the test is that the
+    # deprecation is a message and NOT a behaviour change: same vector as before, once per
+    # session, and silent when the user has turned Mera's output off.
+    @testset "resolve_los -- theta/phi deprecation notice" begin
+        Mera.reset_hints()
+        out = capture_stdout() do; Mera.resolve_los(theta=60, phi=30); end
+        @test occursin("deprecated", out)
+        @test occursin("azimuth = phi + 90", out)
+        # once per session only
+        again = capture_stdout() do; Mera.resolve_los(theta=10, phi=20); end
+        @test isempty(strip(again))
+        # the replacement pair never triggers it
+        Mera.reset_hints()
+        quiet = capture_stdout() do; Mera.resolve_los(inclination=60, azimuth=120); end
+        @test isempty(strip(quiet))
+        # verbose(false) silences it
+        Mera.reset_hints(); Mera.verbose(false)
+        off = capture_stdout() do; Mera.resolve_los(theta=5, phi=5); end
+        Mera.verbose(true)
+        @test isempty(strip(off))
+        # and the result itself is unchanged by any of this
+        Mera.reset_hints()
+        @test isapprox(Mera.resolve_los(theta=60, phi=30)[1],
+                       Mera.resolve_los(inclination=60, azimuth=120, axis=:z)[1]; atol=1e-12)
+        Mera.reset_hints()
+    end
+
     @testset "image roll (position_angle) & input validation" begin
         # roll rotates the image frame about the line of sight; the line of sight is unchanged
         r0, u0, w0 = Mera.build_camera_basis([0.0,0,1], [0.0,1,0])
