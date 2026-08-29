@@ -1,0 +1,138 @@
+! sinks3d_multi.nml — Mera test fixture: a RAMSES run carrying SEVERAL sinks
+!
+! A sibling of sinks3d.nml, not a replacement: sinks3d is pinned by the test suite and stays as it
+! is. Every sink catalogue available to Mera held exactly ONE sink, which is enough to test that
+! the reader finds and parses a catalogue, and not enough to demonstrate SELECTION: a subregion or
+! a shell that catches some sinks and not others cannot be shown with one.
+!
+! The only differences from sinks3d.nml are nsinkmax, npartmax and the ic_sink file. Everything
+! else, the grid, the units, the physics, is identical so the two fixtures stay comparable.
+!
+! THE SINKS COME FROM ic_sink, read at t=0, so every output has all of them and the fixture does
+! not depend on sinks forming during the run. IMPORTANT: the positions in ic_sink are OFFSETS FROM
+! THE BOX CENTRE, not absolute coordinates. The one-sink fixture uses 0,0,0 and lands at the centre
+! of its 250 pc box; writing 125,125,125 there puts the sink at 250,250,250 and RAMSES aborts.
+!
+! Six sinks, placed so that each kind of selection catches a different subset. Measured from the
+! run itself, not predicted:
+!
+!   id  offset (pc)      position (pc)        r_sphere   r_cylinder   z-offset
+!    1    0,   0,  0     125.1 125.0 125.0       0.08       0.07        +0.0
+!    2   50,   0,  0     174.9 125.0 125.0      49.90      49.90        +0.0
+!    3    0,  60,  0     125.0 184.9 125.0      59.91      59.91        +0.0
+!    4    0,   0, 70     125.0 125.0 194.9      69.93       0.02       +69.9
+!    5  -60, -60,  0      65.0  65.0 125.0      84.81      84.81        +0.0
+!    6   40,  40, 40     165.0 164.9 164.9      69.19      56.50       +39.9
+!
+! About the box centre, all measured:
+!
+!   subregion(:sphere,   radius=55)             -> 1, 2
+!   subregion(:sphere,   radius=75)             -> 1, 2, 3, 4, 6
+!   shellregion(:sphere, radius=[55, 75])       -> 3, 4, 6      (inverse: 1, 2, 5)
+!   subregion(:cylinder, radius=55, height=100) -> 1, 2, 4      (4 is on the axis, 6 is outside r)
+!   subregion(:cuboid,   xrange=[-125, 0])      -> 5
+!
+! npartmax is raised from the one-sink fixture: six sinks spawn more stellar objects and RAMSES
+! aborts with "No more free memory / Increase npartmax" at the original 2200.
+!
+! Generate the initial conditions with:
+!     python3 - <<'EOF' > ic_sink
+!     for m, dx, dy, dz in ((4079,0,0,0), (3000,50,0,0), (2500,0,60,0),
+!                           (2000,0,0,70), (1500,-60,-60,0), (1000,40,40,40)):
+!         print(f"{m},{dx},{dy},{dz},0,0,0,0,0,0,{m},{m}")
+!     EOF
+!
+! Run:  mpirun -np 4 <build>/bin/ramses3d sinks3d_multi.nml > run.log 2>&1
+
+&RUN_PARAMS
+nstepmax=40
+hydro=.true.
+rt=.false.
+nrestart=0
+nremap=10
+poisson=.true.
+pic=.true.
+sink=.true.
+stellar=.true.
+nsubcycle=1
+verbose=.false.
+/
+
+&INIT_PARAMS
+nregion=1
+region_type(1)='square'
+x_center=125
+y_center=125
+z_center=125
+length_x=250
+length_y=250
+length_z=250
+exp_region=10.0
+d_region=1d1		   	  ! 10 hydrogen atoms per cc
+p_region=3300.1987634209013
+/
+
+&AMR_PARAMS
+levelmin=5
+levelmax=6
+ngridmax=150000
+npartmax=20000
+nexpand=4
+boxlen=250. ! pc
+/
+
+&OUTPUT_PARAMS
+foutput=20
+tend=0.25
+/
+
+&HYDRO_PARAMS
+gamma=1.666666667
+courant_factor=0.8
+riemann='hllc'
+slope_type=1
+pressure_fix=.true.
+beta_fix=0.5
+/
+
+&COOLING_PARAMS
+cooling=.false.
+metal=.false.
+z_ave=1.0
+/
+
+&UNITS_PARAMS
+units_density = 1.66d-24 ! 1 H/cc
+units_time    = 3.004683525921981d15 !95.21470899675022 Myr
+units_length  = 3.08567758128200d18 ! 1 pc
+/
+
+&REFINE_PARAMS
+jeans_refine=8
+interpol_type=0
+interpol_var=1
+sink_refine=.true.
+/
+
+&POISSON_PARAMS
+gravity_type=0
+/
+
+&SINK_PARAMS
+nlevelmax_sink=6
+create_sinks=.false.
+nsinkmax=6
+mass_sink_seed=1 ! in M_sun
+accretion_scheme='bondi'
+n_sink=1d2 ! ramses doens't like it if you don't set this
+/
+
+&STELLAR_PARAMS
+sn_feedback_sink=.false.
+nstellarmax=200
+stellar_msink_th=200. ! threshold for stellar obj creation
+! IMF
+imf_index=-2.35
+imf_low=8
+imf_high=120
+/

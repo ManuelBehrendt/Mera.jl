@@ -15,18 +15,13 @@ sinks are not written up but are supported by the same code.
 | RT | yes | yes | yes | no |
 | particles | yes | yes | ignored (points) | no |
 | clumps | yes | yes | ignored (points) | no |
-| sinks | yes | **no** (see below) | ignored (points) | no |
+| sinks | yes | yes | ignored (points) | no |
 
 `cell=` decides whether a cell straddling the border is included whole or by its centre, so it is
 meaningful only for AMR cell data. Particles, clumps and sinks are points: they are in or out, and
 the keyword is accepted and ignored.
 
 The smooth-boundary keywords are implemented only for the hydro cylinder.
-
-!!! warning "shellregion does not accept sinks"
-    `shellregion(sinks, ...)` raises a `MethodError`: the shell shapes have no sink method, while
-    `subregion` does. Use `subregion` twice and subtract, or select on
-    `getvar(sinks, :r_sphere)` directly.
 
 !!! warning "Regions do not wrap at periodic boundaries"
     Neither function applies the minimum-image convention. A sphere or shell centred near a box

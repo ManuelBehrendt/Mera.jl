@@ -640,12 +640,13 @@ function readparticlesfile1!(dataobject::InfoType)
             icontent = dataobject.namelist_content[i]
             keylist_parameters = keys(icontent)
             for j in keylist_parameters
+                # value parsing lives in _namelist_float (above), so it can be tested directly
                 if j == "eta_sn"
-                    dataobject.part_info.eta_sn = parse(Float64,icontent[j])
+                    v = _namelist_float(icontent[j]); v === nothing || (dataobject.part_info.eta_sn = v)
                 elseif j == "age_sn"
-                    dataobject.part_info.age_sn = parse(Float64,icontent[j])
+                    v = _namelist_float(icontent[j]); v === nothing || (dataobject.part_info.age_sn = v)
                 elseif j == "f_w"
-                    dataobject.part_info.f_w = parse(Float64,icontent[j])
+                    v = _namelist_float(icontent[j]); v === nothing || (dataobject.part_info.f_w = v)
                 end
             end
 
@@ -774,6 +775,20 @@ end
 
 
 
+
+"""
+    _namelist_float(v) -> Union{Float64,Nothing}
+
+Internal. Parse one RAMSES namelist value. A value routinely carries a trailing Fortran comment
+(`eta_sn=.0    ! Efficiency of the feedback`) which `parse` rejects, and may use a Fortran
+`d` exponent (`1d2`). Returns `nothing` when the value is not a number, so a malformed entry is
+skipped rather than making the whole output unreadable.
+"""
+function _namelist_float(v)
+    t = strip(first(split(String(v), '!')))
+    x = tryparse(Float64, t)
+    return x === nothing ? tryparse(Float64, replace(t, r"[dD]" => "e")) : x
+end
 
 function readnamelistfile!(dataobject::InfoType)
     namelist_file = false

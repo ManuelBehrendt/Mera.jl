@@ -1,3 +1,17 @@
+@testset "namelist values with Fortran comments and d-exponents" begin
+    # A RAMSES namelist routinely writes `eta_sn=.0    ! Efficiency of the feedback`, and getinfo
+    # parsed those three optional values without stripping the comment: any output whose namelist
+    # set one that way was unreadable, and the error named a parse failure rather than the cause.
+    f = Mera._namelist_float
+    @test f(".0    ! Efficiency of the feedback") == 0.0
+    @test f("0.05 ! in Myr")                      == 0.05
+    @test f("250.")                               == 250.0
+    @test f("1d2")                                == 100.0     # Fortran exponent
+    @test f("1.5D-3")                             == 0.0015
+    @test f(".false. ! not a number") === nothing              # skipped, not an error
+    @test f("")                       === nothing
+end
+
 # Data-free tests for the sink-particle reader.
 #
 # RAMSES writes sinks as ONE csv per output (sink_NNNNN.csv) with two header lines: the column
@@ -153,6 +167,34 @@
             # the object stays usable afterwards
             @test sph.boxlen == s.boxlen
             @test sph.used_descriptors[:units] == s.used_descriptors[:units]
+        end
+    end
+
+    @testset "shell selection on a sink catalogue" begin
+        mktempdir() do d
+            s = getsinks(_sink_info(d, SINK_CSV), verbose=false)
+            # sink 1 at (10,20,20), sink 2 at (30,40,0), boxlen 100; under :standard a radius is a
+            # FRACTION of boxlen. About sink 1's position, sink 2 is at r = sqrt(400+400+400) = 34.6
+            c = [0.1, 0.2, 0.2]
+            @test getvar(shellregion(s, :sphere, radius=[0.30, 0.40], center=c,
+                                     range_unit=:standard, verbose=false), :id) == [2.0]
+            # the inner sink is excluded by the inner radius, and inverse is the complement
+            inv = shellregion(s, :sphere, radius=[0.30, 0.40], center=c,
+                              range_unit=:standard, inverse=true, verbose=false)
+            @test getvar(inv, :id) == [1.0]
+            # a shell that contains neither
+            @test length(shellregion(s, :sphere, radius=[0.60, 0.70], center=c,
+                                     range_unit=:standard, verbose=false).data) == 0
+            # cylinder shell: about sink 1, sink 2 is at cylindrical r = sqrt(400+400) = 28.3
+            @test getvar(shellregion(s, :cylinder, radius=[0.25, 0.35], height=0.5, center=c,
+                                     range_unit=:standard, verbose=false), :id) == [2.0]
+            # the object stays usable afterwards
+            sh = shellregion(s, :sphere, radius=[0.30, 0.40], center=c, range_unit=:standard, verbose=false)
+            @test sh.boxlen == s.boxlen
+            @test sh.used_descriptors[:units] == s.used_descriptors[:units]
+            # zero radii are refused rather than silently returning everything
+            @test_throws ErrorException shellregion(s, :sphere, radius=[0., 0.4], center=c,
+                                                    range_unit=:standard, verbose=false)
         end
     end
 

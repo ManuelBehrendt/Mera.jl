@@ -18,9 +18,9 @@ Everything here works the same on hydro and, unless noted, on particles.
 ## Selecting a region first
 
 `subregion` and `shellregion` work on **all six** data types, including RT and sinks, which have no
-tutorial page of their own. One exception and one trap, both in the
-[Subregions API](api/subregions.md): `shellregion` has no sink method, and neither function wraps
-at a periodic boundary, so a region near a box face is silently clipped rather than wrapped.
+tutorial page of their own. One trap, documented in the
+[Subregions API](api/subregions.md): neither function wraps at a periodic boundary, so a region
+near a box face is silently clipped rather than wrapped.
 
 ## A cutting plane
 
