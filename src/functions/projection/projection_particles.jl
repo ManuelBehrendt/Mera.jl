@@ -242,6 +242,13 @@ end
   (`angle_unit=:rad`/`:deg`), or the disk presets `direction=:faceon`/`:edgeon`
   (line of sight from the particle angular momentum). The off-axis camera basis is
   stored on the returned map (`.los`, `.up`, `.cam_right`, `.center`; `.direction==:offaxis`).
+- **`thickness` / `thickness_unit`, `offset` / `offset_unit`:** project a **slab** rather than
+  the full depth. A cutting plane through point particles is empty by construction (a particle
+  has no extent), so the useful analogue of a slice is a projection of finite depth along the
+  line of sight: `thickness` sets that depth and `offset` moves the slab, the same way `offset`
+  moves the plane in [`offaxis_slice`](@ref). Both default to `range_unit`. A non-positive
+  `thickness` is refused rather than silently returning an empty map.
+
   Point particles have no footprint, so `binning=:cic` (default) / `:ngp` apply
   (`:overlap` and `:exact` fall back to `:cic`). See the hydro `projection` docstring for details.
 - select between mass (default), volume, SPH-kernel, or Voronoi (nearest-generator) weighting
@@ -371,6 +378,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -406,6 +415,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -444,6 +455,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -479,6 +492,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -517,6 +532,8 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -552,6 +569,8 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -590,6 +609,8 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -625,6 +646,8 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -662,6 +685,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -697,6 +722,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -735,6 +762,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -792,6 +821,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                               theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
                               position_angle=position_angle, axis=axis, angle_unit=angle_unit,
                               binning=binning, weighting=weighting, nlos=nlos,
+                              thickness=thickness, thickness_unit=thickness_unit,
+                              offset=offset, offset_unit=offset_unit,
                               max_threads=max_threads, xrange=win, yrange=win,
                               zrange=win, center=center, range_unit=fov_unit,
                               data_center=data_center, data_center_unit=data_center_unit,
@@ -895,7 +926,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         return projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                             ranges, data_centerm, range_unit, mask,
                                             los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
-                                            boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos, max_threads)
+                                            boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos, max_threads;
+                                            thickness=thickness, thickness_unit=thickness_unit,
+                                            offset=offset, offset_unit=offset_unit)
     end
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
@@ -1372,7 +1405,9 @@ end
 function projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                        ranges, data_centerm, range_unit, mask,
                                        los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
-                                       boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing, max_threads=Threads.nthreads())
+                                       boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing, max_threads=Threads.nthreads();
+                                       thickness=nothing, thickness_unit=nothing,
+                                       offset=nothing, offset_unit=nothing)
 
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
@@ -1431,6 +1466,22 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     if length(mask) > 1
         length(mask) == npart || error("[Mera]: mask length $(length(mask)) ≠ particle count $npart")
         sel = collect(Bool.(mask))
+    end
+    # A cutting plane through POINT particles catches nothing: a particle has no extent, so a
+    # zero-thickness plane is empty by construction. The useful analogue is a projection of a
+    # SLAB: `thickness` sets its depth along the line of sight and `offset` moves it, the same
+    # way `offset` moves the plane in offaxis_slice.
+    if thickness !== nothing || offset !== nothing
+        cu(u) = u === :standard ? 1.0/boxlen : getunit(dataobject.info, u)
+        zoff = offset === nothing ? 0.0 :
+               float(offset) / cu(offset_unit === nothing ? range_unit : offset_unit)
+        if thickness !== nothing
+            float(thickness) > 0 ||
+                error("projection: `thickness` must be positive; a zero-thickness slab through " *
+                      "point particles is empty by construction. Got $thickness")
+            half = 0.5 * float(thickness) / cu(thickness_unit === nothing ? range_unit : thickness_unit)
+            sel = sel .& (abs.(z_cam .- zoff) .<= half)
+        end
     end
     # subregion clip on WORLD coords (px,py,pz about the sub-box-centre pivot), NOT the rotated camera
     # coords: clipping a rotated coord (x_cam/y_cam/z_cam) against an axis-aligned half-extent drops

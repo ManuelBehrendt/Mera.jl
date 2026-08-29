@@ -1,7 +1,9 @@
+```@raw html
 <!-- GENERATED FILE. Do not edit this markdown.
      Source notebook: movie.ipynb
      Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
      Any edit here is lost the next time the docs are rendered. -->
+```
 
 # Movies (`getmovie` / `savemovie`)
 
@@ -12,13 +14,25 @@
 [`getmovie`](@ref) projects a quantity for **every output** of a simulation and collects the
 maps into the frames of a movie; [`savemovie`](@ref) writes them to an animated GIF. It
 builds on the same machinery as [`timeseries`](@ref) (one snapshot resident at a time,
-RAM-safe) and the [`projection`](@ref) engine, with the view held fixed so the movie is
-steady.
+RAM-safe) and the [`projection`](@ref) engine. Down a box axis the view is fixed by construction; off
+axis it is not, and `fov` is what makes it so (see below).
 
 ![A 3-D Sedov blast over its 13 outputs, each frame tagged with its output number (tags=:output): the column-density frames produced by getmovie, encoded to a GIF by savemovie.](assets/movie/sedov_density.gif)
 
 This notebook runs on the `timeseries_sedov3d` test run (a 3-D Sedov blast, 13 outputs). All
 file outputs are written to a temporary directory.
+
+!!! note "Why the shells converge instead of expanding"
+    The blast in this fixture sits at the **origin corner**, not at the box centre: at `t=0` the
+    pressure peak is at `(0.008, 0.008, 0.008)` in a `0.5` box. The box is periodic, so the single
+    outgoing shell leaves through the low faces and re-enters through the high ones. What you see
+    is one shell wrapping around, arriving from every side and meeting last at the box centre,
+    which is the point farthest from the corner.
+
+    It is expanding, not collapsing. Measured with the periodic (minimum-image) radius about the
+    origin, the mass-weighted shell radius grows from 0.22 to 0.30 over the series. Measured with
+    the plain `:r_sphere` it would not, because the direct distance from a corner is the long way
+    round: see [`getvar`](@ref)'s `:r_sphere_periodic`.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -45,8 +59,8 @@ println("output numbers  : ", m.outputs)
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-temp output dir : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+temp output dir : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe
 getmovie: 13 frame(s) of :sd from "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d"
   [1/13] output 00001
   [2/13] output 00002
@@ -85,31 +99,99 @@ each rendered frame as a PNG (see [Scratch frames](#Scratch-frames-—-keep-the-
 
 ## Orientation: off-axis movies
 
-`getmovie` uses the **full [`projection`](@ref) view**, held fixed across frames so the movie
-is steady. It's axis-aligned by default (`direction=:z`), but every off-axis control that
+`getmovie` is axis-aligned by default (`direction=:z`), and every off-axis control that
 `projection` offers works here too:
 
 ```julia
-# 1. a line of sight from the auto-frame (face-on / edge-on)
+# a line of sight from the auto-frame (face-on / edge-on)
 ref = gethydro(getinfo(1, "/data/sim"))
 fr  = face_on(ref)
 m   = getmovie("/data/sim", :sd; los=fr.los, up=fr.up, center=fr.center, range_unit=fr.center_unit)
 
-# 2. by viewing angles (the off-axis camera)
+# by viewing angles
 m = getmovie("/data/sim", :sd; inclination=60, azimuth=30)      # degrees by default
-m = getmovie("/data/sim", :sd; theta=45, phi=20, position_angle=15)
-
-# 3. auto face-on from the gas angular momentum, recomputed per frame
-m = getmovie("/data/sim", :sd; axis=:angmom)
 ```
 
-The view is the same for every frame (so the camera doesn't wander) — except `axis=:angmom`,
-which re-derives the face-on orientation from each snapshot's own angular momentum.
+!!! warning "An off-axis movie is not steady unless you say so"
+    Down a box axis the window is fixed by construction. Off axis it is not: the projection
+    fits its window to the rotated data, and that footprint changes from snapshot to snapshot.
+    The object then appears to zoom, only the first frame's extent is recorded, and if two
+    snapshots produce different pixel dimensions the encode stops outright.
 
-`res`, `lmax`, and the `xrange`/`yrange`/`zrange` region keywords cut the cost (and memory)
-of each frame. `outputs` selects which snapshots (`:all`, a range, or a vector), and
-`mera_files=true` reads `output_*.jld2` mera files instead of RAMSES outputs — exactly as in
+    Pass `fov`/`fov_unit` (with `aperture=:circle|:square`) to select a fixed sphere about
+    `center`. Every frame then shares one window, which is what [`rotation_sequence`](@ref)
+    has always done for its angle sweeps.
+
+```julia
+m = getmovie("/data/sim", :sd; inclination=60, axis=:angmom,
+             fov=15, fov_unit=:kpc, aperture=:square, pxsize=[0.5, :kpc])
+```
+
+`axis=:angmom` deserves the same caution. It re-derives the orientation from each snapshot's
+own angular momentum, so if the disc's spin drifts, the camera drifts with it and the series
+tumbles. For a steady series, measure the orientation once and freeze it as `los=`.
+
+`res`, `pxsize`, `lmax` and the `xrange`/`yrange`/`zrange` region keywords cut the cost and
+memory of each frame. `outputs` selects which snapshots (`:all`, a range, or a vector), and
+`mera_files=true` reads `output_*.jld2` mera files instead of RAMSES outputs, exactly as in
 [`timeseries`](@ref).
+
+## Moving the camera on purpose
+
+The frames so far differ only in time. Two keywords add camera motion, and they make different
+movies:
+
+| between frames, what changes | keyword | frames |
+|---|---|---|
+| time only | neither | one per output |
+| a full turn at **each** snapshot | `angles` | outputs x angles |
+| time **and** angle together | `sweep` | one per output |
+
+Neither interpolates. Every frame is a real projection from a real viewpoint, so nothing in the
+result is invented.
+
+`angle_var` chooses which angle they drive: `:azimuth` (default), `:inclination` or
+`:position_angle`. Driving an angle you also set explicitly is an error rather than a silent
+override.
+
+```julia
+# orbit, then step time: a turn at every snapshot
+orbit = getmovie(run, :sd; angles=0:120:240, fov=0.3, fov_unit=:standard,
+                 aperture=:square, inclination=50, res=64, verbose=false)
+println("angles : ", length(orbit.frames), " frames from ",
+        length(unique(orbit.outputs)), " outputs")
+
+# orbit while time passes: one frame per snapshot, at a moving angle
+turning = getmovie(run, :sd; sweep=(0, 180), fov=0.3, fov_unit=:standard,
+                   aperture=:square, inclination=50, res=64, verbose=false)
+println("sweep  : ", length(turning.frames), " frames, each a different time and angle")
+println("every frame the same size: ",
+        all(size(f) == size(orbit.frames[1]) for f in orbit.frames))
+```
+
+```
+angles : 39 frames from 13 outputs
+sweep  : 13 frames, each a different time and angle
+every frame the same size: true
+```
+
+The same call works on particles. The weighting differs between the two paths (particles take a
+bare `Symbol` where hydro takes a `[quantity, unit]` pair), which `getmovie` now handles for you.
+
+The Sedov run above carries no particles, so this uses a different fixture: a small
+gravity-plus-particle series.
+
+```julia
+prun = joinpath(MERA_EXAMPLES, "RAMSES-PUBLIC/sedov3d_grav_part")
+pm   = getmovie(prun, :sd; datatype=:particles, res=64, verbose=false)
+println("particle frames : ", length(pm.frames), "  size ", size(pm.frames[1]))
+println("outputs         : ", pm.outputs)
+```
+
+```
+particle frames : 7  size (64, 64)
+outputs         : [1, 2, 3, 4, 5, 6, 7]
+```
 
 ## Save to a GIF
 
@@ -136,8 +218,8 @@ println("wrote GIF       : ", gif, "  (", filesize(gif), " bytes)")
   frame 11: output 00011
   frame 12: output 00012
   frame 13: output 00013
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.gif
-wrote GIF       : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.gif  (41062 bytes)
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.gif
+wrote GIF       : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.gif  (41062 bytes)
 ```
 
 ## Saving: colormap, scaling, steady brightness
@@ -168,8 +250,8 @@ println("wrote          : ", gif2, "  (", filesize(gif2), " bytes)")
   frame 11: t=5.302e-15 Myr
   frame 12: t=5.822e-15 Myr
   frame 13: t=6.352e-15 Myr
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_gray.gif
-wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_gray.gif  (42812 bytes)
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_gray.gif
+wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_gray.gif  (42812 bytes)
 ```
 
 - **`colorrange=:global`** (default) computes a single range over *all* frames, so the movie
@@ -228,7 +310,7 @@ println("custom tags    : ", basename(gif4))
   frame 11: output 00011 | t=5.302e-15 Myr
   frame 12: output 00012 | t=5.822e-15 Myr
   frame 13: output 00013 | t=6.352e-15 Myr
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_tagged.gif
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_tagged.gif
 two-line tags  : density_tagged.gif
   frame 1: frame 1/13
   frame 2: frame 2/13
@@ -243,7 +325,7 @@ two-line tags  : density_tagged.gif
   frame 11: frame 11/13
   frame 12: frame 12/13
   frame 13: frame 13/13
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_custom.gif
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_custom.gif
 custom tags    : density_custom.gif
 ```
 
@@ -264,8 +346,8 @@ println("reloaded frames: ", length(m2.frames), "  (identical: ", length(m2.fram
 ```
 
 ```
-Saved MeraMovie (13 frames) → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.jld2
-Loaded MeraMovie (13 frames) ← /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.jld2
+Saved MeraMovie (13 frames) → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.jld2
+Loaded MeraMovie (13 frames) ← /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.jld2
 reloaded frames: 13  (identical: true)
 ```
 
@@ -311,8 +393,8 @@ println("assembled      : ", out_gif, "  (", filesize(out_gif), " bytes)")
 ```
 
 ```
-moviefromframes: 13 image(s) from /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/from_frames.gif
-assembled      : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/from_frames.gif  (556105 bytes)
+moviefromframes: 13 image(s) from /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/from_frames.gif
+assembled      : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/from_frames.gif  (556105 bytes)
 ```
 
 …or feed the PNGs to `ffmpeg` for an MP4:
@@ -336,7 +418,7 @@ Colorbar(fig[1,2], hm; label = "log10 Sigma")
 fig
 ```
 
-![](movie_files/movie_21_1.png)
+![](movie_files/movie_25_1.png)
 
 ## See also
 

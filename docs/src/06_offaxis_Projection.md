@@ -1,7 +1,12 @@
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+```@raw html
 <!-- GENERATED FILE. Do not edit this markdown.
      Source notebook: 06_offaxis_Projection.ipynb
      Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
      Any edit here is lost the next time the docs are rendered. -->
+```
 
 ## 0. Off-axis projection — what this page gives you
 
@@ -35,10 +40,6 @@ Then, BEFORE the code, the first of the three admitted inline caveats:
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
-
-!!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
-
 # MERA_EXAMPLES environment variable; every path below is built from it.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
@@ -63,7 +64,7 @@ println("threads      : ", Threads.nthreads())
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
 cells loaded : 590311
 box length   : 100.0 kpc
 levels       : 3 – 7
@@ -131,13 +132,19 @@ maprow([fo, eo], :sd, ["direction=:faceon", "direction=:edgeon"]; crange=cr)
 ```
 
 ```
+[Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
+             `center=` fixes the origin; `vcenter=` fixes the frame, and they are separate.
+             For an object with bulk motion pass vcenter=:auto, or vcenter=bulk_velocity(obj).
+             Harmless if the object is already at rest in the box; on a halo streaming at
+             ~200 km/s this shifted |J| by 34 % and its direction by ~5 degrees.
+             (shown once per session; verbose(false) silences Mera's messages)
 line of sight  ŵ = [0.011, 0.02, -1.0]
 image up       û = [1.0, -0.0, 0.011]
 projection centre (box fraction) = [0.5, 0.5, 0.5]
 frame: (147, 147)  and  (147, 147)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_5_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_5_5.png)
 
 Read the output back:
 
@@ -313,7 +320,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-07T13:10:30.749
+[Mera]: 2026-08-29T04:39:10.603
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -551,9 +558,67 @@ level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
 ngp       85.7 %     0.006     1.0381
 cic       64.4 %     0.006     0.9733
-overlap   0.0 %      0.026     0.0021
-exact     0.0 %      0.09      0.0
+overlap   0.0 %      0.037     0.0021
+exact     0.0 %      0.092     0.0
 ```
+
+### One number is not enough: where the disagreement lives
+
+The median above says `:overlap` and `:exact` agree closely. A median hides its tail, and for a
+figure you publish the tail is the part that matters, so look at the distribution instead, split by
+how bright the pixel is.
+
+```julia
+# Reuses the projections computed above: no new reads, no new projections.
+using Statistics, Printf
+A = Float64.(kern[:overlap].maps[:sd]); B = Float64.(kern[:exact].maps[:sd])
+both = (A .> 0) .& (B .> 0)
+d = abs.(log10.(A[both]) .- log10.(B[both])); v = B[both]; peak = maximum(v)
+
+@printf("total flux  overlap/exact = %.6f\n\n", sum(A)/sum(B))
+println(rpad("pixels", 26), rpad("count", 8), rpad("median", 10), rpad("p99", 10), "max  [dex]")
+for (lo, hi, lbl) in ((0.0, 1e-3, "faint   (<0.1% of peak)"),
+                      (1e-3, 1e-1, "mid     (0.1-10%)"),
+                      (1e-1, Inf,  "bright  (>10% of peak)"))
+    s = (v ./ peak .>= lo) .& (v ./ peak .< hi)
+    any(s) || continue
+    println(rpad(lbl, 26), rpad(count(s), 8),
+            rpad(round(median(d[s]), digits=5), 10),
+            rpad(round(quantile(d[s], 0.99), digits=5), 10),
+            round(maximum(d[s]), digits=5))
+end
+```
+
+```
+total flux  overlap/exact = 0.999997
+pixels                    count   median    p99       max  [dex]
+faint   (<0.1% of peak)   14335   0.00213   0.01424   0.0691
+mid     (0.1-10%)         10110   0.00205   0.00733   0.01193
+bright  (>10% of peak)    1155    0.00278   0.01001   0.01279
+```
+
+**Do not carry these numbers to another simulation.** They are a property of *this* map: how many
+cells fall in a pixel, the viewing angle, and how sparse the outskirts are. Repeating the same
+measurement on a Milky-Way-like run at two angles and pixel sizes gave worst-case differences from
+0.058 to 0.143 dex, all different from the value above.
+
+What does carry over is the shape of the result, and it follows from how the two kernels work.
+`:exact` integrates the footprint analytically. `:overlap` samples it with `n³` sub-points, so a
+pixel's value is exact in the limit of many sub-points and noisy when few land in it. Hence:
+
+- **the total is conserved either way**, to about one part in 10⁵ or better: both kernels share out
+  every cell completely, so integrated quantities do not care which you pick
+- **the worst per-pixel disagreement is in the faintest pixels**, the ones fed by few sub-points
+- **bright structure agrees far better**, though "better" was still a few percent in one of the
+  cases measured
+- `:overlap` caps its supersampling at `nmax`, `:exact` has no cap, so cells much coarser than the
+  pixel are where `:overlap` is weakest
+
+**Which to use.** `:overlap` for interactive work, and for anything where you pay the cost many
+times over: orbit movies, parameter sweeps, time series. `:exact` for a figure that goes in a paper,
+where you render once and the runtime difference is irrelevant, and especially if you intend to
+quote a value from a faint pixel or draw contours far down the colour scale. If you are unsure,
+run the cell above on your own data and let it decide.
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -577,7 +642,7 @@ all weight at cell centres",
 same pixels, footprint deposit"]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_24_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_27_1.png)
 
 The totals agree and the pictures do not — which is the point, and the reason "is it
 conservative?" is the wrong question to stop at.
@@ -687,7 +752,7 @@ colsize!(fig.layout, 3, Fixed(14))    # spacer: keeps the v colorbar from readin
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_29_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_32_1.png)
 
 ```julia
 # Does σ_LOS depend on how finely you pixelate? Measure it rather than assume.
@@ -732,7 +797,7 @@ It is a **nearest-cell sample**, not an integral. Three consequences:
 - **Empty (NaN) pixels are geometry, not failure.** Where the plane threads between refinement levels there is simply no cell.
 - **The tilted, elongated blocks are the true shape of the cut** — a plane crossing an axis-aligned cube at an angle gives a quadrilateral cross-section, and that is what you see.
 
-And one API trap that is the *opposite* of Chapter 4: on `slice`, `xrange`/`yrange` **are the camera-plane window**. There is no `fov`, no `zrange`, no `binning`; it takes exactly one variable and works on cell data only (hydro, gravity, RT — `slice(part, …)` is a `MethodError`). Its `.extent` is code units and its `.center` really is code units too, unlike a map's.
+And one API trap that is the *opposite* of Chapter 4: on `slice`, `xrange`/`yrange` **are the camera-plane window**. There is no `fov` and no `binning`; it takes exactly one variable and works on cell data only (hydro, gravity, RT). Depth is set by `offset` rather than `zrange`: see below. `slice(part, …)` is still a `MethodError`, and deliberately so, because a plane through point particles is empty by construction; the particle equivalent is a projection of finite `thickness`, shown in Chapter 11. Its `.extent` is code units and its `.center` really is code units too, unlike a map's.
 
 ```julia
 view = (inclination=60, azimuth=30, axis=:angmom, center=[:bc])
@@ -759,6 +824,76 @@ projection frame (120, 120)
 slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
 
+### Moving the plane: `offset`
+
+The keywords so far set the plane's **orientation**. `offset` sets its **position**, sliding it
+along the line of sight, which is what turns a single cut into a fly-through. `offset=0` (the
+default) puts the plane through `center`, and `offset_unit` defaults to `range_unit`.
+
+The axis-aligned path spells the same idea `slice_pos`/`slice_unit`.
+
+Sweeping it is how you build a slice movie: compute one map per offset and hand the stack to
+[`savemovie`](@ref).
+
+```julia
+using Statistics
+println(rpad("offset [kpc]", 14), rpad("filled px", 12), "median nH [cm^-3]")
+for off in (-15.0, -5.0, 0.0, 5.0, 15.0)
+    sl = slice(gas, :rho, :nH; view..., xrange=[-15,15], yrange=[-15,15], range_unit=:kpc,
+               pxsize=[0.25,:kpc], offset=off, offset_unit=:kpc, verbose=false)
+    f = filter(isfinite, sl.map)
+    println(rpad(off, 14), rpad(length(f), 12),
+            isempty(f) ? "-" : round(median(f), sigdigits=4))
+end
+```
+
+```
+offset [kpc]  filled px   median nH [cm^-3]
+-15.0         14400       5.958e-6
+-5.0          14400       1.39e-5
+0.0           14400       6.55e-6
+5.0           14400       6.46e-6
+15.0          14400       4.146e-6
+```
+
+Every offset fills the frame, and the density changes with depth: the plane really is moving
+through the object rather than being re-drawn in place. `offset=0` returns exactly what omitting
+the keyword returns.
+
+### The two slice movies
+
+Sweeping `offset` at a fixed orientation gives a **travelling** plane: the camera holds still and
+the cut moves through the object. Sweeping an angle at a fixed offset gives a **rotating** plane:
+the cut stays put and turns.
+
+One thing to get right for either: **pin `xrange`/`yrange`**. `slice` has no `fov`, so without a
+window it auto-fits to the cells it painted, and that footprint changes as the plane moves or
+turns. The frames then differ in size, which makes them useless as a movie. A fixed window makes
+every frame the same shape.
+
+```julia
+win = (xrange=[-15,15], yrange=[-15,15], range_unit=:kpc, pxsize=[0.5,:kpc], verbose=false)
+
+travelling = [slice(gas, :rho, :nH; view..., win..., offset=o, offset_unit=:kpc).map
+              for o in -10:5:10]
+rotating   = [slice(gas, :rho, :nH; inclination=a, azimuth=30, axis=:angmom,
+                    center=[:bc], win...).map for a in 0:30:150]
+
+println("travelling: ", length(travelling), " frames, all ",
+        all(size(m) == size(travelling[1]) for m in travelling) ? "the same size" : "DIFFERENT sizes")
+println("rotating  : ", length(rotating), " frames, all ",
+        all(size(m) == size(rotating[1]) for m in rotating) ? "the same size" : "DIFFERENT sizes")
+```
+
+```
+travelling: 5 frames, all the same size
+rotating  : 6 frames, all the same size
+```
+
+Either stack goes straight into a `MeraMovie` and then [`savemovie`](@ref). For projections
+rather than slices, [`getmovie`](@ref) does the loop for you and adds camera motion over a whole
+series of snapshots (`angles`, `sweep`).
+
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 As = log10.(replace(Float64.(sl.map), 0.0 => NaN))
@@ -779,7 +914,7 @@ Colorbar(fig[1,3], h, label="log10 n_H [cm⁻³]")
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_34_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_43_1.png)
 
 Two things in the left panel are the *selection* rather than the gas, and both are worth
 recognising because they show up in every `fov` projection:
@@ -832,7 +967,7 @@ cr = sharedrange(frames, :sd)
 maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_38_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_47_1.png)
 
 Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
 numbers say the same thing from opposite directions. That invariance is what makes the sequence
@@ -848,22 +983,36 @@ this needs nothing installed on the system and runs as part of the notebook:
 
 ```julia
 # Rendered here rather than pasted in, so the movie can never drift from the code above.
-cr  = sharedrange(frames, :sd)
-fig = Figure(size=(560, 560))
-ax  = Axis(fig[1, 1], aspect=DataAspect(), title="orbit movie (auto FOV, square)")
+#
+# The four frames above are for READING: a montage you compare panel by panel. A movie wants many
+# more, or the orbit steps rather than turns. 24 frames at 15 degrees is one revolution in three
+# seconds at framerate 8, which reads as motion; the four-frame version reads as a slideshow.
+# Same camera, same fixed FOV, so nothing else about the sequence changes.
+smooth = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:15:345,
+                           inclination=55, axis=:angmom, center=[:bc],
+                           fov=22, fov_unit=:kpc, aperture=:square,
+                           pxsize=[0.5,:kpc], parallel_frames=false)
+
+cr  = sharedrange(smooth, :sd)          # one colour range across the whole orbit
+fig = Figure(size=(360, 360))           # frame COUNT drives smoothness, resolution drives file
+                                        # size, so keep 24 frames and shrink the canvas instead
+ax  = Axis(fig[1, 1], aspect=DataAspect(), title="orbit movie (fixed FOV, square)")
 hidedecorations!(ax)
 
 mkpath("assets/offaxis")
-record(fig, "assets/offaxis/orbit_movie.gif", eachindex(frames); framerate=8) do k
+record(fig, "assets/offaxis/orbit_movie.gif", eachindex(smooth); framerate=12) do k
     empty!(ax)
-    showmap!(ax, frames[k], :sd; crange=cr)
+    showmap!(ax, smooth[k], :sd; crange=cr)
 end
-println("wrote assets/offaxis/orbit_movie.gif  (",
+println("wrote assets/offaxis/orbit_movie.gif  (", length(smooth), " frames, ",
         round(filesize("assets/offaxis/orbit_movie.gif") / 1024, digits=1), " KB)")
+println("every frame the same size: ",
+        all(size(f.maps[:sd]) == size(smooth[1].maps[:sd]) for f in smooth))
 ```
 
 ```
-wrote assets/offaxis/orbit_movie.gif  (641.8 KB)
+wrote assets/offaxis/orbit_movie.gif  (24 frames, 1967.3 KB)
+every frame the same size: true
 ```
 
 ![Orbit movie — the camera sweeps azimuth at fixed inclination; the frame does not breathe.](assets/offaxis/orbit_movie.gif)
@@ -919,12 +1068,13 @@ The view keywords are the same everywhere. What differs is a short list of defau
 
 | | hydro / RT | particles |
 |---|---|---|
-| `binning` default | `:overlap` | **`:cic`**; `:overlap`/`:exact` silently fall back to `:cic` (points have no footprint) |
+| `binning` default | `:overlap` | **`:cic`**; `:overlap`/`:exact` fall back to `:cic` (points have no footprint) and say so once per session |
 | `weighting` | **Array**, `[:mass, missing]` | **Symbol**, `:mass`, `:volume`, `:sph`, `:voronoi` — all available off-axis. `:sph` conserves mass to ~0.2 % independent of angle; `:voronoi` trades that for sharp cell edges (~3 % angle spread), so prefer `:sph` for quantitative maps |
 | `fov` / `fov_unit` / `aperture` | yes | **yes** — same rotation-invariant sphere selection; the framing is a selection, so it does not care what is deposited |
 | `mode`, `nmax`, `max_threads`, `gravity_data` | yes | absent |
 | `data_center` | **silently ignored** on the off-axis hydro path | honoured |
-| `slice` | yes | no — `slice(part, …)` is a `MethodError` |
+| `slice` | yes, with `offset` to move the plane | no, and by design: a plane through points is empty. Use `thickness`/`offset` on `projection` for a slab |
+| `thickness` / `offset` | not applicable (a slice is the cell equivalent) | **yes** — project a slab of finite depth and move it along the line of sight |
 
 Gravity goes through the combined call form `projection(hydro, gravity, var; …)`. RT data has no velocity field, so `:angmom`, `:faceon` and `:edgeon` are unavailable — give an explicit `los=`, or take `[:lx,:ly,:lz]` from the matching hydro object with `getvar` and pass the result as `axis=[lx,ly,lz]`. (This fixture has no RT output; see the [radiative transfer page](10_multi_RadiativeTransfer.md).)
 
@@ -952,6 +1102,59 @@ stars   : frame (107, 109)   los = [0.999, -0.002, -0.037]
 gravity : maps Any[:epot, :sd]
           epot over filled pixels (-0.5327, -0.03714)   (530 of 11448 pixels empty)
 ```
+
+### A slab instead of a slice, for particles
+
+A cutting plane through point particles catches nothing: a particle has no extent, so a
+zero-thickness plane is empty by construction. That is why `slice(part, …)` is a `MethodError`
+rather than an oversight.
+
+The useful analogue is a projection of finite depth. `thickness` sets the depth of the slab along
+the line of sight and `offset` moves it, the same way `offset` moves the plane for cell data. A
+non-positive thickness is refused rather than returning an empty map.
+
+```julia
+S = (direction=:edgeon, center=[:bc], fov=15, fov_unit=:kpc, aperture=:square,
+     pxsize=[0.5,:kpc], verbose=false, show_progress=false)
+full = projection(part, :sd, :Msol_pc2; S...)
+T = sum(full.maps[:sd])
+println(rpad("thickness [kpc]", 18), rpad("total", 12), "fraction of the full column")
+for th in (20.0, 5.0, 1.0)
+    m = projection(part, :sd, :Msol_pc2; thickness=th, thickness_unit=:kpc, S...)
+    println(rpad(th, 18), rpad(round(sum(m.maps[:sd]), sigdigits=6), 12),
+            round(sum(m.maps[:sd])/T, digits=4))
+end
+
+println()
+println(rpad("offset [kpc]", 18), "total in a 2 kpc slab")
+for off in (-6.0, -2.0, 0.0, 2.0, 6.0)
+    m = projection(part, :sd, :Msol_pc2; thickness=2.0, thickness_unit=:kpc,
+                   offset=off, offset_unit=:kpc, S...)
+    println(rpad(off, 18), round(sum(m.maps[:sd]), sigdigits=6))
+end
+```
+
+```
+thickness [kpc]   total       fraction of the full column
+20.0              273951.0    0.9052
+5.0               178911.0    0.5912
+1.0               28693.2     0.0948
+offset [kpc]      total in a 2 kpc slab
+-6.0              11801.2
+-2.0              115805.0
+0.0               67432.2
+2.0               16791.2
+6.0               5921.15
+```
+
+The slab total rises with thickness, as it must. The offset sweep is more interesting: the mass
+peaks at **-2 kpc**, not at 0. That is not a bug in the slab, it is the slab reporting where the
+stars actually are. `center=[:bc]` is the box centre, and this galaxy's stellar centroid does not
+sit exactly there, so the densest slab is the one offset toward it.
+
+That is the check worth running on your own data. If the peak is not where you expect the object
+to be, either the centre is wrong or the object is not where you think, and both are worth knowing
+before you quote a number from the map.
 
 ```julia
 # The same camera, pointed at a different data type. `fov` frames both identically, so the two
@@ -1000,7 +1203,7 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 φ along the line of sight: (-1976.0, -175.5) km²/s²
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_48_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_60_2.png)
 
 Same keywords, same camera, three different kinds of data — and each one says something the
 others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
@@ -1066,7 +1269,7 @@ weighting=:voronoi off-axis (needs :volume)  : ArgumentError
 fov works on particles                       : (30, 30)
 slice(part, …)                               : MethodError
 particle nmax                                : MethodError
-particle max_threads                         : MethodError
+particle max_threads                         : NO ERROR
 data_center ignored on off-axis hydro        : true
 ```
 

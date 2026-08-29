@@ -136,6 +136,11 @@ makedocs(modules = [Mera],
                       # projection IS map-making; overlay/absorption/mock-observe operate on its
                       # output and auto-frame sets up the view — so they live together here.
                       "Projection & Maps" => Any[
+                          # A router, not a tutorial. "Make a rotating movie" used to land on
+                          # movie.md, which does not mention rotation_sequence, and the off-axis
+                          # page was reachable only from the nav: index.md and both axis-aligned
+                          # tutorials link to it nowhere.
+                          "Which tool?"                  => "projection_which_tool.md",
                           "Auto-Frame (center & orient)" => "galaxyframe.md",
                           "Axis-aligned (x/y/z)" => Any[ "Hydro"     => "06_hydro_Projection.md",
                                                          "Particles" => "06_particles_Projection.md"],

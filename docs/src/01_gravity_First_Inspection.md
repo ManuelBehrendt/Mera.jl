@@ -1,7 +1,12 @@
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+```@raw html
 <!-- GENERATED FILE. Do not edit this markdown.
      Source notebook: 01_gravity_First_Inspection.ipynb
      Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
      Any edit here is lost the next time the docs are rendered. -->
+```
 
 !!! note "Renaming is not wired up yet"
     You can assign into `info.descriptor.gravity`, but nothing reads it: `usegravity` is set to
@@ -14,10 +19,6 @@ Let's start by importing Mera.jl and loading simulation information for output 3
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
-
-!!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
-
 # MERA_EXAMPLES environment variable; every path below is built from it.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
