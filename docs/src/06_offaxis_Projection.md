@@ -145,7 +145,7 @@ projection centre (box fraction) = [0.5, 0.5, 0.5]
 frame: (147, 147)  and  (147, 147)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_5_4.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_5_5.png)
 
 Read the output back:
 
@@ -321,7 +321,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-29T04:23:14.924
+[Mera]: 2026-08-29T04:39:10.603
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -558,9 +558,9 @@ level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
 ngp       85.7 %     0.006     1.0381
-cic       64.4 %     0.016     0.9733
-overlap   0.0 %      0.026     0.0021
-exact     0.0 %      0.115     0.0
+cic       64.4 %     0.006     0.9733
+overlap   0.0 %      0.037     0.0021
+exact     0.0 %      0.092     0.0
 ```
 
 ### One number is not enough: where the disagreement lives
@@ -984,22 +984,36 @@ this needs nothing installed on the system and runs as part of the notebook:
 
 ```julia
 # Rendered here rather than pasted in, so the movie can never drift from the code above.
-cr  = sharedrange(frames, :sd)
-fig = Figure(size=(560, 560))
-ax  = Axis(fig[1, 1], aspect=DataAspect(), title="orbit movie (auto FOV, square)")
+#
+# The four frames above are for READING: a montage you compare panel by panel. A movie wants many
+# more, or the orbit steps rather than turns. 24 frames at 15 degrees is one revolution in three
+# seconds at framerate 8, which reads as motion; the four-frame version reads as a slideshow.
+# Same camera, same fixed FOV, so nothing else about the sequence changes.
+smooth = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:15:345,
+                           inclination=55, axis=:angmom, center=[:bc],
+                           fov=22, fov_unit=:kpc, aperture=:square,
+                           pxsize=[0.5,:kpc], parallel_frames=false)
+
+cr  = sharedrange(smooth, :sd)          # one colour range across the whole orbit
+fig = Figure(size=(360, 360))           # frame COUNT drives smoothness, resolution drives file
+                                        # size, so keep 24 frames and shrink the canvas instead
+ax  = Axis(fig[1, 1], aspect=DataAspect(), title="orbit movie (fixed FOV, square)")
 hidedecorations!(ax)
 
 mkpath("assets/offaxis")
-record(fig, "assets/offaxis/orbit_movie.gif", eachindex(frames); framerate=8) do k
+record(fig, "assets/offaxis/orbit_movie.gif", eachindex(smooth); framerate=12) do k
     empty!(ax)
-    showmap!(ax, frames[k], :sd; crange=cr)
+    showmap!(ax, smooth[k], :sd; crange=cr)
 end
-println("wrote assets/offaxis/orbit_movie.gif  (",
+println("wrote assets/offaxis/orbit_movie.gif  (", length(smooth), " frames, ",
         round(filesize("assets/offaxis/orbit_movie.gif") / 1024, digits=1), " KB)")
+println("every frame the same size: ",
+        all(size(f.maps[:sd]) == size(smooth[1].maps[:sd]) for f in smooth))
 ```
 
 ```
-wrote assets/offaxis/orbit_movie.gif  (641.8 KB)
+wrote assets/offaxis/orbit_movie.gif  (24 frames, 1967.3 KB)
+every frame the same size: true
 ```
 
 ![Orbit movie — the camera sweeps azimuth at fixed inclination; the frame does not breathe.](assets/offaxis/orbit_movie.gif)

@@ -14,13 +14,25 @@
 [`getmovie`](@ref) projects a quantity for **every output** of a simulation and collects the
 maps into the frames of a movie; [`savemovie`](@ref) writes them to an animated GIF. It
 builds on the same machinery as [`timeseries`](@ref) (one snapshot resident at a time,
-RAM-safe) and the [`projection`](@ref) engine, with the view held fixed so the movie is
-steady.
+RAM-safe) and the [`projection`](@ref) engine. Down a box axis the view is fixed by construction; off
+axis it is not, and `fov` is what makes it so (see below).
 
 ![A 3-D Sedov blast over its 13 outputs, each frame tagged with its output number (tags=:output): the column-density frames produced by getmovie, encoded to a GIF by savemovie.](assets/movie/sedov_density.gif)
 
 This notebook runs on the `timeseries_sedov3d` test run (a 3-D Sedov blast, 13 outputs). All
 file outputs are written to a temporary directory.
+
+!!! note "Why the shells converge instead of expanding"
+    The blast in this fixture sits at the **origin corner**, not at the box centre: at `t=0` the
+    pressure peak is at `(0.008, 0.008, 0.008)` in a `0.5` box. The box is periodic, so the single
+    outgoing shell leaves through the low faces and re-enters through the high ones. What you see
+    is one shell wrapping around, arriving from every side and meeting last at the box centre,
+    which is the point farthest from the corner.
+
+    It is expanding, not collapsing. Measured with the periodic (minimum-image) radius about the
+    origin, the mass-weighted shell radius grows from 0.22 to 0.30 over the series. Measured with
+    the plain `:r_sphere` it would not, because the direct distance from a corner is the long way
+    round: see [`getvar`](@ref)'s `:r_sphere_periodic`.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -48,7 +60,7 @@ println("output numbers  : ", m.outputs)
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-temp output dir : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX
+temp output dir : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe
 getmovie: 13 frame(s) of :sd from "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d"
   [1/13] output 00001
   [2/13] output 00002
@@ -206,11 +218,8 @@ println("wrote GIF       : ", gif, "  (", filesize(gif), " bytes)")
   frame 11: output 00011
   frame 12: output 00012
   frame 13: output 00013
-[ Info: Precompiling ImageMagick [6218d12a-5da1-5696-b52f-db25d2ecc6d1](cache misses: wrong dep version loaded (2), incompatible header (5), mismatched flags (2))
-[ Info: Precompiling ImageMagick [6218d12a-5da1-5696-b52f-db25d2ecc6d1] (cache misses: wrong dep version loaded (4), incompatible header (10), mismatched flags (4))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/density.gif
-wrote GIF       : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/density.gif  (41062 bytes)
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.gif
+wrote GIF       : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.gif  (41062 bytes)
 ```
 
 ## Saving: colormap, scaling, steady brightness
@@ -241,8 +250,8 @@ println("wrote          : ", gif2, "  (", filesize(gif2), " bytes)")
   frame 11: t=5.302e-15 Myr
   frame 12: t=5.822e-15 Myr
   frame 13: t=6.352e-15 Myr
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/density_gray.gif
-wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/density_gray.gif  (42812 bytes)
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_gray.gif
+wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_gray.gif  (42812 bytes)
 ```
 
 - **`colorrange=:global`** (default) computes a single range over *all* frames, so the movie
@@ -301,7 +310,7 @@ println("custom tags    : ", basename(gif4))
   frame 11: output 00011 | t=5.302e-15 Myr
   frame 12: output 00012 | t=5.822e-15 Myr
   frame 13: output 00013 | t=6.352e-15 Myr
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/density_tagged.gif
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_tagged.gif
 two-line tags  : density_tagged.gif
   frame 1: frame 1/13
   frame 2: frame 2/13
@@ -316,7 +325,7 @@ two-line tags  : density_tagged.gif
   frame 11: frame 11/13
   frame 12: frame 12/13
   frame 13: frame 13/13
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/density_custom.gif
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_custom.gif
 custom tags    : density_custom.gif
 ```
 
@@ -337,8 +346,8 @@ println("reloaded frames: ", length(m2.frames), "  (identical: ", length(m2.fram
 ```
 
 ```
-Saved MeraMovie (13 frames) → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/density.jld2
-Loaded MeraMovie (13 frames) ← /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/density.jld2
+Saved MeraMovie (13 frames) → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.jld2
+Loaded MeraMovie (13 frames) ← /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.jld2
 reloaded frames: 13  (identical: true)
 ```
 
@@ -384,17 +393,8 @@ println("assembled      : ", out_gif, "  (", filesize(out_gif), " bytes)")
 ```
 
 ```
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (3), incompatible header (6))
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), incompatible header (12))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.8.0
-moviefromframes: 13 image(s) from /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/from_frames.gif
-assembled      : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_RtAbhX/from_frames.gif
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-  (556105
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
- bytes)
+moviefromframes: 13 image(s) from /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/from_frames.gif
+assembled      : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/from_frames.gif  (556105 bytes)
 ```
 
 …or feed the PNGs to `ffmpeg` for an MP4:
