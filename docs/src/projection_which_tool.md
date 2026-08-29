@@ -15,6 +15,13 @@ Everything here works the same on hydro and, unless noted, on particles.
 | the disc's axis as a value I can reuse | [`face_on`](@ref) / [`edge_on`](@ref), which return a frame whose `los`/`up`/`center` splat into any later call |
 | the same window at every angle | `fov`/`fov_unit` with `aperture=:circle|:square`. Without it an off-axis projection fits its window to the rotated data, so the object appears to zoom between angles |
 
+## Selecting a region first
+
+`subregion` and `shellregion` work on **all six** data types, including RT and sinks, which have no
+tutorial page of their own. One exception and one trap, both in the
+[Subregions API](api/subregions.md): `shellregion` has no sink method, and neither function wraps
+at a periodic boundary, so a region near a box face is silently clipped rather than wrapped.
+
 ## A cutting plane
 
 A plane, not a column: values *at* a depth rather than integrated through it.

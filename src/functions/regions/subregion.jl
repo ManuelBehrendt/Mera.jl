@@ -19,7 +19,7 @@ subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
 
             center::Array{<:Any,1}=[0.,0.,0.],     # all
             range_unit::Symbol=:standard,           # all
-            cell::Bool=true,                        # hydro and gravity
+            cell::Bool=true,                        # hydro, gravity and RT (AMR cell data)
             inverse::Bool=false,                    # all
             verbose::Bool=true,             # all
             myargs::ArgumentsType=ArgumentsType() ) # all
@@ -71,7 +71,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
 
     center::Array{<:Any,1}=[0.,0.,0.],      # all
     range_unit::Symbol=:standard,           # all
-    cell::Bool=true,                        # hydro and gravity
+    cell::Bool=true,                        # hydro, gravity and RT (AMR cell data)
     inverse::Bool=false,                    # all
     smooth_boundary::Bool=false,            # hydro cylinder only
     boundary_width::Real=0.1,               # hydro cylinder only
