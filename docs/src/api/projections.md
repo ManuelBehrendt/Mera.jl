@@ -48,7 +48,7 @@ projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbo
 | `pxsize=[value, :unit]` | physical size of a map pixel, the preferred way to set resolution |
 | `res` | grid cells per side instead of a physical pixel size |
 | `lmax` | cap the AMR level used; defaults to the object's own `lmax` |
-| `direction` | `:x`, `:y`, `:z` (default `:z`), or `:faceon`/`:edgeon` after [`galaxyframe`](../galaxyframe.md) |
+| `direction` | `:x`, `:y`, `:z` (default `:z`), or `:faceon`/`:edgeon`, which derive the orientation from the data's own angular momentum |
 | `los`, `up`, `theta`, `phi`, `inclination`, `azimuth` | off-axis line of sight: see [Off-axis](offaxis.md) |
 | `weighting` | how intensive quantities are averaged (see the note below) |
 | `mode` | `:standard` normalises per area; `:sum` returns the raw weighted sum |
