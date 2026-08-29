@@ -206,3 +206,36 @@ end
         end
     end
 end
+
+# Selection on a REAL multi-sink catalogue. The data-free tests above use a hand-written two-sink
+# CSV, which proves the arithmetic; this proves the same selections against a RAMSES run, six sinks
+# placed so that each shape catches a different subset. Private fixture, so it is skipped when the
+# simulation drive is not mounted.
+if DATA_AVAILABLE && isdir(DATASETS[:sinks3d_multi].path)
+    @testset "selection on the six-sink RAMSES fixture" begin
+        ds = DATASETS[:sinks3d_multi]
+        info = getinfo(ds.output, ds.path, verbose=false)
+        @test info.sinks
+        s = getsinks(info, verbose=false)
+        @test length(s.data) == 6
+        ids(o) = sort(Int.(getvar(o, :id)))
+        B = (center=[:bc], range_unit=:pc, verbose=false)
+
+        # each shape selects a DIFFERENT subset — the point of this fixture
+        @test ids(subregion(s, :sphere,   radius=55; B...))              == [1, 2]
+        @test ids(subregion(s, :sphere,   radius=75; B...))              == [1, 2, 3, 4, 6]
+        @test ids(shellregion(s, :sphere, radius=[55., 75.]; B...))      == [3, 4, 6]
+        @test ids(subregion(s, :cylinder, radius=55, height=100; B...))  == [1, 2, 4]
+
+        # the shell and its inverse partition the catalogue
+        inv = shellregion(s, :sphere, radius=[55., 75.], inverse=true; B...)
+        @test ids(inv) == [1, 2, 5]
+        @test length(inv.data) + 3 == length(s.data)
+
+        # sinks accrete between the two outputs: the catalogue is not static
+        s1 = getsinks(getinfo(1, ds.path, verbose=false), verbose=false)
+        @test sum(getvar(s1, :msink)) < sum(getvar(s, :msink))
+        @test maximum(getvar(s1, :acc_rate)) == 0.0        # nothing has accreted at t=0
+        @test maximum(getvar(s,  :acc_rate)) > 0.0
+    end
+end

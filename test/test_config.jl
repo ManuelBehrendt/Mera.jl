@@ -62,6 +62,19 @@ const DATASETS = Dict(
         has_particles = false,
         has_clumps = true
     ),
+    # Six sinks planted at t=0 from ic_sink, at hand-checkable offsets from the box centre, so a
+    # sphere, a shell and a cylinder each select a DIFFERENT subset. The public sinks3d fixture has
+    # one sink, which is enough to test that the reader finds a catalogue and not enough to test
+    # selection. Private (RAMSES/, not RAMSES-PUBLIC/): regenerate with
+    # testdata/namelists/sinks3d_multi.nml.
+    :sinks3d_multi => (
+        path = joinpath(SIMULATION_PATH, "RAMSES/sinks3d_multi"),
+        output = 2,
+        has_hydro = true,
+        has_gravity = true,
+        has_particles = true,
+        has_clumps = false
+    ),
     # Uniform grid simulation with particles - good for projection tests
     :spiral_ugrid => (
         path = joinpath(SIMULATION_PATH, "RAMSES/spiral_ugrid"),
