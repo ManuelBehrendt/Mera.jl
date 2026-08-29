@@ -14,7 +14,6 @@ Start here if you would rather read a whole workflow than a reference.
 
 - [Coming from Other Tools](switching_to_mera.md): inspect, load, select, measure, map, in
   one pass, with the concept map for anyone arriving from another package.
-- [Flux Budgets](fluxbudget.md): inflow and outflow through a surface, with the ledger closed.
 - [Time Series (multi-snapshot)](timeseries.md): one measurement repeated across outputs.
 - [Star-Formation Rate](sfr.md): a star-formation history from particle birth times.
 - [First Look](report.md): the one-call census and dashboard.

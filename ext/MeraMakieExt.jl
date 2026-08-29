@@ -239,28 +239,34 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
     return fig
 end
 
-# ---- fluxmapplot: the inflow/outflow surface map -----------------------------------------
-function Mera._plot_fluxmap(fm::Mera.FluxMapType; size=(640, 460), colormap=nothing, clip::Real=0.95)
-    fig = Makie.Figure(; size=size)
-    xc = (fm.xedges[1:end-1] .+ fm.xedges[2:end]) ./ 2
-    yc = (fm.yedges[1:end-1] .+ fm.yedges[2:end]) ./ 2
-    ylab = fm.surface === :sphere ? "cos θ" : "z"
-    ax = Makie.Axis(fig[1, 1]; title="flux map [$(fm.surface), $(fm.quantity)]",
-                    xlabel="φ [deg]", ylabel=ylab)
-    if fm.quantity === :vr
-        # symmetric diverging range clipped at the `clip` percentile of |v⊥| so a few extreme cells
-        # don't wash out the bulk inflow/outflow contrast (default 95th, exposed as a kwarg).
-        a = sort!(filter(x -> isfinite(x) && x != 0, abs.(vec(fm.map))))
-        m = isempty(a) ? 1.0 : a[clamp(round(Int, clamp(clip, 0.5, 1.0)*length(a)), 1, length(a))]
-        cmap = colormap === nothing ? :vik : colormap     # perceptually-uniform diverging, colorblind-safe
-        hm = Makie.heatmap!(ax, xc, yc, fm.map; colormap=cmap, colorrange=(-m, m))
-        Makie.Colorbar(fig[1, 2], hm; label="mean v⊥ [km/s]  (blue = inflow, red-brown = outflow)")
-    else
-        cmap = colormap === nothing ? :viridis : colormap
-        hm = Makie.heatmap!(ax, xc, yc, fm.map; colormap=cmap)
-        Makie.Colorbar(fig[1, 2], hm; label="Ṁ per bin [$(fm.unit)]")
+# ---- fluxmapplot -------------------------------------------------------------------------
+# flux lives in the git-ignored src/dev on the maintainer's machine and is absent from the
+# public package, so FluxMapType may not exist. Defining a method on a type that is not
+# there fails at extension load and would take the whole Makie extension down with it.
+if isdefined(Mera, :FluxMapType)
+    function Mera._plot_fluxmap(fm::Mera.FluxMapType; size=(640, 460), colormap=nothing, clip::Real=0.95)
+        fig = Makie.Figure(; size=size)
+        xc = (fm.xedges[1:end-1] .+ fm.xedges[2:end]) ./ 2
+        yc = (fm.yedges[1:end-1] .+ fm.yedges[2:end]) ./ 2
+        ylab = fm.surface === :sphere ? "cos θ" : "z"
+        ax = Makie.Axis(fig[1, 1]; title="flux map [$(fm.surface), $(fm.quantity)]",
+                        xlabel="φ [deg]", ylabel=ylab)
+        if fm.quantity === :vr
+            # symmetric diverging range clipped at the `clip` percentile of |v⊥| so a few extreme cells
+            # don't wash out the bulk inflow/outflow contrast (default 95th, exposed as a kwarg).
+            a = sort!(filter(x -> isfinite(x) && x != 0, abs.(vec(fm.map))))
+            m = isempty(a) ? 1.0 : a[clamp(round(Int, clamp(clip, 0.5, 1.0)*length(a)), 1, length(a))]
+            cmap = colormap === nothing ? :vik : colormap     # perceptually-uniform diverging, colorblind-safe
+            hm = Makie.heatmap!(ax, xc, yc, fm.map; colormap=cmap, colorrange=(-m, m))
+            Makie.Colorbar(fig[1, 2], hm; label="mean v⊥ [km/s]  (blue = inflow, red-brown = outflow)")
+        else
+            cmap = colormap === nothing ? :viridis : colormap
+            hm = Makie.heatmap!(ax, xc, yc, fm.map; colormap=cmap)
+            Makie.Colorbar(fig[1, 2], hm; label="Ṁ per bin [$(fm.unit)]")
+        end
+        return fig
     end
-    return fig
+
 end
 
 # ---- clumpplot: catalog overlay (COM markers sized by mass) ------------------------------

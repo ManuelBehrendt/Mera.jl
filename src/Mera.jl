@@ -214,14 +214,6 @@ export
     CoveringGridResult,
 
     # immersive 3-D visualisation (volume ray-caster)
-    fluxbudget,
-    fluxtimeseries,
-    fluxprofile,
-    fluxshell,
-    fluxmap,
-    fluxmapplot,
-    FluxBudgetType,
-    FluxMapType,
     report,
     preview,
     render,
@@ -494,7 +486,6 @@ include("functions/clumping.jl")
 include("functions/profile.jl")
 include("functions/quicklook.jl")
 include("functions/covering_grid.jl")
-include("functions/flux.jl")
 include("functions/sfr.jl")
 include("functions/report/report.jl")
 include("functions/report/report_render.jl")

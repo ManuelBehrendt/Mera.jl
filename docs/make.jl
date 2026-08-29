@@ -20,6 +20,9 @@ const UNDOCUMENTED_OK = Set([
     :bubble, :bubbletimeseries,
     # exported, deliberately left undocumented for now
     :createconstants!,
+    # flux budgets, moved to the git-ignored src/dev while the method is being worked on: present
+    # on this machine, absent from master and from any release, so they have no docs page
+    :fluxbudget, :fluxtimeseries, :fluxprofile, :fluxshell, :fluxmap, :fluxmapplot,
 ])
 
 let
@@ -127,7 +130,6 @@ makedocs(modules = [Mera],
                               "Clump Finding"               => "clumpfind.md",
                               "Clump Finding — Synthetic Example" => "clumpfind_synthetic.md"],
                           "Gas Flows & Star Formation" => Any[
-                              "Flux Budgets"                => "fluxbudget.md",
                               "Star-Formation Rate"         => "sfr.md"],
                           "Time Series & Movies" => Any[
                               "Time Series (multi-snapshot)"=> "timeseries.md",
@@ -173,7 +175,6 @@ makedocs(modules = [Mera],
                           "Volume Rendering"    => "api/volume_rendering.md",
                           "Multi-Threading"     => "api/multithreading.md",
                           "Cosmology"           => "api/cosmology.md",
-                          "Flux"                => "api/flux.md",
                           "Movies"              => "api/movies.md",
                           "Configuration"       => "api/configuration.md",
                           "Notifications"       => "api/notifications.md",
