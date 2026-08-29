@@ -2,6 +2,34 @@
 
 Functions for defining and working with spatial subregions using different geometric shapes.
 
+## Which data types
+
+Both functions dispatch on `DataSetType`, so they work on **every** data type Mera loads, not only
+the four with tutorial pages. The tutorials cover hydro, gravity, particles and clumps; RT and
+sinks are not written up but are supported by the same code.
+
+| data type | `subregion` | `shellregion` | `cell=` | smooth boundary |
+|---|---|---|---|---|
+| hydro | yes | yes | yes | yes, on `:cylinder` |
+| gravity | yes | yes | yes | no |
+| RT | yes | yes | yes | no |
+| particles | yes | yes | ignored (points) | no |
+| clumps | yes | yes | ignored (points) | no |
+| sinks | yes | yes | ignored (points) | no |
+
+`cell=` decides whether a cell straddling the border is included whole or by its centre, so it is
+meaningful only for AMR cell data. Particles, clumps and sinks are points: they are in or out, and
+the keyword is accepted and ignored.
+
+The smooth-boundary keywords are implemented only for the hydro cylinder.
+
+!!! warning "Regions do not wrap at periodic boundaries"
+    Neither function applies the minimum-image convention. A sphere or shell centred near a box
+    face is clipped at the boundary rather than wrapped, silently: you get a partial region and a
+    total that looks plausible. `getvar`'s `:r_sphere_periodic` / `:r_cylinder_periodic` exist for
+    exactly this case on the quantity side, but there is no periodic region selector. On a run
+    where the object of interest straddles a face, select by periodic radius instead.
+
 ## Exported Functions
 
 ### Main Subregion Functions

@@ -1,3 +1,17 @@
+@testset "namelist values with Fortran comments and d-exponents" begin
+    # A RAMSES namelist routinely writes `eta_sn=.0    ! Efficiency of the feedback`, and getinfo
+    # parsed those three optional values without stripping the comment: any output whose namelist
+    # set one that way was unreadable, and the error named a parse failure rather than the cause.
+    f = Mera._namelist_float
+    @test f(".0    ! Efficiency of the feedback") == 0.0
+    @test f("0.05 ! in Myr")                      == 0.05
+    @test f("250.")                               == 250.0
+    @test f("1d2")                                == 100.0     # Fortran exponent
+    @test f("1.5D-3")                             == 0.0015
+    @test f(".false. ! not a number") === nothing              # skipped, not an error
+    @test f("")                       === nothing
+end
+
 # Data-free tests for the sink-particle reader.
 #
 # RAMSES writes sinks as ONE csv per output (sink_NNNNN.csv) with two header lines: the column
@@ -156,11 +170,72 @@
         end
     end
 
+    @testset "shell selection on a sink catalogue" begin
+        mktempdir() do d
+            s = getsinks(_sink_info(d, SINK_CSV), verbose=false)
+            # sink 1 at (10,20,20), sink 2 at (30,40,0), boxlen 100; under :standard a radius is a
+            # FRACTION of boxlen. About sink 1's position, sink 2 is at r = sqrt(400+400+400) = 34.6
+            c = [0.1, 0.2, 0.2]
+            @test getvar(shellregion(s, :sphere, radius=[0.30, 0.40], center=c,
+                                     range_unit=:standard, verbose=false), :id) == [2.0]
+            # the inner sink is excluded by the inner radius, and inverse is the complement
+            inv = shellregion(s, :sphere, radius=[0.30, 0.40], center=c,
+                              range_unit=:standard, inverse=true, verbose=false)
+            @test getvar(inv, :id) == [1.0]
+            # a shell that contains neither
+            @test length(shellregion(s, :sphere, radius=[0.60, 0.70], center=c,
+                                     range_unit=:standard, verbose=false).data) == 0
+            # cylinder shell: about sink 1, sink 2 is at cylindrical r = sqrt(400+400) = 28.3
+            @test getvar(shellregion(s, :cylinder, radius=[0.25, 0.35], height=0.5, center=c,
+                                     range_unit=:standard, verbose=false), :id) == [2.0]
+            # the object stays usable afterwards
+            sh = shellregion(s, :sphere, radius=[0.30, 0.40], center=c, range_unit=:standard, verbose=false)
+            @test sh.boxlen == s.boxlen
+            @test sh.used_descriptors[:units] == s.used_descriptors[:units]
+            # zero radii are refused rather than silently returning everything
+            @test_throws ErrorException shellregion(s, :sphere, radius=[0., 0.4], center=c,
+                                                    range_unit=:standard, verbose=false)
+        end
+    end
+
     @testset "a missing catalogue raises rather than returning nonsense" begin
         mktempdir() do d
             info = _sink_info(d, SINK_CSV)
             info.fnames.sinks = joinpath(d, "no_such_sink_file.csv")
             @test_throws ErrorException getsinks(info, verbose=false)
         end
+    end
+end
+
+# Selection on a REAL multi-sink catalogue. The data-free tests above use a hand-written two-sink
+# CSV, which proves the arithmetic; this proves the same selections against a RAMSES run, six sinks
+# placed so that each shape catches a different subset. Private fixture, so it is skipped when the
+# simulation drive is not mounted.
+if DATA_AVAILABLE && isdir(DATASETS[:sinks3d_multi].path)
+    @testset "selection on the six-sink RAMSES fixture" begin
+        ds = DATASETS[:sinks3d_multi]
+        info = getinfo(ds.output, ds.path, verbose=false)
+        @test info.sinks
+        s = getsinks(info, verbose=false)
+        @test length(s.data) == 6
+        ids(o) = sort(Int.(getvar(o, :id)))
+        B = (center=[:bc], range_unit=:pc, verbose=false)
+
+        # each shape selects a DIFFERENT subset — the point of this fixture
+        @test ids(subregion(s, :sphere,   radius=55; B...))              == [1, 2]
+        @test ids(subregion(s, :sphere,   radius=75; B...))              == [1, 2, 3, 4, 6]
+        @test ids(shellregion(s, :sphere, radius=[55., 75.]; B...))      == [3, 4, 6]
+        @test ids(subregion(s, :cylinder, radius=55, height=100; B...))  == [1, 2, 4]
+
+        # the shell and its inverse partition the catalogue
+        inv = shellregion(s, :sphere, radius=[55., 75.], inverse=true; B...)
+        @test ids(inv) == [1, 2, 5]
+        @test length(inv.data) + 3 == length(s.data)
+
+        # sinks accrete between the two outputs: the catalogue is not static
+        s1 = getsinks(getinfo(1, ds.path, verbose=false), verbose=false)
+        @test sum(getvar(s1, :msink)) < sum(getvar(s, :msink))
+        @test maximum(getvar(s1, :acc_rate)) == 0.0        # nothing has accreted at t=0
+        @test maximum(getvar(s,  :acc_rate)) > 0.0
     end
 end
