@@ -58,11 +58,7 @@ println("threads      : ", Threads.nthreads())
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (1), wrong source (2), dep missing source (1), mismatched flags (5))
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), wrong source (4), dep missing source (2), mismatched flags (10))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -70,11 +66,6 @@ SYSTEM: caught exception of type :MethodError while trying to print a failed Tas
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (3), incompatible header (6))
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), incompatible header (12))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.8.0
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 cells loaded : 590311
 box length   : 100.0 kpc
 levels       : 3 – 7
@@ -330,7 +321,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-28T20:19:15.315
+[Mera]: 2026-08-29T04:12:37.413
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -566,10 +557,10 @@ level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       85.7 %     0.007     1.0381
-cic       64.4 %     0.007     0.9733
-overlap   0.0 %      0.036     0.0021
-exact     0.0 %      0.09      0.0
+ngp       85.7 %     0.006     1.0381
+cic       64.4 %     0.006     0.9733
+overlap   0.0 %      0.026     0.0021
+exact     0.0 %      0.089     0.0
 ```
 
 ### One number is not enough: where the disagreement lives
@@ -807,7 +798,7 @@ It is a **nearest-cell sample**, not an integral. Three consequences:
 - **Empty (NaN) pixels are geometry, not failure.** Where the plane threads between refinement levels there is simply no cell.
 - **The tilted, elongated blocks are the true shape of the cut** — a plane crossing an axis-aligned cube at an angle gives a quadrilateral cross-section, and that is what you see.
 
-And one API trap that is the *opposite* of Chapter 4: on `slice`, `xrange`/`yrange` **are the camera-plane window**. There is no `fov`, no `zrange`, no `binning`; it takes exactly one variable and works on cell data only (hydro, gravity, RT — `slice(part, …)` is a `MethodError`). Its `.extent` is code units and its `.center` really is code units too, unlike a map's.
+And one API trap that is the *opposite* of Chapter 4: on `slice`, `xrange`/`yrange` **are the camera-plane window**. There is no `fov` and no `binning`; it takes exactly one variable and works on cell data only (hydro, gravity, RT). Depth is set by `offset` rather than `zrange`: see below. `slice(part, …)` is still a `MethodError`, and deliberately so, because a plane through point particles is empty by construction; the particle equivalent is a projection of finite `thickness`, shown in Chapter 11. Its `.extent` is code units and its `.center` really is code units too, unlike a map's.
 
 ```julia
 view = (inclination=60, azimuth=30, axis=:angmom, center=[:bc])
@@ -834,6 +825,42 @@ projection frame (120, 120)
 slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
 
+### Moving the plane: `offset`
+
+The keywords so far set the plane's **orientation**. `offset` sets its **position**, sliding it
+along the line of sight, which is what turns a single cut into a fly-through. `offset=0` (the
+default) puts the plane through `center`, and `offset_unit` defaults to `range_unit`.
+
+The axis-aligned path spells the same idea `slice_pos`/`slice_unit`.
+
+Sweeping it is how you build a slice movie: compute one map per offset and hand the stack to
+[`savemovie`](@ref).
+
+```julia
+using Statistics
+println(rpad("offset [kpc]", 14), rpad("filled px", 12), "median nH [cm^-3]")
+for off in (-15.0, -5.0, 0.0, 5.0, 15.0)
+    sl = slice(gas, :rho, :nH; view..., xrange=[-15,15], yrange=[-15,15], range_unit=:kpc,
+               pxsize=[0.25,:kpc], offset=off, offset_unit=:kpc, verbose=false)
+    f = filter(isfinite, sl.map)
+    println(rpad(off, 14), rpad(length(f), 12),
+            isempty(f) ? "-" : round(median(f), sigdigits=4))
+end
+```
+
+```
+offset [kpc]  filled px   median nH [cm^-3]
+-15.0         14400       5.958e-6
+-5.0          14400       1.39e-5
+0.0           14400       6.55e-6
+5.0           14400       6.46e-6
+15.0          14400       4.146e-6
+```
+
+Every offset fills the frame, and the density changes with depth: the plane really is moving
+through the object rather than being re-drawn in place. `offset=0` returns exactly what omitting
+the keyword returns.
+
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 As = log10.(replace(Float64.(sl.map), 0.0 => NaN))
@@ -854,7 +881,7 @@ Colorbar(fig[1,3], h, label="log10 n_H [cm⁻³]")
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_37_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_40_1.png)
 
 Two things in the left panel are the *selection* rather than the gas, and both are worth
 recognising because they show up in every `fov` projection:
@@ -907,7 +934,7 @@ cr = sharedrange(frames, :sd)
 maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_41_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_44_1.png)
 
 Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
 numbers say the same thing from opposite directions. That invariance is what makes the sequence
@@ -994,12 +1021,13 @@ The view keywords are the same everywhere. What differs is a short list of defau
 
 | | hydro / RT | particles |
 |---|---|---|
-| `binning` default | `:overlap` | **`:cic`**; `:overlap`/`:exact` silently fall back to `:cic` (points have no footprint) |
+| `binning` default | `:overlap` | **`:cic`**; `:overlap`/`:exact` fall back to `:cic` (points have no footprint) and say so once per session |
 | `weighting` | **Array**, `[:mass, missing]` | **Symbol**, `:mass`, `:volume`, `:sph`, `:voronoi` — all available off-axis. `:sph` conserves mass to ~0.2 % independent of angle; `:voronoi` trades that for sharp cell edges (~3 % angle spread), so prefer `:sph` for quantitative maps |
 | `fov` / `fov_unit` / `aperture` | yes | **yes** — same rotation-invariant sphere selection; the framing is a selection, so it does not care what is deposited |
 | `mode`, `nmax`, `max_threads`, `gravity_data` | yes | absent |
 | `data_center` | **silently ignored** on the off-axis hydro path | honoured |
-| `slice` | yes | no — `slice(part, …)` is a `MethodError` |
+| `slice` | yes, with `offset` to move the plane | no, and by design: a plane through points is empty. Use `thickness`/`offset` on `projection` for a slab |
+| `thickness` / `offset` | not applicable (a slice is the cell equivalent) | **yes** — project a slab of finite depth and move it along the line of sight |
 
 Gravity goes through the combined call form `projection(hydro, gravity, var; …)`. RT data has no velocity field, so `:angmom`, `:faceon` and `:edgeon` are unavailable — give an explicit `los=`, or take `[:lx,:ly,:lz]` from the matching hydro object with `getvar` and pass the result as `axis=[lx,ly,lz]`. (This fixture has no RT output; see the [radiative transfer page](10_multi_RadiativeTransfer.md).)
 
@@ -1027,6 +1055,59 @@ stars   : frame (107, 109)   los = [0.999, -0.002, -0.037]
 gravity : maps Any[:epot, :sd]
           epot over filled pixels (-0.5327, -0.03714)   (530 of 11448 pixels empty)
 ```
+
+### A slab instead of a slice, for particles
+
+A cutting plane through point particles catches nothing: a particle has no extent, so a
+zero-thickness plane is empty by construction. That is why `slice(part, …)` is a `MethodError`
+rather than an oversight.
+
+The useful analogue is a projection of finite depth. `thickness` sets the depth of the slab along
+the line of sight and `offset` moves it, the same way `offset` moves the plane for cell data. A
+non-positive thickness is refused rather than returning an empty map.
+
+```julia
+S = (direction=:edgeon, center=[:bc], fov=15, fov_unit=:kpc, aperture=:square,
+     pxsize=[0.5,:kpc], verbose=false, show_progress=false)
+full = projection(part, :sd, :Msol_pc2; S...)
+T = sum(full.maps[:sd])
+println(rpad("thickness [kpc]", 18), rpad("total", 12), "fraction of the full column")
+for th in (20.0, 5.0, 1.0)
+    m = projection(part, :sd, :Msol_pc2; thickness=th, thickness_unit=:kpc, S...)
+    println(rpad(th, 18), rpad(round(sum(m.maps[:sd]), sigdigits=6), 12),
+            round(sum(m.maps[:sd])/T, digits=4))
+end
+
+println()
+println(rpad("offset [kpc]", 18), "total in a 2 kpc slab")
+for off in (-6.0, -2.0, 0.0, 2.0, 6.0)
+    m = projection(part, :sd, :Msol_pc2; thickness=2.0, thickness_unit=:kpc,
+                   offset=off, offset_unit=:kpc, S...)
+    println(rpad(off, 18), round(sum(m.maps[:sd]), sigdigits=6))
+end
+```
+
+```
+thickness [kpc]   total       fraction of the full column
+20.0              273951.0    0.9052
+5.0               178911.0    0.5912
+1.0               28693.2     0.0948
+offset [kpc]      total in a 2 kpc slab
+-6.0              11801.2
+-2.0              115805.0
+0.0               67432.2
+2.0               16791.2
+6.0               5921.15
+```
+
+The slab total rises with thickness, as it must. The offset sweep is more interesting: the mass
+peaks at **-2 kpc**, not at 0. That is not a bug in the slab, it is the slab reporting where the
+stars actually are. `center=[:bc]` is the box centre, and this galaxy's stellar centroid does not
+sit exactly there, so the densest slab is the one offset toward it.
+
+That is the check worth running on your own data. If the peak is not where you expect the object
+to be, either the centre is wrong or the object is not where you think, and both are worth knowing
+before you quote a number from the map.
 
 ```julia
 # The same camera, pointed at a different data type. `fov` frames both identically, so the two
@@ -1075,7 +1156,7 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 φ along the line of sight: (-1976.0, -175.5) km²/s²
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_51_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_57_2.png)
 
 Same keywords, same camera, three different kinds of data — and each one says something the
 others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
