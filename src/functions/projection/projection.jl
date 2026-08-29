@@ -239,6 +239,7 @@ function _check_view_specifiers(los, direction, inclination, azimuth, theta, phi
         "  los=[1, 0, 0.5]                            explicit viewing direction (any length)\n" *
         "  inclination=60, azimuth=30, axis=:angmom   tilt off a reference axis (degrees)\n" *
         "  theta=60, phi=30                           spherical angles about the box axes\n" *
+        "                                             (note: azimuth = phi + 90 when axis=:z)\n" *
         "  direction=:faceon   (or :edgeon)           presets using the object's angular momentum"))
     if (direction === :faceon || direction === :edgeon) && axis !== nothing
         throw(ArgumentError("`axis` is not used with `direction=:$direction` — these presets " *
@@ -266,7 +267,25 @@ in `angle_unit` (**`:deg`** by default, or `:rad`):
 
 `:faceon`/`:edgeon` and `axis=:angmom` need the pre-computed `L`; the projection wiring supplies
 it via `getvar(obj,[:lx,:ly,:lz])`. The image roll (`position_angle`) is applied separately in
-`build_camera_basis`, so it is *not* a line-of-sight specifier here. Pure — touches no data.
+`build_camera_basis`, so it is *not* a line-of-sight specifier here. Pure, touches no data.
+
+!!! warning "`azimuth` is not `phi`"
+    Options 2 and 3 cover the same directions when `axis=:z`, but their zero point differs by
+    90 degrees:
+
+        inclination = theta,  azimuth = phi + 90        (for axis=:z)
+
+    `inclination` and `theta` are the same angle: both measure the tilt away from the reference
+    axis. `azimuth` and `phi` both turn around that axis, but they do not start from the same
+    place. `phi` is measured from the `+x` axis, in the usual spherical convention. `azimuth`
+    starts one quarter turn later, so that a view with `inclination=0` has the same image
+    orientation as `direction=:z`. Passing `azimuth=phi` gives a picture rotated by 90 degrees.
+
+    The two options are not equally capable. Use `inclination`/`azimuth` unless you specifically
+    want angles measured about the box axes: it accepts any reference `axis` (including
+    `:angmom`, the object's angular momentum) and it returns an image "up" direction, so the
+    roll of the picture is defined. `theta`/`phi` is always about the box axes and leaves the
+    roll to the automatic choice.
 """
 function resolve_los(; los=nothing, theta=nothing, phi=nothing,
                        inclination=nothing, azimuth=nothing,

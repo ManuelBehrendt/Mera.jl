@@ -6,6 +6,36 @@ narrative guide is in [Off-axis Projection](../06_offaxis_Projection.md); the pi
 selected through the same [`projection`](@ref) call documented in the
 [Projections API](projections.md).
 
+## Choosing the view angles
+
+There are two ways to give an angle, and they do not use the same zero point.
+
+| you give | what it means |
+|---|---|
+| `inclination`, `azimuth` | tilt away from a reference `axis`, then turn around that axis |
+| `theta`, `phi` | the usual spherical angles, always about the box axes |
+
+Both cover the same set of directions when the reference axis is the box `+z`. The tilt angle is
+the same in both: `inclination` equals `theta`. The turning angle is not. `phi` starts at the `+x`
+axis. `azimuth` starts a quarter turn later, so that `inclination=0` gives the same image
+orientation as `direction=:z`. The conversion is:
+
+```julia
+# these two give the same line of sight
+projection(gas, :sd, theta=60, phi=30)
+projection(gas, :sd, inclination=60, azimuth=30 + 90, axis=:z)
+```
+
+Writing `azimuth=30` in place of `phi=30` is a common mistake. It runs without an error and
+returns a picture turned by 90 degrees.
+
+Prefer `inclination`/`azimuth`. It takes any reference `axis`, including `:angmom` for the
+object's angular momentum, and it sets the image "up" direction, so the roll of the picture is
+defined. `theta`/`phi` is always about the box axes and leaves the roll to the automatic choice.
+
+Give only one of these, plus `los=` and `direction=`. Passing two raises an error rather than
+picking one silently.
+
 ## Line-of-sight maps
 
 [`slice`](@ref) is **the** cutting-plane function and the name the documentation uses: with
