@@ -63,27 +63,14 @@ println("threads      : ", Threads.nthreads())
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (2), wrong source (1), dep missing source (1), mismatched flags (6))
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), wrong source (2), dep missing source (2), mismatched flags (12))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (3), incompatible header (6))
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), incompatible header (12))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.8.0
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 cells loaded : 590311
 box length   : 100.0 kpc
 levels       : 3 – 7
@@ -269,7 +256,7 @@ inclination + los         → ArgumentError
 direction=:faceon + axis  → ArgumentError
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_10_6.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_10_7.png)
 
 `direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight** — the two `ŵ`
 vectors agree to the last bit — but they are *not* the same image. A face-on view leaves the roll
@@ -339,7 +326,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-30T13:16:46.662
+[Mera]: 2026-08-30T16:36:23.439
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -575,10 +562,10 @@ level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       85.7 %     0.006     1.0381
-cic       64.4 %     0.006     0.9733
-overlap   0.0 %      0.026     0.0021
-exact     0.0 %      0.09      0.0
+ngp       85.7 %     0.009     1.0381
+cic       64.4 %     0.009     0.9733
+overlap   0.0 %      0.036     0.0021
+exact     0.0 %      0.123     0.0
 ```
 
 ### One number is not enough: where the disagreement lives
@@ -641,24 +628,28 @@ run the cell above on your own data and let it decide.
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
-# Show the REGIME, not one strawman: :cic where you would actually use it, then the three
-# sampled kernels at pixels 8x finer than the cell. :exact gets no panel on purpose — it is
-# visually indistinguishable from :overlap, and the cell above gives the number instead.
+# Show the REGIME, not one strawman: :cic where you would actually use it, then the four
+# kernels at pixels 8x finer than the cell. :exact sits next to :overlap on purpose. The table
+# above puts them 0.002 dex apart; the last two panels are where you confirm that with your own
+# eyes instead of taking the number on trust.
 pc_ok = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, binning=:cic,
                    center=[:bc], fov=8, fov_unit=:kpc, aperture=:square,
                    pxsize=[0.8,:kpc], verbose=false, show_progress=false)
+k_exa = kern[:exact]
 allv = reduce(vcat, [log10.(filter(>(0), vec(Float64.(p.maps[:sd]))))
-                     for p in (pc_ok, k_ngp, k_cic, k_ovl)])
+                     for p in (pc_ok, k_ngp, k_cic, k_ovl, k_exa)])
 cr = (quantile(allv, 0.02), maximum(allv))
-maprow([pc_ok, k_ngp, k_cic, k_ovl], :sd,
+maprow([pc_ok, k_ngp, k_cic, k_ovl, k_exa], :sd,
        [":cic @ 0.8 kpc pixels
-1 pixel per cell — a fine preview",
+1 pixel per cell, a fine preview",
         ":ngp @ 0.1 kpc pixels
 all weight at cell centres",
         ":cic @ 0.1 kpc pixels
-2x2 split — still no footprint",
+2x2 split, still no footprint",
         ":overlap @ 0.1 kpc pixels
-same pixels, footprint deposit"]; crange=cr)
+same pixels, footprint deposit",
+        ":exact @ 0.1 kpc pixels
+analytic, 0.002 dex from :overlap"]; crange=cr)
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_27_1.png)
@@ -678,8 +669,8 @@ each cell over the area its shadow actually covers and leaves **no** pixel empty
 `:overlap` agrees to a **median 0.0005 dex** per pixel (99th percentile 0.005, worst pixel 0.033;
 mass-weighted mean 0.0009 dex) — a 0.1 % effect, for roughly a third of the cost. The point-deposit
 kernels differ from the same reference by a **median 1.3 dex**, a factor of 20, on the pixels they
-do fill. That is the whole case for the default in two numbers, and it is why `:exact` gets no
-panel above: it would be indistinguishable from `:overlap` by eye.
+do fill. That is the whole case for the default in two numbers. `:exact` is the last panel above, so
+you can check the claim yourself: it should be indistinguishable from `:overlap`.
 
 The level table tells you which regime you are in: divide the local cell size by your `pxsize`.
 Below about one pixel per cell, any kernel will do; well above it, only the footprint methods are
