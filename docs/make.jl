@@ -127,6 +127,9 @@ makedocs(modules = [Mera],
                           "Quantities & Fields" => Any[
                               "Basic Calculations"          => "04_multi_Basic_Calculations.md",
                               "How Quantities Are Computed" => "computation_reference.md",
+                              # the unit tables and constants, split out of First Steps, which
+                              # they had grown to dominate
+                              "Units & Constants"           => "units_and_constants.md",
                               "Derived Fields & add_field"  => "derived_fields.md"],
                           "Selection, Statistics & Metadata" => Any[
                               "Mask/Filter/Meta"            => "05_multi_Masking_Filtering.md",
@@ -201,11 +204,12 @@ makedocs(modules = [Mera],
                                                "Parallel RAMSES-Files Reading" => "benchmarks/RAMSES_reading/ramses_reading.md",
                                                "Mera-Files Reading"            => "benchmarks/JLD2_reading/Mera_files_reading.md",
                                                "Projections"                   => "benchmarks/Projection/multi_projections.md"],
-                          "Quick Reference" => Any[ "Julia Basics"            => "quickreference/01_getting_started.md",
-                                                    "From Other Languages"    => "quickreference/02_migrators.md",
-                                                    "Essential Packages"      => "quickreference/03_packages.md",
-                                                    "Julia Fundamentals"      => "quickreference/04_mera_patterns.md",
-                                                    "Performance & Debugging" => "quickreference/05_performance.md",
+                          # Getting Started already answers "coming from another tool"
+                          # (switching_to_mera) and "Julia for this kind of work"
+                          # (julia_for_simulation_analysis), in curated pages roughly a tenth of
+                          # the length. Only the pages adding something beyond those stay listed.
+                          # The rest are still built and still reachable by link.
+                          "Quick Reference" => Any[ "Essential Packages"      => "quickreference/03_packages.md",
                                                     "Resources & Community"   => "quickreference/06_resources.md",
                                                     "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md"],
                           # "Miscellaneous" is deliberately not listed: its four sections (myargs,
