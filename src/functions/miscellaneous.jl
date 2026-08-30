@@ -422,7 +422,11 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     # Gravitational energy analysis unit scales
     scale.u_grav        = unit_d * scale.erg_g                                  # [erg/cm³] Gravitational energy density
     scale.erg_cell      = unit_d * scale.erg_g * unit_l^3                       # [erg] Total energy per cell
-    scale.dyne          = unit_d * scale.cm_s2                                  # [dyne] Force
+    # A force is mass times acceleration, so the scale needs the cell mass, unit_d*unit_l^3,
+    # not the density alone. The old `unit_d * cm_s2` was a force DENSITY (dyn/cm^3) labelled
+    # as a force, and it agreed with the truth only when unit_l == 1 cm. The one fixture that
+    # carries gravity happens to have exactly that, so nothing caught it.
+    scale.dyne          = scale.g * scale.cm_s2                                 # [dyne] Force
     scale.s_2           = scale.cm_s2 / unit_l                                  # [s⁻²] Acceleration per length  
     scale.lambda_J      = unit_l                                                # [cm] Jeans length scale
     scale.M_J           = unit_d * unit_l^3                                     # [g] Jeans mass scale  
@@ -465,8 +469,8 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.az                           = scale.cm_s2                            # [cm/s²] z-acceleration → acceleration unit
     scale.a_mag                        = scale.cm_s2                            # [cm/s²] Acceleration magnitude → acceleration unit
     scale.a_magnitude                  = scale.cm_s2                            # [cm/s²] Acceleration magnitude → acceleration unit
-    scale.v_esc                        = scale.cm_s                             # [cm/s] Escape velocity → velocity unit
-    scale.escape_speed                 = scale.cm_s                             # [cm/s] Escape velocity → velocity unit
+    scale.v_esc                        = scale.cm_s                             # [cm/s] Escape velocity → velocity unit  # KEPT: quantity removed 2026-08-30, field stays (mera-file compat)
+    scale.escape_speed                 = scale.cm_s                             # [cm/s] Escape velocity → velocity unit  # KEPT: quantity removed 2026-08-30, field stays (mera-file compat)
     scale.epot                         = scale.erg_g                            # [erg/g] Gravitational potential → specific energy
     scale.Fg                           = scale.dyne                             # [dyne] Gravitational force → force unit
     scale.gravitational_energy_density = scale.u_grav                           # [erg/cm³] Energy density → gravitational energy density
@@ -474,7 +478,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.total_binding_energy         = scale.erg_cell                         # [erg] Total energy per cell → per-cell energy
     scale.gravitational_work           = scale.erg                              # [erg] Work/energy → energy unit
     scale.delta_rho                    = scale.dimensionless                    # Dimensionless density contrast
-    scale.gravitational_redshift       = scale.dimensionless                    # Dimensionless redshift
+    scale.gravitational_redshift       = scale.dimensionless                    # Dimensionless redshift  # KEPT: quantity removed 2026-08-30, field stays (mera-file compat)
     scale.poisson_source               = 1.0 / unit_t^2                         # [s⁻²] Poisson source term → inverse time squared
 
     return scale

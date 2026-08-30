@@ -85,7 +85,6 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :cellsize=>[:level], :volume=>[:cellsize],
     :x=>[:cx], :y=>[:cy], :z=>[:cz],
     :a_magnitude=>[:ax,:ay,:az],
-    :escape_speed=>[:epot], :gravitational_redshift=>[:epot],
     :specific_gravitational_energy=>[:epot],
     :ar_cylinder=>[:x,:y,:ax,:ay], :aϕ_cylinder=>[:x,:y,:ax,:ay],
     :ar_sphere=>[:x,:y,:z,:ax,:ay,:az], :aθ_sphere=>[:x,:y,:z,:ax,:ay,:az],

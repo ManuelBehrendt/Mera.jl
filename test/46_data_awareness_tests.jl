@@ -177,11 +177,11 @@ end
         gas = gethydro(getinfo(ds.output, ds.path, verbose=false), verbose=false, show_progress=false)
         @test all(isfinite, getvar(gas, :mach_alfven)) # magnetosonic Mach available
     end
-    # gravity-only :escape_speed on a gravity object
+    # gravity-only :a_magnitude on a gravity object (:escape_speed removed 2026-08-30)
     if haskey(DATASETS, :mlike) && isdir(DATASETS[:mlike].path)
         ds   = DATASETS[:mlike]
         grav = getgravity(getinfo(ds.output, ds.path, verbose=false), verbose=false, show_progress=false)
-        @test all(isfinite, getvar(grav, :escape_speed))
+        @test all(isfinite, getvar(grav, :a_magnitude))
     end
     # particle-only :age on a particles object
     if haskey(DATASETS, :manu_stable) && isdir(DATASETS[:manu_stable].path)

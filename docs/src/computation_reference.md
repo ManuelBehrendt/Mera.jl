@@ -266,20 +266,81 @@ the cell mass:
 
 ## Gravity
 
-*Data: **gravity** (`getgravity`), needs `:epot` and/or `:ax,:ay,:az`.*
+*Data: **gravity** (`getgravity`), which stores the potential ``\phi`` (`:epot`) and the
+acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
 
-From the gravitational potential ``\phi`` (`:epot`) and acceleration ``\mathbf a`` (`:ax,:ay,:az`):
+### From gravity alone
+
+These need nothing but the gravity object. Every component measured about an axis or a centre
+depends on `center`, exactly as the velocity components do.
 
 | Quantity | Formula |
 |---|---|
-| Escape speed `:escape_speed` | ``v_\mathrm{esc} = \sqrt{\max(-2\phi,\,0)}`` |
-| Acceleration magnitude `:a_magnitude` | ``|\mathbf a| = \sqrt{a_x^2+a_y^2+a_z^2}`` |
+| Accel. magnitude `:a_magnitude` | ``|\mathbf a| = \sqrt{a_x^2+a_y^2+a_z^2}`` |
+| In-plane accel. magnitude `:a_magnitude_cylinder` | ``\sqrt{a_{r,\mathrm{cyl}}^2 + a_{\varphi,\mathrm{cyl}}^2}`` |
 | Cyl. radial accel. `:ar_cylinder` | ``a_{r,\mathrm{cyl}} = \dfrac{x\,a_x + y\,a_y}{\sqrt{x^2+y^2}}`` |
+| Cyl. azimuthal accel. `:aphi_cylinder` | ``a_{\varphi,\mathrm{cyl}} = \dfrac{x\,a_y - y\,a_x}{\sqrt{x^2+y^2}}`` |
 | Sph. radial accel. `:ar_sphere` | ``a_{r,\mathrm{sph}} = \dfrac{x\,a_x + y\,a_y + z\,a_z}{\sqrt{x^2+y^2+z^2}}`` |
+| Sph. polar accel. `:atheta_sphere` | polar component about the chosen centre |
+| Sph. azimuthal accel. `:aphi_sphere` | azimuthal component about the chosen centre |
+| Specific energy `:specific_gravitational_energy` | ``\phi`` itself, energy per unit mass |
 
-The ``\max(\cdot,0)`` clamp on the escape speed avoids a negative argument where the potential is
-unbound (``\phi \ge 0``, possible near domain boundaries), those cells return `0` rather than
-erroring.
+### Energy and force, which need the cell mass
+
+A potential is per unit mass, so an **energy** or a **force** needs the mass of the cell, and the
+mass lives on the hydro object rather than the gravity one. Pass both:
+
+```julia
+getvar(gravity, hydro, :Fg, :dyne)              # per cell
+projection(hydro, gravity, :Fg, :dyne)          # as a map
+```
+
+Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Mera
+also checks that the two objects describe the same cells in the same order, so a mass can never be
+paired with another cell's potential; load both over the identical `lmax` and ranges.
+
+| Quantity | Formula | Unit |
+|---|---|---|
+| Potential energy `:gravitational_energy` | ``E = m\,\phi`` | `:erg` |
+| Binding energy `:total_binding_energy` | ``E_\mathrm{b} = -m\,\phi`` | `:erg` |
+| Force magnitude `:Fg` | ``F = m\,|\mathbf a|`` | `:dyne` |
+| Force components `:Fx, :Fy, :Fz` | ``F_i = m\,a_i`` | `:dyne` |
+| Cyl. radial force `:Fr_cylinder` | ``m\,a_{r,\mathrm{cyl}}`` | `:dyne` |
+| Cyl. azimuthal force `:Fphi_cylinder` | ``m\,a_{\varphi,\mathrm{cyl}}`` | `:dyne` |
+| In-plane force magnitude `:F_magnitude_cylinder` | ``m\,\sqrt{a_{r,\mathrm{cyl}}^2+a_{\varphi,\mathrm{cyl}}^2}`` | `:dyne` |
+| Sph. radial force `:Fr_sphere` | ``m\,a_{r,\mathrm{sph}}`` | `:dyne` |
+| Sph. polar force `:Ftheta_sphere` | ``m\,a_{\theta,\mathrm{sph}}`` | `:dyne` |
+| Sph. azimuthal force `:Fphi_sphere` | ``m\,a_{\varphi,\mathrm{sph}}`` | `:dyne` |
+
+Each force is the mass times the acceleration component **of the same name**, taken from that
+component rather than recomputed, so the two share one definition and one treatment of `center`.
+
+`:gravitational_energy` is negative where the cell is bound, following ``\phi``.
+`:total_binding_energy` is its negative, positive where bound, which is the sign binding energies
+are usually quoted in.
+
+### Projecting a gravity field
+
+Gravity carries no mass and no density, so it cannot weight its own line-of-sight average. That is
+why there is no single-argument `projection(gravity, ...)`: the hydro object supplies the weight.
+
+```julia
+projection(hydro, gravity, :epot)                    # column-mass-weighted mean potential
+projection(hydro, gravity, :epot; weighting=[:volume])
+```
+
+The result is a **weighted mean** along each ray, not a column integral, which is the right
+treatment for an intensive field: a sum would simply scale with the depth of the box. Note
+`weighting` takes a vector. Mass and volume weighting answer different questions and give
+different numbers, so state which one you used.
+
+!!! note "Removed in 1.8: `:escape_speed` and `:gravitational_redshift`"
+    Both treated ``\phi`` as if its zero point were fixed at infinity. RAMSES does not fix it: the
+    potential carries an arbitrary offset, which is set by the boundary conditions and differs
+    between a periodic box, a zoom region and an isolated halo. ``\sqrt{-2\phi}`` is an escape
+    speed only if ``\phi \to 0`` far away, and ``\phi/c^2`` inherits the same offset. They
+    returned confident numbers that meant nothing without a stated reference level, so they were
+    withdrawn rather than left to be misread.
 
 ## Radiative-transfer (RT) quantities
 

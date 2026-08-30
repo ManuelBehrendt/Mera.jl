@@ -39,6 +39,12 @@
         @test scale.escape_speed == scale.cm_s
         @test scale.epot         == scale.erg_g      # [erg/g]
         @test scale.Fg           == scale.dyne       # [dyne]
+        # A force is mass times acceleration. `dyne` was density times acceleration, a force
+        # DENSITY, which agrees with the truth only when unit_l == 1 cm. The single gravity
+        # fixture has exactly that, so the tautology `Fg == dyne` above passed while the factor
+        # was wrong by unit_l^3. Pin the dimension, not the alias.
+        @test scale.dyne         ≈ scale.g * scale.cm_s2   rtol=1e-12
+        @test scale.erg_cell     ≈ scale.g * scale.erg_g   rtol=1e-12
         @test scale.gravitational_energy_density == scale.u_grav    # [erg/cm³]
         @test scale.gravitational_binding_energy == scale.u_grav
         @test scale.total_binding_energy         == scale.erg_cell  # [erg]

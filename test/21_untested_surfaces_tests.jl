@@ -12,7 +12,6 @@
 #       * :a_magnitude   ≈ sqrt(ax² + ay² + az²)
 #       * :ar_cylinder / :ar_sphere  -- finite + bulk-inward sign on
 #                                       a bound disk-galaxy fixture
-#       * :escape_speed  ≈ sqrt(2·|φ|)  for bound cells
 #
 #   2. Particle spherical / cylindrical kinematics:
 #       * :r_sphere     ≈ sqrt((x-cx)² + (y-cy)² + (z-cz)²)
@@ -91,20 +90,6 @@ end
                 # radial accelerations point inwards more often than out.
                 @test mean(ar_cyl .< 0) > 0.5
                 @test mean(ar_sph .< 0) > 0.5
-            end
-
-            @testset ":escape_speed = √(2|φ|)" begin
-                epot = getvar(gravity, :epot)
-                vesc = getvar(gravity, :escape_speed)
-                @test all(vesc .>= 0)
-                # Cells with negative potential should give a defined
-                # escape speed.
-                bound = epot .< 0
-                if any(bound)
-                    @test isapprox(vesc[bound],
-                                   sqrt.(2 .* abs.(epot[bound])),
-                                   rtol=RTOL_PHYSICS)
-                end
             end
         end
     end

@@ -99,8 +99,9 @@ A few derived quantities carry physical assumptions worth stating explicitly:
   ``v_{f}=\sqrt{c_s^2+v_A^2}`` and the isotropic ``v_{s}=c_s v_A/\sqrt{c_s^2+v_A^2}``. All three are
   dimensionless. (Because they need the field components, `getvar_requirements` lists `:bx,:by,:bz,:rho`
   among their dependencies.)
-- **Escape speed** `:escape_speed` ``= \sqrt{-2φ}`` is defined only where the potential ``φ<0`` (bound);
-  unbound cells (``φ≥0``, possible near boundaries) are clamped to `0` rather than erroring.
+- **Gravity energy and force** `:gravitational_energy`, `:total_binding_energy`, `:Fg` and the
+  `:F…` components are mass times a gravity field, so they need the hydro object for the cell
+  mass: `getvar(gravity, hydro, :Fg)`. On gravity alone they raise an error naming the fix.
 - **Cosmological-only** quantities — `:overdensity`/`:delta` (hydro) and `:age`-relatives
   `:formation_time`/`:formation_redshift`/`:zform` (particles) — are defined only for cosmological runs
   and error on non-cosmological output.

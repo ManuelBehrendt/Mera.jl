@@ -1,3 +1,30 @@
+# Force components follow the acceleration ones exactly: F = m a. Keeping the pairing in one
+# table means a new acceleration component only has to be added here to gain its force twin, and
+# the two can never drift apart in definition or in their dependence on `center`.
+const _GRAV_FORCE_FROM_ACCEL = Dict(
+    :Fr_cylinder          => :ar_cylinder,
+    :Fphi_cylinder        => :aphi_cylinder,
+    :Fr_sphere            => :ar_sphere,
+    :Ftheta_sphere        => :atheta_sphere,
+    :Fphi_sphere          => :aphi_sphere,
+    :F_magnitude_cylinder => :a_magnitude_cylinder,
+)
+
+# Cell mass from the hydro companion, for the gravity quantities that are extensive (energy,
+# force). The two tables must describe the same cells in the same order; anything else would pair
+# a mass with another cell's potential and return a plausible wrong number, so check rather than
+# trust. `mask` is applied after, exactly as the hydro fallback below does it.
+function _grav_hydro_mass(hydro_data, mask)
+    m = getvar(hydro_data, :mass)
+    if length(mask) > 1
+        length(m) == length(mask) || error(
+            "gravity/hydro mismatch: hydro has $(length(m)) cells but the mask has $(length(mask)). " *
+            "Load both over the identical cell set (same lmax and ranges).")
+        return m[mask]
+    end
+    return m
+end
+
 function get_data(dataobject::GravDataType,
                 vars::Array{Symbol,1},
                 units::Array{Symbol,1},
@@ -150,22 +177,11 @@ function get_data(dataobject::GravDataType,
             az = select(masked_data, :az)
             vars_dict[:a_magnitude] = @. sqrt(ax^2 + ay^2 + az^2) * selected_unit
 
-        # Escape speed from gravitational potential - code units by default.
-        # v_esc = sqrt(-2 φ) is only real where the potential is negative (bound). RAMSES φ can be
-        # positive for unbound cells (and near boundaries), which would make sqrt throw a DomainError;
-        # clamp those to 0 (escape speed is 0 / undefined where the cell is not bound).
-        elseif i == :escape_speed
-            selected_unit = getunit(dataobject, :escape_speed, vars, units)
-            epot = select(masked_data, :epot)
-            vars_dict[:escape_speed] = @. sqrt(max(-2 * epot, 0.0)) * selected_unit
-
-        # Gravitational redshift (weak field approximation) - dimensionless by default
-        elseif i == :gravitational_redshift
-            selected_unit = getunit(dataobject, :gravitational_redshift, vars, units)
-            epot = select(masked_data, :epot)
-            c_speed = dataobject.info.constants.c  # cm/s - speed of light
-            vars_dict[:gravitational_redshift] = @. epot / (c_speed^2) * selected_unit
-
+        # REMOVED 2026-08-30: :escape_speed and :gravitational_redshift.
+        # Both read an absolute meaning into phi, which RAMSES does not fix: the zero point of the
+        # potential is arbitrary, so sqrt(-2 phi) is an escape speed only if phi -> 0 at infinity
+        # (false in a periodic box or a zoom region), and phi/c^2 inherits the same offset. They
+        # returned confident numbers that meant nothing without a stated reference.
 
         # Specific gravitational energy: E_specific = φ [erg/g]
         # This is the gravitational potential energy per unit mass (identical to epot)
@@ -291,6 +307,64 @@ function get_data(dataobject::GravDataType,
             x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
             y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
             vars_dict[:ϕ] = @. atan(y, x) * selected_unit
+
+        # In-plane acceleration magnitude, sqrt(a_R^2 + a_phi^2) in cylindrical coordinates.
+        # Completes the naming set next to :ar_cylinder / :aphi_cylinder. Depends on `center`,
+        # like every other cylindrical or spherical component.
+        elseif i == :a_magnitude_cylinder
+            selected_unit = getunit(dataobject, :a_magnitude_cylinder, vars, units)
+            ar = getvar(dataobject, :ar_cylinder, center=center, mask=mask)
+            ap = getvar(dataobject, :aphi_cylinder, center=center, mask=mask)
+            vars_dict[:a_magnitude_cylinder] = @. sqrt(ar^2 + ap^2) * selected_unit
+
+        # Gravitational potential energy of the cell, E = m phi [erg]. Extensive, so it needs the
+        # cell mass, which lives on the hydro object: pass hydro_data (or call the two-argument
+        # getvar(gravity, hydro, ...)). Negative where the cell is bound, following phi.
+        elseif i == :gravitational_energy
+            selected_unit = getunit(dataobject, :gravitational_energy, vars, units)
+            has_hydro || error("`:gravitational_energy` is mass times potential, so it needs the " *
+                               "cell mass. Call getvar(gravity, hydro, :gravitational_energy), or " *
+                               "projection(hydro, gravity, :gravitational_energy).")
+            m = _grav_hydro_mass(hydro_data, mask)
+            epot = select(masked_data, :epot)
+            vars_dict[:gravitational_energy] = @. m * epot * selected_unit
+
+        # Binding energy of the cell, -m phi [erg]: the energy needed to remove it to infinity.
+        # Positive where bound, the sign convention binding energies are usually quoted in.
+        elseif i == :total_binding_energy
+            selected_unit = getunit(dataobject, :total_binding_energy, vars, units)
+            has_hydro || error("`:total_binding_energy` is mass times potential, so it needs the " *
+                               "cell mass. Call getvar(gravity, hydro, :total_binding_energy), or " *
+                               "projection(hydro, gravity, :total_binding_energy).")
+            m = _grav_hydro_mass(hydro_data, mask)
+            epot = select(masked_data, :epot)
+            vars_dict[:total_binding_energy] = @. -m * epot * selected_unit
+
+        # Gravitational force in cylindrical or spherical components, F = m a, [dyn]. One branch
+        # for all of them: each is the cell mass times the acceleration component of the same
+        # name, so they inherit that component's definition and its dependence on `center`.
+        elseif haskey(_GRAV_FORCE_FROM_ACCEL, i)
+            selected_unit = getunit(dataobject, i, vars, units)
+            has_hydro || error("`:$i` is mass times acceleration, so it needs the cell mass. " *
+                               "Call getvar(gravity, hydro, :$i), or projection(hydro, gravity, :$i).")
+            m = _grav_hydro_mass(hydro_data, mask)
+            a = getvar(dataobject, _GRAV_FORCE_FROM_ACCEL[i], center=center, mask=mask)
+            vars_dict[i] = @. m * a * selected_unit
+
+        # Gravitational force on the cell, F = m |a| [dyn], and its components.
+        elseif i in (:Fg, :Fx, :Fy, :Fz)
+            selected_unit = getunit(dataobject, i, vars, units)
+            has_hydro || error("`:$i` is mass times acceleration, so it needs the cell mass. " *
+                               "Call getvar(gravity, hydro, :$i), or projection(hydro, gravity, :$i).")
+            m = _grav_hydro_mass(hydro_data, mask)
+            if i === :Fg
+                ax = select(masked_data, :ax); ay = select(masked_data, :ay); az = select(masked_data, :az)
+                vars_dict[:Fg] = @. m * sqrt(ax^2 + ay^2 + az^2) * selected_unit
+            else
+                acol = i === :Fx ? :ax : (i === :Fy ? :ay : :az)
+                a = select(masked_data, acol)          # hoisted: inside @. it would broadcast per row
+                vars_dict[i] = @. m * a * selected_unit
+            end
 
         # Fallback: if variable not found in gravity and hydro data is available, try hydro getvar
         else

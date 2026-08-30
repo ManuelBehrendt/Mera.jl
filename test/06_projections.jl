@@ -2258,3 +2258,63 @@ end
     end
 
 end
+
+# ── gravity quantities that need the cell mass ───────────────────────────────────────────────
+# epot/ax/ay/az are intensive and live on the gravity object alone. Energy and force are
+# extensive: they are mass times a gravity field, and the mass is on the hydro object. These
+# check the physics against a hand computation rather than re-deriving it the same way twice.
+if DATA_AVAILABLE
+    @testset "gravity: energy and force need hydro" begin
+        p3 = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC/sedov3d_grav_part")
+        if isdir(p3)
+            i3   = getinfo(3, p3, verbose=false)
+            gasg = gethydro(i3,   verbose=false, show_progress=false)
+            grv  = getgravity(i3, verbose=false, show_progress=false)
+            m    = getvar(gasg, :mass)
+            phi  = getvar(grv, :epot)
+            amag = getvar(grv, :a_magnitude)
+
+            @test getvar(grv, gasg, :gravitational_energy) ≈ m .* phi          rtol=1e-12
+            @test getvar(grv, gasg, :total_binding_energy) ≈ -m .* phi         rtol=1e-12
+            @test getvar(grv, gasg, :Fg)                   ≈ m .* amag         rtol=1e-12
+            @test getvar(grv, gasg, :Fx)                   ≈ m .* getvar(grv, :ax)  rtol=1e-12
+
+            # Every force component is the mass times the acceleration of the SAME name, fetched
+            # through getvar rather than recomputed, so the two can never drift apart in either
+            # definition or centre handling.
+            for (F, a) in ((:Fr_cylinder, :ar_cylinder), (:Fphi_cylinder, :aphi_cylinder),
+                           (:Fr_sphere, :ar_sphere), (:Ftheta_sphere, :atheta_sphere),
+                           (:Fphi_sphere, :aphi_sphere),
+                           (:F_magnitude_cylinder, :a_magnitude_cylinder))
+                @test getvar(grv, gasg, F, center=[:bc]) ≈ m .* getvar(grv, a, center=[:bc]) rtol=1e-12
+                @test_throws ErrorException getvar(grv, F, center=[:bc])   # needs the mass
+            end
+            # the cylindrical force magnitude is the in-plane part, so never exceeds the full one
+            @test hypot.(getvar(grv, gasg, :Fr_cylinder,   center=[:bc]),
+                         getvar(grv, gasg, :Fphi_cylinder, center=[:bc])) ≈
+                  getvar(grv, gasg, :F_magnitude_cylinder, center=[:bc])  rtol=1e-12
+            @test all(getvar(grv, gasg, :F_magnitude_cylinder, center=[:bc]) .<=
+                      getvar(grv, gasg, :Fg, center=[:bc]) .+ 1e-14)
+
+            # removed on 2026-08-30: both assumed a fixed zero point for the potential
+            @test_throws ErrorException getvar(grv, :escape_speed)
+            @test_throws ErrorException getvar(grv, :gravitational_redshift)
+
+            # in-plane magnitude completes the cylindrical set and can never exceed the full one
+            ac = getvar(grv, :a_magnitude_cylinder, center=[:bc])
+            @test ac ≈ hypot.(getvar(grv, :ar_cylinder, center=[:bc]),
+                              getvar(grv, :aphi_cylinder, center=[:bc]))       rtol=1e-12
+            @test all(ac .<= amag .+ 1e-12)
+
+            # without the mass these must refuse rather than invent a number
+            @test_throws ErrorException getvar(grv, :Fg)
+            @test_throws ErrorException getvar(grv, :gravitational_energy)
+
+            # and they survive the combined projection path
+            for q in (:gravitational_energy, :total_binding_energy, :Fg, :a_magnitude_cylinder)
+                mp = projection(gasg, grv, q, center=[:bc], verbose=false, show_progress=false)
+                @test haskey(mp.maps, q) && any(isfinite, mp.maps[q])
+            end
+        end
+    end
+end
