@@ -13,9 +13,9 @@
 
 If you already post-process simulations — with a Python analysis package, your group's own
 scripts, or the simulation code's tools — this page maps the concepts you know onto Mera and
-walks one complete workflow end to end. For the Julia language itself (Python/MATLAB/IDL →
-Julia syntax, not simulation analysis), see
-[Julia for Python/MATLAB/IDL users](quickreference/02_migrators.md).
+walks one complete workflow end to end. For the Julia language itself, rather than
+simulation analysis, see [Julia for Simulation Analysis](julia_for_simulation_analysis.md) and
+the [Julia Cheat Sheet](quickreference/Julia_Quick_Reference.md).
 
 ## The mental model
 

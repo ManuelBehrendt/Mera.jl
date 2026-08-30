@@ -1,25 +1,31 @@
 # MERA.jl
 
-*High-performance analysis of astrophysical simulations in pure Julia: RAMSES natively and in full, plus AREPO, GADGET, PLUTO, Athena++, FLASH and Chombo through one unified API*
+*Analyze RAMSES simulations at scale, in pure Julia.*
 
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
-**MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for **RAMSES**, multi-resolution AMR grids, particles, gravity, clumps and radiative-transfer fields loaded into memory-efficient tables, and now reading **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 170+ physics-derived quantities on demand (across hydro, particles, gravity, RT and clumps) and provides conservation-correct projections, profiles, flux budgets and structure finding, all through one unified, multiple-dispatch API.
+**MERA** reads and analyzes astrophysical simulation output natively in Julia. It is built for
+[RAMSES](https://github.com/ramses-organisation/ramses): multi-resolution AMR grids, particles,
+gravity, clumps and radiative-transfer fields loaded into memory-efficient tables. It computes
+140+ physics-derived quantities on demand and provides conservation-correct projections, profiles,
+flux budgets and structure finding, all through one unified, multiple-dispatch API.
 
-Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`, `getrt` and `getclumps` readers, because it writes those to separate files. Where another code stores the same physics inside its snapshot, Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`, Athena++ six-ray radiation, the reader maps it to the canonical field, so `getvar(gas, :gpot)` works there too. AREPO and GADGET add particles and FoF group catalogues (`getgroups`; subhalos are not read).
+!!! warning "Released and upcoming 1.x versions are RAMSES-only"
+    Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development
+    for **version 2.0**, on the `multicode` branch. It is not part of any 1.x release, and nothing
+    on these pages depends on it.
 
-Frontends for other simulation codes: PLUTO, Chombo, Athena++, FLASH and the GADGET-HDF5
-family (GADGET / AREPO / SWIFT / GIZMO), are in active development on the `multicode` branch
-and are not part of this release:
+    For collaborators who want to try it:
 
-```julia
-] add https://github.com/ManuelBehrendt/Mera.jl#multicode
-```
+    ```julia
+    ] add https://github.com/ManuelBehrendt/Mera.jl#multicode
+    ```
 
-They are newer and narrower than the RAMSES reader and tested mainly against synthetic
-fixtures. Widening that is mostly reader work rather than core work, because the analysis layer
-is code-blind, so [contributions and bug reports](https://github.com/ManuelBehrendt/Mera.jl/issues)
-move it forward quickly.
+    Those readers are newer and narrower than the RAMSES one and are tested mainly against
+    synthetic fixtures. Widening that is mostly reader work rather than core work, because the
+    analysis layer is code-blind, so
+    [contributions and bug reports](https://github.com/ManuelBehrendt/Mera.jl/issues) move it
+    forward quickly.
 
 ![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.png)
 
@@ -108,8 +114,9 @@ conserve mass across refinement boundaries.
 backend keep memory in hand, multi-threaded IO is measured rather than assumed, and MERA-files
 store snapshots compressed for fast time-series work.
 
-**Physics on demand.** 82 hydro and 47 particle quantities, plus gravity, RT and clumps, from
-Jeans mass to Mach numbers to virial parameters. `getvar()` lists them all.
+**Physics on demand.** Derived quantities for gas, particles, gravity and clumps, from Jeans mass
+to Mach numbers to virial parameters, computed on request rather than stored. Call `getvar()` with
+no arguments for the current list.
 
 **Results you can defend.** Pin versions with a `Project.toml` and `Manifest.toml` in your own
 analysis project, and record what produced each number with [`provenance`](provenance.md). VTK

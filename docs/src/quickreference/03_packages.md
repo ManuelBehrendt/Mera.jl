@@ -194,10 +194,10 @@ Before moving on, you should now be able to:
 
 **Depending on your goals:**
 
-- **Ready to code?** → [Julia Fundamentals](04_mera_patterns.md): Learn core programming patterns
-- **Need performance?** → [Performance Guide](05_performance.md): Optimize your Julia code  
-- **Coming from other languages?** → [Migration Guides](02_migrators.md): Language-specific transitions
-- **Want to explore?** → [Resources](06_resources.md): Community, learning materials, and references
+- **Ready to code?** → [Julia Cheat Sheet](Julia_Quick_Reference.md): syntax in one place
+- **Need performance?** → [Julia for Simulation Analysis](../julia_for_simulation_analysis.md): environments, compile latency, memory, threads
+- **Coming from other languages?** → [Coming from Other Tools](../switching_to_mera.md): concept mapping and one worked workflow
+- **Want to explore?** → [Resources](06_resources.md): community, learning materials, and references
 
 **Expected next reading time**: 30-120 minutes depending on your path
 

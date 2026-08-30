@@ -176,5 +176,5 @@ ceiling, not a recommendation to buy more cores.
 
 - [First Steps](00_multi_FirstSteps.md) — the full introductory tutorial.
 - [Coming from Other Analysis Tools](switching_to_mera.md) — concept mapping + one complete workflow.
-- [Migration cheat sheet](quickreference/02_migrators.md) — Python/MATLAB/IDL syntax side by side.
+- [Julia Cheat Sheet](quickreference/Julia_Quick_Reference.md), syntax in one place.
 - [Multi-Threading guide](multi-threading/multi-threading_intro.md) — the full threading reference.
