@@ -93,18 +93,31 @@ while the full suite runs against real snapshots locally.
 
 ## What Mera gives you
 
-**One API across data types.** The same function name works on gas, particles, gravity, clumps
-and RT fields, and Julia's multiple dispatch selects the right method. You write the analysis
-once:
+**One API across data types.** Mera reads six: hydro, particles, gravity, clumps, sinks and
+radiative transfer. MHD is not a seventh, the magnetic field arrives as extra columns on hydro.
+The same function name works on each, and Julia's multiple dispatch selects the right method, so
+you write the analysis once:
 
 ```julia
 getvar(gas,       :mass)     # cell mass, density times volume
 getvar(particles, :mass)     # particle mass, discrete values
 getvar(clumps,    :mass)     # clump total mass, aggregated
+getvar(sinks,     :mass)     # sink mass, the column RAMSES calls msink
 
-projection(gas,       :rho)  # gas density projection
+getvar(gravity,   :epot)     # gravity carries a potential, not a mass
+getvar(rt,        :Np1)      # photon density of group 1
+getvar(gas,       :bx)       # MHD, as a field on the hydro cells
+
+projection(gas,       :rho)  # gas density
 projection(particles, :age)  # stellar age distribution
+projection(rt,        :Np1)  # photon density, through the same engine
 ```
+
+Dispatch picks the method, it does not invent physics: a quantity exists where it means
+something. `:mass` is defined for gas, particles, clumps and sinks, while gravity and RT carry
+fields instead. Projection covers the types laid out on the AMR grid and the particles, so clumps
+and sinks, which are catalogues of points, are analysed through regions and `getvar` rather than
+projected.
 
 **AMR handled correctly.** Multi-resolution grids are read natively from the RAMSES binary
 format, with Hilbert space-filling curve support, correct level weighting, and projections that
