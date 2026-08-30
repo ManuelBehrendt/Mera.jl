@@ -63,14 +63,27 @@ println("threads      : ", Threads.nthreads())
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (2), wrong source (1), dep missing source (1), mismatched flags (6))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), wrong source (2), dep missing source (2), mismatched flags (12))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (3), incompatible header (6))
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), incompatible header (12))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 cells loaded : 590311
 box length   : 100.0 kpc
 levels       : 3 – 7
@@ -326,7 +339,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-29T04:39:10.603
+[Mera]: 2026-08-30T13:16:46.662
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -564,8 +577,8 @@ level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
 ngp       85.7 %     0.006     1.0381
 cic       64.4 %     0.006     0.9733
-overlap   0.0 %      0.037     0.0021
-exact     0.0 %      0.092     0.0
+overlap   0.0 %      0.026     0.0021
+exact     0.0 %      0.09      0.0
 ```
 
 ### One number is not enough: where the disagreement lives
@@ -678,8 +691,8 @@ rather than a sampled approximation to it.
 
 ## 7. Line-of-sight kinematics
 
-`:vlos` is `v·ŵ`, the component of the velocity along the line of sight — defined for **any**
-camera. That is what makes it different from `:σx`/`:σy`/`:σz`, which only exist along the box axes
+`:vlos` is the velocity component along the line of sight, signed so that positive is receding,
+and it is defined for **any** camera. That is what makes it different from `:σx`/`:σy`/`:σz`, which only exist along the box axes
 and are rejected off-axis.
 
 `:σlos` is `√(⟨v_LOS²⟩ − ⟨v_LOS⟩²)` over the mass in a pixel. It is a **width of a distribution
@@ -696,14 +709,12 @@ The obvious next worry is that σ_LOS is then an artefact of how finely you pixe
 measures whether it is.
 
 !!! warning "Sign convention"
-    `:vlos` is `v·ŵ`, and `ŵ` points **out of** the image toward the observer. So `v·ŵ > 0` is gas
-    moving **toward you**, which is blueshifted, and `v·ŵ < 0` is receding.
+    `:vlos` follows the observational convention: **positive means receding** (redshifted),
+    negative means approaching (blueshifted), exactly as a radial velocity is reported in a paper.
 
-    Note that this is the opposite of the usual astronomical radial velocity, where positive means
-    receding. If you want the astronomical sign, negate the map.
-
-    You can rederive it: the map's first axis runs along `m.cam_right`, its second along `m.up`, and
-    `cam_right × up = los`, so the image is what an observer on the `+ŵ` side sees.
+    Note the relation to the camera. `ŵ` (`m.los`) points **out of** the image, toward the
+    observer, so the map is `-(v·ŵ)`. If you compute the projection yourself from `m.los`,
+    remember that minus sign, or your rotation curve comes out inverted.
 
     A sign flip inverts a rotation curve and changes nothing else in the figure, so check the shape
     too: on an edge-on map `:vlos` must be **antisymmetric about the minor axis**. If it is not, your
