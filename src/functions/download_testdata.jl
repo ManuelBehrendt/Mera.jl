@@ -25,6 +25,26 @@ const TESTDATA_FIXTURES = (
 
 _testdata_default_dir() = joinpath(DEPOT_PATH[1], "mera_testdata")
 
+# GitHub's asset CDN returns a transient 5xx often enough to be worth riding out:
+# a healthy asset has been seen to fail twice in a row and serve normally a minute later.
+# Anything else (a 404 from a wrong name, no network) fails on the first try.
+function _testdata_download(url::AbstractString, dest::AbstractString, verbose::Bool;
+                            attempts::Int=4)
+    for attempt in 1:attempts
+        try
+            return Downloads.download(url, dest)
+        catch err
+            transient = err isa Downloads.RequestError &&
+                        (err.response.status >= 500 || err.response.status == 0)
+            (transient && attempt < attempts) || rethrow()
+            pause = 2^(attempt - 1)          # 1s, 2s, 4s
+            verbose && println("    attempt $attempt failed (HTTP $(err.response.status)), " *
+                               "retrying in $(pause)s")
+            sleep(pause)
+        end
+    end
+end
+
 function _testdata_fetch_one(name::Symbol, root::AbstractString, force::Bool, verbose::Bool)
     haskey(TESTDATA_FIXTURES, name) || error(
         "unknown test simulation :$name. Available: " *
@@ -43,7 +63,7 @@ function _testdata_fetch_one(name::Symbol, root::AbstractString, force::Bool, ve
     # instant, and it never copies the archive contents a second time
     mktempdir(root) do tmp
         tgz = joinpath(tmp, string(name) * ".tar.gz")
-        Downloads.download(TESTDATA_URL * "/" * string(name) * ".tar.gz", tgz)
+        _testdata_download(TESTDATA_URL * "/" * string(name) * ".tar.gz", tgz, verbose)
         staged = joinpath(tmp, "unpacked")
         open(tgz) do io
             Tar.extract(CodecZlib.GzipDecompressorStream(io), staged)
