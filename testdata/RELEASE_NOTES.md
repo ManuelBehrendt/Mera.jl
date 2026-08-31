@@ -4,7 +4,7 @@ Small RAMSES simulation outputs used by the Mera.jl test suite. They are publish
 assets rather than repository files**: Mera is a registered package, so anything committed to the
 tree would be downloaded by every `Pkg.add("Mera")` and would remain in git history permanently.
 
-Total ~296 MB across 12 archives (11 simulations plus the documentation set).
+Total 282 MB across 12 archives (11 simulations plus the documentation set).
 Each unpacks to a single directory.
 
 Validated against **Mera 1.8**. The tag is versioned independently of the package: the data
@@ -15,8 +15,8 @@ releases and becomes `testdata-v2` only if a fixture actually changes.
 
 ```bash
 git clone https://github.com/ManuelBehrendt/Mera.jl && cd Mera.jl
-./testdata/fetch_fixtures.sh --small     # 119 MB, everything except the Bondi run
-./testdata/fetch_fixtures.sh             # everything, ~296 MB
+./testdata/fetch_fixtures.sh --small     # 117 MB, everything except the Bondi run
+./testdata/fetch_fixtures.sh             # everything, 282 MB
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 

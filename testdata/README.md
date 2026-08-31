@@ -122,7 +122,7 @@ persist in git history.
 
 | script | what it does |
 |---|---|
-| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `READMEs.tar.gz` (~296 MB total) |
+| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `READMEs.tar.gz` (282 MB total) |
 | `fetch_fixtures.sh [--small\|--all\|<names>]` | finds them on disk, or downloads them |
 | `check_release_staging.sh` | **run this after editing anything in `RAMSES-PUBLIC`** — reports whether the staged archives and the committed manifest still describe the current data |
 
