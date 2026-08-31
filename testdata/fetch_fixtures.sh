@@ -15,7 +15,7 @@
 # Usage:
 #   testdata/fetch_fixtures.sh                 # all fixtures
 #   testdata/fetch_fixtures.sh sedov3d_amr ...  # only the named ones
-#   testdata/fetch_fixtures.sh --small          # everything except ramses_smbh_bondi (~165 MB)
+#   testdata/fetch_fixtures.sh --small          # everything except ramses_smbh_bondi (119 MB)
 #   testdata/fetch_fixtures.sh --force          # re-download even if present
 #
 # Env:

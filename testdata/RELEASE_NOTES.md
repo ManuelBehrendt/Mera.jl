@@ -7,17 +7,51 @@ tree would be downloaded by every `Pkg.add("Mera")` and would remain in git hist
 Total ~296 MB across 12 archives (11 simulations plus the documentation set).
 Each unpacks to a single directory.
 
+Validated against **Mera 1.8**. The tag is versioned independently of the package: the data
+changes only when a simulation is regenerated, so `testdata-v1` stays valid across Mera
+releases and becomes `testdata-v2` only if a fixture actually changes.
+
 ## Getting them
 
 ```bash
 git clone https://github.com/ManuelBehrendt/Mera.jl && cd Mera.jl
-./testdata/fetch_fixtures.sh --small     # ~130 MB, everything except the Bondi run
+./testdata/fetch_fixtures.sh --small     # 119 MB, everything except the Bondi run
 ./testdata/fetch_fixtures.sh             # everything, ~296 MB
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
 The script downloads only what is missing, and skips the download entirely if the test
 simulations are already on disk.
+
+## Try one
+
+These are ordinary RAMSES outputs, so there is nothing special about opening them. Point Mera at a
+directory and explore. `sedov3d_amr` is a good first one: 2 MB, a spherical blast wave on an AMR
+grid, and every quantity has a value you can check against theory.
+
+```julia
+using Mera
+info = getinfo(7, "sedov3d_amr")        # the last snapshot
+gas  = gethydro(info)
+
+println(length(gas.data), " cells over levels ", gas.lmin, " to ", gas.lmax)
+println("time ", info.time)
+
+# any derived quantity works the same way as on a research-scale run
+rho = getvar(gas, :rho, :nH)
+println("density ", minimum(rho), " to ", maximum(rho), " cm^-3")
+
+# and a map
+projection(gas, :sd, :Msol_pc2, pxsize=[0.005, :standard])   # ~100 x 100 pixels
+```
+
+Nothing here is test-only: `subregion`, `profile`, `filterdata`, `savedata` and the rest behave
+exactly as they do on a multi-gigabyte simulation, just faster. If you want something with more
+physics in it, `sedov3d_grav_part` adds gravity and particles, `mhdtube3d` adds magnetic fields,
+and `stromgren3d` adds radiative transfer.
+
+The [Mera documentation](https://manuelbehrendt.github.io/Mera.jl/stable/) works through all of
+this in detail.
 
 ## What each one is
 
@@ -64,8 +98,3 @@ Mera.jl is MIT-licensed, but this data is not entirely ours. It is produced by *
 `READMEs.tar.gz` carries `NOTICE.md` and RAMSES's licence text; please cite
 Teyssier (2002), and Rosdahl et al. (2013) for the RT test simulations, if you use these in published
 work.
-
-## Provenance and integrity
-
-It is the link between the code and this data: a test simulation cannot be swapped without the manifest
-changing in a tracked commit.
