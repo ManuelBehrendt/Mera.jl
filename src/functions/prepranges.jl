@@ -10,7 +10,7 @@ function prepranges(    dataobject::InfoType,
                         xrangem::Array{<:Any,1},
                         yrangem::Array{<:Any,1},
                         zrangem::Array{<:Any,1},
-                        center::Array{<:Any,1};
+                        center::CenterType;
                         dataranges::Array{<:Real,1}=[0.,1., 0.,1., 0.,1.] )
 
     xrange = zeros(Float64,2)
@@ -145,7 +145,7 @@ convert given ranges + radius and print overview on screen
 used for subregions...
 """
 function prepranges(    dataobject::InfoType,
-                            center::Array{<:Any,1},
+                            center::CenterType,
                             radius::Real,
                             height::Real,
                             range_unit::Symbol,
@@ -267,7 +267,7 @@ convert given ranges + radius and print overview on screen
 used for shellregions...
 """
 function prep_cylindrical_shellranges(    dataobject::InfoType,
-                            center::Array{<:Any,1},
+                            center::CenterType,
                             radius_in::Real,
                             radius_out::Real,
                             height::Real,
@@ -383,7 +383,7 @@ convert given ranges + radius and print overview on screen
 used for shellregions...
 """
 function prep_spherical_shellranges(    dataobject::InfoType,
-                            center::Array{<:Any,1},
+                            center::CenterType,
                             radius_in::Real,
                             radius_out::Real,
                             range_unit::Symbol,
@@ -487,7 +487,8 @@ end
 
 
 
-function prepboxcenter(dataobject::InfoType, range_unit::Symbol, center::Array{<:Any,1})
+function prepboxcenter(dataobject::InfoType, range_unit::Symbol, center::CenterType)
+    center = _as_center(center)
 
     selected_unit = 1.
     if range_unit != :standard
@@ -556,7 +557,9 @@ function prepboxcenter(dataobject::InfoType, selected_unit::Real, centerm::Any)
     return centerm / selected_unit / dataobject.boxlen
 end
 
-function prepdatacenter(dataobject::InfoType, center::Array{<:Any,1}, range_unit::Symbol, data_centerm::Array{<:Any,1}, data_center_unit::Symbol)
+function prepdatacenter(dataobject::InfoType, center::CenterType, range_unit::Symbol, data_centerm::Array{<:Any,1}, data_center_unit::Symbol)
+    center = _as_center(center)
+    data_centerm = _as_center(data_centerm)
 
     center = center_in_standardnotation(dataobject, center, range_unit)
     selected_unit = 1.

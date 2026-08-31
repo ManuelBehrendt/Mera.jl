@@ -55,7 +55,7 @@ runs — `estimate`/`preview` therefore resolve it against the box at that point
 ProjectionCard(kind::Symbol, var::Symbol; unit::Symbol=:standard, weight::Symbol=:mass,
                res::Int=256, pxsize=nothing, direction::Symbol=:z, center=[:bc],
                range_unit::Symbol=:standard, label::String="") =
-    ProjectionCard(_norm_dt(kind), var, unit, weight, res, direction, collect(Any, center),
+    ProjectionCard(_norm_dt(kind), var, unit, weight, res, direction, collect(Any, _as_center(center)),
                    range_unit, label == "" ? "$(_norm_dt(kind))_$(var)_map" : label,
                    pxsize === nothing ? nothing : collect(Any, pxsize))
 
@@ -87,7 +87,7 @@ ProfileCard(kind::Symbol, xvar::Symbol, yvar::Union{Symbol,Nothing}=nothing; wei
             nbins::Int=40, geometry::Symbol=:none, unit::Symbol=:standard, xunit::Symbol=:standard,
             range_unit::Symbol=:standard, center=[:bc], yscale::Symbol=:auto, label::String="") =
     ProfileCard(_norm_dt(kind), xvar, yvar, weight, nbins, geometry, unit, xunit, range_unit,
-                collect(Any, center), yscale, label == "" ? "$(yvar === nothing ? xvar : yvar)_profile" : label)
+                collect(Any, _as_center(center)), yscale, label == "" ? "$(yvar === nothing ? xvar : yvar)_profile" : label)
 
 struct ScalarCard <: ReportCard
     kind::Symbol; var::Symbol; reduce::Symbol; unit::Symbol; fraction::Bool

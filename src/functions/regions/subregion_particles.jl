@@ -4,7 +4,7 @@ function subregioncuboid(dataobject::PartDataType;
     xrange::Array{<:Any,1}=[missing, missing],
     yrange::Array{<:Any,1}=[missing, missing],
     zrange::Array{<:Any,1}=[missing, missing],
-    center::Array{<:Any,1}=[0., 0., 0.],
+    center::CenterType=[0., 0., 0.],
     range_unit::Symbol=:standard,
     inverse::Bool=false,
     verbose::Bool=verbose_mode)
@@ -64,7 +64,7 @@ end
 function subregioncylinder(dataobject::PartDataType;
                             radius::Real=0.,
                             height::Real=0.,
-                            center::Array{<:Any,1}=[0.,0.,0.],
+                            center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             inverse::Bool=false,
@@ -122,7 +122,7 @@ end
 ##### SPHERE #####-------------------------------------------------------------
 function subregionsphere(dataobject::PartDataType;
                             radius::Real=0.,
-                            center::Array{<:Any,1}=[0.,0.,0.],
+                            center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             inverse::Bool=false,
                             verbose::Bool=verbose_mode)

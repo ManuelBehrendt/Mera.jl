@@ -134,14 +134,13 @@ const _CENTER_RELATIVE_VARS = Set{Symbol}([
 function _center_hint(vars, center)
     # Cheap guard first: in the common (correct) case an origin was given, and this returns
     # before `hint_once` is ever reached. Bookkeeping is shared — see checks.jl.
-    all(iszero, center) || return nothing          # an origin was given: nothing to say
+    all(iszero, _as_center(center)) || return nothing   # an origin was given: nothing to say
     for v in vars
         v in _CENTER_RELATIVE_VARS || continue
         hint(v,
-             "getvar(:$v) has no `center` — it is measured about the box CORNER.",
-             "Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.",
-             "This is a different argument from the `center` that places a region; give it",
-             "the same origin. Absolute positions :x/:y/:z are unaffected.")
+             "getvar(:$v) has no `center`: it is measured about the box CORNER.",
+             "Pass center=:bc, or center=[x, y, z] with center_unit. This is a separate",
+             "argument from the `center` that places a region; give both the same origin.")
     end
     return nothing
 end
@@ -193,7 +192,7 @@ end
 ```julia
 getvar(   dataobject::DataSetType, var::Symbol;
         filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-        center::Array{<:Any,1}=[0.,0.,0.],
+        center::CenterType=[0.,0.,0.],
         center_unit::Symbol=:standard,
         direction::Symbol=:z,
         unit::Symbol=:standard,
@@ -334,7 +333,7 @@ the coupling terms above need both. For other hydro variables you may also pass
 """
 function getvar(   dataobject::DataSetType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
@@ -350,14 +349,14 @@ function getvar(   dataobject::DataSetType, var::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
     _vframe_hint(dataobject, [var], vcenter)
-    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask, center))
 
     return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time )
 end
 
 function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     vcenter=nothing,
@@ -372,14 +371,14 @@ function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
     _vframe_hint(dataobject, [var], vcenter)
-    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask, center))
 
     return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time )
 end
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     vcenter=nothing,
@@ -394,7 +393,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{
         dataobject = construct_datatype(filtered_db, dataobject);
     end
     _vframe_hint(dataobject, vars, vcenter)
-    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask, center))
 
     return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time )
 end
@@ -402,7 +401,7 @@ end
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     vcenter=nothing,
@@ -418,7 +417,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
     _vframe_hint(dataobject, vars, vcenter)
-    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask, center))
 
     return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time )
 end
@@ -427,7 +426,7 @@ end
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     units::Array{Symbol,1}=[:standard],
@@ -445,7 +444,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
         dataobject = construct_datatype(filtered_db, dataobject);
     end
     _vframe_hint(dataobject, vars, vcenter)
-    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask))
+    dataobject = _apply_vframe(dataobject, _vframe_vector(dataobject, vcenter, vunit, mask, center))
 
     #vars = unique(vars)
     return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time )
@@ -485,7 +484,7 @@ mixed_analysis = getvar(grav, hydro, [:epot, :T, :jeanslength], [:erg, :K, :pc])
 function getvar(   dataobject::GravDataType, var::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
@@ -505,7 +504,7 @@ end
 function getvar(   dataobject::GravDataType, var::Symbol, unit::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
@@ -524,7 +523,7 @@ end
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
@@ -543,7 +542,7 @@ end
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, unit::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
@@ -563,7 +562,7 @@ end
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1};
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
@@ -590,7 +589,7 @@ end
 function getvar(   dataobject::RtDataType, var::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, unit::Symbol=:standard,
                     mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
@@ -603,7 +602,7 @@ end
 function getvar(   dataobject::RtDataType, var::Symbol, unit::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -615,7 +614,7 @@ end
 function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -627,7 +626,7 @@ end
 function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, unit::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -640,7 +639,7 @@ end
 function getvar(   dataobject::RtDataType, vars::Array{Symbol,1};
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, unit::Symbol=:standard,
                     mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
@@ -655,7 +654,7 @@ end
 # getvar(rt, hydro, :photoionizations) reads the same as getvar(rt, :photoionizations; hydro_data=hydro).
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, unit::Symbol=:standard,
                     mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
@@ -667,7 +666,7 @@ end
 
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, var::Symbol, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -678,7 +677,7 @@ end
 
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -689,7 +688,7 @@ end
 
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -701,7 +700,7 @@ end
 
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, vars::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
                     direction::Symbol=:z, unit::Symbol=:standard,
                     mask::MaskType=[false], ref_time::Real=dataobject.info.time)
     center = center_in_standardnotation(dataobject.info, center, center_unit)
@@ -730,9 +729,17 @@ getvar(grav, hydro, [:jeansmass, :epot], [:Msol, :erg])
 getvar(grav, hydro, [:T, :cs], :K)
 ```
 """
+# Mirror of the pair below, so the two objects may be given in either order. See the note in
+# projection_hydro.jl: getvar reads gravity-first, projection hydro-first, and both spellings are
+# already released, so each accepts the other's order rather than one of them breaking.
+getvar(hydro_data::HydroDataType, dataobject::GravDataType, args...; kwargs...) =
+    getvar(dataobject, hydro_data, args...; kwargs...)
+getvar(hydro_data::HydroDataType, dataobject::RtDataType, args...; kwargs...) =
+    getvar(dataobject, hydro_data, args...; kwargs...)
+
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
@@ -751,7 +758,7 @@ end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, var::Symbol, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
@@ -769,7 +776,7 @@ end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
@@ -787,7 +794,7 @@ end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
@@ -806,7 +813,7 @@ end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center::CenterType=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
@@ -826,7 +833,8 @@ end
 
 
 
-function center_in_standardnotation(dataobject::InfoType, center::Array{<:Any,1}, center_unit::Symbol)
+function center_in_standardnotation(dataobject::InfoType, center::CenterType, center_unit::Symbol)
+    center = _as_center(center)
 
     # check for :bc, :boxcenter. Build a fresh result — never mutate the caller's `center`
     # array in place (it may be reused across several getvar calls, e.g. by off-axis projection).
@@ -897,7 +905,7 @@ end
 ```julia
 getpositions( dataobject::DataSetType, unit::Symbol;
         direction::Symbol=:z,
-        center::Array{<:Any,1}=[0., 0., 0.],
+        center::CenterType=[0., 0., 0.],
         center_unit::Symbol=:standard,
         mask::MaskType=[false])
 
@@ -923,7 +931,7 @@ return x, y, z
 """
 function getpositions( dataobject::DataSetType, unit::Symbol;
                         direction::Symbol=:z,
-                        center::Array{<:Any,1}=[0., 0., 0.],
+                        center::CenterType=[0., 0., 0.],
                         center_unit::Symbol=:standard,
                         mask::MaskType=[false])
 
@@ -940,7 +948,7 @@ end
 function getpositions( dataobject::DataSetType;
                         unit::Symbol=:standard,
                         direction::Symbol=:z,
-                        center::Array{<:Any,1}=[0., 0., 0.],
+                        center::CenterType=[0., 0., 0.],
                         center_unit::Symbol=:standard,
                         mask::MaskType=[false])
 
@@ -985,7 +993,7 @@ return vx, vy, vz
 """
 function getvelocities( dataobject::DataSetType, unit::Symbol;
     direction::Symbol=:z,
-    center::Array{<:Any,1}=[0., 0., 0.],
+    center::CenterType=[0., 0., 0.],
     center_unit::Symbol=:standard,
     mask::MaskType=[false])
 
@@ -1000,7 +1008,7 @@ end
 function getvelocities( dataobject::DataSetType;
     unit::Symbol=:standard,
     direction::Symbol=:z,
-    center::Array{<:Any,1}=[0., 0., 0.],
+    center::CenterType=[0., 0., 0.],
     center_unit::Symbol=:standard,
     mask::MaskType=[false])
 
@@ -1048,7 +1056,7 @@ end
 ```julia
 function getextent( dataobject::DataSetType;
                      unit::Symbol=:standard,
-                     center::Array{<:Any,1}=[0., 0., 0.],
+                     center::CenterType=[0., 0., 0.],
                      center_unit::Symbol=:standard,
                      direction::Symbol=:z)
 
@@ -1071,7 +1079,7 @@ return (xmin, xmax), (ymin ,ymax ), (zmin ,zmax )
 
 """
 function getextent( dataobject::DataSetType, unit::Symbol;
-                     center::Array{<:Any,1}=[0., 0., 0.],
+                     center::CenterType=[0., 0., 0.],
                      center_unit::Symbol=:standard,
                      direction::Symbol=:z)
 
@@ -1084,7 +1092,7 @@ end
 
 function getextent( dataobject::DataSetType;
                      unit::Symbol=:standard,
-                     center::Array{<:Any,1}=[0., 0., 0.],
+                     center::CenterType=[0., 0., 0.],
                      center_unit::Symbol=:standard,
                      direction::Symbol=:z)
 

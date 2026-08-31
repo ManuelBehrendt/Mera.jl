@@ -292,8 +292,13 @@ mass lives on the hydro object rather than the gravity one. Pass both:
 
 ```julia
 getvar(gravity, hydro, :Fg, :dyne)              # per cell
-projection(hydro, gravity, :Fg, :dyne)          # as a map
+projection(gravity, hydro, :Fg, :dyne)          # as a map
 ```
+
+Either object order works in both calls, so `getvar(hydro, gravity, …)` and
+`projection(hydro, gravity, …)` do the same thing. The Greek component names have ASCII
+spellings too: `:Fphi_cylinder` is the same quantity as `:Fϕ_cylinder`, exactly as
+`:vphi_cylinder` is for velocity.
 
 Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Mera
 also checks that the two objects describe the same cells in the same order, so a mass can never be
@@ -306,11 +311,11 @@ paired with another cell's potential; load both over the identical `lmax` and ra
 | Force magnitude `:Fg` | ``F = m\,|\mathbf a|`` | `:dyne` |
 | Force components `:Fx, :Fy, :Fz` | ``F_i = m\,a_i`` | `:dyne` |
 | Cyl. radial force `:Fr_cylinder` | ``m\,a_{r,\mathrm{cyl}}`` | `:dyne` |
-| Cyl. azimuthal force `:Fphi_cylinder` | ``m\,a_{\varphi,\mathrm{cyl}}`` | `:dyne` |
+| Cyl. azimuthal force `:Fϕ_cylinder` | ``m\,a_{\varphi,\mathrm{cyl}}`` | `:dyne` |
 | In-plane force magnitude `:F_magnitude_cylinder` | ``m\,\sqrt{a_{r,\mathrm{cyl}}^2+a_{\varphi,\mathrm{cyl}}^2}`` | `:dyne` |
 | Sph. radial force `:Fr_sphere` | ``m\,a_{r,\mathrm{sph}}`` | `:dyne` |
-| Sph. polar force `:Ftheta_sphere` | ``m\,a_{\theta,\mathrm{sph}}`` | `:dyne` |
-| Sph. azimuthal force `:Fphi_sphere` | ``m\,a_{\varphi,\mathrm{sph}}`` | `:dyne` |
+| Sph. polar force `:Fθ_sphere` | ``m\,a_{\theta,\mathrm{sph}}`` | `:dyne` |
+| Sph. azimuthal force `:Fϕ_sphere` | ``m\,a_{\varphi,\mathrm{sph}}`` | `:dyne` |
 
 Each force is the mass times the acceleration component **of the same name**, taken from that
 component rather than recomputed, so the two share one definition and one treatment of `center`.
@@ -341,6 +346,34 @@ different numbers, so state which one you used.
     speed only if ``\phi \to 0`` far away, and ``\phi/c^2`` inherits the same offset. They
     returned confident numbers that meant nothing without a stated reference level, so they were
     withdrawn rather than left to be misread.
+
+## Magnetic field
+
+*Data: **hydro** of an MHD run. RAMSES stores the field on cell faces as `:bx_left`/`:bx_right`
+and so on; Mera averages the two faces to the cell centre for `:bx, :by, :bz`.*
+
+| Quantity | Formula |
+|---|---|
+| Field magnitude `:bmag` | ``|\mathbf B| = \sqrt{B_x^2+B_y^2+B_z^2}`` |
+| Magnetic pressure `:pmag` | ``B^2/2`` |
+| Plasma beta `:beta` | ``P_\mathrm{thermal} / (B^2/2)`` |
+| Alfven speed `:v_alfven` | ``|\mathbf B|/\sqrt{\rho}`` |
+| Magnetic energy `:e_magnetic` | ``(B^2/2)\,V`` per cell |
+
+`B` is a vector, so it decomposes into cylindrical and spherical components the same way velocity
+and acceleration do. These are measured about `center`, and warn if none is given.
+
+| Quantity | Formula |
+|---|---|
+| Cyl. radial `:br_cylinder` | ``(x B_x + y B_y)/\sqrt{x^2+y^2}`` |
+| Cyl. azimuthal `:bϕ_cylinder` | ``(x B_y - y B_x)/\sqrt{x^2+y^2}`` |
+| In-plane magnitude `:b_magnitude_cylinder` | ``\sqrt{B_{r,\mathrm{cyl}}^2 + B_{\varphi,\mathrm{cyl}}^2}`` |
+| Sph. radial `:br_sphere` | ``(x B_x + y B_y + z B_z)/\sqrt{x^2+y^2+z^2}`` |
+| Sph. polar `:bθ_sphere` | ``\big(z(xB_x+yB_y) - (x^2+y^2)B_z\big) / (r_\mathrm{sph}\,r_\mathrm{cyl})`` |
+| Sph. azimuthal `:bϕ_sphere` | same as the cylindrical azimuthal component |
+
+ASCII spellings (`:bphi_cylinder`, `:btheta_sphere`, `:bphi_sphere`) resolve to the same
+quantities. A cell at ``r=0`` has no defined direction, so those entries come back as `0`.
 
 ## Radiative-transfer (RT) quantities
 

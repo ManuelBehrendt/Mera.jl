@@ -10,7 +10,7 @@
 ##### SPHERE/SHELL #####-------------------------------------------------------
 function shellregionsphere(dataobject::SinkDataType;
                             radius::Array{<:Real,1}=[0.,0.],
-                            center::Array{<:Any,1}=[0.,0.,0.],
+                            center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             inverse::Bool=false,
                             verbose::Bool=verbose_mode)
@@ -21,7 +21,7 @@ function shellregionsphere(dataobject::SinkDataType;
     radius_out = radius[2]
     # a centre was never given -> the region lands at the box corner: say so once
     _region_corner_hint(:sphere, center; shell=true, verbose=verbose)
-    if radius_in == 0. || radius_out == 0. || all(==(0.), center)
+    if radius_in == 0. || radius_out == 0. || all(==(0.), _as_center(center))
         error("[Mera]: shellregion(:sphere) needs nonzero inner and outer radii — got " *
               "radius = [$(radius_in), $(radius_out)].")
     end
@@ -56,7 +56,7 @@ end
 function shellregioncylinder(dataobject::SinkDataType;
                               radius::Array{<:Real,1}=[0.,0.],
                               height::Real=0.,
-                              center::Array{<:Any,1}=[0.,0.,0.],
+                              center::CenterType=[0.,0.,0.],
                               range_unit::Symbol=:standard,
                               direction::Symbol=:z,
                               inverse::Bool=false,
@@ -67,7 +67,7 @@ function shellregioncylinder(dataobject::SinkDataType;
     radius_in  = radius[1]
     radius_out = radius[2]
     _region_corner_hint(:cylinder, center; shell=true, verbose=verbose)
-    if radius_in == 0. || radius_out == 0. || height == 0. || all(==(0.), center)
+    if radius_in == 0. || radius_out == 0. || height == 0. || all(==(0.), _as_center(center))
         error("[Mera]: shellregion(:cylinder) needs nonzero inner and outer radii and `height` — got " *
               "radius = [$(radius_in), $(radius_out)], height = $(height).")
     end

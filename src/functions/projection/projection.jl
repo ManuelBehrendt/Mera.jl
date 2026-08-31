@@ -334,11 +334,8 @@ function resolve_los(; los=nothing, theta=nothing, phi=nothing,
         # swapping the names without the +90 silently rotates the figure by a quarter turn.
         hint(:theta_phi_deprecated,
              "`theta`/`phi` is deprecated in Mera 1.8 and will be removed in 2.0.",
-             "Use `inclination`/`azimuth`. They do not start from the same angle:",
-             "    inclination = theta,   azimuth = phi + 90      (for axis=:z)",
-             "`inclination`/`azimuth` also takes any reference `axis`, such as :angmom for the",
-             "object's angular momentum, and it sets the image up direction, so the roll of the",
-             "picture is defined rather than chosen automatically.")
+             "Use `inclination`/`azimuth`, which also takes any reference `axis` (:angmom) and",
+             "defines the image roll. NOT the same zero point: azimuth = phi + 90 for axis=:z.")
         th = theta === nothing ? 0.0 : float(theta)
         ph = phi   === nothing ? 0.0 : float(phi)
         return _los_from_angles(th, ph, angle_unit), up
@@ -389,7 +386,7 @@ end
 # numeric center in CODE units, so it can be stored on the returned cube/map for provenance
 # (round-trips through savecube/loadcube).  Mirrors the centering getvar applies internally.
 function _center_code(dataobject, center, range_unit::Symbol)
-    frac = center_in_standardnotation(dataobject.info, collect(Any, center), range_unit)  # → 0..1
+    frac = center_in_standardnotation(dataobject.info, collect(Any, _as_center(center)), range_unit)  # → 0..1
     return Float64.(frac) .* dataobject.boxlen
 end
 

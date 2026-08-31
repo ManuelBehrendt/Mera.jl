@@ -32,7 +32,7 @@ function get_data(dataobject::RtDataType,
                 vars::Array{Symbol,1},
                 units::Array{Symbol,1},
                 direction::Symbol,
-                center::Array{<:Any,1},
+                center::CenterType,
                 mask::MaskType,
                 ref_time::Real;
                 hydro_data::Union{HydroDataType, Nothing}=nothing)

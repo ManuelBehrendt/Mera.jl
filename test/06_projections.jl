@@ -2318,3 +2318,63 @@ if DATA_AVAILABLE
         end
     end
 end
+
+# ── thermal dispersion, spherical dispersions, and varying velocity frames ───────────────────
+if DATA_AVAILABLE
+    @testset "thermal dispersion and velocity frames" begin
+        pr = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC/ramses_rt_dirac")
+        if isdir(pr)
+            ir = getinfo(2, pr, verbose=false)
+            g  = gethydro(ir, verbose=false, show_progress=false)
+            γ  = ir.gamma; kB = ir.constants.kB; mH = ir.constants.mH
+
+            # sigma_thermal = sqrt(P/rho) is the 1D width of the mean particle. Checked against
+            # BOTH equivalent forms: cs/sqrt(gamma), and sqrt(kB T/(mu mH)) using the LOCAL mu.
+            # The second is the one that matters: it holds without assuming an ionization state.
+            st = getvar(g, :σ_thermal, :cm_s)
+            @test isapprox(st, getvar(g, :cs, :cm_s) ./ sqrt(γ); rtol=1e-12)
+            @test isapprox(st, sqrt.(kB .* getvar(g, :T_rt) ./ (getvar(g, :mu) .* mH)); rtol=1e-6)
+            @test getvar(g, :sigma_thermal, :cm_s) == st          # ASCII alias
+            @test all(st .> 0)
+
+            # squared spherical components, which the spherical dispersions are built from
+            for q in (:vr_sphere2, :vθ_sphere2, :vϕ_sphere2)
+                base = getvar(g, Symbol(String(q)[1:end-1]), center=[:bc])
+                @test isapprox(getvar(g, q, center=[:bc]), base .^ 2; rtol=1e-12)
+            end
+        end
+
+        ps = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC/sedov3d_grav_part")
+        if isdir(ps)
+            gs = gethydro(getinfo(3, ps, verbose=false), verbose=false, show_progress=false)
+            kw = (direction=:z, center=:bc, verbose=false, show_progress=false)
+
+            # A dispersion already subtracts the per-pixel mean, so a CONSTANT boost cannot change
+            # it. Use a fixed axis: :faceon/:edgeon re-derive their orientation from the angular
+            # momentum, which a boost legitimately changes, so the view would move underneath us.
+            boost = 50.0
+            a = projection(gs, :σz, :km_s; kw...).maps[:σz]
+            b = projection(restframe(gs; vcenter=[0.0,0.0,boost], vunit=:km_s), :σz, :km_s; kw...).maps[:σz]
+            m = isfinite.(a) .& isfinite.(b)
+            # Compare the change against the BOOST, not against sigma. sqrt(<v^2>-<v>^2) loses
+            # precision in proportion to the mean it subtracts, so the boost is the right yardstick.
+            # This fixture has sigma_z ~ 1e-14 km/s (no velocity structure), and dividing by that
+            # turns a 1e-6 km/s rounding difference into a relative 1e8.
+            @test maximum(abs.(b[m] .- a[m])) < 1e-6 * boost
+
+            # a varying field is what a dispersion CAN see, so it must change the result
+            f = (x, y, z) -> (0.0, 0.0, 1e-3 * x)      # a shear in code units
+            c = projection(restframe(gs; vcenter=f, center=:bc), :σz, :km_s; kw...).maps[:σz]
+            @test !isapprox(filter(isfinite, c), filter(isfinite, a); rtol=1e-6)
+
+            # the spherical dispersions exist and are finite
+            for q in (:σr_sphere, :σθ_sphere, :σϕ_sphere)
+                mp = projection(gs, q, :km_s; kw...)
+                @test haskey(mp.maps, q) && any(isfinite, mp.maps[q])
+            end
+
+            # a function returning the wrong shape must say so, not silently mis-broadcast
+            @test_throws ErrorException restframe(gs; vcenter=(x,y,z) -> (0.0, 0.0))
+        end
+    end
+end

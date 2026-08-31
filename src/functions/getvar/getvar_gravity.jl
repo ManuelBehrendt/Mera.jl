@@ -29,7 +29,7 @@ function get_data(dataobject::GravDataType,
                 vars::Array{Symbol,1},
                 units::Array{Symbol,1},
                 direction::Symbol,
-                center::Array{<:Any,1},
+                center::CenterType,
                 mask::MaskType,
                 ref_time::Real;
                 hydro_data::Union{HydroDataType, Nothing}=nothing)
@@ -346,7 +346,8 @@ function get_data(dataobject::GravDataType,
         elseif haskey(_GRAV_FORCE_FROM_ACCEL, i)
             selected_unit = getunit(dataobject, i, vars, units)
             has_hydro || error("`:$i` is mass times acceleration, so it needs the cell mass. " *
-                               "Call getvar(gravity, hydro, :$i), or projection(hydro, gravity, :$i).")
+                               "Call getvar(gravity, hydro, :$i), or projection(gravity, hydro, :$i). " *
+                               "Either object order works in both.")
             m = _grav_hydro_mass(hydro_data, mask)
             a = getvar(dataobject, _GRAV_FORCE_FROM_ACCEL[i], center=center, mask=mask)
             vars_dict[i] = @. m * a * selected_unit
@@ -355,7 +356,8 @@ function get_data(dataobject::GravDataType,
         elseif i in (:Fg, :Fx, :Fy, :Fz)
             selected_unit = getunit(dataobject, i, vars, units)
             has_hydro || error("`:$i` is mass times acceleration, so it needs the cell mass. " *
-                               "Call getvar(gravity, hydro, :$i), or projection(hydro, gravity, :$i).")
+                               "Call getvar(gravity, hydro, :$i), or projection(gravity, hydro, :$i). " *
+                               "Either object order works in both.")
             m = _grav_hydro_mass(hydro_data, mask)
             if i === :Fg
                 ax = select(masked_data, :ax); ay = select(masked_data, :ay); az = select(masked_data, :az)

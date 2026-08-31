@@ -324,7 +324,11 @@
         # one length, so this ratio pins that erg_cm2_s is not silently a copy of erg_cm3_s again.
         @test isapprox(scale.erg_cm2_s, unit_m / unit_t^3, rtol=1e-15)
         @test isapprox(scale.erg_cm2_s / scale.erg_cm3_s, unit_l, rtol=1e-12)
-        @test isapprox(scale.Jy, scale.erg_cm2_s / 1e-23, rtol=1e-15)
+        # A Jansky is a SPECTRAL flux density, erg/(s*cm^2*Hz). Hz^-1 = s, so it reduces to
+        # erg/cm^2 = unit_m/unit_t^2, NOT the bolometric erg_cm2_s. Asserting the old relation
+        # is what kept the wrong definition alive.
+        @test isapprox(scale.Jy, (unit_m / unit_t^2) / 1e-23, rtol=1e-15)
+        @test !isapprox(scale.Jy, scale.erg_cm2_s / 1e-23, rtol=1e-6)   # they must differ now
         @test isapprox(scale.mJy, scale.Jy * 1e3, rtol=1e-15)
         @test isapprox(scale.microJy, scale.Jy * 1e6, rtol=1e-15)
     end

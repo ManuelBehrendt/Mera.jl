@@ -353,13 +353,22 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.K_cm3     = scale.p_kB # p/kB
 
     # Entropy-specific units for astrophysical applications
-    scale.erg_g_K   = (unit_m * (unit_l / unit_t)^2) / (unit_d * unit_l^3) / kB  # [erg/(g·K)] specific entropy
-    scale.keV_cm2   = scale.erg_g_K * unit_d * unit_l^2 / constants.eV * 1000.0  # [keV·cm²] entropy per particle (X-ray astro)
+    # ENTROPY. :entropy_specific computes (k_B/m_u)*ln(P/rho^gamma)/(gamma-1). k_B is erg/K and
+    # m_u is g, so that value is ALREADY erg/(g*K); it is not in code units like the other
+    # quantities. The factor that converts it to erg/(g*K) is therefore 1, and the rest of the
+    # entropy family is built from that. The old expression was specific_energy/kB, whose
+    # dimension is K/g, so asking for :erg_g_K multiplied an already-cgs number by ~3e29.
+    scale.erg_g_K   = 1.0                                                        # [erg/(g·K)] specific entropy, already cgs
+    # X-ray "entropy" K = kT/n^(2/3) is a DIFFERENT quantity with no getvar implementation, so
+    # there is nothing here to convert. Left as the identity rather than inventing a factor.
+    scale.keV_cm2   = 1.0                                                        # [keV·cm²] X-ray entropy (no quantity yet)
     
     # Additional entropy unit scales
-    scale.erg_K         = scale.erg_g_K * unit_d * unit_l^3                      # [erg/K] total entropy
-    scale.J_K           = scale.erg_K / 1e7                                      # [J/K] SI total entropy  
-    scale.erg_cm3_K     = scale.erg_g_K * unit_d                                 # [erg/(cm³·K)] entropy density
+    # total entropy = specific entropy (already erg/(g*K)) times the cell mass in grams
+    scale.erg_K         = scale.g                                                # [erg/K] total entropy
+    scale.J_K           = scale.erg_K * 1e-7                                     # [J/K] SI total entropy
+    # entropy density = specific entropy times the density in g/cm^3
+    scale.erg_cm3_K     = unit_d                                                 # [erg/(cm³·K)] entropy density
     # 1 erg/cm^3 = 1e-7 J / 1e-6 m^3 = 1e-1 J/m^3. The old 1e1 had the sign of the exponent wrong.
     scale.J_m3_K        = scale.erg_cm3_K * 1e-1                                 # [J/(m³·K)] SI entropy density
     scale.kB_per_particle = constants.k_B                                        # [erg/K per particle] Boltzmann constant
@@ -410,7 +419,11 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     # A flux is energy/(area*time) = unit_m/unit_t^3. The old expression was byte-identical to
     # erg_cm3_s above, i.e. a per-VOLUME rate, and so was low by a factor unit_l.
     scale.erg_cm2_s = unit_m / unit_t^3                                          # [erg/(cm²·s)] Energy flux
-    scale.Jy        = scale.erg_cm2_s / 1e-23                                    # [Jy] Jansky (radio astronomy)
+    # A Jansky is a SPECTRAL flux density, 1e-23 erg/(s*cm^2*Hz). Since Hz^-1 = s, that reduces
+    # to erg/cm^2, whose code scale is unit_m/unit_t^2, NOT the bolometric erg_cm2_s above.
+    # Mera has no per-Hz quantity yet, so this converts a spectral flux density the caller
+    # supplies; it is not applicable to a bolometric flux.
+    scale.Jy        = (unit_m / unit_t^2) / 1e-23                                # [Jy] Jansky (spectral flux density)
     scale.mJy       = scale.Jy * 1e3                                             # [mJy] Milli-Jansky
     scale.microJy   = scale.Jy * 1e6                                             # [μJy] Micro-Jansky
     

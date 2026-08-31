@@ -16,7 +16,7 @@ over boundary handling in adaptive mesh refinement (AMR) simulations.
 - `xrange::Array{<:Any,1}=[missing, missing]`: X-coordinate range [min, max]
 - `yrange::Array{<:Any,1}=[missing, missing]`: Y-coordinate range [min, max]  
 - `zrange::Array{<:Any,1}=[missing, missing]`: Z-coordinate range [min, max]
-- `center::Array{<:Any,1}=[0., 0., 0.]`: Reference center for ranges
+- `center::CenterType=[0., 0., 0.]`: Reference center for ranges
 - `range_unit::Symbol=:standard`: Units for ranges (:standard, :kpc, :Mpc, etc.)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
@@ -51,7 +51,7 @@ function subregioncuboid(dataobject::RtDataType;
     xrange::Array{<:Any,1}=[missing, missing],
     yrange::Array{<:Any,1}=[missing, missing],
     zrange::Array{<:Any,1}=[missing, missing],
-    center::Array{<:Any,1}=[0., 0., 0.],
+    center::CenterType=[0., 0., 0.],
     range_unit::Symbol=:standard,
     cell::Bool=true,
     inverse::Bool=false,
@@ -290,7 +290,7 @@ It supports both cell-based and point-based selection modes for precise boundary
 # Keywords
 - `radius::Real=0.`: Cylinder radius in units specified by `range_unit`
 - `height::Real=0.`: Total cylinder height (extends ±height/2 from center plane)
-- `center::Array{<:Any,1}=[0., 0., 0.]`: Cylinder center position
+- `center::CenterType=[0., 0., 0.]`: Cylinder center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
 - `direction::Symbol=:z`: Cylinder axis orientation (:x, :y, or :z)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
@@ -325,7 +325,7 @@ disk = subregioncylinder(rt,
 function subregioncylinder(dataobject::RtDataType;
                             radius::Real=0.,
                             height::Real=0.,
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             cell::Bool=true,
@@ -407,7 +407,7 @@ and point-based selection modes for precise boundary handling in AMR simulations
 
 # Keywords
 - `radius::Real=0.`: Sphere radius in units specified by `range_unit`
-- `center::Array{<:Any,1}=[0., 0., 0.]`: Sphere center position
+- `center::CenterType=[0., 0., 0.]`: Sphere center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
@@ -442,7 +442,7 @@ subregion = subregionsphere(rt,
 """
 function subregionsphere(dataobject::RtDataType;
                             radius::Real=0.,
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             cell::Bool=true,
                             inverse::Bool=false,

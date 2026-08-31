@@ -154,6 +154,8 @@ export
     center_of_mass,
     com,
     bulk_velocity,
+    rotation_frame,
+    restframe,
     average_velocity,
     average_mweighted,
     getvar,

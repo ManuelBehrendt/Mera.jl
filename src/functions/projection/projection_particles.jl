@@ -270,9 +270,9 @@ projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 xrange::Array{<:Any,1}=[missing, missing],
                 yrange::Array{<:Any,1}=[missing, missing],
                 zrange::Array{<:Any,1}=[missing, missing],
-                center::Array{<:Any,1}=[0., 0., 0.],
+                center::CenterType=[0., 0., 0.],
                 range_unit::Symbol=:standard,
-                data_center::Array{<:Any,1}=[missing, missing, missing],
+                data_center::CenterType=[missing, missing, missing],
                 data_center_unit::Symbol=:standard,
                 ref_time::Real=dataobject.info.time,
                 verbose::Bool=true,
@@ -388,9 +388,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -465,9 +465,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -542,9 +542,9 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -619,9 +619,9 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -695,9 +695,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -772,9 +772,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -863,7 +863,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     # for velocity dispersion add necessary velocity components
     # ========================================================
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
+              :σr_sphere, :σθ_sphere, :σϕ_sphere]
     rσanglecheck = [rcheck...,σcheck...,anglecheck...]
 
     σ_to_v = SortedDict(  :σx => [:vx, :vx2],
@@ -871,7 +872,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                           :σz => [:vz, :vz2],
                           :σ  => [:v,  :v2],
                           :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
-                          :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
+                          :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2],
+                          :σr_sphere   => [:vr_sphere,   :vr_sphere2],
+                          :σθ_sphere   => [:vθ_sphere,   :vθ_sphere2],
+                          :σϕ_sphere   => [:vϕ_sphere,   :vϕ_sphere2] )
 
     for i in σcheck
         idx = findall(x->x==i, selected_vars) #[1]
@@ -1412,7 +1416,8 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
     rcheck = [:r_cylinder, :r_sphere]; anglecheck = [:ϕ]
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
+              :σr_sphere, :σθ_sphere, :σϕ_sphere]
     rσanglecheck = [rcheck..., σcheck..., anglecheck...]
     for v in selected_vars
         if v in rσanglecheck
