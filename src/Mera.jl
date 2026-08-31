@@ -24,6 +24,7 @@ using Dates
 using Statistics
 using Random
 using Downloads
+using Tar
 using TOML
 using PrecompileTools
 using Pkg
@@ -242,6 +243,7 @@ export
     VirialBelow,
     MassAbove,
     Custom,
+    download_testdata,
     synthetic_clumps,
     save_synthetic_clumps,
     load_synthetic_clumps,
@@ -495,6 +497,7 @@ include("functions/report/report_render.jl")
 include("functions/report/report_cost.jl")
 include("functions/clumpfind.jl")
 include("functions/synthetic_clumps.jl")
+include("functions/download_testdata.jl")
 include("functions/timeseries.jl")
 include("functions/galaxy_frame.jl")
 include("functions/gridoverlay.jl")

@@ -32,6 +32,15 @@ reader `getgroups`, and the run-time-log readers, live on the `multicode` branch
 They register through the same reader registry the loaders above dispatch through, so nothing
 in this API changes when they are present.
 
+## Test simulations
+
+Mera publishes eleven small RAMSES simulations as a GitHub release. Each has a known answer, so
+they can be used to check an installation without a large download.
+
+```@docs
+download_testdata
+```
+
 ## Related
 
 Spatial cuts after loading are in the [Subregions API](subregions.md); value-based selection

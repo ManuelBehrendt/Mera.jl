@@ -41,21 +41,37 @@ Pkg.add("Mera")
 using Mera
 ```
 
-Then run something. This needs no simulation data at all, because `synthetic_clumps()` builds
-real Mera objects in memory:
+Then run something on a real RAMSES simulation. `download_testdata` fetches one of Mera's public
+test simulations, 2.3 MB, and hands you the path:
 
 ```julia
 using Mera
-F   = synthetic_clumps()              # 51,514 gas cells + 2,438 particles, 8 known clumps
-gas = F.gas
-projection(gas, :sd, :Msol_pc2)       # a 128×128 surface-density map
+path = download_testdata("sedov3d_amr")   # a Sedov blast on an AMR grid
+info = getinfo(path)
+gas  = gethydro(info)
+projection(gas, :sd, :Msol_pc2)           # a 128x128 surface-density map
 ```
 
 Expect about 10 seconds on the first call, because Julia compiles as it goes. Later calls are
-instant. Everything else in these docs, `getvar`, `subregion`, `filterdata`, `profile`,
-`savedata`, works on `gas` exactly as it does on a real snapshot.
+instant. The download happens once and is reused afterwards.
 
-With a snapshot of your own, point `getinfo` at the output folder and continue the same way:
+This simulation has a known answer: the blast radius grows as `t^(2/5)`, which is what Mera's own
+test suite checks it against. Eleven simulations are available, listed by `?download_testdata`, and
+each one carries either an analytic law like this or reference values published by the RAMSES
+developers.
+
+If you would rather not download anything, `synthetic_clumps()` builds real Mera objects in memory
+instead, and everything below works on them the same way:
+
+```julia
+F   = synthetic_clumps()              # 51,514 gas cells + 2,438 particles, 8 known clumps
+gas = F.gas
+```
+
+Everything else in these docs, `getvar`, `subregion`, `filterdata`, `profile`, `savedata`, works on
+`gas` exactly as it does on any other snapshot.
+
+With a simulation of your own, point `getinfo` at the output folder and continue the same way:
 
 ```julia
 info = getinfo(300, "/path/to/simulation")   # reads output_00300
@@ -150,10 +166,9 @@ simulation it points at is not something you have.
 If you want something you can run immediately, Mera publishes a small set of test simulations,
 eleven of them, a few megabytes each. Every one carries either an analytic oracle, a law that
 follows from its own setup, or is checked against reference values published by the RAMSES
-developers. They ship with a getting-started example, and Mera's own test suite verifies the
-package against them, so you can confirm an installation behaves correctly without a large
-download. See [`testdata/README.md`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/testdata/README.md)
-in the repository for how to fetch them.
+developers. Mera's own test suite verifies the package against them, so you can confirm an
+installation behaves correctly without a large download. Fetch them with `download_testdata()`, or
+one at a time by name.
 
 Two tutorial pages already use data you can obtain: the radiative-transfer page runs on one of the
 published test simulations, and the cosmology page carries download instructions for the yt
