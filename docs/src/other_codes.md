@@ -13,7 +13,7 @@ exists, what does not, and how to try it.
 | Chombo | `multicode` branch | in development |
 | Athena++ | `multicode` branch | in development |
 | FLASH | `multicode` branch | in development |
-| GADGET / AREPO / SWIFT / GIZMO | `multicode` branch | in development, HDF5 family |
+| GADGET / AREPO | `multicode` branch | in development, HDF5 family |
 
 Coverage is deepest for RAMSES. It is the only code with dedicated `getgravity`, `getrt` and
 `getclumps` readers, because it writes those to separate files. Where another code stores the same

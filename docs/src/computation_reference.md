@@ -90,7 +90,7 @@ With ``k_B`` Boltzmann's constant, ``m_u`` the atomic mass unit and ``\gamma`` t
 
 ### Gas particle thermodynamics (GADGET/AREPO family)
 
-*Data: **particles** (`getparticles`) on a GADGET/AREPO/SWIFT/GIZMO gas snapshot, needs the
+*Data: **particles** (`getparticles`) on a GADGET or AREPO gas snapshot, needs the
 specific internal energy `:u`. Requesting these without `:u` raises an `ArgumentError`.*
 
 !!! note "The physics ships, the reader does not"

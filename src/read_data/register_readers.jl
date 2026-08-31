@@ -7,7 +7,7 @@
 #
 # The registry is deliberately kept even with a single reader, because it is the seam the
 # other-code frontends plug into: PLUTO, Chombo, Athena++, FLASH and the GADGET-HDF5 family
-# (GADGET / AREPO / SWIFT / GIZMO) register here on the `multicode` branch, which is
+# (GADGET, AREPO) register here on the `multicode` branch, which is
 # installable directly:
 #
 #     ] add https://github.com/ManuelBehrendt/Mera.jl#multicode
