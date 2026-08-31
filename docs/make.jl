@@ -222,7 +222,8 @@ makedocs(modules = [Mera],
                           # same four topics twice, at two levels of quality, is what the docs panel
                           # flagged. The page and its notebook are kept, just not offered as a route.
                           "Examples & Misc" => Any[ "Examples"             => "examples.md",
-                                                    "Recommended Packages" => "recommended_packages.md"]]
+                                                    "Recommended Packages" => "recommended_packages.md",
+                                                    "Logo"                 => "logo.md"]]
                     ]
 )
 
