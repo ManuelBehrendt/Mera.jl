@@ -52,9 +52,6 @@ gas  = gethydro(info)
 projection(gas, :sd, :Msol_pc2)           # a 128x128 surface-density map
 ```
 
-Expect about 10 seconds on the first call, because Julia compiles as it goes. Later calls are
-instant. The download happens once and is reused afterwards.
-
 This simulation has a known answer: the blast radius grows as `t^(2/5)`, which is what Mera's own
 test suite checks it against. Eleven simulations are available, listed by `?download_testdata`, and
 each one carries either an analytic law like this or reference values published by the RAMSES
@@ -158,13 +155,13 @@ active use and active development.
 
 ## About the data in these tutorials
 
-The tutorial pages analyse research-scale RAMSES simulations, several gigabytes each, which are
-not distributed. They are worked examples: read them to see what an analysis of real data looks
-like, and adapt the code to your own outputs. Running a page unchanged will not work, because the
-simulation it points at is not something you have.
+The tutorial pages analyse research-scale RAMSES simulations, several gigabytes each. They are
+worked examples: read them to see what an analysis of real data looks like, and adapt the code to
+your own outputs. Those particular simulations are not distributed, so point the examples at a
+snapshot of your own, or at one of the test simulations below.
 
-If you want something you can run immediately, Mera publishes a small set of test simulations,
-eleven of them, a few megabytes each. Every one carries either an analytic oracle, a law that
+To run code as you read, Mera publishes a small set of test simulations, eleven of them, a few
+megabytes each. Every one carries either an analytic oracle, a law that
 follows from its own setup, or is checked against reference values published by the RAMSES
 developers. Mera's own test suite verifies the package against them, so you can confirm an
 installation behaves correctly without a large download. Fetch them with `download_testdata()`, or
