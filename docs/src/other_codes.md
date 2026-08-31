@@ -13,7 +13,7 @@ exists, what does not, and how to try it.
 | Chombo | `multicode` branch | in development |
 | Athena++ | `multicode` branch | in development |
 | FLASH | `multicode` branch | in development |
-| GADGET / AREPO / IllustrisTNG | `multicode` branch | in development, one reader for the shared HDF5 family |
+| GADGET / AREPO | `multicode` branch | in development, one reader for the shared HDF5 family |
 
 Coverage is deepest for RAMSES. It is the only code with dedicated `getgravity`, `getrt` and
 `getclumps` readers, because it writes those to separate files. Where another code stores the same
@@ -69,14 +69,18 @@ Those six symbols are the whole list, one per reader:
 | symbol | reads |
 |---|---|
 | `:ramses` | RAMSES |
-| `:gadget` | GADGET, **AREPO** and **IllustrisTNG**, which share the same HDF5 snapshot family |
+| `:gadget` | GADGET and **AREPO**, which share the same HDF5 snapshot family |
 | `:pluto` | PLUTO |
 | `:chombo` | Chombo |
 | `:athena` | Athena++ |
 | `:flash` | FLASH |
 
-**There is no `:arepo`.** AREPO and IllustrisTNG snapshots are read by the `:gadget` reader, because
-the three write the same HDF5 layout. If you have an AREPO snapshot, pass `code=:gadget`.
+`code=` names the **reader**, not the code that wrote the file, and one reader serves the whole
+GADGET-HDF5 family. So there is no `:arepo` to pass: for an AREPO snapshot, use `code=:gadget`.
+
+That does not mean Mera confuses the two. `getinfo` reads the producer out of the file and reports
+it, so `info.simcode` is `"AREPO"` for an AREPO snapshot and `"GADGET"` for a GADGET one, and the
+printed summary says so. You only need `code=` at all when detection fails.
 
 See [Troubleshooting](troubleshooting.md) for what an unrecognised folder looks like.
 

@@ -33,8 +33,8 @@ data has no such file and never should. Name the code explicitly to find out:
 info = getinfo(path, code=:pluto)     # :pluto, :chombo, :athena, :flash, :gadget, :ramses
 ```
 
-Those six are the whole list. Note there is **no `:arepo`**: AREPO and IllustrisTNG snapshots are
-read by `:gadget`, because the three share the same HDF5 layout.
+Those six are the whole list. `code=` names the reader, so an AREPO snapshot takes `code=:gadget`,
+there is no `:arepo`. Mera still reports the real producer: `info.simcode` reads `"AREPO"`.
 
 If that works, detection failed rather than the file being missing, please
 [report it](https://github.com/ManuelBehrendt/Mera.jl/issues) with your directory listing,

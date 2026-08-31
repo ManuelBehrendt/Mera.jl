@@ -111,7 +111,7 @@ table above, in particular ``\mu`` is **not** the constant 1.32 used for RAMSES:
 
 ``X_H = 0.76``. The electron abundance ``n_e`` comes from the `:ne` column when the snapshot
 carries one; without it Mera falls back to neutral primordial gas, ``\mu = 4/(1+3X_H) \approx
-1.22``. **If you are writing a methods section for an AREPO or IllustrisTNG analysis, cite
+1.22``. **If you are writing a methods section for an AREPO analysis, cite
 this ``\mu``, not the RAMSES constant above.**
 
 The magnetic quantities in [Magnetic quantities](#Magnetic-quantities) apply unchanged to
