@@ -63,15 +63,33 @@ MERA_FOCUS=06_projections.jl julia --project -e 'using Pkg; Pkg.test("Mera")'
 
 ### Test Data Requirements
 
-Full test coverage requires RAMSES simulation data. The test suite gracefully handles missing data:
+You do not need simulation data to contribute. With none present, the data-backed tier is detected,
+announced and skipped, and the run still passes; it is never an error and never a hang.
 
-- **With simulation data**: All tests run with full validation
-- **Without simulation data**: Tests skip data-dependent sections with informative messages
+If you do want to run tier 2, Mera publishes a set of small public RAMSES fixtures, a few megabytes
+each, as a GitHub release. One command fetches them:
 
-For local comprehensive testing, simulation data should be available at:
+```bash
+testdata/fetch_fixtures.sh            # all of them
+testdata/fetch_fixtures.sh --small    # skip the largest, 117 MB total
 ```
-/Volumes/FASTStorage/Simulations/Mera-Tests
+
+It only downloads what is missing, and prints the resolved directory as its last line, so you can
+hand it straight to the suite:
+
+```bash
+export MERA_TEST_DATA="$(testdata/fetch_fixtures.sh --quiet)"
+julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
+
+Every fixture carries a known answer, either an analytic oracle that follows from its own setup
+(the Sedov blast radius grows as `t^(2/5)`, a divergence-free field keeps `Bx` constant, four blobs
+give four clumps) or reference values published by the RAMSES developers. So a failure points at
+Mera, not at an unverifiable dataset. [`testdata/README.md`](testdata/README.md) documents how each
+one is generated, from namelists committed to this repository.
+
+The tutorial pages in the documentation are a separate matter: they analyse research-scale
+simulations that are not distributed, and are meant to be read and adapted rather than run.
 
 ## Code Style
 
