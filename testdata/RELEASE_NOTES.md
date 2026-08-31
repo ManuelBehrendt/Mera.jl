@@ -1,8 +1,8 @@
 # Mera.jl public test simulations, v1
 
-Small RAMSES simulation outputs used by the Mera.jl test suite. They are published as **release
-assets rather than repository files**: Mera is a registered package, so anything committed to the
-tree would be downloaded by every `Pkg.add("Mera")` and would remain in git history permanently.
+Small RAMSES simulation outputs you can download and analyse with
+[Mera.jl](https://github.com/ManuelBehrendt/Mera.jl). They are the same simulations Mera's own test
+suite runs against, so every one has a known answer to check against.
 
 Total 282 MB across 12 archives (11 simulations plus the documentation set).
 Each unpacks to a single directory.
