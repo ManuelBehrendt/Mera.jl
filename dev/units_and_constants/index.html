@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Units &amp; Constants · Mera.jl</title><meta name="title" content="Units &amp; Constants · Mera.jl"/><meta property="og:title" content="Units &amp; Constants · Mera.jl"/><meta property="twitter:title" content="Units &amp; Constants · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/units_and_constants/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/units_and_constants/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/units_and_constants/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../assets/custom.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../first_look/">First Look</a></li><li><a class="tocitem" href="../report/">Composable Reports</a></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><a class="tocitem" href="../switching_to_mera/">Coming from Other Tools</a></li><li><a class="tocitem" href="../julia_for_simulation_analysis/">Julia for Simulation Analysis</a></li><li><a class="tocitem" href="../troubleshooting/">Troubleshooting</a></li><li><a class="tocitem" href="../other_codes/">Other Simulation Codes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-5-1" type="checkbox"/><label class="tocitem" for="menuitem-5-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_gravity_First_Inspection/">Gravity</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../01_sinks_First_Inspection/">Sinks</a></li><li><a class="tocitem" href="../01_rt_First_Inspection/">RT</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_gravity_Load_Selections/">Gravity</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../02_sinks_Load_Selections/">Sinks</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-3" type="checkbox"/><label class="tocitem" for="menuitem-5-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_gravity_Get_Subregions/">Gravity</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../03_sinks_Get_Subregions/">Sinks</a></li></ul></li><li><a class="tocitem" href="../covering_grid/">Uniform Grid / Resampling</a></li><li><a class="tocitem" href="../09_multi_Cosmology/">Cosmological Runs</a></li><li><input class="collapse-toggle" id="menuitem-5-6" type="checkbox"/><label class="tocitem" for="menuitem-5-6"><span class="docs-label">Simulation Physics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../magnetic_fields/">Magnetic Fields (MHD)</a></li><li><a class="tocitem" href="../10_multi_RadiativeTransfer/">Radiative Transfer</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox" checked/><label class="tocitem" for="menuitem-6"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-6-1" type="checkbox" checked/><label class="tocitem" for="menuitem-6-1"><span class="docs-label">Quantities &amp; Fields</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../04_multi_Basic_Calculations/">Basic Calculations</a></li><li><a class="tocitem" href="../computation_reference/">How Quantities Are Computed</a></li><li class="is-active"><a class="tocitem" href>Units &amp; Constants</a><ul class="internal"><li><a class="tocitem" href="#Units,-Scaling,-and-Physical-Constants"><span>Units, Scaling, and Physical Constants</span></a></li><li><a class="tocitem" href="#Accuracy-of-the-scale-factors"><span>Accuracy of the scale factors</span></a></li></ul></li><li><a class="tocitem" href="../derived_fields/">Derived Fields &amp; add_field</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Selection, Statistics &amp; Metadata</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../05_multi_Masking_Filtering/">Mask/Filter/Meta</a></li><li><a class="tocitem" href="../statistics/">Statistics (PDFs)</a></li><li><a class="tocitem" href="../15_multi_Profiles_Phase/">Profiles &amp; Phase Diagrams</a></li><li><a class="tocitem" href="../provenance/">Provenance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-3" type="checkbox"/><label class="tocitem" for="menuitem-6-3"><span class="docs-label">Structure Finding</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../clumpfind/">Clump Finding</a></li><li><a class="tocitem" href="../clumpfind_synthetic/">Clump Finding: Synthetic Example</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-4" type="checkbox"/><label class="tocitem" for="menuitem-6-4"><span class="docs-label">Gas Flows &amp; Star Formation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../sfr/">Star-Formation Rate</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-5" type="checkbox"/><label class="tocitem" for="menuitem-6-5"><span class="docs-label">Time Series &amp; Movies</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../timeseries/">Time Series (multi-snapshot)</a></li><li><a class="tocitem" href="../movie/">Movies (getmovie)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Projection &amp; Maps</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../projection_which_tool/">Which tool?</a></li><li><a class="tocitem" href="../galaxyframe/">Auto-Frame (center &amp; orient)</a></li><li><input class="collapse-toggle" id="menuitem-7-3" type="checkbox"/><label class="tocitem" for="menuitem-7-3"><span class="docs-label">Axis-aligned (x/y/z)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../06_offaxis_Projection/">Off-axis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Data &amp; Visualization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-8-1" type="checkbox"/><label class="tocitem" for="menuitem-8-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-8-2" type="checkbox"/><label class="tocitem" for="menuitem-8-2"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-9" type="checkbox"/><label class="tocitem" for="menuitem-9"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../api/data_inspection/">Data Inspection</a></li><li><a class="tocitem" href="../api/data_loading/">Data Loading</a></li><li><a class="tocitem" href="../api/subregions/">Subregions</a></li><li><a class="tocitem" href="../api/calculations/">Calculations</a></li><li><a class="tocitem" href="../api/masking_filtering/">Masking &amp; Filtering</a></li><li><a class="tocitem" href="../api/structure_finding/">Structure Finding</a></li><li><a class="tocitem" href="../profiles_phase/">Profiles &amp; Phase</a></li><li><a class="tocitem" href="../api/projections/">Projections</a></li><li><a class="tocitem" href="../api/offaxis/">Off-axis Projection</a></li><li><a class="tocitem" href="../api/mera_files/">Mera-Files</a></li><li><a class="tocitem" href="../api/volume_rendering/">Volume Rendering</a></li><li><a class="tocitem" href="../api/multithreading/">Multi-Threading</a></li><li><a class="tocitem" href="../api/cosmology/">Cosmology</a></li><li><a class="tocitem" href="../api/movies/">Movies</a></li><li><a class="tocitem" href="../api/configuration/">Configuration</a></li><li><a class="tocitem" href="../api/notifications/">Notifications</a></li><li><a class="tocitem" href="../api/">Complete API</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10" type="checkbox"/><label class="tocitem" for="menuitem-10"><span class="docs-label">More</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-10-1" type="checkbox"/><label class="tocitem" for="menuitem-10-1"><span class="docs-label">Advanced Features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../bundled_arguments/">Bundling Arguments (myargs)</a></li><li><a class="tocitem" href="../verbose_progress_switches/">Verbose &amp; Progress Switches</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">Multi-Threading</a></li><li><a class="tocitem" href="../advanced_features/testing_guide/">Testing Framework</a></li><li><input class="collapse-toggle" id="menuitem-10-1-5" type="checkbox"/><label class="tocitem" for="menuitem-10-1-5"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../notifications/">Overview</a></li><li><a class="tocitem" href="../notifications/setup_and_usage/">Setup &amp; Usage</a></li><li><a class="tocitem" href="../notifications/examples/">Examples</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-2" type="checkbox"/><label class="tocitem" for="menuitem-10-2"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Projections</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-3" type="checkbox"/><label class="tocitem" for="menuitem-10-3"><span class="docs-label">Quick Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../quickreference/06_resources/">Resources &amp; Community</a></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia Cheat Sheet (all-in-one)</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-4" type="checkbox"/><label class="tocitem" for="menuitem-10-4"><span class="docs-label">Examples &amp; Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../recommended_packages/">Recommended Packages</a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Analysis &amp; Calculations</a></li><li><a class="is-disabled">Quantities &amp; Fields</a></li><li class="is-active"><a href>Units &amp; Constants</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Units &amp; Constants</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: units_and_constants.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. --><h1 id="Units,-Scaling-and-Physical-Constants"><a class="docs-heading-anchor" href="#Units,-Scaling-and-Physical-Constants">Units, Scaling and Physical Constants</a><a id="Units,-Scaling-and-Physical-Constants-1"></a><a class="docs-heading-anchor-permalink" href="#Units,-Scaling-and-Physical-Constants" title="Permalink"></a></h1><div class="admonition is-success" id="Run-it-yourself-c0df2f98e158bc8f"><header class="admonition-header">Run it yourself<a class="admonition-anchor" href="#Run-it-yourself-c0df2f98e158bc8f" title="Permalink"></a></header><div class="admonition-body"><p>This page is also an executable <strong>Jupyter notebook</strong>: <a href="https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/units_and_constants.ipynb">open / download <code>units_and_constants.ipynb</code></a>. The notebooks run end-to-end and double as part of Mera&#39;s test suite.</p></div></div><p>Mera stores simulation data in RAMSES code units and converts on request. This page is the reference for that: which scaling factors exist, how they are derived, how to reach the physical constants, and how to inspect every field an object carries.</p><p>You do not need to read it front to back. Load it when you need a factor or a constant, and use the tables to find the name.</p><p>For the first tour of Mera, see <a href="../00_multi_FirstSteps/">First Steps</a>.</p><pre><code class="language-julia hljs">using Mera
+pkgversion(Mera)</code></pre><pre><code class="nohighlight hljs">*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0 | Julia 1.12.7 | 4 threads</code></pre><pre><code class="nohighlight hljs">v&quot;1.8.0&quot;</code></pre><pre><code class="language-julia hljs"># Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, &quot;MERA_EXAMPLES&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests&quot;);
+
+info = getinfo(300, &quot;$MERA_EXAMPLES/RAMSES/mw_L10&quot;); # output=300 in given path</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T14:44:26.621
+Code: RAMSES
+output [300] summary:
+mtime: 2023-04-09T05:34:09
+ctime: 2025-06-21T18:31:24.020
+=======================================================
+simulation time: 445.89 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 640
+ndim: 3
+cosmological:  false
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 10 --&gt; cellsize(s): 750.0 [pc] - 46.88 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Nstars:   5.445150e+05
+particle-variables: 7  --&gt; (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
+-------------------------------------------------------
+rt:            false
+clumps:           false
+-------------------------------------------------------
+namelist-file: (&quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
+-------------------------------------------------------
+timer-file:       true
+compilation-file: false
+makefile:         true
+patchfile:        true
+=======================================================</code></pre><h2 id="Units,-Scaling,-and-Physical-Constants"><a class="docs-heading-anchor" href="#Units,-Scaling,-and-Physical-Constants">Units, Scaling, and Physical Constants</a><a id="Units,-Scaling,-and-Physical-Constants-1"></a><a class="docs-heading-anchor-permalink" href="#Units,-Scaling,-and-Physical-Constants" title="Permalink"></a></h2><p><strong>Critical Note</strong>: All calculations in Mera.jl use <strong>code units</strong> from your RAMSES simulation. The package provides comprehensive unit conversion through scaling factors and physical constants.</p><h3 id="How-Mera.jl-Handles-Unit-Conversion"><a class="docs-heading-anchor" href="#How-Mera.jl-Handles-Unit-Conversion">How Mera.jl Handles Unit Conversion</a><a id="How-Mera.jl-Handles-Unit-Conversion-1"></a><a class="docs-heading-anchor-permalink" href="#How-Mera.jl-Handles-Unit-Conversion" title="Permalink"></a></h3><p><strong>Automatic Internal Scaling</strong>: Many Mera.jl functions use these scaling factors internally to provide results in physical units automatically. When you specify units in functions like:</p><ul><li><strong><code>gettime(info, :Myr)</code></strong> - Returns simulation time directly in Megayears</li><li><strong><code>projection(gas, :sd, :Msol_pc2)</code></strong> - Creates surface density maps in M☉ pc⁻²</li><li><strong><code>projection(particles, [:vx, :vy], [:km_s, :km_s])</code></strong> - Projects velocities in km/s</li><li><strong>Calculation functions</strong> - Many accept unit arguments (e.g., <code>center_of_mass(gas, :kpc)</code>)</li></ul><p><strong>Note</strong>: The basic data loading functions <code>gethydro()</code> and <code>getparticles()</code> always return data in code units. You convert to physical units by multiplying with the appropriate scaling factors (e.g., <code>density_physical = gas.data.rho * info.scale.g_cm3</code>).</p><p>The scaling factors you&#39;ll learn about below are the foundation that enables this automatic conversion throughout the Mera.jl ecosystem.</p><h3 id="RAMSES-Base-Units-and-Scaling-Factor-Calculation"><a class="docs-heading-anchor" href="#RAMSES-Base-Units-and-Scaling-Factor-Calculation">RAMSES Base Units and Scaling Factor Calculation</a><a id="RAMSES-Base-Units-and-Scaling-Factor-Calculation-1"></a><a class="docs-heading-anchor-permalink" href="#RAMSES-Base-Units-and-Scaling-Factor-Calculation" title="Permalink"></a></h3><p>RAMSES simulations store fundamental scaling factors for:</p><ul><li><strong><code>unit_l</code></strong> - Length [cm]</li><li><strong><code>unit_d</code></strong> - Density [g cm⁻³]</li><li><strong><code>unit_m</code></strong> - Mass [g]</li><li><strong><code>unit_v</code></strong> - Velocity [cm s⁻¹]</li><li><strong><code>unit_t</code></strong> - Time [s]</li></ul><p>These form the basis for all derived physical quantities in your simulation.</p><p><strong>Scaling Factor Implementation</strong>: The conversion factors are calculated from these base units using dimensional analysis. For example:</p><ul><li><strong>Energy scaling</strong>: <code>unit_m × unit_v²</code> → converts to erg</li><li><strong>Pressure scaling</strong>: <code>unit_d × unit_v²</code> → converts to Ba (Barye)</li><li><strong>Force scaling</strong>: <code>unit_m × unit_l / unit_t²</code> → converts to dyn</li></ul><p>The complete implementation can be found in the Mera.jl source code at <code>src/functions/miscellaneous.jl</code>, which contains the mathematical relationships between RAMSES base units and all derived physical quantities.</p><h3 id="Predefined-Scaling-Factors"><a class="docs-heading-anchor" href="#Predefined-Scaling-Factors">Predefined Scaling Factors</a><a id="Predefined-Scaling-Factors-1"></a><a class="docs-heading-anchor-permalink" href="#Predefined-Scaling-Factors" title="Permalink"></a></h3><p>For convenience, Mera.jl provides commonly used astrophysical units in the <code>scale</code> sub-field. These are derived from the base RAMSES units and ready for immediate use:</p><h4 id="Quick-Reference:-Essential-Scaling-Factors"><a class="docs-heading-anchor" href="#Quick-Reference:-Essential-Scaling-Factors">Quick Reference: Essential Scaling Factors</a><a id="Quick-Reference:-Essential-Scaling-Factors-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Essential-Scaling-Factors" title="Permalink"></a></h4><p><strong>Length and Distance</strong></p><pre><code class="language-julia hljs">info.scale.kpc     # Kiloparsecs
+info.scale.pc      # Parsecs
+info.scale.ly      # Light years
+info.scale.Au      # Astronomical units
+info.scale.km      # Kilometers
+info.scale.cm      # Centimeters</code></pre><p><strong>Mass and Density</strong></p><pre><code class="language-julia hljs">info.scale.Msol    # Solar masses
+info.scale.g       # Grams
+info.scale.g_cm3   # Mass density [g cm⁻³]
+info.scale.Msol_pc3 # Mass density [M☉ pc⁻³]
+info.scale.g_cm2   # Surface density [g cm⁻²]
+info.scale.Msol_pc2 # Surface density [M☉ pc⁻²]</code></pre><p><strong>Time</strong></p><pre><code class="language-julia hljs">info.scale.Gyr     # Gigayears
+info.scale.Myr     # Megayears
+info.scale.yr      # Years
+info.scale.s       # Seconds</code></pre><p><strong>Velocity and Kinematics</strong></p><pre><code class="language-julia hljs">info.scale.km_s    # Velocity [km s⁻¹]
+info.scale.cm_s    # Velocity [cm s⁻¹]
+info.scale.cm_s2   # Acceleration [cm s⁻²]</code></pre><p><strong>Temperature and Pressure</strong></p><pre><code class="language-julia hljs">info.scale.K       # Temperature [K]
+info.scale.Ba      # Pressure [Barye]
+info.scale.p_kB    # Pressure/kB [K cm⁻³]</code></pre><p><strong>Energy and Power</strong></p><pre><code class="language-julia hljs">info.scale.erg     # Energy [erg]
+info.scale.eV      # Electron volts
+info.scale.Lsol    # Solar luminosity</code></pre><p><strong>Number Density</strong></p><pre><code class="language-julia hljs">info.scale.nH      # Hydrogen number density [cm⁻³]
+info.scale.cm_3    # Number density [cm⁻³]</code></pre><pre><code class="language-julia hljs"># Get list of available scaling factors
+scale_fields = propertynames(info.scale)
+println(&quot;Available scaling factors (total: $(length(scale_fields))):&quot;)
+println(&quot;First 10 examples: $(scale_fields[1:min(10, end)])&quot;)
+println()
+println(&quot;To see all scaling factors, use:&quot;)
+println(&quot;  propertynames(info.scale)   # Get field names&quot;)
+println(&quot;  viewfields(info.scale)      # Hierarchical view&quot;)</code></pre><pre><code class="nohighlight hljs">Available scaling factors (total: 134):
+First 10 examples: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm)
+To see all scaling factors, use:
+  propertynames(info.scale)   # Get field names
+  viewfields(info.scale)      # Hierarchical view</code></pre><h3 id="Complete-Unit-Conversion-Reference"><a class="docs-heading-anchor" href="#Complete-Unit-Conversion-Reference">Complete Unit Conversion Reference</a><a id="Complete-Unit-Conversion-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Complete-Unit-Conversion-Reference" title="Permalink"></a></h3><p><strong>Important</strong>: Mera.jl provides an extensive set of <strong>133 scaling factors</strong> covering a comprehensive range of physical units. The underscore in field names represents division (fraction line). Below is a categorized overview of the most commonly used scaling factors:</p><h4 id="Essential-Length-Units"><a class="docs-heading-anchor" href="#Essential-Length-Units">Essential Length Units</a><a id="Essential-Length-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Essential-Length-Units" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>Mpc</code></td><td style="text-align: right">Mpc</td><td style="text-align: right">Megaparsec</td></tr><tr><td style="text-align: right"><code>kpc</code></td><td style="text-align: right">kpc</td><td style="text-align: right">Kiloparsec</td></tr><tr><td style="text-align: right"><code>pc</code></td><td style="text-align: right">pc</td><td style="text-align: right">Parsec</td></tr><tr><td style="text-align: right"><code>mpc</code></td><td style="text-align: right">mpc</td><td style="text-align: right">Milliparsec</td></tr><tr><td style="text-align: right"><code>ly</code></td><td style="text-align: right">ly</td><td style="text-align: right">Light year</td></tr><tr><td style="text-align: right"><code>Au</code></td><td style="text-align: right">AU</td><td style="text-align: right">Astronomical Unit</td></tr><tr><td style="text-align: right"><code>km</code></td><td style="text-align: right">km</td><td style="text-align: right">Kilometer</td></tr><tr><td style="text-align: right"><code>m</code></td><td style="text-align: right">m</td><td style="text-align: right">Meter</td></tr><tr><td style="text-align: right"><code>cm</code></td><td style="text-align: right">cm</td><td style="text-align: right">Centimeter</td></tr><tr><td style="text-align: right"><code>mm</code></td><td style="text-align: right">mm</td><td style="text-align: right">Millimeter</td></tr><tr><td style="text-align: right"><code>μm</code></td><td style="text-align: right">μm</td><td style="text-align: right">Micrometer</td></tr></table><h4 id="Volume-Units"><a class="docs-heading-anchor" href="#Volume-Units">Volume Units</a><a id="Volume-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Volume-Units" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>Mpc3</code></td><td style="text-align: right">Mpc³</td><td style="text-align: right">Cubic Megaparsec</td></tr><tr><td style="text-align: right"><code>kpc3</code></td><td style="text-align: right">kpc³</td><td style="text-align: right">Cubic kiloparsec</td></tr><tr><td style="text-align: right"><code>pc3</code></td><td style="text-align: right">pc³</td><td style="text-align: right">Cubic parsec</td></tr><tr><td style="text-align: right"><code>mpc3</code></td><td style="text-align: right">mpc³</td><td style="text-align: right">Cubic milliparsec</td></tr><tr><td style="text-align: right"><code>ly3</code></td><td style="text-align: right">ly³</td><td style="text-align: right">Cubic light year</td></tr><tr><td style="text-align: right"><code>km3</code></td><td style="text-align: right">km³</td><td style="text-align: right">Cubic kilometer</td></tr><tr><td style="text-align: right"><code>m3</code></td><td style="text-align: right">m³</td><td style="text-align: right">Cubic meter</td></tr><tr><td style="text-align: right"><code>cm3</code></td><td style="text-align: right">cm³</td><td style="text-align: right">Cubic centimeter</td></tr></table><h4 id="Mass-and-Density"><a class="docs-heading-anchor" href="#Mass-and-Density">Mass and Density</a><a id="Mass-and-Density-1"></a><a class="docs-heading-anchor-permalink" href="#Mass-and-Density" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>Msol</code></td><td style="text-align: right">M☉</td><td style="text-align: right">Solar mass</td></tr><tr><td style="text-align: right"><code>Msun</code></td><td style="text-align: right">M☉</td><td style="text-align: right">Solar mass (alternative)</td></tr><tr><td style="text-align: right"><code>Mearth</code></td><td style="text-align: right">M⊕</td><td style="text-align: right">Earth mass</td></tr><tr><td style="text-align: right"><code>Mjupiter</code></td><td style="text-align: right">M♃</td><td style="text-align: right">Jupiter mass</td></tr><tr><td style="text-align: right"><code>g</code></td><td style="text-align: right">g</td><td style="text-align: right">Gram</td></tr><tr><td style="text-align: right"><code>Msol_pc3</code></td><td style="text-align: right">M☉ pc⁻³</td><td style="text-align: right">Mass density</td></tr><tr><td style="text-align: right"><code>Msun_pc3</code></td><td style="text-align: right">M☉ pc⁻³</td><td style="text-align: right">Mass density (alternative)</td></tr><tr><td style="text-align: right"><code>g_cm3</code></td><td style="text-align: right">g cm⁻³</td><td style="text-align: right">Mass density (CGS)</td></tr><tr><td style="text-align: right"><code>Msol_pc2</code></td><td style="text-align: right">M☉ pc⁻²</td><td style="text-align: right">Surface density</td></tr><tr><td style="text-align: right"><code>Msun_pc2</code></td><td style="text-align: right">M☉ pc⁻²</td><td style="text-align: right">Surface density (alternative)</td></tr><tr><td style="text-align: right"><code>g_cm2</code></td><td style="text-align: right">g cm⁻²</td><td style="text-align: right">Surface density (CGS)</td></tr></table><h4 id="Time-Units"><a class="docs-heading-anchor" href="#Time-Units">Time Units</a><a id="Time-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Time-Units" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>Gyr</code></td><td style="text-align: right">Gyr</td><td style="text-align: right">Gigayear</td></tr><tr><td style="text-align: right"><code>Myr</code></td><td style="text-align: right">Myr</td><td style="text-align: right">Megayear</td></tr><tr><td style="text-align: right"><code>yr</code></td><td style="text-align: right">yr</td><td style="text-align: right">Year</td></tr><tr><td style="text-align: right"><code>s</code></td><td style="text-align: right">s</td><td style="text-align: right">Second</td></tr><tr><td style="text-align: right"><code>ms</code></td><td style="text-align: right">ms</td><td style="text-align: right">Millisecond</td></tr></table><h4 id="Velocity-and-Kinematics"><a class="docs-heading-anchor" href="#Velocity-and-Kinematics">Velocity and Kinematics</a><a id="Velocity-and-Kinematics-1"></a><a class="docs-heading-anchor-permalink" href="#Velocity-and-Kinematics" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>km_s</code></td><td style="text-align: right">km s⁻¹</td><td style="text-align: right">Velocity</td></tr><tr><td style="text-align: right"><code>m_s</code></td><td style="text-align: right">m s⁻¹</td><td style="text-align: right">Velocity (SI)</td></tr><tr><td style="text-align: right"><code>cm_s</code></td><td style="text-align: right">cm s⁻¹</td><td style="text-align: right">Velocity (CGS)</td></tr><tr><td style="text-align: right"><code>cm_s2</code></td><td style="text-align: right">cm s⁻²</td><td style="text-align: right">Acceleration (CGS)</td></tr><tr><td style="text-align: right"><code>m_s2</code></td><td style="text-align: right">m s⁻²</td><td style="text-align: right">Acceleration (SI)</td></tr><tr><td style="text-align: right"><code>km_s2</code></td><td style="text-align: right">km s⁻²</td><td style="text-align: right">Acceleration</td></tr></table><h4 id="Temperature-and-Thermodynamics"><a class="docs-heading-anchor" href="#Temperature-and-Thermodynamics">Temperature and Thermodynamics</a><a id="Temperature-and-Thermodynamics-1"></a><a class="docs-heading-anchor-permalink" href="#Temperature-and-Thermodynamics" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>K</code></td><td style="text-align: right">K</td><td style="text-align: right">Temperature (Kelvin)</td></tr><tr><td style="text-align: right"><code>T</code></td><td style="text-align: right">K</td><td style="text-align: right">Temperature (alternative)</td></tr><tr><td style="text-align: right"><code>T_mu</code></td><td style="text-align: right">K μ⁻¹</td><td style="text-align: right">Temperature per mean molecular weight</td></tr><tr><td style="text-align: right"><code>K_mu</code></td><td style="text-align: right">K μ⁻¹</td><td style="text-align: right">Temperature per mean molecular weight (alternative)</td></tr></table><h4 id="Pressure-and-Force"><a class="docs-heading-anchor" href="#Pressure-and-Force">Pressure and Force</a><a id="Pressure-and-Force-1"></a><a class="docs-heading-anchor-permalink" href="#Pressure-and-Force" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>Ba</code></td><td style="text-align: right">Ba (Barye)</td><td style="text-align: right">Pressure [g cm⁻¹ s⁻²]</td></tr><tr><td style="text-align: right"><code>g_cm_s2</code></td><td style="text-align: right">g cm⁻¹ s⁻²</td><td style="text-align: right">Pressure (CGS)</td></tr><tr><td style="text-align: right"><code>g_cms2</code></td><td style="text-align: right">g cm⁻¹ s⁻²</td><td style="text-align: right">Pressure (CGS alternative)</td></tr><tr><td style="text-align: right"><code>dyne</code></td><td style="text-align: right">dyn</td><td style="text-align: right">Force (CGS)</td></tr><tr><td style="text-align: right"><code>p_kB</code></td><td style="text-align: right">K cm⁻³</td><td style="text-align: right">Pressure over Boltzmann constant</td></tr><tr><td style="text-align: right"><code>K_cm3</code></td><td style="text-align: right">K cm⁻³</td><td style="text-align: right">Pressure over kB (alternative)</td></tr></table><h4 id="Energy-and-Power"><a class="docs-heading-anchor" href="#Energy-and-Power">Energy and Power</a><a id="Energy-and-Power-1"></a><a class="docs-heading-anchor-permalink" href="#Energy-and-Power" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>erg</code></td><td style="text-align: right">erg</td><td style="text-align: right">Energy (CGS)</td></tr><tr><td style="text-align: right"><code>eV</code></td><td style="text-align: right">eV</td><td style="text-align: right">Electron volt</td></tr><tr><td style="text-align: right"><code>keV</code></td><td style="text-align: right">keV</td><td style="text-align: right">Kilo-electron volt</td></tr><tr><td style="text-align: right"><code>MeV</code></td><td style="text-align: right">MeV</td><td style="text-align: right">Mega-electron volt</td></tr><tr><td style="text-align: right"><code>erg_s</code></td><td style="text-align: right">erg s⁻¹</td><td style="text-align: right">Power (CGS)</td></tr><tr><td style="text-align: right"><code>Lsol</code></td><td style="text-align: right">L☉</td><td style="text-align: right">Solar luminosity</td></tr><tr><td style="text-align: right"><code>Lsun</code></td><td style="text-align: right">L☉</td><td style="text-align: right">Solar luminosity (alternative)</td></tr><tr><td style="text-align: right"><code>erg_g</code></td><td style="text-align: right">erg g⁻¹</td><td style="text-align: right">Specific energy</td></tr><tr><td style="text-align: right"><code>erg_g_K</code></td><td style="text-align: right">erg g⁻¹ K⁻¹</td><td style="text-align: right">Specific heat capacity</td></tr></table><h4 id="Number-Density-and-Particles"><a class="docs-heading-anchor" href="#Number-Density-and-Particles">Number Density and Particles</a><a id="Number-Density-and-Particles-1"></a><a class="docs-heading-anchor-permalink" href="#Number-Density-and-Particles" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>nH</code></td><td style="text-align: right">cm⁻³</td><td style="text-align: right">Hydrogen number density</td></tr><tr><td style="text-align: right"><code>n_e</code></td><td style="text-align: right">cm⁻³</td><td style="text-align: right">Electron number density</td></tr><tr><td style="text-align: right"><code>cm_3</code></td><td style="text-align: right">cm⁻³</td><td style="text-align: right">Number density (generic)</td></tr><tr><td style="text-align: right"><code>pc_3</code></td><td style="text-align: right">pc⁻³</td><td style="text-align: right">Number density per cubic parsec</td></tr></table><h4 id="Magnetic-Field"><a class="docs-heading-anchor" href="#Magnetic-Field">Magnetic Field</a><a id="Magnetic-Field-1"></a><a class="docs-heading-anchor-permalink" href="#Magnetic-Field" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>Gauss</code></td><td style="text-align: right">G</td><td style="text-align: right">Magnetic field (Gauss)</td></tr><tr><td style="text-align: right"><code>muG</code></td><td style="text-align: right">μG</td><td style="text-align: right">Micro-Gauss</td></tr><tr><td style="text-align: right"><code>microG</code></td><td style="text-align: right">μG</td><td style="text-align: right">Micro-Gauss (alternative)</td></tr><tr><td style="text-align: right"><code>Tesla</code></td><td style="text-align: right">T</td><td style="text-align: right">Magnetic field (SI)</td></tr></table><h4 id="Specialized-Astrophysical-Units"><a class="docs-heading-anchor" href="#Specialized-Astrophysical-Units">Specialized Astrophysical Units</a><a id="Specialized-Astrophysical-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Specialized-Astrophysical-Units" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>Jy</code></td><td style="text-align: right">Jy</td><td style="text-align: right">Jansky (flux density)</td></tr><tr><td style="text-align: right"><code>mJy</code></td><td style="text-align: right">mJy</td><td style="text-align: right">Milli-Jansky</td></tr><tr><td style="text-align: right"><code>microJy</code></td><td style="text-align: right">μJy</td><td style="text-align: right">Micro-Jansky</td></tr><tr><td style="text-align: right"><code>atoms_cm2</code></td><td style="text-align: right">cm⁻²</td><td style="text-align: right">Column density</td></tr><tr><td style="text-align: right"><code>NH_cm2</code></td><td style="text-align: right">cm⁻²</td><td style="text-align: right">Hydrogen column density</td></tr></table><h4 id="Gravitational-and-Dynamical-Quantities"><a class="docs-heading-anchor" href="#Gravitational-and-Dynamical-Quantities">Gravitational and Dynamical Quantities</a><a id="Gravitational-and-Dynamical-Quantities-1"></a><a class="docs-heading-anchor-permalink" href="#Gravitational-and-Dynamical-Quantities" title="Permalink"></a></h4><table><tr><th style="text-align: right">Field Name</th><th style="text-align: right">Physical Unit</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>lambda_J</code></td><td style="text-align: right">cm</td><td style="text-align: right">Jeans length</td></tr><tr><td style="text-align: right"><code>M_J</code></td><td style="text-align: right">g</td><td style="text-align: right">Jeans mass</td></tr><tr><td style="text-align: right"><code>t_ff</code></td><td style="text-align: right">s</td><td style="text-align: right">Free-fall time</td></tr><tr><td style="text-align: right"><code>jeansmass</code></td><td style="text-align: right">g</td><td style="text-align: right">Jeans mass (alternative)</td></tr><tr><td style="text-align: right"><code>alpha_vir</code></td><td style="text-align: right">dimensionless</td><td style="text-align: right">Virial parameter</td></tr><tr><td style="text-align: right"><code>v_esc</code></td><td style="text-align: right">cm s⁻¹</td><td style="text-align: right">Escape velocity</td></tr></table><p><strong>Complete List Access</strong>: To see all 133 available scaling factors with their current values, use:</p><pre><code class="language-julia hljs">propertynames(info.scale)  # Get all field names
+viewfields(info.scale)     # Hierarchical view</code></pre><h4 id="Hydrogen-Number-Density-Calculation"><a class="docs-heading-anchor" href="#Hydrogen-Number-Density-Calculation">Hydrogen Number Density Calculation</a><a id="Hydrogen-Number-Density-Calculation-1"></a><a class="docs-heading-anchor-permalink" href="#Hydrogen-Number-Density-Calculation" title="Permalink"></a></h4><p>The <code>nH</code> scaling factor converts code density to hydrogen number density using:</p><pre><code class="nohighlight hljs">nH = ρ_code × scale.nH = ρ_code × (scale.g_cm3 × X_H) / mH</code></pre><p>Where:</p><ul><li><strong><code>ρ_code</code></strong> - Density in code units</li><li><strong><code>X_H</code></strong> - Hydrogen mass fraction (<code>X_frac = 0.76</code> in RAMSES; primordial composition)</li><li><strong><code>mH</code></strong> - Hydrogen-atom mass, <code>info.constants.mH</code> (RAMSES convention, <code>1.66e-24</code> g; ≈ the proton mass <code>info.constants.mp</code> = <code>1.6726e-24</code> g)</li></ul><p><code>n_H</code> is the number density of hydrogen <strong>nuclei</strong> (summed over all ionization states); it depends only on <code>X_H</code>, <strong>not</strong> on the ionization state.</p><p><strong>Note on μ (mean molecular weight):</strong> MERA/RAMSES uses the simplified convention <code>μ = 1/X_H ≈ 1.32</code>, so the same result can be written <code>nH = ρ_code × scale.g_cm3 / (μ × mH)</code> (the <code>X_H</code> factor is absorbed into <code>1/μ</code>). Be careful: this <code>μ</code> is the RAMSES value that enters the <strong>temperature</strong> scale (<code>scale.T = scale.T_mu × μ</code>), it is <em>not</em> the textbook ionization-dependent mean molecular weight (≈ 0.62 for fully ionized, ≈ 1.22 for neutral H+He gas). Do <strong>not</strong> substitute that ionization-dependent value into the <code>nH</code> formula; only <code>X_H</code> (equivalently <code>μ = 1/X_H</code>) is correct here.</p><p><strong>Note</strong>: This documentation covers the most commonly used scaling factors and constants. Mera.jl actually provides <strong>133 scaling factors</strong> and <strong>41 physical constants</strong> in total. The actual available factors may vary depending on your Mera.jl version and simulation setup. Use <code>propertynames(info.scale)</code> and <code>propertynames(info.constants)</code> to see all available items for your specific installation.</p><pre><code class="language-julia hljs"># Example: Convert velocity from code units to km/s
+velocity_code_units = 1.0  # Some velocity in code units
+velocity_physical = velocity_code_units * info.scale.km_s
+println(&quot;Velocity: $velocity_physical km/s&quot;)
+
+# Display the scaling factor value
+println(&quot;Velocity scaling factor: $(info.scale.km_s) km/s per code unit&quot;)</code></pre><pre><code class="nohighlight hljs">Velocity: 65.57528732282063 km/s
+Velocity scaling factor: 65.57528732282063 km/s per code unit</code></pre><pre><code class="language-julia hljs">scale = info.scale;</code></pre><pre><code class="language-julia hljs"># Now you can use the shortcut directly
+println(&quot;Velocity scale: $(scale.km_s) km/s&quot;)
+println(&quot;Length scale: $(scale.kpc) kpc&quot;)
+println(&quot;Mass scale: $(scale.Msun) M☉&quot;)
+println(&quot;Time scale: $(scale.Myr) Myr&quot;)
+
+# Practical example: convert simulation time to Myr
+sim_time_myr = info.time * scale.Myr
+println(&quot;Simulation time: $(sim_time_myr) Myr&quot;)</code></pre><pre><code class="nohighlight hljs">Velocity scale: 65.57528732282063 km/s
+Length scale: 1.0000000000006481 kpc
+Mass scale: 9.99723479002109e8 M☉
+Time scale: 14.910986463557084 Myr
+Simulation time: 445.8861174695 Myr</code></pre><h3 id="Creating-Independent-Scale-and-Constants-Objects"><a class="docs-heading-anchor" href="#Creating-Independent-Scale-and-Constants-Objects">Creating Independent Scale and Constants Objects</a><a id="Creating-Independent-Scale-and-Constants-Objects-1"></a><a class="docs-heading-anchor-permalink" href="#Creating-Independent-Scale-and-Constants-Objects" title="Permalink"></a></h3><p>For advanced workflows or when working with multiple simulations, Mera.jl provides functions to create independent scaling factor and physical constants objects. This is particularly useful when you need to:</p><ul><li>Compare scaling factors between different simulations</li><li>Pass scaling factors to custom functions</li><li>Work with scaling factors independently of the InfoType object</li><li>Perform calculations without keeping the full InfoType in memory</li></ul><p><strong>Key Functions:</strong></p><ul><li><code>createscales(info)</code> - Creates an independent scaling factors object</li><li><code>createconstants()</code> - Creates an independent physical constants object</li></ul><p>These functions extract the scaling factors and constants from an InfoType object and create standalone objects that can be used independently.</p><pre><code class="language-julia hljs"># Create independent scaling factors and constants objects
+scales = createscales(info)
+consts = createconstants()
+
+println(&quot;=== Independent Objects Created ===&quot;)
+println(&quot;Type of scales object: $(typeof(scales))&quot;)
+println(&quot;Type of constants object: $(typeof(consts))&quot;)
+println()
+
+# These objects work identically to info.scale and info.constants
+println(&quot;=== Comparison: Different Access Methods ===&quot;)
+println(&quot;Using info.scale.kpc:     $(info.scale.kpc)&quot;)
+println(&quot;Using scales.kpc:         $(scales.kpc)&quot;)
+println(&quot;Using info.constants.G:   $(info.constants.G)&quot;)
+println(&quot;Using consts.G:           $(consts.G)&quot;)
+println()
+
+# Practical example: Memory-efficient workflow
+println(&quot;=== Memory-Efficient Workflow Example ===&quot;)
+println(&quot;1. Extract needed scaling factors and constants&quot;)
+println(&quot;2. Clear large InfoType object&quot;)
+println(&quot;3. Continue calculations with lightweight objects&quot;)
+println()
+
+# Demonstrate independence
+println(&quot;✓ Scales object is independent of InfoType&quot;)
+println(&quot;✓ Constants object is independent of InfoType&quot;)
+println(&quot;✓ Useful for passing to custom functions&quot;)
+println(&quot;✓ Enables memory optimization in large workflows&quot;)</code></pre><pre><code class="nohighlight hljs">=== Independent Objects Created ===
+Type of scales object: ScalesType003
+Type of constants object: PhysicalUnitsType002
+=== Comparison: Different Access Methods ===
+Using info.scale.kpc:     1.0000000000006481
+Using scales.kpc:         1.0000000000006481
+Using info.constants.G:   6.6743e-8
+Using consts.G:           6.6743e-8
+=== Memory-Efficient Workflow Example ===
+1. Extract needed scaling factors and constants
+2. Clear large InfoType object
+3. Continue calculations with lightweight objects
+✓ Scales object is independent of InfoType
+✓ Constants object is independent of InfoType
+✓ Useful for passing to custom functions
+✓ Enables memory optimization in large workflows</code></pre><pre><code class="language-julia hljs"># Examine the InfoType object structure
+info_type = typeof(info)
+println(&quot;Object type: $info_type&quot;)
+println()
+println(&quot;This InfoType object contains:&quot;)
+println(&quot;- Simulation metadata and parameters&quot;)
+println(&quot;- Scaling factors for unit conversion&quot;)
+println(&quot;- Physical constants&quot;)
+println(&quot;- File organization information&quot;)
+println(&quot;- AMR grid structure details&quot;)
+println()
+println(&quot;Use viewfields(info) to explore the complete structure.&quot;)</code></pre><pre><code class="nohighlight hljs">Object type: InfoType
+This InfoType object contains:
+- Simulation metadata and parameters
+- Scaling factors for unit conversion
+- Physical constants
+- File organization information
+- AMR grid structure details
+Use viewfields(info) to explore the complete structure.</code></pre><h3 id="Physical-Constants-Access"><a class="docs-heading-anchor" href="#Physical-Constants-Access">Physical Constants Access</a><a id="Physical-Constants-Access-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Constants-Access" title="Permalink"></a></h3><p>Create shortcuts for easier access to physical constants in calculations:</p><h4 id="Quick-Reference:-Essential-Physical-Constants"><a class="docs-heading-anchor" href="#Quick-Reference:-Essential-Physical-Constants">Quick Reference: Essential Physical Constants</a><a id="Quick-Reference:-Essential-Physical-Constants-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Essential-Physical-Constants" title="Permalink"></a></h4><p><strong>Fundamental Constants</strong></p><pre><code class="language-julia hljs">info.constants.G      # Gravitational constant [cm³ g⁻¹ s⁻²]
+info.constants.c      # Speed of light [cm s⁻¹]
+info.constants.kB     # Boltzmann constant [erg K⁻¹]
+info.constants.h      # Planck constant [erg s]
+info.constants.sigma_SB  # Stefan-Boltzmann constant [erg cm⁻² s⁻¹ K⁻⁴]</code></pre><p><strong>Masses</strong></p><pre><code class="language-julia hljs">info.constants.mp     # Proton mass [g]
+info.constants.me     # Electron mass [g]
+info.constants.mH     # Hydrogen mass [g]
+info.constants.Msol   # Solar mass [g]</code></pre><p><strong>Astrophysical References</strong></p><pre><code class="language-julia hljs">info.constants.pc     # Parsec [cm]
+info.constants.kpc    # Kiloparsec [cm]
+info.constants.yr     # Year [s]
+info.constants.Lsol   # Solar luminosity [erg s⁻¹]</code></pre><h4 id="Access-Methods"><a class="docs-heading-anchor" href="#Access-Methods">Access Methods</a><a id="Access-Methods-1"></a><a class="docs-heading-anchor-permalink" href="#Access-Methods" title="Permalink"></a></h4><pre><code class="language-julia hljs"># Method 1: Direct shortcut (maintains link to InfoType)
+constants = info.constants  # Create shortcut
+
+# Method 2: Independent object (breaks link to InfoType)
+consts = createconstants()  # Standalone constants object
+
+# Both methods provide identical access to constants
+G = constants.G            # Gravitational constant
+G = consts.G              # Same value, independent object</code></pre><p><strong>When to use each method:</strong></p><ul><li>Use <code>info.constants</code> for most general purposes</li><li>Use <code>createconstants()</code> when you need memory optimization or want to pass constants to functions independently</li></ul><pre><code class="language-julia hljs"># Demonstrate both methods for accessing constants
+println(&quot;=== Method 1: Direct shortcut ===&quot;)
+constants = info.constants
+
+println(&quot;=== Method 2: Independent object ===&quot;)
+consts = createconstants()
+
+# Display all available constants
+println(&quot;\n=== Available Constants Structure ===&quot;)
+viewfields(constants)
+
+# Compare both methods
+println(&quot;\n=== Comparison of Access Methods ===&quot;)
+println(&quot;info.constants.G:    $(info.constants.G)&quot;)
+println(&quot;constants.G:         $(constants.G)&quot;)
+println(&quot;consts.G:            $(consts.G)&quot;)
+println(&quot;All identical:       $(info.constants.G == constants.G == consts.G)&quot;)
+
+# Example usage of physical constants in astrophysical calculations
+println(&quot;\n=== Key Physical Constants for Astrophysics ===&quot;)
+println(&quot;- Gravitational constant: $(consts.G) cm³ g⁻¹ s⁻²&quot;)
+println(&quot;- Boltzmann constant: $(consts.kB) erg K⁻¹&quot;)
+println(&quot;- Speed of light: $(consts.c) cm s⁻¹&quot;)
+println(&quot;- Solar mass: $(consts.Msol) g&quot;)
+println(&quot;- Proton mass: $(consts.mp) g&quot;)
+
+# Practical example: Calculate Jeans length scale
+# Jeans length = sqrt(π * k_B * T / (G * μ * m_H * ρ))
+println(&quot;\n=== Example: Jeans length calculation components ===&quot;)
+println(&quot;✓ Gravitational constant G = $(consts.G)&quot;)
+println(&quot;✓ Boltzmann constant k_B = $(consts.kB)&quot;)
+println(&quot;✓ Proton mass (for μ * m_H calculation) = $(consts.mp)&quot;)
+println(&quot;✓ Temperature and density from scaling factors&quot;)
+
+println(&quot;\n=== Benefits of createconstants() ===&quot;)
+println(&quot;✓ Memory optimization: Independent of InfoType object&quot;)
+println(&quot;✓ Function arguments: Easy to pass to custom functions&quot;)
+println(&quot;✓ Multi-simulation: Compare constants between simulations&quot;)
+println(&quot;✓ Persistence: Maintain constants after clearing InfoType&quot;)</code></pre><pre><code class="nohighlight hljs">=== Method 1: Direct shortcut ===
+=== Method 2: Independent object ===
+=== Available Constants Structure ===
+[Mera]: Constants given in cgs units
+=========================================
+Au	= 0.01495978707
+Mpc	= 3.08567758128e24
+kpc	= 3.08567758128e21
+pc	= 3.08567758128e18
+mpc	= 3.08567758128e15
+ly	= 9.4607304725808e17
+Msol	= 1.9891e33
+Msun	= 1.9891e33
+Mearth	= 5.9722e27
+Mjupiter	= 1.89813e30
+Rsol	= 6.96e10
+Rsun	= 6.96e10
+me	= 9.1093837015e-28
+mp	= 1.67262192369e-24
+mn	= 1.67492749804e-24
+mH	= 1.66e-24
+amu	= 1.6605390666e-24
+NA	= 6.02214076e23
+c	= 2.99792458e10
+G	= 6.6743e-8
+kB	= 1.380649e-16
+k_B	= 1.380649e-16
+h	= 6.62607015e-27
+hbar	= 1.0545718176461565e-27
+sigma_SB	= 5.670374419e-5
+sigma_T	= 6.6524587321e-25
+alpha_fs	= 0.0072973525693
+R_gas	= 8.314462618e7
+eV	= 1.602176634e-12
+keV	= 1.602176634e-9
+MeV	= 1.602176634e-6
+GeV	= 0.001602176634
+Lsol	= 3.828e33
+Lsun	= 3.828e33
+m_u	= 1.6605390666e-24
+day	= 86400.0
+hr	= 3600.0
+min	= 60.0
+Gyr	= 3.15576e16
+Myr	= 3.15576e13
+yr	= 3.15576e7
+=== Comparison of Access Methods ===
+info.constants.G:    6.6743e-8
+constants.G:         6.6743e-8
+consts.G:            6.6743e-8
+All identical:       true
+=== Key Physical Constants for Astrophysics ===
+- Gravitational constant: 6.6743e-8 cm³ g⁻¹ s⁻²
+- Boltzmann constant: 1.380649e-16 erg K⁻¹
+- Speed of light: 2.99792458e10 cm s⁻¹
+- Solar mass: 1.9891e33 g
+- Proton mass: 1.67262192369e-24 g
+=== Example: Jeans length calculation components ===
+✓ Gravitational constant G = 6.6743e-8
+✓ Boltzmann constant k_B = 1.380649e-16
+✓ Proton mass (for μ * m_H calculation) = 1.67262192369e-24
+✓ Temperature and density from scaling factors
+=== Benefits of createconstants() ===
+✓ Memory optimization: Independent of InfoType object
+✓ Function arguments: Easy to pass to custom functions
+✓ Multi-simulation: Compare constants between simulations
+✓ Persistence: Maintain constants after clearing InfoType</code></pre><h3 id="Additional-Analysis-Tools"><a class="docs-heading-anchor" href="#Additional-Analysis-Tools">Additional Analysis Tools</a><a id="Additional-Analysis-Tools-1"></a><a class="docs-heading-anchor-permalink" href="#Additional-Analysis-Tools" title="Permalink"></a></h3><p>Beyond the core functions already covered, Mera.jl provides several specialized utility functions for deeper simulation analysis and metadata exploration.</p><h4 id="RAMSES-Configuration-Access"><a class="docs-heading-anchor" href="#RAMSES-Configuration-Access">RAMSES Configuration Access</a><a id="RAMSES-Configuration-Access-1"></a><a class="docs-heading-anchor-permalink" href="#RAMSES-Configuration-Access" title="Permalink"></a></h4><p>Access detailed RAMSES configuration parameters and compilation information:</p><pre><code class="language-julia hljs"># Example: Access compilation and build information
+try
+    make_info = makefile(info)
+    println(&quot;Compilation information available: &quot;, !isnothing(make_info))
+
+    timer_info = timerfile(info)
+    println(&quot;Performance timing data available: &quot;, !isnothing(timer_info))
+
+    patch_info = patchfile(info)
+    println(&quot;AMR patch information available: &quot;, !isnothing(patch_info))
+
+catch
+    println(&quot;Some compilation/build information files may not be available&quot;)
+end</code></pre><pre><code class="nohighlight hljs">[Mera]: Makefile content
+=================================
+!content deleted on purpose
+Compilation information available: false
+[Mera]: Timer-file content
+=================================
+ --------------------------------------------------------------------
+     minimum       average       maximum  standard dev        std/av       %   rmn   rmx  TIMER
+     426.559       428.960       431.540         1.216         0.003     0.5   562 606    coarse levels
+    2086.863      2285.294      2620.028       109.814         0.048     2.9   639   1    refine
+     518.746       519.356       520.299         0.572         0.001     0.7   608  21    load balance
+     173.017       565.169      1799.729       385.862         0.683     0.7   602   1    particles
+    5897.562      5897.616      5897.791         0.018         0.000     7.5   244   1    io
+    5176.808      9619.415     26606.857      5416.924         0.563    12.3   568   1    feedback
+   25022.898     25410.890     25585.446       143.363         0.006    32.4     1 602    poisson
+    1131.397      2241.256      2547.320       322.916         0.144     2.9     1 345    rho
+     521.635       678.056      1076.044       151.775         0.224     0.9   601   1    courant
+      82.818       115.742       135.415        10.926         0.094     0.1   398 125    hydro - set unew
+    7009.921      9876.180     12208.171      1176.765         0.119    12.6   481 343    hydro - godunov
+     948.967     16679.099     23569.950      4760.658         0.285    21.3   640 340    hydro - rev ghostzones
+     189.513       208.576       229.883         7.902         0.038     0.3   398 581    hydro - set uold
+    1757.246      1795.542      1860.788        11.757         0.007     2.3   524 180    cooling
+      84.519       300.570       375.587        67.032         0.223     0.4     1 593    hydro - ghostzones
+     933.143      1662.855      1788.316       119.084         0.072     2.1     1 639    flag
+   78327.986     100.0    TOTAL
+Performance timing data available: false
+[Mera]: Patch-file content
+=================================
+!content deleted on purpose
+AMR patch information available: false</code></pre><pre><code class="language-julia hljs"># Explore available methods for different functions (simplified for documentation)
+println(&quot;=== Available exploration methods ===&quot;)
+println()
+println(&quot;1. viewfields methods:&quot;)
+println(&quot;   - viewfields(info)     # View InfoType object structure&quot;)
+println(&quot;   - viewfields(scale)    # View scaling factors&quot;)
+println(&quot;   - viewfields(constants) # View physical constants&quot;)
+println()
+println(&quot;2. Object creation utilities:&quot;)
+println(&quot;   - createscales(info)   # Create independent scaling factors object&quot;)
+println(&quot;   - createconstants() # Create independent constants object&quot;)
+println()
+println(&quot;3. Additional utility functions:&quot;)
+println(&quot;   - namelist(info)       # Display RAMSES namelist parameters&quot;)
+println(&quot;   - makefile(info)       # View compilation information&quot;)
+println(&quot;   - timerfile(info)      # Performance timing data&quot;)
+println(&quot;   - patchfile(info)      # AMR patch information&quot;)
+println(&quot;   - viewallfields(info)  # Complete field hierarchy&quot;)
+println()
+println(&quot;4. Data management:&quot;)
+println(&quot;   - checkoutputs(path)   # Check simulation output availability&quot;)
+println(&quot;   - storageoverview(info) # Analyze storage requirements&quot;)
+println()
+println(&quot;Note: Use &#39;methods(function_name)&#39; in interactive sessions&quot;)
+println(&quot;      to see detailed method signatures.&quot;)</code></pre><pre><code class="nohighlight hljs">=== Available exploration methods ===
+1. viewfields methods:
+   - viewfields(info)     # View InfoType object structure
+   - viewfields(scale)    # View scaling factors
+   - viewfields(constants) # View physical constants
+2. Object creation utilities:
+   - createscales(info)   # Create independent scaling factors object
+   - createconstants() # Create independent constants object
+3. Additional utility functions:
+   - namelist(info)       # Display RAMSES namelist parameters
+   - makefile(info)       # View compilation information
+   - timerfile(info)      # Performance timing data
+   - patchfile(info)      # AMR patch information
+   - viewallfields(info)  # Complete field hierarchy
+4. Data management:
+   - checkoutputs(path)   # Check simulation output availability
+   - storageoverview(info) # Analyze storage requirements
+Note: Use &#39;methods(function_name)&#39; in interactive sessions
+      to see detailed method signatures.</code></pre><h4 id="Complete-Field-Overview"><a class="docs-heading-anchor" href="#Complete-Field-Overview">Complete Field Overview</a><a id="Complete-Field-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Complete-Field-Overview" title="Permalink"></a></h4><p>For a comprehensive view of all available fields and sub-fields in your InfoType object, use <code>viewallfields()</code>. This provides a complete hierarchical listing of everything available in your simulation metadata:</p><p><strong>Tip</strong>: This function can produce extensive output for complex simulations. Consider redirecting output to a file for large simulations:</p><pre><code class="language-julia hljs"># For very detailed output, you might want to capture it
+output = viewallfields(info)</code></pre><pre><code class="language-julia hljs"># Example: Use viewallfields to explore complete structure
+println(&quot;=== Complete InfoType Structure Overview ===&quot;)
+println(&quot;This will show ALL available fields and sub-fields:&quot;)
+println()
+
+# Uncomment the line below to see the complete structure
+# viewallfields(info)
+
+println(&quot;Note: viewallfields(info) produces extensive output.&quot;)
+println(&quot;Use it when you need to discover all available data fields.&quot;)
+println()
+println(&quot;For selective exploration, use:&quot;)
+println(&quot;- viewfields(info)        # Main structure&quot;)
+println(&quot;- viewfields(info.scale)  # Scaling factors only&quot;)
+println(&quot;- viewfields(info.constants) # Physical constants only&quot;)</code></pre><pre><code class="nohighlight hljs">=== Complete InfoType Structure Overview ===
+This will show ALL available fields and sub-fields:
+Note: viewallfields(info) produces extensive output.
+Use it when you need to discover all available data fields.
+For selective exploration, use:
+- viewfields(info)        # Main structure
+- viewfields(info.scale)  # Scaling factors only
+- viewfields(info.constants) # Physical constants only</code></pre><h2 id="Accuracy-of-the-scale-factors"><a class="docs-heading-anchor" href="#Accuracy-of-the-scale-factors">Accuracy of the scale factors</a><a id="Accuracy-of-the-scale-factors-1"></a><a class="docs-heading-anchor-permalink" href="#Accuracy-of-the-scale-factors" title="Permalink"></a></h2><p>The scale table was audited dimensionally on 2026-08-31, by checking every expression against the base units (<code>unit_l</code> in cm, <code>unit_d</code> in g/cm³, <code>unit_t</code> in s, with mass = <code>unit_d·unit_l³</code>) rather than against the formula written next to it. Seven entries were wrong and are now fixed.</p><table><tr><th style="text-align: right">scale</th><th style="text-align: right">was</th><th style="text-align: right">error</th></tr><tr><td style="text-align: right"><code>dyne</code></td><td style="text-align: right">density times acceleration, a force <strong>density</strong></td><td style="text-align: right"><code>unit_l³</code></td></tr><tr><td style="text-align: right"><code>J_s</code></td><td style="text-align: right">byte-identical to <code>g_cm2_s</code>, a cgs value labelled SI</td><td style="text-align: right"><code>1e7</code></td></tr><tr><td style="text-align: right"><code>kg_m2_s</code></td><td style="text-align: right">cm² to m² exponent sign flipped</td><td style="text-align: right"><code>1e8</code></td></tr><tr><td style="text-align: right"><code>J_kg</code></td><td style="text-align: right">erg to J applied, g to kg not</td><td style="text-align: right"><code>1e3</code></td></tr><tr><td style="text-align: right"><code>J_m3_K</code></td><td style="text-align: right"><code>1e1</code> where erg/cm³ to J/m³ needs <code>1e-1</code></td><td style="text-align: right"><code>1e2</code></td></tr><tr><td style="text-align: right"><code>erg_cm2_s</code></td><td style="text-align: right">byte-identical to <code>erg_cm3_s</code>, a per-volume rate labelled a flux</td><td style="text-align: right"><code>unit_l</code></td></tr><tr><td style="text-align: right"><code>pc_Myr2</code></td><td style="text-align: right">both conversions inverted, so every <code>unit_*</code> cancelled</td><td style="text-align: right">~<code>1.4e9</code></td></tr></table><p>Two of those are self-proving: a pair of scales that are <em>exactly equal</em> while claiming different dimensions cannot both be right.</p><p>They survived because the tests restated each formula (<code>@test J_kg ≈ erg_g/1e7</code>) instead of checking the physics, so they could never fail. The tests now assert <strong>relations</strong>: a flux divided by a volumetric rate must be one length, <code>J·s</code> must equal <code>kg·m²/s</code>, and so on.</p><h3 id="Three-names-to-be-careful-with"><a class="docs-heading-anchor" href="#Three-names-to-be-careful-with">Three names to be careful with</a><a id="Three-names-to-be-careful-with-1"></a><a class="docs-heading-anchor-permalink" href="#Three-names-to-be-careful-with" title="Permalink"></a></h3><p><strong><code>:g_cms2</code> is a pressure, not a force.</strong> It reads like g·cm/s² but is g/(cm·s²), and is exactly equal to <code>:Ba</code>. For a force use <code>:dyne</code>, for an acceleration <code>:cm_s2</code>. Mera&#39;s own clump finder had this wrong and scaled its gravitational accelerations by <code>unit_d·unit_l</code>.</p><p><strong>The entropy units are already cgs.</strong> <code>:entropy_specific</code> computes <code>(k_B/m_u)·ln(P/ρ^γ)/(γ-1)</code>, which is already in erg/(g·K), unlike every other quantity that comes back in code units. So <code>scale.erg_g_K</code> is <code>1.0</code>: asking for that unit is a no-op, not a conversion. <code>:erg_K</code> and <code>:erg_cm3_K</code> are built from it as mass and density factors.</p><p><strong><code>:Jy</code> needs a spectral quantity.</strong> A Jansky is a <em>spectral</em> flux density, erg s⁻¹ cm⁻² Hz⁻¹. Mera has no per-Hz quantity, so <code>:Jy</code> converts one you supply yourself; it does not apply to a bolometric flux. <code>:keV_cm2</code> is likewise the X-ray entropy <code>kT/n^{2/3}</code>, a quantity Mera does not compute, so it is left as the identity rather than given an invented factor.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../computation_reference/">« How Quantities Are Computed</a><a class="docs-footer-nextpage" href="../derived_fields/">Derived Fields &amp; add_field »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.18.0 on <span class="colophon-date" title="Monday 31 August 2026 14:20">Monday 31 August 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
