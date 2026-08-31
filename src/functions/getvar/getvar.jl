@@ -121,6 +121,14 @@ const _CENTER_RELATIVE_VARS = Set{Symbol}([
     :lx, :ly, :lz, :l, :hx, :hy, :hz, :h,
     :mach_r_sphere, :mach_theta_sphere, :mach_phi_sphere,
     :mach_r_cylinder, :mach_phi_cylinder,
+    # Gravity forces and the in-plane acceleration magnitude. Each is measured about the same
+    # origin as the acceleration it comes from, so it needs the same reminder.
+    :Fr_sphere, :Fθ_sphere, :Fϕ_sphere, :Fr_cylinder, :Fϕ_cylinder,
+    :a_magnitude_cylinder, :F_magnitude_cylinder,
+    # Magnetic field in cylindrical/spherical components.
+    :br_sphere, :bθ_sphere, :bϕ_sphere, :br_cylinder, :bϕ_cylinder, :b_magnitude_cylinder,
+    # Periodic radii: they wrap the box, but they still measure FROM the given centre.
+    :r_sphere_periodic, :r_cylinder_periodic,
 ])
 
 function _center_hint(vars, center)

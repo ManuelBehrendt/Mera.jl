@@ -3,10 +3,10 @@
 # the two can never drift apart in definition or in their dependence on `center`.
 const _GRAV_FORCE_FROM_ACCEL = Dict(
     :Fr_cylinder          => :ar_cylinder,
-    :Fphi_cylinder        => :aphi_cylinder,
+    :Fϕ_cylinder          => :aϕ_cylinder,
     :Fr_sphere            => :ar_sphere,
-    :Ftheta_sphere        => :atheta_sphere,
-    :Fphi_sphere          => :aphi_sphere,
+    :Fθ_sphere            => :aθ_sphere,
+    :Fϕ_sphere            => :aϕ_sphere,
     :F_magnitude_cylinder => :a_magnitude_cylinder,
 )
 

@@ -866,6 +866,44 @@ function get_data(  dataobject::HydroDataType,
         # P_mag = B²/2, u_mag = P_mag, v_A = |B|/√ρ, E_mag = P_mag·V. Each reuses an existing unit:
         # :bmag → :Gauss/:muG/:Tesla, :pmag → :Ba, :v_alfven → :km_s, :e_magnetic → :erg; :beta is
         # dimensionless. (|B| is the cell-centred field from the constrained-transport faces.)
+        # Magnetic field in cylindrical and spherical components. B is a vector like v and a, so
+        # the decomposition is the same algebra as the velocity one above, applied to (bx,by,bz).
+        # These are measured about `center`, so they are registered in _CENTER_RELATIVE_VARS.
+        # The r=0 cell has no defined direction; the velocity path zeroes those NaNs and so do we.
+        elseif i in (:br_cylinder, :bϕ_cylinder, :b_magnitude_cylinder,
+                     :br_sphere, :bθ_sphere, :bϕ_sphere)
+            has_faces = (:bx_left in column_names && :by_left in column_names && :bz_left in column_names)
+            has_cc    = (:bx in column_names && :by in column_names && :bz in column_names)
+            if !(has_faces || has_cc)
+                error("getvar :$i needs the magnetic field (:bx/:by/:bz, or the MHD face fields " *
+                      ":b*_left/:b*_right); load an MHD run.")
+            end
+            selected_unit = getunit(dataobject, i, vars, units)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+            bx = getvar(filtered_dataobject, :bx, mask=use_mask_in_recursion)
+            by = getvar(filtered_dataobject, :by, mask=use_mask_in_recursion)
+            bz = getvar(filtered_dataobject, :bz, mask=use_mask_in_recursion)
+            r_cyl = @. sqrt(x^2 + y^2)
+            r_sph = @. sqrt(x^2 + y^2 + z^2)
+            out = if i === :br_cylinder
+                @. (x * bx + y * by) / r_cyl
+            elseif i === :bϕ_cylinder
+                @. (x * by - y * bx) / r_cyl
+            elseif i === :b_magnitude_cylinder                 # in-plane magnitude, sqrt(br^2 + bphi^2)
+                @. sqrt(((x * bx + y * by) / r_cyl)^2 + ((x * by - y * bx) / r_cyl)^2)
+            elseif i === :br_sphere
+                @. (x * bx + y * by + z * bz) / r_sph
+            elseif i === :bθ_sphere                            # polar component, same form as vθ_sphere
+                @. (z * (x * bx + y * by) - (x^2 + y^2) * bz) / (r_sph * r_cyl)
+            else                                               # :bϕ_sphere, identical to the cylindrical one
+                @. (x * by - y * bx) / r_cyl
+            end
+            out = out .* selected_unit
+            out[isnan.(out)] .= 0.0                            # r = 0: no defined direction
+            vars_dict[i] = out
+
         elseif i == :bmag || i == :pmag || i == :beta || i == :v_alfven || i == :e_magnetic
             has_faces = (:bx_left in column_names && :by_left in column_names && :bz_left in column_names)
             has_cc    = (:bx in column_names && :by in column_names && :bz in column_names)

@@ -491,6 +491,10 @@ const _VAR_ASCII = Dict{Symbol,Symbol}(
     :lphi_cylinder   => :lϕ_cylinder,
     :atheta_sphere   => :aθ_sphere,    :aphi_sphere    => :aϕ_sphere,
     :aphi_cylinder   => :aϕ_cylinder,
+    :Ftheta_sphere   => :Fθ_sphere,    :Fphi_sphere    => :Fϕ_sphere,
+    :Fphi_cylinder   => :Fϕ_cylinder,
+    :btheta_sphere   => :bθ_sphere,    :bphi_sphere    => :bϕ_sphere,
+    :bphi_cylinder   => :bϕ_cylinder,
 )
 _canon_var(v::Symbol) = get(_VAR_ASCII, v, v)
 
