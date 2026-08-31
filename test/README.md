@@ -242,7 +242,7 @@ time,R_measured,R_powerlaw_fit,mass
 
 Numbers rather than plot images on purpose: they are dependency-free, a few KB, and **diffable**,
 which an image is not. Figures can be generated from them afterwards — see
-[`../testdata/make_figures.jl`](../testdata/make_figures.jl).
+[`../docs/make_timeseries_figures.jl`](../docs/make_timeseries_figures.jl).
 
 | variable | effect |
 |---|---|

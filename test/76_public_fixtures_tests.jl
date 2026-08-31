@@ -19,7 +19,7 @@ else
     # Each oracle writes what it MEASURED next to what theory says, as a small CSV. Numbers, not
     # pictures, on purpose: they are dependency-free, a few KB, and DIFFABLE between runs — so a
     # slope drifting from 0.375 to 0.361 across commits is visible, which an image cannot show.
-    # Figures can be generated from these afterwards (see testdata/make_figures.jl for the
+    # Figures can be generated from these afterwards (see docs/make_timeseries_figures.jl for the
     # pattern). In CI this directory is what `actions/upload-artifact` would publish.
     #
     # Override the location with MERA_TEST_RESULTS; default test/results/ (gitignored).
