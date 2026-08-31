@@ -20,8 +20,6 @@ Start here if you would rather read a whole workflow than a reference.
 
 ## Short tutorials elsewhere
 
-- [Hands-On Session RUM2023](https://github.com/ManuelBehrendt/RUM2023): density PDFs,
-  radial profiles, phase diagrams.
 - [Load from a sequence of existing simulations in a folder](examples/LoadFromExistingOutputs.md)
 - [Export/Import data: ASCII/binary files](examples/ExportImportData.md)
 

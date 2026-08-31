@@ -85,7 +85,8 @@ Called with a single name, returns the path to that simulation, which can be
 handed straight to [`getinfo`](@ref):
 
 ```julia
-info = getinfo(download_testdata("sedov3d_amr"))
+path = download_testdata("sedov3d_amr")
+info = getinfo(path, output=7)     # this run has 7 snapshots; 1 is before the blast
 gas  = gethydro(info)
 ```
 

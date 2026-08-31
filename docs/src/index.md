@@ -47,10 +47,13 @@ test simulations, 2.3 MB, and hands you the path:
 ```julia
 using Mera
 path = download_testdata("sedov3d_amr")   # a Sedov blast on an AMR grid
-info = getinfo(path)
+info = getinfo(path, output=7)            # the last of its seven snapshots
 gas  = gethydro(info)
 projection(gas, :sd, :Msol_pc2)           # a 128x128 surface-density map
 ```
+
+Pick the snapshot with `output=`. This run has seven, and number 1 is the moment before the blast,
+a uniform box, so the map would be featureless. Number 7 is the developed shock.
 
 This simulation has a known answer: the blast radius grows as `t^(2/5)`, which is what Mera's own
 test suite checks it against. Eleven simulations are available, listed by `?download_testdata`, and
@@ -214,7 +217,6 @@ Coming from another analysis tool, or new to Julia:
   requests
 - In the REPL: `?getinfo` for function docs, `methods(getinfo)` for available methods
 - [Jupyter notebooks](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1)
-  and [RUM2023 materials](https://github.com/ManuelBehrendt/RUM2023)
 
 ## Ambient Study Music
 

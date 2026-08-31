@@ -33,6 +33,9 @@ data has no such file and never should. Name the code explicitly to find out:
 info = getinfo(path, code=:pluto)     # :pluto, :chombo, :athena, :flash, :gadget, :ramses
 ```
 
+Those six are the whole list. Note there is **no `:arepo`**: AREPO and IllustrisTNG snapshots are
+read by `:gadget`, because the three share the same HDF5 layout.
+
 If that works, detection failed rather than the file being missing, please
 [report it](https://github.com/ManuelBehrendt/Mera.jl/issues) with your directory listing,
 since detection is meant to handle it. This release reads RAMSES; the frontends for other
