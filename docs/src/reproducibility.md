@@ -142,6 +142,47 @@ Every derived quantity is written out in
 confirm what a number means rather than trusting a name. If a definition there disagrees with the
 one your field uses, you will see it immediately, which is the point.
 
+## Periodic boxes
+
+RAMSES does not record its boundary conditions in `info_*.txt`. When a namelist is present, Mera
+infers them and says so in the `getinfo` summary:
+
+```
+boundaries:       periodic in x, y, z
+```
+
+`info.boundaries` is `:periodic`, `:nonperiodic`, `:mixed`, or `:unknown` when there is no namelist
+to read.
+
+**`:mixed` is common, not exotic.** RAMSES closes individual *faces*, so a run can wrap in some
+directions and not others: RAMSES's own `rad_beams.nml` closes x and y and leaves z periodic. Ask
+which:
+
+```julia
+Mera.periodic_axes(info.namelist_content)   # (x = false, y = false, z = true)
+```
+
+and the summary line says so too:
+
+```
+boundaries:       periodic in z only (x, y closed by &BOUNDARY_PARAMS)
+```
+
+**Mera reports this and does nothing else with it.** No function wraps coordinates on your behalf,
+because doing that to a run with outflow or reflecting boundaries would give wrong physics with no
+warning, and the boundary type cannot be recovered from the snapshot alone. Where wrapping matters,
+you ask for it:
+
+```julia
+getvar(gas, :r_sphere_periodic, center=[0., 0., 0.])   # minimum-image radius
+```
+
+Two places to watch on a periodic run, because neither wraps:
+
+- a `subregion` touching a face is truncated, not wrapped around
+- `center_of_mass` of a structure straddling a face lands in the middle of the box, which looks
+  plausible and is wrong
+
 ## A short checklist
 
 - [ ] the analysis lives in its own directory with `Project.toml` and `Manifest.toml`

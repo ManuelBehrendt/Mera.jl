@@ -837,7 +837,71 @@ function readnamelistfile!(dataobject::InfoType)
 
     dataobject.namelist = namelist_file
     dataobject.namelist_content = namelist
+    dataobject.boundaries = infer_boundaries(namelist)
     return dataobject
+end
+
+"""
+    periodic_axes(namelist_content::Dict) -> NamedTuple
+
+Which axes wrap, as `(x=Bool, y=Bool, z=Bool)`.
+
+RAMSES applies periodic boundaries to every face unless `&BOUNDARY_PARAMS`
+defines a region on that face, so a run can be periodic in some directions and
+not others: `rad_beams.nml` bounds x and y and leaves z periodic. A region lies
+on a face of an axis when its `min` and `max` index for that axis are equal and
+non-zero (`-1` low face, `+1` high face); a region spanning `-1..+1` merely
+covers the axis, it does not close it.
+
+With no `&BOUNDARY_PARAMS` block, all three are `true`.
+"""
+function periodic_axes(namelist_content::Dict)
+    block = nothing
+    for (k, v) in namelist_content
+        if uppercase(strip(string(k))) == "&BOUNDARY_PARAMS" && v isa Dict
+            block = v
+            break
+        end
+    end
+    block === nothing && return (x=true, y=true, z=true)
+
+    ints(name) = haskey(block, name) ?
+        [tryparse(Int, strip(t)) for t in split(string(block[name]), ",")] : Int[]
+
+    closed = map(((lo, hi),) -> begin
+        a, b = ints(lo), ints(hi)
+        any(i -> a[i] !== nothing && b[i] !== nothing && a[i] == b[i] && a[i] != 0,
+            1:min(length(a), length(b)))
+    end, (("ibound_min", "ibound_max"),
+          ("jbound_min", "jbound_max"),
+          ("kbound_min", "kbound_max")))
+
+    return (x = !closed[1], y = !closed[2], z = !closed[3])
+end
+
+"""
+    infer_boundaries(namelist_content::Dict) -> Symbol
+
+Summarise the boundary conditions as `:periodic`, `:mixed`, `:nonperiodic` or
+`:unknown`.
+
+`info_*.txt` does not record boundary conditions, so this reads the namelist
+instead: RAMSES is periodic on every face unless `&BOUNDARY_PARAMS` says
+otherwise. `:mixed` means some axes wrap and others do not, which is common;
+[`periodic_axes`](@ref) says which. Without a namelist the answer is `:unknown`.
+
+The result is reported, never acted on. Nothing in Mera wraps coordinates on
+its own, because doing that to a run with outflow or reflecting boundaries
+would produce wrong physics with no warning.
+"""
+function infer_boundaries(namelist_content::Dict)
+    isempty(namelist_content) && return :unknown
+    has_block = any(uppercase(strip(string(k))) == "&BOUNDARY_PARAMS"
+                    for k in keys(namelist_content))
+    has_block || return :periodic
+    p = periodic_axes(namelist_content)
+    n = count((p.x, p.y, p.z))
+    return n == 3 ? :periodic : n == 0 ? :nonperiodic : :mixed
 end
 
 
@@ -1125,6 +1189,25 @@ function printsimoverview(info::InfoType, verbose::Bool)
             println("-------------------------------------------------------")
         else
             println("namelist-file:    ", info.namelist)
+        end
+
+        # info_*.txt does not record boundary conditions; the namelist does, indirectly.
+        # Reported only: nothing in Mera wraps coordinates on its own.
+        if isdefined(info, :boundaries)
+            if info.boundaries === :unknown
+                println("boundaries:       unknown (no namelist; not recorded in info_*.txt)")
+            elseif info.boundaries === :periodic
+                println("boundaries:       periodic in x, y, z")
+            else
+                p = periodic_axes(info.namelist_content)
+                wrap = join([ax for (ax, on) in zip(("x","y","z"), (p.x,p.y,p.z)) if on], ", ")
+                shut = join([ax for (ax, on) in zip(("x","y","z"), (p.x,p.y,p.z)) if !on], ", ")
+                if info.boundaries === :nonperiodic
+                    println("boundaries:       not periodic (&BOUNDARY_PARAMS closes x, y, z)")
+                else
+                    println("boundaries:       periodic in $wrap only ($shut closed by &BOUNDARY_PARAMS)")
+                end
+            end
         end
 
 

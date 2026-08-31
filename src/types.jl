@@ -784,6 +784,12 @@ mutable struct InfoType
 
     namelist::Bool
     namelist_content::Dict{Any,Any}
+    # Boundary conditions are NOT recorded in info_*.txt. When the namelist is
+    # present they can be inferred: RAMSES is periodic unless &BOUNDARY_PARAMS
+    # says otherwise. This is reported, never acted on automatically, because
+    # wrapping a non-periodic run would silently produce wrong physics.
+    # :periodic | :nonperiodic | :unknown
+    boundaries::Symbol
     headerfile::Bool
     makefile::Bool
     files_content::FilesContentType
@@ -1582,6 +1588,11 @@ function _mera_rconvert(::Type{T}, nt::NamedTuple) where {T}
                 # filename, it is an honest "not recorded", and isfile("") is false, which is the
                 # answer callers want anyway.
                 setfield!(obj, f, "")
+            elseif FT === Symbol
+                # Same reasoning as String above: a file written before this field
+                # existed must still round-trip. :unknown is not a guess, it is the
+                # honest answer for "this file predates the field".
+                setfield!(obj, f, :unknown)
             end
         end
     end

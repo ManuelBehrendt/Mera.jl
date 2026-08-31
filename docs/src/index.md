@@ -63,7 +63,8 @@ heatmap(sd; colormap=:inferno)
 Two details of this particular run: snapshot 1 is the moment before the blast, a uniform box, which
 is why the example asks for 7; and RAMSES's own Sedov setup puts the explosion at the *origin* of a
 periodic box, simulating one octant of the sphere, so the shell straddles the corners until you roll
-the map by half a box.
+the map by half a box. `getinfo` reports `boundaries: periodic` for exactly this reason, but Mera
+never wraps coordinates on its own: see [Periodic boxes](reproducibility.md#Periodic-boxes).
 
 With a simulation of your own, point `getinfo` at the output folder and continue the same way:
 
