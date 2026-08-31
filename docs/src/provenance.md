@@ -16,6 +16,13 @@ Mera version, what units produced this?* `provenance` answers it. It reads the m
 Mera result already carries (its `InfoType`) and returns a compact, **deterministic** record
 you can print, compare, or stamp onto a figure or a FITS header.
 
+!!! note "One part of a larger picture"
+    A provenance record says what produced a number. It does not, by itself, let someone rebuild
+    the software that produced it. For that you also need the package versions pinned in a Julia
+    project. [Reproducibility](reproducibility.md) collects the four pieces, the project, this
+    record, the published formula behind each quantity, and the test simulations with known
+    answers, and shows them working together.
+
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
 # MERA_EXAMPLES environment variable; every path below is built from it.
