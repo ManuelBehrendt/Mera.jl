@@ -87,44 +87,27 @@ can fail without failing the whole build.
 
 ## Test suite structure
 
-`test/runtests.jl` executes the files below in tiered order. Tier 1 is
-data-independent and always runs; the rest run only when simulation data is
-available and `MERA_SMOKE_ONLY` is not set.
+`test/runtests.jl` executes 62 test files in tiered order. Tier 1 is
+data-independent and always runs; the data-backed tier runs only when simulation
+data is present and `MERA_SMOKE_ONLY` is not set.
 
-| Group | File | Focus | Data |
-|-------|------|-------|:----:|
-| Quality & Fundamentals | `01_aqua_quality.jl` | Aqua.jl quality checks (ambiguities, unbound args, stale deps, piracy) | No |
-| Quality & Fundamentals | `02_unit_system.jl` | Physical constants, unit scales, CODATA validation | No |
-| Quality & Fundamentals | `22_types_tests.jl` | Type constructors, `getproperty` aliases, JLD2 conversion methods | No |
-| Quality & Fundamentals | `30_doc_codeblocks.jl` | Syntax-lints every `julia` code block in `docs/src` (runs on the 1.10/1.11/1.12 CI matrix) | No |
-| Core Functionality | `03_data_readers.jl` | `getinfo`/`gethydro`/`getparticles`/`getgravity`; legacy + new particle formats | Yes |
-| Core Functionality | `04_basic_calculations.jl` | `msum`, `center_of_mass`/`com`, `bulk_velocity` variants | Yes |
-| Core Functionality | `05_derived_variables.jl` | Temperature, sound speed, Mach, Jeans length/mass, free-fall time | Yes |
-| Analysis Functions | `06_projections.jl` | Hydro/particle projections; `mode`/`pxsize`/`data_center` options; ground-truth + conservation matrix | Yes |
-| Analysis Functions | `07_regions.jl` | `subregion`/`shellregion` with conservation and ID-tag preservation | Yes |
-| Scientific Validation | `08_physics_and_contracts.jl` | Reference values, per-cell getvar formulas, unit-kwarg dispatch contracts | Yes |
-| Scientific Validation | `09_determinism.jl` | Projection repeated-call equality (parallel-table-build guard) | Yes |
-| I/O and Integration | `10_io_export.jl` | `savedata`/`loaddata` round-trip, MERA I/O | Yes |
-| I/O and Integration | `11_error_handling.jl` | Edge cases, invalid inputs, error paths, latent-gap pattern | Partial |
-| I/O and Integration | `12_integration_workflows.jl` | End-to-end cross-step pipelines | Yes |
-| Utilities & Notifications | `13_additional_coverage.jl` | `viewfields`, `wstat`, overview functions, global-state setters | Yes |
-| Utilities & Notifications | `14_io_notifications.jl` | Zulip/email notification stack, system info helpers | Yes |
-| Clumps | `20_clump_tests.jl` | `getclumps`, clump `getvar`, clump subregion/shellregion | Yes |
-| Untested API Surfaces | `21_untested_surfaces_tests.jl` | Gravity/particle `getvar` variants; non-hydro region selection | Yes |
-| VTK Export | `19_vtk_export_tests.jl` | VTK file export and validation | Yes |
-| Filter Macros | `25_filter_macro_tests.jl` | `@filter` macro on hydro/particle data | Yes |
-| I/O Configuration | `26_io_config_tests.jl` | I/O configuration helpers (server-side tuning recommendations) | Yes |
-| Data Conversion | `27_data_conversion_tests.jl` | `convertdata`, `batch_convert_mera`, round-trip vs. RAMSES | Yes |
-| Extended Coverage | `28_coverage_boost_tests.jl` | Additional helper / overview function coverage | Yes |
-| Parallel Execution | `29_parallel_execution_tests.jl` | Parallel vs. serial equivalence (`julia -t 4`) | Yes |
+| tier | what it proves | data needed |
+|---|---|---|
+| **1, data-free** | package hygiene (Aqua), unit scales and CODATA anchors, the type system, analytic oracles for conservation and the surface-integral budget, weighted-statistics and structure-finder kernels, synthetic-HDF5 reader contracts, the reader registry, the IO layer, mera-file round-trips, and that every `julia` block in `docs/src` parses | none |
+| **2, data-backed** | the same code paths against real RAMSES output: readers, derived quantities, projections, regions, conservation relations, clump analysis, VTK export, save/load round-trips | `MERA_TEST_DATA` |
 
-Support files:
+A per-file map, which file proves what and which simulation backs it, is kept in
+[`test/README.md`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/test/README.md).
+It is maintained alongside the suite, so this page does not repeat it; a list
+copied here would silently fall behind as files are added.
 
-| File | Purpose |
-|------|---------|
-| `test_config.jl` | `SIMULATION_PATH`, `DATASETS` dict, tolerances, CODATA constants, mode flags |
-| `test_utilities.jl` | Helpers: `load_test_info`, `load_test_hydro`, region-extent validators, etc. |
-| `run_coverage.jl` | Alternative entry point that runs every existing test file |
+Three files are infrastructure rather than tests:
+
+| file | role |
+|---|---|
+| `test_config.jl` | `SIMULATION_PATH`, the `DATASETS` dict, tolerances, CODATA constants, mode flags |
+| `test_utilities.jl` | helpers: `load_test_info`, `load_test_hydro`, region-extent validators |
+| `run_coverage.jl` | alternative entry point that runs every existing test file |
 
 ## Test datasets
 

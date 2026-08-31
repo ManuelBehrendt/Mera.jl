@@ -7,7 +7,7 @@ without reading 60 test files.
 ## Quick start
 
 ```bash
-# 1. What everyone can run: no simulation data needed, ~2.5 minutes
+# 1. What everyone can run: no simulation data needed, under 2 minutes
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 
 # 2. Same thing, forced (what CI runs on every push)
@@ -25,13 +25,21 @@ Form 3 is run on one configuration: **Julia 1.12 on macOS (Apple Silicon)**, wit
 an external drive. CI never runs it (`MERA_SMOKE_ONLY=1`), so a regression that appears only on
 Linux or Windows *with real data* would not be caught by either.
 
+Measured on 2026-08-31, Julia 1.12 on macOS:
+
 | run | assertions | wall time |
 |---|---|---|
-| no simulation data (form 1 or 2) | **1637 pass, 0 fail** | ~2m30s |
-| full local run, RAMSES data present | **5685 pass, 0 fail** | ~22 min |
+| no simulation data (form 1 or 2) | **1800 pass, 0 fail, 3 broken** | ~1m40s |
+| form 2 with the data present anyway | **2796 pass, 0 fail** | ~11 min |
+| full local run, RAMSES data present | **6394 pass, 0 fail, 3 broken** | ~18 min |
 
-So roughly 29 % of the suite is reproducible by anyone who clones the repository, and that 29 %
-deliberately includes every *analytic* correctness oracle — see Tier 1 below.
+The middle row is the one that surprises people: `MERA_SMOKE_ONLY=1` skips the data-backed tier,
+but several always-run files read whatever data they find, so the same tier costs far more on a
+machine where the simulations are mounted.
+
+So roughly 28 % of the suite is reproducible by anyone who clones the repository, and that 28 %
+deliberately includes every *analytic* correctness oracle, see Tier 1 below. The 3 broken are
+`@test_broken` markers for known gaps, not failures.
 
 ## The three tiers
 
@@ -69,6 +77,7 @@ Key files:
 | `55_region_algebra_tests.jl` | composable regions + exact cell splitting vs analytic volumes |
 | `54_clumpfind_synthetic_tests.jl` | all finders scored against synthetic ground truth |
 | `75_mask_equivalence_tests.jl` | masking commutes with per-cell evaluation, on every data type |
+| `78_download_testdata_tests.jl` | the fixture fetcher: catalogue, on-disk layout, already-present short-circuit |
 | `22_types_tests.jl`, `69_config_tests.jl`, `65_io_coverage_tests.jl` | type system, config resolution, IO layer |
 
 `41` and `43` gate only their AMR-backed blocks, so they contribute their analytic assertions even
@@ -134,19 +143,21 @@ oracle it is asserted against, and any trap worth knowing. They fall into four c
 **provenance** — which matters, because it determines what a failure means.
 
 **Getting them.** Nothing needs configuring by hand: the fixtures are published as assets on the
-`testdata-v1` release, and one script finds or fetches them.
+`testdata-v1` release. From Julia, `download_testdata()` fetches them and returns a directory that
+works as `MERA_TEST_DATA`. From a shell, one script finds or fetches them.
 
 ```bash
-./testdata/fetch_fixtures.sh --small     # ~130 MB: everything except the Bondi run
-./testdata/fetch_fixtures.sh             # everything, ~296 MB
+./testdata/fetch_fixtures.sh --small     # 117 MB: everything except the Bondi run
+./testdata/fetch_fixtures.sh             # everything, 282 MB
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
 It resolves in this order and downloads only as a last resort — `$MERA_TEST_DATA`, then the
 maintainer's external drive (override with `FIXTURE_EXTERNAL_ROOT`), then `testdata/fixtures/`
-inside this checkout, which is also where downloads land. Every archive is verified against the
-committed `testdata/SHA256SUMS` before it is unpacked. `test_config.jl` resolves the same three
-locations, so the suite finds whatever the script left.
+inside this checkout, which is also where downloads land. A damaged download already stops on its
+own: `curl -f` fails on a bad response and gzip carries its own CRC, so there is no checksum file to
+keep in step. `test_config.jl` resolves the same three locations, so the suite finds whatever the
+script left.
 
 The fixtures are release **assets**, not repository files: Mera is a registered package, so
 anything committed to the tree would be downloaded by every `Pkg.add("Mera")` and would remain in
