@@ -21,6 +21,10 @@ Form 1 is the important one: **the suite runs and passes with no simulation data
 data is detected (`DATA_AVAILABLE = isdir(SIMULATION_PATH)`), announced with a banner, and the
 data-backed tier is skipped — it is never an error and never a hang.
 
+Form 3 is run on one configuration: **Julia 1.12 on macOS (Apple Silicon)**, with the fixtures on
+an external drive. CI never runs it (`MERA_SMOKE_ONLY=1`), so a regression that appears only on
+Linux or Windows *with real data* would not be caught by either.
+
 | run | assertions | wall time |
 |---|---|---|
 | no simulation data (form 1 or 2) | **1637 pass, 0 fail** | ~2m30s |

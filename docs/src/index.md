@@ -89,7 +89,9 @@ CI so it keeps working. 1.12 is what we recommend running: the compiler is faste
 collector handles the large allocations of AMR and particle analysis better, which is most of what
 Mera does. CI runners have no simulation data, so they exercise the data-free tiers: the
 synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file round-trips,
-while the full suite runs against real snapshots locally.
+while the full suite runs against real snapshots locally, on one configuration: **Julia 1.12 on
+macOS (Apple Silicon)**. The data-backed tier is therefore verified on a single platform, not
+across the whole matrix.
 
 ## What Mera gives you
 

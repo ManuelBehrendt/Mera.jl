@@ -208,7 +208,9 @@ current GC. **Platforms**: macOS (incl. Apple Silicon), Linux, Windows.
 Windows** — every supported version on every supported platform, nine jobs. CI runners have no
 access to simulation data, so they run the data-free
 tiers — the analytic conservation oracles, the reader registry, the IO layer, the derived-field
-registry and the mera-file round-trips. The full suite runs against real snapshots locally.
+registry and the mera-file round-trips. The full suite runs against real snapshots locally, on
+one configuration: **Julia 1.12 on macOS (Apple Silicon)**. So the nine-job matrix covers the
+data-free tiers everywhere, while the data-backed tier is verified on a single platform.
 
 ## One name, many types — multiple dispatch
 
@@ -283,7 +285,7 @@ The badges above report two different measurements, not one number twice.
 | badge | what it covers | where it runs | when |
 |---|---|---|---|
 | **coverage: CI** | the data-free tier only | GitHub Actions | every push |
-| **coverage: full** | the whole suite, data-backed tier included | maintainer's machine, with the simulation data mounted | before a release, uploaded by `scripts/run_local_coverage.sh` |
+| **coverage: full** | the whole suite, data-backed tier included | maintainer's machine, Julia 1.12 on macOS (Apple Silicon), with the simulation data mounted | before a release, uploaded by `scripts/run_local_coverage.sh` |
 
 Measured on 2026-08-27: the full suite covers **85.9%**, meaning 13 593 of 15 826 lines across 85
 source files, while the CI tests alone cover **31%**. The data-free tier that CI runs is 1 677
