@@ -3,6 +3,14 @@
 A number in a paper should be something you can produce again: next month, on another machine, or
 by a referee who has your script. That needs four things, and Mera supports each one.
 
+!!! note "What this page assumes"
+    That you can start Julia and install a package. If package mode (the `]` prompt) is new to you,
+    read [Julia for Simulation Analysis](julia_for_simulation_analysis.md) first: it introduces
+    environments in a few lines, and this page is the full treatment of the same idea.
+
+    Set this up **before** you start analysing, not after. Reconstructing which versions produced a
+    figure six months ago is difficult; recording it as you go costs nothing.
+
 | what you need | how |
 |---|---|
 | the same package versions | a **Julia project**, described on this page |

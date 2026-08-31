@@ -91,6 +91,7 @@ makedocs(modules = [Mera],
 		                  "First Steps"                    => "00_multi_FirstSteps.md",
 		                  "Coming from Other Tools"        => "switching_to_mera.md",
 		                  "Julia for Simulation Analysis"  => "julia_for_simulation_analysis.md",
+		                  "Reproducibility"               => "reproducibility.md",
 		                  # first-hour errors, with the message Mera actually prints
 		                  "Troubleshooting"                => "troubleshooting.md",
                   # one authoritative status page for the 2.0 frontends, so master never
@@ -138,8 +139,7 @@ makedocs(modules = [Mera],
                               "Mask/Filter/Meta"            => "05_multi_Masking_Filtering.md",
                               "Statistics (PDFs)"           => "statistics.md",
                               "Profiles & Phase Diagrams"   => "15_multi_Profiles_Phase.md",
-                              "Provenance"                  => "provenance.md",
-                              "Reproducibility"             => "reproducibility.md"],
+                              "Provenance"                  => "provenance.md"],
                           "Structure Finding" => Any[
                               "Clump Finding"               => "clumpfind.md",
                               "Clump Finding: Synthetic Example" => "clumpfind_synthetic.md"],
