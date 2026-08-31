@@ -975,6 +975,22 @@ MaskType = Union{Array{Bool,1},BitArray{1}}
 MaskType = Union{Array{Bool,1},BitArray{1}} # exported
 
 """
+Union Type: what may be given as a `center` (or `data_center`).
+
+    CenterType = Union{Symbol, Array{<:Any,1}}
+
+A vector as before, `[:bc]`, `[x, y, z]`, or a mix such as `[value, :bc, :bc]`, and now also the
+bare symbol `:bc` / `:boxcenter`, which means the same as `[:bc]`. The bare form is normalised to
+a vector at the first thing that reads it, so everything downstream still sees a vector.
+"""
+CenterType = Union{Symbol, Array{<:Any,1}} # exported
+
+# A bare `center=:bc` means the same as `[:bc]`. Normalise once, here, so every converter and
+# every downstream index sees a vector and nothing else has to know about the short form.
+_as_center(c::Symbol) = Any[c]
+_as_center(c) = c
+
+"""
 Union Type: A vector of masks, one per data object
 MaskArrayType = Union{ Array{Array{Bool,1},1}, Array{BitArray{1},1} }
 
@@ -1556,7 +1572,17 @@ function _mera_rconvert(::Type{T}, nt::NamedTuple) where {T}
             FT = fieldtype(T, i)
             # zero-fill a NEW field only when it is a CONCRETE Number (zero(Real) etc. would throw on an
             # abstract type); abstract-Number and ref fields are left unset rather than fabricated.
-            (FT <: Number && isconcretetype(FT)) && setfield!(obj, f, zero(FT))
+            if FT <: Number && isconcretetype(FT)
+                setfield!(obj, f, zero(FT))
+            elseif FT === String
+                # An empty String, not "leave it undefined". Leaving it unset let the object LOAD but
+                # made it impossible to SAVE again: JLD2 refuses an undefined field, so an old
+                # mera-file round-tripped into a file Mera could no longer read (seen with
+                # FileNamesType.sinks, a field newer than the AVALON files). "" is not a fabricated
+                # filename, it is an honest "not recorded", and isfile("") is false, which is the
+                # answer callers want anyway.
+                setfield!(obj, f, "")
+            end
         end
     end
     return obj

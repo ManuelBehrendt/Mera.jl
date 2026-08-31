@@ -3,7 +3,7 @@
 function shellregioncylinder(dataobject::PartDataType;
                             radius::Array{<:Real,1}=[0.,0.],
                             height::Real=0.,
-                            center::Array{<:Any,1}=[0.,0.,0.],
+                            center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             inverse::Bool=false,
@@ -72,7 +72,7 @@ end
 ##### SPHERE/SHELL #####-------------------------------------------------------
 function shellregionsphere(dataobject::PartDataType;
                             radius::Array{<:Real,1}=[0.,0.],
-                            center::Array{<:Any,1}=[0.,0.,0.],
+                            center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             inverse::Bool=false,
                             verbose::Bool=verbose_mode)

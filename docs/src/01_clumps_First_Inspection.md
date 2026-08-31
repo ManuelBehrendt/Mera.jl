@@ -8,7 +8,7 @@
 # Clump Data: First Inspection
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `01_clumps_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_clumps_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `01_clumps_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_clumps_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook provides a comprehensive introduction to loading and analyzing clump structure data using Mera.jl. You'll learn the fundamentals of working with RAMSES clump data and understanding clump hierarchies and properties.
@@ -144,8 +144,8 @@ info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-03T10:23:09.305
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T13:19:23.860
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -223,7 +223,7 @@ clumps = getclumps(info);
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:23:11.708
+[Mera]: Get clump data: 2026-08-31T13:19:26.144
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -243,7 +243,7 @@ usedmemory(clumps);
 ```
 
 ```
-Memory used: 349.0 KB
+Memory used: 349.084 KB
 ```
 
 ## Understanding Data Types

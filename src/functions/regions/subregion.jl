@@ -17,7 +17,7 @@ subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
             height::Real=0.,              # cylinder
             direction::Symbol=:z,         # cylinder
 
-            center::Array{<:Any,1}=[0.,0.,0.],     # all
+            center::CenterType=[0.,0.,0.],     # all
             range_unit::Symbol=:standard,           # all
             cell::Bool=true,                        # hydro, gravity and RT (AMR cell data)
             inverse::Bool=false,                    # all
@@ -69,7 +69,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
     height::Real=0.,              # cylinder
     direction::Symbol=:z,         # cylinder
 
-    center::Array{<:Any,1}=[0.,0.,0.],      # all
+    center::CenterType=[0.,0.,0.],      # all
     range_unit::Symbol=:standard,           # all
     cell::Bool=true,                        # hydro, gravity and RT (AMR cell data)
     inverse::Bool=false,                    # all

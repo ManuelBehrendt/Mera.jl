@@ -184,7 +184,7 @@ usually I/O bound, so it saturates once the storage does; see
     splits the pixels (bitwise identical to serial at any thread count); `:mass`, `:volume` and
     `:sph` split the particles into chunks with per-thread accumulators reduced in a fixed order.
 
-    This matters most on the particle-based codes (GADGET, AREPO, SWIFT, GIZMO), where the gas
+    This matters most on the particle-based codes (GADGET, AREPO), where the gas
     is particles too, so *every* projection takes this path. `:voronoi` is compute-bound and
     scales well; the deposition schemes are memory-bandwidth bound and gain roughly 2 to 4×. Costs
     per scheme are in [GADGET / AREPO](../gadget_reader.md).

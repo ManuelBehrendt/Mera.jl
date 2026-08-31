@@ -19,7 +19,7 @@ else
     # Each oracle writes what it MEASURED next to what theory says, as a small CSV. Numbers, not
     # pictures, on purpose: they are dependency-free, a few KB, and DIFFABLE between runs — so a
     # slope drifting from 0.375 to 0.361 across commits is visible, which an image cannot show.
-    # Figures can be generated from these afterwards (see testdata/make_figures.jl for the
+    # Figures can be generated from these afterwards (see docs/make_timeseries_figures.jl for the
     # pattern). In CI this directory is what `actions/upload-artifact` would publish.
     #
     # Override the location with MERA_TEST_RESULTS; default test/results/ (gitignored).
@@ -154,7 +154,42 @@ else
         _diag("mhdtube3d", ["time", "bx_dev_centre", "bx_dev_face", "by_min", "by_max", "bz_absmax"], diag)
     end
 
-    # ------------------------------------------------------------------ gravity + particles
+    # ------------------------------------------------------------------ MHD frame decomposition
+# B is a vector like v and a, so its cylindrical/spherical components must satisfy the same
+# geometric identities. These are checked as ORTHOGONAL DECOMPOSITIONS rather than against a
+# restatement of the formula, so an algebra slip in any single component fails here.
+@testset "mhdtube3d: magnetic field in cylindrical and spherical components" begin
+    f = PUBLIC_FIXTURES[:mhdtube3d]
+    info = getinfo(sort(checkoutputs(f.path, verbose=false).outputs)[1], f.path, verbose=false)
+    gas  = gethydro(info, verbose=false, show_progress=false)
+    c    = [:bc]
+    bz   = getvar(gas, :bz);   bmag = getvar(gas, :bmag)
+    brc  = getvar(gas, :br_cylinder,          center=c)
+    bpc  = getvar(gas, :bϕ_cylinder,          center=c)
+    bmc  = getvar(gas, :b_magnitude_cylinder, center=c)
+    brs  = getvar(gas, :br_sphere,            center=c)
+    bts  = getvar(gas, :bθ_sphere,            center=c)
+    bps  = getvar(gas, :bϕ_sphere,            center=c)
+
+    # a decomposition must put back together into the magnitude it came from
+    @test isapprox(sqrt.(brs.^2 .+ bts.^2 .+ bps.^2), bmag; rtol=1e-8)
+    @test isapprox(sqrt.(brc.^2 .+ bpc.^2 .+ bz.^2),  bmag; rtol=1e-8)
+    # the in-plane magnitude is the cylindrical pair, and can never exceed the full field
+    @test isapprox(hypot.(brc, bpc), bmc; rtol=1e-10)
+    @test all(bmc .<= bmag .+ 1e-12)
+    # the azimuthal component is shared between the two frames, as it is for velocity
+    @test bps == bpc
+    # ASCII spellings resolve to the same values as the Greek canonical ones
+    @test getvar(gas, :bphi_cylinder, center=c) == bpc
+    @test getvar(gas, :btheta_sphere, center=c) == bts
+    @test getvar(gas, :bphi_sphere,   center=c) == bps
+    # and they are registered as frame-relative, so they warn when no centre is given
+    for v in (:br_cylinder, :bϕ_cylinder, :br_sphere, :bθ_sphere, :bϕ_sphere, :b_magnitude_cylinder)
+        @test v in Mera._CENTER_RELATIVE_VARS
+    end
+end
+
+# ------------------------------------------------------------------ gravity + particles
     @testset "sedov3d_grav_part: tracers are conserved; gravity and particles both readable" begin
         f = PUBLIC_FIXTURES[:sedov3d_grav_part]; P = f.path
         outs = sort(checkoutputs(P, verbose=false).outputs)

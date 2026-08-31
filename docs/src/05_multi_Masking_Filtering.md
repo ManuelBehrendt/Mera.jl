@@ -8,10 +8,10 @@
 # 5. Masking & Filtering: Selection by Value
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `05_multi_Masking_Filtering.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/05_multi_Masking_Filtering.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `05_multi_Masking_Filtering.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/05_multi_Masking_Filtering.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-The [sub-region pages](03_hydro_Get_Subregions.md) select by **place** — a sphere,
+The [sub-region pages](03_hydro_Get_Subregions.md) select by **place**, a sphere,
 a cylinder, a slab. This page selects by **state**: temperature, density, age,
 speed, or any quantity Mera can derive. The two are independent, they compose in
 either order, and together they cover most of what "give me *this* gas" means.
@@ -20,7 +20,7 @@ Two verbs do the work, and the only difference is what they hand back:
 
 | | returns | use it when |
 |:--|:--|:--|
-| `filterdata(obj, condition)` | a **new object** of the same type | you want to carry on working — project it, cut it, weigh it |
+| `filterdata(obj, condition)` | a **new object** of the same type | you want to carry on working, project it, cut it, weigh it |
 | `getmask(obj, condition)` | a **`Vector{Bool}`** over the rows | you want to pass `mask=` to a Mera function and keep the original object |
 
 Everything else on this page is about writing the *condition*.
@@ -50,7 +50,7 @@ decoration.
 ## 1. Selection by State
 
 The same galaxy as the sub-region pages, at `lmax=8` so the page stays quick.
-All three data types are loaded, because filtering is not a hydro-only idea —
+All three data types are loaded, because filtering is not a hydro-only idea,
 particles filter on age, clumps on their catalogue properties.
 
 ```julia
@@ -80,7 +80,7 @@ println("clumps         : ", length(clumps.data))
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.9.0 | Julia 1.12.7 | 4 threads
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
 gas cells      : 849332
 star particles : 508939
 clumps         : 644
@@ -108,13 +108,13 @@ identical                       : true
 ```
 
 Same selection, same answer, two shapes. Which one you want depends on what comes
-next — §4 makes that concrete.
+next, §4 makes that concrete.
 
 ## 2. A Condition Is a Quantity, a Threshold and a Unit
 
 `Above`, `Below`, `InRange` and `Equals` take a **quantity name**, a value, and
 the unit that value is in. The quantity may be a stored column (`:rho`) or
-anything `getvar` can *derive* — temperature, sound speed, Mach number, a
+anything `getvar` can *derive*, temperature, sound speed, Mach number, a
 cylindrical radius. That is the whole point: you write the physics, not the code
 that reconstructs it.
 
@@ -144,30 +144,27 @@ Above(:rho, 1, :nH)               10126     79.8 %
 Below(:T, 2e4, :K)                33569     37.0 %
 Above(:cs, 20, :km_s)             652583    44.6 %
 [Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
-             `center=` fixes the origin; `vcenter=` fixes the frame, and they are separate.
-             For an object with bulk motion pass vcenter=:auto, or vcenter=bulk_velocity(obj).
-             Harmless if the object is already at rest in the box; on a halo streaming at
-             ~200 km/s this shifted |J| by 34 % and its direction by ~5 degrees.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
              (shown once per session; verbose(false) silences Mera's messages)
 Above(:mach, 1)                   520858    94.5 %
-[Mera] Hint: getvar(:r_cylinder) has no `center` — it is measured about the box CORNER.
-             Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.
-             This is a different argument from the `center` that places a region; give it
-             the same origin. Absolute positions :x/:y/:z are unaffected.
+[Mera] Hint: getvar(:r_cylinder) has no `center`: it is measured about the box CORNER.
+             Pass center=:bc, or center=[x, y, z] with center_unit. This is a separate
+             argument from the `center` that places a region; give both the same origin.
              (shown once per session; verbose(false) silences Mera's messages)
 InRange(:r_cylinder, 0,10,:kpc)   8896      0.1 %
 Equals(:level, gas.lmax)          501568    92.6 %
 ```
 
 Note `:r_cylinder` in that list. A *geometric* quantity used as a value
-condition selects a cylinder — but by testing each cell's centre, with no
+condition selects a cylinder, but by testing each cell's centre, with no
 boundary treatment. When the geometry is what you care about, use a region
 instead (§7); the exactness is worth it.
 
 Two further selectors are worth knowing:
 
-- `Satisfies(:quantity, f)` — an arbitrary predicate, when a threshold is not enough.
-- `IsFinite(:quantity)` — drops `NaN`/`Inf` before a statistic. Data hygiene, and
+- `Satisfies(:quantity, f)`, an arbitrary predicate, when a threshold is not enough.
+- `IsFinite(:quantity)`, drops `NaN`/`Inf` before a statistic. Data hygiene, and
   cheap insurance.
 
 ## 3. Combining Conditions
@@ -209,7 +206,7 @@ cold + not-cold mass  : 3.096875415e10
 whole box mass        : 3.096875415e10
 ```
 
-The partition is exact because `!` is a strict negation of the same test — no
+The partition is exact because `!` is a strict negation of the same test, no
 cell is counted twice and none is dropped. That check costs one line and catches
 a mis-specified threshold immediately.
 
@@ -237,7 +234,7 @@ finest level & top 1 %: 8494     78.6 %
 ```
 
 `AbovePercentile(:rho, 90)` is *the densest tenth of the cells*, whatever the
-density scale of this simulation happens to be — the right tool when you have not
+density scale of this simulation happens to be, the right tool when you have not
 looked at the numbers yet, or when the same script must run on several outputs.
 
 ## 4. Two Shapes: an Object or a Mask
@@ -249,8 +246,8 @@ it, filter it again, weigh it. Use it when the selection *is* the thing you are
 studying.
 
 **`getmask` returns a `Vector{Bool}`** aligned with the original rows. Use it when
-you want a statistic *of the whole object* restricted to a subset — every Mera
-function with a `mask=` keyword takes it — or when you need several different
+you want a statistic *of the whole object* restricted to a subset, every Mera
+function with a `mask=` keyword takes it, or when you need several different
 subsets of one object without copying the data each time.
 
 ```julia
@@ -327,12 +324,12 @@ gas ⟨vx⟩ mass-weighted [km/s] : all -1.2   masked -3.094
 ```
 
 The mask must be as long as the object's row count, which is why it belongs to
-the object it came from — `getmask(gas, …)` cannot be passed to a particle
+the object it came from, `getmask(gas, …)` cannot be passed to a particle
 function. Mixing them is the one mistake worth watching for.
 
 ### Selecting by what a particle *is*
 
-Everything above selects on a **value** — a density, an age, a speed. Particles also carry a
+Everything above selects on a **value**, a density, an age, a speed. Particles also carry a
 **type**: RAMSES tags each one with a family code saying whether it is dark matter, a star, a
 sink-cloud marker, debris, or a tracer. `getparticlemask` turns that into the same kind of
 `Vector{Bool}` the rest of this page uses, so type and value conditions combine freely:
@@ -352,7 +349,7 @@ young_stars = getparticlemask(parts, :stars) .& getmask(parts, Below(:age, 100, 
 
 The galaxy used on this page was written in the **legacy** particle format, which has no `:family`
 column at all. There `getparticlemask` falls back to `:birth` and offers only `:stars`
-(`birth != 0`) and `:dm` (`birth == 0`) — which is why the age conditions above are the natural
+(`birth != 0`) and `:dm` (`birth == 0`), which is why the age conditions above are the natural
 way to work with it.
 
 ```julia
@@ -371,8 +368,8 @@ tracer   -> unavailable (legacy format)
 
 On a run written in the modern format the `:family` column is present, and then the type is just
 another quantity: `getmask` and `filterdata` work on it exactly as they do on density or age. The
-small public test simulation below carries Monte-Carlo **tracers** — test particles advected by the
-flow without acting back on it — so every selection route can be shown at once.
+small public test simulation below carries Monte-Carlo **tracers**, test particles advected by the
+flow without acting back on it, so every selection route can be shown at once.
 
 ```julia
 tracer_run = "$MERA_EXAMPLES/RAMSES-PUBLIC/sedov3d_grav_part"
@@ -401,8 +398,8 @@ filterdata(:family, ==(0))  : 124990 rows
 tracers inside a sphere     : 1707 of 1707 particles in the region
 ```
 
-Three routes to the same rows — a named type, a value condition on `:family`, and a filtered
-object — and the type survives a `subregion`, so *where* and *what* compose in either order. The
+Three routes to the same rows, a named type, a value condition on `:family`, and a filtered
+object, and the type survives a `subregion`, so *where* and *what* compose in either order. The
 same holds through a mera-file round trip: `:family` and `:tag` are ordinary columns and are
 written and read back unchanged.
 
@@ -416,7 +413,7 @@ using CairoMakie
 CairoMakie.activate!()
 
 # ─────────────────────────────────────────────────────────────────────
-# FIGURE INFRASTRUCTURE for the whole page — skim freely on first read.
+# FIGURE INFRASTRUCTURE for the whole page, skim freely on first read.
 # The one Mera-relevant definition is `prj`: the projection defaults every panel reuses.
 # ─────────────────────────────────────────────────────────────────────
 const SDLIM5 = (-3.0, 3.0)     # log10 Σ [Msol/pc²] — one colour scale for every panel below
@@ -435,35 +432,6 @@ prj(d; kw...) = projection(d, :sd, :Msol_pc2; direction=:z, center=[:bc], range_
 ```
 
 ```
-[ Info: Precompiling CairoMakie [13f3f980-e62b-5c42-98c6-ff1f3baf88f0](cache misses: wrong dep version loaded (1), incompatible header (8))
-[ Info: Precompiling CairoMakie [13f3f980-e62b-5c42-98c6-ff1f3baf88f0] (cache misses: wrong dep version loaded (2), incompatible header (16))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Precompiling FilePathsURIsExt [159e7594-57f7-51fe-8c60-75839224e477](cache misses: wrong dep version loaded (1), incompatible header (3))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Precompiling FilePathsURIsExt [159e7594-57f7-51fe-8c60-75839224e477] (cache misses: wrong dep version loaded (2), incompatible header (6))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Precompiling IntervalArithmeticRecipesBaseExt [e3b91bd4-2888-5303-85ed-4cf5ebb38ff1](cache misses: wrong dep version loaded (1), incompatible header (5))
-[ Info: Precompiling IntervalArithmeticRecipesBaseExt [e3b91bd4-2888-5303-85ed-4cf5ebb38ff1] (cache misses: wrong dep version loaded (2), incompatible header (10))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Precompiling PolynomialsMakieExt [6a4b1961-d857-5aa3-b7f6-fc7c46de29bb](cache misses: wrong dep version loaded (1), incompatible header (8))
-[ Info: Precompiling PolynomialsMakieExt [6a4b1961-d857-5aa3-b7f6-fc7c46de29bb] (cache misses: wrong dep version loaded (2), incompatible header (16))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (1), incompatible header (8))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (2), incompatible header (16))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.9.0
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-```
-
-```
 prj (generic function with 1 method)
 ```
 
@@ -477,7 +445,7 @@ for (n, o) in (("cold  T<2e4 K ", cold_g), ("hot   T>1e6 K ", hot_g), ("densest 
             " Msol  = ", round(100*msum(o, :Msol)/m_all, digits=1), " % of the box")
 end
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(1180, 420))
 sdpanel!(Axis(fig[1, 1], title="cold gas  T < 2·10⁴ K — the star-forming phase"), prj(cold_g))
 sdpanel!(Axis(fig[1, 2], title="hot gas  T > 10⁶ K — smooth and volume-filling"), prj(hot_g))
@@ -497,7 +465,7 @@ densest 1%    : 8494     2.433e10 Msol  = 78.6 % of the box
 Three views of one simulation, on one colour scale. The cold phase is
 filamentary and carries 37 % of the mass in 4 % of the cells; the hot phase is
 smooth and volume-filling, 6.9 % of the mass spread over most of the box; and the
-densest percentile — a *relative* threshold — isolates the clumps while holding
+densest percentile, a *relative* threshold, isolates the clumps while holding
 79 % of the mass, without anyone having to know this run's density scale.
 
 Read the middle panel with the usual care: it is a column density, so a smooth
@@ -537,7 +505,7 @@ cold + rest  vs  disc      : 2.28691723e10  vs  2.28691723e10 Msol
 filter→region == region→filter cells : true
 ```
 
-The partition still closes exactly *inside a split region* — `filterdata`
+The partition still closes exactly *inside a split region*, `filterdata`
 preserves the `:fraction` column, so a half-inside boundary cell contributes its
 half to whichever phase it belongs to. That is the property that lets you mix the
 two selection styles without quietly losing mass at the rim.
@@ -545,13 +513,13 @@ two selection styles without quietly losing mass at the rim.
 The two edges in the map below are worth telling apart: the **outer rim** is
 geometric and smooth, feathered by the fraction weighting; the **internal edges**
 between cold and warm gas are value edges, and they are cell-sharp, because a
-cell either passes the temperature test or does not — there is no such thing as
+cell either passes the temperature test or does not, there is no such thing as
 half a cell being cold.
 
 ```julia
 p_cd = prj(cold_d)
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(640, 520))
 ax = Axis(fig[1, 1], title="cold gas inside the split disc — two kinds of edge")
 sdpanel!(ax, p_cd)
@@ -580,13 +548,13 @@ cold mass, refine_to vs plain      : 1.0
 ```
 
 `refine_to` changes how sharply the boundary is *drawn*, not how much mass is
-inside it — the ratio above is 1 to five digits. See §7 of the
+inside it, the ratio above is 1 to five digits. See §7 of the
 [hydro sub-region page](03_hydro_Get_Subregions.md) for what it costs.
 
 ## 8. Adding a Column of Your Own
 
 Any array as long as the table can be pushed in as a new column and then used
-like a native one — projected, filtered, masked. `transform` adds it, `select …
+like a native one, projected, filtered, masked. `transform` adds it, `select …
 Not(…)` removes it again.
 
 ```julia
@@ -612,15 +580,15 @@ columns after removal: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :passive
 ```
 
 Mera already derives `:mach` on demand, so this is not the way to *get* a Mach
-number — it is the way to attach something Mera cannot know about: a tracer, a
+number, it is the way to attach something Mera cannot know about: a tracer, a
 label from an external catalogue, the output of your own model.
 
 ## 9. Reference: the Raw Table Path
 
 Underneath, a Mera object holds an `IndexedTable`, and every filter above can be
 written directly against it. This is the older interface. It is still the right
-tool when you need a predicate that is not a value condition — one that mixes
-columns, or calls out to your own function — and it keeps existing scripts
+tool when you need a predicate that is not a value condition, one that mixes
+columns, or calls out to your own function, and it keeps existing scripts
 working unchanged.
 
 The trade-off: you work in **code units**, positions must be reconstructed by
@@ -663,7 +631,7 @@ cv     = boxlen / 2.                       # box centre, code units
 radius = 3. / gas.scale.kpc
 height = 2. / gas.scale.kpc
 
-# a cell's CENTRE is (cx - 0.5) * boxlen / 2^level — cx is the 1-based index on the level grid
+# a cell's CENTRE is (cx - 0.5) * boxlen / 2^level, cx is the 1-based index on the level grid
 filtered_db = filter(p -> p.rho >= density &&
                      sqrt(((p.cx - 0.5) * boxlen/2^p.level - cv)^2 +
                           ((p.cy - 0.5) * boxlen/2^p.level - cv)^2) <= radius &&
@@ -671,7 +639,7 @@ filtered_db = filter(p -> p.rho >= density &&
 println("hand-built cylinder + density : ", length(filtered_db), " rows, ",
         round(sum(getvar(gas, :mass, :Msol, filtered_db=filtered_db)), sigdigits=6), " Msol")
 
-# the same thing as a region and a condition — units, exact boundary, and no geometry by hand
+# the same thing as a region and a condition, units, exact boundary, and no geometry by hand
 reg = Cylinder(3., 2.; center=[:bc], range_unit=:kpc)
 sel = filterdata(subregion(gas, reg, verbose=false), Above(:rho, 3, unit=:Msol_pc3), verbose=false)
 println("region × condition            : ", length(sel.data), " rows, ",
@@ -686,11 +654,11 @@ region × condition            : 37 rows, 2.83126e9 Msol   (split boundary)
 The two numbers differ, and the difference is the point of the sub-region pages:
 the hand-built version keeps whole cells whose centres pass the test, the region
 version weights the boundary cells by the fraction actually inside. Neither is
-"wrong" — they answer slightly different questions — but only one of them adds up
+"wrong", they answer slightly different questions, but only one of them adds up
 when you put regions next to each other.
 
-**Macros.** `@filter` writes a single comparison compactly, and — applied to a
-Mera object rather than a table — routes through `filterdata`, so it returns an
+**Macros.** `@filter` writes a single comparison compactly, and, applied to a
+Mera object rather than a table, routes through `filterdata`, so it returns an
 object and understands derived quantities:
 
 ```julia
@@ -730,7 +698,7 @@ type            : BitVector
 ```
 
 All three produce the same `Vector{Bool}`. `getmask` is the one that states the
-unit, works on derived quantities, and composes with `&` `|` `!` — the others are
+unit, works on derived quantities, and composes with `&` `|` `!`, the others are
 worth knowing because they are what to reach for when the test is not expressible
 as a condition on one quantity.
 
@@ -741,7 +709,7 @@ as a condition on one quantity.
 will mean something different in the next simulation.
 
 **Filter, then look.** A condition is cheap and a map is cheap. §6 takes seconds
-and catches a threshold that selects nothing — or everything — before it becomes
+and catches a threshold that selects nothing, or everything, before it becomes
 a result.
 
 **Check the partition.** A condition and its `!` must reproduce the parent's
@@ -765,7 +733,7 @@ region (§7) and let the boundary cells carry their fractions.
   `getmask` returns a **`Vector{Bool}`** for any Mera function that takes `mask=`.
   They select identically (§1, §4).
 - A condition is a **quantity, a threshold and a unit**, and the quantity can be
-  anything `getvar` derives — temperature, sound speed, Mach number, age (§2).
+  anything `getvar` derives, temperature, sound speed, Mach number, age (§2).
 - Conditions compose with `&`, `|`, `!`; several arguments mean AND; and
   `AbovePercentile`/`BelowPercentile` set the threshold from the data itself
   (§3).
@@ -773,15 +741,15 @@ region (§7) and let the boundary cells carry their fractions.
   `filterdata` preserves a split region's `:fraction`, so a mass budget still
   closes when you mix them (§7).
 - The raw `IndexedTables` path is still there for predicates that are not value
-  conditions — at the price of code units and hand-built geometry (§9).
+  conditions, at the price of code units and hand-built geometry (§9).
 
 **Continue with:**
 
-- [Hydro sub-regions](03_hydro_Get_Subregions.md) — selection by place, exact
+- [Hydro sub-regions](03_hydro_Get_Subregions.md), selection by place, exact
   cell splitting, and mass budgets.
 - The sibling sub-region pages for
   [particles](03_particles_Get_Subregions.md),
   [gravity](03_gravity_Get_Subregions.md) and
   [clumps](03_clumps_Get_Subregions.md).
-- [How Quantities Are Computed](computation_reference.md) — the formula behind
+- [How Quantities Are Computed](computation_reference.md), the formula behind
   every quantity a condition can name.

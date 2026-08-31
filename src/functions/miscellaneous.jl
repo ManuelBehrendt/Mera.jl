@@ -338,6 +338,9 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
 
     scale.nH        = X_frac / mH * unit_d  # Hydrogen number density in [H/cc]
     scale.erg       = unit_m * (unit_l / unit_t)^2 # [g (cm/s)^2]
+    # NAME HAZARD: reads as g*cm/s^2 (a force) but is g/(cm*s^2), a PRESSURE, and is exactly
+    # equal to Ba/g_cm_s2. It is kept because it is a public unit name, but for a force use
+    # :dyne and for an acceleration use :cm_s2. clumpfind once used it for accelerations.
     scale.g_cms2    = unit_m / (unit_l * unit_t^2)
 
     scale.T_mu      = mH / kB * (unit_l / unit_t)^2 # T/mu [Kelvin]
@@ -350,20 +353,35 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.K_cm3     = scale.p_kB # p/kB
 
     # Entropy-specific units for astrophysical applications
-    scale.erg_g_K   = (unit_m * (unit_l / unit_t)^2) / (unit_d * unit_l^3) / kB  # [erg/(g·K)] specific entropy
-    scale.keV_cm2   = scale.erg_g_K * unit_d * unit_l^2 / constants.eV * 1000.0  # [keV·cm²] entropy per particle (X-ray astro)
+    # ENTROPY. :entropy_specific computes (k_B/m_u)*ln(P/rho^gamma)/(gamma-1). k_B is erg/K and
+    # m_u is g, so that value is ALREADY erg/(g*K); it is not in code units like the other
+    # quantities. The factor that converts it to erg/(g*K) is therefore 1, and the rest of the
+    # entropy family is built from that. The old expression was specific_energy/kB, whose
+    # dimension is K/g, so asking for :erg_g_K multiplied an already-cgs number by ~3e29.
+    scale.erg_g_K   = 1.0                                                        # [erg/(g·K)] specific entropy, already cgs
+    # X-ray "entropy" K = kT/n^(2/3) is a DIFFERENT quantity with no getvar implementation, so
+    # there is nothing here to convert. Left as the identity rather than inventing a factor.
+    scale.keV_cm2   = 1.0                                                        # [keV·cm²] X-ray entropy (no quantity yet)
     
     # Additional entropy unit scales
-    scale.erg_K         = scale.erg_g_K * unit_d * unit_l^3                      # [erg/K] total entropy
-    scale.J_K           = scale.erg_K / 1e7                                      # [J/K] SI total entropy  
-    scale.erg_cm3_K     = scale.erg_g_K * unit_d                                 # [erg/(cm³·K)] entropy density
-    scale.J_m3_K        = scale.erg_cm3_K * 1e1                                  # [J/(m³·K)] SI entropy density
+    # total entropy = specific entropy (already erg/(g*K)) times the cell mass in grams
+    scale.erg_K         = scale.g                                                # [erg/K] total entropy
+    scale.J_K           = scale.erg_K * 1e-7                                     # [J/K] SI total entropy
+    # entropy density = specific entropy times the density in g/cm^3
+    scale.erg_cm3_K     = unit_d                                                 # [erg/(cm³·K)] entropy density
+    # 1 erg/cm^3 = 1e-7 J / 1e-6 m^3 = 1e-1 J/m^3. The old 1e1 had the sign of the exponent wrong.
+    scale.J_m3_K        = scale.erg_cm3_K * 1e-1                                 # [J/(m³·K)] SI entropy density
     scale.kB_per_particle = constants.k_B                                        # [erg/K per particle] Boltzmann constant
     
     # Angular momentum units
-    scale.J_s           = unit_m * (unit_l^2 / unit_t)                          # [J·s] Angular momentum (SI)
-    scale.g_cm2_s       = unit_m * (unit_l^2 / unit_t)                          # [g·cm²/s] Angular momentum (cgs)
-    scale.kg_m2_s       = scale.g_cm2_s * 1e-3 * 1e4                           # [kg·m²/s] Angular momentum (SI)
+    scale_g_cm2_s       = unit_m * (unit_l^2 / unit_t)   # cgs angular momentum, shared below
+    # J*s = kg*m^2/s = 1e7 g*cm^2/s, so the SI value is the cgs one times 1e-7. This line was
+    # byte-identical to g_cm2_s below: a cgs number wearing an SI label.
+    scale.J_s           = scale_g_cm2_s * 1e-7                                   # [J·s] Angular momentum (SI)
+    scale.g_cm2_s       = scale_g_cm2_s                                          # [g·cm²/s] Angular momentum (cgs)
+    # g->kg is 1e-3 and cm^2->m^2 is 1e-4, so the product is 1e-7. The old 1e-3*1e4 = 1e1 had
+    # the second exponent's sign flipped, an error of 1e8.
+    scale.kg_m2_s       = scale_g_cm2_s * 1e-7                                   # [kg·m²/s] Angular momentum (SI)
     
     # Magnetic field units (corrected formulas)
     scale.Gauss     = sqrt(4π * unit_m / (unit_l * unit_t^2))                   # [G] Magnetic field strength  
@@ -398,8 +416,14 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.erg_cm3_s = unit_m / (unit_l * unit_t^3)                              # [erg/(cm³·s)] Volumetric cooling rate
     
     # Flux and surface brightness (corrected)
-    scale.erg_cm2_s = unit_m / (unit_l * unit_t^3)                              # [erg/(cm²·s)] Energy flux
-    scale.Jy        = scale.erg_cm2_s / 1e-23                                    # [Jy] Jansky (radio astronomy)
+    # A flux is energy/(area*time) = unit_m/unit_t^3. The old expression was byte-identical to
+    # erg_cm3_s above, i.e. a per-VOLUME rate, and so was low by a factor unit_l.
+    scale.erg_cm2_s = unit_m / unit_t^3                                          # [erg/(cm²·s)] Energy flux
+    # A Jansky is a SPECTRAL flux density, 1e-23 erg/(s*cm^2*Hz). Since Hz^-1 = s, that reduces
+    # to erg/cm^2, whose code scale is unit_m/unit_t^2, NOT the bolometric erg_cm2_s above.
+    # Mera has no per-Hz quantity yet, so this converts a spectral flux density the caller
+    # supplies; it is not applicable to a bolometric flux.
+    scale.Jy        = (unit_m / unit_t^2) / 1e-23                                # [Jy] Jansky (spectral flux density)
     scale.mJy       = scale.Jy * 1e3                                             # [mJy] Milli-Jansky
     scale.microJy   = scale.Jy * 1e6                                             # [μJy] Micro-Jansky
     
@@ -412,17 +436,25 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.cm_s2     = unit_l / unit_t^2                                          # [cm/s²] Acceleration
     scale.m_s2      = scale.cm_s2 / 100.0                                        # [m/s²] SI acceleration
     scale.km_s2     = scale.cm_s2 / 1e5                                          # [km/s²] Acceleration
-    scale.pc_Myr2   = scale.cm_s2 * (scale.Myr^2 / scale.pc)                    # [pc/Myr²] Astronomical acceleration
+    # cm/s^2 -> pc/Myr^2 multiplies by Myr_s^2/pc_cm, and scale.Myr/scale.pc are the RECIPROCALS
+    # of those. The old form inverted both, cancelling every unit_* and leaving a constant that
+    # did not depend on the simulation at all.
+    scale.pc_Myr2   = scale.pc / scale.Myr^2                                     # [pc/Myr²] Astronomical acceleration
     
     # Gravitational potential and energy unit scales
     scale.erg_g     = (unit_l / unit_t)^2                                        # [erg/g] Specific energy/potential
-    scale.J_kg      = scale.erg_g / 1e7                                          # [J/kg] SI specific energy
+    # 1 erg/g = 1e-7 J / 1e-3 kg = 1e-4 J/kg. The old /1e7 converted erg->J but not g->kg.
+    scale.J_kg      = scale.erg_g * 1e-4                                         # [J/kg] SI specific energy
     scale.km2_s2    = scale.erg_g / 1e10                                         # [km²/s²] Velocity squared units
     
     # Gravitational energy analysis unit scales
     scale.u_grav        = unit_d * scale.erg_g                                  # [erg/cm³] Gravitational energy density
     scale.erg_cell      = unit_d * scale.erg_g * unit_l^3                       # [erg] Total energy per cell
-    scale.dyne          = unit_d * scale.cm_s2                                  # [dyne] Force
+    # A force is mass times acceleration, so the scale needs the cell mass, unit_d*unit_l^3,
+    # not the density alone. The old `unit_d * cm_s2` was a force DENSITY (dyn/cm^3) labelled
+    # as a force, and it agreed with the truth only when unit_l == 1 cm. The one fixture that
+    # carries gravity happens to have exactly that, so nothing caught it.
+    scale.dyne          = scale.g * scale.cm_s2                                 # [dyne] Force
     scale.s_2           = scale.cm_s2 / unit_l                                  # [s⁻²] Acceleration per length  
     scale.lambda_J      = unit_l                                                # [cm] Jeans length scale
     scale.M_J           = unit_d * unit_l^3                                     # [g] Jeans mass scale  
@@ -465,8 +497,8 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.az                           = scale.cm_s2                            # [cm/s²] z-acceleration → acceleration unit
     scale.a_mag                        = scale.cm_s2                            # [cm/s²] Acceleration magnitude → acceleration unit
     scale.a_magnitude                  = scale.cm_s2                            # [cm/s²] Acceleration magnitude → acceleration unit
-    scale.v_esc                        = scale.cm_s                             # [cm/s] Escape velocity → velocity unit
-    scale.escape_speed                 = scale.cm_s                             # [cm/s] Escape velocity → velocity unit
+    scale.v_esc                        = scale.cm_s                             # [cm/s] Escape velocity → velocity unit  # KEPT: quantity removed 2026-08-30, field stays (mera-file compat)
+    scale.escape_speed                 = scale.cm_s                             # [cm/s] Escape velocity → velocity unit  # KEPT: quantity removed 2026-08-30, field stays (mera-file compat)
     scale.epot                         = scale.erg_g                            # [erg/g] Gravitational potential → specific energy
     scale.Fg                           = scale.dyne                             # [dyne] Gravitational force → force unit
     scale.gravitational_energy_density = scale.u_grav                           # [erg/cm³] Energy density → gravitational energy density
@@ -474,7 +506,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.total_binding_energy         = scale.erg_cell                         # [erg] Total energy per cell → per-cell energy
     scale.gravitational_work           = scale.erg                              # [erg] Work/energy → energy unit
     scale.delta_rho                    = scale.dimensionless                    # Dimensionless density contrast
-    scale.gravitational_redshift       = scale.dimensionless                    # Dimensionless redshift
+    scale.gravitational_redshift       = scale.dimensionless                    # Dimensionless redshift  # KEPT: quantity removed 2026-08-30, field stays (mera-file compat)
     scale.poisson_source               = 1.0 / unit_t^2                         # [s⁻²] Poisson source term → inverse time squared
 
     return scale

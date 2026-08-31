@@ -90,8 +90,13 @@ With ``k_B`` Boltzmann's constant, ``m_u`` the atomic mass unit and ``\gamma`` t
 
 ### Gas particle thermodynamics (GADGET/AREPO family)
 
-*Data: **particles** (`getparticles`) on a GADGET/AREPO/SWIFT/GIZMO gas snapshot, needs the
+*Data: **particles** (`getparticles`) on a GADGET or AREPO gas snapshot, needs the
 specific internal energy `:u`. Requesting these without `:u` raises an `ArgumentError`.*
+
+!!! note "Where the data comes from"
+    Mera's analysis layer is code-blind, so these quantities work on any snapshot once it is in
+    memory. On this branch the readers that load them ship too: see
+    [GADGET](gadget_reader.md) and [AREPO](arepo_reader.md).
 
 These codes store gas as particles rather than AMR cells, so the thermodynamics is computed
 from ``u`` instead of ``p/\rho``, with ``\gamma = 5/3``. The formulas differ from the hydro
@@ -266,20 +271,175 @@ the cell mass:
 
 ## Gravity
 
-*Data: **gravity** (`getgravity`), needs `:epot` and/or `:ax,:ay,:az`.*
+*Data: **gravity** (`getgravity`), which stores the potential ``\phi`` (`:epot`) and the
+acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
 
-From the gravitational potential ``\phi`` (`:epot`) and acceleration ``\mathbf a`` (`:ax,:ay,:az`):
+### From gravity alone
+
+These need nothing but the gravity object. Every component measured about an axis or a centre
+depends on `center`, exactly as the velocity components do.
 
 | Quantity | Formula |
 |---|---|
-| Escape speed `:escape_speed` | ``v_\mathrm{esc} = \sqrt{\max(-2\phi,\,0)}`` |
-| Acceleration magnitude `:a_magnitude` | ``|\mathbf a| = \sqrt{a_x^2+a_y^2+a_z^2}`` |
+| Accel. magnitude `:a_magnitude` | ``|\mathbf a| = \sqrt{a_x^2+a_y^2+a_z^2}`` |
+| In-plane accel. magnitude `:a_magnitude_cylinder` | ``\sqrt{a_{r,\mathrm{cyl}}^2 + a_{\varphi,\mathrm{cyl}}^2}`` |
 | Cyl. radial accel. `:ar_cylinder` | ``a_{r,\mathrm{cyl}} = \dfrac{x\,a_x + y\,a_y}{\sqrt{x^2+y^2}}`` |
+| Cyl. azimuthal accel. `:aphi_cylinder` | ``a_{\varphi,\mathrm{cyl}} = \dfrac{x\,a_y - y\,a_x}{\sqrt{x^2+y^2}}`` |
 | Sph. radial accel. `:ar_sphere` | ``a_{r,\mathrm{sph}} = \dfrac{x\,a_x + y\,a_y + z\,a_z}{\sqrt{x^2+y^2+z^2}}`` |
+| Sph. polar accel. `:atheta_sphere` | polar component about the chosen centre |
+| Sph. azimuthal accel. `:aphi_sphere` | azimuthal component about the chosen centre |
+| Specific energy `:specific_gravitational_energy` | ``\phi`` itself, energy per unit mass |
 
-The ``\max(\cdot,0)`` clamp on the escape speed avoids a negative argument where the potential is
-unbound (``\phi \ge 0``, possible near domain boundaries), those cells return `0` rather than
-erroring.
+### Energy and force, which need the cell mass
+
+A potential is per unit mass, so an **energy** or a **force** needs the mass of the cell, and the
+mass lives on the hydro object rather than the gravity one. Pass both:
+
+```julia
+getvar(gravity, hydro, :Fg, :dyne)              # per cell
+projection(gravity, hydro, :Fg, :dyne)          # as a map
+```
+
+Either object order works in both calls, so `getvar(hydro, gravity, …)` and
+`projection(hydro, gravity, …)` do the same thing. The Greek component names have ASCII
+spellings too: `:Fphi_cylinder` is the same quantity as `:Fϕ_cylinder`, exactly as
+`:vphi_cylinder` is for velocity.
+
+Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Mera
+also checks that the two objects describe the same cells in the same order, so a mass can never be
+paired with another cell's potential; load both over the identical `lmax` and ranges.
+
+| Quantity | Formula | Unit |
+|---|---|---|
+| Potential energy `:gravitational_energy` | ``E = m\,\phi`` | `:erg` |
+| Binding energy `:total_binding_energy` | ``E_\mathrm{b} = -m\,\phi`` | `:erg` |
+| Force magnitude `:Fg` | ``F = m\,|\mathbf a|`` | `:dyne` |
+| Force components `:Fx, :Fy, :Fz` | ``F_i = m\,a_i`` | `:dyne` |
+| Cyl. radial force `:Fr_cylinder` | ``m\,a_{r,\mathrm{cyl}}`` | `:dyne` |
+| Cyl. azimuthal force `:Fϕ_cylinder` | ``m\,a_{\varphi,\mathrm{cyl}}`` | `:dyne` |
+| In-plane force magnitude `:F_magnitude_cylinder` | ``m\,\sqrt{a_{r,\mathrm{cyl}}^2+a_{\varphi,\mathrm{cyl}}^2}`` | `:dyne` |
+| Sph. radial force `:Fr_sphere` | ``m\,a_{r,\mathrm{sph}}`` | `:dyne` |
+| Sph. polar force `:Fθ_sphere` | ``m\,a_{\theta,\mathrm{sph}}`` | `:dyne` |
+| Sph. azimuthal force `:Fϕ_sphere` | ``m\,a_{\varphi,\mathrm{sph}}`` | `:dyne` |
+
+Each force is the mass times the acceleration component **of the same name**, taken from that
+component rather than recomputed, so the two share one definition and one treatment of `center`.
+
+`:gravitational_energy` is negative where the cell is bound, following ``\phi``.
+`:total_binding_energy` is its negative, positive where bound, which is the sign binding energies
+are usually quoted in.
+
+### Projecting a gravity field
+
+Gravity carries no mass and no density, so it cannot weight its own line-of-sight average. That is
+why there is no single-argument `projection(gravity, ...)`: the hydro object supplies the weight.
+
+```julia
+projection(hydro, gravity, :epot)                    # column-mass-weighted mean potential
+projection(hydro, gravity, :epot; weighting=[:volume])
+```
+
+The result is a **weighted mean** along each ray, not a column integral, which is the right
+treatment for an intensive field: a sum would simply scale with the depth of the box. Note
+`weighting` takes a vector. Mass and volume weighting answer different questions and give
+different numbers, so state which one you used.
+
+!!! note "Removed in 1.8: `:escape_speed` and `:gravitational_redshift`"
+    Both treated ``\phi`` as if its zero point were fixed at infinity. RAMSES does not fix it: the
+    potential carries an arbitrary offset, which is set by the boundary conditions and differs
+    between a periodic box, a zoom region and an isolated halo. ``\sqrt{-2\phi}`` is an escape
+    speed only if ``\phi \to 0`` far away, and ``\phi/c^2`` inherits the same offset. They
+    returned confident numbers that meant nothing without a stated reference level, so they were
+    withdrawn rather than left to be misread.
+
+## Velocity dispersion and frames
+
+*Data: **hydro** or **particles**. The dispersions are map quantities: they are computed per pixel
+from the spread of velocities along the ray, so they exist in `projection`, not per cell.*
+
+| Quantity | Meaning |
+|---|---|
+| `:σx, :σy, :σz, :σ` | bulk spread along a box axis, and of the speed |
+| `:σr_cylinder, :σϕ_cylinder` | cylindrical components |
+| `:σr_sphere, :σθ_sphere, :σϕ_sphere` | spherical components |
+| `:σlos` | along an arbitrary line of sight, off-axis only |
+
+Each is ``\sqrt{\langle v^2\rangle - \langle v\rangle^2}`` over the mass in a pixel.
+
+### Thermal broadening
+
+`:σ_thermal` is a per-cell quantity, the 1D thermal width of the mean gas particle:
+
+```math
+\sigma_\mathrm{thermal} = \sqrt{\frac{k_B T}{\mu m_H}} = \sqrt{P/\rho} = \frac{c_s}{\sqrt{\gamma}}
+```
+
+The middle form is what Mera computes, and it needs no μ: ``P/\rho`` **is** ``k_B T/(\mu m_H)`` by
+the ideal gas law, whatever the ionization state. That matters on an RT run, where μ varies per cell
+and the constant μ behind plain `:T` is wrong by a large factor. Use `:T_rt` and `:mu` there.
+
+It is **isotropic**, so there is no directional version. Combine it with a directional bulk
+dispersion by adding the **variances**, because a line profile is a convolution:
+
+```math
+\sigma_\mathrm{total}^2 = \sigma_\mathrm{bulk}^2 + \sigma_\mathrm{thermal}^2
+```
+
+This is the width for a particle of the mean mass ``\mu m_H``. A line is broadened by the mass of
+the *emitting* species, so for a species of mass ``m_X`` scale it by ``\sqrt{\mu m_H/m_X}``: CO is
+28 times heavier than hydrogen and so 5.3 times narrower.
+
+### Subtracting an ordered flow
+
+A dispersion already subtracts the mean **inside each pixel**, so a constant boost cannot change it.
+What it cannot see is an ordered gradient **along the ray**: an edge-on sightline crosses many radii
+rotating at different speeds, so `:σlos` measures the rotation curve rather than turbulence.
+
+`restframe` returns an object with a velocity frame subtracted, which is how a frame reaches
+`projection` (that function has no `vcenter` keyword; `getvar` does).
+
+```julia
+f       = rotation_frame(gas; center=:bc)        # curve measured from the data itself
+gas_rot = restframe(gas; vcenter=f, center=:bc)
+projection(gas_rot, :σlos, :km_s; direction=:edgeon, center=:bc)
+```
+
+`vcenter` accepts a 3-vector, `:auto` for the mass-weighted bulk velocity, or a function
+`f(x, y, z)` returning an ordered velocity field. `rotation_frame` builds that function by binning
+cells in cylindrical radius and taking the mass-weighted mean ``v_\varphi`` per bin.
+
+!!! note "Comparing frames"
+    `direction=:faceon` and `:edgeon` derive their orientation from the angular momentum, and
+    changing velocities changes ``\mathbf L``, so the camera moves between two frames. For a
+    controlled before-and-after comparison use `direction=:x/:y/:z`.
+
+## Magnetic field
+
+*Data: **hydro** of an MHD run. RAMSES stores the field on cell faces as `:bx_left`/`:bx_right`
+and so on; Mera averages the two faces to the cell centre for `:bx, :by, :bz`.*
+
+| Quantity | Formula |
+|---|---|
+| Field magnitude `:bmag` | ``|\mathbf B| = \sqrt{B_x^2+B_y^2+B_z^2}`` |
+| Magnetic pressure `:pmag` | ``B^2/2`` |
+| Plasma beta `:beta` | ``P_\mathrm{thermal} / (B^2/2)`` |
+| Alfven speed `:v_alfven` | ``|\mathbf B|/\sqrt{\rho}`` |
+| Magnetic energy `:e_magnetic` | ``(B^2/2)\,V`` per cell |
+
+`B` is a vector, so it decomposes into cylindrical and spherical components the same way velocity
+and acceleration do. These are measured about `center`, and warn if none is given.
+
+| Quantity | Formula |
+|---|---|
+| Cyl. radial `:br_cylinder` | ``(x B_x + y B_y)/\sqrt{x^2+y^2}`` |
+| Cyl. azimuthal `:bϕ_cylinder` | ``(x B_y - y B_x)/\sqrt{x^2+y^2}`` |
+| In-plane magnitude `:b_magnitude_cylinder` | ``\sqrt{B_{r,\mathrm{cyl}}^2 + B_{\varphi,\mathrm{cyl}}^2}`` |
+| Sph. radial `:br_sphere` | ``(x B_x + y B_y + z B_z)/\sqrt{x^2+y^2+z^2}`` |
+| Sph. polar `:bθ_sphere` | ``\big(z(xB_x+yB_y) - (x^2+y^2)B_z\big) / (r_\mathrm{sph}\,r_\mathrm{cyl})`` |
+| Sph. azimuthal `:bϕ_sphere` | same as the cylindrical azimuthal component |
+
+ASCII spellings (`:bphi_cylinder`, `:btheta_sphere`, `:bphi_sphere`) resolve to the same
+quantities. A cell at ``r=0`` has no defined direction, so those entries come back as `0`.
 
 ## Radiative-transfer (RT) quantities
 

@@ -8,7 +8,7 @@ function getparticles( dataobject::InfoType, var::Symbol;
                     xrange::Array{<:Any,1}=[missing, missing], # X spatial range [min, max]
                     yrange::Array{<:Any,1}=[missing, missing], # Y spatial range [min, max]
                     zrange::Array{<:Any,1}=[missing, missing], # Z spatial range [min, max]
-                    center::Array{<:Any,1}=[0., 0., 0.],     # Center point for ranges
+                    center::CenterType=[0., 0., 0.],     # Center point for ranges
                     range_unit::Symbol=:standard,            # Units for ranges
                     presorted::Bool=true,                    # Sort output table by key variables
                     print_filenames::Bool=false,             # Print each CPU file being read
@@ -43,7 +43,7 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     presorted::Bool=true,
                     print_filenames::Bool=false,
@@ -87,7 +87,7 @@ function getparticles( dataobject::InfoType;
                     xrange::Array{<:Any,1}=[missing, missing], # X spatial range [min, max]
                     yrange::Array{<:Any,1}=[missing, missing], # Y spatial range [min, max]
                     zrange::Array{<:Any,1}=[missing, missing], # Z spatial range [min, max]
-                    center::Array{<:Any,1}=[0., 0., 0.],     # Center point for ranges
+                    center::CenterType=[0., 0., 0.],     # Center point for ranges
                     range_unit::Symbol=:standard,            # Units for ranges (:standard, :kpc, etc.)
                     presorted::Bool=true,                    # Sort output table by key variables
                     print_filenames::Bool=false,             # Print each CPU file being read
@@ -188,7 +188,7 @@ function getparticles( dataobject::InfoType;
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     presorted::Bool=true,
                     print_filenames::Bool=false,

@@ -170,7 +170,7 @@ test/results/
 
 # Public test fixtures downloaded by testdata/fetch_fixtures.sh. These are release ASSETS, never
 # repository files: Mera is registered, so anything committed here ships in every Pkg.add tarball
-# and stays in git history forever. Only testdata/SHA256SUMS is tracked.
+# and stays in git history forever. Nothing from this folder is tracked.
 testdata/fixtures/
 
 # ── ambient music, published separately ──────────────────────────────────────

@@ -33,7 +33,7 @@ coordinate axes and supports both cell-based and point-based selection modes.
 # Keywords
 - `radius::Array{<:Real,1}=[0.,0.]`: Inner and outer radii [r_inner, r_outer]
 - `height::Real=0.`: Total cylinder height (extends ±height/2 from center plane)
-- `center::Array{<:Any,1}=[0.,0.,0.]`: Cylinder center position
+- `center::CenterType=[0.,0.,0.]`: Cylinder center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
 - `direction::Symbol=:z`: Cylinder axis orientation (:x, :y, or :z)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
@@ -70,7 +70,7 @@ disk_shell = shellregioncylinder(gas,
 function shellregioncylinder(dataobject::HydroDataType;
                             radius::Array{<:Real,1}=[0.,0.],
                             height::Real=0.,
-                            center::Array{<:Any,1}=[0.,0.,0.],
+                            center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             cell::Bool=true,
@@ -183,7 +183,7 @@ selection modes for precise boundary handling in AMR simulations.
 
 # Keywords
 - `radius::Array{<:Real,1}=[0.,0.]`: Inner and outer radii [r_inner, r_outer]
-- `center::Array{<:Any,1}=[0.,0.,0.]`: Sphere center position
+- `center::CenterType=[0.,0.,0.]`: Sphere center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the shell instead of inside
@@ -221,7 +221,7 @@ inverse_shell = shellregionsphere(gas,
 
 function shellregionsphere(dataobject::HydroDataType;
                             radius::Array{<:Real,1}=[0.,0.],
-                            center::Array{<:Any,1}=[0.,0.,0.],
+                            center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             cell::Bool=true,
                             inverse::Bool=false,

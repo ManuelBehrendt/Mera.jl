@@ -8,7 +8,7 @@
 # Magnetic Fields (MHD)
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `magnetic_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/magnetic_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `magnetic_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/magnetic_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Mera reads **RAMSES MHD** (ideal magnetohydrodynamics) outputs and exposes the magnetic field for
@@ -74,8 +74,8 @@ info = getinfo(27, joinpath(MERA_EXAMPLES, "RAMSES/ramses_mhd_128"));
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-03T12:09:04.380
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T14:31:38.941
 [ Info: Mera: no hydro descriptor and nvarh=11 (≥11) on a 3D run — assuming a RAMSES MHD layout (B faces at 5–10, pressure at 11). If this is hydro with ≥6 passive scalars instead, the names are positional (:var6…).
 Code: RAMSES
 output [27] summary:
@@ -119,7 +119,7 @@ println("temperature  T [K]   : ", extrema(getvar(gas, :T, :K)))
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-03T12:09:07.782
+[Mera]: Get hydro data: 2026-08-31T14:31:42.266
 Key vars=(:cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) = (:rho, :vx, :vy, :vz, :bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right, :p)
 domain:
@@ -141,7 +141,7 @@ Creating Table from 2097152 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 14 columns...
-✓ Table created in 4.328 seconds
+✓ Table created in 4.153 seconds
 Memory used for data table :224.00138664245605 MB
 -------------------------------------------------------
 cells loaded         : 2097152
@@ -154,8 +154,8 @@ temperature  T [K]   : (1.0812393953743894e-8, 3.1640344885858596e-8)
 
 ## Derived magnetic quantities
 
-All of these are **built-in `getvar` quantities** computed from the cell-centred field — no manual
-arithmetic needed — and each takes the units shown:
+All of these are **built-in `getvar` quantities** computed from the cell-centred field, no manual
+arithmetic needed, and each takes the units shown:
 
 ```julia
 Bmag_uG = getvar(gas, :bmag, :muG)      # |B| in micro-Gauss
@@ -172,6 +172,10 @@ println("Mach_fast            : ", extrema(mf))
 ```
 
 ```
+[Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             (shown once per session; verbose(false) silences Mera's messages)
 |B|   [muG]          : (3.544907701811032e6, 6.84718581051191e6)
 plasma beta          : (0.07401400537131442, 3.9999999999999996)
 Alfven speed [km/s]  : (1.0e-5, 5.603087067452776e-5)
@@ -190,7 +194,7 @@ conversion) are listed in
 
 ## Projecting the magnetic field
 
-The cell-centred components project like any other field — e.g. a mass-weighted map of `:bx`, or a
+The cell-centred components project like any other field, e.g. a mass-weighted map of `:bx`, or a
 column-density map alongside it:
 
 ```julia
@@ -208,7 +212,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-08-03T12:09:32.078
+[Mera]: 2026-08-31T14:32:10.459
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
@@ -223,7 +227,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-[Mera]: 2026-08-03T12:09:33.265
+[Mera]: 2026-08-31T14:32:12.185
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]

@@ -8,17 +8,17 @@
 # Covering Grid / Fixed-Resolution Buffer
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `covering_grid.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/covering_grid.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `covering_grid.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/covering_grid.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 `covering_grid` resamples the sparse AMR leaf cells onto a **dense, uniform `Nx×Ny×Nz`
-array** at a chosen refinement level — every output cell sampled, *not* integrated (unlike
+array** at a chosen refinement level, every output cell sampled, *not* integrated (unlike
 `projection`, which sums along a line of sight). `slice` is the 2-D, single-cell-thick version.
 
 Use it to feed analyses that need a regular grid: power spectra, FFTs, structure functions,
 volume rendering / VTK export, ML inputs, or `array`-style indexing.
 
-> Works on **AMR cell** data only — hydro / gravity / RT. Not particles or clumps.
+> Works on **AMR cell** data only, hydro / gravity / RT. Not particles or clumps.
 > A uniform grid can be far larger than the AMR data: **size it first** with
 > `covering_grid_memory` (and `covering_grid` refuses to allocate past `max_bytes`).
 
@@ -48,8 +48,8 @@ println("AMR cells loaded: ", length(gas.data))
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-03T11:34:24.093
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T14:12:56.326
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -89,7 +89,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-08-03T11:34:26.561
+[Mera]: Get hydro data: 2026-08-31T14:12:58.736
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 domain:
@@ -101,7 +101,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:15 ( 7.79 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 ( 7.26 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 4879946 cells, 7 variables
@@ -111,7 +111,7 @@ Creating Table from 4879946 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 7.492 seconds
+✓ Table created in 6.857 seconds
 Memory used for data table :409.54250621795654 MB
 -------------------------------------------------------
 AMR levels      : lmin 6 … lmax 10
@@ -122,7 +122,7 @@ AMR cells loaded: 4879946
 
 `covering_grid_memory` returns a `NamedTuple` with `dims`, `ncells`, `bytes_per_array`,
 `result_bytes`, `peak_bytes` (construction high-water mark) and the `blowup` factor
-(output cells ÷ AMR cells) — so you can size a grid *before* building it.
+(output cells ÷ AMR cells), so you can size a grid *before* building it.
 
 ```julia
 # pick a modest target level so the uniform grid stays small
@@ -186,7 +186,7 @@ T    extrema   : (-6.486657006516816e10, 8.403483574667937e10)
 
 ### Restrict to a sub-box
 
-Giving a `center` + `xrange`/`yrange`/`zrange` (in any unit) builds the grid only there — much
+Giving a `center` + `xrange`/`yrange`/`zrange` (in any unit) builds the grid only there, much
 cheaper, so you can afford a finer `lmax`.
 
 ```julia
@@ -234,7 +234,7 @@ n_H extrema : (-0.008446982515435507, 9010.145363667258)
 
 ### Plot the mid-plane slice
 
-A uniform level-resampled `n_H` cut — coarse de-refined regions show up as larger uniform
+A uniform level-resampled `n_H` cut, coarse de-refined regions show up as larger uniform
 blocks, NaN (outside the data) is left blank.
 
 ```julia
@@ -252,4 +252,4 @@ fig
 ![](covering_grid_files/covering_grid_12_1.png)
 
 That is the whole covering-grid workflow: size it, build the dense 3-D array (whole box or a
-sub-box), and take 2-D FRB slices — all volume-conservative resampling of the AMR leaves.
+sub-box), and take 2-D FRB slices, all volume-conservative resampling of the AMR leaves.

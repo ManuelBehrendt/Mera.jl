@@ -1203,8 +1203,13 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
     if tidal === :tensor                                          # attach the gravity field for the tidal tensor
         gp = getvar(gravity, [:x, :y, :z], pos_unit)
         bargs = merge(bargs, (grav=(gx=gp[:x], gy=gp[:y], gz=gp[:z],
-                                    gax=getvar(gravity, :ax, :g_cms2), gay=getvar(gravity, :ay, :g_cms2),
-                                    gaz=getvar(gravity, :az, :g_cms2)),))
+                                    # :cm_s2, not :g_cms2. The latter reads like g*cm/s^2 but is
+                                    # g/(cm*s^2), a PRESSURE, numerically identical to Ba. Using it
+                                    # here scaled every acceleration by unit_d*unit_l, which is 0.21
+                                    # on mw_L10 and arbitrary elsewhere, so the tidal tensor was wrong
+                                    # by a simulation-dependent factor.
+                                    gax=getvar(gravity, :ax, :cm_s2), gay=getvar(gravity, :ay, :cm_s2),
+                                    gaz=getvar(gravity, :az, :cm_s2)),))
     end
     tree = (hierarchy && finder isa Dendrogram) ?                 # arbitrary-depth merge tree
         last(_dendrogram3d(collect(eachindex(xs)), xs, ys, zs, fs,

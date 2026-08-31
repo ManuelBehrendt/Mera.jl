@@ -72,7 +72,7 @@ function get_data(  dataobject::HydroDataType,
                     vars::Array{Symbol,1},
                     units::Array{Symbol,1},
                     direction::Symbol,
-                    center::Array{<:Any,1},
+                    center::CenterType,
                     mask::MaskType,
                     ref_time::Real)
 
@@ -240,6 +240,26 @@ function get_data(  dataobject::HydroDataType,
             end
             # exact region splitting: weight by the per-cell inside-fraction (see :volume above)
             in(:fraction, column_names) && (vars_dict[:mass] .*= select(masked_data, :fraction))
+
+        # 1D THERMAL velocity dispersion of the mean gas particle.
+        #
+        #   sigma_th = sqrt(k_B T / (mu m_H)) = sqrt(P/rho) = cs / sqrt(gamma)
+        #
+        # The middle form is what we compute, and it is exact without knowing mu: P/rho IS
+        # k_B T/(mu m_H) by the ideal gas law, whatever the ionization state. That matters for RT
+        # runs, where mu varies per cell and the constant mu behind plain :T is wrong by a large
+        # factor. Verified against sqrt(k_B*T_rt/(mu*m_H)) built from the LOCAL mu.
+        #
+        # It is ISOTROPIC: a Maxwellian has the same 1D width along every axis, so there is no
+        # x/y/z or r/theta/phi variant. Combine it with a directional bulk dispersion as
+        #   sigma_total^2 = sigma_bulk^2 + sigma_thermal^2
+        # because the line profile is a convolution, so the VARIANCES add.
+        #
+        # This is the width for a particle of the mean mass mu*m_H. A specific emitting species of
+        # mass m_X is narrower by sqrt(mu*m_H/m_X): CO is 28x heavier than H, so 5.3x narrower.
+        elseif i == :σ_thermal || i == :sigma_thermal
+            selected_unit = getunit(dataobject, i, vars, units)
+            vars_dict[i] = sqrt.( select(masked_data, :p) ./ select(masked_data, :rho) ) .* selected_unit
 
         elseif i == :cs
             selected_unit = getunit(dataobject, :cs, vars, units)
@@ -556,6 +576,20 @@ function get_data(  dataobject::HydroDataType,
             vr[isnan.(vr)] .= 0 # overwrite NaN due to radius = 0
             vars_dict[:vr_cylinder] =  vr
 
+        # Squared spherical components, the mean-square half of a dispersion. Same shape as the
+        # *_cylinder2 pair below; the projection sigma machinery needs <v> and <v^2> per direction.
+        elseif i == :vr_sphere2
+            selected_unit = getunit(dataobject, :vr_sphere2, vars, units)
+            vars_dict[:vr_sphere2] = (getvar(filtered_dataobject, :vr_sphere, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
+
+        elseif i == :vθ_sphere2
+            selected_unit = getunit(dataobject, :vθ_sphere2, vars, units)
+            vars_dict[:vθ_sphere2] = (getvar(filtered_dataobject, :vθ_sphere, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
+
+        elseif i == :vϕ_sphere2
+            selected_unit = getunit(dataobject, :vϕ_sphere2, vars, units)
+            vars_dict[:vϕ_sphere2] = (getvar(filtered_dataobject, :vϕ_sphere, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
+
         elseif i == :vr_cylinder2
 
             selected_unit = getunit(dataobject, :vr_cylinder2, vars, units)
@@ -866,6 +900,44 @@ function get_data(  dataobject::HydroDataType,
         # P_mag = B²/2, u_mag = P_mag, v_A = |B|/√ρ, E_mag = P_mag·V. Each reuses an existing unit:
         # :bmag → :Gauss/:muG/:Tesla, :pmag → :Ba, :v_alfven → :km_s, :e_magnetic → :erg; :beta is
         # dimensionless. (|B| is the cell-centred field from the constrained-transport faces.)
+        # Magnetic field in cylindrical and spherical components. B is a vector like v and a, so
+        # the decomposition is the same algebra as the velocity one above, applied to (bx,by,bz).
+        # These are measured about `center`, so they are registered in _CENTER_RELATIVE_VARS.
+        # The r=0 cell has no defined direction; the velocity path zeroes those NaNs and so do we.
+        elseif i in (:br_cylinder, :bϕ_cylinder, :b_magnitude_cylinder,
+                     :br_sphere, :bθ_sphere, :bϕ_sphere)
+            has_faces = (:bx_left in column_names && :by_left in column_names && :bz_left in column_names)
+            has_cc    = (:bx in column_names && :by in column_names && :bz in column_names)
+            if !(has_faces || has_cc)
+                error("getvar :$i needs the magnetic field (:bx/:by/:bz, or the MHD face fields " *
+                      ":b*_left/:b*_right); load an MHD run.")
+            end
+            selected_unit = getunit(dataobject, i, vars, units)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+            bx = getvar(filtered_dataobject, :bx, mask=use_mask_in_recursion)
+            by = getvar(filtered_dataobject, :by, mask=use_mask_in_recursion)
+            bz = getvar(filtered_dataobject, :bz, mask=use_mask_in_recursion)
+            r_cyl = @. sqrt(x^2 + y^2)
+            r_sph = @. sqrt(x^2 + y^2 + z^2)
+            out = if i === :br_cylinder
+                @. (x * bx + y * by) / r_cyl
+            elseif i === :bϕ_cylinder
+                @. (x * by - y * bx) / r_cyl
+            elseif i === :b_magnitude_cylinder                 # in-plane magnitude, sqrt(br^2 + bphi^2)
+                @. sqrt(((x * bx + y * by) / r_cyl)^2 + ((x * by - y * bx) / r_cyl)^2)
+            elseif i === :br_sphere
+                @. (x * bx + y * by + z * bz) / r_sph
+            elseif i === :bθ_sphere                            # polar component, same form as vθ_sphere
+                @. (z * (x * bx + y * by) - (x^2 + y^2) * bz) / (r_sph * r_cyl)
+            else                                               # :bϕ_sphere, identical to the cylindrical one
+                @. (x * by - y * bx) / r_cyl
+            end
+            out = out .* selected_unit
+            out[isnan.(out)] .= 0.0                            # r = 0: no defined direction
+            vars_dict[i] = out
+
         elseif i == :bmag || i == :pmag || i == :beta || i == :v_alfven || i == :e_magnetic
             has_faces = (:bx_left in column_names && :by_left in column_names && :bz_left in column_names)
             has_cc    = (:bx in column_names && :by in column_names && :bz in column_names)

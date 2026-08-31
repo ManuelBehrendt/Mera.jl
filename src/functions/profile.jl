@@ -491,7 +491,8 @@ function profile(m::DataMapsType, var::Symbol; xvar::Symbol=:r, weight::Union{Sy
         # axis-aligned FOV and is wrong for asymmetric or off-axis maps.
         px = m.pixsize; ce = m.cextent; x0 = ce[1]; y0 = ce[3]
         cu = ru === :standard ? 1.0 : getunit(m.info, ru)
-        cx, cy = center === nothing ? (0.0, 0.0) : (center[1]/cu, center[2]/cu)
+        cc = center === nothing ? nothing : _as_center(center)
+        cx, cy = cc === nothing ? (0.0, 0.0) : (cc[1]/cu, cc[2]/cu)
         xs = [x0 + (i-0.5)*px for i in 1:nx]; ys = [y0 + (j-0.5)*px for j in 1:ny]
         f = _lenfac(m.scale, xunit)                       # code-length → xunit
         xv = xvar === :r ? [sqrt((xs[i]-cx)^2 + (ys[j]-cy)^2)*f for j in 1:ny for i in 1:nx] :

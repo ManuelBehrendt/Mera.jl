@@ -57,9 +57,10 @@ function projection()
     println()
     println("==============[off-axis views]:==================")
     println("project along ANY line of sight (degrees by default):")
-    println("  inclination=, azimuth=, axis=(:z|:angmom|vector)")
+    println("  inclination=, azimuth=, axis=(:x|:y|:z|:angmom|:L|[ax,ay,az])")
     println("  direction=:faceon / :edgeon   (disk from L)")
-    println("  los=[lx,ly,lz]   or   theta=, phi=")
+    println("  los=[lx,ly,lz]")
+    println("  theta=, phi=   (deprecated in 1.8: azimuth = phi + 90 for axis=:z)")
     println("  position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact")
     println("    (:overlap/:exact integrate a cell's footprint; point particles have none,")
     println("     so on particle data they fall back to :cic)")
@@ -218,7 +219,7 @@ function _resolve_axis(axis, L)
         n = norm(L); n > 0 || throw(ArgumentError("angular-momentum vector L is zero"))
         return collect(float.(L)) ./ n
     end
-    throw(ArgumentError("axis must be a 3-vector, :x/:y/:z or :angmom, got :$axis"))
+    throw(ArgumentError("axis must be a 3-vector, :x/:y/:z, or :angmom (alias :L), got :$axis"))
 end
 
 # deterministic orthonormal basis (e1,e2) spanning the plane ⟂ ahat
@@ -239,6 +240,7 @@ function _check_view_specifiers(los, direction, inclination, azimuth, theta, phi
         "  los=[1, 0, 0.5]                            explicit viewing direction (any length)\n" *
         "  inclination=60, azimuth=30, axis=:angmom   tilt off a reference axis (degrees)\n" *
         "  theta=60, phi=30                           spherical angles about the box axes\n" *
+        "                                             (note: azimuth = phi + 90 when axis=:z)\n" *
         "  direction=:faceon   (or :edgeon)           presets using the object's angular momentum"))
     if (direction === :faceon || direction === :edgeon) && axis !== nothing
         throw(ArgumentError("`axis` is not used with `direction=:$direction` — these presets " *
@@ -259,14 +261,33 @@ in `angle_unit` (**`:deg`** by default, or `:rad`):
 1. explicit `los` 3-vector,
 2. **`inclination`/`azimuth`** — tilt the view away from a reference `axis` by `inclination`
    (0 ⇒ looking straight down the axis, 90° ⇒ perpendicular to it) and rotate around the axis
-   by `azimuth`. `axis` defaults to the box `:z`; use `:x`/`:y`/`:z`, a 3-vector, or `:angmom`
+   by `azimuth`. `axis` defaults to the box `:z`; use `:x`/`:y`/`:z`, a 3-vector, or `:angmom` (alias `:L`)
    (the object's angular momentum `L`, for disks). The reference axis is kept pointing "up".
-3. spherical angles `(theta, phi)` about the box axes (`los=[sinθcosφ, sinθsinφ, cosθ]`),
+3. spherical angles `(theta, phi)` about the box axes (`los=[sinθcosφ, sinθsinφ, cosθ]`).
+   **Deprecated in 1.8, removed in 2.0.** Use `inclination`/`azimuth`, see the note below,
 4. preset `direction`: `:x`/`:y`/`:z`, `:faceon` (look along `L`), `:edgeon` (⟂ `L`, up = `L̂`).
 
 `:faceon`/`:edgeon` and `axis=:angmom` need the pre-computed `L`; the projection wiring supplies
 it via `getvar(obj,[:lx,:ly,:lz])`. The image roll (`position_angle`) is applied separately in
-`build_camera_basis`, so it is *not* a line-of-sight specifier here. Pure — touches no data.
+`build_camera_basis`, so it is *not* a line-of-sight specifier here. Pure, touches no data.
+
+!!! warning "`azimuth` is not `phi`"
+    Options 2 and 3 cover the same directions when `axis=:z`, but their zero point differs by
+    90 degrees:
+
+        inclination = theta,  azimuth = phi + 90        (for axis=:z)
+
+    `inclination` and `theta` are the same angle: both measure the tilt away from the reference
+    axis. `azimuth` and `phi` both turn around that axis, but they do not start from the same
+    place. `phi` is measured from the `+x` axis, in the usual spherical convention. `azimuth`
+    starts one quarter turn later, so that a view with `inclination=0` has the same image
+    orientation as `direction=:z`. Passing `azimuth=phi` gives a picture rotated by 90 degrees.
+
+    The two options are not equally capable. Use `inclination`/`azimuth` unless you specifically
+    want angles measured about the box axes: it accepts any reference `axis` (including
+    `:angmom`, the object's angular momentum) and it returns an image "up" direction, so the
+    roll of the picture is defined. `theta`/`phi` is always about the box axes and leaves the
+    roll to the automatic choice.
 """
 function resolve_los(; los=nothing, theta=nothing, phi=nothing,
                        inclination=nothing, azimuth=nothing,
@@ -306,6 +327,15 @@ function resolve_los(; los=nothing, theta=nothing, phi=nothing,
 
     # (3) spherical angles about the box axes
     if theta !== nothing || phi !== nothing
+        # Deprecated in 1.8, to be removed in 2.0. `inclination`/`azimuth` does everything this
+        # pair does and more: any reference axis (including :angmom), plus a defined image "up".
+        # Still fully supported here, so existing scripts keep running unchanged. The hint gives
+        # the conversion, not just the replacement, because the two do NOT share a zero point:
+        # swapping the names without the +90 silently rotates the figure by a quarter turn.
+        hint(:theta_phi_deprecated,
+             "`theta`/`phi` is deprecated in Mera 1.8 and will be removed in 2.0.",
+             "Use `inclination`/`azimuth`, which also takes any reference `axis` (:angmom) and",
+             "defines the image roll. NOT the same zero point: azimuth = phi + 90 for axis=:z.")
         th = theta === nothing ? 0.0 : float(theta)
         ph = phi   === nothing ? 0.0 : float(phi)
         return _los_from_angles(th, ph, angle_unit), up
@@ -356,7 +386,7 @@ end
 # numeric center in CODE units, so it can be stored on the returned cube/map for provenance
 # (round-trips through savecube/loadcube).  Mirrors the centering getvar applies internally.
 function _center_code(dataobject, center, range_unit::Symbol)
-    frac = center_in_standardnotation(dataobject.info, collect(Any, center), range_unit)  # → 0..1
+    frac = center_in_standardnotation(dataobject.info, collect(Any, _as_center(center)), range_unit)  # → 0..1
     return Float64.(frac) .* dataobject.boxlen
 end
 

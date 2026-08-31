@@ -8,7 +8,7 @@
 # Hydro: Export Selected Variables to VTK
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `08_hydro_VTK_export.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/paraview/08_hydro_VTK_export.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `08_hydro_VTK_export.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/paraview/08_hydro_VTK_export.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Export hydrodynamical simulation data to VTK format for advanced 3D visualization in ParaView. This tutorial demonstrates how to convert MERA hydro data into VTK files with customizable resolution, variable selection, and coordinate systems.

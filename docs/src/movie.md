@@ -8,7 +8,7 @@
 # Movies (`getmovie` / `savemovie`)
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `movie.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/movie.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `movie.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/movie.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 [`getmovie`](@ref) projects a quantity for **every output** of a simulation and collects the
@@ -60,7 +60,7 @@ println("output numbers  : ", m.outputs)
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-temp output dir : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe
+temp output dir : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV
 getmovie: 13 frame(s) of :sd from "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d"
   [1/13] output 00001
   [2/13] output 00002
@@ -82,19 +82,19 @@ output numbers  : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
 ## How it works (no scratch images)
 
-The pipeline is **simulation outputs → in-memory numeric maps → one GIF** — it does *not*
+The pipeline is **simulation outputs → in-memory numeric maps → one GIF**, it does *not*
 write a folder of PNGs and stitch them, and it does *not* read existing image files:
 
 1. `getmovie` loops the outputs, loading **one snapshot at a time** (released before the
    next, like `timeseries`), and `projection`s each into an in-memory 2-D numeric array
-   (`Matrix{Float64}`). These accumulate in `m.frames` — no files are written.
+   (`Matrix{Float64}`). These accumulate in `m.frames`, no files are written.
 2. `savemovie` takes those numeric frames, applies the log/colormap/normalisation, and
    writes a **single** animated GIF in one `FileIO.save` call (using the bundled
-   FileIO/Images — no extra package). No per-frame temp files.
+   FileIO/Images, no extra package). No per-frame temp files.
 
 The frames stay numeric, so you can post-process them or render them yourself. If you *do*
-want the individual images on disk, ask for them — `savemovie(...; save_frames="dir/")` writes
-each rendered frame as a PNG (see [Scratch frames](#Scratch-frames-—-keep-the-PNGs)) — and
+want the individual images on disk, ask for them, `savemovie(...; save_frames="dir/")` writes
+each rendered frame as a PNG (see [Scratch frames](#Scratch-frames-—-keep-the-PNGs)), and
 [`moviefromframes`](@ref) goes the other way, building a movie from images already on disk.
 
 ## Orientation: off-axis movies
@@ -218,8 +218,8 @@ println("wrote GIF       : ", gif, "  (", filesize(gif), " bytes)")
   frame 11: output 00011
   frame 12: output 00012
   frame 13: output 00013
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.gif
-wrote GIF       : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.gif  (41062 bytes)
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/density.gif
+wrote GIF       : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/density.gif  (41062 bytes)
 ```
 
 ## Saving: colormap, scaling, steady brightness
@@ -250,15 +250,15 @@ println("wrote          : ", gif2, "  (", filesize(gif2), " bytes)")
   frame 11: t=5.302e-15 Myr
   frame 12: t=5.822e-15 Myr
   frame 13: t=6.352e-15 Myr
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_gray.gif
-wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_gray.gif  (42812 bytes)
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/density_gray.gif
+wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/density_gray.gif  (42812 bytes)
 ```
 
 - **`colorrange=:global`** (default) computes a single range over *all* frames, so the movie
   doesn't flicker as the peak grows. Use `:perframe` to stretch each frame independently, or
   pass an explicit `(lo, hi)` (in log space when `log=true`).
 - **`colormap`** is `:fire` or `:gray` out of the box (no colour-package dependency), or any
-  function mapping `t∈[0,1]` to an `(r, g, b)` tuple — e.g. plug in a `ColorSchemes`/Makie
+  function mapping `t∈[0,1]` to an `(r, g, b)` tuple, e.g. plug in a `ColorSchemes`/Makie
   colormap if you have one loaded.
 
 ## Tags: a timestamp or label on each frame
@@ -270,11 +270,11 @@ font (top-left, no font dependency).
 `tags` accepts:
 
 - `:time` → the frame's physical time and unit; `:output` → its output number;
-- a **vector of strings** (one per frame) — any custom caption you like;
+- a **vector of strings** (one per frame), any custom caption you like;
 - a **function** `k -> String` (frame index → label), e.g. `k -> "z = $(redshifts[k])"`;
 - a **tuple** of any of the above to stack **multiple lines**, e.g. `tags=(:output, :time)`.
 
-Control how the labels look — all optional, with sensible defaults:
+Control how the labels look, all optional, with sensible defaults:
 
 | keyword | default | options |
 |---------|---------|---------|
@@ -310,7 +310,7 @@ println("custom tags    : ", basename(gif4))
   frame 11: output 00011 | t=5.302e-15 Myr
   frame 12: output 00012 | t=5.822e-15 Myr
   frame 13: output 00013 | t=6.352e-15 Myr
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_tagged.gif
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/density_tagged.gif
 two-line tags  : density_tagged.gif
   frame 1: frame 1/13
   frame 2: frame 2/13
@@ -325,7 +325,7 @@ two-line tags  : density_tagged.gif
   frame 11: frame 11/13
   frame 12: frame 12/13
   frame 13: frame 13/13
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density_custom.gif
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/density_custom.gif
 custom tags    : density_custom.gif
 ```
 
@@ -334,8 +334,8 @@ Set `annotate=false` to print the labels without drawing them on the frames.
 ## Save and reload the movie object
 
 Computing the frames (especially at high resolution over many outputs) is the expensive part.
-Persist the `MeraMovie` to a **JLD2** file — the same Julia-native way [`savemap`](@ref)
-stores a map — and reload it later with [`loadmovie`](@ref),
+Persist the `MeraMovie` to a **JLD2** file, the same Julia-native way [`savemap`](@ref)
+stores a map, and reload it later with [`loadmovie`](@ref),
 without re-running [`getmovie`](@ref):
 
 ```julia
@@ -346,14 +346,14 @@ println("reloaded frames: ", length(m2.frames), "  (identical: ", length(m2.fram
 ```
 
 ```
-Saved MeraMovie (13 frames) → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.jld2
-Loaded MeraMovie (13 frames) ← /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/density.jld2
+Saved MeraMovie (13 frames) → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/density.jld2
+Loaded MeraMovie (13 frames) ← /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/density.jld2
 reloaded frames: 13  (identical: true)
 ```
 
 `savemovie` switches on the extension: `.gif` encodes a movie, `.jld2` persists the object.
 
-## Scratch frames — keep the PNGs
+## Scratch frames, keep the PNGs
 
 Set `save_frames` to a directory and `savemovie` also writes every rendered frame as
 `frame_00001.png`, `frame_00002.png`, … there (the GIF is still written too):
@@ -365,14 +365,14 @@ savemovie(m, "density.gif"; tags=:output, save_frames="frames/")
 
 ## Build a movie from existing images
 
-The complement: [`moviefromframes`](@ref) assembles a GIF from image files already on disk —
+The complement: [`moviefromframes`](@ref) assembles a GIF from image files already on disk,
 the PNGs from `save_frames`, or frames you rendered yourself:
 
 ```julia
 moviefromframes("frames/", "movie.gif"; fps=12)   # sorts by name, stacks, encodes
 ```
 
-This is the "use existing images to make a movie" path — so you can render
+This is the "use existing images to make a movie" path, so you can render
 publication-quality frames with `CairoMakie` (axes, a colourbar, your own annotations), save
 them as PNGs, and turn them into a GIF, or feed them to `ffmpeg` for an MP4:
 
@@ -393,8 +393,8 @@ println("assembled      : ", out_gif, "  (", filesize(out_gif), " bytes)")
 ```
 
 ```
-moviefromframes: 13 image(s) from /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/from_frames.gif
-assembled      : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_CeJNbe/from_frames.gif  (556105 bytes)
+moviefromframes: 13 image(s) from /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/from_frames.gif
+assembled      : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Eak2bV/from_frames.gif  (556105 bytes)
 ```
 
 …or feed the PNGs to `ffmpeg` for an MP4:
@@ -422,6 +422,6 @@ fig
 
 ## See also
 
-- [`timeseries`](@ref) — the same outputs/loading machinery, reducing each snapshot to a row instead of a frame.
-- [`projection`](@ref) — the per-frame projection engine and its view keywords.
-- [Auto-Frame](galaxyframe.md) — `face_on`/`edge_on` for an oriented movie.
+- [`timeseries`](@ref), the same outputs/loading machinery, reducing each snapshot to a row instead of a frame.
+- [`projection`](@ref), the per-frame projection engine and its view keywords.
+- [Auto-Frame](galaxyframe.md), `face_on`/`edge_on` for an oriented movie.

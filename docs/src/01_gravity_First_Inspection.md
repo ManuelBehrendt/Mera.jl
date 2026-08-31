@@ -1,5 +1,5 @@
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 ```@raw html
 <!-- GENERATED FILE. Do not edit this markdown.
@@ -34,8 +34,8 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-07T11:33:37.518
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T13:19:38.548
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -204,7 +204,7 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-07T11:33:41.294
+[Mera]: Get gravity data: 2026-08-31T13:19:42.231
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -216,7 +216,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.04 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:11 (17.70 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -226,7 +226,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 3.903 seconds
+✓ Table created in 2.576 seconds
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 ```
@@ -540,6 +540,116 @@ level  cx   cy   cz   epot
 10     814  496  511  -0.284295
 10     814  496  512  -0.284306
 ```
+
+## Derived quantities: what gravity alone can tell you
+
+The stored columns are the potential and the three acceleration components. From those, `getvar`
+derives the acceleration in cylindrical and spherical components, and their magnitudes.
+
+Everything measured about an axis or a centre depends on `center`, exactly as the velocity
+components do. Pass the same centre you use elsewhere in the analysis.
+
+```julia
+ctr = :bc                       # a bare symbol works; [:bc] does too                     # box centre; use the object's centre for a real galaxy
+
+using Printf
+for q in (:a_magnitude, :a_magnitude_cylinder,
+          :ar_cylinder, :aphi_cylinder,
+          :ar_sphere, :atheta_sphere, :aphi_sphere)
+    v = getvar(grav, q, :cm_s2, center=ctr)
+    @printf("%-24s %10.3e .. %10.3e  cm/s^2\n", q, minimum(v), maximum(v))
+end
+```
+
+```
+a_magnitude               1.723e-09 ..  1.251e-07  cm/s^2
+a_magnitude_cylinder      2.757e-11 ..  9.097e-08  cm/s^2
+ar_cylinder              -9.097e-08 .. -2.757e-11  cm/s^2
+aphi_cylinder            -3.811e-09 ..  4.831e-09  cm/s^2
+ar_sphere                -1.251e-07 .. -1.723e-09  cm/s^2
+atheta_sphere            -4.505e-08 ..  4.000e-08  cm/s^2
+aphi_sphere              -3.811e-09 ..  4.831e-09  cm/s^2
+```
+
+## Energy and force: these need the hydro object
+
+A potential is energy **per unit mass** and an acceleration is force **per unit mass**. To get an
+energy or a force you need the mass of the cell, and the mass lives on the hydro object, not the
+gravity one.
+
+So these quantities take both objects. Either order works, gravity first or hydro first:
+
+```julia
+getvar(gravity, hydro, :Fg, :dyne)
+```
+
+Called on gravity alone they raise an error that names the fix, rather than guessing a mass.
+
+```julia
+gas = gethydro(info, verbose=false, show_progress=false);
+
+for (q, u) in ((:gravitational_energy, :erg), (:total_binding_energy, :erg),
+               (:Fg, :dyne), (:Fr_cylinder, :dyne), (:Fr_sphere, :dyne),
+               (:Fθ_sphere, :dyne), (:F_magnitude_cylinder, :dyne))
+    v = getvar(grav, gas, q, u, center=ctr)
+    @printf("%-24s %10.3e .. %10.3e  %s\n", q, minimum(v), maximum(v), u)
+end
+```
+
+```
+gravitational_energy     -2.869e+52 .. -1.115e+45  erg
+total_binding_energy      1.115e+45 ..  2.869e+52  erg
+Fg                        9.260e+23 ..  4.539e+31  dyne
+Fr_cylinder              -4.538e+31 .. -2.271e+22  dyne
+Fr_sphere                -4.538e+31 .. -9.259e+23  dyne
+Fθ_sphere                -7.828e+30 ..  6.246e+30  dyne
+F_magnitude_cylinder      2.271e+22 ..  4.539e+31  dyne
+```
+
+`:gravitational_energy` is ``m\,\phi``, negative where the cell is bound.
+`:total_binding_energy` is its negative, positive where bound, the sign binding energies are
+usually quoted in.
+
+Each force component is the mass times the acceleration component **of the same name**, so the two
+always share one definition and one treatment of `center`.
+
+Mera checks that the two objects describe the same cells in the same order. Load them over the
+same `lmax` and the same ranges, or the call refuses rather than pairing a mass with another
+cell's potential.
+
+## Projecting a gravity field
+
+Gravity carries no mass and no density, so it cannot weight its own line-of-sight average. There
+is therefore no single-argument `projection(grav, …)`. Pass hydro alongside, and it supplies the
+weight:
+
+```julia
+p = projection(gas, grav, :epot, center=ctr, verbose=false, show_progress=false)
+e = getvar(grav, :epot)
+@printf("epot map  %10.4f .. %10.4f\n", minimum(p.maps[:epot]), maximum(p.maps[:epot]))
+@printf("per cell  %10.4f .. %10.4f\n", minimum(e), maximum(e))
+println("\nthe map lies inside the per-cell range: ",
+        minimum(p.maps[:epot]) >= minimum(e) && maximum(p.maps[:epot]) <= maximum(e))
+```
+
+```
+epot map     -0.9849 ..    -0.1244
+per cell     -0.9865 ..    -0.1055
+the map lies inside the per-cell range: true
+```
+
+The map lies inside the range of the cell values, because it is a **weighted mean** along each
+ray and not a column integral. That is the right treatment for an intensive field: summing a
+potential along a sightline would simply scale with the depth of the box.
+
+`weighting` takes a vector, `weighting=[:mass]` (the default) or `[:volume]`. The two answer
+different questions and give different numbers, so say which one you used.
+
+!!! note "Removed in 1.8"
+    `:escape_speed` and `:gravitational_redshift` were withdrawn. Both treated the potential as if
+    its zero point were fixed at infinity, and RAMSES does not fix it: the offset depends on the
+    boundary conditions and differs between a periodic box, a zoom region and an isolated halo.
+    They returned confident numbers that meant nothing without a stated reference level.
 
 ## Summary and Next Steps
 

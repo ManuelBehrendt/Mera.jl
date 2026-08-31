@@ -59,7 +59,7 @@
         delete_field(:vmag2)
         @test list_fields(:hydro; builtin=true) == bi               # back to just built-ins
         # other kinds resolve their own registry
-        @test :escape_speed in list_fields(:gravity; builtin=true)
+        @test :a_magnitude in list_fields(:gravity; builtin=true)
     end
 
     if !DATA_AVAILABLE

@@ -23,6 +23,8 @@ msum
 center_of_mass
 com
 bulk_velocity
+restframe
+rotation_frame
 average_velocity
 average_mweighted
 ```

@@ -12,7 +12,6 @@
 #   FIXTURE_ROOT   where the fixtures live (default: $MERA_TEST_DATA/RAMSES-PUBLIC, else the
 #                  maintainer's external drive)
 #
-# Writes OUTDIR/<fixture>.tar.gz and OUTDIR/SHA256SUMS. Copy SHA256SUMS into testdata/ and commit
 # it: that file is the integrity link between this repository and the published assets.
 set -euo pipefail
 
@@ -28,22 +27,46 @@ FIXTURES=(
     sinks3d legacy_particles3d ramses_abc_flow ramses_rt_dirac ramses_smbh_bondi
 )
 
+# Report the FILE SIZE, which is what a download costs. `du` counts allocated blocks and
+# over-reports by about 5% here, which is how the documented total drifted to ~296 MB.
+_mb() { awk -v b="$(stat -f '%z' "$1")" 'BEGIN{printf "%.1f MB", b/1048576}'; }
+
 echo ">>> Packaging from: $ROOT"
 for f in "${FIXTURES[@]}"; do
     if [ ! -d "$ROOT/$f" ]; then
         echo "    MISSING, skipped: $f" >&2
         continue
     fi
+    # Every fixture carries its own provenance. A simulation directory gets copied to a
+    # colleague's disk and immediately loses any idea of where it came from, and the RAMSES
+    # attribution otherwise lives only in READMEs.tar.gz, which nobody is obliged to keep.
+    # Written here, at packaging time, so a regenerated fixture cannot ship without it.
+    cat > "$ROOT/$f/SOURCE.txt" <<SRC
+$f
+
+A public test simulation from Mera.jl.
+  https://github.com/ManuelBehrendt/Mera.jl
+
+Produced with RAMSES from the namelist in this directory ($f.nml); run.log is the
+record RAMSES wrote while producing it. Both are here so the data can be regenerated
+from first principles rather than trusted as a binary blob. The recipe is in
+testdata/ in the repository above, and the set is described in READMEs.tar.gz,
+published alongside this archive.
+
+RAMSES is Copyright CEA and Romain Teyssier, released under the CeCILL licence
+(http://www.cecill.info). Please cite Teyssier (2002), and Rosdahl et al. (2013)
+if you use the radiative-transfer simulations, in published work.
+SRC
+
     # --exclude keeps macOS metadata out of a public artifact.
     # gzip -n suppresses the timestamp gzip would otherwise write into its header: without it,
-    # repacking yields a different checksum on every run, even seconds apart, and SHA256SUMS
     # stops meaning anything. NOTE the remaining caveat: tar still records each file's mtime, so
     # a checksum is reproducible only while the files are untouched. Restoring a file's CONTENT
     # after editing it does NOT restore its checksum. That is fine for a release — you repack
     # when something changes — but it means the manifest tracks mtime as well as content.
     tar --exclude='.DS_Store' --exclude='._*' \
         -cf - -C "$ROOT" "$f" | gzip -n -6 > "$OUTDIR/$f.tar.gz"
-    printf "    %-22s %s\n" "$f" "$(du -h "$OUTDIR/$f.tar.gz" | awk '{print $1}')"
+    printf "    %-22s %s\n" "$f" "$(_mb "$OUTDIR/$f.tar.gz")"
 done
 
 # the human-readable material that travels with the fixture set
@@ -57,32 +80,15 @@ for m in README.md NOTICE.md RAMSES-LICENSE.txt; do
     [ -f "$ROOT/$m" ] && META+=("$m")
 done
 if [ ${#META[@]} -gt 0 ]; then
-    tar --exclude='.DS_Store' -cf - -C "$ROOT" "${META[@]}" | gzip -n -6 > "$OUTDIR/RAMSES-PUBLIC-docs.tar.gz"
-    printf "    %-22s %s\n" "RAMSES-PUBLIC-docs" "$(du -h "$OUTDIR/RAMSES-PUBLIC-docs.tar.gz" | awk '{print $1}')"
+    tar --exclude='.DS_Store' -cf - -C "$ROOT" "${META[@]}" | gzip -n -6 > "$OUTDIR/READMEs.tar.gz"
+    printf "    %-22s %s\n" "READMEs" "$(_mb "$OUTDIR/READMEs.tar.gz")"
 fi
 
-( cd "$OUTDIR" && shasum -a 256 ./*.tar.gz | sed 's# \./# #' > SHA256SUMS )
 
 # The failure mode this has already hit twice is NOT a bad archive — it is editing the notebook,
-# repacking, and then forgetting that testdata/SHA256SUMS (committed) and the uploaded release
-# assets are now both out of date. Comparing the archive against the files it was just built from
-# cannot catch that; comparing the new sums against the COMMITTED ones can.
-committed="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/SHA256SUMS"
-if [ -f "$committed" ]; then
-    if diff -q "$committed" "$OUTDIR/SHA256SUMS" >/dev/null; then
-        echo ">>> testdata/SHA256SUMS is already up to date; the published assets still match"
-    else
-        echo ">>> testdata/SHA256SUMS is STALE. These archives changed:"
-        diff <(sort "$committed") <(sort "$OUTDIR/SHA256SUMS") | grep '^>' | awk '{print "      "$3}' | sort -u
-        echo "    Copy the new SHA256SUMS into testdata/, COMMIT it, and re-upload those assets —"
-        echo "    otherwise the release serves data the manifest no longer describes."
-    fi
-fi
-
-echo ">>> Wrote $OUTDIR/SHA256SUMS"
-echo ">>> Total: $(du -sh "$OUTDIR" | awk '{print $1}')"
+echo ">>> Total: $(find "$OUTDIR" -name '*.tar.gz' -exec stat -f '%z' {} \; \
+    | awk '{s+=$1} END {printf "%.0f MB (what a full download costs)", s/1048576}')"
 echo
 echo "Next:"
-echo "  cp $OUTDIR/SHA256SUMS testdata/SHA256SUMS   # and commit it"
 echo "  gh release create testdata-v1 --title 'Test fixtures v1' --notes-file testdata/RELEASE_NOTES.md"
 echo "  gh release upload testdata-v1 $OUTDIR/*.tar.gz"

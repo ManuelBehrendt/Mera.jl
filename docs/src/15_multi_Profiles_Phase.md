@@ -5,21 +5,21 @@
      Any edit here is lost the next time the docs are rendered. -->
 ```
 
-# Profiles & phase diagrams — a step-by-step guide
+# Profiles & phase diagrams, a step-by-step guide
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 `profile`, `phase`, `profile3d`, `rotationcurve` and `profiletimeseries` are **general, weighted
-reductions** over any Mera field — a *profile* bins by one quantity (often a **radius**) and reports
+reductions** over any Mera field, a *profile* bins by one quantity (often a **radius**) and reports
 per-bin **statistics** of another; a *phase diagram* is a 2-D weighted histogram. They work on
 **3-D data** (gas / gravity / particles) **and on projected 2-D maps**.
 
 This guide builds the core features up one at a time, on **one galaxy**. Seven sections cover the
 essentials with a plot each; the remaining features share the same API and are summarised at the end.
 
-## Setup — load the galaxy once
+## Setup, load the galaxy once
 
 Load hydro, gravity and clumps from one snapshot, plus a companion run that carries **particles**
 (dark matter + stars). Define a reusable physical **center**; profiles take a `center` in any length unit.
@@ -48,18 +48,18 @@ println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
 gas cells = 590311   particles = 45470
 ```
 
-## 1. The simplest profile — binning a quantity
+## 1. The simplest profile, binning a quantity
 
-With only a bin field, `profile` returns the **summed weight** per bin — e.g. the radial **mass
+With only a bin field, `profile` returns the **summed weight** per bin, e.g. the radial **mass
 profile** M(R). The radius is measured about `center`; `nbins`, `xrange`, `scale` and units are
 physical. `scale=:log` gives log-spaced bins (the low edge is clamped to the smallest positive
 value; the top edge is inclusive). Set bins by **count** (`nbins`), by a **physical width**
 (`binsize=0.5` in `xunit`, or `binsize=(500,:pc)` with its own unit; a dimensionless **dex** step
-under `scale=:log`), or by fully custom `edges=` — `binsize`/`edges` override `nbins`. Returns `x`
+under `scale=:log`), or by fully custom `edges=`, `binsize`/`edges` override `nbins`. Returns `x`
 (centres), `edges`, `count`, `sum` (Σweight), `sumw2`.
 
 ```julia
@@ -85,7 +85,7 @@ binsize=(500,:pc) → bin width [kpc] = 0.5  (48 bins)
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_5_3.png)
 
-## 2. Per-bin statistics — a binned statistic is not a histogram
+## 2. Per-bin statistics, a binned statistic is not a histogram
 
 Give a **second field** `yvar` and each bin carries the weight-weighted **`mean`**, **`std`**,
 **`sem`** (standard error on the mean, `std/√neff` with the Kish effective sample size `neff`),
@@ -120,10 +120,10 @@ axislegend(ax, position=:rt, framevisible=false); fig
 
 `geometry=:spherical` (shell `4/3·π·Δr³`) or `:cylindrical` (annulus `π·Δr²`) divides the binned
 weight by the shell volume to give a physical **`density`** (`weight`-unit per `xunit`³, + `shell_volume`).
-`cumulative=:forward` (or `:reverse`) adds `cumsum`/`cumcount` — the **enclosed mass** M(<r).
+`cumulative=:forward` (or `:reverse`) adds `cumsum`/`cumcount`, the **enclosed mass** M(<r).
 `normalize=:sum` gives per-bin `fraction` (Σ=1); `normalize=:pdf` gives a true probability density
-`pdf` (∫=1). The canonical use is the **density PDF** — bin *by* density and normalize; the `weight`
-then picks the **mass-weighted** vs **volume-weighted** ρ-PDF (they differ — the near-log-normal ISM
+`pdf` (∫=1). The canonical use is the **density PDF**, bin *by* density and normalize; the `weight`
+then picks the **mass-weighted** vs **volume-weighted** ρ-PDF (they differ, the near-log-normal ISM
 density distribution).
 
 ```julia
@@ -146,11 +146,11 @@ axislegend(ax3, position=:lt); fig
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_9_1.png)
 
-## 4. Weighting & components — mass vs volume vs none
+## 4. Weighting & components, mass vs volume vs none
 
 `weight` is `:mass`, `:volume` (grid-only), `:none` (equal cells) or **any field**. Mass- and
 volume-weighted means differ wherever density varies within a bin; `:none` is the unweighted mean.
-Profiles work for every data type — but **gravity/RT carry no `:mass`** (use `:volume`/`:none`).
+Profiles work for every data type, but **gravity/RT carry no `:mass`** (use `:volume`/`:none`).
 To combine components, profile each on **shared `edges`** (here gas vs DM vs stars enclosed mass).
 
 ```julia
@@ -170,19 +170,19 @@ og=isfinite.(pep.mean); lines!(ax2, pep.x[og], pep.mean[og], color=:slateblue, l
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_11_1.png)
 
-## 5. Rotation curve — who contributes how much
+## 5. Rotation curve, who contributes how much
 
 `rotationcurve` forms the enclosed mass M(<r) and returns the **dynamical** circular velocity
-`v_circ = √(G·M(<r)/r)`. Run it per **component** — gas (optionally **masked**, e.g. cold gas only),
-stars, dark matter — and they add **in quadrature**, `v_tot² = Σ v_i²`. The squared ratio
+`v_circ = √(G·M(<r)/r)`. Run it per **component**, gas (optionally **masked**, e.g. cold gas only),
+stars, dark matter, and they add **in quadrature**, `v_tot² = Σ v_i²`. The squared ratio
 `(v_i/v_tot)²` is exactly each component's **fractional contribution** to the rotational support. This
 is the dynamical mass decomposition (≠ the *kinematic* ⟨v_ϕ⟩ of §7).
 
 **How `v_circ` is estimated:** the enclosed mass `M(<r)` is an *exact* direct sum of the binned masses;
-`v_circ = √(G·M(<r)/r)` is then the **spherical** (shell-theorem) idealization — it assumes spherical
+`v_circ = √(G·M(<r)/r)` is then the **spherical** (shell-theorem) idealization, it assumes spherical
 symmetry, so for a flattened disk it under-shoots at large R. The third panel overplots it against the
 **exact** curve from the solved gravity field, `v = √(R·|a_R|)` with `a_R = getvar(grav, :ar_cylinder)`
-(the true radial acceleration of all matter) — the dynamically rigorous rotation curve.
+(the true radial acceleration of all matter), the dynamically rigorous rotation curve.
 
 ```julia
 opts = (rvar=:r_cylinder, xunit=:kpc, center=ctr, range_unit=:kpc, nbins=50, xrange=(0.3,25))
@@ -218,12 +218,12 @@ axislegend(ax3, position=:rb); fig
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_1.png)
 
-## 6. Phase diagrams — colour is a knob
+## 6. Phase diagrams, colour is a knob
 
-`phase` is a 2-D weighted histogram of two fields — the classic mass-weighted **ρ–T** diagram. With
+`phase` is a 2-D weighted histogram of two fields, the classic mass-weighted **ρ to T** diagram. With
 a third field `cvar` each cell is coloured by the per-cell weighted **mean**; `cstat` swaps that for
 `:std`/`:median`/`:min`/`:max`/`:full` or a function. `normalize=:pdf` makes a 2-D PDF, and
-`xedges`/`yedges` accept custom edges. Same ρ–T plane, four different colourings:
+`xedges`/`yedges` accept custom edges. Same ρ to T plane, four different colourings:
 
 ```julia
 kw = (weight=:mass, nbins=(140,140), xscale=:log, yscale=:log, xunit=:nH, yunit=:K, center=ctr, range_unit=:kpc)
@@ -243,16 +243,23 @@ end
 fig
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_1.png)
+```
+[Mera] Hint: getvar(:vϕ_cylinder) has no `vcenter` — velocities are in the BOX frame.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             (shown once per session; verbose(false) silences Mera's messages)
+```
 
-## 7. Distribution shape & uncertainties — moments, equal-count bins, bootstrap CIs
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_3.png)
+
+## 7. Distribution shape & uncertainties, moments, equal-count bins, bootstrap CIs
 
 Three statistics upgrades, all opt-in and composable:
 
-* **`skewness`** and (excess) **`kurtosis`** are always returned with a `yvar` — the asymmetry and
+* **`skewness`** and (excess) **`kurtosis`** are always returned with a `yvar`, the asymmetry and
   tail-weight of each bin's distribution (a Gaussian gives both ≈ 0).
 * **`scale=:equal`** places *quantile-spaced* edges so every bin holds about the same number of
-  points — far steadier statistics where the disk thins out (vs fixed-width bins that empty out).
+  points, far steadier statistics where the disk thins out (vs fixed-width bins that empty out).
 * **`bootstrap=N`** resamples each bin to add confidence intervals for the per-bin mean and median
   (`mean_ci`/`median_ci`, `nbins×2`) plus `median_se`; `ci=:percentile` (default), `:basic` or
   `:bca` (bias-corrected & accelerated). It is deterministic (seeded), so reruns match.
@@ -286,26 +293,26 @@ equal-count points/bin (min..max): (32096, 33456)  → nearly equal
 
 These use exactly the same `profile`/`phase` calls shown above:
 
-* **Many fields in one pass** — pass `yvar` as a vector to bin once and reduce several fields together
+* **Many fields in one pass**, pass `yvar` as a vector to bin once and reduce several fields together
   (cheaper than one call per field); per-field stats live under `p.fields[:T]`, in `p.yvars` order:
   `profile(gas, :r_cylinder, [:T, :rho]; weight=:mass, nbins=40, center=ctr, range_unit=:kpc)`.
-* **Velocity decomposition** — `getvar` splits each cell's velocity about `center` into
+* **Velocity decomposition**, `getvar` splits each cell's velocity about `center` into
   `:vr_cylinder` (radial in/outflow, ±), `:vϕ_cylinder` (rotation), `:vz` (vertical), plus the
   spherical triplet `:vr_sphere`/`:vθ_sphere`/`:vϕ_sphere`. Profiling them gives ⟨v⟩(R) (`mean`,
   signed) and the **rest-frame dispersion** σ(R) (`std`, about the per-bin mean, so net rotation
   doesn't inflate it). [`velocitydispersion`](@ref) returns σ_R/σ_ϕ/σ_z and the total σ in one call.
   These are **3-D, per-annulus** dispersions about the bin mean (intra-bin shear retained); for a
-  **local, per-pixel line-of-sight** dispersion use the projected `:σlos` map instead —
+  **local, per-pixel line-of-sight** dispersion use the projected `:σlos` map instead,
   `profile(projection(gas, :σlos, :km_s; direction=:edgeon, center=ctr, range_unit=:kpc), :σlos; xvar=:r, weight=:sd)`.
-* **Select particles** — `getparticlemask(parts, :stars)` (or `:dm`/`:clouds`/… , a family `Int`, or
+* **Select particles**, `getparticlemask(parts, :stars)` (or `:dm`/`:clouds`/… , a family `Int`, or
   `(family=…, tag=…)`) builds a boolean mask to pass as `mask=` to any profile call.
-* **Profiles from a 2-D map** — `profile` also takes a `projection` result: bin map pixels by
+* **Profiles from a 2-D map**, `profile` also takes a `projection` result: bin map pixels by
   image-plane radius `:r` (a surface brightness Σ(R)), by `:x`/`:y`, or by another map; weight by
-  `:none`/`:area` or a map key. Works for off-axis (e.g. edge-on) maps too — `:r` stays centred on
+  `:none`/`:area` or a map key. Works for off-axis (e.g. edge-on) maps too, `:r` stays centred on
   the object. `profile(proj, :sd; xvar=:r, weight=:none, xunit=:kpc, nbins=30)`.
-* **3-D profiles** — `profile3d(gas, :rho, :T, :z; weight=:mass, nbins=(80,80,24), …)` bins by three
+* **3-D profiles**, `profile3d(gas, :rho, :T, :z; weight=:mass, nbins=(80,80,24), …)` bins by three
   fields; marginalizing one axis reproduces `phase` exactly (a built-in consistency check).
-* **Evolution across snapshots** — `profiletimeseries(loadfn, outputs, xvar, yvar; …)` stacks a
+* **Evolution across snapshots**, `profiletimeseries(loadfn, outputs, xvar, yvar; …)` stacks a
   profile over many outputs into an `(nbins × n_snapshots)` matrix on a fixed radius axis.
 
 ## Takeaway
@@ -317,7 +324,7 @@ These use exactly the same `profile`/`phase` calls shown above:
 | density / enclosed mass / fraction / pdf | `geometry`, `cumulative`, `normalize` |
 | many fields in one pass | `profile(obj, x, [y1,y2])` → `.fields` |
 | mass/volume/none/field weighting; components | `weight=…`, shared `edges` |
-| rotation curve — gas (maskable) / stars / DM | `rotationcurve(obj; mask=…)` |
+| rotation curve, gas (maskable) / stars / DM | `rotationcurve(obj; mask=…)` |
 | velocity decomposition ⟨v_ϕ⟩/⟨v_r⟩ + σ_r/σ_ϕ/σ_z | `profile(obj, r, :vϕ_cylinder/:vr_cylinder/:vz)` |
 | select particles by type/family/tag | `getparticlemask` |
 | profile from a 2-D map (Σ(R), map-weighted) | `profile(m::DataMapsType, …)` |

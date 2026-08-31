@@ -6,7 +6,7 @@ getsinks(dataobject::InfoType; vars::Array{Symbol,1}=[:all],
          xrange::Array{<:Any,1}=[missing, missing],
          yrange::Array{<:Any,1}=[missing, missing],
          zrange::Array{<:Any,1}=[missing, missing],
-         center::Array{<:Any,1}=[0., 0., 0.],
+         center::CenterType=[0., 0., 0.],
          range_unit::Symbol=:standard,
          verbose::Bool=true) -> SinkDataType
 ```
@@ -50,7 +50,7 @@ function getsinks(dataobject::InfoType;
                   xrange::Array{<:Any,1}=[missing, missing],
                   yrange::Array{<:Any,1}=[missing, missing],
                   zrange::Array{<:Any,1}=[missing, missing],
-                  center::Array{<:Any,1}=[0., 0., 0.],
+                  center::CenterType=[0., 0., 0.],
                   range_unit::Symbol=:standard,
                   verbose::Bool=true)
 

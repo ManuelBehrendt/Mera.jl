@@ -8,7 +8,7 @@
 # Hydro Data Projections
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `06_hydro_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_hydro_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `06_hydro_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_hydro_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This tutorial demonstrates advanced projection techniques for hydrodynamical simulation data using MERA.jl. Learn how to create 2D projections from 3D data, handle different coordinate systems, and visualize complex astrophysical datasets.
@@ -32,7 +32,7 @@ projection(data, :sd, :Msol_pc2, direction=:x)  # x, y, z directions
 
 # Resolution control
 projection(data, :sd, :Msol_pc2, lmax=8)        # AMR level
-projection(data, :sd, :Msol_pc2, res=256)       # Effective grid resolution
+projection(data, :sd, :Msol_pc2, pxsize=[0.1, :kpc])   # physical pixel size
 projection(data, :sd, :Msol_pc2, pxsize=[100.,:pc])  # Physical pixel size
 
 # Masking and weighting
@@ -65,20 +65,20 @@ MERA.jl provides powerful projection capabilities for analyzing hydrodynamical s
 - **Weighting Schemes**: Mass-weighted, volume-weighted, or custom weighting
 - **Coordinate Systems**: Native Cartesian or derived cylindrical/spherical coordinates
 
-### Intensive vs. extensive quantities — what a projection *means*
+### Intensive vs. extensive quantities, what a projection *means*
 
 A line-of-sight projection reduces a 3-D field to a 2-D map, and **how** the cells along each
 sightline are combined depends on whether the quantity is *intensive* or *extensive*:
 
 | Quantity kind | Examples | How it is projected | Result per pixel |
 |---|---|---|---|
-| **Extensive** (adds up) | `:sd` (surface density), `:mass` | **summed** along the sightline, divided by the pixel area | a column / surface density — the total is conserved |
+| **Extensive** (adds up) | `:sd` (surface density), `:mass` | **summed** along the sightline, divided by the pixel area | a column / surface density, the total is conserved |
 | **Intensive** (a local value) | `:T`, `:vx`, `:rho`, `:cs`, `:p`, … | **weight-averaged** along the sightline (`weighting=:mass` by default, or `:volume`) | a representative value, *not* a sum |
 
 In other words: a mass-weighted projection of an intensive field answers *"what value would a
 mass-tracer see, averaged down this column?"*, while a surface-density projection answers
 *"how much is there per unit area?"*. Choosing the wrong combination is the most common projection
-mistake — e.g. mass-weighting a temperature map biases it toward dense gas, whereas volume-weighting
+mistake, e.g. mass-weighting a temperature map biases it toward dense gas, whereas volume-weighting
 (`weighting=[:volume]`) gives the volume-filling temperature.
 
 ```julia
@@ -90,10 +90,10 @@ projection(gas, :sd, :Msol_pc2)          # extensive: summed mass per pixel area
 !!! note "`mode=:standard` vs `mode=:sum`"
     The default `mode=:standard` produces the **physically normalized** map described above
     (extensive ⇒ per-area column; intensive ⇒ weight-average). `mode=:sum` instead returns the
-    **raw per-pixel weighted sum** with no area/normalization division — useful when you want to
+    **raw per-pixel weighted sum** with no area/normalization division, useful when you want to
     accumulate a conserved total yourself (e.g. summing energy or a custom budget across pixels) and
     will apply your own normalization. For standard surface-density and weighted-average maps, keep
-    `mode=:standard`. (Hydro, gravity and RT take the weighting as an ARRAY — `[:mass]`, `[:volume]`;
+    `mode=:standard`. (Hydro, gravity and RT take the weighting as an ARRAY, `[:mass]`, `[:volume]`;
     only particle projections take a bare symbol, `weighting=:mass`/`:volume`. `mode` applies to
     the hydro/gravity grid path.)
 
@@ -127,8 +127,8 @@ gas = gethydro(info, smallr=1e-11, lmax=12);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-06T16:02:12.521
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T13:42:33.192
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -168,7 +168,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-08-06T16:02:14.897
+[Mera]: Get hydro data: 2026-08-31T13:42:35.592
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 domain:
@@ -180,7 +180,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:36 (17.79 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (13.05 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 18966620 cells, 7 variables
@@ -190,7 +190,7 @@ Creating Table from 18966620 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 26.581 seconds
+✓ Table created in 24.676 seconds
 Memory used for data table :1.5544367535039783 GB
 -------------------------------------------------------
 ```
@@ -264,13 +264,18 @@ velocity dispersion => σr_cylinder, σϕ_cylinder
 2d maps (not projected) => :r_cylinder, :ϕ
 ==============[off-axis views]:==================
 project along ANY line of sight (degrees by default):
-  inclination=, azimuth=, axis=(:z|:angmom|vector)
+  inclination=, azimuth=, axis=(:x|:y|:z|:angmom|:L|[ax,ay,az])
   direction=:faceon / :edgeon   (disk from L)
-  los=[lx,ly,lz]   or   theta=, phi=
+  los=[lx,ly,lz]
+  theta=, phi=   (deprecated in 1.8: azimuth = phi + 90 for axis=:z)
   position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact
+    (:overlap/:exact integrate a cell's footprint; point particles have none,
+     so on particle data they fall back to :cic)
+  thickness=, offset= (particles): project a SLAB of finite depth instead of the
+     full column, and move it along the line of sight
   line-of-sight tools (same view kwargs):
     :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)
-    slice (off-axis kwargs)       -> cutting plane ;  profile / phase -> 1D/2D reductions
+    slice (off-axis kwargs)       -> cutting plane (offset= moves it) ;  profile / phase -> 1D/2D reductions
     rotation_sequence             -> shared-FOV angle sweep (orbit movies)
     savemap/loadmap (JLD2)        -> store/restore a projection result
 ------------------------------------------------
@@ -308,7 +313,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbo
 ```
 
 ```
-[Mera]: 2026-08-06T16:03:29.352
+[Mera]: 2026-08-31T13:43:39.169
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -345,7 +350,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-06T16:03:45.286
+[Mera]: 2026-08-31T13:43:55.508
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -376,7 +381,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-06T16:03:47.757
+[Mera]: 2026-08-31T13:43:57.797
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -403,7 +408,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-06T16:03:49.549
+[Mera]: 2026-08-31T13:43:59.446
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -434,7 +439,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-06T16:03:51.813
+[Mera]: 2026-08-31T13:44:01.724
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -476,7 +481,7 @@ proj1_x = projection(gas, [:sd],                # Single variable in array
 ```
 
 ```
-[Mera]: 2026-08-06T16:03:53.549
+[Mera]: 2026-08-31T13:44:03.451
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -511,7 +516,7 @@ proj1_z = projection(gas, [:sd, :vx],           # Surface density + x-velocity
 ```
 
 ```
-[Mera]: 2026-08-06T16:03:55.023
+[Mera]: 2026-08-31T13:44:04.896
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -545,7 +550,7 @@ proj1_z = projection(gas, [:sd, :vx], [:Msol_pc2, :km_s],  # Required positional
 ```
 
 ```
-[Mera]: 2026-08-06T16:03:56.981
+[Mera]: 2026-08-31T13:44:06.506
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -579,7 +584,7 @@ projvel_z = projection(gas, [:vx, :vy, :vz],    # Velocity components
 ```
 
 ```
-[Mera]: 2026-08-06T16:03:58.802
+[Mera]: 2026-08-31T13:44:07.953
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -733,9 +738,9 @@ proj1_z.cextent # ranges in code units relative to a given center (by default: b
 
 `proj.extent`/`proj.cextent` above are in **code length** units. To get plot axes in a physical unit
 that matches the map (surface density here is `Msol/pc²`), use `getextent(proj, :kpc)` rather than the
-raw field — it returns `[xmin, xmax, ymin, ymax]` scaled to the unit (`center=true` for the
+raw field, it returns `[xmin, xmax, ymin, ymax]` scaled to the unit (`center=true` for the
 centre-relative form, like `.cextent`). This is the robust idiom: for these tutorial runs one code
-length happens to equal 1 kpc, but for a run in pc / Mpc — or a GADGET/AREPO snapshot — the raw
+length happens to equal 1 kpc, but for a run in pc / Mpc, or a GADGET/AREPO snapshot, the raw
 code-unit extent would mislabel the axes.
 
 ```julia
@@ -784,7 +789,7 @@ proj_x = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
 ```
 
 #### matplotlib Configuration
@@ -843,7 +848,7 @@ cb = colorbar(im,
 ![](06_hydro_Projection_files/06_hydro_Projection_49_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x313e4c7c0>
+PyObject <matplotlib.colorbar.Colorbar object at 0x30f828760>
 ```
 
 ```julia
@@ -878,18 +883,18 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 ![](06_hydro_Projection_files/06_hydro_Projection_51_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x3150b9f60>
+PyObject <matplotlib.colorbar.Colorbar object at 0x310e3df00>
 ```
 
 ### Where the map's axes are measured from: `data_center`
 
 `center` says which part of the box to project. `data_center` says what the map's coordinate
-axes are measured *relative to* — it sets the origin of `cextent`, so it controls the numbers
+axes are measured *relative to*, it sets the origin of `cextent`, so it controls the numbers
 on the axes and the reference point for cylindrical and spherical quantities such as
 `:vr_cylinder` or `:σr_cylinder`.
 
 They are usually the same point, and `data_center=[:boxcenter]` is the common choice. Set
-them differently when you want a map centred on one structure but measured from another — for
+them differently when you want a map centred on one structure but measured from another, for
 example projecting a satellite while keeping radii relative to the host's centre:
 
 ```julia
@@ -930,7 +935,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and 
 ```
 
 ```
-[Mera]: 2026-08-06T16:04:27.022
+[Mera]: 2026-08-31T13:44:36.533
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -942,6 +947,10 @@ Effective resolution: 4096^2
 Map size: 1708 x 1708
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
+[Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             (shown once per session; verbose(false) silences Mera's messages)
 Available threads: 4
 Requested max_threads: 4
 Variables: 9 (sd, v, v2, vx, vx2, vy, vy2, vz, vz2)
@@ -1061,7 +1070,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-08-06T16:04:35.211
+[Mera]: 2026-08-31T13:44:44.191
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1242,7 +1251,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-08-06T16:04:49.857
+[Mera]: 2026-08-31T13:44:57.750
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1325,7 +1334,7 @@ colorbar();
 Fix the physical size of a map pixel, independent of the AMR levels present:
 
 ```julia
-# 0.5 kpc pixels — the map size follows from the range you project
+# 0.5 kpc pixels, the map size follows from the range you project
 proj_z = projection(gas,
     [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],
     :km_s,
@@ -1335,7 +1344,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-08-06T16:04:59.508
+[Mera]: 2026-08-31T13:45:06.078
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1420,7 +1429,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-08-06T16:05:08.883
+[Mera]: 2026-08-31T13:45:13.150
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1445,11 +1454,11 @@ Processing mode: Variable-based parallel (4 threads)
    Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
    Processing levels 6 to 12
    🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4
-✅ Variable-based parallel processing completed in 3.334s
+✅ Variable-based parallel processing completed in 2.411s
    ⚡ No combining phase needed - direct variable assignment eliminates overhead!
    📊 Performance Metrics:
       ├─ Total operations: 241678294 (18590638 cells × 13 vars)
-      ├─ Processing rate: 72488361 cells/second
+      ├─ Processing rate: 100246299 cells/second
       ├─ Parallel efficiency: 100.0% (target: 85-95%)
       ├─ Threads utilized: 4 / 4 available
       └─ Memory benefit: Direct allocation (no intermediate combining buffers)
@@ -1534,7 +1543,7 @@ proj_x = projection(gas, :cs, :km_s,           # X-direction sound speed
 ```
 
 ```
-[Mera]: 2026-08-06T16:05:17.665
+[Mera]: 2026-08-31T13:45:20.138
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1549,7 +1558,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
-[Mera]: 2026-08-06T16:05:19.215
+[Mera]: 2026-08-31T13:45:21.503
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1658,7 +1667,7 @@ proj_x = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-08-06T16:05:21.864
+[Mera]: 2026-08-31T13:45:24.109
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1675,7 +1684,7 @@ Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
-[Mera]: 2026-08-06T16:05:25.823
+[Mera]: 2026-08-31T13:45:28.017
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1691,7 +1700,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
 ```
 
 ```julia
@@ -1725,7 +1734,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-08-06T16:05:31.410
+[Mera]: 2026-08-31T13:45:33.768
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1740,7 +1749,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:18
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
 ```
 
 #### Custom Weighting with Units
@@ -1754,7 +1763,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-08-06T16:06:13.836
+[Mera]: 2026-08-31T13:46:13.245
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1769,7 +1778,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:18
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
 ```
 
 ## Specialized Applications
@@ -1788,7 +1797,7 @@ proj_y = projection(gas, [:sd, :v], [:Msol_pc2, :km_s],
 ```
 
 ```
-[Mera]: 2026-08-06T16:06:56.455
+[Mera]: 2026-08-31T13:46:52.992
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]

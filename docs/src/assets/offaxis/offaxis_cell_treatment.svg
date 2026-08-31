@@ -50,7 +50,7 @@
   </defs>
 
   <rect width="1180" height="772" fill="#ffffff"/>
-  <text x="590" y="34" text-anchor="middle" font-size="22" font-weight="bold" fill="#1f2937">How a tilted simulation becomes a flat image &#8212; one cube at a time</text>
+  <text x="590" y="34" text-anchor="middle" font-size="22" font-weight="bold" fill="#1f2937">How a tilted simulation becomes a flat image, one cube at a time</text>
   <text x="590" y="58" text-anchor="middle" font-size="13.5" fill="#64748b">A simulation is built from cubes of gas. To picture it from any viewing angle, tilt each cube and spread its gas onto the image&#8217;s pixels.</text>
 
   <!-- ============================ ROW 1: geometry ============================ -->
@@ -124,12 +124,13 @@
 
   <!-- divider -->
   <line x1="60" y1="372" x2="1120" y2="372" stroke="#e2e8f0" stroke-width="1.4"/>
-  <text x="590" y="396" text-anchor="middle" font-size="16" font-weight="bold" fill="#1f2937">Four ways to share one cube&#8217;s gas among the pixels &#8212; fast to most accurate (all keep the total)</text>
+  <text x="590" y="396" text-anchor="middle" font-size="16" font-weight="bold" fill="#1f2937">Four ways to share one cube&#8217;s gas among the pixels, fast to most accurate (all keep the total)</text>
+<text x="590" y="413" text-anchor="middle" font-size="11.5" fill="#475569">This choice only matters when your pixels are FINER than the cells. At one pixel per cell or coarser, any kernel will do.</text>
 
   <!-- ============================ ROW 2: the four kernels ============================ -->
   <!-- P4: :ngp -->
   <g transform="translate(45,418)">
-    <text x="125" y="14" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#0f766e">:ngp</text>
+    <text x="125" y="14" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#0f766e">binning=:ngp</text>
     <g transform="translate(25,24)">
       <use xlink:href="#px5"/>
       <!-- nearest pixel -->
@@ -142,7 +143,7 @@
 
   <!-- P5: :cic -->
   <g transform="translate(325,418)">
-    <text x="125" y="14" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#0f766e">:cic</text>
+    <text x="125" y="14" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#0f766e">binning=:cic</text>
     <g transform="translate(25,24)">
       <use xlink:href="#px5"/>
       <!-- bilinear 4-pixel stencil (opacity = weight) -->
@@ -158,7 +159,7 @@
 
   <!-- P6: :overlap -->
   <g transform="translate(605,418)">
-    <text x="125" y="14" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#0f766e">:overlap  <tspan font-size="11" font-weight="normal" fill="#94a3b8">(default)</tspan></text>
+    <text x="125" y="14" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#0f766e">binning=:overlap  <tspan font-size="11" font-weight="normal" fill="#94a3b8">(default)</tspan></text>
     <g transform="translate(25,24)">
       <use xlink:href="#px5"/>
       <g transform="translate(100,100)">
@@ -180,7 +181,7 @@
 
   <!-- P7: :exact -->
   <g transform="translate(885,418)">
-    <text x="125" y="14" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#0f766e">:exact</text>
+    <text x="125" y="14" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#0f766e">binning=:exact</text>
     <g transform="translate(25,24)">
       <use xlink:href="#px5"/>
       <g transform="translate(100,100)">
@@ -192,11 +193,12 @@
         <line x1="0" y1="40" x2="200" y2="40"/><line x1="0" y1="80" x2="200" y2="80"/><line x1="0" y1="120" x2="200" y2="120"/><line x1="0" y1="160" x2="200" y2="160"/>
       </g>
     </g>
-    <text x="125" y="246" text-anchor="middle" font-size="11.5" fill="#475569">use the cube&#8217;s true shadow shape</text>
-    <text x="125" y="262" text-anchor="middle" font-size="11" fill="#94a3b8" font-style="italic">most accurate &#183; colour = depth through the cube</text>
+    <text x="125" y="246" text-anchor="middle" font-size="11.5" fill="#475569">the analytic reference (colour = depth)</text>
+    <text x="125" y="262" text-anchor="middle" font-size="11" fill="#94a3b8" font-style="italic">~3x slower, only 0.002 dex from :overlap</text>
   </g>
 
   <!-- footer -->
-  <text x="590" y="720" text-anchor="middle" font-size="12.5" fill="#1f2937">Whichever method, a cube always gives <tspan font-weight="bold">all</tspan> its gas to the image &#8212; the picture adds up to the simulation&#8217;s true total, at any angle and any zoom.</text>
-  <text x="590" y="740" text-anchor="middle" font-size="10.5" fill="#94a3b8">technical: every kernel is a partition of unity (&#931; shares = 1) &#183; Mera.jl projection_hydro.jl: deposit_rotated_cells_{to_grid!, overlap!, exact!}</text>
+  <text x="590" y="720" text-anchor="middle" font-size="12.5" fill="#1f2937">Whichever method, a cube always gives <tspan font-weight="bold">all</tspan> its gas to the image, the picture adds up to the simulation&#8217;s true total, at any angle and any zoom.</text>
+  <text x="590" y="726" text-anchor="middle" font-size="11" fill="#475569">Particles are points and have no shadow, so on particle data :overlap and :exact fall back to :cic.</text>
+<text x="590" y="740" text-anchor="middle" font-size="10.5" fill="#94a3b8">technical: every kernel is a partition of unity (&#931; shares = 1) &#183; Mera.jl projection_hydro.jl: deposit_rotated_cells_{to_grid!, overlap!, exact!}</text>
 </svg>
