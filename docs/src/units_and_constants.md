@@ -796,3 +796,42 @@ For selective exploration, use:
 - viewfields(info.scale)  # Scaling factors only
 - viewfields(info.constants) # Physical constants only
 ```
+
+## Accuracy of the scale factors
+
+The scale table was audited dimensionally on 2026-08-31, by checking every expression against the
+base units (`unit_l` in cm, `unit_d` in g/cm³, `unit_t` in s, with mass = `unit_d·unit_l³`) rather
+than against the formula written next to it. Seven entries were wrong and are now fixed.
+
+| scale | was | error |
+|---|---|---|
+| `dyne` | density times acceleration, a force **density** | `unit_l³` |
+| `J_s` | byte-identical to `g_cm2_s`, a cgs value labelled SI | `1e7` |
+| `kg_m2_s` | cm² to m² exponent sign flipped | `1e8` |
+| `J_kg` | erg to J applied, g to kg not | `1e3` |
+| `J_m3_K` | `1e1` where erg/cm³ to J/m³ needs `1e-1` | `1e2` |
+| `erg_cm2_s` | byte-identical to `erg_cm3_s`, a per-volume rate labelled a flux | `unit_l` |
+| `pc_Myr2` | both conversions inverted, so every `unit_*` cancelled | ~`1.4e9` |
+
+Two of those are self-proving: a pair of scales that are *exactly equal* while claiming different
+dimensions cannot both be right.
+
+They survived because the tests restated each formula (`@test J_kg ≈ erg_g/1e7`) instead of
+checking the physics, so they could never fail. The tests now assert **relations**: a flux divided
+by a volumetric rate must be one length, `J·s` must equal `kg·m²/s`, and so on.
+
+### Three names to be careful with
+
+**`:g_cms2` is a pressure, not a force.** It reads like g·cm/s² but is g/(cm·s²), and is exactly
+equal to `:Ba`. For a force use `:dyne`, for an acceleration `:cm_s2`. Mera's own clump finder had
+this wrong and scaled its gravitational accelerations by `unit_d·unit_l`.
+
+**The entropy units are already cgs.** `:entropy_specific` computes `(k_B/m_u)·ln(P/ρ^γ)/(γ-1)`,
+which is already in erg/(g·K), unlike every other quantity that comes back in code units. So
+`scale.erg_g_K` is `1.0`: asking for that unit is a no-op, not a conversion. `:erg_K` and
+`:erg_cm3_K` are built from it as mass and density factors.
+
+**`:Jy` needs a spectral quantity.** A Jansky is a *spectral* flux density, erg s⁻¹ cm⁻² Hz⁻¹.
+Mera has no per-Hz quantity, so `:Jy` converts one you supply yourself; it does not apply to a
+bolometric flux. `:keV_cm2` is likewise the X-ray entropy `kT/n^{2/3}`, a quantity Mera does not
+compute, so it is left as the identity rather than given an invented factor.

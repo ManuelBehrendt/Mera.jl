@@ -550,7 +550,7 @@ Everything measured about an axis or a centre depends on `center`, exactly as th
 components do. Pass the same centre you use elsewhere in the analysis.
 
 ```julia
-ctr = [:bc]                     # box centre; use the object's centre for a real galaxy
+ctr = :bc                       # a bare symbol works; [:bc] does too                     # box centre; use the object's centre for a real galaxy
 
 using Printf
 for q in (:a_magnitude, :a_magnitude_cylinder,
@@ -561,23 +561,13 @@ for q in (:a_magnitude, :a_magnitude_cylinder,
 end
 ```
 
-```
-a_magnitude               1.723e-09 ..  1.251e-07  cm/s^2
-a_magnitude_cylinder      2.757e-11 ..  9.097e-08  cm/s^2
-ar_cylinder              -9.097e-08 .. -2.757e-11  cm/s^2
-aphi_cylinder            -3.811e-09 ..  4.831e-09  cm/s^2
-ar_sphere                -1.251e-07 .. -1.723e-09  cm/s^2
-atheta_sphere            -4.505e-08 ..  4.000e-08  cm/s^2
-aphi_sphere              -3.811e-09 ..  4.831e-09  cm/s^2
-```
-
 ## Energy and force: these need the hydro object
 
 A potential is energy **per unit mass** and an acceleration is force **per unit mass**. To get an
 energy or a force you need the mass of the cell, and the mass lives on the hydro object, not the
 gravity one.
 
-So these quantities take both objects. The order is gravity first, then hydro:
+So these quantities take both objects. Either order works, gravity first or hydro first:
 
 ```julia
 getvar(gravity, hydro, :Fg, :dyne)
@@ -590,20 +580,10 @@ gas = gethydro(info, verbose=false, show_progress=false);
 
 for (q, u) in ((:gravitational_energy, :erg), (:total_binding_energy, :erg),
                (:Fg, :dyne), (:Fr_cylinder, :dyne), (:Fr_sphere, :dyne),
-               (:Ftheta_sphere, :dyne), (:F_magnitude_cylinder, :dyne))
+               (:Fθ_sphere, :dyne), (:F_magnitude_cylinder, :dyne))
     v = getvar(grav, gas, q, u, center=ctr)
     @printf("%-24s %10.3e .. %10.3e  %s\n", q, minimum(v), maximum(v), u)
 end
-```
-
-```
-gravitational_energy     -2.869e+52 .. -1.115e+45  erg
-total_binding_energy      1.115e+45 ..  2.869e+52  erg
-Fg                        9.260e+23 ..  4.539e+31  dyne
-Fr_cylinder              -4.538e+31 .. -2.271e+22  dyne
-Fr_sphere                -4.538e+31 .. -9.259e+23  dyne
-Ftheta_sphere            -7.828e+30 ..  6.246e+30  dyne
-F_magnitude_cylinder      2.271e+22 ..  4.539e+31  dyne
 ```
 
 `:gravitational_energy` is ``m\,\phi``, negative where the cell is bound.

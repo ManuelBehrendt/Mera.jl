@@ -347,6 +347,67 @@ different numbers, so state which one you used.
     returned confident numbers that meant nothing without a stated reference level, so they were
     withdrawn rather than left to be misread.
 
+## Velocity dispersion and frames
+
+*Data: **hydro** or **particles**. The dispersions are map quantities: they are computed per pixel
+from the spread of velocities along the ray, so they exist in `projection`, not per cell.*
+
+| Quantity | Meaning |
+|---|---|
+| `:σx, :σy, :σz, :σ` | bulk spread along a box axis, and of the speed |
+| `:σr_cylinder, :σϕ_cylinder` | cylindrical components |
+| `:σr_sphere, :σθ_sphere, :σϕ_sphere` | spherical components |
+| `:σlos` | along an arbitrary line of sight, off-axis only |
+
+Each is ``\sqrt{\langle v^2\rangle - \langle v\rangle^2}`` over the mass in a pixel.
+
+### Thermal broadening
+
+`:σ_thermal` is a per-cell quantity, the 1D thermal width of the mean gas particle:
+
+```math
+\sigma_\mathrm{thermal} = \sqrt{\frac{k_B T}{\mu m_H}} = \sqrt{P/\rho} = \frac{c_s}{\sqrt{\gamma}}
+```
+
+The middle form is what Mera computes, and it needs no μ: ``P/\rho`` **is** ``k_B T/(\mu m_H)`` by
+the ideal gas law, whatever the ionization state. That matters on an RT run, where μ varies per cell
+and the constant μ behind plain `:T` is wrong by a large factor. Use `:T_rt` and `:mu` there.
+
+It is **isotropic**, so there is no directional version. Combine it with a directional bulk
+dispersion by adding the **variances**, because a line profile is a convolution:
+
+```math
+\sigma_\mathrm{total}^2 = \sigma_\mathrm{bulk}^2 + \sigma_\mathrm{thermal}^2
+```
+
+This is the width for a particle of the mean mass ``\mu m_H``. A line is broadened by the mass of
+the *emitting* species, so for a species of mass ``m_X`` scale it by ``\sqrt{\mu m_H/m_X}``: CO is
+28 times heavier than hydrogen and so 5.3 times narrower.
+
+### Subtracting an ordered flow
+
+A dispersion already subtracts the mean **inside each pixel**, so a constant boost cannot change it.
+What it cannot see is an ordered gradient **along the ray**: an edge-on sightline crosses many radii
+rotating at different speeds, so `:σlos` measures the rotation curve rather than turbulence.
+
+`restframe` returns an object with a velocity frame subtracted, which is how a frame reaches
+`projection` (that function has no `vcenter` keyword; `getvar` does).
+
+```julia
+f       = rotation_frame(gas; center=:bc)        # curve measured from the data itself
+gas_rot = restframe(gas; vcenter=f, center=:bc)
+projection(gas_rot, :σlos, :km_s; direction=:edgeon, center=:bc)
+```
+
+`vcenter` accepts a 3-vector, `:auto` for the mass-weighted bulk velocity, or a function
+`f(x, y, z)` returning an ordered velocity field. `rotation_frame` builds that function by binning
+cells in cylindrical radius and taking the mass-weighted mean ``v_\varphi`` per bin.
+
+!!! note "Comparing frames"
+    `direction=:faceon` and `:edgeon` derive their orientation from the angular momentum, and
+    changing velocities changes ``\mathbf L``, so the camera moves between two frames. For a
+    controlled before-and-after comparison use `direction=:x/:y/:z`.
+
 ## Magnetic field
 
 *Data: **hydro** of an MHD run. RAMSES stores the field on cell faces as `:bx_left`/`:bx_right`

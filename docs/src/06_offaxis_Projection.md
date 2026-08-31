@@ -139,10 +139,8 @@ maprow([fo, eo], :sd, ["direction=:faceon", "direction=:edgeon"]; crange=cr)
 
 ```
 [Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
-             `center=` fixes the origin; `vcenter=` fixes the frame, and they are separate.
-             For an object with bulk motion pass vcenter=:auto, or vcenter=bulk_velocity(obj).
-             Harmless if the object is already at rest in the box; on a halo streaming at
-             ~200 km/s this shifted |J| by 34 % and its direction by ~5 degrees.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
              (shown once per session; verbose(false) silences Mera's messages)
 line of sight  ŵ = [0.011, 0.02, -1.0]
 image up       û = [1.0, -0.0, 0.011]
@@ -256,7 +254,7 @@ inclination + los         → ArgumentError
 direction=:faceon + axis  → ArgumentError
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_10_7.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_10_6.png)
 
 `direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight** — the two `ŵ`
 vectors agree to the last bit — but they are *not* the same image. A face-on view leaves the roll
@@ -320,13 +318,10 @@ end
 
 ```
 [Mera] Hint: off-axis view with `xrange`/`yrange` but no `zrange`.
-             These are WORLD-space bounds, so the camera frame is the bounding box of that
-             region AFTER rotation: the full box depth folds into the image height, and the
-             window's own faces show up as straight edges across the map. Pass `zrange` to
-             bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
-             frame (add aperture=:square for an identical frame at every angle).
+             These are WORLD-space bounds, so after rotation the full box depth folds into
+             the image. Pass `zrange`, or `fov=<half-width>` for a fixed camera frame.
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-30T16:36:23.439
+[Mera]: 2026-08-31T12:49:07.265
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -562,10 +557,10 @@ level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       85.7 %     0.009     1.0381
-cic       64.4 %     0.009     0.9733
-overlap   0.0 %      0.036     0.0021
-exact     0.0 %      0.123     0.0
+ngp       85.7 %     0.006     1.0381
+cic       64.4 %     0.006     0.9733
+overlap   0.0 %      0.027     0.0021
+exact     0.0 %      0.099     0.0
 ```
 
 ### One number is not enough: where the disagreement lives
@@ -806,6 +801,125 @@ you. Quote it anyway, so a reader can check.
     and FITS export are **in development in a separate module** and are not part of the released
     package. This page covers only the moment maps `:vlos` and `:σlos`. (Stated once, here.)
 
+### Taking the rotation out
+
+Chapter 7 said the edge-on σ_LOS is dominated by **ordered rotation**, not turbulence, because one
+sightline crosses many radii that rotate at different speeds. That is a warning you can now act on.
+
+A dispersion already subtracts the mean **inside each pixel**, so a single bulk velocity changes
+nothing. What it cannot see is an ordered gradient **along the ray**. To remove that, subtract a
+velocity field before projecting.
+
+`rotation_frame` measures the field from the data itself: cells are binned by cylindrical radius,
+the mass-weighted mean `vϕ` is taken per bin, and the result is a function of position.
+`restframe` applies it and hands back an object every later call can use.
+
+```julia
+sig = (direction=:edgeon, center=:bc, fov=15, fov_unit=:kpc, aperture=:square,
+       pxsize=[0.8,:kpc], verbose=false, show_progress=false)
+good(A) = filter(x -> isfinite(x) && x > 0, vec(A))
+
+# Do it twice: on everything, and on the disc alone. The contrast is the point.
+for (label, zr) in (("all gas", [-50.,50.]), ("disc only, |z| < 2 kpc", [-2.,2.]))
+    g  = gethydro(info, zrange=zr, center=[:bc], range_unit=:kpc, verbose=false, show_progress=false)
+    f  = rotation_frame(g; center=:bc)          # the rotation curve measured from THIS gas
+    gr = restframe(g; vcenter=f, center=:bc)
+    a  = projection(g,  :σlos, :km_s; sig...).maps[:σlos]
+    b  = projection(gr, :σlos, :km_s; sig...).maps[:σlos]
+    ma, mb = median(good(a)), median(good(b))
+    global σ_bulk_disc = mb          # kept for the thermal section below
+    println(rpad(label, 24), "σ_LOS ", round(ma, digits=1), " → ", round(mb, digits=1),
+            " km/s   (", round(100*(1 - mb/ma), digits=1), " % was rotation)")
+end
+```
+
+```
+all gas                 σ_LOS 95.1 → 89.2 km/s   (6.3 % was rotation)
+disc only, |z| < 2 kpc  σ_LOS 84.6 → 16.2 km/s   (80.9 % was rotation)
+```
+
+Read those two lines together, because they say different things.
+
+Over **all** the gas, taking the rotation out barely moves σ_LOS. That is not the tool failing: it
+is the measurement telling you that this σ_LOS is not rotation. Chapter 7 already showed why, the
+brightest σ_LOS is *off* the disc plane, where a sightline crosses infalling and outflowing gas.
+
+Restricted to the **disc**, most of it goes: σ_LOS falls to roughly a fifth of its value, so about
+four fifths of what looked like a dispersion in the plane was the rotation curve sampled along the
+ray. What is left is the genuine spread about that curve.
+
+So the frame is also a diagnostic. The fraction that disappears tells you how much of your
+dispersion was ordered motion, and that number is worth quoting.
+
+Two things to keep in mind.
+
+**Use a fixed axis when comparing frames.** `direction=:faceon` and `:edgeon` derive their
+orientation from the angular momentum, and changing the velocities changes `L`, so the camera moves
+between the two maps. Each line above is internally consistent because both of its projections use
+the same gas; for a controlled before/after comparison use `direction=:x/:y/:z`.
+
+**`vcenter` also takes a plain vector or `:auto`**, so `restframe(gas; vcenter=:auto)` removes the
+bulk motion of the whole selection. That will *not* change a dispersion, because a dispersion
+already subtracts the mean in each pixel. It matters for velocity *maps*, not widths. Any function
+`f(x, y, z)` works, so a model rotation curve or an outflow model can be subtracted the same way.
+
+### The thermal part
+
+The dispersion above is the **bulk** spread of gas velocities. A real line is also broadened by
+thermal motion, and `:σ_thermal` gives that:
+
+```math
+\sigma_\mathrm{thermal} = \sqrt{\frac{k_B T}{\mu m_H}} = \sqrt{P/\rho} = \frac{c_s}{\sqrt{\gamma}}
+```
+
+The middle form is what Mera computes, and it is exact **without knowing μ**: `P/ρ` *is*
+`k_B T/(μ m_H)` by the ideal gas law, whatever the ionization state. That matters on an RT run,
+where μ varies cell by cell and the constant μ behind plain `:T` is wrong by a large factor.
+
+It is **isotropic**. A Maxwellian has the same 1D width along every axis, so there is no
+x/y/z or r/θ/ϕ version of it. Combine it with a directional bulk dispersion as
+
+```math
+\sigma_\mathrm{total}^2 = \sigma_\mathrm{bulk}^2 + \sigma_\mathrm{thermal}^2
+```
+
+adding the **variances**, because the line profile is a convolution.
+
+```julia
+th = getvar(gas, :σ_thermal, :km_s)
+println("σ_thermal per cell : ", round(minimum(th), digits=2), " .. ", round(maximum(th), digits=2), " km/s")
+
+# the two equivalent forms, as a check rather than an assertion
+γ = info.gamma
+println("equals cs/√γ       : ", isapprox(th, getvar(gas, :cs, :km_s) ./ sqrt(γ); rtol=1e-12))
+
+# Combine with the bulk dispersion: variances add. Use the disc value from above, where the
+# rotation has already been removed, so this is residual bulk motion rather than rotation.
+σ_therm = median(filter(isfinite, th))
+println("\nσ_bulk  (disc, rotation removed) = ", round(σ_bulk_disc, digits=2), " km/s")
+println("σ_therm (all gas, median)        = ", round(σ_therm, digits=2), " km/s")
+println("σ_total = √(σ_bulk² + σ_therm²)  = ", round(sqrt(σ_bulk_disc^2 + σ_therm^2), digits=2), " km/s")
+```
+
+```
+σ_thermal per cell : 0.11 .. 1917.32 km/s
+equals cs/√γ       : true
+σ_bulk  (disc, rotation removed) = 16.17 km/s
+σ_therm (all gas, median)        = 134.58 km/s
+σ_total = √(σ_bulk² + σ_therm²)  = 135.54 km/s
+```
+
+One caveat if you are comparing against an observed line. `:σ_thermal` is the width of the
+**mean gas particle**, of mass `μ m_H`. A line is broadened by the mass of the *emitting species*,
+so for a species of mass `m_X`:
+
+```math
+\sigma_{\mathrm{thermal},X} = \sqrt{P/\rho}\;\sqrt{\mu m_H / m_X}
+```
+
+CO is 28 times heavier than hydrogen, so its thermal width is 5.3 times narrower. Use `getvar(gas, :mu)`
+for the local μ when you need that scaling.
+
 ## 8. Cutting planes: a sample, not an integral
 
 `slice` is the cutting-plane function. It takes the same view keywords as `projection` and returns the cells the plane passes through. (`offaxis_slice` is a documented alias of the same function; prefer `slice`.)
@@ -933,7 +1047,7 @@ Colorbar(fig[1,3], h, label="log10 n_H [cm⁻³]")
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_43_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_49_1.png)
 
 Two things in the left panel are the *selection* rather than the gas, and both are worth
 recognising because they show up in every `fov` projection:
@@ -986,7 +1100,7 @@ cr = sharedrange(frames, :sd)
 maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_47_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_53_1.png)
 
 Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
 numbers say the same thing from opposite directions. That invariance is what makes the sequence
@@ -1222,7 +1336,7 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 φ along the line of sight: (-1976.0, -175.5) km²/s²
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_60_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_66_2.png)
 
 Same keywords, same camera, three different kinds of data — and each one says something the
 others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
