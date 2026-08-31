@@ -191,9 +191,9 @@ earlier.
 
 ### 2. RAMSES's own test configurations, run unchanged
 
-Not ours. These are configurations from RAMSES's own test suite, run **without modification** so
-the `*-ref.dat` files the RAMSES developers validate their solver against apply directly. This is
-the strongest tier in the suite: the numbers being matched were published by someone else.
+These are configurations from RAMSES's own test suite, run **without modification** so the
+`*-ref.dat` files the RAMSES developers validate their solver against apply directly. This is the
+strongest tier in the suite, because the numbers being matched were published independently.
 
 | fixture | RAMSES test | reference quantities |
 |---|---|---|
