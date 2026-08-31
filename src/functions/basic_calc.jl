@@ -47,6 +47,11 @@ return Float64
 ##### Optional Keywords:
 - **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units)  :Msol, :Mearth, :Mjupiter, :g, :kg  (of typye Symbol) ..etc. ; see for defined mass-scales viewfields(info.scale)
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
+  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
+  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
+  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
+  the run is periodic (`info.boundaries`).
 
 #### Sub-regions: the sum is boundary-aware
 `msum` sums `getvar(obj, :mass)`, which honours the per-cell `:fraction` attached by a
@@ -118,14 +123,66 @@ return Tuple{Float64, Float64, Float64,}
 ##### Optional Keywords:
 - **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
+  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
+  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
+  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
+  the run is periodic (`info.boundaries`).
 
 
 """
-function center_of_mass(dataobject::ContainMassDataSetType, unit::Symbol; mask::MaskType=[false])
-    return center_of_mass(dataobject, unit=unit, mask=mask)
+# --- periodic centre of mass ------------------------------------------------
+#
+# A plain mass-weighted mean assumes the box has an inside and an outside. On a
+# periodic axis it does not: a structure sitting on the boundary has half its
+# mass near 0 and half near L, and the mean lands in the middle of the box,
+# maximally far from the truth and entirely plausible-looking.
+#
+# The fix is the circular mean (Bai & Breen 2008): map each coordinate onto a
+# circle, average there, map back. The answer no longer depends on where the box
+# happens to be cut.
+
+function _com_circular(x::AbstractVector, m::AbstractVector, L::Real, total_mass::Real)
+    k = 2pi / L
+    xi   = sum(m .* cos.(k .* x)) / total_mass
+    zeta = sum(m .* sin.(k .* x)) / total_mass
+    # atan(-zeta, -xi) + pi maps back to [0, 2pi) rather than (-pi, pi]
+    return L * (atan(-zeta, -xi) + pi) / (2pi)
 end
 
-function center_of_mass(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
+# `periodic` may be a Bool for every axis, or per axis as (x=..., y=..., z=...)
+# or a 3-tuple, because a RAMSES run can wrap in some directions only.
+_periodic_flags(p::Bool) = (p, p, p)
+_periodic_flags(p::NTuple{3,Bool}) = p
+_periodic_flags(p::NamedTuple) = (get(p, :x, false), get(p, :y, false), get(p, :z, false))
+_periodic_flags(p) = error("periodic: expected a Bool, a 3-tuple of Bool, or (x=, y=, z=); got $(typeof(p))")
+
+function _center_of_mass_periodic(dataobject, unit::Symbol, mask, periodic)
+    flags = _periodic_flags(periodic)
+    L = dataobject.boxlen
+    m = getvar(dataobject, :mass, mask=mask)
+    total_mass = sum(m)
+    total_mass > 0 || error("center_of_mass: total mass is zero (empty selection or all-zero masses)")
+    f = get_unit_factor_fast(dataobject.info, Val(unit))
+    coords = (getvar(dataobject, :x, mask=mask),
+              getvar(dataobject, :y, mask=mask),
+              getvar(dataobject, :z, mask=mask))
+    return ntuple(3) do i
+        c = flags[i] ? _com_circular(coords[i], m, L, total_mass) :
+                       sum(coords[i] .* m) / total_mass
+        c * f
+    end
+end
+
+function center_of_mass(dataobject::ContainMassDataSetType, unit::Symbol; mask::MaskType=[false], periodic=false)
+    return center_of_mass(dataobject, unit=unit, mask=mask, periodic=periodic)
+end
+
+function center_of_mass(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false], periodic=false)
+    # opt-in: the default keeps the plain mass-weighted mean, so no existing result moves
+    if periodic !== false
+        return _center_of_mass_periodic(dataobject, unit, mask, periodic)
+    end
     # Use metaprogramming for compile-time optimization
     # - Generates fused mass-weighted calculations 
     # - Eliminates redundant getvar calls through template expansion
@@ -151,15 +208,20 @@ return Tuple{Float64, Float64, Float64,}
 ##### Optional Keywords:
 - **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
+  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
+  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
+  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
+  the run is periodic (`info.boundaries`).
 
 
 """
-function com(dataobject::ContainMassDataSetType, unit::Symbol; mask::MaskType=[false])
-    return center_of_mass(dataobject, unit, mask=mask)
+function com(dataobject::ContainMassDataSetType, unit::Symbol; mask::MaskType=[false], periodic=false)
+    return center_of_mass(dataobject, unit, mask=mask, periodic=periodic)
 end
 
-function com(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
-    return center_of_mass(dataobject, unit=unit, mask=mask)
+function com(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false], periodic=false)
+    return center_of_mass(dataobject, unit=unit, mask=mask, periodic=periodic)
 end
 
 
@@ -415,6 +477,11 @@ return Tuple{Float64, Float64, Float64,}
 - **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units)  :km_s, :m_s, :cm_s (of typye Symbol) ..etc. ; see for defined velocity-scales viewfields(info.scale)
 - **`weighting`:** use different weightings: :mass (default), :volume (hydro), :no
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
+  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
+  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
+  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
+  the run is periodic (`info.boundaries`).
 
 """
 function bulk_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting::Symbol=:mass, mask::MaskType=[false])
@@ -447,6 +514,11 @@ return Tuple{Float64, Float64, Float64,}
 - **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units)  :km_s, :m_s, :cm_s (of typye Symbol) ..etc. ; see for defined velocity-scales viewfields(info.scale)
 - **`weighting`:** use different weightings: :mass (default), :volume (hydro), :no
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
+  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
+  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
+  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
+  the run is periodic (`info.boundaries`).
 
 """
 function average_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting::Symbol=:mass, mask::MaskType=[false])

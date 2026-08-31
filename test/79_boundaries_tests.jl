@@ -82,3 +82,61 @@
         @test ib(Dict("  &boundary_params  " => Dict("ibound_min"=>"-1","ibound_max"=>"-1"))) === :mixed
     end
 end
+
+@testset "periodic centre of mass" begin
+    cc, flags = Mera._com_circular, Mera._periodic_flags
+
+    @testset "a structure split across the boundary" begin
+        # equal masses just inside each face: the true centre is the face itself,
+        # and a plain mean would answer L/2, the furthest possible point
+        L = 1.0
+        x = [0.01, 0.99]; m = [1.0, 1.0]
+        plain = sum(x .* m) / sum(m)
+        @test isapprox(plain, 0.5; atol=1e-12)             # the wrong answer, for contrast
+        c = cc(x, m, L, sum(m))
+        @test min(abs(c - 0.0), abs(c - L)) < 1e-9         # 0 and L are the same point
+    end
+
+    @testset "agrees with the plain mean when nothing wraps" begin
+        L = 1.0
+        x = [0.40, 0.50, 0.60]; m = [1.0, 2.0, 1.0]
+        @test isapprox(cc(x, m, L, sum(m)), sum(x .* m) / sum(m); atol=1e-9)
+    end
+
+    @testset "invariant to where the box is cut" begin
+        # the point of the circular mean: rolling every coordinate by the same
+        # amount must roll the answer by the same amount, not change it
+        L = 2.0
+        x = [0.10, 0.30, 1.90]; m = [1.0, 1.0, 1.0]
+        c0 = cc(x, m, L, sum(m))
+        shift = 0.7
+        c1 = cc(mod.(x .+ shift, L), m, L, sum(m))
+        @test isapprox(mod(c0 + shift, L), c1; atol=1e-9)
+    end
+
+    @testset "mass weighting is honoured" begin
+        # 0.02 and 0.98 are +0.02 and -0.02 from the boundary. Weighted 9:1 the
+        # answer must be the weighted mean of those minimum-image offsets, which
+        # is what the circular mean reduces to when the spread is small.
+        L = 1.0
+        x = [0.02, 0.98]; m = [9.0, 1.0]
+        c  = cc(x, m, L, sum(m))
+        cw = c > L/2 ? c - L : c                            # as a signed offset
+        expected = (9.0 * 0.02 + 1.0 * (-0.02)) / 10.0      # = 0.016
+        @test isapprox(cw, expected; atol=1e-4)
+        @test cw > 0                                        # leans to the heavy side
+    end
+
+    @testset "single point returns itself" begin
+        @test isapprox(cc([0.37], [2.0], 1.0, 2.0), 0.37; atol=1e-9)
+    end
+
+    @testset "the periodic flags accept every documented form" begin
+        @test flags(true)  == (true, true, true)
+        @test flags(false) == (false, false, false)
+        @test flags((true, false, true)) == (true, false, true)
+        @test flags((x=true, y=false, z=true)) == (true, false, true)
+        @test flags((x=true,)) == (true, false, false)      # unnamed axes default to false
+        @test_throws ErrorException flags("yes")
+    end
+end
