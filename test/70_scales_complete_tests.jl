@@ -45,6 +45,21 @@
         # was wrong by unit_l^3. Pin the dimension, not the alias.
         @test scale.dyne         ≈ scale.g * scale.cm_s2   rtol=1e-12
         @test scale.erg_cell     ≈ scale.g * scale.erg_g   rtol=1e-12
+
+        # Dimensional guards for the scales that were found wrong on 2026-08-31. Each is written
+        # as a RELATION between scales, never as a restatement of the assignment, so a change to
+        # the formula has to keep the physics rather than just keep matching itself.
+        @test scale.J_s       ≈ scale.g_cm2_s * 1e-7    rtol=1e-12   # J*s = kg*m^2/s
+        @test scale.kg_m2_s   ≈ scale.g_cm2_s * 1e-7    rtol=1e-12
+        @test scale.J_kg      ≈ scale.erg_g   * 1e-4    rtol=1e-12   # erg/g -> J/kg
+        @test scale.J_K       ≈ scale.erg_K   * 1e-7    rtol=1e-12   # erg -> J
+        @test scale.J_m3_K    ≈ scale.erg_cm3_K * 1e-1  rtol=1e-12   # erg/cm^3 -> J/m^3
+        # a flux and a volumetric rate differ by exactly one length
+        @test scale.erg_cm2_s / scale.erg_cm3_s ≈ scale.cm   rtol=1e-12
+        # an acceleration expressed per pc and per Myr must still scale with the simulation
+        @test scale.pc_Myr2   ≈ scale.pc / scale.Myr^2  rtol=1e-12
+        # :g_cms2 is a PRESSURE despite the name; pin that so nobody "fixes" it into a force
+        @test scale.g_cms2    ≈ scale.Ba                rtol=1e-12
         @test scale.gravitational_energy_density == scale.u_grav    # [erg/cm³]
         @test scale.gravitational_binding_energy == scale.u_grav
         @test scale.total_binding_energy         == scale.erg_cell  # [erg]

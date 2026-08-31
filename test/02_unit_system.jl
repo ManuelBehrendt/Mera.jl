@@ -285,7 +285,11 @@
     @testset "Angular Momentum Scale Formulas" begin
         L_cgs = unit_m * unit_l^2 / unit_t  # g·cm²/s
         @test isapprox(scale.g_cm2_s, L_cgs, rtol=1e-15)
-        @test isapprox(scale.kg_m2_s, L_cgs * 1e-3 * 1e4, rtol=1e-15)
+        # cgs -> SI: g->kg (1e-3) and cm^2->m^2 (1e-4), so 1e-7. The old test asserted
+        # `1e-3 * 1e4`, restating the code's own (wrong) formula, so it could never fail.
+        @test isapprox(scale.kg_m2_s, L_cgs * 1e-7, rtol=1e-15)
+        @test isapprox(scale.J_s,     L_cgs * 1e-7, rtol=1e-15)   # J*s IS kg*m^2/s
+        @test scale.J_s == scale.kg_m2_s
     end
 
     @testset "Luminosity Scale Formulas" begin
@@ -298,7 +302,8 @@
     @testset "Gravitational Potential Formulas" begin
         erg_g = unit_v^2  # specific energy [erg/g = cm²/s²]
         @test isapprox(scale.erg_g, erg_g, rtol=1e-15)
-        @test isapprox(scale.J_kg, erg_g / 1e7, rtol=1e-15)
+        # 1 erg/g = 1e-7 J / 1e-3 kg = 1e-4 J/kg. The old test restated the code's /1e7.
+        @test isapprox(scale.J_kg, erg_g * 1e-4, rtol=1e-15)
         @test isapprox(scale.km2_s2, erg_g / 1e10, rtol=1e-15)
     end
 
@@ -315,6 +320,10 @@
     end
 
     @testset "Flux Scale Formulas" begin
+        # A flux is energy/(area*time); a volumetric rate is energy/(volume*time). They differ by
+        # one length, so this ratio pins that erg_cm2_s is not silently a copy of erg_cm3_s again.
+        @test isapprox(scale.erg_cm2_s, unit_m / unit_t^3, rtol=1e-15)
+        @test isapprox(scale.erg_cm2_s / scale.erg_cm3_s, unit_l, rtol=1e-12)
         @test isapprox(scale.Jy, scale.erg_cm2_s / 1e-23, rtol=1e-15)
         @test isapprox(scale.mJy, scale.Jy * 1e3, rtol=1e-15)
         @test isapprox(scale.microJy, scale.Jy * 1e6, rtol=1e-15)
