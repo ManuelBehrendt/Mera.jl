@@ -8,14 +8,14 @@
 # Star-Formation Rate
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `sfr.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/sfr.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `sfr.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/sfr.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Mera measures star formation directly from the **star particles**, in two complementary ways:
 
-* `sfr` — the **star-formation history** SFR(t): stellar mass formed per time bin, in M☉/yr.
-* `sfr_snapshot` — the **current SFR** from a single snapshot: mass formed within recent look-back
-  windows (the observational "current SFR", e.g. Hα ≈ 5–10 Myr, FUV ≈ 100 Myr), plus the
+* `sfr`, the **star-formation history** SFR(t): stellar mass formed per time bin, in M☉/yr.
+* `sfr_snapshot`, the **current SFR** from a single snapshot: mass formed within recent look-back
+  windows (the observational "current SFR", e.g. Hα ≈ 5 to 10 Myr, FUV ≈ 100 Myr), plus the
   lifetime-averaged rate.
 
 Star particles are selected by the universal sentinel **`birth ≠ 0`**; the formation-time axis is
@@ -46,8 +46,8 @@ println("hydro cells      : ", length(gas.data))
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-03T12:19:09.624
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T14:36:23.949
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -85,7 +85,7 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get particle data: 2026-08-03T12:19:15.216
+[Mera]: Get particle data: 2026-08-31T14:36:28.847
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
@@ -99,7 +99,7 @@ Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :38.428720474243164 MB
 -------------------------------------------------------
-[Mera]: Get hydro data: 2026-08-03T12:19:19.051
+[Mera]: Get hydro data: 2026-08-31T14:36:32.566
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -111,7 +111,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.91 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.60 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -121,7 +121,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 40.708 seconds
+✓ Table created in 35.841 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 particles loaded : 544515
@@ -214,7 +214,7 @@ SFR per window [M☉/yr]: [1.3736, 1.377, 1.164728, 1.14778]
 
 `depletion_time(gas, SFR)` combines a gas region with an SFR estimate to return the gas depletion time
 `t_depl = M_gas/SFR`, the mass-weighted free-fall time `⟨t_ff⟩`, and the efficiency per free-fall time
-`ε_ff = SFR·⟨t_ff⟩/M_gas` (Krumholz–McKee). Mask to the star-forming gas to measure its efficiency.
+`ε_ff = SFR·⟨t_ff⟩/M_gas` (Krumholz to McKee). Mask to the star-forming gas to measure its efficiency.
 
 ```julia
 sfr_now = snap.sfr[2]                                  # current SFR from the 10 Myr window [M☉/yr]

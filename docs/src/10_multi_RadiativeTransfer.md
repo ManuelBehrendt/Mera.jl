@@ -8,7 +8,7 @@
 # 10. Radiative Transfer (RT)
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `10_multi_RadiativeTransfer.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/10_multi_RadiativeTransfer.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `10_multi_RadiativeTransfer.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/10_multi_RadiativeTransfer.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 RAMSES can run with **radiative transfer** (`RT=1`): on top of the gas it transports, per
@@ -23,7 +23,7 @@ Two objects, one bridge:
 - Mera connects them through the RT descriptor index `iIons`.
 
 We build it up simplest-first: one striking map in three calls, then RT photon fields, then
-the hydro–RT bridge, then physical units, then a reference card.
+the hydro to RT bridge, then physical units, then a reference card.
 
 ## The physics we expect to see
 
@@ -32,7 +32,7 @@ a point source at the box **corner** ionizing a *uniform* neutral hydrogen mediu
 (`X=1`, `n_H≈10⁻³ cm⁻³`, box 15 kpc, 3 photon groups).
 
 A source emitting `Ṅγ` ionizing photons/s into gas of density `n_H` builds an ionized sphere
-whose photo-ionizations balance recombinations — the **Strömgren sphere** of radius
+whose photo-ionizations balance recombinations, the **Strömgren sphere** of radius
 
 $$R_S = \left(\frac{3\,\dot N_\gamma}{4\pi\,\alpha_B\,n_H^2}\right)^{1/3},$$
 
@@ -41,11 +41,11 @@ is uniform and near photoionization equilibrium, both `xHII` and temperature are
 single-valued functions of radius. The maps and profiles below recover exactly this picture
 (and we check `R_S` quantitatively at the end).
 
-## Hello RT — three calls and a map
+## Hello RT, three calls and a map
 
 The simplest end-to-end example: load the snapshot, load the RT data, project one field.
 `projection` flattens the 3D field onto a 2D map (here the volume-weighted average along z;
-the modes are defined once below). `:Np_total` is the sum over all groups — it needs no group
+the modes are defined once below). `:Np_total` is the sum over all groups, it needs no group
 or descriptor knowledge, so it is the perfect first look.
 
 ```julia
@@ -82,10 +82,7 @@ show_map(p.maps[:Np_total]; logscale=true,
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[ Info: Precompiling PyPlot [d330b81b-6aea-500a-939a-2ce795aea3ee](cache misses: incompatible header (5))
-[ Info: Precompiling PyPlot [d330b81b-6aea-500a-939a-2ce795aea3ee] (cache misses: incompatible header (10))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[Mera]: 2026-08-27T20:47:49.846
+[Mera]: 2026-08-31T13:57:52.461
 Code: RAMSES
 output [3] summary:
 mtime: 2026-08-20T16:57:42.963
@@ -123,11 +120,11 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 (62.87 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 (66.58 ms/it)
 ✓ File processing complete! Combining results...
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_4_14.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_4_10.png)
 
 **Takeaway:** `getinfo → getrt → projection → show_map` already reveals the ionized sphere.
 Everything below varies *what* we put through this same pipeline.
@@ -163,7 +160,7 @@ RT run? true    nvarrt = 12  (= 4 × nGroups)
  :Fz3
 ```
 
-## Variables with `getvar` — the simplest form
+## Variables with `getvar`, the simplest form
 
 `getvar(object, :symbol)` returns one array (per leaf cell). That is the whole idea; later we
 pass a *vector* of symbols to get several at once, and a unit symbol to convert.
@@ -201,10 +198,9 @@ title("Radial photon-density profile (≈ 1/r² then cutoff)"); tight_layout();
 ```
 
 ```
-[Mera] Hint: getvar(:r_sphere) has no `center` — it is measured about the box CORNER.
-             Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.
-             This is a different argument from the `center` that places a region; give it
-             the same origin. Absolute positions :x/:y/:z are unaffected.
+[Mera] Hint: getvar(:r_sphere) has no `center`: it is measured about the box CORNER.
+             Pass center=:bc, or center=[x, y, z] with center_unit. This is a separate
+             argument from the `center` that places a region; give both the same origin.
              (shown once per session; verbose(false) silences Mera's messages)
 ```
 
@@ -212,7 +208,7 @@ title("Radial photon-density profile (≈ 1/r² then cutoff)"); tight_layout();
 
 ## Region selection
 
-`subregion` and `shellregion` work on an `RtDataType` just like on hydro — handy for zooms
+`subregion` and `shellregion` work on an `RtDataType` just like on hydro, handy for zooms
 and shells. Note the two centre conventions used here: `[:bc]` = **box centre** (7.5 kpc),
 while the **source** sits at the corner `[0,0,0]` (used for the radial profiles).
 
@@ -221,7 +217,7 @@ sub   = subregion(rt,  :sphere, radius=5.0,        center=[:bc], range_unit=:kpc
 shell = shellregion(rt, :sphere, radius=[3.0, 6.0], center=[:bc], range_unit=:kpc, verbose=false)
 @show (full_cells = length(rt.data), sphere_cells = length(sub.data), shell_cells = length(shell.data))
 
-# payoff: the selection is itself an RtDataType — project the 5 kpc sphere
+# payoff: the selection is itself an RtDataType, project the 5 kpc sphere
 psub = projection(sub, :Np_total, verbose=false, show_progress=false)
 show_map(psub.maps[:Np_total]; logscale=true, clabel=L"$\log_{10}\,N_p^{\rm total}$",
          ttl="subregion (5 kpc sphere): total photon density")
@@ -247,7 +243,7 @@ turns a projection into a **slice**. Note: `:sum` carries a cell-**volume** fact
 proportional to a column total, **not** the path-length integral `∫q dz`; RT fields have no
 `:sd` (surface-density) analogue.
 
-## Photon flux — the vectorial field (M1)
+## Photon flux, the vectorial field (M1)
 
 RT is vectorial: each group carries a flux **F** = (Fx, Fy, Fz). The **reduced flux**
 
@@ -291,22 +287,22 @@ the **ionization thresholds** of H and He, so each band ionizes a species:
 
 | group | band [eV] | ionizes (threshold) |
 |---|---|---|
-| 1 | 13.6 – 24.59 | H I → H II (13.6 eV) |
-| 2 | 24.59 – 54.42 | He I → He II (24.59 eV) |
+| 1 | 13.6, 24.59 | H I → H II (13.6 eV) |
+| 2 | 24.59, 54.42 | He I → He II (24.59 eV) |
 | 3 | > 54.42 | He II → He III (54.42 eV) |
 
 *These are the generic RAMSES-RT band definitions. This run is **pure hydrogen** (`X=1`, `Y=0`), so
-all helium cross-sections are zero — groups 2 and 3 here simply supply **harder hydrogen-ionizing**
+all helium cross-sections are zero, groups 2 and 3 here simply supply **harder hydrogen-ionizing**
 photons (smaller H I cross-sections), and only the 13.6 eV H I threshold is physically active.*
 
 The band edges (`groupL0/L1`) and the SED-averaged **mean energy** per band (`group_egy`) live
 in `info.descriptor.rt` / `info.descriptor.rtPhotonGroups`. Resolving bands lets the code follow
-**spectral hardening** — higher-energy photons have smaller cross-sections `≈ (ν/ν₀)⁻³`, so they
+**spectral hardening**, higher-energy photons have smaller cross-sections `≈ (ν/ν₀)⁻³`, so they
 penetrate deeper and raise the field's mean energy outward. The bar chart is the **integrated**
 photon budget per band (not a spatial map).
 
-This completes the **RT-native** tour — raw fields, geometry, regions, projection modes, flux
-vectors and spectral bands — all through the same `getvar` / `projection` pipeline.
+This completes the **RT-native** tour, raw fields, geometry, regions, projection modes, flux
+vectors and spectral bands, all through the same `getvar` / `projection` pipeline.
 
 ```julia
 @show info.descriptor.rt[:group_egy]                       # mean photon energy per band [eV]
@@ -325,10 +321,10 @@ info.descriptor.rt[:group_egy] = [18.85, 35.08, 65.67]
 
 ![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_18_2.png)
 
-## The hydro–RT bridge
+## The hydro to RT bridge
 
 This is the conceptual pivot. The **photon transport** lives in `rt`; the **ionization state**
-it produces — `xHII`, temperature, electron density — lives in the **hydro** data as passive
+it produces, `xHII`, temperature, electron density, lives in the **hydro** data as passive
 scalars. Load it with `gethydro`; Mera locates the ionization fractions automatically via the
 RT descriptor index `iIons`, so you ask for them by name (`:xHII`, …). For this **pure-hydrogen**
 run (`X=1`, `Y=0`) the free-electron density equals the HII density (`n_e = n_HII`).
@@ -352,7 +348,7 @@ Columns:
 8   p          Float64
 9   scalar_00  Float64
 10  scalar_01  Float64
-11  scalar_02  Float64, InfoType(3, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/info_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/amr_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/hydro_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/grav_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/part_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/rt_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/info_rt_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/clump_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/sink_00003.csv", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/timer_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/header_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/patches.txt"), "RAMSES", Dates.DateTime("2026-08-20T16:57:42.963"), Dates.DateTime("2026-08-20T16:57:42.963"), 8, 3, 5, 5, 15.0, 30.006753312671, 1.0, 1.0, 1.0, 0.0, 0.0, 0.045, 3.08568025e21, 1.66e-24, 4.877090903692205e40, 9.77813951206781e7, 3.1556926e13, 1.4, true, 8, 5, 12, [:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01, :scalar_02], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], [:Np1, :Fx1, :Fy1, :Fz1, :Np2, :Fx2, :Fy2, :Fz2, :Np3, :Fx3, :Fy3, :Fz3], Symbol[], Symbol[], DescriptorType(1, [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01, :scalar_02], ["d", "d", "d", "d", "d", "d", "d", "d"], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 1, Dict{Any, Any}(:g_star => 1.6, :T2_star => 0.0, :nRTvar => 12, :nIons => 3, :group_egy => [18.85, 35.08, 65.67], :rt_c_frac => 0.01, :unit_pf => 9.77813951206781e7, :n_star => 0.1, :X_fraction => 1.0, :unit_np => 1.0…), Dict{Any, Any}(:L0_eV => [13.6, 24.59, 54.42], 2 => Dict{Symbol, Any}(:cse_cm2 => [5.04e-19, 0.0, 0.0], :egy_eV => 35.08, :csn_cm2 => [5.69e-19, 0.0, 0.0]), :spec2group => [1, 2, 3], :L1_eV => [24.59, 54.42, 0.0], 3 => Dict{Symbol, Any}(:cse_cm2 => [7.46e-20, 0.0, 0.0], :egy_eV => 65.67, :csn_cm2 => [7.89e-20, 0.0, 0.0]), 1 => Dict{Symbol, Any}(:cse_cm2 => [2.78e-18, 0.0, 0.0], :egy_eV => 18.85, :csn_cm2 => [3.0e-18, 0.0, 0.0])), false, true, Symbol[], false, false, Symbol[], false, false), true, false, false, true, false, false, true, Dict{Any, Any}("&COOLING_PARAMS" => Dict{Any, Any}("cooling" => ".true."), "&AMR_PARAMS" => Dict{Any, Any}("levelmax" => "5", "ngridmax" => "50000", "boxlen" => "15.\t\t\t!  1 kpc", "levelmin" => "5", "nexpand" => "1"), "&OUTPUT_PARAMS" => Dict{Any, Any}("noutput" => "6", "tout" => "10.,30.,60.,120.,250.,500."), "&BOUNDARY_PARAMS" => Dict{Any, Any}("nboundary" => "6", "jbound_min" => "0, 0, -1,  1, -1, -1", "kbound_max" => "0, 0,  0,  0, -1,  1", "bound_type" => "1, 2,  1,  2,  1,  2", "ibound_max" => "-1, 1,  1,  1,  1,  1", "ibound_min" => "-1, 1, -1, -1, -1, -1", "jbound_max" => "0, 0, -1,  1,  1,  1", "kbound_min" => "0, 0,  0,  0, -1,  1"), "&RT_PARAMS" => Dict{Any, Any}("rt_source_type" => "3*'point'", "&RT_GROUPS\t\t\t! Blackbody at T" => "1d5 Kelvin", "rt_flux_scheme" => "'glf'", "rt_w_source" => "3*0", "rt_c_fraction" => "0.01", "rt_v_source" => "3*0", "rt_src_z_center" => "3*0.", "rt_src_length_y" => "3*1.0", "rt_src_length_z" => "3*1.0", "rt_courant_factor" => "0.8"…), "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin" => Dict{Any, Any}("group_csn(2,:)" => "5.69d-19, 0.,0.   ! pck 2-> HI, HeI, HeII", "group_egy" => "18.85, 35.079, 65.666", "group_cse(2,:)" => "5.04d-19, 0.,0.   ! pck 2-> HI, HeI, HeII", "spec2group" => "1,2,3             ! HI, HeI, HeII -> pck", "group_cse(1,:)" => "2.78d-18, 0.,0.   ! pck 1-> HI, HeI, HeII", "group_csn(3,:)" => "7.89d-20, 0.,0.   ! pck 3-> HI, HeI, HeII", "group_csn(1,:)" => "3.00d-18, 0.,0.   ! pck 1-> HI, HeI, HeII", "group_cse(3,:)" => "7.46d-20, 0.,0.   ! pck 3-> HI, HeI, HeII"), "&UNITS_PARAMS" => Dict{Any, Any}("units_density" => "1.66d-24", "units_time" => "3.1556926d13", "units_length" => "3.08568025d21"), "&RUN_PARAMS" => Dict{Any, Any}("static_gas" => ".true.", "nsubcycle" => "10*1", "rt" => ".true.", "verbose" => ".false.", "nremap" => "0", "nrestart" => "0", "hydro" => ".true."), "! the Sedov fixture the boundaries here are NOT periodic (see &BOUNDARY_PARAMS), so plain" => Dict{Any, Any}(), "&HYDRO_PARAMS" => Dict{Any, Any}("slope_type" => "2", "gamma" => "1.4", "courant_factor" => "0.8", "riemann" => "'hllc'", "scheme" => "'muscl'")…), false, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "", "# Do we want a debug build? 1=Yes, 0=No", "DEBUG = 0", "# Do we want to test coverage?", "GCOV = 0", "# Compiler flavor: GNU or INTEL"  …  "\t\$(FC) -O0 -c write_patch.f90 -o \$@", "%.o:%.F", "\t\$(F90) \$(FFLAGS_BASE) \$(FFLAGS_OPT) -c \$^ -o \$@ \$(LIBS_OBJ) \$(LIBS_OBJ_TURB)", "%.o:%.f90", "\t\$(F90) \$(FFLAGS_BASE) \$(FFLAGS_OPT) -c \$^ -o \$@ \$(LIBS_OBJ) \$(LIBS_OBJ_TURB)", "FORCE:", "#############################################################################", "clean:", "\trm -f *.o *.\$(MOD) *.i", "#############################################################################"], [" --------------------------------------------------------------------", "", "     minimum       average       maximum  standard dev        std/av       %   rmn   rmx  TIMER", "       0.018         0.019         0.023         0.002         0.086     0.5     2   1    coarse levels           ", "       0.005         0.008         0.009         0.001         0.156     0.2     1   2    particles               ", "       0.028         0.028         0.029         0.000         0.002     0.7     2   1    io                      ", "       2.637         3.312         3.422         0.255         0.077    78.7     1   5    radiative transfer      ", "       0.102         0.103         0.104         0.001         0.006     2.5     1   3    courant                 ", "       0.025         0.026         0.027         0.000         0.017     0.6     5   2    hydro - set unew        ", "       0.600         0.710         1.386         0.256         0.360    16.9     5   1    cooling                 ", "       4.208     100.0    TOTAL"], ["no patches", " "]), true, true, true, 0, ScalesType003(0.0010000008648732505, 1.0000008648732506, 1000.0008648732505, 1.0000008648732505e6, 3261.5665977832837, 2.0626498462588077e23, 3.08568025e16, 3.08568025e19, 3.08568025e21, 3.0856802499999998e22, 3.08568025e25, 1.0000025946219956e-9, 1.0000025946219957, 1.0000025946219956e9, 1.0000025946219955e18, 3.4695947530005516e10, 8.775594075372522e69, 2.9380065684892807e49, 2.93800656848928e58, 2.93800656848928e64, 2.93800656848928e67, 2.93800656848928e76, 0.02451901990607664, 0.02451901990607664, 1.66e-24, 24.51904111192109, 24.51904111192109, 0.005122229215, 0.0009999786422288134, 0.9999786422288134, 999978.6422288134, 3.1556926e13, 3.1556926e16, 2.4519083523665e7, 2.4519083523665e7, 8.166322132032091e12, 2.5694187983395264e10, 4.877090903692205e40, 977.813951206781, 977813.951206781, 9.77813951206781e7, 0.76, 4.663084755571995e56, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.5125985224777243e8, 1.5125985224777243e8, 1.587159404469864e-8, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 6.925149861946208e31, 6.831698820714928e65, 3.3774585398403183e72, 3.3774585398403183e65, 1.1495748770830706e8, 1.1495748770830705e9, 1.380649e-16, 1.4715262056331354e70, 1.4715262056331354e70, 1.4715262056331355e71, 0.0004465963871398189, 446.5963871398189, 446.5963871398189, 446596.3871398189, 4.465963871398189e-8, 2.9104685816882255e68, 2.9104685816882255e65, 2.9104685816882256e62, 1.4776739520104065e43, 3.860172288428439e9, 3.860172288428439e9, 3.4036683604631933e-65, 9.999974053847366e-10, 0.76, 302.98265527339925, 5.0295120775384285e-22, 5.0295120775384285e-22, 50.295120775384284, 50295.12077538428, 5.0295120775384285e7, 3.08568025e21, 3.08568025e21, 3.0985716137458414e-6, 3.098571613745841e-8, 3.0985716137458415e-11, 3.09843657823729e-9, 9.56120123174617e15, 9.56120123174617e8, 956120.123174617, 1.5871594044698644e-8, 4.663084755571996e56, 5.143628878818097e-30, 1.004177802851038e-27, 3.08568025e21, 4.877090903692205e40, 3.1556926e13, 1.0, 1.0, 3.0985716137458414e-6, 9.77813951206781e7, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 9.56120123174617e15, 3.0985716137458414e-6, 9.77813951206781e7, 1.0, 1.5871594044698644e-8, 1.5871594044698644e-8, 4.663084755571996e56, 9.56120123174617e15, 4.663084755571995e56, 3.08568025e21, 4.877090903692205e40, 4.877090903692205e40, 3.1556926e13, 4.663084755571995e56, 4.663084755571995e56, 1.0, 5.143628878818097e-30, 1.004177802851038e-27, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.08568025e21, 3.08568025e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(50000, 736, 3, 3, 3, 5, 6, 1371, [0.0, 32768.0, 65536.0, 98304.0, 131072.0, 163840.0, 196608.0, 229376.0, 262144.0], Bool[0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 10.000213582273508, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 08/20/26-18:38:15", " /Applications/Xcode.app/Contents/Developer/usr/bin/make NGROUPS", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 5, 5, 15.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7, 8], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :scalar_00, 7 => :scalar_01, 2 => :vx, 8 => :scalar_02, 3 => :vy, 1 => :rho), 0.0, 0.0, ScalesType003(0.0010000008648732505, 1.0000008648732506, 1000.0008648732505, 1.0000008648732505e6, 3261.5665977832837, 2.0626498462588077e23, 3.08568025e16, 3.08568025e19, 3.08568025e21, 3.0856802499999998e22, 3.08568025e25, 1.0000025946219956e-9, 1.0000025946219957, 1.0000025946219956e9, 1.0000025946219955e18, 3.4695947530005516e10, 8.775594075372522e69, 2.9380065684892807e49, 2.93800656848928e58, 2.93800656848928e64, 2.93800656848928e67, 2.93800656848928e76, 0.02451901990607664, 0.02451901990607664, 1.66e-24, 24.51904111192109, 24.51904111192109, 0.005122229215, 0.0009999786422288134, 0.9999786422288134, 999978.6422288134, 3.1556926e13, 3.1556926e16, 2.4519083523665e7, 2.4519083523665e7, 8.166322132032091e12, 2.5694187983395264e10, 4.877090903692205e40, 977.813951206781, 977813.951206781, 9.77813951206781e7, 0.76, 4.663084755571995e56, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.5125985224777243e8, 1.5125985224777243e8, 1.587159404469864e-8, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 6.925149861946208e31, 6.831698820714928e65, 3.3774585398403183e72, 3.3774585398403183e65, 1.1495748770830706e8, 1.1495748770830705e9, 1.380649e-16, 1.4715262056331354e70, 1.4715262056331354e70, 1.4715262056331355e71, 0.0004465963871398189, 446.5963871398189, 446.5963871398189, 446596.3871398189, 4.465963871398189e-8, 2.9104685816882255e68, 2.9104685816882255e65, 2.9104685816882256e62, 1.4776739520104065e43, 3.860172288428439e9, 3.860172288428439e9, 3.4036683604631933e-65, 9.999974053847366e-10, 0.76, 302.98265527339925, 5.0295120775384285e-22, 5.0295120775384285e-22, 50.295120775384284, 50295.12077538428, 5.0295120775384285e7, 3.08568025e21, 3.08568025e21, 3.0985716137458414e-6, 3.098571613745841e-8, 3.0985716137458415e-11, 3.09843657823729e-9, 9.56120123174617e15, 9.56120123174617e8, 956120.123174617, 1.5871594044698644e-8, 4.663084755571996e56, 5.143628878818097e-30, 1.004177802851038e-27, 3.08568025e21, 4.877090903692205e40, 3.1556926e13, 1.0, 1.0, 3.0985716137458414e-6, 9.77813951206781e7, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 9.56120123174617e15, 3.0985716137458414e-6, 9.77813951206781e7, 1.0, 1.5871594044698644e-8, 1.5871594044698644e-8, 4.663084755571996e56, 9.56120123174617e15, 4.663084755571995e56, 3.08568025e21, 4.877090903692205e40, 4.877090903692205e40, 3.1556926e13, 4.663084755571995e56, 4.663084755571995e56, 1.0, 5.143628878818097e-30, 1.004177802851038e-27, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.08568025e21, 3.08568025e21, 1.0, 1.0, 1.0, 57.29577951308232))
+11  scalar_02  Float64, InfoType(3, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/info_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/amr_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/hydro_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/grav_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/part_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/rt_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/info_rt_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/clump_00003.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/sink_00003.csv", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/timer_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/header_00003.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES-PUBLIC/stromgren3d/output_00003/patches.txt"), "RAMSES", Dates.DateTime("2026-08-20T16:57:42.963"), Dates.DateTime("2026-08-20T16:57:42.963"), 8, 3, 5, 5, 15.0, 30.006753312671, 1.0, 1.0, 1.0, 0.0, 0.0, 0.045, 3.08568025e21, 1.66e-24, 4.877090903692205e40, 9.77813951206781e7, 3.1556926e13, 1.4, true, 8, 5, 12, [:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01, :scalar_02], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], [:Np1, :Fx1, :Fy1, :Fz1, :Np2, :Fx2, :Fy2, :Fz2, :Np3, :Fx3, :Fy3, :Fz3], Symbol[], Symbol[], DescriptorType(1, [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01, :scalar_02], ["d", "d", "d", "d", "d", "d", "d", "d"], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 1, Dict{Any, Any}(:g_star => 1.6, :T2_star => 0.0, :nRTvar => 12, :nIons => 3, :group_egy => [18.85, 35.08, 65.67], :rt_c_frac => 0.01, :unit_pf => 9.77813951206781e7, :n_star => 0.1, :X_fraction => 1.0, :unit_np => 1.0…), Dict{Any, Any}(:L0_eV => [13.6, 24.59, 54.42], 2 => Dict{Symbol, Any}(:cse_cm2 => [5.04e-19, 0.0, 0.0], :egy_eV => 35.08, :csn_cm2 => [5.69e-19, 0.0, 0.0]), :spec2group => [1, 2, 3], :L1_eV => [24.59, 54.42, 0.0], 3 => Dict{Symbol, Any}(:cse_cm2 => [7.46e-20, 0.0, 0.0], :egy_eV => 65.67, :csn_cm2 => [7.89e-20, 0.0, 0.0]), 1 => Dict{Symbol, Any}(:cse_cm2 => [2.78e-18, 0.0, 0.0], :egy_eV => 18.85, :csn_cm2 => [3.0e-18, 0.0, 0.0])), false, true, Symbol[], false, false, Symbol[], false, false), true, false, false, true, false, false, true, Dict{Any, Any}("&COOLING_PARAMS" => Dict{Any, Any}("cooling" => ".true."), "&AMR_PARAMS" => Dict{Any, Any}("levelmax" => "5", "ngridmax" => "50000", "boxlen" => "15.\t\t\t!  1 kpc", "levelmin" => "5", "nexpand" => "1"), "&OUTPUT_PARAMS" => Dict{Any, Any}("noutput" => "6", "tout" => "10.,30.,60.,120.,250.,500."), "&BOUNDARY_PARAMS" => Dict{Any, Any}("nboundary" => "6", "jbound_min" => "0, 0, -1,  1, -1, -1", "kbound_max" => "0, 0,  0,  0, -1,  1", "bound_type" => "1, 2,  1,  2,  1,  2", "ibound_max" => "-1, 1,  1,  1,  1,  1", "ibound_min" => "-1, 1, -1, -1, -1, -1", "jbound_max" => "0, 0, -1,  1,  1,  1", "kbound_min" => "0, 0,  0,  0, -1,  1"), "&RT_PARAMS" => Dict{Any, Any}("rt_source_type" => "3*'point'", "&RT_GROUPS\t\t\t! Blackbody at T" => "1d5 Kelvin", "rt_flux_scheme" => "'glf'", "rt_w_source" => "3*0", "rt_c_fraction" => "0.01", "rt_v_source" => "3*0", "rt_src_z_center" => "3*0.", "rt_src_length_y" => "3*1.0", "rt_src_length_z" => "3*1.0", "rt_courant_factor" => "0.8"…), "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin" => Dict{Any, Any}("group_csn(2,:)" => "5.69d-19, 0.,0.   ! pck 2-> HI, HeI, HeII", "group_egy" => "18.85, 35.079, 65.666", "group_cse(2,:)" => "5.04d-19, 0.,0.   ! pck 2-> HI, HeI, HeII", "spec2group" => "1,2,3             ! HI, HeI, HeII -> pck", "group_cse(1,:)" => "2.78d-18, 0.,0.   ! pck 1-> HI, HeI, HeII", "group_csn(3,:)" => "7.89d-20, 0.,0.   ! pck 3-> HI, HeI, HeII", "group_csn(1,:)" => "3.00d-18, 0.,0.   ! pck 1-> HI, HeI, HeII", "group_cse(3,:)" => "7.46d-20, 0.,0.   ! pck 3-> HI, HeI, HeII"), "&UNITS_PARAMS" => Dict{Any, Any}("units_density" => "1.66d-24", "units_time" => "3.1556926d13", "units_length" => "3.08568025d21"), "&RUN_PARAMS" => Dict{Any, Any}("static_gas" => ".true.", "nsubcycle" => "10*1", "rt" => ".true.", "verbose" => ".false.", "nremap" => "0", "nrestart" => "0", "hydro" => ".true."), "! the Sedov fixture the boundaries here are NOT periodic (see &BOUNDARY_PARAMS), so plain" => Dict{Any, Any}(), "&HYDRO_PARAMS" => Dict{Any, Any}("slope_type" => "2", "gamma" => "1.4", "courant_factor" => "0.8", "riemann" => "'hllc'", "scheme" => "'muscl'")…), false, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "", "# Do we want a debug build? 1=Yes, 0=No", "DEBUG = 0", "# Do we want to test coverage?", "GCOV = 0", "# Compiler flavor: GNU or INTEL"  …  "\t\$(FC) -O0 -c write_patch.f90 -o \$@", "%.o:%.F", "\t\$(F90) \$(FFLAGS_BASE) \$(FFLAGS_OPT) -c \$^ -o \$@ \$(LIBS_OBJ) \$(LIBS_OBJ_TURB)", "%.o:%.f90", "\t\$(F90) \$(FFLAGS_BASE) \$(FFLAGS_OPT) -c \$^ -o \$@ \$(LIBS_OBJ) \$(LIBS_OBJ_TURB)", "FORCE:", "#############################################################################", "clean:", "\trm -f *.o *.\$(MOD) *.i", "#############################################################################"], [" --------------------------------------------------------------------", "", "     minimum       average       maximum  standard dev        std/av       %   rmn   rmx  TIMER", "       0.018         0.019         0.023         0.002         0.086     0.5     2   1    coarse levels           ", "       0.005         0.008         0.009         0.001         0.156     0.2     1   2    particles               ", "       0.028         0.028         0.029         0.000         0.002     0.7     2   1    io                      ", "       2.637         3.312         3.422         0.255         0.077    78.7     1   5    radiative transfer      ", "       0.102         0.103         0.104         0.001         0.006     2.5     1   3    courant                 ", "       0.025         0.026         0.027         0.000         0.017     0.6     5   2    hydro - set unew        ", "       0.600         0.710         1.386         0.256         0.360    16.9     5   1    cooling                 ", "       4.208     100.0    TOTAL"], ["no patches", " "]), true, true, true, 0, ScalesType003(0.0010000008648732505, 1.0000008648732506, 1000.0008648732505, 1.0000008648732505e6, 3261.5665977832837, 2.0626498462588077e23, 3.08568025e16, 3.08568025e19, 3.08568025e21, 3.0856802499999998e22, 3.08568025e25, 1.0000025946219956e-9, 1.0000025946219957, 1.0000025946219956e9, 1.0000025946219955e18, 3.4695947530005516e10, 8.775594075372522e69, 2.9380065684892807e49, 2.93800656848928e58, 2.93800656848928e64, 2.93800656848928e67, 2.93800656848928e76, 0.02451901990607664, 0.02451901990607664, 1.66e-24, 24.51904111192109, 24.51904111192109, 0.005122229215, 0.0009999786422288134, 0.9999786422288134, 999978.6422288134, 3.1556926e13, 3.1556926e16, 2.4519083523665e7, 2.4519083523665e7, 8.166322132032091e12, 2.5694187983395264e10, 4.877090903692205e40, 977.813951206781, 977813.951206781, 9.77813951206781e7, 0.76, 4.663084755571995e56, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.5125985224777243e8, 1.5125985224777243e8, 1.587159404469864e-8, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.0, 1.0, 4.877090903692205e40, 4.877090903692205e33, 1.66e-24, 1.6600000000000001e-25, 1.380649e-16, 1.4715262056331354e63, 1.4715262056331354e70, 1.4715262056331354e63, 0.0004465963871398189, 446.5963871398189, 446.5963871398189, 446596.3871398189, 4.465963871398189e-8, 2.9104685816882255e68, 2.9104685816882255e65, 2.9104685816882256e62, 1.4776739520104065e43, 3.860172288428439e9, 3.860172288428439e9, 3.4036683604631933e-65, 9.999974053847366e-10, 0.76, 302.98265527339925, 5.0295120775384285e-22, 1.5519466084796796, 4.897466427974422e36, 4.897466427974422e39, 4.897466427974422e42, 3.08568025e21, 3.08568025e21, 3.0985716137458414e-6, 3.098571613745841e-8, 3.0985716137458415e-11, 1000.0435818210707, 9.56120123174617e15, 9.561201231746171e11, 956120.123174617, 1.5871594044698644e-8, 4.663084755571996e56, 1.5112015431838721e35, 1.004177802851038e-27, 3.08568025e21, 4.877090903692205e40, 3.1556926e13, 1.0, 1.0, 3.0985716137458414e-6, 9.77813951206781e7, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 9.56120123174617e15, 3.0985716137458414e-6, 9.77813951206781e7, 1.0, 1.5871594044698644e-8, 1.5871594044698644e-8, 4.663084755571996e56, 9.56120123174617e15, 4.663084755571995e56, 3.08568025e21, 4.877090903692205e40, 4.877090903692205e40, 3.1556926e13, 4.663084755571995e56, 4.663084755571995e56, 1.0, 1.5112015431838721e35, 1.004177802851038e-27, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.08568025e21, 3.08568025e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(50000, 736, 3, 3, 3, 5, 6, 1371, [0.0, 32768.0, 65536.0, 98304.0, 131072.0, 163840.0, 196608.0, 229376.0, 262144.0], Bool[0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 10.000213582273508, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 08/20/26-18:38:15", " /Applications/Xcode.app/Contents/Developer/usr/bin/make NGROUPS", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 5, 5, 15.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7, 8], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :scalar_00, 7 => :scalar_01, 2 => :vx, 8 => :scalar_02, 3 => :vy, 1 => :rho), 0.0, 0.0, ScalesType003(0.0010000008648732505, 1.0000008648732506, 1000.0008648732505, 1.0000008648732505e6, 3261.5665977832837, 2.0626498462588077e23, 3.08568025e16, 3.08568025e19, 3.08568025e21, 3.0856802499999998e22, 3.08568025e25, 1.0000025946219956e-9, 1.0000025946219957, 1.0000025946219956e9, 1.0000025946219955e18, 3.4695947530005516e10, 8.775594075372522e69, 2.9380065684892807e49, 2.93800656848928e58, 2.93800656848928e64, 2.93800656848928e67, 2.93800656848928e76, 0.02451901990607664, 0.02451901990607664, 1.66e-24, 24.51904111192109, 24.51904111192109, 0.005122229215, 0.0009999786422288134, 0.9999786422288134, 999978.6422288134, 3.1556926e13, 3.1556926e16, 2.4519083523665e7, 2.4519083523665e7, 8.166322132032091e12, 2.5694187983395264e10, 4.877090903692205e40, 977.813951206781, 977813.951206781, 9.77813951206781e7, 0.76, 4.663084755571995e56, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.5125985224777243e8, 1.5125985224777243e8, 1.587159404469864e-8, 1.587159404469864e-8, 1.1495748770830704e8, 1.1495748770830704e8, 1.0, 1.0, 4.877090903692205e40, 4.877090903692205e33, 1.66e-24, 1.6600000000000001e-25, 1.380649e-16, 1.4715262056331354e63, 1.4715262056331354e70, 1.4715262056331354e63, 0.0004465963871398189, 446.5963871398189, 446.5963871398189, 446596.3871398189, 4.465963871398189e-8, 2.9104685816882255e68, 2.9104685816882255e65, 2.9104685816882256e62, 1.4776739520104065e43, 3.860172288428439e9, 3.860172288428439e9, 3.4036683604631933e-65, 9.999974053847366e-10, 0.76, 302.98265527339925, 5.0295120775384285e-22, 1.5519466084796796, 4.897466427974422e36, 4.897466427974422e39, 4.897466427974422e42, 3.08568025e21, 3.08568025e21, 3.0985716137458414e-6, 3.098571613745841e-8, 3.0985716137458415e-11, 1000.0435818210707, 9.56120123174617e15, 9.561201231746171e11, 956120.123174617, 1.5871594044698644e-8, 4.663084755571996e56, 1.5112015431838721e35, 1.004177802851038e-27, 3.08568025e21, 4.877090903692205e40, 3.1556926e13, 1.0, 1.0, 3.0985716137458414e-6, 9.77813951206781e7, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 9.56120123174617e15, 3.0985716137458414e-6, 9.77813951206781e7, 1.0, 1.5871594044698644e-8, 1.5871594044698644e-8, 4.663084755571996e56, 9.56120123174617e15, 4.663084755571995e56, 3.08568025e21, 4.877090903692205e40, 4.877090903692205e40, 3.1556926e13, 4.663084755571995e56, 4.663084755571995e56, 1.0, 1.5112015431838721e35, 1.004177802851038e-27, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.0985716137458414e-6, 3.08568025e21, 3.08568025e21, 1.0, 1.0, 1.0, 57.29577951308232))
 ```
 
 ## Ionization map: slice vs. column
@@ -360,8 +356,8 @@ Columns:
 `:xHII` is a hydro scalar (located via `iIons`). The source sits at the box **corner** `[0,0,0]`,
 so we **zoom** on the ionized region (the Strömgren sphere is only ≈2.6 kpc in a 15 kpc box). A
 **thin slice at the source plane** shows the *local* sphere with a sharp ionization front
-(xHII: 0→1); the **full-column average** integrates the whole 15 kpc line of sight — mostly
-neutral gas — so it is far lower and smoother (note the separate colour scale). That is the
+(xHII: 0→1); the **full-column average** integrates the whole 15 kpc line of sight, mostly
+neutral gas, so it is far lower and smoother (note the separate colour scale). That is the
 slice-vs-column distinction: local structure vs. line-of-sight dilution.
 
 ```julia
@@ -399,7 +395,7 @@ d = getvar(gas, [:n_HII, :n_HI, :n_e])     # → Dict of arrays
 A recombination-line image (e.g. Hα) is the line-of-sight integral of the emissivity
 `j ∝ α(T)·nₑ·n_HII`. `getvar(gas, :em_recomb)` returns the proxy `n_HII²` (valid here because
 the ionized gas is nearly isothermal); projecting it with `mode=:sum` gives a map proportional to
-the **emission-measure column** — the synthetic glow of the HII region.
+the **emission-measure column**, the synthetic glow of the HII region.
 
 ```julia
 em = projection(gas, :em_recomb, mode=:sum, verbose=false, show_progress=false)
@@ -411,7 +407,7 @@ show_map(em.maps[:em_recomb]; logscale=true, cmap="hot",
 
 ## Strömgren climax: ionization & temperature profiles
 
-The defining diagnostic — radially binned `xHII(r)` and `T_rt(r)` from the source (per-bin
+The defining diagnostic, radially binned `xHII(r)` and `T_rt(r)` from the source (per-bin
 mean via `radial_mean`). The **ionization front** is the radius where `xHII = 0.5`; the temperature rises to ~10⁴ K inside (peaking at ~2×10⁴ K near the hard source) and falls
 outside. We compute `r`, `xHII`, `T_rt` here once and reuse them next.
 
@@ -445,15 +441,15 @@ round(ifront, digits = 2) = 2.61
 The temperature follows `T ∝ μ` at fixed `P/ρ`, so the **mean molecular weight** matters. μ
 depends on the ionization state: for pure H, `μ = 1/(1+xHII)`, running from **1.0** (neutral,
 since `X=1` here) to **0.5** (fully ionized). Mera's plain `:T` (`unit=:K`) bakes in a *constant*
-μ ≈ 1/0.76 ≈ 1.32 (the fixed primordial default — **independent of this run's `X=1`**), so it
+μ ≈ 1/0.76 ≈ 1.32 (the fixed primordial default, **independent of this run's `X=1`**), so it
 **over-estimates** the ionized-gas temperature by `μ_const/μ_local` ≈ 1.32/0.5 ≈ **2.6×** (matching
 the printed `T_const/T_rt`); **`:T_rt`** uses the *local* μ and recovers the physical temperature
 (~2×10⁴ K here). (μ also responds to metallicity via the `:metallicity` scalar when present; this
 test is metal-free.)
 
 Because the medium is uniform and in photoionization equilibrium, `T` is single-valued in `xHII`
-— the cells trace a **1D relation**, so a scatter (coloured by radius) is the honest plot; a 2D
-density–temperature phase *heatmap* would collapse to a line here and only becomes informative in
+the cells trace a **1D relation**, so a scatter (coloured by radius) is the honest plot; a 2D
+density to temperature phase *heatmap* would collapse to a line here and only becomes informative in
 a multiphase ISM/galaxy run.
 
 ```julia
@@ -474,7 +470,7 @@ title("Ionization–temperature relation"); tight_layout();
 (T_const_max = 55977.75489365413, T_rt_max = 21275.378385872624)
 ```
 
-## Radiation–matter rates & ionization balance
+## Radiation to matter rates & ionization balance
 
 The radiation field drives the gas. From the **RT** object: the **photoionization rate**
 `Γ_HI = Σ_g c·Np_g·σ_g` [s⁻¹] (using the reduced light speed `rt_c_frac·c`) and the
@@ -483,7 +479,7 @@ The radiation field drives the gas. From the **RT** object: the **photoionizatio
 `Γ·n_HI ≈ α·n_e·n_HII`.
 
 Quantities that **couple both objects** (`:photoionizations`, `:ionization_balance`) are
-requested on the RT object with `hydro_data=gas` (both loaded over the same cells — Mera
+requested on the RT object with `hydro_data=gas` (both loaded over the same cells, Mera
 checks the alignment). The radial profile below shows the two rates **tracking in shape**
 through the ionized interior. They are **not yet equal**: at this early time
 `t ≈ 20 Myr ≪ t_rec ≈ 120 Myr` (`t/t_rec ≈ 0.16`) the front is still **expanding** toward `R_S`,
@@ -524,9 +520,9 @@ maximum(getvar(rt, :ionization_balance, hydro_data = gas)) = 3.2746012509460365e
 `getinfo` parsed the RT descriptor (`info_rt`) into `info.descriptor.rt`: the unit factors
 `unit_np`/`unit_pf`, the per-group `group_egy`, and `rtPhotonGroups` (cross-sections, band edges).
 Two ways to physical units: **dedicated cgs symbols** (`:Np1_cgs`, `:Fmag1_cgs`,
-`:rad_energy_density` — these return fixed cgs and ignore a unit argument), and the general
+`:rad_energy_density`, these return fixed cgs and ignore a unit argument), and the general
 `getvar(obj, :var, :unit)` route for plain quantities (as we used for radius in kpc). We lead with
-the radiation energy density `u = Np·unit_np·egy` — it carries the eV factor and is genuinely
+the radiation energy density `u = Np·unit_np·egy`, it carries the eV factor and is genuinely
 `~10⁻¹³ erg cm⁻³`. (Here `Np1_cgs` happens to equal the code value only because `unit_np≈1` in
 this run.)
 
@@ -555,7 +551,7 @@ Other RT quantities are one call each (per-group reduced flux, physical flux, pe
 density, neutral fraction `:xHI`). Finally we close the loop on the **physics we expected**: compute the **Strömgren
 radius** from the source rate and compare to the measured front. `Ṅγ` is a hand-entered namelist
 constant (not in the cell data); `α_B` is the case-B coefficient at ~10⁴ K; `n_H` comes from the
-data. At this early time `t ≪ t_rec`, so the front is still **expanding** toward `R_S` —
+data. At this early time `t ≪ t_rec`, so the front is still **expanding** toward `R_S`,
 the right comparison is the time-dependent `r_I(t) = R_S(1-e^{-t/t_rec})^{1/3}`.
 
 ```julia
@@ -587,7 +583,7 @@ r_I(t=30.0 Myr) = 3.24 kpc   (t_rec = 122.0 Myr)
 measured front   = 2.61 kpc   → still expanding toward R_S
 ```
 
-## Summary — RT calls at a glance
+## Summary, RT calls at a glance
 
 | call | result |
 |---|---|
@@ -603,7 +599,7 @@ measured front   = 2.61 kpc   → still expanding toward R_S
 | `getvar(gas, [:n_HII,:n_HI,:n_e])` | ionization-state densities [cm⁻³] |
 | `getvar(rt, :Gamma_HI)`, `:photoheating_HI` | photoionization / photoheating rate |
 | `getvar(gas, :recomb_rate)` | case-B recombination rate [cm⁻³ s⁻¹] |
-| `getvar(rt, :ionization_balance, hydro_data=gas)` | radiation–gas coupling (Γ·n_HI − α·nₑ·n_HII) |
+| `getvar(rt, :ionization_balance, hydro_data=gas)` | radiation to gas coupling (Γ·n_HI − α·nₑ·n_HII) |
 | `getvar(gas, :em_recomb)` | recombination-emission proxy `n_HII²` |
 | `getvar(gas, [:mu,:T,:T_rt],[…])` | μ and RT-aware temperature [K] |
 | `getvar(rt, :Np1_cgs)`, `:rad_energy_density` | physical (cgs) photon density / energy density |

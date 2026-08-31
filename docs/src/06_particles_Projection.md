@@ -8,7 +8,7 @@
 # Particle Data Projections
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `06_particles_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_particles_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `06_particles_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_particles_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This tutorial demonstrates advanced projection techniques for stellar and dark matter particle data using MERA.jl. Learn how to create 2D projections from N-body simulations, analyze stellar populations, and investigate galactic structure through particle-based analysis.
@@ -32,7 +32,7 @@ projection(particles, :sd, :Msol_pc2, direction=:x)  # x, y, z directions
 
 # Resolution control
 projection(particles, :sd, :Msol_pc2, lmax=9)       # AMR level
-projection(particles, :sd, :Msol_pc2, res=256)      # Effective grid resolution
+projection(particles, :sd, :Msol_pc2, pxsize=[0.1, :kpc])  # physical pixel size
 projection(particles, :sd, :Msol_pc2, pxsize=[100.,:pc])  # Physical pixel size
 
 # Stellar population analysis
@@ -99,8 +99,8 @@ particles = getparticles(info);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-03T11:03:34.121
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T13:48:25.452
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -138,7 +138,7 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get particle data: 2026-08-03T11:03:39.167
+[Mera]: Get particle data: 2026-08-31T13:48:30.325
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
@@ -221,13 +221,18 @@ velocity dispersion => σr_cylinder, σϕ_cylinder
 2d maps (not projected) => :r_cylinder, :ϕ
 ==============[off-axis views]:==================
 project along ANY line of sight (degrees by default):
-  inclination=, azimuth=, axis=(:z|:angmom|vector)
+  inclination=, azimuth=, axis=(:x|:y|:z|:angmom|:L|[ax,ay,az])
   direction=:faceon / :edgeon   (disk from L)
-  los=[lx,ly,lz]   or   theta=, phi=
+  los=[lx,ly,lz]
+  theta=, phi=   (deprecated in 1.8: azimuth = phi + 90 for axis=:z)
   position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact
+    (:overlap/:exact integrate a cell's footprint; point particles have none,
+     so on particle data they fall back to :cic)
+  thickness=, offset= (particles): project a SLAB of finite depth instead of the
+     full column, and move it along the line of sight
   line-of-sight tools (same view kwargs):
     :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)
-    slice (off-axis kwargs)       -> cutting plane ;  profile / phase -> 1D/2D reductions
+    slice (off-axis kwargs)       -> cutting plane (offset= moves it) ;  profile / phase -> 1D/2D reductions
     rotation_sequence             -> shared-FOV angle sweep (orbit movies)
     savemap/loadmap (JLD2)        -> store/restore a projection result
 ------------------------------------------------
@@ -259,7 +264,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-03T11:03:51.758
+[Mera]: 2026-08-31T13:48:40.118
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -280,7 +285,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-03T11:03:54.137
+[Mera]: 2026-08-31T13:48:40.861
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -299,7 +304,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-03T11:03:55.924
+[Mera]: 2026-08-31T13:48:40.999
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -320,7 +325,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-03T11:03:58.133
+[Mera]: 2026-08-31T13:48:41.616
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -347,7 +352,7 @@ proj1_x = projection(particles, [:sd], units=[:Msol_pc2], lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-03T11:03:59.956
+[Mera]: 2026-08-31T13:48:41.850
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -372,7 +377,7 @@ proj1_z = projection(particles, [:sd, :vx], units=[:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-03T11:04:01.660
+[Mera]: 2026-08-31T13:48:41.916
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -397,7 +402,7 @@ proj1_z = projection(particles, [:sd, :vx], [:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-03T11:04:03.811
+[Mera]: 2026-08-31T13:48:42.994
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -421,7 +426,7 @@ projvel_z = projection(particles, [:vx, :vy, :vz], :km_s, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-03T11:04:05.527
+[Mera]: 2026-08-31T13:48:43.030
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -688,7 +693,7 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin],
 ```
 
 ```
-[Mera]: 2026-08-03T11:04:23.505
+[Mera]: 2026-08-31T13:48:52.408
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -697,6 +702,11 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
+[Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             (shown once per session; verbose(false) silences Mera's messages)
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:01
 ```
 
 For the velocity dispersion additional maps are created that lead to the mass-weighted quantity:
@@ -805,7 +815,7 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylin
 ```
 
 ```
-[Mera]: 2026-08-03T11:04:27.293
+[Mera]: 2026-08-31T13:48:54.808
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -935,7 +945,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-08-03T11:04:31.367
+[Mera]: 2026-08-31T13:48:57.055
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1067,7 +1077,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-08-03T11:04:34.616
+[Mera]: 2026-08-31T13:48:58.458
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1092,7 +1102,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-08-03T11:04:36.736
+[Mera]: 2026-08-31T13:48:58.611
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1224,7 +1234,7 @@ proj_x = projection(particles, :age, :Myr, mask=mask,
 ```
 
 ```
-[Mera]: 2026-08-03T11:04:51.127
+[Mera]: 2026-08-31T13:49:01.079
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1233,7 +1243,7 @@ Effective resolution: 256^2
 Pixel size: 187.5 [pc]
 Simulation min.: 46.875 [pc]
 :mask provided by function
-[Mera]: 2026-08-03T11:04:54.399
+[Mera]: 2026-08-31T13:49:01.690
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]

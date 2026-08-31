@@ -8,7 +8,7 @@
 # Auto-Frame: centering & orientation
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `galaxyframe.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/galaxyframe.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `galaxyframe.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/galaxyframe.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 "Find the centre, then rotate to face-on / edge-on" is a ritual every disk-galaxy analysis
@@ -18,7 +18,7 @@ momentum**. The result drops straight into [`projection`](@ref).
 
 ![Face-on and edge-on views of the spiral_clumps disk, both obtained automatically from the gas angular momentum with face_on(gas) and edge_on(gas).](assets/galaxyframe/face_edge.png)
 
-This notebook runs on the `mw_L10` disk-galaxy snapshot (output 300) — an isolated spiral, so
+This notebook runs on the `mw_L10` disk-galaxy snapshot (output 300), an isolated spiral, so
 the bare `face_on(gas)` call is correct. Each cell prints the real frame it computed.
 
 ```julia
@@ -41,8 +41,8 @@ println("cells loaded : ", length(gas.data))
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-03T11:52:25.491
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T14:17:33.969
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -80,7 +80,7 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-08-03T11:52:28.149
+[Mera]: Get hydro data: 2026-08-31T14:17:36.434
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -92,7 +92,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.86 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:12 (20.04 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -102,7 +102,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 42.044 seconds
+✓ Table created in 35.799 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 cells loaded : 28320979
@@ -128,8 +128,8 @@ center_of (:densest)        : [0.49658, 0.50244, 0.50146]
 center_of (:com,  kpc)      : [24.0003, 24.022, 24.0212]
 ```
 
-For `:standard` the result is a **box fraction (0–1)** — the convention that
-[`projection`](@ref), [`subregion`](@ref) and `getvar(…; center=…)` expect — so it feeds
+For `:standard` the result is a **box fraction (0 to 1)**, the convention that
+[`projection`](@ref), [`subregion`](@ref) and `getvar(…; center=…)` expect, so it feeds
 straight back into them.
 
 ## Orienting: face-on and edge-on
@@ -152,6 +152,10 @@ println("angmom : ", round.(fr.angmom, sigdigits=4))
 ```
 
 ```
+[Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             (shown once per session; verbose(false) silences Mera's messages)
 GalaxyFrame:
   center (standard) = [0.5, 0.5005, 0.5004]
   los  = [-0.0004, -0.0002, 1.0]
@@ -192,7 +196,7 @@ there. (The same cancellation removes the Hubble flow in cosmological runs, sinc
 
 ## Drive a projection with the frame
 
-Splat the frame's `los`/`up`/`center` into `projection` — face-on for morphology, edge-on for
+Splat the frame's `los`/`up`/`center` into `projection`, face-on for morphology, edge-on for
 the rotating disk.
 
 ```julia
@@ -215,7 +219,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-08-03T11:53:58.646
+[Mera]: 2026-08-31T14:18:57.641
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -225,7 +229,7 @@ Selected var(s)=(:sd,)
 Weighting      = :mass
 Off-axis LOS   = [-0.0004, -0.0002, 1.0]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-[Mera]: 2026-08-03T11:54:09.266
+[Mera]: 2026-08-31T14:19:08.647
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -245,7 +249,7 @@ edge-on Sigma extrema : (0.0, 6539.3160386012305)
 
 !!! warning "The bare call assumes one object"
     `face_on(gas)` / `center_of(gas)` use the **global** CoM and the **summed** angular
-    momentum. In a box with many galaxies that is meaningless — the CoM lands between them
+    momentum. In a box with many galaxies that is meaningless, the CoM lands between them
     and unrelated spins cancel. **Point the tool at the object** with a seed `center` plus
     an `aperture`; it then re-centres on the *local* CoM inside that sphere and measures
     only that object's spin:
@@ -303,7 +307,7 @@ Works on hydro and particle data (both carry mass and velocity → angular momen
 ## Method and references
 
 **Aperture.** The `aperture` keyword is a sphere *radius* (in `range_unit`) around the seed
-centre — the region within which the local centre and the spin axis are measured. The name
+centre, the region within which the local centre and the spin axis are measured. The name
 is borrowed from aperture photometry: only data inside the sphere contributes, which is what
 isolates one object from its neighbours. `aperture=nothing` (the default) uses all the data,
 which is correct only for an already-isolated object.
@@ -320,27 +324,27 @@ angular-momentum recipe for orienting disc galaxies.
 
 **Centring.** `:com` is the mass-weighted centre of mass; `:densest` is the density peak.
 With a seed centre plus an `aperture`, the frame re-centres on the *local* CoM inside the
-sphere — one iteration of the shrinking-sphere centre commonly used for haloes.
+sphere, one iteration of the shrinking-sphere centre commonly used for haloes.
 
 **Why no bulk-velocity subtraction.** Angular momentum about the centre of mass separates
 into centre-of-mass and internal parts (König's theorem), so a net translation contributes
 nothing about the CoM. The Hubble flow ``\mathbf{v} = H\mathbf{r}`` is parallel to
-``\mathbf{r}``, so ``\mathbf{r} \times \mathbf{v} = 0`` — hence the recipe is also correct
+``\mathbf{r}``, so ``\mathbf{r} \times \mathbf{v} = 0``, hence the recipe is also correct
 in cosmological runs.
 
 These are standard techniques in galaxy-simulation analysis rather than any single source;
 the authoritative references for the ingredients:
 
-- A. Pontzen, R. Roškar, G. Stinson, et al., *pynbody: Astrophysics Simulation Analysis for Python* (2013), Astrophysics Source Code Library, ascl:1305.002 — `faceon`/`sideon` orientation by angular momentum.
+- A. Pontzen, R. Roškar, G. Stinson, et al., *pynbody: Astrophysics Simulation Analysis for Python* (2013), Astrophysics Source Code Library, ascl:1305.002, `faceon`/`sideon` orientation by angular momentum.
 - M. J. Turk, B. D. Smith, J. S. Oishi, et al., "yt: A Multi-code Analysis Toolkit for Astrophysical Simulation Data", *ApJS* **192**, 9 (2011).
-- C. Power, J. F. Navarro, A. Jenkins, et al., "The inner structure of ΛCDM haloes — I. A numerical convergence study", *MNRAS* **338**, 14 (2003) — iterative shrinking-sphere centre.
-- V. Springel, N. Yoshida, S. D. M. White, "GADGET … and the SUBFIND algorithm", *MNRAS* **328**, 726 (2001) — density-peak substructure centres.
-- J. Binney & S. Tremaine, *Galactic Dynamics*, 2nd ed. (Princeton University Press, 2008) — angular momentum and disc dynamics.
-- H. Goldstein, C. Poole, J. Safko, *Classical Mechanics*, 3rd ed. (Addison-Wesley, 2002) — König's theorem (decomposition of angular momentum about the CoM).
+- C. Power, J. F. Navarro, A. Jenkins, et al., "The inner structure of ΛCDM haloes, I. A numerical convergence study", *MNRAS* **338**, 14 (2003), iterative shrinking-sphere centre.
+- V. Springel, N. Yoshida, S. D. M. White, "GADGET … and the SUBFIND algorithm", *MNRAS* **328**, 726 (2001), density-peak substructure centres.
+- J. Binney & S. Tremaine, *Galactic Dynamics*, 2nd ed. (Princeton University Press, 2008), angular momentum and disc dynamics.
+- H. Goldstein, C. Poole, J. Safko, *Classical Mechanics*, 3rd ed. (Addison-Wesley, 2002), König's theorem (decomposition of angular momentum about the CoM).
 
 ## See also
 
-- [`projection`](@ref) — consumes `los`/`up`/`center` for off-axis views.
-- [`subregion`](@ref) — isolate one object before framing it.
-- [`center_of_mass`](@ref), [`bulk_velocity`](@ref) — the underlying reductions.
-- [Off-axis projection](06_offaxis_Projection.md) — the projection machinery the frame drives.
+- [`projection`](@ref), consumes `los`/`up`/`center` for off-axis views.
+- [`subregion`](@ref), isolate one object before framing it.
+- [`center_of_mass`](@ref), [`bulk_velocity`](@ref), the underlying reductions.
+- [Off-axis projection](06_offaxis_Projection.md), the projection machinery the frame drives.

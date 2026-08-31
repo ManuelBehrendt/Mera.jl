@@ -8,7 +8,7 @@
 # Hydro Data: First Inspection
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `01_hydro_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_hydro_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `01_hydro_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_hydro_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook provides a comprehensive introduction to loading and analyzing hydrodynamic simulation data using Mera.jl. You'll learn the fundamentals of working with RAMSES hydro data and AMR (Adaptive Mesh Refinement) structures.
@@ -150,9 +150,6 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (1), incompatible header (3), dep missing source (1), mismatched flags (3))
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), incompatible header (6), dep missing source (2), mismatched flags (6))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -160,8 +157,8 @@ SYSTEM: caught exception of type :MethodError while trying to print a failed Tas
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-07T11:27:10.055
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T13:21:26.576
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -213,8 +210,8 @@ The output above provides a comprehensive overview of the loaded hydro data prop
 
 ## Variable Names and Descriptors
 
-Mera addresses hydro variables by canonical names — `:rho`, `:vx`, `:vy`, `:vz`, `:p` and the
-derived quantities built on them — regardless of what the simulation called them.
+Mera addresses hydro variables by canonical names, `:rho`, `:vx`, `:vy`, `:vz`, `:p` and the
+derived quantities built on them, regardless of what the simulation called them.
 
 `info.descriptor.hydro` shows what the RAMSES descriptor file actually declared, which is
 useful for checking that a run wrote the variables you expect and in what order:
@@ -309,18 +306,18 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10", verbose=false); # here, used
 ## What AMR means for your analysis
 
 RAMSES does not use one uniform grid. Where the flow demands resolution it splits a cell into
-eight, repeatedly — so each cell carries a `level`, and its size is `boxlen / 2^level`. In this
+eight, repeatedly, so each cell carries a `level`, and its size is `boxlen / 2^level`. In this
 simulation that spans **750 pc at level 6 down to 46.9 pc at level 10**, a factor of 16 in
 length and roughly 4000 in volume.
 
-Mera stores only **leaf cells** — the finest cell covering each point, never its parents. The
+Mera stores only **leaf cells**, the finest cell covering each point, never its parents. The
 rows therefore tile the box exactly once, with no double counting, which is why you can sum
 masses straight from the table.
 
-!!! warning "Rows are not equal-volume — never take a plain `mean()`"
+!!! warning "Rows are not equal-volume, never take a plain `mean()`"
     Because a level-6 cell occupies ~4000× the volume of a level-10 cell, an unweighted
     average over rows silently weights the coarse, mostly-empty regions as heavily as the
-    dense refined ones. `mean(getvar(gas, :rho))` is not the mean density of the box — on
+    dense refined ones. `mean(getvar(gas, :rho))` is not the mean density of the box, on
     this snapshot it comes out **6.1× too high**.
 
     Use a weight that reflects what you are averaging over:
@@ -359,7 +356,7 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-07T11:27:13.965
+[Mera]: Get hydro data: 2026-08-31T13:21:30.467
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -371,7 +368,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.12 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.45 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -381,7 +378,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 42.904 seconds
+✓ Table created in 35.384 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
@@ -488,7 +485,7 @@ gas = gethydro(info, smallr=1e-11);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-07T11:28:19.594
+[Mera]: Get hydro data: 2026-08-31T13:22:27.892
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -500,7 +497,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (26.69 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.40 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -510,7 +507,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 40.601 seconds
+✓ Table created in 35.555 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
@@ -569,7 +566,7 @@ level  cells     cellsize
 #### Visual overview
 
 `overviewplot` is the visual companion to `amroverview`/`dataoverview`: a one-figure summary computed in
-a single pass — cells and mass per AMR level, the mass-weighted density PDF, and the ρ–T phase diagram.
+a single pass, cells and mass per AMR level, the mass-weighted density PDF, and the ρ to T phase diagram.
 It needs a Makie backend (`using CairoMakie`).
 
 ```julia
@@ -577,14 +574,7 @@ using CairoMakie
 overviewplot(gas)
 ```
 
-```
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (2), incompatible header (7))
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (4), incompatible header (14))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.8.0
-```
-
-![](01_hydro_First_Inspection_files/01_hydro_First_Inspection_39_5.png)
+![](01_hydro_First_Inspection_files/01_hydro_First_Inspection_39_1.png)
 
 ### Statistical Data Analysis
 
@@ -600,7 +590,7 @@ data_overview = dataoverview(gas)
 
 ```
 Calculating...
- 100%|███████████████████████████████████████████████████| Time: 0:03:16
+ 100%|███████████████████████████████████████████████████| Time: 0:00:01
 ```
 
 ```

@@ -8,11 +8,11 @@
 # Coming from Other Analysis Tools
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `switching_to_mera.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/switching_to_mera.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `switching_to_mera.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/switching_to_mera.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-If you already post-process simulations — with a Python analysis package, your group's own
-scripts, or the simulation code's tools — this page maps the concepts you know onto Mera and
+If you already post-process simulations, with a Python analysis package, your group's own
+scripts, or the simulation code's tools, this page maps the concepts you know onto Mera and
 walks one complete workflow end to end. For the Julia language itself, rather than
 simulation analysis, see [Julia for Simulation Analysis](julia_for_simulation_analysis.md) and
 the [Julia Cheat Sheet](quickreference/Julia_Quick_Reference.md).
@@ -20,25 +20,25 @@ the [Julia Cheat Sheet](quickreference/Julia_Quick_Reference.md).
 ## The mental model
 
 Mera's central design choice: **data is loaded explicitly into memory as a columnar table that
-you own.** There is no lazy proxy object — after `gethydro` you hold the actual cells (one row
+you own.** There is no lazy proxy object, after `gethydro` you hold the actual cells (one row
 per AMR leaf cell), and every downstream operation is a plain function over that table. You
 control RAM at load time (level cap, spatial window), not through deferred evaluation.
 
 | Concept you may know | In Mera |
 |---|---|
 | snapshot / dataset object | `info = getinfo(output, path)` → metadata only, instant |
-| loading data | `gethydro(info)`, `getparticles(info)`, `getgravity(info)`, … — explicit, RAM-aware |
-| derived / on-the-fly fields | `getvar(gas, :T, :K)` — computed from the loaded columns; extend with `add_field` |
-| geometric selection | `subregion(gas, :sphere; …)`, `shellregion(…)` — return the same table type, chainable |
-| value-based selection | `filterdata(gas, …)` / `getmask` — thresholds on any `getvar` quantity |
+| loading data | `gethydro(info)`, `getparticles(info)`, `getgravity(info)`, …, explicit, RAM-aware |
+| derived / on-the-fly fields | `getvar(gas, :T, :K)`, computed from the loaded columns; extend with `add_field` |
+| geometric selection | `subregion(gas, :sphere; …)`, `shellregion(…)`, return the same table type, chainable |
+| value-based selection | `filterdata(gas, …)` / `getmask`, thresholds on any `getvar` quantity |
 | projections | `projection(gas, :sd, :Msol_pc2; direction=:z or any line of sight)` |
 | profiles / phase diagrams | `profile(…)`, `phase(…)`, `pdf(…)` |
-| 2-D slice through the volume | `slice(gas, :rho, :g_cm3; …)` — axis-aligned or along any line of sight |
-| loop over snapshots | `timeseries(path, d -> …)` — reads each output, returns a table |
-| find structures | `clumpfind(gas, …)` — FoF/watershed on loaded data, scored in [Clump Finding](clumpfind_synthetic.md) |
+| 2-D slice through the volume | `slice(gas, :rho, :g_cm3; …)`, axis-aligned or along any line of sight |
+| loop over snapshots | `timeseries(path, d -> …)`, reads each output, returns a table |
+| find structures | `clumpfind(gas, …)`, FoF/watershed on loaded data, scored in [Clump Finding](clumpfind_synthetic.md) |
 | animations | `getmovie(path, :rho)` / `savemovie(…)` |
 | unit handling | a `scale` factor table: multiply, or pass the unit symbol (`:g_cm3`, `:km_s`, `:Msol_pc2`) |
-| saving processed data | `savedata`/`loaddata` — LZ4-compressed JLD2, the fast Mera-native round-trip. Julia-side only: it stores the Mera object, so h5py cannot reconstruct the table — use `export_vtk`, write columns out yourself, or call Mera from Python via JuliaCall |
+| saving processed data | `savedata`/`loaddata`, LZ4-compressed JLD2, the fast Mera-native round-trip. Julia-side only: it stores the Mera object, so h5py cannot reconstruct the table, use `export_vtk`, write columns out yourself, or call Mera from Python via JuliaCall |
 
 Two conventions worth internalising on day one:
 
@@ -46,10 +46,10 @@ Two conventions worth internalising on day one:
     The default `:standard` unit means *fractions of the box* (0…1), not physical lengths.
     `xrange=[0.4, 0.6]` is the central 20% of the box; a sphere `radius=0.2` spans 20% of
     `boxlen`. Pass `range_unit=:kpc` (or `:pc`, `:Mpc`, …) with `center=[…]` to work in
-    physical units — the examples below do.
+    physical units, the examples below do.
 
 - **Loading is eager, selection is cheap.** Load once (possibly windowed), then slice, filter,
-  and project the in-memory table as often as you like — each step returns a normal Mera object.
+  and project the in-memory table as often as you like, each step returns a normal Mera object.
 
 ## One complete workflow
 
@@ -59,30 +59,43 @@ The same five steps you would do anywhere: inspect → load → select → measu
 using Mera, CairoMakie, Statistics
 CairoMakie.activate!()
 # This page uses a high-resolution AVALON run (levels 6-13, 5.9 pc finest cell), stored as a
-# Mera file so it reloads in one call. Point AVALON at any output of your own — every step
+# Mera file so it reloads in one call. Point AVALON at any output of your own, every step
 # below is code-blind and works the same on a raw RAMSES/PLUTO/AREPO snapshot via getinfo.
 AVALON = get(ENV, "MERA_AVALON", "/Volumes/FASTStorage/Simulations/AVALONpaper/AV05CDhr/mera")
 info = infodata(390, AVALON, verbose=false);                   # metadata only — instant
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (2), dep missing source (1), mismatched flags (6))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (2), mismatched flags (12))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (3), incompatible header (6))
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), incompatible header (12))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 ```
 
 `info` already knows everything about the snapshot (levels, box size, which files exist,
-the unit system) without touching the heavy data. Loading is the explicit step — and the place
+the unit system) without touching the heavy data. Loading is the explicit step, and the place
 to bound memory with a level cap and/or a spatial window:
 
 ```julia
 # bound the read: the box is applied while loading, so the rest is never allocated.
-# 148M cells, ~12 GB, a few minutes off a Mera file — the full-resolution ISM.
+# 148M cells, ~12 GB, a few minutes off a Mera file, the full-resolution ISM.
 gas = loaddata(390, AVALON, :hydro; xrange=[-12,12], yrange=[-12,12], zrange=[-3,3],
                center=[:bc], range_unit=:kpc, verbose=false)
 println(length(gas.data), " cells in memory, levels ", gas.lmin, "-", gas.lmax)
@@ -95,10 +108,10 @@ Memory used: 12.146 GB
 ```
 
 ```
-(12.145861289463937, "GB")
+(12.145861252211034, "GB")
 ```
 
-Derived quantities are computed on demand from the loaded columns — with units as
+Derived quantities are computed on demand from the loaded columns, with units as
 symbols (every available scale is listed by `viewfields(info.scale)`):
 
 ```julia
@@ -114,7 +127,7 @@ cs range: (0.341, 2400.0) km/s
 ```
 
 Geometric and value-based selection compose, and each result is again a full Mera
-object — `getvar`, `projection`, `profile` all work on it unchanged:
+object, `getvar`, `projection`, `profile` all work on it unchanged:
 
 ```julia
 disk = subregion(gas, :cylinder; radius=8., height=2., center=[:bc],
@@ -129,7 +142,7 @@ disk: 104072571 cells;  cold disk: 86950432 cells
 cold gas mass: 4.116e9 Msol
 ```
 
-Maps and profiles close the loop — a face-on surface-density map of the cold disk and
+Maps and profiles close the loop, a face-on surface-density map of the cold disk and
 its radial profile:
 
 ```julia
@@ -150,7 +163,14 @@ hidedecorations!(ax)
 fig
 ```
 
-![](switching_to_mera_files/switching_to_mera_10_1.png)
+```
+[Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             (shown once per session; verbose(false) silences Mera's messages)
+```
+
+![](switching_to_mera_files/switching_to_mera_10_2.png)
 
 ```julia
 out = mktempdir()                                   # any existing folder
@@ -170,7 +190,7 @@ round-trip ok: true  (4060.3 MB on disk)
 
 - **First call is slower, loops are fast.** Julia compiles on first use (see
   [Julia for Simulation Analysis](julia_for_simulation_analysis.md)); after that, custom
-  per-cell analysis loops run at compiled speed — no need to push work into vectorised
+  per-cell analysis loops run at compiled speed, no need to push work into vectorised
   library calls for performance.
 - **Units are explicit, not attached.** Quantities are plain arrays; units enter as scale
   factors or unit symbols. This keeps everything zero-overhead but means *you* choose the unit
@@ -179,5 +199,5 @@ round-trip ok: true  (4060.3 MB on disk)
   plan the handoff (`export_vtk`, your own column dump, or JuliaCall) rather than assuming
   h5py can read it.
 
-**Next:** [Julia for Simulation Analysis](julia_for_simulation_analysis.md) — environments,
+**Next:** [Julia for Simulation Analysis](julia_for_simulation_analysis.md), environments,
 compile-time latency, memory habits and measured multithreading.

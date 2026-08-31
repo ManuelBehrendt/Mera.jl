@@ -8,7 +8,7 @@
 # First Look: `quicklook` and `report`
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `first_look.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/first_look.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `first_look.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/first_look.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 You have a simulation output and no idea what is in it. This page is about the first two minutes.
@@ -98,12 +98,12 @@ q = quicklook(output; path=path);
 ```
 
 ```
-[Mera]: quicklook output 300, reading gas: 2026-08-28T12:57:22.264
+[Mera]: quicklook output 300, reading gas: 2026-08-31T14:15:39.607
    640 CPU file(s), levels 6-8 of 10  (budgeted to ~2000000 cells)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:03 ( 5.32 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:12 (19.08 ms/it)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 9959076 cells
-[Mera]: quicklook output 300, reading particles: 2026-08-28T12:57:34.918
+[Mera]: quicklook output 300, reading particles: 2026-08-31T14:16:00.987
 ┌─ Mera quicklook ── output 300 (RAMSES) ───────────────
 │ box        : 48.0 kpc      levels 6–10  (finest 46.88 pc)
 │ grid       : ndim 3 · ncpu 640 · nvarh 7
@@ -115,8 +115,8 @@ Processing files: 100%|███████████████████
 │ T  range   : 30.22 … 2.41e7 K  ⚠ peaks smoothed (lower bound)
 │ star mass  : 4.385e8 M⊙        DM mass : 0.0 M⊙
 │ current SFR: 1.377 (10 Myr) · 1.148 (100 Myr) M⊙/yr
-└─ 18.81 s ──────────────────────────────────
-[Mera]: quicklook output 300 finished: 2026-08-28T12:57:41.071
+└─ 27.54 s ──────────────────────────────────
+[Mera]: quicklook output 300 finished: 2026-08-31T14:16:07.144
 ```
 
 ### What came back
@@ -138,7 +138,7 @@ q.summary
 ```
 
 ```
-(output = 300, simcode = "RAMSES", box_kpc = 48.00000000003111, levelmin = 6, levelmax = 10, finest_cell_pc = 46.87500000003038, ncpu = 640, ndim = 3, nvarh = 7, time_Myr = 445.8861174695, redshift = nothing, npart = 544515, nstars = 544515, ndm = 0, nsinks = 0, ncells = 9959076, lmax_used = 8, sampled = true, gas_mass_Msol = 7.060719565110762e9, particle_subsample = 1.0, stellar_mass_Msol = 4.38466e8, dm_mass_Msol = 0.0, sfr10 = 1.377, sfr100 = 1.14778, nH_range = (8.111842617338044e-8, 19.474166141696692), T_range_K = (30.216649542865262, 2.4096147641221385e7), bmag_range_muG = nothing, beta_range = nothing, seconds = 18.793329000473022)
+(output = 300, simcode = "RAMSES", box_kpc = 48.00000000003111, levelmin = 6, levelmax = 10, finest_cell_pc = 46.87500000003038, ncpu = 640, ndim = 3, nvarh = 7, time_Myr = 445.8861174695, redshift = nothing, npart = 544515, nstars = 544515, ndm = 0, nsinks = 0, ncells = 9959076, lmax_used = 8, sampled = true, gas_mass_Msol = 7.060719565110762e9, particle_subsample = 1.0, stellar_mass_Msol = 4.38466e8, dm_mass_Msol = 0.0, sfr10 = 1.377, sfr100 = 1.14778, nH_range = (8.111842617338044e-8, 19.474166141696692), T_range_K = (30.216649542865262, 2.4096147641221385e7), bmag_range_muG = nothing, beta_range = nothing, seconds = 27.52463388442993)
 ```
 
 ```julia
@@ -368,7 +368,7 @@ calibrate!(output; path=path)
 ```
 
 ```
-CostModel(0.005, 3.0e-7, 1.0e-6, 1.0e-8, 5.0e-9, 5.0e-8, 1.0e-6, Dict(:map => 17.474359254524796, :phase => 14.449460799902905, :read => 0.6681983411159792, :profile => 67.42888440515165, :scalar => 2.2694713264917), true)
+CostModel(0.005, 3.0e-7, 1.0e-6, 1.0e-8, 5.0e-9, 5.0e-8, 1.0e-6, Dict(:map => 17.453832180060985, :phase => 14.020969628182414, :read => 0.6741532372499657, :profile => 69.10562215673266, :scalar => 1.3110765100102504), true)
 ```
 
 ```julia
@@ -377,7 +377,7 @@ estimate(plan)
 ```
 
 ```
-(per_card = [("hydro_sd_map", :map, :hydro, 1.36352e6, 1.3834659914118335), ("rho_T_phase", :phase, :hydro, 1.36352e6, 0.10313447140538698)], read_s = 2.6848957728182095, compute_s = 1.4866004628172205, total_s = 4.17149623563543, level = 8, cells = 1363520, sampled = true, calibrated = true)
+(per_card = [("hydro_sd_map", :map, :hydro, 1.36352e6, 1.3818408382940441), ("rho_T_phase", :phase, :hydro, 1.36352e6, 0.1000760728181148)], read_s = 2.708823212432934, compute_s = 1.4819169111121588, total_s = 4.190740123545093, level = 8, cells = 1363520, sampled = true, calibrated = true)
 ```
 
 If the estimate is larger than you want to wait, `downsample` reduces the plan to fit a target

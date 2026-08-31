@@ -8,7 +8,7 @@
 # Units, Scaling and Physical Constants
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `units_and_constants.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/units_and_constants.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `units_and_constants.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/units_and_constants.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Mera stores simulation data in RAMSES code units and converts on request. This page is the
@@ -49,7 +49,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10"); # output=300 in given path
 ```
 
 ```
-[Mera]: 2026-08-30T17:05:38.709
+[Mera]: 2026-08-31T14:44:26.621
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -356,7 +356,7 @@ Where:
 
 `n_H` is the number density of hydrogen **nuclei** (summed over all ionization states); it depends only on `X_H`, **not** on the ionization state.
 
-**Note on μ (mean molecular weight):** MERA/RAMSES uses the simplified convention `μ = 1/X_H ≈ 1.32`, so the same result can be written `nH = ρ_code × scale.g_cm3 / (μ × mH)` (the `X_H` factor is absorbed into `1/μ`). Be careful: this `μ` is the RAMSES value that enters the **temperature** scale (`scale.T = scale.T_mu × μ`) — it is *not* the textbook ionization-dependent mean molecular weight (≈ 0.62 for fully ionized, ≈ 1.22 for neutral H+He gas). Do **not** substitute that ionization-dependent value into the `nH` formula; only `X_H` (equivalently `μ = 1/X_H`) is correct here.
+**Note on μ (mean molecular weight):** MERA/RAMSES uses the simplified convention `μ = 1/X_H ≈ 1.32`, so the same result can be written `nH = ρ_code × scale.g_cm3 / (μ × mH)` (the `X_H` factor is absorbed into `1/μ`). Be careful: this `μ` is the RAMSES value that enters the **temperature** scale (`scale.T = scale.T_mu × μ`), it is *not* the textbook ionization-dependent mean molecular weight (≈ 0.62 for fully ionized, ≈ 1.22 for neutral H+He gas). Do **not** substitute that ionization-dependent value into the `nH` formula; only `X_H` (equivalently `μ = 1/X_H`) is correct here.
 
 **Note**: This documentation covers the most commonly used scaling factors and constants. Mera.jl actually provides **133 scaling factors** and **41 physical constants** in total. The actual available factors may vary depending on your Mera.jl version and simulation setup. Use `propertynames(info.scale)` and `propertynames(info.constants)` to see all available items for your specific installation.
 

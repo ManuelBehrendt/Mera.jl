@@ -8,7 +8,7 @@
 # 9. Cosmological Simulations
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `09_multi_Cosmology.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/09_multi_Cosmology.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `09_multi_Cosmology.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/09_multi_Cosmology.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 RAMSES writes the *same* info-file fields for every run, so Mera reads them for
@@ -33,7 +33,7 @@ they also work on `MERA` files of any age (see *Backward compatibility* below).
 ## Test simulation and reference
 
 The example below uses the public **yt project sample** output `output_00080`
-— a cosmological zoom simulation (gas, dark matter and stars), provided by the
+a cosmological zoom simulation (gas, dark matter and stars), provided by the
 yt project (Turk et al. 2011, *yt: A Multi-code Analysis Toolkit for
 Astrophysical Simulation Data*, ApJS 192, 9). It is **not**
 redistributed with Mera; download it once with:
@@ -71,8 +71,8 @@ info = getinfo(80, "$MERA_EXAMPLES/RAMSES/yt_cosmo");
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-03T11:13:33.151
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T13:57:13.132
 Code: RAMSES
 output [80] summary:
 mtime: 2012-08-13T16:51:06
@@ -127,7 +127,7 @@ iscosmological(info), redshift(info)
 ## Full cosmological state: `cosmology`
 
 `cosmology(info)` returns a `NamedTuple` with the complete state of the snapshot
-— redshift, scale factor, the density parameters, and derived quantities:
+redshift, scale factor, the density parameters, and derived quantities:
 Hubble time, age of the universe, lookback time and the critical density
 `ρ_crit = 3H(z)²/8πG`. Everything is computed from the stored info fields.
 
@@ -156,7 +156,7 @@ gettime(info, :Gyr)    # age of the universe at this snapshot [Gyr]
 ## Mean and critical densities
 
 `mean_matter_density` and `mean_baryon_density` give the mean (proper) densities
-at the snapshot redshift, `ρ̄ = Ω · ρ_crit,0 · (1+z)³` — the reference densities
+at the snapshot redshift, `ρ̄ = Ω · ρ_crit,0 · (1+z)³`, the reference densities
 for overdensities. The critical density at the snapshot is `c.rho_crit_cgs`.
 
 ```julia
@@ -164,7 +164,7 @@ mean_matter_density(info), mean_baryon_density(info), c.rho_crit_cgs   # [g/cm³
 ```
 
 ```
-(3.821451389512857e-30, 6.230626996398271e-31, 1.0542295486333991e-29)
+(3.821451389512857e-30, 6.230626996398272e-31, 1.0542295486333991e-29)
 ```
 
 ## Stellar ages
@@ -177,7 +177,7 @@ integration table (as in RAMSES' own `friedman` routine), so `getvar(…, :age)`
 returns the correct physical age on a cosmological run.
 
 Star particles have `birth < 0`; non-star particles (dark matter) carry the
-sentinel `birth = 0` and are reported with age `0` — select stars with
+sentinel `birth = 0` and are reported with age `0`, select stars with
 `birth .< 0`.
 
 ```julia
@@ -189,7 +189,7 @@ ages  = getvar(particles, :age, :Gyr)
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T11:13:39.085
+[Mera]: Get particle data: 2026-08-31T13:57:18.931
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
@@ -228,7 +228,7 @@ formed, `:formation_time` the corresponding age of the universe. They satisfy
 
 **Non-star particles (`birth ≥ 0`) return `NaN`** for both `:zform` and
 `:formation_time` (the underlying `formation_redshift` / `formation_time` are
-undefined for the `birth = 0` sentinel) — so select stars with `birth .< 0` or
+undefined for the `birth = 0` sentinel), so select stars with `birth .< 0` or
 filter `!isnan`, **not** `== 0`. (Only `:age` returns `0` for non-stars.)
 
 ```julia
@@ -263,7 +263,7 @@ delta = getvar(gas, :overdensity)
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-03T11:13:50.660
+[Mera]: Get hydro data: 2026-08-31T13:57:32.256
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
 domain:
@@ -275,7 +275,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
    Files to be processed: 16
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 (67.64 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 (67.21 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1749455 cells, 6 variables
@@ -285,13 +285,13 @@ Creating Table from 1749455 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 10 columns...
-✓ Table created in 0.87 seconds
+✓ Table created in 0.737 seconds
 Memory used for data table :133.47387886047363 MB
 -------------------------------------------------------
 ```
 
 ```
-(delta_min = -0.9852022034691776, delta_max = 1.2811226613578297e7)
+(delta_min = -0.9852022034691776, delta_max = 1.2811226613578295e7)
 ```
 
 ```julia
@@ -325,8 +325,8 @@ l_comoving = proper_to_comoving_length(info, 1.0)    # proper → comoving  (÷ 
 ## Backward compatibility
 
 None of this required new stored fields: the accessors read only `aexp`, `H0`
-and the `omega_*` parameters, which every `InfoType` — and therefore every
-`MERA` file ever written — already contains. Consequently:
+and the `omega_*` parameters, which every `InfoType`, and therefore every
+`MERA` file ever written, already contains. Consequently:
 
 - old `MERA`/JLD2 files load unchanged, and `infodata` prints the same cosmology
   block as `getinfo`;

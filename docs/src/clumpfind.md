@@ -8,23 +8,23 @@
 # Clump Finding
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `clumpfind.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/clumpfind.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `clumpfind.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/clumpfind.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 `clumpfind` locates **connected over-dense structures** and returns a per-clump catalog. It works
 two ways:
 
-* **3D** — friends-of-friends on the cells (hydro) or particles above a field threshold.
-* **2D** — connected-component labelling of a [`projection`](@ref) map above a threshold.
+* **3D**, friends-of-friends on the cells (hydro) or particles above a field threshold.
+* **2D**, connected-component labelling of a [`projection`](@ref) map above a threshold.
 
 Both return a [`ClumpCatalog`](@ref) sorted most-massive-first.
 
 !!! tip "Try it on known ground truth"
     The [synthetic, data-free example](clumpfind_synthetic.md) builds a Mera object whose
     clumps are known exactly and scores every finder and feature against it (downloadable
-    dataset included) — the quickest way to see the behaviour and accuracy of each algorithm.
+    dataset included), the quickest way to see the behaviour and accuracy of each algorithm.
 
-The 3D finder runs on a pluggable framework: an [`AbstractFinder`](@ref) value (one of seven —
+The 3D finder runs on a pluggable framework: an [`AbstractFinder`](@ref) value (one of seven,
 [`ThresholdFoF`](@ref), [`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`GraphSegFinder`](@ref),
 [`HDBSCANFinder`](@ref), [`PhaseSpaceFoF`](@ref), [`PersistenceFinder`](@ref)) selects the algorithm,
 while a shared neighbour index, statistics, boundedness and catalog pipeline serves them all. The keyword form
@@ -45,13 +45,13 @@ Start with [`ThresholdFoF`](@ref); reach for the others when its single threshol
 
 | Finder | Method | Reach for it when |
 |---|---|---|
-| [`ThresholdFoF`](@ref) | Friends-of-friends above a field threshold (Davis et al. 1985) | The default — fast, robust; isolated clumps over a clear background |
+| [`ThresholdFoF`](@ref) | Friends-of-friends above a field threshold (Davis et al. 1985) | The default, fast, robust; isolated clumps over a clear background |
 | [`DensityWatershed`](@ref) | FoF connectivity, then watershed split at saddles (DENMAX/SUBFIND); `persistence` prunes shallow basins | Deblending **touching/overlapping** peaks inside one connected over-dense region |
 | [`Dendrogram`](@ref) | Multi-scale hierarchy (Rosolowsky & Leroy 2008); `min_delta` peak-to-saddle contrast | You want the **nested hierarchy** (leaves → branches → roots), not a flat catalog |
 | [`GraphSegFinder`](@ref) | Graph segmentation by internal-vs-boundary contrast (Felzenszwalb & Huttenlocher 2004) | Density varies smoothly and no single threshold separates structures |
 | [`HDBSCANFinder`](@ref) | Density-based hierarchical clustering, stable-cluster extraction | Clumps span a **wide density range** / variable background; you'd rather not pick a threshold |
 | [`PhaseSpaceFoF`](@ref) | 6-D position+velocity FoF (Rockstar-style; Behroozi et al. 2013) | **Kinematically** separating spatially-overlapping structures (streams, mergers, substructure) |
-| [`PersistenceFinder`](@ref) | Topological persistence / ToMATo (Chazal et al. 2013) | **Crowded** fields — rank peaks by prominence, robust to noise |
+| [`PersistenceFinder`](@ref) | Topological persistence / ToMATo (Chazal et al. 2013) | **Crowded** fields, rank peaks by prominence, robust to noise |
 
 All take the same shared keywords (`field`, `threshold`, `linking_length`, `backend`, gravitational
 boundedness, tidal truncation, …); see the **Density-adaptive finders** and **Phase-space & topology**
@@ -59,14 +59,14 @@ sections below for the algorithm-specific parameters.
 
 !!! tip "Plotting the mass function"
     [`massfunctionplot`](@ref) draws the clump mass function straight from a
-    [`ClumpCatalog`](@ref) — cumulative or differential — with a Makie backend loaded:
+    [`ClumpCatalog`](@ref), cumulative or differential, with a Makie backend loaded:
 
     ```julia
     using CairoMakie
     massfunctionplot(cat; cumulative=true)
     ```
 
-## 3D — cells or particles (friends-of-friends)
+## 3D, cells or particles (friends-of-friends)
 
 Cells/particles with `field ≥ threshold` are linked into a clump when they lie within
 `linking_length` (in `pos_unit`) of one another:
@@ -93,8 +93,8 @@ println("box length   : ", gas.boxlen, " kpc")
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-03T11:31:57.365
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T14:10:25.291
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -134,7 +134,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-08-03T11:31:59.803
+[Mera]: Get hydro data: 2026-08-31T14:10:27.716
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -148,7 +148,7 @@ zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
    Compute threads: 4
    GC threads: 4
    📍 Spatial filtering active: 109 files skipped
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:25 (13.22 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (13.47 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1277874 cells, 7 variables
@@ -158,7 +158,7 @@ Creating Table from 1277874 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 2.605 seconds
+✓ Table created in 2.387 seconds
 Memory used for data table :107.2445936203003 MB
 -------------------------------------------------------
 cells loaded : 1277874
@@ -211,7 +211,7 @@ c1.radius = 0.9229258020368907
 0.9229258020368907
 ```
 
-With a Makie backend loaded, [`clumpplot`](@ref) draws the catalog directly — each clump's centre of
+With a Makie backend loaded, [`clumpplot`](@ref) draws the catalog directly, each clump's centre of
 mass as a marker sized by mass (and coloured by log mass), optionally over a projection background:
 
 ```julia
@@ -222,10 +222,10 @@ fig = clumpplot(cat; background=bg)        # marker size ∝ mass, colour = log�
 
 ![Clumps found by `clumpfind` ([`clumpplot`](@ref): marker size ∝ mass, colour = log₁₀ mass) overlaid on
 the gas surface density Σ. The markers sit on the over-dense peaks above the density threshold; fainter
-arm and inter-arm gas *below* the threshold is intentionally not flagged — clump finding is always
+arm and inter-arm gas *below* the threshold is intentionally not flagged, clump finding is always
 threshold- (and finder-) dependent.](assets/features/clump_catalog.png)
 
-!!! note "Not every visible peak is a clump — by design"
+!!! note "Not every visible peak is a clump, by design"
     A clump is what the finder + threshold define. Two effects are worth knowing:
 
     * **Threshold selection.** Peaks fainter than `threshold` are not selected at all, and a single
@@ -240,7 +240,7 @@ threshold- (and finder-) dependent.](assets/features/clump_catalog.png)
 
 !!! warning "`Dendrogram` name clash with Makie"
     `Makie` also exports a `Dendrogram` type, so when both are loaded (`using Mera, CairoMakie`) a bare
-    `Dendrogram(...)` is ambiguous — qualify Mera's finder as `Mera.Dendrogram(...)` in that case. The
+    `Dendrogram(...)` is ambiguous, qualify Mera's finder as `Mera.Dendrogram(...)` in that case. The
     other six finders have unique names.
 
 ## Choosing a finder explicitly
@@ -291,7 +291,7 @@ b1.e_grav = 7.214955930128814e56
 
 Each clump gains `e_kin` (COM-frame kinetic), `e_therm` (thermal, gas), `e_grav` (binding energy),
 `alpha_vir`, and `bound`. The potential is chosen with `egrav`: `:approx` (⅗·GM²/R, fast but biased)
-by default, `:direct` (exact pairwise sum up to `direct_max` members), or `:tree` (Barnes–Hut octree,
+by default, `:direct` (exact pairwise sum up to `direct_max` members), or `:tree` (Barnes to Hut octree,
 `O(N log N)`, accurate at any N). `softening` (in `pos_unit`) softens the kernel as `1/√(r²+ε²)`.
 
 `iterative_unbinding=true` adds SUBFIND-style unbinding: members with positive total energy in the
@@ -303,13 +303,13 @@ cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2
                 boundedness=true, egrav=:tree, iterative_unbinding=true)
 ```
 
-### Validators — a composable acceptance chain
+### Validators, a composable acceptance chain
 
 Instead of the boundedness keywords, pass a `validators` chain of value-typed criteria that a clump
-must **all** satisfy (an AND): [`MinMembers`](@ref), [`Bound`](@ref) (configures the boundedness pass —
-potential `egrav`, iterative unbinding — and keeps only self-bound clumps), [`VirialBelow`](@ref),
+must **all** satisfy (an AND): [`MinMembers`](@ref), [`Bound`](@ref) (configures the boundedness pass,
+potential `egrav`, iterative unbinding, and keeps only self-bound clumps), [`VirialBelow`](@ref),
 [`MassAbove`](@ref), and [`Custom`](@ref) (an arbitrary `clump -> Bool` predicate). Membership-mutating
-validators (`Bound` with unbinding) act during the analysis; predicates filter the catalog afterwards —
+validators (`Bound` with unbinding) act during the analysis; predicates filter the catalog afterwards,
 regardless of the order listed. A non-empty `validators` overrides the
 `boundedness`/`bound_only`/`min_members`/`egrav`/`iterative_unbinding` keywords.
 
@@ -329,7 +329,7 @@ cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH,
                   validators=[MinMembers(20), Bound(:tree; iterative=true), VirialBelow(2.0)])
 ```
 
-## Particles — cluster-finding on stars
+## Particles, cluster-finding on stars
 
 The same call works on particles (e.g. cluster-finding on stars):
 
@@ -342,7 +342,7 @@ println(cats)
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T11:32:44.285
+[Mera]: Get particle data: 2026-08-31T14:11:14.264
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
@@ -363,7 +363,7 @@ ClumpCatalog: 1 clumps  [3D, field=mass ≥ 0.0 standard]
   largest: 262102 members, mass 2.986e9
 ```
 
-**Choosing parameters.** `linking_length` should be a few times the local resolution — comparable to
+**Choosing parameters.** `linking_length` should be a few times the local resolution, comparable to
 or larger than the finest cell size (3D AMR) or the mean interparticle separation (particles);
 too small and dense regions fragment, too large and separate clumps merge. `threshold` sets which
 material is considered (e.g. a number-density floor for the cold/dense gas). `min_members` drops
@@ -401,7 +401,7 @@ cat[1].subclumps[1].mass    # the largest bound subclump's mass
 
 `tidal=:tensor` uses the **tidal-tensor / Hill radius** instead of the Jacobi form: it fits the local
 gravity acceleration field `a(x)` (from a `gravity` object, `getgravity`) around each subclump to the
-tidal tensor `T_ij = −∂²Φ/∂x_i∂x_j` and truncates at `r_t³ = G·m_sub / λ_max(T)` — exactly the Hill
+tidal tensor `T_ij = −∂²Φ/∂x_i∂x_j` and truncates at `r_t³ = G·m_sub / λ_max(T)`, exactly the Hill
 radius `R·(m_sub/2M)^{1/3}` for a point-mass host. `tidal_sample` (default 3) sets the fit radius in
 units of the subclump radius.
 
@@ -411,7 +411,7 @@ cat  = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.
                  substructure=true, tidal=:tensor, gravity=grav)
 ```
 
-## Multi-field — gas + stars + dark matter together
+## Multi-field, gas + stars + dark matter together
 
 Pass a vector of **components** to find over-densities across several mass species in one pass. Each
 component pre-selects its points (with its own `field`/`threshold` and an optional `mask`); the
@@ -430,7 +430,7 @@ cat[1].components.dm.n       # dark-matter particle count
 ```
 
 Pass `boundedness=true` to get the combined-cloud energetics (`e_kin`, `e_therm`, `e_mag`, `e_grav`,
-`alpha_vir`, `bound`) summed over **all** species — the self-gravity test uses gas + stars + DM
+`alpha_vir`, `bound`) summed over **all** species, the self-gravity test uses gas + stars + DM
 together while the `components` breakdown stays the per-species mass budget (`egrav`, `softening`,
 `iterative_unbinding`, `bound_only` work as in the single-object form).
 
@@ -443,12 +443,12 @@ Each entry is a `NamedTuple`; the fields differ slightly between 3D and 2D:
 | `id` | rank (1 = most massive) |
 | `n_members` | cells / particles (3D) or pixels (2D) |
 | `mass` | clump mass (3D) or area-integral (2D) |
-| `com` | centre of mass — `(x,y,z)` (3D) or `(x,y)` (2D) |
+| `com` | centre of mass, `(x,y,z)` (3D) or `(x,y)` (2D) |
 | `peak`, `peak_pos` | maximum field value and its position |
 | `radius` | maximum member distance from the COM |
 
 `ClumpCatalog` behaves like a vector (`length`, `cat[i]`, iteration). For analysis/export, get a
-columnar table (a `NamedTuple` of vectors — including boundedness and per-component columns when
+columnar table (a `NamedTuple` of vectors, including boundedness and per-component columns when
 present), ready for `DataFrame` / `CSV.write`:
 
 ```julia
@@ -503,7 +503,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-08-03T11:33:11.854
+[Mera]: 2026-08-31T14:11:43.099
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
@@ -531,7 +531,7 @@ report(output; path, cards=[ ClumpCard(:hydro, :rho; threshold=1e2, threshold_un
                                        linking_length=0.2) ])
 ```
 
-## 2D — a projection map (connected components)
+## 2D, a projection map (connected components)
 
 Run it on any [`projection`](@ref) result to segment a map above a threshold:
 
@@ -544,7 +544,7 @@ length(cat2) > 0 && println("largest region   : ", cat2[1].n_members, " pixels, 
 ```
 
 ```
-[Mera]: 2026-08-03T11:33:28.425
+[Mera]: 2026-08-31T14:11:57.574
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
@@ -571,7 +571,7 @@ exact area-integral `Σ value · pixel_area`; positions are in the map's extent 
 
 A [`Dendrogram`](@ref) finder returns the finest density peaks (local maxima with prominence ≥
 `min_delta`) as the catalog's leaf clumps; passing `hierarchy=true` additionally attaches the full
-merge [`StructureTree`](@ref) — the level at which leaves join into branches and ultimately roots
+merge [`StructureTree`](@ref), the level at which leaves join into branches and ultimately roots
 (Rosolowsky & Leroy 2008):
 
 ```julia
@@ -588,11 +588,11 @@ r.n_subtree                              # members in the whole subtree
 
 Two further finders handle variable-density fields without a single hard threshold:
 
-* [`HDBSCANFinder`](@ref) — a self-contained HDBSCAN\\* (Campello+2013; McInnes+2017): core distances
+* [`HDBSCANFinder`](@ref), a self-contained HDBSCAN\\* (Campello+2013; McInnes+2017): core distances
   define a mutual-reachability metric whose MST is condensed into a cluster hierarchy, and the most
   *stable* clusters (≥ `min_cluster_size`) are extracted. Near parameter-free; points outside any
   stable cluster are labelled noise (dropped).
-* [`GraphSegFinder`](@ref) — Felzenszwalb & Huttenlocher (2004) graph segmentation: keeps within-region
+* [`GraphSegFinder`](@ref), Felzenszwalb & Huttenlocher (2004) graph segmentation: keeps within-region
   density variation below the between-region contrast, with a single `scale` knob. Near-linear; a fast
   multi-scale deblender.
 
@@ -606,7 +606,7 @@ cat = clumpfind(gas, GraphSegFinder(:rho; threshold=1e2, threshold_unit=:nH,
 ### Finder composition
 
 `deblend` can be **any finder**: a cheap finder establishes connectivity, then the deblend finder
-splits each group — e.g. friends-of-friends connectivity refined per-group by HDBSCAN:
+splits each group, e.g. friends-of-friends connectivity refined per-group by HDBSCAN:
 
 ```julia
 cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=1.0);
@@ -621,7 +621,7 @@ caps it, and the result is identical to the serial output regardless of thread c
 ### Neighbour backend
 
 Every finder takes a `backend` for its spatial neighbour search: `CellLinkedList` (default),
-`HashGrid`, or [`MortonGrid`](@ref) — which visits points along a Z-order (Morton) curve so
+`HashGrid`, or [`MortonGrid`](@ref), which visits points along a Z-order (Morton) curve so
 spatially-near points are near in memory, improving cache locality on large selections (the same
 ordering an out-of-core path needs). All three return identical results; only speed differs.
 
@@ -632,11 +632,11 @@ cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH,
 
 ## Phase-space & topology
 
-* [`PhaseSpaceFoF`](@ref) — 6-D friends-of-friends (Rockstar-style; Behroozi+2013): points link only
+* [`PhaseSpaceFoF`](@ref), 6-D friends-of-friends (Rockstar-style; Behroozi+2013): points link only
   when within `linking_length_pos` in space **and** `linking_length_vel` (km/s) in velocity, so
-  kinematically distinct populations that overlap spatially — streams, subhaloes, tidal debris —
+  kinematically distinct populations that overlap spatially, streams, subhaloes, tidal debris,
   separate. Velocities are loaded automatically.
-* [`PersistenceFinder`](@ref) — 0-dim persistent homology / ToMATo (Chazal+2013): a peak is kept as a
+* [`PersistenceFinder`](@ref), 0-dim persistent homology / ToMATo (Chazal+2013): a peak is kept as a
   separate cluster only if its prominence (peak − merge saddle) reaches `persistence`. Principled,
   parameter-light deblending, robust in crowded fields.
 
@@ -664,7 +664,7 @@ hierarchy from the surrounding driver:
    linking length `b`"* (and *"neighbours of point `i`"*). Points are hashed into cells of side `b`; a
    27-cell stencil then yields every pair within `b`. Three interchangeable backends produce **identical**
    pairs and differ only in memory/cache behaviour (`backend=`): `HashGrid` (`Dict(cell ⇒ members)`,
-   baseline), `CellLinkedList` (head/next linked list per cell — the default, no per-bucket allocation),
+   baseline), `CellLinkedList` (head/next linked list per cell, the default, no per-bucket allocation),
    and `MortonGrid` (same pairs, but points are visited in Morton / Z-order so spatial neighbours are
    cache-near). Index build and pair enumeration are ~O(N) at roughly uniform density.
 2. **Union-find.** A disjoint-set forest with path-halving merges linked points into connected groups in
@@ -676,11 +676,11 @@ hierarchy from the surrounding driver:
    hierarchy identically for every finder.
 
 !!! note "Works on AMR, uniform grids, particles and Voronoi alike"
-    The finders never look at the grid — `clumpfind` first flattens the object into a **point set**:
+    The finders never look at the grid, `clumpfind` first flattens the object into a **point set**:
     every cell (any AMR level) becomes one point at its centre (`getvar(:x,:y,:z)`) carrying its field
     value and its **level-dependent mass and volume** (`getvar(:mass)`/`getvar(:volume)` =
     `ρ·(boxlen/2^level)³`). So a clump's mass, centre of mass, radius and energy budget sum per-cell
-    masses that already encode each cell's level — no uniform-cell-size assumption. The neighbour index
+    masses that already encode each cell's level, no uniform-cell-size assumption. The neighbour index
     finds *all* pairs within the linking length `b` regardless of how cell sizes or point density vary
     across refinement levels (the 27-cell stencil is exact, not a uniform-grid approximation), so the
     same finder runs unchanged on RAMSES AMR, a uniform grid, SPH/N-body particles, and AREPO Voronoi
@@ -688,43 +688,43 @@ hierarchy from the surrounding driver:
     a small multiple of the cell size *in the region of interest* (clumps sit at high density → maximum
     refinement, hence internally uniform resolution; e.g. `linking_length ≈ 2·boxlen/2^lmax`). The only
     edge case is a sharp refinement jump *inside* a structure, where a lone coarse cell's centre may lie
-    beyond `b` from its fine neighbours — rarely an issue, since clumps are fully refined.
+    beyond `b` from its fine neighbours, rarely an issue, since clumps are fully refined.
 
 ### The finders
 
-- **[`ThresholdFoF`](@ref) — friends-of-friends** (Davis et al. 1985). Link every above-threshold pair
+- **[`ThresholdFoF`](@ref), friends-of-friends** (Davis et al. 1985). Link every above-threshold pair
   closer than `linking_length`, then take connected components (within-`b` pairs → union-find). One
   parameter, ~O(N); the classic halo definition and the default.
-- **[`DensityWatershed`](@ref) — watershed deblending** (immersion watershed: Vincent & Soille 1991;
+- **[`DensityWatershed`](@ref), watershed deblending** (immersion watershed: Vincent & Soille 1991;
   density-maximum/DENMAX lineage: Gelb & Bertschinger 1994; SUBFIND: Springel et al. 2001). Points are
   processed in **descending field order**; each joins the basin of its highest already-processed
   neighbour (steepest ascent), and a point with no higher neighbour starts a new basin (a peak). Where
   basins meet at a **saddle**, `persistence` merges any basin whose prominence (`peak − saddle`) is below
   threshold into the deepest neighbour (a union-find over basins). `persistence=0` is the bare watershed.
-- **[`Dendrogram`](@ref) — multi-scale merge tree** (Rosolowsky et al. 2008; cf. `astrodendro`). Takes the
+- **[`Dendrogram`](@ref), multi-scale merge tree** (Rosolowsky et al. 2008; cf. `astrodendro`). Takes the
   persistence-watershed basins as **leaves**, measures each adjacent pair's **saddle height** (highest
   field on their shared boundary), and builds the single-linkage tree of the basin-adjacency graph keyed
-  by saddle height — **highest saddle merges first**. Returns a [`StructureTree`](@ref) (leaves → branches
+  by saddle height, **highest saddle merges first**. Returns a [`StructureTree`](@ref) (leaves → branches
   → roots), each node carrying its peak value, merge level and member counts.
-- **[`GraphSegFinder`](@ref) — graph segmentation** (Felzenszwalb & Huttenlocher 2004). Neighbour-graph
+- **[`GraphSegFinder`](@ref), graph segmentation** (Felzenszwalb & Huttenlocher 2004). Neighbour-graph
   edges weighted `|fᵢ − fⱼ|` are merged **cheapest-first** while the weight stays below the per-component
   internal contrast `Int(C) + scale/|C|`. Larger `scale` ⇒ coarser segments; near-linear; for
   smoothly-varying fields with no clean threshold.
-- **[`HDBSCANFinder`](@ref) — density-based hierarchical clustering** (HDBSCAN*: Campello et al. 2013;
+- **[`HDBSCANFinder`](@ref), density-based hierarchical clustering** (HDBSCAN*: Campello et al. 2013;
   McInnes et al. 2017), self-contained: (1) **core distance** = distance to the `min_samples`-th nearest
   neighbour; (2) **mutual-reachability** weights `max(core_i, core_j, d_ij)` and their **minimum spanning
-  tree** (Kruskal via union-find); (3) **condense** the tree — at increasing density `λ=1/d`, a split into
+  tree** (Kruskal via union-find); (3) **condense** the tree, at increasing density `λ=1/d`, a split into
   two parts each ≥ `min_cluster_size` spawns two clusters, smaller fragments fall out as noise, and each
   cluster accrues a **stability** `Σ(λ_fall − λ_birth)`; (4) **excess-of-mass** selection keeps a cluster
   iff its stability ≥ that of its sub-clusters. Points in no selected cluster are **noise** (label 0).
-- **[`PhaseSpaceFoF`](@ref) — 6-D position+velocity FoF** (Rockstar-style; Behroozi et al. 2013). Links a
+- **[`PhaseSpaceFoF`](@ref), 6-D position+velocity FoF** (Rockstar-style; Behroozi et al. 2013). Links a
   pair only when within `linking_length_pos` in space **and** `linking_length_vel` in velocity (spatial
   index for the position test; velocity test per spatial pair). Separates structures that overlap on the
   sky but differ kinematically (streams, mergers, substructure).
-- **[`PersistenceFinder`](@ref) — topological persistence** (ToMATo; Chazal et al. 2013). A superlevel-set
+- **[`PersistenceFinder`](@ref), topological persistence** (ToMATo; Chazal et al. 2013). A superlevel-set
   filtration: densest-first, each point flows by steepest ascent into its highest seen neighbour's basin;
   when basins meet, the **younger** (lower-peak) dies with persistence `peak − saddle` and merges into the
-  elder iff that prominence is below `τ`. Surviving basins are the clusters — a parameter-light prominence
+  elder iff that prominence is below `τ`. Surviving basins are the clusters, a parameter-light prominence
   ranking, robust in crowded fields.
 - **2-D maps.** On a projection, `clumpfind(proj, :sd; threshold, connectivity)` runs union-find connected
   components of the above-threshold mask (4-/8-connectivity); with deblending, a Meyer-style priority-flood
@@ -734,40 +734,40 @@ hierarchy from the surrounding driver:
 
 - **Peak deblending** (`deblend=true`). Independent of the watershed finders: local field maxima within
   `min_sep` are found (near-duplicate/plateau peaks merged, stronger kept), then every member is assigned
-  to its **nearest peak** — splitting merged overlapping clumps post-hoc.
+  to its **nearest peak**, splitting merged overlapping clumps post-hoc.
 - **Self-boundedness** (the [`Bound`](@ref) validator). Per clump, an energy budget (kinetic + thermal
-  [+ magnetic] vs. gravitational) is built. The potential uses `egrav=:tree` (Barnes–Hut tree gravity;
+  [+ magnetic] vs. gravitational) is built. The potential uses `egrav=:tree` (Barnes to Hut tree gravity;
   Barnes & Hut 1986), `:direct` (exact O(N²) below `direct_max`), or `:approx` (`3GM²/5R`). With
-  `iterative=true` it performs **SUBFIND-style iterative unbinding** — repeatedly stripping positive-energy
-  members until only the self-bound core remains (Springel et al. 2001) — keeping clumps with
+  `iterative=true` it performs **SUBFIND-style iterative unbinding**, repeatedly stripping positive-energy
+  members until only the self-bound core remains (Springel et al. 2001), keeping clumps with
   `E_kin + E_therm [+ E_mag] < |E_grav|`; nested bound basins form the substructure tree.
 
 ### Validation
 
 [`clump_recovery`](@ref)`(found, truth)` scores a segmentation against per-point ground truth via the
-**Adjusted Rand Index** (Hubert & Arabie 1985) plus completeness, purity and bijective merit — the basis
+**Adjusted Rand Index** (Hubert & Arabie 1985) plus completeness, purity and bijective merit, the basis
 of the data-free [synthetic benchmark](clumpfind_synthetic.md).
 
 ### References
 
-- Barnes, J. & Hut, P. 1986, *Nature* 324, 446 — hierarchical (tree) force calculation.
-- Behroozi, P. S., Wechsler, R. H. & Wu, H.-Y. 2013, *ApJ* 762, 109 — Rockstar (6-D phase-space halo finder).
-- Campello, R. J. G. B., Moulavi, D. & Sander, J. 2013, *PAKDD*, LNCS 7819, 160 — density-based clustering on hierarchical density estimates (HDBSCAN).
-- Chazal, F., Guibas, L. J., Oudot, S. Y. & Skraba, P. 2013, *J. ACM* 60(6), 41 — persistence-based clustering (ToMATo).
-- Davis, M., Efstathiou, G., Frenk, C. S. & White, S. D. M. 1985, *ApJ* 292, 371 — friends-of-friends.
-- Edelsbrunner, H., Letscher, D. & Zomorodian, A. 2002, *Discrete & Comput. Geom.* 28, 511 — topological persistence.
-- Felzenszwalb, P. F. & Huttenlocher, D. P. 2004, *Int. J. Computer Vision* 59, 167 — efficient graph-based segmentation.
-- Gelb, J. M. & Bertschinger, E. 1994, *ApJ* 436, 467 — DENMAX (density-maximum clump finding).
-- Hubert, L. & Arabie, P. 1985, *J. Classification* 2, 193 — Adjusted Rand Index.
-- McInnes, L., Healy, J. & Astels, S. 2017, *J. Open Source Software* 2(11), 205 — `hdbscan`.
-- Meyer, F. 1994, *Signal Processing* 38, 113 — topographic distance / priority-flood watershed.
-- Rosolowsky, E. W., Pineda, J. E., Kauffmann, J. & Goodman, A. A. 2008, *ApJ* 679, 1338 — dendrograms.
-- Springel, V., White, S. D. M., Tormen, G. & Kauffmann, G. 2001, *MNRAS* 328, 726 — SUBFIND (gravitational unbinding).
-- Vincent, L. & Soille, P. 1991, *IEEE Trans. PAMI* 13, 583 — watersheds by immersion.
+- Barnes, J. & Hut, P. 1986, *Nature* 324, 446, hierarchical (tree) force calculation.
+- Behroozi, P. S., Wechsler, R. H. & Wu, H.-Y. 2013, *ApJ* 762, 109, Rockstar (6-D phase-space halo finder).
+- Campello, R. J. G. B., Moulavi, D. & Sander, J. 2013, *PAKDD*, LNCS 7819, 160, density-based clustering on hierarchical density estimates (HDBSCAN).
+- Chazal, F., Guibas, L. J., Oudot, S. Y. & Skraba, P. 2013, *J. ACM* 60(6), 41, persistence-based clustering (ToMATo).
+- Davis, M., Efstathiou, G., Frenk, C. S. & White, S. D. M. 1985, *ApJ* 292, 371, friends-of-friends.
+- Edelsbrunner, H., Letscher, D. & Zomorodian, A. 2002, *Discrete & Comput. Geom.* 28, 511, topological persistence.
+- Felzenszwalb, P. F. & Huttenlocher, D. P. 2004, *Int. J. Computer Vision* 59, 167, efficient graph-based segmentation.
+- Gelb, J. M. & Bertschinger, E. 1994, *ApJ* 436, 467, DENMAX (density-maximum clump finding).
+- Hubert, L. & Arabie, P. 1985, *J. Classification* 2, 193, Adjusted Rand Index.
+- McInnes, L., Healy, J. & Astels, S. 2017, *J. Open Source Software* 2(11), 205, `hdbscan`.
+- Meyer, F. 1994, *Signal Processing* 38, 113, topographic distance / priority-flood watershed.
+- Rosolowsky, E. W., Pineda, J. E., Kauffmann, J. & Goodman, A. A. 2008, *ApJ* 679, 1338, dendrograms.
+- Springel, V., White, S. D. M., Tormen, G. & Kauffmann, G. 2001, *MNRAS* 328, 726, SUBFIND (gravitational unbinding).
+- Vincent, L. & Soille, P. 1991, *IEEE Trans. PAMI* 13, 583, watersheds by immersion.
 
 ## Saving & validation
 
-Persist a catalog (full fidelity — boundedness, nested `subclumps`, the `tree`) and reload it:
+Persist a catalog (full fidelity, boundedness, nested `subclumps`, the `tree`) and reload it:
 
 ```julia
 save_clumps("clumps_out100", cat)        # → clumps_out100.jld2
@@ -775,7 +775,7 @@ cat = load_clumps("clumps_out100.jld2")
 ```
 
 [`clump_recovery`](@ref) scores a found segmentation against a known ground truth (per-point labels),
-returning the **Adjusted Rand Index**, completeness, purity and bijective merit — the basis of the
+returning the **Adjusted Rand Index**, completeness, purity and bijective merit, the basis of the
 validation harness:
 
 ```julia

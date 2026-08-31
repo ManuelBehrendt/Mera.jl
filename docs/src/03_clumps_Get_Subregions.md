@@ -8,11 +8,11 @@
 # 3. Clumps: Regions Applied to a Catalogue
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `03_clumps_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/03_clumps_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `03_clumps_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/03_clumps_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 A clump catalogue is not a grid and not a particle list. It is a table of
-*objects* — each row one clump, summarised by the position of its density
+*objects*, each row one clump, summarised by the position of its density
 peak and a handful of scalars. `subregion` applies to it the same way it
 applies to everything else, and the mechanics are the simplest on any of these
 pages: the peak is a point, the region is a predicate, a clump is in or out.
@@ -20,7 +20,7 @@ pages: the peak is a point, the region is a predicate, a clump is in or out.
 The interesting part is what that simplicity hides.
 
 A clump is an extended thing. Its mass is spread over many cells, but the
-catalogue records only where its peak is — so when a region boundary cuts
+catalogue records only where its peak is, so when a region boundary cuts
 through a clump, the selection has no way to split it. The whole object is
 assigned by its peak, all of its mass or none of it. The boundary problem the
 [hydro page](03_hydro_Get_Subregions.md) solved with volume fractions does not
@@ -30,7 +30,7 @@ because the catalogue no longer knows where the mass is.
 This page shows how to work with that honestly: the same regions, the same
 algebra, plus a two-line check that tells you whether the objects your
 boundary cuts through matter. In this galaxy, at the scales one normally
-works at, they do not — but that is a measurement, not an assumption, and §3
+works at, they do not, but that is a measurement, not an assumption, and §3
 shows where the answer flips.
 
 **Reading convention.** Longer code cells are cut in two by a banner line:
@@ -57,7 +57,7 @@ decoration.
 ## 1. What a Clump Row Is
 
 The same galaxy as the other sub-region pages, now through the clump finder's
-eyes. The gas is loaded too — not for the selection, but as a backdrop and,
+eyes. The gas is loaded too, not for the selection, but as a backdrop and,
 in §3, as the thing the clumps are made of.
 
 ```julia
@@ -66,7 +66,7 @@ in §3, as the thing the clumps are made of.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
 using Mera, CairoMakie
-# Makie also exports geometric names (Sphere, Cylinder, ...) — state explicitly
+# Makie also exports geometric names (Sphere, Cylinder, ...), state explicitly
 # that we mean Mera's region types:
 import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 CairoMakie.activate!()
@@ -95,7 +95,7 @@ println("clump masses   : ", round(minimum(getvar(clumps, :mass, :Msol)), sigdig
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
 clumps         : 644
 columns        : (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
 total clump mass: 1.3743e10 Msol
@@ -104,7 +104,7 @@ clump masses   : 312000.0 – 8.61e8 Msol
 ```
 
 Twelve columns, 644 rows. `:peak_x, :peak_y, :peak_z` are the
-position of the density maximum — and the only geometry in the table.
+position of the density maximum, and the only geometry in the table.
 `:mass_cl` is the clump's mass (`getvar(..., :mass)` reads it), `:rho_av` its
 mean density, `:ncell` how many cells it covers, `:relevance` the clump
 finder's significance measure, and `:index`/`:parent`/`:lev` place it in the
@@ -115,7 +115,7 @@ absence is the subject of §3.
 
 ```julia
 # ─────────────────────────────────────────────────────────────────────
-# FIGURE INFRASTRUCTURE for the whole page — skim freely on first read.
+# FIGURE INFRASTRUCTURE for the whole page, skim freely on first read.
 # The Mera-relevant lines are `gproj` (the gas backdrop) and `peaks`
 # (clump peak positions in kpc relative to the box centre).
 # ─────────────────────────────────────────────────────────────────────
@@ -152,7 +152,7 @@ msize (generic function with 1 method)
 p_face = gproj(gas)
 cx, cy, cz = peaks(clumps)
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(1000, 470))
 ax1 = Axis(fig[1, 1], title="clump peaks over the gas they were found in",
            xlabel="x − x꜀ [kpc]", ylabel="y − y꜀ [kpc]")
@@ -179,7 +179,7 @@ fig
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_6_1.png)
 
 Marker area scales with clump mass. They trace the dense gas, they are
-confined to the disc, and — the point of the next two sections — they are
+confined to the disc, and, the point of the next two sections, they are
 *objects*, not samples: a few hundred of them stand in for the entire
 population of dense structures in this galaxy.
 
@@ -214,14 +214,14 @@ clump mass as a share of the gas inside r < 10 kpc : 52.94 %
 The counts close exactly, as they must for a membership test.
 
 The last line is more interesting than it looks. The clumps in this sphere
-hold **53 %** of its gas mass — this finder's density threshold is low enough
+hold **53 %** of its gas mass, this finder's density threshold is low enough
 that the catalogue is not a sprinkling of rare peaks but half the inner
 galaxy's gas, gathered into 400 objects. That is worth knowing before quoting
 any clump statistic as "the dense gas".
 
 It is still not a decomposition. The other 47 % is diffuse material that
 belongs to no clump, so summing clump masses gives a *lower bound* on the gas
-in a region, never an estimate of it — and no region operation changes that.
+in a region, never an estimate of it, and no region operation changes that.
 Ratios of the two (this one, or its radial profile) are the meaningful
 statistic.
 
@@ -236,7 +236,7 @@ volume implies an effective radius,
 
 $$r_\mathrm{eff} = \left(\frac{3}{4\pi}\frac{M_\mathrm{cl}}{\rho_\mathrm{av}}\right)^{1/3}.$$
 
-That is a crude sphere-equivalent radius — real clumps are filamentary — but
+That is a crude sphere-equivalent radius, real clumps are filamentary, but
 it is enough to answer the question that matters: *how many of these objects
 does a given boundary cut through?*
 
@@ -289,7 +289,7 @@ rows in the catalogue and a mass function spanning three decades, one massive
 clump on the boundary is worth more than the counting noise of a whole
 annulus. Small catalogues are lumpy.
 
-But the ambiguity is not a property of the catalogue alone — it is the ratio
+But the ambiguity is not a property of the catalogue alone, it is the ratio
 of object size to *region* size. Shrink the region and it grows. The cleanest
 way to see that is to keep one shape and sweep its scale: a midplane slab,
 from a couple of kpc thick down to the size of a single clump.
@@ -312,7 +312,7 @@ for h in (2.0, 0.5, 0.1, 0.02, 0.005)
             round(slab_bracket(h), digits=2), " %")
 end
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(980, 400))
 ax1 = Axis(fig[1, 1], xlabel="effective radius [pc]", ylabel="number of clumps",
            title="how big the unsplittable units are")
@@ -343,7 +343,7 @@ slab |z| < 0.005   kpc :  bracket = 234.42 %
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_14_3.png)
 
 At the slab thicknesses this galaxy is normally sliced with the bracket is
-negligible: 0 % at |z| < 2 kpc — no clump reaches that high — and 0.45 % at
+negligible: 0 % at |z| < 2 kpc, no clump reaches that high, and 0.45 % at
 |z| < 0.5 kpc. Follow the curve leftward and it climbs fast: 51 % at 100 pc,
 and past 100 % below about 20 pc, where the bracket is wider than the estimate
 it brackets. By the time the slab is as thin as a clump is wide, "the clump
@@ -353,13 +353,13 @@ Two things are worth taking from that.
 
 First, the check is cheap. Two extra sums against `d ± r_eff` tell you whether
 the region you are about to use is in the safe regime, and the answer is not
-always obvious — a *thin* region can be geometrically large and still be
+always obvious, a *thin* region can be geometrically large and still be
 dominated by boundary effects.
 
 Second, this ambiguity is a different kind of thing from the hydro page's
 whole-cell excess. There, refinement shrinks it and fraction splitting removes
 it outright. Here nothing in the catalogue can remove it, because the
-information needed to split a clump — where inside it the mass sits — was
+information needed to split a clump, where inside it the mass sits, was
 discarded when the finder wrote one row per object. The only ways out are to
 keep the regions large compared with the clumps, or to go back to the gas and
 do the measurement on cells.
@@ -372,7 +372,7 @@ the bracket.
 
 Every region value type applies to a clump catalogue, with the usual keywords:
 `center`, `range_unit`, `inverse=true`, and `axis` to tilt a cylinder. The
-grid-boundary keywords — `split`, `nsub`, `refine`, `refine_to` — have nothing
+grid-boundary keywords, `split`, `nsub`, `refine`, `refine_to`, have nothing
 to act on and are absent.
 
 ```julia
@@ -390,7 +390,7 @@ for (name, reg) in gallery
             round(100*msum(s, :Msol)/msum(clumps, :Msol), digits=1), " % of the clump mass")
 end
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(1020, 470))
 for (k, (name, reg)) in enumerate(gallery)
     s = subregion(clumps, reg, verbose=false)
@@ -424,7 +424,7 @@ few hundred objects the panels double as a sanity check you cannot get from a
 grid: you can *see* every selected item, and a region that has gone wrong is
 obvious immediately.
 
-The two shells are worth a second look — they select exactly the same clumps.
+The two shells are worth a second look, they select exactly the same clumps.
 A spherical shell and a cylindrical shell of the same radii differ only off
 the midplane, and this population is thin enough that there is nothing out
 there to differ about. On the gas, the same two regions would enclose very
@@ -432,8 +432,8 @@ different volumes.
 
 ## 5. Composites and the `@region` Block
 
-Boolean composition works as everywhere else — `∩` `∪` `\` `!`, or
-`intersect` / `union` / `setdiff` — and `@region` keeps a composite readable by
+Boolean composition works as everywhere else, `∩` `∪` `\` `!`, or
+`intersect` / `union` / `setdiff`, and `@region` keeps a composite readable by
 hoisting the shared keywords out of the constructors.
 
 (`∩` is typed `\cap`+TAB, `∪` is `\cup`+TAB; the named functions are always
@@ -474,11 +474,11 @@ composite means what you think, and it costs one line.
 ## 6. Place *and* Property: Regions Meet Filters
 
 A clump table is unusually rich in per-object properties, and `filterdata`
-selects on any of them by value — mass, mean density, cell count, or the clump
+selects on any of them by value, mass, mean density, cell count, or the clump
 finder's own `:relevance`. Geometric and property cuts compose in either
 order.
 
-`:relevance` is the clump finder's own significance measure — a peak-to-saddle
+`:relevance` is the clump finder's own significance measure, a peak-to-saddle
 density contrast, large when a clump is clearly separated from its neighbours
 and close to 1 when it is barely a distinct object. This run kept nothing
 below 2, so filtering on it means asking for clumps *more* clearly separated
@@ -531,7 +531,7 @@ answer.
 
 A stack of `CylindricalShell` annuli turns the catalogue into a radial
 profile. With a few hundred objects in total, though, the honest constraint is
-not the geometry — it is how many clumps land in each ring.
+not the geometry, it is how many clumps land in each ring.
 
 ```julia
 r_ann = collect(1.0:1.0:15.0)
@@ -551,7 +551,7 @@ for (r, n, m) in zip(r_ann, n_cl, m_cl)
             n == 0 ? "—" : string(round(100/sqrt(n), digits=0), " %"))
 end
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(960, 400))
 ax1 = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="clumps per kpc²",
            title="surface number density of clumps")
@@ -596,8 +596,8 @@ made of: a dozen or two objects per ring, sometimes fewer. The error bars are
 $\sqrt{N}$, and outside the star-forming disc they are the entire story.
 
 This is the same lesson as the [particle page's](03_particles_Get_Subregions.md)
-§3, arriving sooner. A clump catalogue is a small sample by construction — the
-finder returns hundreds of objects where the grid has millions of cells — so
+§3, arriving sooner. A clump catalogue is a small sample by construction, the
+finder returns hundreds of objects where the grid has millions of cells, so
 it reaches the counting limit at radii where a particle or cell profile is
 still perfectly smooth. Bin wide, quote $N$, and resist reading structure into
 rings holding five objects.
@@ -621,7 +621,7 @@ and value-type selections agree exactly.
 
 `getpositions(clumps, :kpc, center=[:boxcenter])` returns the three peak
 coordinate arrays in one call, and `getextent(clumps, :kpc, center=[:boxcenter])`
-the coordinate ranges of the loaded object — for a catalogue read from the
+the coordinate ranges of the loaded object, for a catalogue read from the
 whole box, that is the box itself. Both are convenience accessors, handy for
 setting plot limits.
 
@@ -656,7 +656,7 @@ the boundary passes through clump-sized structures.
 
 **Keep boundaries away from the objects.** Regions much larger than the
 typical clump make the bracket negligible. Regions comparable to a clump make
-it dominant — and at that point the question probably belongs on the gas, not
+it dominant, and at that point the question probably belongs on the gas, not
 on the catalogue.
 
 **Clumps are peaks, not a decomposition.** Their masses do not sum to the gas
@@ -675,7 +675,7 @@ unfiltered catalogue silently includes them (§6).
 
 - A clump catalogue is a table of objects located by their density peaks;
   `subregion` is a membership test on those peaks, with no fractions and no
-  `split` — partitions close exactly (§2, §5).
+  `split`, partitions close exactly (§2, §5).
 - Because a clump is extended but recorded as a point, a boundary through
   clumps turns a mass into a *bracket*. Mass and mean density give an
   effective radius (tens of pc here) that makes the bracket measurable: at
@@ -689,11 +689,11 @@ unfiltered catalogue silently includes them (§6).
 
 **Continue with:**
 
-- [Hydro sub-regions](03_hydro_Get_Subregions.md) — where the boundary
+- [Hydro sub-regions](03_hydro_Get_Subregions.md), where the boundary
   ambiguity *can* be removed, by splitting cells on volume fraction.
-- [Particle sub-regions](03_particles_Get_Subregions.md) — genuinely
+- [Particle sub-regions](03_particles_Get_Subregions.md), genuinely
   point-like data, and what limits it instead.
-- [Gravity sub-regions](03_gravity_Get_Subregions.md) — the same regions on
+- [Gravity sub-regions](03_gravity_Get_Subregions.md), the same regions on
   the force field.
-- [Masking & Filtering](05_multi_Masking_Filtering.md) — the value-space
+- [Masking & Filtering](05_multi_Masking_Filtering.md), the value-space
   counterpart of these selections.

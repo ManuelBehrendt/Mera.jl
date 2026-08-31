@@ -1572,7 +1572,17 @@ function _mera_rconvert(::Type{T}, nt::NamedTuple) where {T}
             FT = fieldtype(T, i)
             # zero-fill a NEW field only when it is a CONCRETE Number (zero(Real) etc. would throw on an
             # abstract type); abstract-Number and ref fields are left unset rather than fabricated.
-            (FT <: Number && isconcretetype(FT)) && setfield!(obj, f, zero(FT))
+            if FT <: Number && isconcretetype(FT)
+                setfield!(obj, f, zero(FT))
+            elseif FT === String
+                # An empty String, not "leave it undefined". Leaving it unset let the object LOAD but
+                # made it impossible to SAVE again: JLD2 refuses an undefined field, so an old
+                # mera-file round-tripped into a file Mera could no longer read (seen with
+                # FileNamesType.sinks, a field newer than the AVALON files). "" is not a fabricated
+                # filename, it is an honest "not recorded", and isfile("") is false, which is the
+                # answer callers want anyway.
+                setfield!(obj, f, "")
+            end
         end
     end
     return obj

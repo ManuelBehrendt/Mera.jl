@@ -8,7 +8,7 @@
 # 4. Multi-Physics Basic Calculations and Statistical Analysis
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `04_multi_Basic_Calculations.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/04_multi_Basic_Calculations.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `04_multi_Basic_Calculations.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/04_multi_Basic_Calculations.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This comprehensive tutorial demonstrates essential computational methods for analyzing multi-physics simulation data using MERA.jl. Learn to calculate fundamental quantities, statistical measures, and derived properties across hydro, particle, and clump datasets with proper unit handling and weighting schemes.
@@ -152,8 +152,8 @@ clumps    = getclumps(info);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-[Mera]: 2026-08-06T10:34:42.146
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T13:39:08.604
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -193,7 +193,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-08-06T10:34:44.690
+[Mera]: Get hydro data: 2026-08-31T13:39:11.033
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:rho, :vx, :vy, :vz)
 domain:
@@ -205,7 +205,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 ( 8.86 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 ( 8.84 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 849332 cells, 4 variables
@@ -215,10 +215,10 @@ Creating Table from 849332 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 8 columns...
-✓ Table created in 0.974 seconds
+✓ Table created in 0.925 seconds
 Memory used for data table :51.839996337890625 MB
 -------------------------------------------------------
-[Mera]: Get particle data: 2026-08-06T10:35:08.090
+[Mera]: Get particle data: 2026-08-31T13:39:34.294
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass)
@@ -232,7 +232,7 @@ Combining results from 4 thread(s)...
 Found 5.089390e+05 particles
 Memory used for data table :31.064148902893066 MB
 -------------------------------------------------------
-[Mera]: Get clump data: 2026-08-06T10:35:10.082
+[Mera]: Get clump data: 2026-08-31T13:39:35.718
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -314,16 +314,16 @@ Ba	= 2.910484414358466e-9
 g_cm_s2	= 2.910484414358466e-9
 p_kB	= 2.1080552800592083e7
 K_cm3	= 2.1080552800592083e7
-erg_g_K	= 3.114563011649217e29
-keV_cm2	= 1.252773885965637e65
-erg_K	= 6.193464189866091e71
-J_K	= 6.193464189866091e64
-erg_cm3_K	= 2.1080552800592083e7
-J_m3_K	= 2.1080552800592083e8
+erg_g_K	= 1.0
+keV_cm2	= 1.0
+erg_K	= 1.9885499720830952e42
+J_K	= 1.988549972083095e35
+erg_cm3_K	= 6.76838218451376e-23
+J_m3_K	= 6.76838218451376e-24
 kB_per_particle	= 1.380649e-16
-J_s	= 4.023715412864333e70
+J_s	= 4.023715412864333e63
 g_cm2_s	= 4.023715412864333e70
-kg_m2_s	= 4.023715412864333e71
+kg_m2_s	= 4.023715412864333e63
 Gauss	= 0.00019124389093025845
 muG	= 191.24389093025846
 microG	= 191.24389093025846
@@ -336,26 +336,26 @@ erg_s	= 1.8172160775884043e41
 Lsol	= 4.747168436751317e7
 Lsun	= 4.747168436751317e7
 cm_3	= 3.4036771916893676e-65
-pc_3	= 1.158501842524895e-120
+pc_3	= 9.999999999980552e-10
 n_e	= 30.987773856809987
 erg_g_s	= 0.09138397843151959
 erg_cm3_s	= 6.185216915658869e-24
-erg_cm2_s	= 6.185216915658869e-24
-Jy	= 0.6185216915658869
-mJy	= 618.5216915658868
-microJy	= 618521.6915658868
+erg_cm2_s	= 0.019085585172014773
+Jy	= 8.98081650805659e35
+mJy	= 8.980816508056591e38
+microJy	= 8.98081650805659e41
 atoms_cm2	= 1.2581352511025663e23
 NH_cm2	= 1.2581352511025663e23
 cm_s2	= 1.3935734353956443e-8
 m_s2	= 1.3935734353956443e-10
 km_s2	= 1.3935734353956443e-13
-pc_Myr2	= 3.09843657823729e-9
+pc_Myr2	= 4.497666485038892
 erg_g	= 4.30011830747048e13
-J_kg	= 4.30011830747048e6
+J_kg	= 4.30011830747048e9
 km2_s2	= 4300.1183074704795
 u_grav	= 2.910484414358466e-9
 erg_cell	= 8.55100014027443e55
-dyne	= 9.432237612943517e-31
+dyne	= 2.7711904160517516e34
 s_2	= 4.516263928056473e-30
 lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
@@ -383,7 +383,7 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 9.432237612943517e-31
+Fg	= 2.7711904160517516e34
 poisson_source	= 4.5162639280564735e-30
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
@@ -642,9 +642,9 @@ methods(bulk_velocity)
 ```julia
 # 2 methods for generic function "bulk_velocity" from Mera:
  [1] bulk_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask)
-     @ src/functions/basic_calc.jl:415
- [2] bulk_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask)
      @ src/functions/basic_calc.jl:420
+ [2] bulk_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask)
+     @ src/functions/basic_calc.jl:425
 ```
 
 ```julia
@@ -656,9 +656,9 @@ methods(average_velocity)
 ```julia
 # 2 methods for generic function "average_velocity" from Mera:
  [1] average_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask)
-     @ src/functions/basic_calc.jl:447
+     @ src/functions/basic_calc.jl:452
  [2] average_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask)
-     @ src/functions/basic_calc.jl:451
+     @ src/functions/basic_calc.jl:456
 ```
 
 ## Mass Weighted Average
@@ -687,7 +687,7 @@ gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false);
 ```
 
 ```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 ( 0.45  s/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 ( 0.42  s/it)
 ✓ File processing complete! Combining results...
 ```
 
@@ -734,8 +734,6 @@ Predefined vars that can be calculated for each cell/particle:
 :cellsize, :volume
      -gravitational field properties-
 :a_magnitude
-:escape_speed
-:gravitational_redshift
 :specific_gravitational_energy
 ===========================[clumps]:===========================
 :peak_x or :x, :peak_y or :y, :peak_z or :z
@@ -763,6 +761,15 @@ related to a given center:
 :ar_cylinder, :aϕ_cylinder
      -spherical acceleration components, gravity-
 :ar_sphere, :aθ_sphere, :aϕ_sphere
+----------------------------------------------------------------
+:cellsize is V^(1/3) — the side of the EQUAL-VOLUME CUBE, comparable to a
+Cartesian grid spacing. A published Voronoi "cell radius" is usually the
+sphere-equivalent (3V/4pi)^(1/3) = 0.62x this, not the same number.
+----------------------------------------------------------------
+Velocity-derived quantities are BOX-FRAME unless you pass vcenter=.
+center= sets the origin; vcenter= sets the frame — you need both.
+  v0 = bulk_velocity(halo)         # or vcenter=:auto
+  getvar(halo, :lz; center=c, vcenter=v0)
 ----------------------------------------------------------------
 ```
 
@@ -844,6 +851,13 @@ Get several quantities with one function call by passing an array containing the
 ```julia
 # array of variables -> Dict of 1-dim arrays, in code units
 quantities = getvar(gas, [:mass, :ekin])
+```
+
+```
+[Mera] Hint: getvar(:ekin) has no `vcenter` — velocities are in the BOX frame.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             (shown once per session; verbose(false) silences Mera's messages)
 ```
 
 ```
@@ -972,8 +986,6 @@ Predefined vars that can be calculated for each cell/particle:
 :cellsize, :volume
      -gravitational field properties-
 :a_magnitude
-:escape_speed
-:gravitational_redshift
 :specific_gravitational_energy
 ===========================[clumps]:===========================
 :peak_x or :x, :peak_y or :y, :peak_z or :z
@@ -1001,6 +1013,15 @@ related to a given center:
 :ar_cylinder, :aϕ_cylinder
      -spherical acceleration components, gravity-
 :ar_sphere, :aθ_sphere, :aϕ_sphere
+----------------------------------------------------------------
+:cellsize is V^(1/3) — the side of the EQUAL-VOLUME CUBE, comparable to a
+Cartesian grid spacing. A published Voronoi "cell radius" is usually the
+sphere-equivalent (3V/4pi)^(1/3) = 0.62x this, not the same number.
+----------------------------------------------------------------
+Velocity-derived quantities are BOX-FRAME unless you pass vcenter=.
+center= sets the origin; vcenter= sets the frame — you need both.
+  v0 = bulk_velocity(halo)         # or vcenter=:auto
+  getvar(halo, :lz; center=c, vcenter=v0)
 ----------------------------------------------------------------
 ```
 
@@ -1239,7 +1260,7 @@ clumps    = getclumps(info, verbose=false);
 ```
 
 ```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 ( 8.88 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 ( 8.60 ms/it)
 ✓ File processing complete! Combining results...
 ```
 

@@ -8,12 +8,12 @@
 # Julia for Simulation Analysis
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `julia_for_simulation_analysis.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/julia_for_simulation_analysis.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `julia_for_simulation_analysis.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/julia_for_simulation_analysis.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Practical Julia habits for post-processing work: reproducible environments, what compile-time
 latency is (and is not), memory discipline on laptop-scale machines, and measured
-multithreading. Nothing here is Mera-specific dogma — these are the standard patterns of the
+multithreading. Nothing here is Mera-specific dogma, these are the standard patterns of the
 language, applied to snapshot analysis.
 
 ## 1. Environments: make every project reproducible
@@ -58,21 +58,21 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-first call: 12.07 s   second call: 0.042 s
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+first call: 14.71 s   second call: 0.044 s
 ```
 
 Keep one session alive while you work (REPL, Jupyter, VS Code) instead of re-launching
-`julia script.jl` per plot — relaunching pays the compile tax every time.
+`julia script.jl` per plot, relaunching pays the compile tax every time.
 
-## 3. Your own loops are fast — write them
+## 3. Your own loops are fast, write them
 
 Custom per-cell analysis needs no vectorisation gymnastics. A plain loop over columns compiles
 to native code; the one rule is to keep it in a **function** (globals are slow):
 
 ```julia
 rho = getvar(gas, :rho, :g_cm3); T = getvar(gas, :T, :K); vol = getvar(gas, :volume, :cm3)
-# mass-weighted mean temperature of dense gas — as an explicit loop
+# mass-weighted mean temperature of dense gas, as an explicit loop
 function mwT(rho, T, vol; thresh=1e-24)
     num = 0.0; den = 0.0
     @inbounds for i in eachindex(rho)
@@ -89,7 +89,7 @@ println("mass-weighted T (ρ>1e-24 g/cm³): ", round(mwT(rho, T, vol), sigdigits
 ```
 
 ```
-mass-weighted T (ρ>1e-24 g/cm³): 67870.0 K   —   590311 cells in 0.21 ms
+mass-weighted T (ρ>1e-24 g/cm³): 67870.0 K   —   590311 cells in 0.2 ms
 ```
 
 ## 4. Memory discipline on laptop-scale machines
@@ -97,7 +97,7 @@ mass-weighted T (ρ>1e-24 g/cm³): 67870.0 K   —   590311 cells in 0.21 ms
 The levers, in the order to reach for them:
 
 1. **Load less**: `gethydro(info; lmax=…)` caps the refinement level;
-   `xrange/yrange/zrange` load a spatial window (applied while reading — the full box never
+   `xrange/yrange/zrange` load a spatial window (applied while reading, the full box never
    materialises).
 2. **Select variables**: `gethydro(info, [:rho, :p])` reads only what you need.
 3. **One snapshot at a time**: in loops over outputs, let each object go out of scope before
@@ -115,11 +115,11 @@ usedmemory(small)
 
 ```
 576 cells (windowed, lmax=6, :rho only)  vs  590311 full (lmax=7)
-Memory used: 481.366 KB
+Memory used: 481.448 KB
 ```
 
 ```
-(481.3662109375, "KB")
+(481.4482421875, "KB")
 ```
 
 ## 5. Multithreading, measured
@@ -130,12 +130,12 @@ throttle a single call. Three rules of thumb:
 
 - results are **independent of the thread count** (per-thread buffers, summed at the end);
 - **threading pays where the compute is.** A light call on a small dataset is dominated by its
-  serial parts (column access, setup) and shows little gain — an axis-aligned projection of this
+  serial parts (column access, setup) and shows little gain, an axis-aligned projection of this
   small fixture runs in ~0.6 s regardless of threads. Give the threads real work and the
   picture changes: below, the compute-heavy off-axis `:exact` deposit kernel on the same data;
-- BLAS keeps its own thread pool — keep `Julia threads × BLAS threads` within your core budget.
+- BLAS keeps its own thread pool, keep `Julia threads × BLAS threads` within your core budget.
 
-Measured on this machine (8 Julia threads; **illustrative, not a benchmark** — your times will
+Measured on this machine (8 Julia threads; **illustrative, not a benchmark**, your times will
 differ):
 
 ```julia
@@ -159,22 +159,22 @@ fig
 
 ```
 Julia threads: 4
-max_threads=1  105.42 s   speedup ×1.0
-max_threads=2  75.87 s   speedup ×1.39
-max_threads=4  52.57 s   speedup ×2.01
-max_threads=8  52.54 s   speedup ×2.01
+max_threads=1  103.48 s   speedup ×1.0
+max_threads=2  74.81 s   speedup ×1.38
+max_threads=4  51.85 s   speedup ×2.0
+max_threads=8  52.13 s   speedup ×1.98
 ```
 
-![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_3.png)
+![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_4.png)
 
 The dashed line is ideal scaling; the gap to it is the serial fraction. Throttle
 individual calls (`max_threads=4`) when you run several analyses at once or share the machine.
-The examples throughout these docs use at most 8 threads — treat that as a sensible laptop
+The examples throughout these docs use at most 8 threads, treat that as a sensible laptop
 ceiling, not a recommendation to buy more cores.
 
 ## 6. Where to go next
 
-- [First Steps](00_multi_FirstSteps.md) — the full introductory tutorial.
-- [Coming from Other Analysis Tools](switching_to_mera.md) — concept mapping + one complete workflow.
+- [First Steps](00_multi_FirstSteps.md), the full introductory tutorial.
+- [Coming from Other Analysis Tools](switching_to_mera.md), concept mapping + one complete workflow.
 - [Julia Cheat Sheet](quickreference/Julia_Quick_Reference.md), syntax in one place.
-- [Multi-Threading guide](multi-threading/multi-threading_intro.md) — the full threading reference.
+- [Multi-Threading guide](multi-threading/multi-threading_intro.md), the full threading reference.

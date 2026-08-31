@@ -8,7 +8,7 @@
 # Particle Data: First Inspection
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `01_particles_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_particles_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `01_particles_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_particles_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook provides a comprehensive introduction to loading and analyzing particle simulation data using Mera.jl. You'll learn the fundamentals of working with RAMSES particle data and its relationship to AMR (Adaptive Mesh Refinement) structures.
@@ -139,8 +139,8 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.9.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-08-26T20:36:13.215
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T13:24:14.450
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -268,7 +268,7 @@ particles = getparticles(info);
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-26T20:36:19.186
+[Mera]: Get particle data: 2026-08-31T13:24:20.171
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
@@ -643,8 +643,8 @@ function.
 | other | 5 | anything else the run defines |
 | **tracers** | **≤ 0** | RAMSES's *test particles* |
 
-**Tracers are test particles.** They are advected by the flow — Monte-Carlo tracers follow the mass
-flux between cells, classical tracers follow the velocity field — but they do not act back on it.
+**Tracers are test particles.** They are advected by the flow, Monte-Carlo tracers follow the mass
+flux between cells, classical tracers follow the velocity field, but they do not act back on it.
 They are how you follow *where a parcel of gas goes*, which the Eulerian grid cannot tell you. Code
 `0` is a gas tracer; negative codes trace the other families.
 
@@ -682,18 +682,18 @@ tracer   -> 0
 gas      -> 0
 ```
 
-### Where the selection happens — and why it matters for memory
+### Where the selection happens, and why it matters for memory
 
 This is worth being precise about, because it decides how much memory a large run costs you.
 
 **Chosen while reading** (so never loaded):
 
-- `vars=[...]` — which **columns** to read
-- `xrange`/`yrange`/`zrange` with `center` and `range_unit` — a spatial region
-- `lmax` — a maximum refinement level
-- `stars=false` — the one type filter available at read time; it drops the star family
+- `vars=[...]`, which **columns** to read
+- `xrange`/`yrange`/`zrange` with `center` and `range_unit`, a spatial region
+- `lmax`, a maximum refinement level
+- `stars=false`, the one type filter available at read time; it drops the star family
 
-**Chosen after reading** — everything else, including dark-matter-only, tracers-only, or a list of
+**Chosen after reading**, everything else, including dark-matter-only, tracers-only, or a list of
 ids. `getparticlemask` and ordinary boolean vectors work on the table you already hold.
 
 So on a very large simulation the memory-saving lever is the **spatial range**, not the particle
@@ -709,7 +709,7 @@ println("particles in the region: ", length(subset.data))
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-26T20:36:31.357
+[Mera]: Get particle data: 2026-08-31T13:24:35.860
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass)
@@ -730,7 +730,7 @@ particles in the region: 536813
 ### Tracers in practice
 
 The simulation used above contains only one family, so the tracer selections come back empty. To
-see tracers actually working we switch to a small public test simulation that carries them — a
+see tracers actually working we switch to a small public test simulation that carries them, a
 Sedov blast seeded with Monte-Carlo tracer particles. It ships with Mera's reproducible fixture
 set, so this cell runs anywhere the fixtures are installed.
 
@@ -756,7 +756,7 @@ gas-tracer mask: 124990
 star mask      : 0
 ```
 
-Every particle here is family `0` — a gas tracer. Because tracers are advected with the flow and
+Every particle here is family `0`, a gas tracer. Because tracers are advected with the flow and
 never created or destroyed, their **count and total mass are invariant** between snapshots; that
 invariance is one of the properties Mera's own test suite asserts on this very simulation.
 
@@ -765,11 +765,11 @@ invariance is one of the properties Mera's own test suite asserts on this very s
 Simulations written before RAMSES `stable_18_09` have no `:family` column at all. There,
 `getparticlemask` falls back to the `:birth` field, which supports only two selections:
 
-- `:stars` — particles with `birth != 0` (they formed during the run)
-- `:dm` — particles with `birth == 0`
+- `:stars`, particles with `birth != 0` (they formed during the run)
+- `:dm`, particles with `birth == 0`
 
-Any other selection raises an error rather than guessing. Whichever column the selection needs —
-`:family` or `:birth` — has to be among the variables you loaded.
+Any other selection raises an error rather than guessing. Whichever column the selection needs,
+`:family` or `:birth`, has to be among the variables you loaded.
 
 ## Summary and Next Steps
 

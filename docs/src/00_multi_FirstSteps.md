@@ -8,7 +8,7 @@
 # First Steps with Mera.jl
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `00_multi_FirstSteps.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/00_multi_FirstSteps.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `00_multi_FirstSteps.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/00_multi_FirstSteps.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook introduces the essential concepts and workflow for inspecting, loading, and analyzing RAMSES simulation outputs using Mera.jl.
@@ -32,7 +32,12 @@ pkgversion(Mera)
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (1), dep missing source (1), mismatched flags (6))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), dep missing source (2), mismatched flags (12))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -40,6 +45,7 @@ pkgversion(Mera)
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 ```
 
 ```
@@ -55,7 +61,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10"); # output=300 in given path
 ```
 
 ```
-[Mera]: 2026-08-30T17:04:07.922
+[Mera]: 2026-08-31T13:18:12.034
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -270,16 +276,16 @@ Ba	= 2.910484414358466e-9
 g_cm_s2	= 2.910484414358466e-9
 p_kB	= 2.1080552800592083e7
 K_cm3	= 2.1080552800592083e7
-erg_g_K	= 3.114563011649217e29
-keV_cm2	= 1.252773885965637e65
-erg_K	= 6.193464189866091e71
-J_K	= 6.193464189866091e64
-erg_cm3_K	= 2.1080552800592083e7
-J_m3_K	= 2.1080552800592083e8
+erg_g_K	= 1.0
+keV_cm2	= 1.0
+erg_K	= 1.9885499720830952e42
+J_K	= 1.988549972083095e35
+erg_cm3_K	= 6.76838218451376e-23
+J_m3_K	= 6.76838218451376e-24
 kB_per_particle	= 1.380649e-16
-J_s	= 4.023715412864333e70
+J_s	= 4.023715412864333e63
 g_cm2_s	= 4.023715412864333e70
-kg_m2_s	= 4.023715412864333e71
+kg_m2_s	= 4.023715412864333e63
 Gauss	= 0.00019124389093025845
 muG	= 191.24389093025846
 microG	= 191.24389093025846
@@ -296,22 +302,22 @@ pc_3	= 9.999999999980552e-10
 n_e	= 30.987773856809987
 erg_g_s	= 0.09138397843151959
 erg_cm3_s	= 6.185216915658869e-24
-erg_cm2_s	= 6.185216915658869e-24
-Jy	= 0.6185216915658869
-mJy	= 618.5216915658868
-microJy	= 618521.6915658868
+erg_cm2_s	= 0.019085585172014773
+Jy	= 8.98081650805659e35
+mJy	= 8.980816508056591e38
+microJy	= 8.98081650805659e41
 atoms_cm2	= 1.2581352511025663e23
 NH_cm2	= 1.2581352511025663e23
 cm_s2	= 1.3935734353956443e-8
 m_s2	= 1.3935734353956443e-10
 km_s2	= 1.3935734353956443e-13
-pc_Myr2	= 3.09843657823729e-9
+pc_Myr2	= 4.497666485038892
 erg_g	= 4.30011830747048e13
-J_kg	= 4.30011830747048e6
+J_kg	= 4.30011830747048e9
 km2_s2	= 4300.1183074704795
 u_grav	= 2.910484414358466e-9
 erg_cell	= 8.55100014027443e55
-dyne	= 9.432237612943517e-31
+dyne	= 2.7711904160517516e34
 s_2	= 4.516263928056473e-30
 lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
@@ -339,7 +345,7 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 9.432237612943517e-31
+Fg	= 2.7711904160517516e34
 poisson_source	= 4.5162639280564735e-30
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
@@ -406,12 +412,12 @@ First 5 constants: (:Au, :Mpc, :kpc, :pc, :mpc)
 ## Your first map
 
 Metadata and units are the groundwork; this is the payoff. Load the gas, project it, and
-look at the galaxy — three calls.
+look at the galaxy, three calls.
 
 ```julia
 using CairoMakie
 
-# a bounded read — cap the level and the box so only what you need is allocated
+# a bounded read, cap the level and the box so only what you need is allocated
 gas = gethydro(info, lmax=9, xrange=[-15,15], yrange=[-15,15], zrange=[-3,3],
                center=[:bc], range_unit=:kpc, verbose=false, show_progress=false)
 
@@ -426,7 +432,17 @@ hidedecorations!(ax)
 fig
 ```
 
-![](00_multi_FirstSteps_files/00_multi_FirstSteps_12_1.png)
+```
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (3), incompatible header (6))
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), incompatible header (12))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+```
+
+![](00_multi_FirstSteps_files/00_multi_FirstSteps_12_6.png)
 
 ## Units and constants
 
@@ -592,7 +608,7 @@ Data completeness: 50.0%
 
 ## Function Quick Reference
 
-Now that you have run the workflow, here is the same ground as a lookup table — the calls
+Now that you have run the workflow, here is the same ground as a lookup table, the calls
 you will reach for again, common problems, and where to go next.
 
 This section provides a comprehensive reference of essential Mera.jl functions for getting started with simulation analysis.

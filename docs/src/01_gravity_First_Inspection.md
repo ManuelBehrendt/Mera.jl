@@ -1,5 +1,5 @@
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 ```@raw html
 <!-- GENERATED FILE. Do not edit this markdown.
@@ -35,7 +35,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-08-30T18:50:26.082
+[Mera]: 2026-08-31T13:19:38.548
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -204,7 +204,7 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-30T18:50:30.049
+[Mera]: Get gravity data: 2026-08-31T13:19:42.231
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -216,7 +216,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:15 (24.43 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:11 (17.70 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -226,7 +226,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 2.486 seconds
+✓ Table created in 2.576 seconds
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 ```
@@ -561,6 +561,16 @@ for q in (:a_magnitude, :a_magnitude_cylinder,
 end
 ```
 
+```
+a_magnitude               1.723e-09 ..  1.251e-07  cm/s^2
+a_magnitude_cylinder      2.757e-11 ..  9.097e-08  cm/s^2
+ar_cylinder              -9.097e-08 .. -2.757e-11  cm/s^2
+aphi_cylinder            -3.811e-09 ..  4.831e-09  cm/s^2
+ar_sphere                -1.251e-07 .. -1.723e-09  cm/s^2
+atheta_sphere            -4.505e-08 ..  4.000e-08  cm/s^2
+aphi_sphere              -3.811e-09 ..  4.831e-09  cm/s^2
+```
+
 ## Energy and force: these need the hydro object
 
 A potential is energy **per unit mass** and an acceleration is force **per unit mass**. To get an
@@ -584,6 +594,16 @@ for (q, u) in ((:gravitational_energy, :erg), (:total_binding_energy, :erg),
     v = getvar(grav, gas, q, u, center=ctr)
     @printf("%-24s %10.3e .. %10.3e  %s\n", q, minimum(v), maximum(v), u)
 end
+```
+
+```
+gravitational_energy     -2.869e+52 .. -1.115e+45  erg
+total_binding_energy      1.115e+45 ..  2.869e+52  erg
+Fg                        9.260e+23 ..  4.539e+31  dyne
+Fr_cylinder              -4.538e+31 .. -2.271e+22  dyne
+Fr_sphere                -4.538e+31 .. -9.259e+23  dyne
+Fθ_sphere                -7.828e+30 ..  6.246e+30  dyne
+F_magnitude_cylinder      2.271e+22 ..  4.539e+31  dyne
 ```
 
 `:gravitational_energy` is ``m\,\phi``, negative where the cell is bound.

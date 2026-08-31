@@ -8,7 +8,7 @@
 # RT Data: First Inspection
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `01_rt_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_rt_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `01_rt_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_rt_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Radiative-transfer data is a data type of its own in Mera, read with [`getrt`](@ref) into an
@@ -55,7 +55,7 @@ info = getinfo(2, path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-08-29T11:18:56.982
+[Mera]: 2026-08-31T13:24:49.168
 Code: RAMSES
 output [2] summary:
 mtime: 2026-08-26T15:25:07.216
@@ -128,7 +128,7 @@ rt = getrt(info);
 ```
 
 ```
-[Mera]: Get RT data: 2026-08-29T11:18:59.952
+[Mera]: Get RT data: 2026-08-31T13:24:53.020
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12) = (:Np1, :Fx1, :Fy1, :Fz1, :Np2, :Fx2, :Fy2, :Fz2, :Np3, :Fx3, :Fy3, :Fz3)
 domain:
@@ -140,7 +140,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 5.0 [pc]
    Files to be processed: 8
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 (51.40 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 (74.01 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 25040 cells, 12 variables
