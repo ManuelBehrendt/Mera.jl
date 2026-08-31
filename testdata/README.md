@@ -122,8 +122,8 @@ persist in git history.
 
 | script | what it does |
 |---|---|
-| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `SHA256SUMS` (~282 MB total) |
-| `fetch_fixtures.sh [--small\|--all\|<names>]` | finds them on disk, or downloads and verifies them |
+| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture, plus a `SHA256SUMS` listing to upload alongside them (~282 MB total) |
+| `fetch_fixtures.sh [--small\|--all\|<names>]` | finds them on disk, or downloads them |
 | `check_release_staging.sh` | **run this after editing anything in `RAMSES-PUBLIC`** — reports whether the staged archives and the committed manifest still describe the current data |
 | `SHA256SUMS` | **committed**: the integrity link between this repo and the published assets |
 

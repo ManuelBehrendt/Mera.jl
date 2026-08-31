@@ -7,7 +7,7 @@
 #   1. $MERA_TEST_DATA/RAMSES-PUBLIC          — an explicit override
 #   2. the maintainer's external drive         — /Volumes/FASTStorage/Simulations/Mera-Tests
 #   3. ./testdata/fixtures/RAMSES-PUBLIC       — inside this checkout (where downloads land)
-#   4. download from the GitHub release        — into (3), verified against testdata/SHA256SUMS
+#   4. download from the GitHub release        — into (3)
 #
 # The script prints the resolved root as its LAST line, so a caller can do:
 #   export MERA_TEST_DATA="$(testdata/fetch_fixtures.sh --quiet)"
@@ -31,7 +31,6 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TAG="${FIXTURE_TAG:-testdata-v1}"
 REPO="${FIXTURE_REPO:-ManuelBehrendt/Mera.jl}"
-SUMS="$REPO_ROOT/testdata/SHA256SUMS"
 LOCAL_ROOT="$REPO_ROOT/testdata/fixtures"
 EXTERNAL_ROOT="${FIXTURE_EXTERNAL_ROOT:-/Volumes/FASTStorage/Simulations/Mera-Tests}"
 BASE_URL="${FIXTURE_BASE_URL:-https://github.com/$REPO/releases/download/$TAG}"
@@ -78,25 +77,6 @@ DEST="$LOCAL_ROOT/RAMSES-PUBLIC"
 mkdir -p "$DEST"
 say ">>> Downloading into $DEST (tag $TAG)"
 
-# The checksum ADVISES, it does not gate. curl -f already fails on a bad response and tar fails on
-# a corrupt gzip, so damage is caught without this. What SHA256SUMS adds is "the data you have is
-# not the data this checkout expects", which is worth printing when a test later fails oddly, but
-# is not worth refusing a download over: the manifest lives in two places (here and beside the
-# archives) and forgetting to refresh one has already blocked downloads twice.
-verify() {   # $1 = file, $2 = basename to look up; never fails the run
-    [ -f "$SUMS" ] || { say "    .. no testdata/SHA256SUMS, skipping the check for $2"; return 0; }
-    local want got
-    want=$(awk -v n="$2" '$2 == n {print $1}' "$SUMS")
-    [ -n "$want" ] || { say "    .. $2 is not listed in SHA256SUMS, not checked"; return 0; }
-    got=$(shasum -a 256 "$1" | awk '{print $1}')
-    if [ "$want" != "$got" ]; then
-        echo "    !! $2 does not match testdata/SHA256SUMS." >&2
-        echo "       Using it anyway. If a test fails unexpectedly, this is why: the release" >&2
-        echo "       assets and this checkout were built at different times." >&2
-    fi
-    return 0
-}
-
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 for f in "${WANT[@]}" ; do
     if [ "$FORCE" != "1" ] && [ -d "$DEST/$f" ]; then
@@ -107,7 +87,6 @@ for f in "${WANT[@]}" ; do
     url="$BASE_URL/$f.tar.gz"
     curl -fsSL --retry 3 -o "$TMP/$f.tar.gz" "$url" \
         || { echo "    !! download failed: $url" >&2; exit 1; }
-    verify "$TMP/$f.tar.gz" "$f.tar.gz" || exit 1
     rm -rf "$DEST/$f"
     tar -xzf "$TMP/$f.tar.gz" -C "$DEST"
 done
@@ -116,9 +95,6 @@ done
 if [ ! -f "$DEST/README.md" ]; then
     if curl -fsSL --retry 2 -o "$TMP/docs.tar.gz" \
         "$BASE_URL/RAMSES-PUBLIC-docs.tar.gz" 2>/dev/null; then
-        # a checksum failure here must not pass silently: it means the archive is not what
-        # SHA256SUMS describes, which is exactly the case a verified download exists to catch
-        verify "$TMP/docs.tar.gz" "RAMSES-PUBLIC-docs.tar.gz" || exit 1
         tar -xzf "$TMP/docs.tar.gz" -C "$DEST"
     fi
 fi

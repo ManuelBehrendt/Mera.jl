@@ -16,8 +16,9 @@ git clone https://github.com/ManuelBehrendt/Mera.jl && cd Mera.jl
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
-The script downloads only what is missing, verifies every archive against `testdata/SHA256SUMS`,
-and skips the download entirely if the test simulations are already on disk.
+The script downloads only what is missing, and skips the download entirely if the test
+simulations are already on disk. A `SHA256SUMS` listing is published with the archives if you
+want to check a download by hand; nothing requires it.
 
 ## What each one is
 
