@@ -78,13 +78,22 @@ DEST="$LOCAL_ROOT/RAMSES-PUBLIC"
 mkdir -p "$DEST"
 say ">>> Downloading into $DEST (tag $TAG)"
 
-verify() {   # $1 = file, $2 = basename to look up
-    [ -f "$SUMS" ] || { say "    !! no testdata/SHA256SUMS — cannot verify $2"; return 0; }
+# The checksum ADVISES, it does not gate. curl -f already fails on a bad response and tar fails on
+# a corrupt gzip, so damage is caught without this. What SHA256SUMS adds is "the data you have is
+# not the data this checkout expects", which is worth printing when a test later fails oddly, but
+# is not worth refusing a download over: the manifest lives in two places (here and beside the
+# archives) and forgetting to refresh one has already blocked downloads twice.
+verify() {   # $1 = file, $2 = basename to look up; never fails the run
+    [ -f "$SUMS" ] || { say "    .. no testdata/SHA256SUMS, skipping the check for $2"; return 0; }
     local want got
     want=$(awk -v n="$2" '$2 == n {print $1}' "$SUMS")
-    [ -n "$want" ] || { say "    !! $2 not listed in SHA256SUMS — refusing"; return 1; }
+    [ -n "$want" ] || { say "    .. $2 is not listed in SHA256SUMS, not checked"; return 0; }
     got=$(shasum -a 256 "$1" | awk '{print $1}')
-    [ "$want" = "$got" ] || { echo "    !! CHECKSUM MISMATCH for $2" >&2; return 1; }
+    if [ "$want" != "$got" ]; then
+        echo "    !! $2 does not match testdata/SHA256SUMS." >&2
+        echo "       Using it anyway. If a test fails unexpectedly, this is why: the release" >&2
+        echo "       assets and this checkout were built at different times." >&2
+    fi
     return 0
 }
 

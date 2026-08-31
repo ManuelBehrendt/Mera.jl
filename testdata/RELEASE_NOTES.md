@@ -4,7 +4,8 @@ Small RAMSES simulation outputs used by the Mera.jl test suite. They are publish
 assets rather than repository files**: Mera is a registered package, so anything committed to the
 tree would be downloaded by every `Pkg.add("Mera")` and would remain in git history permanently.
 
-Total ~296 MB across 12 archives. Each unpacks to a single directory.
+Total ~282 MB across 12 archives (11 simulations plus the documentation set).
+Each unpacks to a single directory.
 
 ## Getting them
 
