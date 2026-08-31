@@ -89,6 +89,10 @@ Source: <https://github.com/ramses-organisation/ramses>, tag **2026.05**.
 
 `READMEs.tar.gz` holds the README, the third-party `NOTICE.md` and RAMSES's licence.
 
+Each simulation directory also carries a `SOURCE.txt`: where the data came from, the namelist
+it was produced from, and the RAMSES attribution. A folder copied elsewhere keeps its
+provenance without needing this page.
+
 
 ## Attribution and licence
 

@@ -116,6 +116,10 @@ the per-file provenance and the citations to give.
 
 ## Publishing and fetching the fixtures
 
+Packaging writes a `SOURCE.txt` into each fixture directory first: the Mera repository URL, the
+namelist the data came from, and the RAMSES attribution. It is written at packaging time rather
+than by hand, so a regenerated fixture cannot ship without it.
+
 The generated fixtures are published as **assets on the `testdata-v1` release**, not committed to
 this repository: Mera is registered, so tree contents ship in every `Pkg.add("Mera")` tarball and
 persist in git history.
