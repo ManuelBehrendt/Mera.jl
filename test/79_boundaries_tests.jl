@@ -56,6 +56,28 @@
         @test ib(Dict("&MY_BOUNDARY_PARAMS_EXTRA" => Dict())) === :periodic
     end
 
+    @testset "Fortran repeat syntax, n*value" begin
+        # RAMSES namelists use it (nsubcycle=10*1). Left unexpanded, `2*-1` parses
+        # as nothing and a closed axis would be reported as periodic.
+        rep = Dict("&BOUNDARY_PARAMS" => Dict("ibound_min" => "2*-1", "ibound_max" => "2*-1"))
+        @test pa(rep).x === false
+        @test ib(rep) === :mixed
+        # zeros repeated must still mean "no face"
+        z = Dict("&BOUNDARY_PARAMS" => Dict("ibound_min" => "-1,+1", "ibound_max" => "-1,+1",
+                                            "kbound_min" => "2*0",  "kbound_max" => "2*0"))
+        @test pa(z) == (x=false, y=true, z=true)
+    end
+
+    @testset "the real RAMSES namelists" begin
+        # nboundary = 2 x ndim in every shipped example, so the closed-axis count
+        # must track the dimensionality
+        oneD  = Dict("&BOUNDARY_PARAMS" => Dict("ibound_min"=>"-1,+1", "ibound_max"=>"-1,+1"))
+        twoD  = Dict("&BOUNDARY_PARAMS" => Dict("ibound_min"=>"-1,+1,-1,-1", "ibound_max"=>"-1,+1,+1,+1",
+                                                "jbound_min"=>" 0, 0,+1,-1", "jbound_max"=>" 0, 0,+1,-1"))
+        @test count(values(pa(oneD))) == 2      # y, z still wrap
+        @test count(values(pa(twoD))) == 1      # only z wraps
+    end
+
     @testset "case and whitespace" begin
         @test ib(Dict("  &boundary_params  " => Dict("ibound_min"=>"-1","ibound_max"=>"-1"))) === :mixed
     end

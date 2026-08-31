@@ -865,8 +865,26 @@ function periodic_axes(namelist_content::Dict)
     end
     block === nothing && return (x=true, y=true, z=true)
 
-    ints(name) = haskey(block, name) ?
-        [tryparse(Int, strip(t)) for t in split(string(block[name]), ",")] : Int[]
+    # Fortran list syntax: entries may repeat as `n*value` (`nsubcycle=10*1` in
+    # RAMSES's own namelists). Expanding it matters: an unparsed `2*-1` would read
+    # as "no face here" and report a closed axis as periodic.
+    function ints(name)
+        haskey(block, name) || return Union{Int,Nothing}[]
+        out = Union{Int,Nothing}[]
+        for t in split(string(block[name]), ",")
+            t = strip(t)
+            if occursin('*', t)
+                n, v = split(t, '*', limit=2)
+                rep, val = tryparse(Int, strip(n)), tryparse(Int, strip(v))
+                if rep !== nothing && val !== nothing && rep > 0
+                    append!(out, fill(val, rep))
+                    continue
+                end
+            end
+            push!(out, tryparse(Int, t))
+        end
+        return out
+    end
 
     closed = map(((lo, hi),) -> begin
         a, b = ints(lo), ints(hi)
