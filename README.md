@@ -12,6 +12,11 @@
 [![coverage, full suite](https://img.shields.io/codecov/c/github/ManuelBehrendt/Mera.jl?flag=local-full&label=coverage%3A%20full%20suite)](https://codecov.io/gh/ManuelBehrendt/Mera.jl?flags[0]=local-full)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
+<sub>The **Aqua QA** badge is a structural check, not a physics one: no undefined exports, no method
+ambiguities among Mera's own methods, no stale or uncapped dependencies, no type piracy. All seven
+checks and their three deliberate exemptions are listed in
+[`test/README.md`](test/README.md#what-the-aqua-check-covers).</sub>
+
 <sub>Two coverage figures, because they measure different things: **CI tests** are what a GitHub
 runner can execute without simulation data, while **full suite** adds the integration tests that
 read real RAMSES output on the maintainer's machine. See

@@ -60,7 +60,7 @@ Key files:
 
 | file | what it proves |
 |---|---|
-| `01_aqua_quality.jl` | package hygiene (Aqua): no method ambiguities, stale deps, undefined exports |
+| `01_aqua_quality.jl` | package hygiene, seven static Aqua checks ([what they are](#what-the-aqua-check-covers)) |
 | `02_unit_system.jl` | unit scales against external anchors, deliberately with `scale.kpc ≠ 1` |
 | `70_scales_complete_tests.jl` | every scale field is assigned; impossible unit/quantity pairs are rejected |
 | `42_kernel_oracle_tests.jl` | deposit / profile / phase kernels vs closed-form weighted statistics |
@@ -73,6 +73,34 @@ Key files:
 
 `41` and `43` gate only their AMR-backed blocks, so they contribute their analytic assertions even
 with no data present.
+
+#### What the Aqua check covers
+
+`01_aqua_quality.jl` runs [Aqua.jl](https://github.com/JuliaTesting/Aqua.jl), which inspects the
+package *structurally*. It executes no Mera code paths, so it catches a different class of problem
+from every other file here: things that are wrong about the package rather than about the physics.
+
+| check | what a failure would mean |
+|---|---|
+| `test_undefined_exports` | a name in `export` that does not exist, so `using Mera` warns |
+| `test_unbound_args` | a method with a type parameter that cannot be inferred from its arguments |
+| `test_ambiguities` | two methods where Julia cannot decide which to call |
+| `test_project_extras` | `[extras]` and `[targets]` in `Project.toml` disagree |
+| `test_stale_deps` | a dependency declared but never loaded |
+| `test_deps_compat` | a dependency with no `[compat]` bound, so a breaking release can hit users |
+| `test_piracies` | a method defined on types Mera does not own, which can break unrelated packages |
+
+Three exemptions are deliberate, and they narrow what the badge in the top-level README asserts:
+
+```julia
+Aqua.test_ambiguities(Mera, recursive=false)          # Mera's own methods only, not its deps
+Aqua.test_stale_deps(Mera, ignore=[:PyPlot, :Aqua])   # PyPlot loads through an extension
+Aqua.test_deps_compat(Mera, ignore=[:Dates, :LinearAlgebra, :Pkg, :Printf, :Random,
+                                    :SparseArrays, :Statistics])   # stdlibs ship with Julia
+```
+
+`recursive=false` is the one to know about: ambiguities *introduced by a dependency* are not
+reported, only ambiguities among Mera's own methods.
 
 ### Tier 2 — data-backed: integration against real RAMSES output
 
