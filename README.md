@@ -1,4 +1,4 @@
-<img src="assets/repository_logo_small.jpg" alt="Mera.jl" width="200">
+<img src="assets/logo.svg" alt="Mera.jl" width="260">
 
 # MERA.jl
 
