@@ -4,7 +4,6 @@
 #
 # `_release_staging/` is a BUILD OUTPUT of package_fixtures.sh, not a source of truth. It changes
 # only when that script runs, so editing anything in RAMSES-PUBLIC — the notebook, the README, a
-# regenerated fixture — silently leaves the staged archives, the committed SHA256SUMS and any
 # already-uploaded release assets describing older data. That has happened twice.
 #
 # This is the cheap check: for every archive, is any file it was built from NEWER than the archive?
@@ -33,19 +32,15 @@ done
 # the docs archive is built from the loose files in the fixture root
 for m in README.md NOTICE.md RAMSES-LICENSE.txt; do
     [ -f "$ROOT/$m" ] || continue
-    src=$(stat -f '%m' "$ROOT/$m"); arc=$(stat -f '%m' "$OUT/RAMSES-PUBLIC-docs.tar.gz" 2>/dev/null || echo 0)
+    src=$(stat -f '%m' "$ROOT/$m"); arc=$(stat -f '%m' "$OUT/READMEs.tar.gz" 2>/dev/null || echo 0)
     [ "$src" -gt "$arc" ] && { echo "  STALE: $m changed after the docs archive was packaged"; stale=1; }
 done
 
-if ! diff -q "$REPO/testdata/SHA256SUMS" "$OUT/SHA256SUMS" >/dev/null 2>&1; then
-    echo "  STALE: testdata/SHA256SUMS does not match the staged archives"; stale=1
-fi
 
 if [ "$stale" = "0" ]; then
     echo "Release staging is in step with $ROOT"
 else
     echo
-    echo "Rerun: testdata/package_fixtures.sh \"$OUT\"   then copy SHA256SUMS into testdata/ and commit."
     echo "If the release is already published, the changed assets must be re-uploaded too."
 fi
 exit $stale

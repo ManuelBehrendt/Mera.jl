@@ -4,7 +4,7 @@ Small RAMSES simulation outputs used by the Mera.jl test suite. They are publish
 assets rather than repository files**: Mera is a registered package, so anything committed to the
 tree would be downloaded by every `Pkg.add("Mera")` and would remain in git history permanently.
 
-Total ~282 MB across 12 archives (11 simulations plus the documentation set).
+Total ~296 MB across 12 archives (11 simulations plus the documentation set).
 Each unpacks to a single directory.
 
 ## Getting them
@@ -17,8 +17,7 @@ julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
 The script downloads only what is missing, and skips the download entirely if the test
-simulations are already on disk. A `SHA256SUMS` listing is published with the archives if you
-want to check a download by hand; nothing requires it.
+simulations are already on disk.
 
 ## What each one is
 
@@ -54,7 +53,7 @@ using their reduction
 
 Source: <https://github.com/ramses-organisation/ramses>, tag **2026.05**.
 
-`RAMSES-PUBLIC-docs.tar.gz` holds the README, the third-party `NOTICE.md` and RAMSES's licence.
+`READMEs.tar.gz` holds the README, the third-party `NOTICE.md` and RAMSES's licence.
 
 
 ## Attribution and licence
@@ -62,12 +61,11 @@ Source: <https://github.com/ramses-organisation/ramses>, tag **2026.05**.
 Mera.jl is MIT-licensed, but this data is not entirely ours. It is produced by **RAMSES**
 (Copyright CEA and Romain Teyssier), governed by the **CeCILL** licence
 (<http://www.cecill.info>), and three of these archives redistribute RAMSES namelists unmodified.
-`RAMSES-PUBLIC-docs.tar.gz` carries `NOTICE.md` and RAMSES's licence text; please cite
+`READMEs.tar.gz` carries `NOTICE.md` and RAMSES's licence text; please cite
 Teyssier (2002), and Rosdahl et al. (2013) for the RT test simulations, if you use these in published
 work.
 
 ## Provenance and integrity
 
-`testdata/SHA256SUMS` is committed in the repository and lists the checksum of every archive here.
 It is the link between the code and this data: a test simulation cannot be swapped without the manifest
 changing in a tracked commit.

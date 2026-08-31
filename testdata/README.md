@@ -122,22 +122,20 @@ persist in git history.
 
 | script | what it does |
 |---|---|
-| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture, plus a `SHA256SUMS` listing to upload alongside them (~282 MB total) |
+| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `READMEs.tar.gz` (~296 MB total) |
 | `fetch_fixtures.sh [--small\|--all\|<names>]` | finds them on disk, or downloads them |
 | `check_release_staging.sh` | **run this after editing anything in `RAMSES-PUBLIC`** — reports whether the staged archives and the committed manifest still describe the current data |
-| `SHA256SUMS` | **committed**: the integrity link between this repo and the published assets |
 
 To publish a new set:
 
 ```bash
 testdata/package_fixtures.sh /path/to/staging
-cp /path/to/staging/SHA256SUMS testdata/SHA256SUMS      # and commit it
 gh release create testdata-v1 --title 'Test fixtures v1' --notes-file testdata/RELEASE_NOTES.md
 gh release upload testdata-v1 /path/to/staging/*.tar.gz
 ```
 
 Bump the tag (`testdata-v2`, via `FIXTURE_TAG`) when a fixture changes, so an older checkout keeps
-resolving the assets its committed `SHA256SUMS` describes.
+resolving the assets published on the release.
 
 `.github/workflows/fixtures.yml` runs the data-backed tier on this: the `--small` set on every
 push, and the full set including the 165 MB Bondi fixture nightly.

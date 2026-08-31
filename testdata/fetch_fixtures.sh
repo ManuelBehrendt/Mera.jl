@@ -94,7 +94,7 @@ done
 # the README, NOTICE and licence that document the set
 if [ ! -f "$DEST/README.md" ]; then
     if curl -fsSL --retry 2 -o "$TMP/docs.tar.gz" \
-        "$BASE_URL/RAMSES-PUBLIC-docs.tar.gz" 2>/dev/null; then
+        "$BASE_URL/READMEs.tar.gz" 2>/dev/null; then
         tar -xzf "$TMP/docs.tar.gz" -C "$DEST"
     fi
 fi
