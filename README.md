@@ -12,15 +12,8 @@
 [![coverage, full suite](https://img.shields.io/codecov/c/github/ManuelBehrendt/Mera.jl?flag=local-full&label=coverage%3A%20full%20suite)](https://codecov.io/gh/ManuelBehrendt/Mera.jl?flags[0]=local-full)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-<sub>The **Aqua QA** badge is a structural check, not a physics one: no undefined exports, no method
-ambiguities among Mera's own methods, no stale or uncapped dependencies, no type piracy. All seven
-checks and their three deliberate exemptions are listed in
-[`test/README.md`](test/README.md#what-the-aqua-check-covers).</sub>
-
-<sub>Two coverage figures, because they measure different things: **CI tests** are what a GitHub
-runner can execute without simulation data, while **full suite** adds the integration tests that
-read real RAMSES output on the maintainer's machine. See
-[the two coverage numbers](#the-two-coverage-numbers).</sub>
+<sub>What the badges mean: [the two coverage numbers](#the-two-coverage-numbers) and
+[what Aqua checks](#package-hygiene-the-aqua-badge).</sub>
 
 **MERA** reads and analyzes astrophysical simulation output natively in Julia. It is built for
 [RAMSES](https://github.com/ramses-organisation/ramses) — multi-resolution AMR grids, particles,
@@ -282,6 +275,17 @@ MERA_SMOKE_ONLY=1 julia --project -e 'using Pkg; Pkg.test("Mera")'
 # full suite (requires the RAMSES test data)
 MERA_TEST_DATA=/path/to/Mera-Tests julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
+
+### Package hygiene: the Aqua badge
+
+The **Aqua QA** badge is a structural check, not a physics one. It asserts that the *package* is
+well formed: no undefined exports, no unbound type parameters, no method ambiguities among Mera's
+own methods, no stale or uncapped dependencies, no type piracy. It executes no Mera code paths, so
+it catches a different class of problem from every other test here.
+
+One caveat worth knowing: the ambiguity check runs with `recursive=false`, so ambiguities
+introduced by a dependency are not reported. All seven checks and the three deliberate exemptions
+are listed in [`test/README.md`](test/README.md#what-the-aqua-check-covers).
 
 ### The two coverage numbers
 
