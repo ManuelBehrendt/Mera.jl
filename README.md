@@ -53,6 +53,10 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   proper per-level cell volumes; flux budgets through surfaces split inflow/outflow explicitly.
 - **Multi-threaded by default** — `gethydro()` and `projection()` use all available cores
   automatically; benchmarking guides included for system tuning.
+- **Reproducible by construction** — pin your stack with a Julia project (`Project.toml` +
+  `Manifest.toml`), record what produced each number with `provenance()`, and check the install
+  against test simulations that have known answers. See
+  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
 - **100+ derived quantities** — temperature, sound speed, Mach numbers (incl. Alfvén/fast/slow),
   Jeans length/mass, virial parameter, cylindrical/spherical velocities, specific angular momentum,
   kinetic/thermal energy and more — all via one `getvar()` interface, extensible with `add_field()`.
@@ -235,7 +239,8 @@ Write the analysis once; it works on every data type.
   derived physics (spherical/cylindrical velocities, Jeans/virial, magnetosonic Mach, tidal truncation).
 - **vs. hand-written scripts** — conservation treated as a *tested* property (a data-free oracle suite
   checks weighted statistics, projection/covering-grid mass conservation, and the flux estimator
-  against the analytic surface integral on every release).
+  against the analytic surface integral on every release), and every result can carry a
+  `provenance()` record of the versions, output and units behind it.
 
 ## Documentation
 

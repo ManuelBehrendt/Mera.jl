@@ -147,7 +147,8 @@ to Mach numbers to virial parameters, computed on request rather than stored. Ca
 no arguments for the current list.
 
 **Results you can defend.** Pin versions with a `Project.toml` and `Manifest.toml` in your own
-analysis project, and record what produced each number with [`provenance`](provenance.md). VTK
+analysis project, and record what produced each number with [`provenance`](provenance.md). See
+[Reproducibility](reproducibility.md) for how the pieces fit together. VTK
 export preserves AMR structure for ParaView and VisIt.
 
 Mera supports RAMSES stable-17.09 through stable-19.10, plus RAMSES 2025.05 (beta), and is in
