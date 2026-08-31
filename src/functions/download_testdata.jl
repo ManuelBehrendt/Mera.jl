@@ -29,21 +29,25 @@ function _testdata_fetch_one(name::Symbol, root::AbstractString, force::Bool, ve
     haskey(TESTDATA_FIXTURES, name) || error(
         "unknown test simulation :$name. Available: " *
         join(string.(keys(TESTDATA_FIXTURES)), ", "))
-    dest = joinpath(root, string(name))
+    # same layout the test suite and fetch_fixtures.sh use, so `root` can be handed
+    # straight to MERA_TEST_DATA
+    dest = joinpath(root, "RAMSES-PUBLIC", string(name))
     if isdir(dest) && !force
         verbose && println("  $name: already present")
         return dest
     end
     mb = TESTDATA_FIXTURES[name][1]
     verbose && println("  $name: downloading $(mb) MB")
-    mktempdir() do tmp
+    mkpath(dirname(dest))
+    # stage inside `root` so the final move is a rename on the same filesystem:
+    # instant, and it never copies the archive contents a second time
+    mktempdir(root) do tmp
         tgz = joinpath(tmp, string(name) * ".tar.gz")
         Downloads.download(TESTDATA_URL * "/" * string(name) * ".tar.gz", tgz)
         staged = joinpath(tmp, "unpacked")
         open(tgz) do io
             Tar.extract(CodecZlib.GzipDecompressorStream(io), staged)
         end
-        mkpath(root)
         force && isdir(dest) && rm(dest; recursive=true)
         mv(joinpath(staged, string(name)), dest)
     end
@@ -71,6 +75,14 @@ directory holding them. Anything already present is skipped unless `force=true`.
 By default they land in `joinpath(DEPOT_PATH[1], "mera_testdata")`, alongside
 Julia's own package depot, so they survive between sessions. Pass `dir` to put
 them somewhere else.
+
+The layout matches what Mera's test suite looks for, so the returned directory
+can be handed straight to it to run the data-backed tests:
+
+```julia
+ENV["MERA_TEST_DATA"] = download_testdata()   # or a subset by name
+using Pkg; Pkg.test("Mera")
+```
 
 Available simulations, with download sizes:
 
