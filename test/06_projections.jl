@@ -2375,6 +2375,26 @@ if DATA_AVAILABLE
 
             # a function returning the wrong shape must say so, not silently mis-broadcast
             @test_throws ErrorException restframe(gs; vcenter=(x,y,z) -> (0.0, 0.0))
+
+            # PARTICLES must have the same set. The spherical dispersions were added to the
+            # particle projection path while the squared spherical velocities existed only for
+            # hydro, so they returned an all-NaN map with a warning rather than failing. A NaN map
+            # is easy to miss in a plot, which is why this is pinned per data type.
+            pt = getparticles(getinfo(3, ps, verbose=false), verbose=false, show_progress=false)
+            for (q, base) in ((:vr_sphere2, :vr_sphere), (:vθ_sphere2, :vθ_sphere),
+                              (:vϕ_sphere2, :vϕ_sphere))
+                @test isapprox(getvar(pt, q, center=[:bc]),
+                               getvar(pt, base, center=[:bc]) .^ 2; rtol=1e-12)
+            end
+            for q in (:σr_sphere, :σθ_sphere, :σϕ_sphere, :σr_cylinder, :σϕ_cylinder)
+                mp = projection(pt, q, :km_s; kw...)
+                @test haskey(mp.maps, q) && any(isfinite, mp.maps[q])   # not an all-NaN map
+            end
+            # frames work on particles too: they need only position, velocity and mass
+            @test restframe(pt; vcenter=:auto) isa PartDataType
+            @test restframe(pt; vcenter=rotation_frame(pt; center=:bc), center=:bc) isa PartDataType
+            # but a thermal width does not exist for a collisionless population
+            @test_throws ErrorException getvar(pt, :σ_thermal)
         end
     end
 end

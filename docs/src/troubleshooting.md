@@ -36,7 +36,7 @@ info = getinfo(path, code=:pluto)     # :pluto, :chombo, :athena, :flash, :gadge
 If that works, detection failed rather than the file being missing, please
 [report it](https://github.com/ManuelBehrendt/Mera.jl/issues) with your directory listing,
 since detection is meant to handle it. This release reads RAMSES; the frontends for other
-codes are on the `multicode` branch (`] add https://github.com/ManuelBehrendt/Mera.jl#multicode`).
+codes are on the `multicode` branch, see [Other Simulation Codes](other_codes.md).
 
 ## The tutorials point at a folder I don't have
 

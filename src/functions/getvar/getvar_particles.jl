@@ -334,6 +334,21 @@ function get_data(dataobject::PartDataType,
            vars_dict[:vz2] =  (vz .* selected_unit ).^2
 
 
+       # Squared spherical components. Particles carry :vr_sphere/:vθ_sphere/:vϕ_sphere but were
+       # missing their squares, so the spherical dispersions had nothing to build a mean-square
+       # from and returned an all-NaN map with only a warning.
+       elseif i == :vr_sphere2
+           selected_unit = getunit(dataobject, :vr_sphere2, vars, units)
+           vars_dict[:vr_sphere2] = (getvar(filtered_dataobject, :vr_sphere, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
+
+       elseif i == :vθ_sphere2
+           selected_unit = getunit(dataobject, :vθ_sphere2, vars, units)
+           vars_dict[:vθ_sphere2] = (getvar(filtered_dataobject, :vθ_sphere, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
+
+       elseif i == :vϕ_sphere2
+           selected_unit = getunit(dataobject, :vϕ_sphere2, vars, units)
+           vars_dict[:vϕ_sphere2] = (getvar(filtered_dataobject, :vϕ_sphere, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
+
        elseif i == :vr_cylinder2
 
         selected_unit = getunit(dataobject, :vr_cylinder2, vars, units)

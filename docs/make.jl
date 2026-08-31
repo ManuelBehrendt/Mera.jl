@@ -92,7 +92,10 @@ makedocs(modules = [Mera],
 		                  "Coming from Other Tools"        => "switching_to_mera.md",
 		                  "Julia for Simulation Analysis"  => "julia_for_simulation_analysis.md",
 		                  # first-hour errors, with the message Mera actually prints
-		                  "Troubleshooting"                => "troubleshooting.md" ],
+		                  "Troubleshooting"                => "troubleshooting.md",
+                  # one authoritative status page for the 2.0 frontends, so master never
+                  # repeats an install line or implies a capability it does not ship
+                  "Other Simulation Codes"         => "other_codes.md" ],
 
                       # --- Tutorials (API moved to its own top-level section, below) ---
                       "Core Workflows" => Any[

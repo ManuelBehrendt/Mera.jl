@@ -93,6 +93,11 @@ With ``k_B`` Boltzmann's constant, ``m_u`` the atomic mass unit and ``\gamma`` t
 *Data: **particles** (`getparticles`) on a GADGET/AREPO/SWIFT/GIZMO gas snapshot, needs the
 specific internal energy `:u`. Requesting these without `:u` raises an `ArgumentError`.*
 
+!!! note "The physics ships, the reader does not"
+    These quantities are part of every release, because Mera's analysis layer is code-blind. What
+    is not in a 1.x release is the **reader** for those snapshots: that is on the `multicode`
+    branch. See [Other Simulation Codes](other_codes.md).
+
 These codes store gas as particles rather than AMR cells, so the thermodynamics is computed
 from ``u`` instead of ``p/\rho``, with ``\gamma = 5/3``. The formulas differ from the hydro
 table above, in particular ``\mu`` is **not** the constant 1.32 used for RAMSES:
