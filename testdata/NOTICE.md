@@ -68,8 +68,5 @@ so it was written from scratch and is entirely ours.
 The `output_*` directories are data produced by running RAMSES, not copies of its source. They are
 distributed so that Mera's assertions about them can be re-run by anyone.
 
-## Referenced but not redistributed
-
-`yt_cosmo`, `ramses_mhd_128` and `ramses_mhd_amr` come from the yt project's public sample data
-(<https://yt-project.org/data/>) and are downloaded by the user, never redistributed here.
-See Turk, M. J. et al. 2011, *ApJS* **192**, 9.
+Each simulation directory also carries a `SOURCE.txt` repeating the origin and this attribution, so
+a folder copied elsewhere keeps it even without this file.
