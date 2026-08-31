@@ -65,6 +65,9 @@ getvar(gas, :r_cylinder_periodic, center=[0., 0., 0.])
 # centre of mass, via the circular mean
 center_of_mass(gas, mask=clump, periodic=true)
 center_of_mass(gas, mask=clump, periodic=(x=true, y=true, z=false))   # mixed boundaries
+
+# spherical subregions of hydro, gravity and RT data reach around a face
+subregionsphere(gas, radius=0.1, center=[0., 0., 0.], periodic=true)
 ```
 
 `periodic` accepts `true` for all axes, or a per-axis form, because a RAMSES run can close some
@@ -77,7 +80,8 @@ is wrong rather than an error:
 
 | function | what happens |
 |---|---|
-| `subregion`, `shellregion` | the part of the region outside the box is dropped, not wrapped: a sphere on a face returns a hemisphere |
+| `shellregion` | the part outside the box is dropped, not wrapped |
+| `subregion` on a cuboid, or on particles, clumps and sinks | as above |
 | `projection` | the map shows the box as stored, so a structure on a face appears split across opposite edges |
 | `clumpfind` | a structure crossing a face is found as two |
 | `covering_grid`, `profile` | bins near a face are incomplete |
@@ -90,7 +94,8 @@ p  = projection(gas, :sd, :Msol_pc2)
 sd = circshift(p.maps[:sd], size(p.maps[:sd]) .÷ 2)    # move the origin to the centre
 ```
 
-For regions, place the centre away from a face where you can. Where you cannot, build the mask
+For the region shapes that do not yet wrap, place the centre away from a face where you can. Where
+you cannot, build the mask
 yourself from a periodic radius and pass it on; every routine that takes `mask=` will then respect
 it:
 

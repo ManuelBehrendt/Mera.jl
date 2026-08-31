@@ -331,10 +331,18 @@ This function handles both cell-based and point-based selection modes:
 For cell-based selection, finds the closest point on the cell boundary to the
 axis using clamp operations. For point-based selection, uses cell center.
 """
-function get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell)
+
+# Of the periodic images of `center`, the one nearest `cell_mid`. Coordinates run
+# 0..1 here, so the period is 1. With `on=false` the centre is returned unchanged,
+# which is what every existing caller gets.
+@inline _nearest_image_center(center, cell_mid, on::Bool) =
+    on ? center + round(cell_mid - center) : center
+
+function get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell,
+                             periodic=(false, false, false))
     level_factor = 2^level
-    axis_x = cx_shift  # Axis position in physical coordinates
-    axis_y = cy_shift
+    axis_x = _nearest_image_center(cx_shift, (cx - 0.5) / level_factor, periodic[1])
+    axis_y = _nearest_image_center(cy_shift, (cy - 0.5) / level_factor, periodic[2])
     
     if cell == false
         # Point-based: distance from cell center to axis
@@ -662,7 +670,7 @@ end
 ##### SPHERE #####-------------------------------------------------------------
 
 """
-    get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell)
+    get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell, periodic=(false,false,false))
 
 Calculate distance from cell to sphere center for spherical subregion selection.
 
@@ -690,11 +698,15 @@ uses the Euclidean distance from cell center to sphere center.
 distance = get_radius_sphere(10, 20, 30, 2, 0.5, 0.5, 0.5, true)
 ```
 """
-function get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell)
+function get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell,
+                           periodic=(false, false, false))
     level_factor = 2^level
-    center_x = cx_shift  # Sphere center in physical coordinates
-    center_y = cy_shift
-    center_z = cz_shift
+    # Coordinates here run 0..1, so the period is 1. On a periodic axis, move the
+    # centre to its nearest image of THIS cell first; everything below is then the
+    # ordinary non-periodic maths, and a region on a face reaches around correctly.
+    center_x = _nearest_image_center(cx_shift, (cx - 0.5) / level_factor, periodic[1])
+    center_y = _nearest_image_center(cy_shift, (cy - 0.5) / level_factor, periodic[2])
+    center_z = _nearest_image_center(cz_shift, (cz - 0.5) / level_factor, periodic[3])
     
     if cell == false
         # Point-based: distance from cell center to sphere center
@@ -774,7 +786,9 @@ function subregionsphere(dataobject::HydroDataType;
                             range_unit::Symbol=:standard,
                             cell::Bool=true,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -798,19 +812,19 @@ function subregionsphere(dataobject::HydroDataType;
     if inverse == false
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell) <= radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) <= radius_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell) <= radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) <= radius_shift))
         end
     else # inverse == true
         ranges = dataobject.ranges
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell) > radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) > radius_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell) > radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) > radius_shift))
         end
     end
 

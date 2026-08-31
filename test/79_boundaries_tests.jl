@@ -140,3 +140,43 @@ end
         @test_throws ErrorException flags("yes")
     end
 end
+
+@testset "periodic region selection" begin
+    g = Mera.get_radius_sphere
+    lvl = 7; f = 2.0^lvl
+    # a cell whose centre sits near 0.99 in the 0..1 coordinates the helpers use
+    cx = round(Int, 0.99f + 0.5)
+    mid = (cx - 0.5) / f
+
+    @testset "the default is unchanged" begin
+        # every existing call site omits the argument and must behave exactly as before
+        @test g(cx, cx, cx, lvl, 0.5, 0.5, 0.5, false) ==
+              g(cx, cx, cx, lvl, 0.5, 0.5, 0.5, false, (false, false, false))
+    end
+
+    @testset "wrapping picks the near image" begin
+        # centre at 0.01, cell near 0.99: the long way round is ~0.98 per axis,
+        # the short way is the small remainder
+        far  = g(cx, cx, cx, lvl, 0.01, 0.01, 0.01, false)
+        near = g(cx, cx, cx, lvl, 0.01, 0.01, 0.01, false, (true, true, true))
+        @test near < far
+        # exact: each axis separation is (1 - mid) + 0.01
+        d = (1.0 - mid) + 0.01
+        @test isapprox(near, sqrt(3) * d; atol=1e-9)
+    end
+
+    @testset "per axis" begin
+        # wrap x only: x uses the near image, y and z still go the long way
+        mixed = g(cx, cx, cx, lvl, 0.01, 0.01, 0.01, false, (true, false, false))
+        dnear = (1.0 - mid) + 0.01
+        dfar  = mid - 0.01
+        @test isapprox(mixed, sqrt(dnear^2 + 2 * dfar^2); atol=1e-9)
+    end
+
+    @testset "a centre far from any face is unaffected" begin
+        # nothing to wrap: periodic and non-periodic must agree
+        cmid = round(Int, 0.5f + 0.5)
+        @test isapprox(g(cmid, cmid, cmid, lvl, 0.5, 0.5, 0.5, false),
+                       g(cmid, cmid, cmid, lvl, 0.5, 0.5, 0.5, false, (true, true, true)); atol=1e-12)
+    end
+end
