@@ -45,15 +45,25 @@ Then run something on a real RAMSES simulation. `download_testdata` fetches one 
 test simulations, 2.3 MB, and hands you the path:
 
 ```julia
-using Mera
+using Mera, CairoMakie
 path = download_testdata("sedov3d_amr")   # a Sedov blast on an AMR grid
 info = getinfo(path, output=7)            # the last of its seven snapshots
 gas  = gethydro(info)
-projection(gas, :sd, :Msol_pc2)           # a 128x128 surface-density map
+p    = projection(gas, :sd, :Msol_pc2)    # a 128x128 surface-density map
+
+heatmap(p.extent[1:2], p.extent[3:4], p.maps[:sd]; colormap=:inferno)
 ```
 
+![The Sedov blast, projected to surface density](assets/home/first_projection.png)
+
+`projection` returns an object, not a picture: the map itself is `p.maps[:sd]`, and `p.extent` gives
+its physical edges, so you can draw it with whatever plotting package you prefer. Mera draws
+nothing itself.
+
 Pick the snapshot with `output=`. This run has seven, and number 1 is the moment before the blast,
-a uniform box, so the map would be featureless. Number 7 is the developed shock.
+a uniform box, so the map would be featureless. Number 7 is the developed shock. The explosion sits
+at the origin of a periodic box holding one octant of the sphere, which is why the shock appears as
+an arc in each corner.
 
 With a simulation of your own, point `getinfo` at the output folder and continue the same way:
 
