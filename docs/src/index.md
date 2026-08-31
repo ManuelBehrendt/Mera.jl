@@ -55,22 +55,6 @@ projection(gas, :sd, :Msol_pc2)           # a 128x128 surface-density map
 Pick the snapshot with `output=`. This run has seven, and number 1 is the moment before the blast,
 a uniform box, so the map would be featureless. Number 7 is the developed shock.
 
-This simulation has a known answer: the blast radius grows as `t^(2/5)`, which is what Mera's own
-test suite checks it against. Eleven simulations are available, listed by `?download_testdata`, and
-each one carries either an analytic law like this or reference values published by the RAMSES
-developers.
-
-If you would rather not download anything, `synthetic_clumps()` builds real Mera objects in memory
-instead, and everything below works on them the same way:
-
-```julia
-F   = synthetic_clumps()              # 51,514 gas cells + 2,438 particles, 8 known clumps
-gas = F.gas
-```
-
-Everything else in these docs, `getvar`, `subregion`, `filterdata`, `profile`, `savedata`, works on
-`gas` exactly as it does on any other snapshot.
-
 With a simulation of your own, point `getinfo` at the output folder and continue the same way:
 
 ```julia
