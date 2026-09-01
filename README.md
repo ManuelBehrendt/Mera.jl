@@ -19,9 +19,9 @@
 [RAMSES](https://github.com/ramses-organisation/ramses) — multi-resolution AMR grids carrying hydro
 and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fields, loaded into
 memory-efficient tables. Cosmological runs are handled throughout, with scale factor, redshift and
-the derived quantities that depend on them. It computes 140+ physics-derived quantities on demand
-and provides conservation-correct projections, profiles, flux budgets and structure finding, all
-through one unified, multiple-dispatch API.
+the derived quantities that depend on them. It computes physics-derived quantities on demand,
+listed by `getvar()`, and provides conservation-correct projections, profiles, flux budgets and
+structure finding, all through one unified, multiple-dispatch API.
 
 > ### Released and upcoming 1.x versions are **RAMSES-only**
 >
@@ -59,7 +59,7 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   `Manifest.toml`), record what produced each number with `provenance()`, and check the install
   against test simulations that have known answers. See
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
-- **100+ derived quantities** — temperature, sound speed, Mach numbers (incl. Alfvén/fast/slow),
+- **Derived quantities on demand** — temperature, sound speed, Mach numbers (incl. Alfvén/fast/slow),
   Jeans length/mass, virial parameter, cylindrical/spherical velocities, specific angular momentum,
   kinetic/thermal energy and more — all via one `getvar()` interface, extensible with `add_field()`.
 
@@ -151,7 +151,7 @@ Barnes–Hut self-potential, SUBFIND-style unbinding and tidal (Hill-radius) tru
   where gas enters and leaves.
 
 ### Derived fields & extensions
-- **`getvar`** — 100+ derived quantities by name (`:T`, `:cs`, `:mach`, `:jeanslength`,
+- **`getvar`** — derived quantities by name (`:T`, `:cs`, `:mach`, `:jeanslength`,
   `:vr_cylinder`, `:ekin`, `:escape_speed`, …); `list_fields(:hydro; builtin=true)` lists them all
 - **`add_field`** — register a custom derived field once; it then works inside `projection`, `profile`, `phase`
 - **`getvar_requirements`** — query the raw variables a derived field needs (drives selective I/O)

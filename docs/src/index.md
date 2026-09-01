@@ -8,9 +8,9 @@
 [RAMSES](https://github.com/ramses-organisation/ramses): multi-resolution AMR grids carrying
 hydro and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fields, loaded into
 memory-efficient tables. Cosmological runs are handled throughout, with scale factor, redshift and
-the derived quantities that depend on them. It computes 140+ physics-derived quantities on demand
-and provides conservation-correct projections, profiles, flux budgets and structure finding, all
-through one unified, multiple-dispatch API.
+the derived quantities that depend on them. It computes physics-derived quantities on demand,
+listed by `getvar()`, and provides conservation-correct projections, profiles, flux budgets and
+structure finding, all through one unified, multiple-dispatch API.
 
 !!! warning "Released and upcoming 1.x versions are RAMSES-only"
     Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development
@@ -201,6 +201,12 @@ Coming from another analysis tool, or new to Julia:
 - [Troubleshooting](troubleshooting.md), the first-hour errors, listed under the message Mera
   actually prints
 
+## Citation
+
+If you use MERA in your research, please cite it using the DOI badge above. This supports
+continued development and helps other researchers discover the tool. Click the badge for BibTeX
+format. Please also star the [GitHub repository](https://github.com/ManuelBehrendt/Mera.jl).
+
 ## Community and support
 
 - [GitHub Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions): ask questions,
@@ -230,11 +236,7 @@ astronomical object. Written alongside the package, and meant for long sessions 
 </p>
 ```
 
-## Citation and license
-
-If you use MERA in your research, please cite it using the DOI badge above. This supports
-continued development and helps other researchers discover the tool. Click the badge for BibTeX
-format. Please also star the [GitHub repository](https://github.com/ManuelBehrendt/Mera.jl).
+## License
 
 MIT License, Copyright (c) 2019 Manuel Behrendt.
 

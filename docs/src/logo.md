@@ -92,4 +92,4 @@ version for a social avatar, open an
 [issue](https://github.com/ManuelBehrendt/Mera.jl/issues) and it can be added.
 
 If Mera contributed to a piece of work, a citation helps far more than a logo does: see
-[Citation](index.md#Citation-and-license) on the home page.
+[Citation](index.md#Citation) on the home page.
