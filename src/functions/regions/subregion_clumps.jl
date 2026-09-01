@@ -75,7 +75,9 @@ function subregioncylinder(dataobject::ClumpDataType;
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -95,14 +97,14 @@ function subregioncylinder(dataobject::ClumpDataType;
 
     if inverse == false
         sub_data = _subset_table(dataobject.data,
-                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2)
                                     <= ( radius_shift*boxlen )  &&
                             abs(c.peak_z[i] - cz_shift*boxlen) <= ( height_shift*boxlen)))
     elseif inverse == true
         sub_data = _subset_table(dataobject.data,
-                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2)
                                     > ( radius_shift*boxlen )  ||
                             abs(c.peak_z[i] - cz_shift*boxlen) > ( height_shift*boxlen)))
         ranges = dataobject.ranges
@@ -130,7 +132,9 @@ function subregionsphere(dataobject::ClumpDataType;
                             center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -150,15 +154,15 @@ function subregionsphere(dataobject::ClumpDataType;
 
     if inverse == false
         sub_data = _subset_table(dataobject.data,
-                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
-                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2+
+                                    _pdiff(c.peak_z[i] - cz_shift*boxlen, boxlen, pflags[3])^2 )
                                     <= ( radius_shift*boxlen )))
     elseif inverse == true
         sub_data = _subset_table(dataobject.data,
-                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
-                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2+
+                                    _pdiff(c.peak_z[i] - cz_shift*boxlen, boxlen, pflags[3])^2 )
                                     > ( radius_shift*boxlen )))
         ranges = dataobject.ranges
     end

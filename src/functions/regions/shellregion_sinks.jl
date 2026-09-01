@@ -13,7 +13,9 @@ function shellregionsphere(dataobject::SinkDataType;
                             center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -31,9 +33,9 @@ function shellregionsphere(dataobject::SinkDataType;
     ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift =
         prep_spherical_shellranges(dataobject.info, center, radius_in, radius_out, range_unit, verbose)
 
-    rad(c, i) = sqrt( (c.x[i] - cx_shift*boxlen)^2 +
-                      (c.y[i] - cy_shift*boxlen)^2 +
-                      (c.z[i] - cz_shift*boxlen)^2 )
+    rad(c, i) = sqrt( _pdiff(c.x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                      _pdiff(c.y[i] - cy_shift*boxlen, boxlen, pflags[2])^2 +
+                      _pdiff(c.z[i] - cz_shift*boxlen, boxlen, pflags[3])^2 )
 
     if inverse == false
         sub_data = _subset_table(dataobject.data,
@@ -60,7 +62,9 @@ function shellregioncylinder(dataobject::SinkDataType;
                               range_unit::Symbol=:standard,
                               direction::Symbol=:z,
                               inverse::Bool=false,
-                              verbose::Bool=verbose_mode)
+                              periodic=false,
+                            verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -78,7 +82,7 @@ function shellregioncylinder(dataobject::SinkDataType;
         prep_cylindrical_shellranges(dataobject.info, center, radius_in, radius_out, height,
                                      range_unit, verbose)
 
-    rad(c, i) = sqrt( (c.x[i] - cx_shift*boxlen)^2 + (c.y[i] - cy_shift*boxlen)^2 )
+    rad(c, i) = sqrt( _pdiff(c.x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 + _pdiff(c.y[i] - cy_shift*boxlen, boxlen, pflags[2])^2 )
 
     if inverse == false
         sub_data = _subset_table(dataobject.data,

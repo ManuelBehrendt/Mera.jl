@@ -1,5 +1,9 @@
 # -----------------------------------------------------------------------------
 ##### CUBOID #####-------------------------------------------------------------
+# Minimum image on a single separation, for the point-data regions. `on=false`
+# returns the separation unchanged, which is what every existing caller gets.
+@inline _pdiff(d, L, on::Bool) = on ? _minimum_image(d, L) : d
+
 function subregioncuboid(dataobject::PartDataType;
     xrange::Array{<:Any,1}=[missing, missing],
     yrange::Array{<:Any,1}=[missing, missing],
@@ -68,7 +72,9 @@ function subregioncylinder(dataobject::PartDataType;
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -91,8 +97,8 @@ function subregioncylinder(dataobject::PartDataType;
 
     # columnwise (see `_subset_table`); same `sqrt` arithmetic as the row-wise form it replaced
     cols = IndexedTables.columns(dataobject.data)
-    inside = (sqrt.((cols.x .- cx_shift*boxlen).^2 .+
-                    (cols.y .- cy_shift*boxlen).^2) .<= (radius_shift*boxlen)) .&
+    inside = (sqrt.(_pdiff.(cols.x .- cx_shift*boxlen, boxlen, pflags[1]).^2 .+
+                    _pdiff.(cols.y .- cy_shift*boxlen, boxlen, pflags[2]).^2) .<= (radius_shift*boxlen)) .&
              (abs.(cols.z .- cz_shift*boxlen) .<= (height_shift*boxlen))
     if inverse == false
         sub_data = _subset_table(dataobject.data, inside)
@@ -125,7 +131,9 @@ function subregionsphere(dataobject::PartDataType;
                             center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -146,9 +154,9 @@ function subregionsphere(dataobject::PartDataType;
     # columnwise (see `_subset_table`); same `sqrt` arithmetic as the row-wise form it replaced.
     # This is the `fov=` path: _fov_selection selects a sphere before projecting.
     cols = IndexedTables.columns(dataobject.data)
-    inside = sqrt.((cols.x .- cx_shift*boxlen).^2 .+
-                   (cols.y .- cy_shift*boxlen).^2 .+
-                   (cols.z .- cz_shift*boxlen).^2) .<= (radius_shift*boxlen)
+    inside = sqrt.(_pdiff.(cols.x .- cx_shift*boxlen, boxlen, pflags[1]).^2 .+
+                   _pdiff.(cols.y .- cy_shift*boxlen, boxlen, pflags[2]).^2 .+
+                   _pdiff.(cols.z .- cz_shift*boxlen, boxlen, pflags[3]).^2) .<= (radius_shift*boxlen)
     if inverse == false
         sub_data = _subset_table(dataobject.data, inside)
     elseif inverse == true

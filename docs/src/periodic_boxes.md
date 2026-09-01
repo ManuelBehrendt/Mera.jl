@@ -66,7 +66,7 @@ getvar(gas, :r_cylinder_periodic, center=[0., 0., 0.])
 center_of_mass(gas, mask=clump, periodic=true)
 center_of_mass(gas, mask=clump, periodic=(x=true, y=true, z=false))   # mixed boundaries
 
-# spheres, shells and cylinders of hydro, gravity and RT data reach around a face
+# spheres, shells and cylinders reach around a face, on every data type
 subregionsphere(gas,     radius=0.1,         center=[0., 0., 0.], periodic=true)
 shellregionsphere(gas,   radius=[0.05, 0.1], center=[0., 0., 0.], periodic=true)
 subregioncylinder(gas,   radius=0.1, height=0.5, center=[0., 0., 0.], periodic=true)
@@ -84,8 +84,7 @@ is wrong rather than an error:
 | function | what happens |
 |---|---|
 | cuboid regions | the part outside the box is dropped, not wrapped |
-| a cylinder's **height** cut | wraps radially in x and y, but not along its own axis |
-| any region on particles, clumps or sinks | not wrapped |
+| a cylinder's **height** cut | cylinders wrap in their two radial axes, never along their own axis |
 | `projection` | the map shows the box as stored, so a structure on a face appears split across opposite edges |
 | `clumpfind` | a structure crossing a face is found as two |
 | `covering_grid`, `profile` | bins near a face are incomplete |

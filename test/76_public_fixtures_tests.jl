@@ -183,6 +183,42 @@ else
         @test length(s_off.data) < length(sm.data) < length(s_on.data)
     end
 
+    @testset "sedov3d_grav_part: point data wraps too" begin
+        f = PUBLIC_FIXTURES[:sedov3d_grav_part]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        part = getparticles(info, verbose=false, show_progress=false)
+        L = info.boxlen
+        mi(v) = v .- L .* round.(v ./ L)
+        x = getvar(part, :x); y = getvar(part, :y); z = getvar(part, :z)
+        rp = sqrt.(mi(x) .^ 2 .+ mi(y) .^ 2 .+ mi(z) .^ 2)
+        rn = sqrt.(x .^ 2 .+ y .^ 2 .+ z .^ 2)
+        R = 0.1; Rc = R * L
+        lo = 0.05; loc = lo * L
+
+        sp = Mera.subregionsphere(part, radius=R, center=[0., 0., 0.], periodic=true,  verbose=false)
+        sn = Mera.subregionsphere(part, radius=R, center=[0., 0., 0.], periodic=false, verbose=false)
+        @test length(sp.data) == count(rp .< Rc)
+        @test length(sn.data) == count(rn .< Rc)
+        @test length(sp.data) > length(sn.data)
+
+        hp = Mera.shellregionsphere(part, radius=[lo, R], center=[0., 0., 0.], periodic=true,  verbose=false)
+        hn = Mera.shellregionsphere(part, radius=[lo, R], center=[0., 0., 0.], periodic=false, verbose=false)
+        @test length(hp.data) == count(loc .<= rp .<= Rc)
+        @test length(hn.data) == count(loc .<= rn .<= Rc)
+
+        # a cylinder wraps in its two radial axes and NOT along its own height, the
+        # same way for subregion and shellregion; the masks below encode that
+        H = 0.2; Hc = H * L
+        rrp = sqrt.(mi(x) .^ 2 .+ mi(y) .^ 2)
+        rrn = sqrt.(x .^ 2 .+ y .^ 2)
+        cp = Mera.subregioncylinder(part, radius=R, height=H, center=[0., 0., 0.], periodic=true,  verbose=false)
+        cn = Mera.subregioncylinder(part, radius=R, height=H, center=[0., 0., 0.], periodic=false, verbose=false)
+        @test length(cp.data) == count((rrp .<= Rc) .& (abs.(z) .<= Hc))
+        @test length(cn.data) == count((rrn .<= Rc) .& (abs.(z) .<= Hc))
+        gp = Mera.shellregioncylinder(part, radius=[lo, R], height=H, center=[0., 0., 0.], periodic=true, verbose=false)
+        @test length(gp.data) == count((loc .<= rrp .<= Rc) .& (abs.(z) .<= Hc))
+    end
+
     @testset "sedov3d_amr: cylinders wrap radially" begin
         f = PUBLIC_FIXTURES[:sedov3d_amr]
         info = getinfo(f.outputs, f.path, verbose=false)
