@@ -66,9 +66,11 @@ getvar(gas, :r_cylinder_periodic, center=[0., 0., 0.])
 center_of_mass(gas, mask=clump, periodic=true)
 center_of_mass(gas, mask=clump, periodic=(x=true, y=true, z=false))   # mixed boundaries
 
-# spherical regions of hydro, gravity and RT data reach around a face
-subregionsphere(gas,   radius=0.1,        center=[0., 0., 0.], periodic=true)
-shellregionsphere(gas, radius=[0.05, 0.1], center=[0., 0., 0.], periodic=true)
+# spheres, shells and cylinders of hydro, gravity and RT data reach around a face
+subregionsphere(gas,     radius=0.1,         center=[0., 0., 0.], periodic=true)
+shellregionsphere(gas,   radius=[0.05, 0.1], center=[0., 0., 0.], periodic=true)
+subregioncylinder(gas,   radius=0.1, height=0.5, center=[0., 0., 0.], periodic=true)
+shellregioncylinder(gas, radius=[0.05, 0.1], height=0.5, center=[0., 0., 0.], periodic=true)
 ```
 
 `periodic` accepts `true` for all axes, or a per-axis form, because a RAMSES run can close some
@@ -81,8 +83,9 @@ is wrong rather than an error:
 
 | function | what happens |
 |---|---|
-| `subregion`/`shellregion` on a cuboid or cylinder | the part outside the box is dropped, not wrapped |
-| any region on particles, clumps or sinks | as above |
+| cuboid regions | the part outside the box is dropped, not wrapped |
+| a cylinder's **height** cut | wraps radially in x and y, but not along its own axis |
+| any region on particles, clumps or sinks | not wrapped |
 | `projection` | the map shows the box as stored, so a structure on a face appears split across opposite edges |
 | `clumpfind` | a structure crossing a face is found as two |
 | `covering_grid`, `profile` | bins near a face are incomplete |

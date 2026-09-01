@@ -183,6 +183,26 @@ else
         @test length(s_off.data) < length(sm.data) < length(s_on.data)
     end
 
+    @testset "sedov3d_amr: cylinders wrap radially" begin
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = info.boxlen; R = 0.1; Rc = R * L; H = 0.5
+
+        rp = getvar(gas, :r_cylinder_periodic, center=[0., 0., 0.])
+        rn = getvar(gas, :r_cylinder,          center=[0., 0., 0.])
+        zc = getvar(gas, :z)
+        # full height, so only the radial cut can differ; the height cut along the
+        # cylinder axis is NOT wrapped, which is why the test does not vary it
+        cp = Mera.subregioncylinder(gas, radius=R, height=H, center=[0., 0., 0.],
+                                    cell=false, periodic=true,  verbose=false)
+        cn = Mera.subregioncylinder(gas, radius=R, height=H, center=[0., 0., 0.],
+                                    cell=false, periodic=false, verbose=false)
+        @test length(cp.data) == count((rp .< Rc) .& (zc .<= H * L))
+        @test length(cn.data) == count((rn .< Rc) .& (zc .<= H * L))
+        @test length(cp.data) > length(cn.data)
+    end
+
     # ------------------------------------------------------------------ Sedov-Taylor blast
     @testset "sedov3d_amr: blast radius follows R ~ t^(2/5)" begin
         f = PUBLIC_FIXTURES[:sedov3d_amr]; P = f.path

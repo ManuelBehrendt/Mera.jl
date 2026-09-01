@@ -558,7 +558,9 @@ function subregioncylinder(dataobject::HydroDataType;
                             inverse::Bool=false,
                             smooth_boundary::Bool=false,
                             boundary_width::Real=0.1,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    cflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -625,11 +627,11 @@ function subregioncylinder(dataobject::HydroDataType;
             # Original sharp boundary filtering
             if isamr
                 sub_data = _subset_table(dataobject.data,
-                                   _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell) <= radius_shift &&
+                                   _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) <= radius_shift &&
                                     get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) <= height_shift))
             else # for uniform grid
                 sub_data = _subset_table(dataobject.data,
-                                   _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell) <= radius_shift &&
+                                   _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) <= radius_shift &&
                                     get_height_cylinder(c.cz[i], lmax, cz_shift, cell) <= height_shift))
             end
         end
@@ -638,11 +640,11 @@ function subregioncylinder(dataobject::HydroDataType;
         ranges = dataobject.ranges
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell) > radius_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) > radius_shift ||
                                 get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) > height_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell) > radius_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) > radius_shift ||
                                 get_height_cylinder(c.cz[i], lmax, cz_shift, cell) > height_shift))
         end
     end
