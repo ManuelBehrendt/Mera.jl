@@ -51,8 +51,8 @@ info = getinfo(path, output=7)            # the last of its seven snapshots
 gas  = gethydro(info)
 p    = projection(gas, :sd, :Msol_pc2)    # a 128x128 surface-density map
 
-sd = circshift(p.maps[:sd], size(p.maps[:sd]) .÷ 2)   # centre the blast, see below
-heatmap(sd; colormap=:inferno)
+q  = periodic_recenter(p, center=[0., 0., 0.])         # centre the blast, see below
+heatmap(q.extent[1:2], q.extent[3:4], q.maps[:sd]; colormap=:inferno)
 ```
 
 ![The Sedov blast, projected to surface density](assets/home/first_projection.png)
@@ -62,8 +62,8 @@ heatmap(sd; colormap=:inferno)
 
 Two details of this particular run: snapshot 1 is the moment before the blast, a uniform box, which
 is why the example asks for 7; and RAMSES's own Sedov setup puts the explosion at the *origin* of a
-periodic box, simulating one octant of the sphere, so the shell straddles the corners until you roll
-the map by half a box. `getinfo` reports `boundaries: periodic` for exactly this reason, but Mera
+periodic box, simulating one octant of the sphere, so the shell straddles the corners until
+`periodic_recenter` rolls it around the boundary, which is exact on a periodic grid. `getinfo` reports `boundaries: periodic` for exactly this reason, but Mera
 never wraps coordinates on its own: see [Periodic boxes](reproducibility.md#Periodic-boxes).
 
 With a simulation of your own, point `getinfo` at the output folder and continue the same way:

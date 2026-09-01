@@ -86,17 +86,23 @@ is wrong rather than an error:
 | function | what happens |
 |---|---|
 | a cylinder's **height** cut | cylinders wrap in their two radial axes, never along their own axis |
-| `projection` | the map shows the box as stored, so a structure on a face appears split across opposite edges |
+| `projection` | still bins onto the box as stored; roll the finished map with `periodic_recenter` (axis-aligned only) |
 | `clumpfind` | a structure crossing a face is found as two |
 | `covering_grid`, `profile` | bins near a face are incomplete |
 
-For projections there is a simple workaround, since the map is a regular grid: roll it. This is
-exact on a periodic axis.
+For projections, roll the finished map with `periodic_recenter`. A whole-pixel shift of an
+axis-aligned map is exactly a translation of the box, so no value changes and no interpolation
+happens; only the frame moves, and `extent` is relabelled to measure from the new centre.
 
 ```julia
-p  = projection(gas, :sd, :Msol_pc2)
-sd = circshift(p.maps[:sd], size(p.maps[:sd]) .÷ 2)    # move the origin to the centre
+p = projection(gas, :sd, :Msol_pc2)
+q = periodic_recenter(p, center=[0., 0., 0.])          # direction=:z by default
+heatmap(q.extent[1:2], q.extent[3:4], q.maps[:sd])
 ```
+
+Pass the same `direction` you gave `projection`: a projection does not record which axis it looked
+along, so it cannot be inferred. **Off-axis projections are refused**, because a tilted camera plane
+has no pixel shift that corresponds to a periodic translation.
 
 For the region shapes that do not yet wrap, place the centre away from a face where you can. Where
 you cannot, build the mask

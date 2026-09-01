@@ -244,6 +244,7 @@ export
     MassAbove,
     Custom,
     download_testdata,
+    periodic_recenter,
     synthetic_clumps,
     save_synthetic_clumps,
     load_synthetic_clumps,
@@ -498,6 +499,7 @@ include("functions/report/report_cost.jl")
 include("functions/clumpfind.jl")
 include("functions/synthetic_clumps.jl")
 include("functions/download_testdata.jl")
+include("functions/periodic_recenter.jl")
 include("functions/timeseries.jl")
 include("functions/galaxy_frame.jl")
 include("functions/gridoverlay.jl")

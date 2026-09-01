@@ -10,6 +10,18 @@ Functions for creating 2D projections from 3D simulation data.
 
 The `projection` function uses Julia's multiple dispatch to provide specialized implementations for different data types. Since the complete API documentation is extensive, this section provides focused guidance for each data type.
 
+### Periodic boxes
+
+On a periodic run a structure sitting on a box face is split across opposite edges of the map.
+[`periodic_recenter`](@ref) rolls a finished projection around the boundary so it appears whole,
+which is exact for an axis-aligned map because a whole-pixel shift is a translation of the box.
+
+```@docs
+periodic_recenter
+```
+
+See [Periodic Boxes](../periodic_boxes.md) for what else needs care on a wrapping run.
+
 ### Performance & Threading Functions
 
 - [`benchmark_projection_hydro`](@ref): Benchmark projection performance for hydro data

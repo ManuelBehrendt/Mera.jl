@@ -18,20 +18,19 @@ gas  = gethydro(info, verbose=false, show_progress=false)
 p    = projection(gas, :sd, :Msol_pc2, verbose=false, show_progress=false)
 
 # RAMSES's own sedov3d namelist puts the explosion at the ORIGIN of a periodic
-# box, so the run covers one octant of the sphere at 8x the effective resolution.
-# The shell therefore straddles all four corners of the map. Rolling the map by
-# half the box is exact for a periodic grid and puts the blast in the middle.
-m  = p.maps[:sd]
-sd = circshift(m, size(m) .÷ 2)
-half = info.boxlen / 2
-xs = (-half, half)
+# box, so the run covers one octant of the sphere at 8x the effective resolution
+# and the shell straddles all four corners of the map. periodic_recenter rolls it
+# around the boundary, which is exact on a periodic grid, and relabels the axes
+# so they are measured from the explosion.
+q  = periodic_recenter(p, center=[0., 0., 0.], verbose=false)
+sd = q.maps[:sd]
 
 fig = Figure(size=(560, 460))
 ax  = Axis(fig[1, 1], aspect=1,
            xlabel="x from the explosion [code units]",
            ylabel="y from the explosion [code units]",
            title="Sedov blast, surface density")
-hm = heatmap!(ax, xs, xs, sd; colormap=:inferno)
+hm = heatmap!(ax, q.extent[1:2], q.extent[3:4], sd; colormap=:inferno)
 Colorbar(fig[1, 2], hm, label="surface density")
 colgap!(fig.layout, 12)
 

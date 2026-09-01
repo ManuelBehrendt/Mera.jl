@@ -236,6 +236,35 @@ else
         end
     end
 
+    @testset "sedov3d_amr: periodic_recenter rolls a projection" begin
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+
+        for d in (:x, :y, :z)
+            p = projection(gas, :sd, :Msol_pc2, direction=d, verbose=false, show_progress=false)
+            q = periodic_recenter(p, center=[0., 0., 0.], direction=d, verbose=false)
+            m0, m1 = p.maps[:sd], q.maps[:sd]
+            # a whole-pixel roll: same values, reordered, so any total is untouched
+            @test isapprox(sum(m0), sum(m1); rtol=1e-12)
+            @test sort(vec(m0)) == sort(vec(m1))
+            # the blast sits on the origin, so its evacuated centre lands mid-map
+            n1, n2 = size(m1)
+            @test Tuple(argmin(m1)) == (n1 ÷ 2 + 1, n2 ÷ 2 + 1)
+            # coordinates are now measured from the requested centre
+            @test q.extent[1] ≈ -q.extent[2]
+            @test q.extent[3] ≈ -q.extent[4]
+        end
+
+        # an off-axis map has no pixel shift that is a periodic translation, so this
+        # must refuse rather than return something plausible
+        o = projection(gas, :sd, :Msol_pc2, los=[1., 1., 1.], verbose=false, show_progress=false)
+        @test_throws ErrorException periodic_recenter(o, center=[0., 0., 0.], verbose=false)
+        # and a non-axis direction is rejected
+        p = projection(gas, :sd, :Msol_pc2, verbose=false, show_progress=false)
+        @test_throws ErrorException periodic_recenter(p, direction=:q, verbose=false)
+    end
+
     @testset "sedov3d_amr: cuboids wrap" begin
         # A cuboid is the one shape where wrapping is not a distance test: in box
         # coordinates a wrapped cuboid is two intervals per axis. Expressed as a
