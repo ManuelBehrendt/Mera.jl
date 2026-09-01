@@ -5,10 +5,12 @@
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
 **MERA** reads and analyzes astrophysical simulation output natively in Julia. It is built for
-[RAMSES](https://github.com/ramses-organisation/ramses): multi-resolution AMR grids, particles,
-gravity, clumps and radiative-transfer fields loaded into memory-efficient tables. It computes
-140+ physics-derived quantities on demand and provides conservation-correct projections, profiles,
-flux budgets and structure finding, all through one unified, multiple-dispatch API.
+[RAMSES](https://github.com/ramses-organisation/ramses): multi-resolution AMR grids carrying
+hydro and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fields, loaded into
+memory-efficient tables. Cosmological runs are handled throughout, with scale factor, redshift and
+the derived quantities that depend on them. It computes 140+ physics-derived quantities on demand
+and provides conservation-correct projections, profiles, flux budgets and structure finding, all
+through one unified, multiple-dispatch API.
 
 !!! warning "Released and upcoming 1.x versions are RAMSES-only"
     Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development
