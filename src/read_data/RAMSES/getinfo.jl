@@ -14,6 +14,15 @@ Call patterns:
 Set `verbose=false` to suppress the textual summary. The returned object exposes
 fields like `descriptor`, `grid_info`, `part_info`, `scale`, and helper accessors
 (`namelist(info)`, `makefile(info)`, `timerfile(info)`, etc.).
+
+This is the starting point of almost every workflow, because `gethydro`, `getparticles`,
+`getgravity` and the rest all take the `InfoType` it returns. It reads headers only and
+never touches cell or particle data.
+
+For a first impression of an unfamiliar output rather than an object to work with, see
+[`quicklook`](@ref): it reports the same header facts and then reads a budgeted sample to
+add projections along all three axes, a phase diagram and a mass budget. Use `getinfo` in
+a script, `quicklook` when you open a directory and want to know what is in it.
 """
 function getinfo end
 
