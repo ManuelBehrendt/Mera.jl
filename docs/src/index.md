@@ -42,29 +42,26 @@ using Mera
 ```
 
 Then run something on a real RAMSES simulation. `download_testdata` fetches one of Mera's public
-test simulations, 2.3 MB, and hands you the path:
+test simulations and hands you the path:
 
 ```julia
 using Mera, CairoMakie
-path = download_testdata("sedov3d_amr")   # a Sedov blast on an AMR grid
+path = download_testdata("stromgren3d")   # a source ionising neutral gas
 info = getinfo(path, output=7)            # the last of its seven snapshots
 gas  = gethydro(info)
-p    = projection(gas, :sd, :Msol_pc2)    # a 128x128 surface-density map
+p    = projection(gas, :xHII)             # the ionised-hydrogen fraction
 
-q  = periodic_recenter(p, center=[0., 0., 0.])         # centre the blast, see below
-heatmap(q.extent[1:2], q.extent[3:4], q.maps[:sd]; colormap=:inferno)
+heatmap(p.extent[1:2], p.extent[3:4], p.maps[:xHII]; colormap=:inferno)
 ```
 
-![The Sedov blast, projected to surface density](assets/home/first_projection.png)
+![Ionised hydrogen around a source, from the Strömgren test simulation](assets/home/first_projection.png)
 
-`projection` returns an object rather than a picture: the map is `p.maps[:sd]` and its edges are
-`p.extent`, so you can draw it with any plotting package. Mera draws nothing itself.
+`projection` returns an object rather than a picture: the map is `p.maps[:xHII]` and its edges are
+`p.extent`, in kpc here, so you can draw it with any plotting package. Mera draws nothing itself.
 
-Two details of this particular run: snapshot 1 is the moment before the blast, a uniform box, which
-is why the example asks for 7; and RAMSES's own Sedov setup puts the explosion at the *origin* of a
-periodic box, simulating one octant of the sphere, so the shell straddles the corners until
-`periodic_recenter` rolls it around the boundary, which is exact on a periodic grid. `getinfo` reports `boundaries: periodic` for exactly this reason, but Mera
-never wraps coordinates on its own: see [Periodic boxes](reproducibility.md#Periodic-boxes).
+The source sits at a corner of the box and ionises outward, so the run follows one octant of the
+sphere at eight times the effective resolution. Its answer is known: the ionisation front should
+follow the Strömgren law, which is what Mera's own test suite checks it against.
 
 With a simulation of your own, point `getinfo` at the output folder and continue the same way:
 
