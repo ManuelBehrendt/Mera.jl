@@ -130,6 +130,59 @@ else
         @test length(sp.data) > length(sn.data)
     end
 
+    # The three boundary cases all have a published fixture, so the inference is
+    # checked against real namelists rather than hand-written dictionaries.
+    @testset "boundary inference on the published fixtures" begin
+        cases = ((:sedov3d_amr, :periodic,    (x=true,  y=true,  z=true)),   # no &BOUNDARY_PARAMS
+                 (:mhdtube3d,   :mixed,       (x=false, y=true,  z=true)),   # shock tube: x closed
+                 (:stromgren3d, :nonperiodic, (x=false, y=false, z=false)))  # all six faces closed
+        for (key, expect, axes) in cases
+            haskey(PUBLIC_FIXTURES, key) || continue
+            f = PUBLIC_FIXTURES[key]
+            isdir(f.path) || continue
+            info = getinfo(1, f.path, verbose=false)
+            @test info.boundaries === expect
+            @test Mera.periodic_axes(info.namelist_content) == axes
+        end
+    end
+
+    @testset "sedov3d_amr: shells and mixed axes wrap correctly" begin
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = info.boxlen
+        mi(d) = d .- L .* round.(d ./ L)
+
+        # --- spherical shell straddling the faces -----------------------------------
+        lo, hi = 0.05, 0.12                        # box units
+        loc, hic = lo * L, hi * L
+        rp = getvar(gas, :r_sphere_periodic, center=[0., 0., 0.])
+        rn = getvar(gas, :r_sphere,          center=[0., 0., 0.])
+        sp = Mera.shellregionsphere(gas, radius=[lo, hi], center=[0., 0., 0.],
+                                    cell=false, periodic=true,  verbose=false)
+        sn = Mera.shellregionsphere(gas, radius=[lo, hi], center=[0., 0., 0.],
+                                    cell=false, periodic=false, verbose=false)
+        @test length(sp.data) == count(loc .<= rp .<= hic)
+        @test length(sn.data) == count(loc .<= rn .<= hic)
+        @test length(sp.data) > length(sn.data)
+
+        # --- a MIXED request: wrap x and y, leave z alone ---------------------------
+        # mhdtube3d is a real mixed run, but its structure does not touch a face; this
+        # asserts the per-axis plumbing itself against a mask built by hand.
+        x = getvar(gas, :x); y = getvar(gas, :y); z = getvar(gas, :z)
+        R = 0.1; Rc = R * L
+        r_mixed = sqrt.(mi(x) .^ 2 .+ mi(y) .^ 2 .+ z .^ 2)
+        sm = Mera.subregionsphere(gas, radius=R, center=[0., 0., 0.], cell=false,
+                                  periodic=(x=true, y=true, z=false), verbose=false)
+        @test length(sm.data) == count(r_mixed .< Rc)
+        # and it must sit strictly between the all-off and all-on answers
+        s_off = Mera.subregionsphere(gas, radius=R, center=[0., 0., 0.], cell=false,
+                                     periodic=false, verbose=false)
+        s_on  = Mera.subregionsphere(gas, radius=R, center=[0., 0., 0.], cell=false,
+                                     periodic=true,  verbose=false)
+        @test length(s_off.data) < length(sm.data) < length(s_on.data)
+    end
+
     # ------------------------------------------------------------------ Sedov-Taylor blast
     @testset "sedov3d_amr: blast radius follows R ~ t^(2/5)" begin
         f = PUBLIC_FIXTURES[:sedov3d_amr]; P = f.path
