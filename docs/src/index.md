@@ -8,8 +8,9 @@
 [RAMSES](https://github.com/ramses-organisation/ramses): multi-resolution AMR grids carrying
 hydro and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fields, loaded into
 memory-efficient tables. Cosmological runs are handled throughout, with scale factor, redshift and
-the derived quantities that depend on them. It computes physics-derived quantities on demand,
-listed by `getvar()`, and provides conservation-correct projections, profiles, flux budgets and
+the derived quantities that depend on them. It derives quantities on demand, thermodynamics
+and kinematics, magnetic and gravitational fields, ionisation states, Jeans and virial diagnostics,
+each in any unit, and provides conservation-correct projections, profiles, flux budgets and
 structure finding, all through one unified, multiple-dispatch API.
 
 !!! warning "Released and upcoming 1.x versions are RAMSES-only"
@@ -139,9 +140,24 @@ conserve mass across refinement boundaries.
 backend keep memory in hand, multi-threaded IO is measured rather than assumed, and MERA-files
 store snapshots compressed for fast time-series work.
 
-**Physics on demand.** Derived quantities for gas, particles, gravity and clumps, from Jeans mass
-to Mach numbers to virial parameters, computed on request rather than stored. Call `getvar()` with
-no arguments for the current list.
+**Physics on demand.** Nothing is precomputed and nothing is stored twice: ask for a quantity by
+name and Mera derives it from what the snapshot actually holds, in the unit you ask for.
+
+| | |
+|---|---|
+| thermodynamics | temperature, sound speed, mean molecular weight, five entropy measures, cooling time and length |
+| kinematics | velocities and Mach numbers in Cartesian, cylindrical and spherical frames, and the squared components the dispersions build on |
+| magnetic fields | components in three coordinate systems, magnitude, magnetic pressure, plasma beta, Alfvén speed, and Alfvén, fast and slow magnetosonic Mach numbers |
+| gravity | potential, accelerations and forces in three coordinate systems, specific and total binding energy |
+| stability and star formation | Jeans length, mass and number, local virial parameter, free-fall time |
+| angular momentum | specific and total, Cartesian, cylindrical and spherical components |
+| radiative transfer | ionisation fractions, number densities, photoionisation and photoheating rates, recombination |
+| geometry | cell size and volume, cylindrical and spherical radii, and their minimum-image forms for a periodic box |
+| cosmology | overdensity, formation redshift and time, physical age from conformal birth time |
+
+A quantity exists where the data supports it: the magnetosonic Mach numbers need a magnetic field,
+the ionisation states need radiative transfer. `getvar()` prints the current list, and
+[`add_field`](derived_fields.md) adds your own on the same footing.
 
 **Results you can defend.** Pin versions with a `Project.toml` and `Manifest.toml` in your own
 analysis project, and record what produced each number with [`provenance`](provenance.md). See

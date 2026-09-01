@@ -19,8 +19,9 @@
 [RAMSES](https://github.com/ramses-organisation/ramses) — multi-resolution AMR grids carrying hydro
 and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fields, loaded into
 memory-efficient tables. Cosmological runs are handled throughout, with scale factor, redshift and
-the derived quantities that depend on them. It computes physics-derived quantities on demand,
-listed by `getvar()`, and provides conservation-correct projections, profiles, flux budgets and
+the derived quantities that depend on them. It derives quantities on demand, thermodynamics
+and kinematics, magnetic and gravitational fields, ionisation states, Jeans and virial diagnostics,
+each in any unit, and provides conservation-correct projections, profiles, flux budgets and
 structure finding, all through one unified, multiple-dispatch API.
 
 > ### Released and upcoming 1.x versions are **RAMSES-only**
@@ -59,9 +60,12 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   `Manifest.toml`), record what produced each number with `provenance()`, and check the install
   against test simulations that have known answers. See
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
-- **Derived quantities on demand** — temperature, sound speed, Mach numbers (incl. Alfvén/fast/slow),
-  Jeans length/mass, virial parameter, cylindrical/spherical velocities, specific angular momentum,
-  kinetic/thermal energy and more — all via one `getvar()` interface, extensible with `add_field()`.
+- **Derived quantities on demand** — thermodynamics (temperature, sound speed, five entropy measures,
+  cooling time), kinematics and Mach numbers in Cartesian/cylindrical/spherical frames, magnetic
+  fields (magnitude, pressure, plasma beta, Alfvén speed, magnetosonic Mach numbers), gravity
+  (accelerations, forces, binding energies), stability (Jeans length/mass/number, virial parameter,
+  free-fall time), angular momentum, ionisation states, and cosmological ages and overdensities —
+  all via one `getvar()` interface, extensible with `add_field()`.
 
 ## Try it without any data
 
