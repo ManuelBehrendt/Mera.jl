@@ -7,17 +7,20 @@ function subregioncuboid(dataobject::ClumpDataType;
         center::CenterType=[0., 0., 0.],
         range_unit::Symbol=:standard,
         inverse::Bool=false,
+        periodic=false,
         verbose::Bool=verbose_mode)
 
     printtime("", verbose)
+    bflags = _periodic_flags(periodic)
 
        boxlen = dataobject.boxlen
 
        # convert given ranges and print overview on screen
-       ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center)
+       ranges, ranges_raw = prepranges(dataobject.info, range_unit, verbose,
+                                       xrange, yrange, zrange, center; unclamped=true)
 
 
-       xmin, xmax, ymin, ymax, zmin, zmax = ranges
+       xmin, xmax, ymin, ymax, zmin, zmax = any(bflags) ? ranges_raw : ranges
 
        #if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
        #  yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
@@ -28,20 +31,14 @@ function subregioncuboid(dataobject::ClumpDataType;
 
           if inverse == false
               sub_data = _subset_table(dataobject.data,
-                                 _mask_rows(dataobject.data, (c, i) ->   c.peak_x[i] >=  xmin * boxlen  &&
-                                      c.peak_x[i] <=  xmax * boxlen  &&
-                                      c.peak_y[i] >=  ymin * boxlen  &&
-                                      c.peak_y[i] <=  ymax * boxlen  &&
-                                      c.peak_z[i] >=  zmin * boxlen  &&
-                                      c.peak_z[i] <=  zmax * boxlen))
+                                 _mask_rows(dataobject.data, (c, i) ->   _axis_in_range(c.peak_x[i], xmin, xmax, boxlen, bflags[1]) &&
+                                      _axis_in_range(c.peak_y[i], ymin, ymax, boxlen, bflags[2]) &&
+                                      _axis_in_range(c.peak_z[i], zmin, zmax, boxlen, bflags[3])))
           elseif inverse == true
               sub_data = _subset_table(dataobject.data,
-                                 _mask_rows(dataobject.data, (c, i) ->   (c.peak_x[i] <  xmin * boxlen  ||
-                                      c.peak_x[i] >  xmax * boxlen)  ||
-                                      (c.peak_y[i] <  ymin * boxlen  ||
-                                      c.peak_y[i] >  ymax * boxlen)  ||
-                                      (c.peak_z[i] <  zmin * boxlen  ||
-                                      c.peak_z[i] >  zmax * boxlen)))
+                                 _mask_rows(dataobject.data, (c, i) ->   !_axis_in_range(c.peak_x[i], xmin, xmax, boxlen, bflags[1]) ||
+                                      !_axis_in_range(c.peak_y[i], ymin, ymax, boxlen, bflags[2]) ||
+                                      !_axis_in_range(c.peak_z[i], zmin, zmax, boxlen, bflags[3])))
               ranges = dataobject.ranges
           end
 

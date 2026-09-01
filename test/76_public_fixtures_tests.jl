@@ -183,6 +183,59 @@ else
         @test length(s_off.data) < length(sm.data) < length(s_on.data)
     end
 
+    @testset "cuboids wrap on the point data types too" begin
+        L(i) = i.boxlen
+        mi(v, l) = v .- l .* round.(v ./ l)
+        h = 0.05
+
+        # particles: 124,990 tracers surrounding the origin
+        f = PUBLIC_FIXTURES[:sedov3d_grav_part]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        part = getparticles(info, verbose=false, show_progress=false)
+        l = L(info); hc = h * l
+        x = getvar(part, :x); y = getvar(part, :y); z = getvar(part, :z)
+        cp = Mera.subregioncuboid(part, xrange=[-h,h], yrange=[-h,h], zrange=[-h,h],
+                                  center=[0.,0.,0.], periodic=true,  verbose=false)
+        cn = Mera.subregioncuboid(part, xrange=[-h,h], yrange=[-h,h], zrange=[-h,h],
+                                  center=[0.,0.,0.], periodic=false, verbose=false)
+        ip = Mera.subregioncuboid(part, xrange=[-h,h], yrange=[-h,h], zrange=[-h,h],
+                                  center=[0.,0.,0.], periodic=true, inverse=true, verbose=false)
+        @test length(cp.data) == count((abs.(mi(x,l)) .<= hc) .& (abs.(mi(y,l)) .<= hc) .& (abs.(mi(z,l)) .<= hc))
+        @test length(cn.data) == count((0 .<= x .<= hc) .& (0 .<= y .<= hc) .& (0 .<= z .<= hc))
+        @test length(cp.data) > length(cn.data)
+        @test length(cp.data) + length(ip.data) == length(part.data)
+
+        # clumps: four blobs, addressed through peak_x/y/z rather than x/y/z
+        if haskey(PUBLIC_FIXTURES, :clumps3d) && isdir(PUBLIC_FIXTURES[:clumps3d].path)
+            fc = PUBLIC_FIXTURES[:clumps3d]
+            ic = getinfo(2, fc.path, verbose=false)
+            cl = getclumps(ic, verbose=false)
+            lc = L(ic); hh = 0.3; hhc = hh * lc
+            px = getvar(cl, :peak_x); py = getvar(cl, :peak_y); pz = getvar(cl, :peak_z)
+            kp = Mera.subregioncuboid(cl, xrange=[-hh,hh], yrange=[-hh,hh], zrange=[-hh,hh],
+                                      center=[0.,0.,0.], periodic=true,  verbose=false)
+            kn = Mera.subregioncuboid(cl, xrange=[-hh,hh], yrange=[-hh,hh], zrange=[-hh,hh],
+                                      center=[0.,0.,0.], periodic=false, verbose=false)
+            @test length(kp.data) == count((abs.(mi(px,lc)) .<= hhc) .& (abs.(mi(py,lc)) .<= hhc) .& (abs.(mi(pz,lc)) .<= hhc))
+            @test length(kn.data) == count((0 .<= px .<= hhc) .& (0 .<= py .<= hhc) .& (0 .<= pz .<= hhc))
+            @test length(kp.data) > length(kn.data)
+        end
+
+        # sinks: one sink at the box centre, so put the request a whole box away.
+        # Only wrapping can reach it, which is the sharpest form of this test.
+        if haskey(PUBLIC_FIXTURES, :sinks3d) && isdir(PUBLIC_FIXTURES[:sinks3d].path)
+            fs = PUBLIC_FIXTURES[:sinks3d]
+            is = getinfo(2, fs.path, verbose=false)
+            sk = getsinks(is, verbose=false)
+            sp = Mera.subregioncuboid(sk, xrange=[-0.02,0.02], yrange=[-0.02,0.02], zrange=[-0.02,0.02],
+                                      center=[-0.5,-0.5,-0.5], periodic=true,  verbose=false)
+            sn = Mera.subregioncuboid(sk, xrange=[-0.02,0.02], yrange=[-0.02,0.02], zrange=[-0.02,0.02],
+                                      center=[-0.5,-0.5,-0.5], periodic=false, verbose=false)
+            @test length(sp.data) == 1
+            @test length(sn.data) == 0
+        end
+    end
+
     @testset "sedov3d_amr: cuboids wrap" begin
         # A cuboid is the one shape where wrapping is not a distance test: in box
         # coordinates a wrapped cuboid is two intervals per axis. Expressed as a

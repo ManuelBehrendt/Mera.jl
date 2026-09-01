@@ -2,6 +2,17 @@
 ##### CUBOID #####-------------------------------------------------------------
 # Minimum image on a single separation, for the point-data regions. `on=false`
 # returns the separation unchanged, which is what every existing caller gets.
+# Cuboid overlap on one axis, for the point data types, whose coordinates are in
+# physical units rather than the 0..1 the AMR path uses. `lo`/`hi` arrive as box
+# fractions, so they are scaled here. Inclusive, matching the comparisons it replaces.
+@inline function _axis_in_range(v, lo, hi, L, on::Bool)
+    c = (lo + hi) / 2 * L
+    h = (hi - lo) / 2 * L
+    d = v - c
+    on && (d -= L * round(d / L))
+    return abs(d) <= h
+end
+
 @inline _pdiff(d, L, on::Bool) = on ? _minimum_image(d, L) : d
 
 function subregioncuboid(dataobject::PartDataType;
@@ -11,16 +22,19 @@ function subregioncuboid(dataobject::PartDataType;
     center::CenterType=[0., 0., 0.],
     range_unit::Symbol=:standard,
     inverse::Bool=false,
+    periodic=false,
     verbose::Bool=verbose_mode)
 
     printtime("", verbose)
+    bflags = _periodic_flags(periodic)
 
     boxlen = dataobject.boxlen
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center)
+    ranges, ranges_raw = prepranges(dataobject.info, range_unit, verbose,
+                                    xrange, yrange, zrange, center; unclamped=true)
 
-    xmin, xmax, ymin, ymax, zmin, zmax = ranges
+    xmin, xmax, ymin, ymax, zmin, zmax = any(bflags) ? ranges_raw : ranges
 
     #if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
     #   yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
@@ -31,9 +45,9 @@ function subregioncuboid(dataobject::PartDataType;
 
        # columnwise (see `_subset_table`): the row-wise form allocated a NamedTuple per particle
        cols = IndexedTables.columns(dataobject.data)
-       inside = (cols.x .>= xmin * boxlen) .& (cols.x .<= xmax * boxlen) .&
-                (cols.y .>= ymin * boxlen) .& (cols.y .<= ymax * boxlen) .&
-                (cols.z .>= zmin * boxlen) .& (cols.z .<= zmax * boxlen)
+       inside = _axis_in_range.(cols.x, xmin, xmax, boxlen, bflags[1]) .&
+                _axis_in_range.(cols.y, ymin, ymax, boxlen, bflags[2]) .&
+                _axis_in_range.(cols.z, zmin, zmax, boxlen, bflags[3])
        if inverse == false
            sub_data = _subset_table(dataobject.data, inside)
        elseif inverse == true
