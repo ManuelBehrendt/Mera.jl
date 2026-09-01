@@ -88,6 +88,48 @@ else
         (n*sum(x .* y) - sum(x)*sum(y)) / (n*sum(x .^ 2) - sum(x)^2)
     end
 
+    # ------------------------------------------------------------ periodic boundary handling
+    # sedov3d_amr is the fixture for this: RAMSES's own namelist puts the explosion at
+    # the ORIGIN of a periodic box, so the shell straddles every face. That makes it the
+    # one published simulation where the periodic code paths can be checked against a
+    # known answer instead of against themselves.
+    @testset "sedov3d_amr: periodic paths agree with the minimum image" begin
+        f = PUBLIC_FIXTURES[:sedov3d_amr]; P = f.path
+        info = getinfo(f.outputs, P, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+
+        @test info.boundaries === :periodic          # inferred from the namelist
+        @test Mera.periodic_axes(info.namelist_content) == (x=true, y=true, z=true)
+
+        # --- centre of mass of the shell, which sits on the origin ------------------
+        shell = getvar(gas, :rho) .> 1.15
+        @test count(shell) > 100                      # the shell is actually resolved
+        com_naive = center_of_mass(gas, mask=shell)
+        com_per   = center_of_mass(gas, mask=shell, periodic=true)
+        half = info.boxlen / 2
+        # the naive answer collapses to the middle of the box, the furthest point from
+        # the truth; the circular mean has to land near the origin instead
+        @test all(abs.(com_naive .- half) .< 0.05 * info.boxlen)
+        for c in com_per
+            @test min(abs(c), abs(c - info.boxlen)) < 0.10 * info.boxlen
+        end
+
+        # --- spherical subregion reaching around the faces --------------------------
+        R_box  = 0.1                       # :standard radius is in box units
+        R_code = R_box * info.boxlen
+        rp = getvar(gas, :r_sphere_periodic, center=[0., 0., 0.])
+        rn = getvar(gas, :r_sphere,          center=[0., 0., 0.])
+        sp = Mera.subregionsphere(gas, radius=R_box, center=[0., 0., 0.],
+                                  cell=false, periodic=true,  verbose=false)
+        sn = Mera.subregionsphere(gas, radius=R_box, center=[0., 0., 0.],
+                                  cell=false, periodic=false, verbose=false)
+        # point-based selection must reproduce the corresponding radius mask exactly
+        @test length(sp.data) == count(rp .< R_code)
+        @test length(sn.data) == count(rn .< R_code)
+        # and wrapping must actually find more: the naive sphere keeps one octant
+        @test length(sp.data) > length(sn.data)
+    end
+
     # ------------------------------------------------------------------ Sedov-Taylor blast
     @testset "sedov3d_amr: blast radius follows R ~ t^(2/5)" begin
         f = PUBLIC_FIXTURES[:sedov3d_amr]; P = f.path
