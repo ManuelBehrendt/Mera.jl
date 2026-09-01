@@ -88,7 +88,7 @@ is wrong rather than an error:
 | a cylinder's **height** cut | cylinders wrap in their two radial axes, never along their own axis |
 | `projection` | still bins onto the box as stored; roll the finished map with `periodic_recenter` (axis-aligned only) |
 | `clumpfind` | a structure crossing a face is found as two |
-| `covering_grid`, `profile` | bins near a face are incomplete |
+| `covering_grid` | the grid is cut at the face rather than continued around it |
 
 For projections, roll the finished map with `periodic_recenter`. A whole-pixel shift of an
 axis-aligned map is exactly a translation of the box, so no value changes and no interpolation
@@ -116,6 +116,18 @@ sel = r .< 0.1                                    # a Bool mask, wrapped correct
 msum(gas, mask=sel)
 center_of_mass(gas, mask=sel, periodic=true)
 ```
+
+### Radial profiles
+
+`profile` bins on any `getvar` quantity, so a periodic radial profile needs nothing special:
+bin on `:r_sphere_periodic` instead of `:r_sphere`.
+
+```julia
+profile(gas, :r_sphere_periodic, :rho, center=[0., 0., 0.], nbins=25)
+```
+
+On the Sedov test simulation, whose blast sits on the origin, that bins 419 cells against 211 for
+the plain radius, and recovers the shell at its true density instead of a washed-out one.
 
 On the Sedov test simulation, whose blast sits on the origin, that mask holds **862** cells. The
 same cut on the plain `:r_sphere` holds **521**: it misses everything on the wrapped side.

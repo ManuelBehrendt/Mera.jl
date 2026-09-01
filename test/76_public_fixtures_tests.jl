@@ -236,6 +236,27 @@ else
         end
     end
 
+    @testset "sedov3d_amr: radial profiles bin periodically" begin
+        # profile bins on any getvar quantity and forwards `center`, so a periodic
+        # radial profile needs no special support: bin on :r_sphere_periodic. This
+        # test exists to keep that true.
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+
+        pn = profile(gas, :r_sphere,          :rho, center=[0., 0., 0.], nbins=25, xrange=(0., 0.08))
+        pp = profile(gas, :r_sphere_periodic, :rho, center=[0., 0., 0.], nbins=25, xrange=(0., 0.08))
+
+        # the blast sits on the origin, so wrapping must reach cells the naive radius misses
+        @test sum(pp.count) > sum(pn.count)
+
+        okn = .!isnan.(pn.mean) .& (pn.count .> 0)
+        okp = .!isnan.(pp.mean) .& (pp.count .> 0)
+        @test any(okn) && any(okp)
+        # and it must recover a sharper shell, not merely more cells
+        @test maximum(pp.mean[okp]) > maximum(pn.mean[okn])
+    end
+
     @testset "sedov3d_amr: periodic_recenter rolls a projection" begin
         f = PUBLIC_FIXTURES[:sedov3d_amr]
         info = getinfo(f.outputs, f.path, verbose=false)
