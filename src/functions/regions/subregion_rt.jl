@@ -55,7 +55,9 @@ function subregioncuboid(dataobject::RtDataType;
     range_unit::Symbol=:standard,
     cell::Bool=true,
     inverse::Bool=false,
+    periodic=false,
     verbose::Bool=verbose_mode)
+    bflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -64,9 +66,10 @@ function subregioncuboid(dataobject::RtDataType;
     isamr = checkuniformgrid(dataobject, lmax)
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center)
+    ranges, ranges_raw = prepranges(dataobject.info, range_unit, verbose,
+                                    xrange, yrange, zrange, center; unclamped=true)
 
-    xmin, xmax, ymin, ymax, zmin, zmax = ranges
+    xmin, xmax, ymin, ymax, zmin, zmax = any(bflags) ? ranges_raw : ranges
 
     #if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
     #   yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
@@ -93,9 +96,9 @@ function subregioncuboid(dataobject::RtDataType;
                         cell_zmax = c.cz[i] / level_factor
                         
                         # Check for overlap: cell overlaps if its max > range_min AND its min < range_max
-                        (cell_xmax > xmin && cell_xmin < xmax) &&
-                        (cell_ymax > ymin && cell_ymin < ymax) &&
-                        (cell_zmax > zmin && cell_zmin < zmax)
+                        _axis_overlaps((cell_xmin + cell_xmax) / 2, xmin, xmax, (cell_xmax - cell_xmin) / 2, bflags[1]) &&
+                        _axis_overlaps((cell_ymin + cell_ymax) / 2, ymin, ymax, (cell_xmax - cell_xmin) / 2, bflags[2]) &&
+                        _axis_overlaps((cell_zmin + cell_zmax) / 2, zmin, zmax, (cell_xmax - cell_xmin) / 2, bflags[3])
                     end))
                 else
                     # Point-based selection: include cells whose centers lie within the range
@@ -106,9 +109,9 @@ function subregioncuboid(dataobject::RtDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x >= xmin && cell_x <= xmax &&
-                        cell_y >= ymin && cell_y <= ymax &&
-                        cell_z >= zmin && cell_z <= zmax
+                        _axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) &&
+                        _axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) &&
+                        _axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             else # for uniform grid
@@ -126,9 +129,9 @@ function subregioncuboid(dataobject::RtDataType;
                         cell_zmax = c.cz[i] / level_factor
                         
                         # Check for overlap
-                        (cell_xmax > xmin && cell_xmin < xmax) &&
-                        (cell_ymax > ymin && cell_ymin < ymax) &&
-                        (cell_zmax > zmin && cell_zmin < zmax)
+                        _axis_overlaps((cell_xmin + cell_xmax) / 2, xmin, xmax, (cell_xmax - cell_xmin) / 2, bflags[1]) &&
+                        _axis_overlaps((cell_ymin + cell_ymax) / 2, ymin, ymax, (cell_xmax - cell_xmin) / 2, bflags[2]) &&
+                        _axis_overlaps((cell_zmin + cell_zmax) / 2, zmin, zmax, (cell_xmax - cell_xmin) / 2, bflags[3])
                     end))
                 else
                     # Point-based selection for uniform grid
@@ -139,9 +142,9 @@ function subregioncuboid(dataobject::RtDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x >= xmin && cell_x <= xmax &&
-                        cell_y >= ymin && cell_y <= ymax &&
-                        cell_z >= zmin && cell_z <= zmax
+                        _axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) &&
+                        _axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) &&
+                        _axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
 
@@ -176,9 +179,9 @@ function subregioncuboid(dataobject::RtDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x < xmin || cell_x > xmax ||
-                        cell_y < ymin || cell_y > ymax ||
-                        cell_z < zmin || cell_z > zmax
+                        !_axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) ||
+                        !_axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) ||
+                        !_axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             else # for uniform grid
@@ -209,9 +212,9 @@ function subregioncuboid(dataobject::RtDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x < xmin || cell_x > xmax ||
-                        cell_y < ymin || cell_y > ymax ||
-                        cell_z < zmin || cell_z > zmax
+                        !_axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) ||
+                        !_axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) ||
+                        !_axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             end

@@ -183,6 +183,35 @@ else
         @test length(s_off.data) < length(sm.data) < length(s_on.data)
     end
 
+    @testset "sedov3d_amr: cuboids wrap" begin
+        # A cuboid is the one shape where wrapping is not a distance test: in box
+        # coordinates a wrapped cuboid is two intervals per axis. Expressed as a
+        # distance from the range centre it stays one comparison, which is what the
+        # implementation does, so this checks it against an explicit two-sided mask.
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = info.boxlen; h = 0.05; hc = h * L
+        x = getvar(gas, :x); y = getvar(gas, :y); z = getvar(gas, :z)
+        mi(v) = v .- L .* round.(v ./ L)
+
+        cp = Mera.subregioncuboid(gas, xrange=[-h, h], yrange=[-h, h], zrange=[-h, h],
+                                  center=[0., 0., 0.], cell=false, periodic=true,  verbose=false)
+        cn = Mera.subregioncuboid(gas, xrange=[-h, h], yrange=[-h, h], zrange=[-h, h],
+                                  center=[0., 0., 0.], cell=false, periodic=false, verbose=false)
+        mp = (abs.(mi(x)) .< hc) .& (abs.(mi(y)) .< hc) .& (abs.(mi(z)) .< hc)
+        mn = (0 .<= x .< hc) .& (0 .<= y .< hc) .& (0 .<= z .< hc)
+        @test length(cp.data) == count(mp)
+        @test length(cn.data) == count(mn)
+        @test length(cp.data) > length(cn.data)
+
+        # inverse must stay the exact complement once wrapping is on
+        ip = Mera.subregioncuboid(gas, xrange=[-h, h], yrange=[-h, h], zrange=[-h, h],
+                                  center=[0., 0., 0.], cell=false, periodic=true,
+                                  inverse=true, verbose=false)
+        @test length(cp.data) + length(ip.data) == length(gas.data)
+    end
+
     @testset "sedov3d_grav_part: point data wraps too" begin
         f = PUBLIC_FIXTURES[:sedov3d_grav_part]
         info = getinfo(f.outputs, f.path, verbose=false)

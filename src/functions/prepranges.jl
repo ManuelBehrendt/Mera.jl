@@ -11,7 +11,8 @@ function prepranges(    dataobject::InfoType,
                         yrangem::Array{<:Any,1},
                         zrangem::Array{<:Any,1},
                         center::CenterType;
-                        dataranges::Array{<:Real,1}=[0.,1., 0.,1., 0.,1.] )
+                        dataranges::Array{<:Real,1}=[0.,1., 0.,1., 0.,1.],
+                        unclamped::Bool=false )
 
     xrange = zeros(Float64,2)
     yrange = zeros(Float64,2)
@@ -136,6 +137,9 @@ function prepranges(    dataobject::InfoType,
 
 
     ranges = [xmin, xmax, ymin, ymax, zmin, zmax]
+    # A periodic selection needs the request BEFORE it was clamped to the box: the
+    # half that fell outside is the half that wraps round to the other side.
+    unclamped && return ranges, [xmin0, xmax0, ymin0, ymax0, zmin0, zmax0]
     return ranges
 end
 
