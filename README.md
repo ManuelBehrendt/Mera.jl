@@ -21,8 +21,8 @@ and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fields, l
 memory-efficient tables. Cosmological runs are handled throughout, with scale factor, redshift and
 the derived quantities that depend on them. It derives quantities on demand, thermodynamics
 and kinematics, magnetic and gravitational fields, ionisation states, Jeans and virial diagnostics,
-each in any unit, and provides conservation-correct projections, profiles, flux budgets and
-structure finding, all through one unified, multiple-dispatch API.
+each in any unit, and provides conservation-correct projections, profiles and structure finding,
+all through one unified, multiple-dispatch API.
 
 > ### Released and upcoming 1.x versions are **RAMSES-only**
 >
@@ -53,7 +53,7 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
 - **RAMSES-native** — direct binary reading of AMR outputs with automatic unit conversion and full
   multi-level support; load only what you need with spatial and refinement-level filtering.
 - **Conservation-correct** — projections and covering grids conserve mass to machine precision with
-  proper per-level cell volumes; flux budgets through surfaces split inflow/outflow explicitly.
+  proper per-level cell volumes.
 - **Multi-threaded by default** — `gethydro()` and `projection()` use all available cores
   automatically; benchmarking guides included for system tuning.
 - **Reproducible by construction** — pin your stack with a Julia project (`Project.toml` +
@@ -148,15 +148,9 @@ boundedness, validation and catalogue pipeline:
 `PersistenceFinder` (plus the default friends-of-friends). Gravitational boundedness uses a
 Barnes–Hut self-potential, SUBFIND-style unbinding and tidal (Hill-radius) truncation.
 
-### Flux budgets
-- **`fluxbudget` / `fluxprofile` / `fluxtimeseries`** — conservation-correct inflow/outflow of mass,
-  momentum, energy and metals through spheres, cylinders, planes or angular-momentum-aligned
-  surfaces, optionally split by gas phase, with sampling/bootstrap uncertainties and a surface map of
-  where gas enters and leaves.
-
 ### Derived fields & extensions
 - **`getvar`** — derived quantities by name (`:T`, `:cs`, `:mach`, `:jeanslength`,
-  `:vr_cylinder`, `:ekin`, `:escape_speed`, …); `list_fields(:hydro; builtin=true)` lists them all
+  `:vr_cylinder`, `:ekin`, `:jeansmass`, …); `getvar()` prints the full list
 - **`add_field`** — register a custom derived field once; it then works inside `projection`, `profile`, `phase`
 - **`getvar_requirements`** — query the raw variables a derived field needs (drives selective I/O)
 
@@ -170,7 +164,6 @@ Barnes–Hut self-potential, SUBFIND-style unbinding and tidal (Hill-radius) tru
 
 | Feature | Use case |
 |---|---|
-| Flux budgets | inflow/outflow through surfaces (winds, accretion) |
 | Clump catalogs | star-forming clouds, halo substructure, dense cores |
 | Covering grids | FFTs, power spectra, ML inputs |
 | Phase diagrams | gas thermodynamics, phase structure |
@@ -238,8 +231,7 @@ Write the analysis once; it works on every data type.
 
 ## How MERA compares
 
-- **vs. `yt`** — a Julia-native code path (no Python/Cython split) for custom, auditable analyses; a
-  first-class, conservation-checked **flux budget** (yt offers only marching-cubes isocontour flux);
+- **vs. `yt`** — a Julia-native code path (no Python/Cython split) for custom, auditable analyses,
   and a **pluggable clump/halo finder** with several modern algorithms behind one interface.
 - **vs. `pynbody`** — direct RAMSES AMR reading, multi-threaded out of the box, and research-grade
   derived physics (spherical/cylindrical velocities, Jeans/virial, magnetosonic Mach, tidal truncation).

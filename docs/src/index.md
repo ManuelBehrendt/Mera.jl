@@ -10,8 +10,8 @@ hydro and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fie
 memory-efficient tables. Cosmological runs are handled throughout, with scale factor, redshift and
 the derived quantities that depend on them. It derives quantities on demand, thermodynamics
 and kinematics, magnetic and gravitational fields, ionisation states, Jeans and virial diagnostics,
-each in any unit, and provides conservation-correct projections, profiles, flux budgets and
-structure finding, all through one unified, multiple-dispatch API.
+each in any unit, and provides conservation-correct projections, profiles and structure finding,
+all through one unified, multiple-dispatch API.
 
 !!! warning "Released and upcoming 1.x versions are RAMSES-only"
     Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development
