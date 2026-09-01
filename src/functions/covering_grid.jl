@@ -273,6 +273,11 @@ an `ArgumentError`; use [`projection`](@ref) for those. Clumps raise a `MethodEr
 A uniform grid is dense and can be far larger than the AMR data — call [`covering_grid_memory`](@ref)
 first; this errors rather than allocate past `max_bytes`.
 
+Pass `periodic=true` to let the window continue around a box face instead of being cut at it, which
+is what you want for a structure sitting on a boundary. A run that wraps in some directions only
+takes `(x=true, y=true, z=false)`; `getinfo` reports which (`info.boundaries`). Without it the
+requested range is clamped to the box, so the grid comes back narrower than asked for.
+
 ```julia
 gas = gethydro(getinfo(output, path))
 covering_grid_memory(gas, [:rho, :T]; lmax=8)          # check size first

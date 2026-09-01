@@ -20,6 +20,11 @@ over boundary handling in adaptive mesh refinement (AMR) simulations.
 - `range_unit::Symbol=:standard`: Units for ranges (:standard, :kpc, :Mpc, etc.)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
+- `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
+  a run that wraps in some directions only takes `(x=true, y=true, z=false)`. Needed when the
+  region touches a face: without it the part outside the box is dropped, not wrapped, so a
+  sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
+  (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
 - `verbose::Bool=verbose_mode`: Print progress information
 
 # Selection Modes
@@ -516,6 +521,11 @@ It supports both cell-based and point-based selection modes for precise boundary
 - `direction::Symbol=:z`: Cylinder axis orientation — only `:z` is implemented (`:x`/`:y` raise an error); for arbitrary orientations use the value-type `Cylinder(r, h; axis=…)` region
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
+- `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
+  a run that wraps in some directions only takes `(x=true, y=true, z=false)`. Needed when the
+  region touches a face: without it the part outside the box is dropped, not wrapped, so a
+  sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
+  (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
 - `smooth_boundary::Bool=false`: Enable smooth boundary transitions (eliminates grid artifacts)
 - `boundary_width::Real=0.1`: Relative width of smooth transition zone (0.0-1.0)
 - `verbose::Bool=verbose_mode`: Print progress information
@@ -770,6 +780,11 @@ and point-based selection modes for precise boundary handling in AMR simulations
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
+- `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
+  a run that wraps in some directions only takes `(x=true, y=true, z=false)`. Needed when the
+  region touches a face: without it the part outside the box is dropped, not wrapped, so a
+  sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
+  (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
 - `verbose::Bool=verbose_mode`: Print progress information
 
 # Selection Modes

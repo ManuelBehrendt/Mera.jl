@@ -236,6 +236,29 @@ else
         end
     end
 
+    @testset "the PUBLIC region API forwards periodic" begin
+        # The shape functions are internal. If `subregion`/`shellregion` stop forwarding
+        # the keyword, every periodic selection silently reverts to the clamped answer
+        # and nothing else in the suite would notice: the same class of bug the `cell`
+        # keyword hit before.
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = info.boxlen; R = 0.1; Rc = R * L
+        rp = getvar(gas, :r_sphere_periodic, center=[0., 0., 0.])
+        rn = getvar(gas, :r_sphere,          center=[0., 0., 0.])
+
+        sp = subregion(gas, :sphere, radius=R, center=[0., 0., 0.], cell=false, periodic=true,  verbose=false)
+        sn = subregion(gas, :sphere, radius=R, center=[0., 0., 0.], cell=false, periodic=false, verbose=false)
+        @test length(sp.data) == count(rp .< Rc)
+        @test length(sn.data) == count(rn .< Rc)
+        @test length(sp.data) > length(sn.data)
+
+        hp = shellregion(gas, :sphere, radius=[0.05, R], center=[0., 0., 0.],
+                         cell=false, periodic=true, verbose=false)
+        @test length(hp.data) == count(0.05 * L .<= rp .<= Rc)
+    end
+
     @testset "sedov3d_amr: covering_grid continues around a face" begin
         # The strongest check available: build the whole box at one level, then a window
         # that reaches past the origin, and require every cell of the window to equal the

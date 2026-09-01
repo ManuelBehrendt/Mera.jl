@@ -21,6 +21,7 @@ subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
             range_unit::Symbol=:standard,           # all
             cell::Bool=true,                        # hydro, gravity and RT (AMR cell data)
             inverse::Bool=false,                    # all
+    periodic=false,                         # all
             verbose::Bool=true,             # all
             myargs::ArgumentsType=ArgumentsType() ) # all
 ```
@@ -73,6 +74,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
     range_unit::Symbol=:standard,           # all
     cell::Bool=true,                        # hydro, gravity and RT (AMR cell data)
     inverse::Bool=false,                    # all
+    periodic=false,                         # all
     smooth_boundary::Bool=false,            # hydro cylinder only
     boundary_width::Real=0.1,               # hydro cylinder only
     verbose::Bool=true,             # all
@@ -109,6 +111,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                         range_unit=range_unit,
                         cell=cell,
                         inverse=inverse,
+                        periodic=periodic,
                         verbose=verbose)
         else
             return subregioncuboid(dataobject,
@@ -116,6 +119,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                         center=center,
                         range_unit=range_unit,
                         inverse=inverse,
+                        periodic=periodic,
                         verbose=verbose)
         end
 
@@ -133,6 +137,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             direction=direction,
                             cell=cell,
                             inverse=inverse,
+                        periodic=periodic,
                             smooth_boundary=smooth_boundary,
                             boundary_width=boundary_width,
                             verbose=verbose)
@@ -147,6 +152,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             direction=direction,
                             cell=cell,
                             inverse=inverse,
+                        periodic=periodic,
                             verbose=verbose)
         else
             return subregioncylinder(dataobject,
@@ -156,6 +162,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             range_unit=range_unit,
                             direction=direction,
                             inverse=inverse,
+                        periodic=periodic,
                             verbose=verbose)
         end
 
@@ -168,6 +175,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             range_unit=range_unit,
                             cell=cell,
                             inverse=inverse,
+                        periodic=periodic,
                             verbose=verbose)
         else
             return subregionsphere(dataobject,
@@ -175,6 +183,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             center=center,
                             range_unit=range_unit,
                             inverse=inverse,
+                        periodic=periodic,
                             verbose=verbose)
         end
     end
