@@ -104,26 +104,38 @@ _cg_default_lmax(obj) = obj isa InfoType ? obj.levelmax : obj.lmax
 
 # accumulate AMR leaves into the uniform grid(s); shared geometric weight `wsum` (∝ cell volume)
 function _cg_paint!(grids::Vector{<:Array{Float64}}, wsum::Array{Float64}, cxs, cys, czs, lvls,
-                    vmats, L::Int, g0, dims)
+                    vmats, L::Int, g0, dims, pflags=(false, false, false))
     nx, ny, nz = dims; gx0, gy0, gz0 = g0; nv = length(vmats)
+    N = 1 << L                       # the full box is N cells across at this level
+    # On a periodic axis a source cell can also reach the window through a face, so its
+    # index range is tried at the neighbouring images too. The window is never wider than
+    # the box, so one image on each side is enough. Non-periodic axes keep a single pass
+    # with the original arithmetic, so nothing changes for them.
+    kxs = pflags[1] ? (-N, 0, N) : (0,)
+    kys = pflags[2] ? (-N, 0, N) : (0,)
+    kzs = pflags[3] ? (-N, 0, N) : (0,)
     @inbounds for i in eachindex(lvls)
         ℓ = Int(lvls[i]); w = 8.0^(-ℓ)
         if ℓ <= L
             s = 1 << (L - ℓ)
-            ixa = max(1, (cxs[i]-1)*s + 1 - gx0); ixb = min(nx, cxs[i]*s - gx0); ixa > ixb && continue
-            iya = max(1, (cys[i]-1)*s + 1 - gy0); iyb = min(ny, cys[i]*s - gy0); iya > iyb && continue
-            iza = max(1, (czs[i]-1)*s + 1 - gz0); izb = min(nz, czs[i]*s - gz0); iza > izb && continue
-            for kz in iza:izb, ky in iya:iyb, kx in ixa:ixb
-                wsum[kx,ky,kz] += w
-                for vi in 1:nv; grids[vi][kx,ky,kz] += vmats[vi][i]*w; end
+            for oxk in kxs, oyk in kys, ozk in kzs
+                ixa = max(1, (cxs[i]-1)*s + 1 - gx0 + oxk); ixb = min(nx, cxs[i]*s - gx0 + oxk); ixa > ixb && continue
+                iya = max(1, (cys[i]-1)*s + 1 - gy0 + oyk); iyb = min(ny, cys[i]*s - gy0 + oyk); iya > iyb && continue
+                iza = max(1, (czs[i]-1)*s + 1 - gz0 + ozk); izb = min(nz, czs[i]*s - gz0 + ozk); iza > izb && continue
+                for kz in iza:izb, ky in iya:iyb, kx in ixa:ixb
+                    wsum[kx,ky,kz] += w
+                    for vi in 1:nv; grids[vi][kx,ky,kz] += vmats[vi][i]*w; end
+                end
             end
         else
             d = ℓ - L
-            ox = ((cxs[i]-1) >> d) + 1 - gx0; (1 <= ox <= nx) || continue
-            oy = ((cys[i]-1) >> d) + 1 - gy0; (1 <= oy <= ny) || continue
-            oz = ((czs[i]-1) >> d) + 1 - gz0; (1 <= oz <= nz) || continue
-            wsum[ox,oy,oz] += w
-            for vi in 1:nv; grids[vi][ox,oy,oz] += vmats[vi][i]*w; end
+            for oxk in kxs, oyk in kys, ozk in kzs
+                ox = ((cxs[i]-1) >> d) + 1 - gx0 + oxk; (1 <= ox <= nx) || continue
+                oy = ((cys[i]-1) >> d) + 1 - gy0 + oyk; (1 <= oy <= ny) || continue
+                oz = ((czs[i]-1) >> d) + 1 - gz0 + ozk; (1 <= oz <= nz) || continue
+                wsum[ox,oy,oz] += w
+                for vi in 1:nv; grids[vi][ox,oy,oz] += vmats[vi][i]*w; end
+            end
         end
     end
     return nothing
@@ -131,7 +143,7 @@ end
 
 # shared core: build the (3-D) uniform grids over `ranges` at level `L` for `vars`/`units`
 function _covering_core(obj, vars::Vector{Symbol}, units::Vector{Symbol}, L::Int, ranges::Vector{Float64},
-                        pos_unit::Symbol, max_bytes::Real, slice_axis, verbose::Bool)
+                        pos_unit::Symbol, max_bytes::Real, slice_axis, verbose::Bool, pflags=(false, false, false))
     g0, dims = _grid_dims(ranges, L)
     nv = length(vars)
     peak = prod(dims) * sizeof(Float64) * (nv + 1)
@@ -146,7 +158,7 @@ function _covering_core(obj, vars::Vector{Symbol}, units::Vector{Symbol}, L::Int
     vmats = [Float64.(getvar(obj, v, u)) for (v, u) in zip(vars, units)]
     grids = [zeros(Float64, dims) for _ in 1:nv]
     wsum = zeros(Float64, dims)
-    _cg_paint!(grids, wsum, cxs, cys, czs, lvls, vmats, L, g0, dims)
+    _cg_paint!(grids, wsum, cxs, cys, czs, lvls, vmats, L, g0, dims, pflags)
     @inbounds for vi in 1:nv, idx in eachindex(wsum)
         grids[vi][idx] = wsum[idx] > 0 ? grids[vi][idx]/wsum[idx] : NaN   # uncovered output cells → NaN
     end
@@ -274,11 +286,15 @@ covering_grid(obj::_CGCellData, vars::AbstractVector{Symbol}; kwargs...) =
 function covering_grid(obj::_CGCellData, vars::AbstractVector{Symbol}, units::AbstractVector{Symbol};
                        lmax::Int=obj.lmax, center=[0.,0.,0.], xrange=[missing,missing],
                        yrange=[missing,missing], zrange=[missing,missing], range_unit::Symbol=:standard,
-                       max_bytes::Real=4e9, pos_unit::Symbol=:standard, verbose::Bool=true)
+                       max_bytes::Real=4e9, pos_unit::Symbol=:standard, periodic=false, verbose::Bool=true)
     length(units) == length(vars) || throw(ArgumentError("units length must match vars"))
-    ranges = prepranges(obj.info, range_unit, false, collect(xrange), collect(yrange), collect(zrange), collect(center))
+    pflags = _periodic_flags(periodic)
+    # a window that reaches past a face keeps its full width only if it is not clamped
+    ranges, ranges_raw = prepranges(obj.info, range_unit, false, collect(xrange), collect(yrange),
+                                    collect(zrange), collect(center); unclamped=true)
+    any(pflags) && (ranges = ranges_raw)
     return _covering_core(obj, collect(Symbol, vars), collect(Symbol, units), lmax, ranges, pos_unit,
-                          max_bytes, nothing, verbose)
+                          max_bytes, nothing, verbose, pflags)
 end
 
 covering_grid(obj::PartDataType, var::Symbol, unit::Symbol=:standard; kwargs...) =

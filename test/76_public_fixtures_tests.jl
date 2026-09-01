@@ -236,6 +236,38 @@ else
         end
     end
 
+    @testset "sedov3d_amr: covering_grid continues around a face" begin
+        # The strongest check available: build the whole box at one level, then a window
+        # that reaches past the origin, and require every cell of the window to equal the
+        # corresponding cell of the full box under wrapping. Exact, not approximate.
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = 6; N = 2^L; h = 0.08
+
+        full = first(values(covering_grid(gas, [:rho], [:standard], lmax=L,
+                     xrange=[0., 1.], yrange=[0., 1.], zrange=[0., 1.], verbose=false).grid))
+        win  = first(values(covering_grid(gas, [:rho], [:standard], lmax=L, center=[0., 0., 0.],
+                     xrange=[-h, h], yrange=[-h, h], zrange=[-h, h], periodic=true, verbose=false).grid))
+        @test size(full) == (N, N, N)
+
+        g0 = round(Int, -h * N)
+        n  = size(win, 1)
+        mismatches = 0
+        for k in 1:n, j in 1:n, i in 1:n
+            a = win[i, j, k]
+            b = full[mod1(i + g0, N), mod1(j + g0, N), mod1(k + g0, N)]
+            isapprox(a, b; rtol=1e-10) || (mismatches += 1)
+        end
+        @test mismatches == 0
+
+        # without wrapping the same request is clamped at the face, so the window is
+        # narrower and covers only the part inside the box
+        clamped = first(values(covering_grid(gas, [:rho], [:standard], lmax=L, center=[0., 0., 0.],
+                        xrange=[-h, h], yrange=[-h, h], zrange=[-h, h], periodic=false, verbose=false).grid))
+        @test size(clamped, 1) < size(win, 1)
+    end
+
     @testset "sedov3d_amr: radial profiles bin periodically" begin
         # profile bins on any getvar quantity and forwards `center`, so a periodic
         # radial profile needs no special support: bin on :r_sphere_periodic. This

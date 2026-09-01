@@ -72,6 +72,10 @@ shellregionsphere(gas,   radius=[0.05, 0.1], center=[0., 0., 0.], periodic=true)
 subregioncylinder(gas,   radius=0.1, height=0.5, center=[0., 0., 0.], periodic=true)
 subregioncuboid(gas, xrange=[-0.05, 0.05], yrange=[-0.05, 0.05], zrange=[-0.05, 0.05],
                 center=[0., 0., 0.], periodic=true)
+
+# a uniform grid that continues around a face instead of stopping at it
+covering_grid(gas, [:rho], [:standard], lmax=6, center=[0., 0., 0.],
+              xrange=[-0.08, 0.08], yrange=[-0.08, 0.08], zrange=[-0.08, 0.08], periodic=true)
 shellregioncylinder(gas, radius=[0.05, 0.1], height=0.5, center=[0., 0., 0.], periodic=true)
 ```
 
@@ -88,7 +92,6 @@ is wrong rather than an error:
 | a cylinder's **height** cut | cylinders wrap in their two radial axes, never along their own axis |
 | `projection` | still bins onto the box as stored; roll the finished map with `periodic_recenter` (axis-aligned only) |
 | `clumpfind` | a structure crossing a face is found as two |
-| `covering_grid` | the grid is cut at the face rather than continued around it |
 
 For projections, roll the finished map with `periodic_recenter`. A whole-pixel shift of an
 axis-aligned map is exactly a translation of the box, so no value changes and no interpolation
