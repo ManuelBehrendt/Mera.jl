@@ -138,7 +138,7 @@ end
 | `getgravity`  | Same strategy as `gethydro`                               | `Threads.nthreads()`   | ✓             |
 | `getparticles`| Same strategy as `gethydro`                               | `Threads.nthreads()`   | ✓             |
 | `projection` (cells) | One task per variable (bounded by available/max_threads); dynamic queueing if variables > threads | `Threads.nthreads()`   | ✓             |
-| `projection` (particles) | Single-threaded; the backend contains no threading and takes no `max_threads` | 1                      | ✗             |
+| `projection` (particles) | Threaded *inside* one map: `:voronoi` splits the pixels, the deposition schemes split the particles | `Threads.nthreads()`   | ✓             |
 | `export_vtk`  | Internally threaded (hydro and particles); thread count auto-managed | `Threads.nthreads()`   | ✗             |
 
 ### What to expect from more threads
