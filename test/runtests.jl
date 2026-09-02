@@ -99,6 +99,7 @@ if isempty(_focus)
         tinclude("78_download_testdata_tests.jl")  # data-free: fixture catalogue, layout, already-present short-circuit
         tinclude("79_boundaries_tests.jl")  # data-free: boundary-condition inference from the namelist
         tinclude("80_getvar_overview_tests.jl")  # data-free: the getvar() list must match the code
+        tinclude("81_type_hierarchy_tests.jl")  # data-free: the type diagram must match subtypes()
         tinclude("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
         tinclude("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
         tinclude("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities

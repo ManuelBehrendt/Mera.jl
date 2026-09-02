@@ -2,7 +2,8 @@
 // Render: dot -Tpng -Gdpi=170 docs/type_hierarchy.dot -o docs/src/assets/TypeHierarchy.png
 //
 // Top card  : simulation codes (code-blind frontends) → which structs they populate.
-// Mid card  : DataSetType hierarchy (data sources). Abstract = italic/dashed; concrete
+// Mid card  : DataSetType hierarchy (data sources), regenerate after ANY change to the
+//             type tree in src/types.jl; test/81 compares the two. Abstract = italic/dashed; concrete
 //             = filled card + loader. Blue = contains mass, green = massless field.
 // Bottom card: DataMapsType (projection results). AMR maps are shared by hydro/gravity/RT;
 //             particle projections return PartMapsType.
@@ -29,7 +30,7 @@ digraph TypeHierarchy {
         node [style="rounded,filled", fillcolor="#ffedd5", color="#ea580c", fontcolor="#7c2d12", fontsize=13.5];
         RamsesCode [label=<<B>RAMSES</B> &#8729; native<BR/><FONT POINT-SIZE="10.5" COLOR="#9a3412">gethydro · getgravity · getparticles · getclumps · getrt</FONT>>];
         GridCodes  [label=<<B>Grid / AMR codes</B><BR/><FONT POINT-SIZE="10.5" COLOR="#9a3412">PLUTO &#8729; Athena++ &#8729; FLASH &#8729; Chombo</FONT>>];
-        PartCodes  [label=<<B>Particle / moving-mesh</B><BR/><FONT POINT-SIZE="10.5" COLOR="#9a3412">GADGET &#8729; AREPO/TNG &#8729; GIZMO &#8729; SWIFT</FONT>>];
+        PartCodes  [label=<<B>Particle / moving-mesh</B><BR/><FONT POINT-SIZE="10.5" COLOR="#9a3412">GADGET &#8729; AREPO</FONT>>];
         { rank=same; RamsesCode; GridCodes; PartCodes; }
     }
 
@@ -54,6 +55,7 @@ digraph TypeHierarchy {
         Hydro [label=<<B>HydroDataType</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#0369a1">gethydro</FONT>>];
         Part  [label=<<B>PartDataType</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#0369a1">getparticles</FONT>>];
         Clump [label=<<B>ClumpDataType</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#0369a1">getclumps</FONT>>];
+        Sink  [label=<<B>SinkDataType</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#0369a1">getsinks</FONT>>];
 
         // concrete, massless (green)
         node [style="rounded,filled", fillcolor="#dcfce7", color="#16a34a", fontcolor="#14352a"];
@@ -65,9 +67,10 @@ digraph TypeHierarchy {
         HydroPartType -> Hydro;
         HydroPartType -> Part;
         ContainMass   -> Clump;
+        ContainMass   -> Sink;
         DataSetType   -> Grav;
         DataSetType   -> Rt;
-        { rank=same; Hydro; Part; Clump; Grav; Rt; }
+        { rank=same; Hydro; Part; Clump; Sink; Grav; Rt; }
     }
 
     // codes → the structs they fill (RAMSES feeds the whole family; grid codes → Hydro;
