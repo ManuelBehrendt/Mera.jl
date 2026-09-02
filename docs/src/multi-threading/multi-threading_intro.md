@@ -68,6 +68,7 @@ end
 | `getparticles` | ✅ | ✅ | Same as gethydro |
 | `projection` (cells) | ✅ | ✅ | 1 thread per variable |
 | `projection` (particles) | ✅ | ✅ | Pixels or particle chunks |
+| `getrt` | ✅ | ✅ | Same as gethydro |
 | `export_vtk` | ✅ | ✗ | Auto-threading only |
 | `getinfo` | ✗ | ✗ | Lightweight, single-thread |
 
@@ -307,7 +308,7 @@ println("Compute threads: ", nthreads(:default))
 println("Interactive threads: ", nthreads(:interactive))  
 println("Current thread: ", threadid())
 println("Current pool: ", threadpool())
-# Note: GC thread count available in Julia 1.10+ with specific functions
+println("GC threads: ", Threads.ngcthreads())
 
 # Optimize BLAS for linear algebra
 using LinearAlgebra
@@ -1202,7 +1203,8 @@ using Mera, Base.Threads
 snapshots = 100:25:400
 results = Vector{NamedTuple}(undef, length(snapshots))
 
-@threads for (i, snapshot) in enumerate(snapshots)
+@threads for i in eachindex(snapshots)
+    snapshot = snapshots[i]
     info = getinfo(snapshot, SIMPATH)
     # Use max_threads=1 to reduce contention in outer loop
     gas = gethydro(info; lmax=10, max_threads=1)
@@ -1253,7 +1255,8 @@ selections = [
 
 results = Vector{NamedTuple}(undef, length(selections))
 
-@threads for (i, sel) in enumerate(selections)
+@threads for i in eachindex(selections)
+    sel = selections[i]
     info = getinfo(200, SIMPATH)
     # Extract selection parameters (excluding name)
     selection_kwargs = [(k,v) for (k,v) in pairs(sel) if k != :name]
@@ -1494,13 +1497,16 @@ function comprehensive_analysis_pipeline(simulation_paths)
     
     all_results = Vector{Any}(undef, length(simulation_paths))
     
-    # Outer level: Parallel across simulations
-    @threads for (j, sim_path) in enumerate(simulation_paths)
+    # Outer level: Parallel across simulations.
+    # NOTE: @threads needs an indexable range. `enumerate(...)` is not indexable,
+    # so thread over the indices and look the element up inside the loop.
+    @threads for j in eachindex(simulation_paths)
+        sim_path = simulation_paths[j]
         println("Analyzing simulation: $sim_path")
         
         try
             # Find available snapshots
-            snapshots = find_snapshots_in_path(sim_path)  # Custom function
+            snapshots = checkoutputs(sim_path, verbose=false).outputs  # Custom function
             sim_results = []
             
             # Process snapshots in this simulation
@@ -1551,11 +1557,6 @@ function comprehensive_analysis_pipeline(simulation_paths)
     return all_results
 end
 
-function find_snapshots_in_path(path)
-    # Placeholder - implement based on your file structure
-    return 100:50:500
-end
-
 # Usage
 simulation_paths = ["/data/sim_001", "/data/sim_002", "/data/sim_003"]
 results = comprehensive_analysis_pipeline(simulation_paths)
@@ -1595,7 +1596,8 @@ function parallel_parameter_study()
     results = Vector{NamedTuple}(undef, length(param_combinations))
     
     # Process parameter combinations in parallel
-    @threads for (i, params) in enumerate(param_combinations)
+    @threads for i in eachindex(param_combinations)
+        params = param_combinations[i]
         try
             info = getinfo(300, SIMPATH)
             
