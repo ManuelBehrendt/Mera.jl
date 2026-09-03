@@ -1,262 +1,213 @@
+# Julia Cheat Sheet
 
+Syntax lookup for people analysing simulations in Julia. It assumes you can already
+program, and answers "how do I write that here", not "what is a loop".
 
-# Julia Quick Reference & Migration Guide (2025, Julia 1.10+)
+Two pages nearby cover what this one deliberately leaves out:
+[Essential Packages](03_packages.md) for what to install, and
+[Resources & Community](06_resources.md) for tutorials, books and where to ask.
+For performance in the context of real analysis, see
+[Julia for Simulation Analysis](../julia_for_simulation_analysis.md) and
+[Multi-threading](../multi-threading/multi-threading_intro.md).
 
-**Author:** Manuel Behrendt  
-**Compiled:** 26 July 2025
+**[base]** ships with Julia. **[mera]** is already a Mera dependency, so `using Mera`
+is enough. **[extra]** needs `] add` first.
 
-**Audience:** Mera users, scientists, and users migrating from Python, MATLAB, or IDL.
+## 1. Install and start
 
-> **Julia at a Glance:**
-> Julia combines the speed of C, the ease of Python, and the power of multiple dispatch and metaprogramming. It is designed for scientific and technical computing, with a focus on performance and productivity.
+Use [Juliaup](https://github.com/JuliaLang/juliaup). It manages Julia versions the way
+`pyenv` or `conda` manages Python.
 
-> **Legend:**
-> - **[base]** = Julia Base / stdlib (no install needed)
-> - **[extra]** = Needs installation (`Pkg.add("...")`)
+| | |
+|---|---|
+| macOS, Linux | `curl -fsSL https://install.julialang.org \| sh` |
+| Windows | install Juliaup from the Microsoft Store |
+| start the REPL | `julia` |
+| run a script | `julia myscript.jl` |
+| start with 8 threads | `julia -t 8` |
 
----
+## 2. The REPL
 
+Four modes, reached by typing one character at an empty prompt. Backspace returns you
+to Julia mode.
 
+| key | mode | use it for |
+|---|---|---|
+| `]` | package | `add DataFrames`, `status`, `activate .` |
+| `?` | help | `?mean` prints the docstring |
+| `;` | shell | `ls`, `pwd`, without leaving Julia |
+| `Tab` | | complete names, and expand `\alpha` to `α` |
 
+Useful anywhere:
 
-## 2. Getting Started with Julia
+| | |
+|---|---|
+| `methods(f)` | every method of `f` |
+| `@which f(x)` | which one this call reaches |
+| `names(Mera)` | what a module exports |
+| `typeof(x)`, `fieldnames(T)` | what you are holding |
 
-> **Install Julia (Recommended):**
-> Use [Juliaup](https://github.com/JuliaLang/juliaup) for easy installation and version management (like `pyenv` or `conda` for Python).
-> - On Windows: install from the Microsoft Store.
-> - On macOS/Linux: run `curl -fsSL https://install.julialang.org | sh` in your terminal.
-> - See [juliaup documentation](https://github.com/JuliaLang/juliaup) for details.
->
-> **Alternative:** Download binaries from [julialang.org/downloads](https://julialang.org/downloads/)
+## 3. Reproducible environments
 
-> **Start the REPL:** Open a terminal and run `julia`.
-> 
-> **Run a script:** `julia myscript.jl`
-> 
-> **Install a package:**
-> 1. Enter package mode: type `]` in the REPL
-> 2. Add a package: `add DataFrames`
-> 3. Back to Julia: press Backspace or Ctrl+C
-> 
-> **Get help:** Type `?` in the REPL, then a function name (e.g., `?mean`).
+An environment records exact package versions, so a result can be reproduced later or
+on another machine.
 
-> **Hello World Plot:**
-> ```julia
-> using CairoMakie
-> scatter(1:5, rand(5))
-> ```
-> *(Install with `] add CairoMakie` if needed)*
+```julia
+] activate .          # in your project folder, creates a local environment
+] add Mera CairoMakie
+] instantiate         # on another machine: installs exactly what Project/Manifest record
+```
 
----
+`Project.toml` lists what you asked for, `Manifest.toml` records the exact versions
+resolved. Commit both. For random numbers, `using Random; Random.seed!(1234)`.
 
+Mera writes the environment into the files it saves, so a stored result can say what
+produced it: see [Provenance](../provenance.md).
 
-## 3. Achieving Reproducibility in Julia
+## 4. Coming from another language
 
-> **Reproducibility is essential for scientific computing.**
-> Julia makes it easy to create reproducible environments and results.
+### The five that catch everyone
 
-- **Use project environments:**
-  - In your project folder, run `julia` and then `] activate .` to create/use a local environment.
-  - Add packages with `] add PackageName`.
-  - This creates `Project.toml` and `Manifest.toml` files, which record exact package versions.
-  - Share these files to let others exactly reproduce your environment: `] instantiate` installs all dependencies.
-- **Set random seeds:**
-  - For reproducible random numbers, set a seed: `using Random; Random.seed!(1234)`
-- **Save scripts and notebooks:**
-  - Keep your code, data, and environment files together for full reproducibility.
+| | Julia | Python |
+|---|---|---|
+| first index | `A[1]` | `A[0]` |
+| slice `A[2:4]` | includes 4 | excludes the last |
+| elementwise | `sin.(A)`, explicit dot | `np.sin(A)` |
+| power | `A .^ 2` elementwise, `A^2` is matrix power | `A**2` |
+| mutating functions | end in `!`: `push!(a, x)`, `sort!(a)` | naming is a convention only |
 
-> See the [Pkg documentation](https://pkgdocs.julialang.org/v1/environments/) for more details on environments and reproducibility.
+### Python
 
+| Python | Julia | where |
+|---|---|---|
+| `np.array([1,2,3])` | `[1, 2, 3]` | [base] |
+| `np.zeros((2,3))` | `zeros(2, 3)` | [base] |
+| `np.linspace(0,1,10)` | `range(0, 1, length=10)` | [base] |
+| `np.arange(0,10,2)` | `0:2:9` | [base] |
+| `np.random.randn(100)` | `randn(100)` | Random |
+| `A.T`, `A.reshape(3,4)` | `A'`, `reshape(A, 3, 4)` | [base] |
+| `np.where(a > 0)` | `findall(>(0), a)` | [base] |
+| `a[a > 0]` | `a[a .> 0]` | [base] |
+| `np.mean(x)` | `mean(x)` | Statistics |
+| `np.linalg.solve(A, b)` | `A \ b` | [base] |
+| `scipy.optimize.minimize` | `optimize(f, x0)` | Optim |
+| `pd.DataFrame()` | `DataFrame()` | DataFrames |
+| `f"x = {x}"` | `"x = $x"` | [base] |
+| `and`, `or`, `not` | `&&`, `\|\|`, `!` | [base] |
+| `# one`, `""" many """` | `# one`, `#= many =#` | [base] |
 
----
+### MATLAB
 
-## 4. Top 5 Performance Tips (Quick Reference)
+| MATLAB | Julia | note |
+|---|---|---|
+| `A(:,2)` | `A[:,2]` | brackets, not parentheses |
+| `A.*B`, `A.^2` | `A .* B`, `A .^ 2` | same idea, spacing matters less |
+| `zeros(3,4)`, `length(A)` | same | column-major in both |
+| `for i=1:10 ... end` | `for i in 1:10 ... end` | |
+| `function f(x)` | `f(x) = ...` | short form for one-liners |
+| `A'` | `A'` | conjugate transpose in both |
 
-> 1. **Write code inside functions, not at global scope**
-> 2. **Use concrete types for arrays and variables**
-> 3. **Prefer broadcasting (`.`) for elementwise operations**
-> 4. **Pre-allocate arrays outside loops**
-> 5. **Profile and benchmark with `@profile` and `@btime`**
+### IDL
 
----
+| IDL | Julia | note |
+|---|---|---|
+| `a = findgen(10)` | `a = collect(0:9)` | IDL counts from 0 |
+| `where(a GT 0)` | `findall(>(0), a)` | |
+| `for i=0,9 do ... endfor` | `for i in 1:10 ... end` | |
+| `plot, x, y` | `lines(x, y)` | Makie |
 
-## 5. Common Pitfalls & Tips
+## 5. Arrays and indexing
 
-| Pitfall / Tip | Julia | Python | Note |
-| :-- | :-- | :-- | :-- |
-| Indexing | `A[1]` (1-based) | `A[0]` (0-based) | Julia starts at 1! |
-| Assignment vs. equality | `=` vs. `==` | `=` vs. `==` | Same as Python |
-| Broadcasting | `sin.(A)` | `np.sin(A)` | Use `.` for elementwise |
-| Mutate array | `push!(a, x)` | `a.append(x)` | `!` = mutates |
-| Slicing | `A[2:4]` (includes 4) | `A[1:4]` (excludes 4) | Inclusive in Julia |
-| Type stability | Use concrete types | Dynamic | For speed |
-| Package manager | `] add ...` | `pip install ...` | Use REPL pkg mode |
-| Function definition | `f(x) = x^2` | `def f(x): return x**2` | Short syntax |
-| String interpolation | `"x = $x"` | `f"x = {x}"` | Dollar sign |
-| Comments | `#`, `#= =#` | `#`, `''' '''` | Multi-line |
+Indices start at 1 and ranges include their last element.
 
+| task | code |
+|---|---|
+| vector, matrix | `[1, 2, 3]`, `[1 2; 3 4]` |
+| row, column | `[1 2 3]` is 1x3, `[1; 2; 3]` is 3x1 |
+| zeros, ones, identity | `zeros(2,2)`, `ones(2,2)`, `I` |
+| range, linear, logarithmic | `1:2:9`, `range(0, 1, length=10)`, `exp10.(range(0, 2, length=5))` |
+| reshape, flatten | `reshape(A, 3, 4)`, `vec(A)` |
+| slice | `A[2:4, 1:2]`, `A[end, 1:end-1]` |
+| select by condition | `A[A .> 0]` |
+| slice without copying | `@views A[2:4, :]` |
+| iterate indices | `eachindex(A)`, `axes(A, 1)` |
 
----
+Arrays are stored column first, as in Fortran and MATLAB. The **first** index should be
+the innermost loop.
 
-## 6. REPL & Package Manager Shortcuts
+## 6. Linear algebra
 
+`using LinearAlgebra` for everything below the first two rows.
 
-| Shortcut | Action |
-| :-- | :-- |
-| `]` | Enter package manager |
-| `?` | Help mode |
-| `;` | Shell mode |
-| `Tab` | Autocomplete |
-| `Ctrl+C` | Interrupt execution |
-| `;` in pkg mode | Run shell command |
+| task | code |
+|---|---|
+| matrix product, elementwise product | `A * B`, `A .* B` |
+| solve `Ax = b` | `A \ b` |
+| dot, cross | `dot(a, b)` or `a ⋅ b`, `cross(a, b)` |
+| norm, inverse, determinant | `norm(A)`, `inv(A)`, `det(A)` |
+| eigen, SVD | `vals, vecs = eigen(A)`, `U, S, V = svd(A)` |
+| QR, Cholesky | `qr(A)`, `cholesky(A)` |
+| FFT | `fft(x)`, `ifft(X)` (FFTW) |
 
+Prefer `A \ b` over `inv(A) * b`: it is faster and more accurate.
 
----
+## 7. Statistics and fitting
 
-## 7. Migration Quick Wins (Python/MATLAB/IDL → Julia)
+| task | code | package |
+|---|---|---|
+| mean, spread | `mean(x)`, `std(x)`, `var(x)`, `median(x)` | Statistics |
+| quantiles | `quantile(x, [0.25, 0.5, 0.75])` | Statistics |
+| correlation, covariance | `cor(x, y)`, `cov(x, y)` | Statistics |
+| weighted mean | `mean(x, weights(w))` | StatsBase [mera] |
+| histogram, ECDF | `fit(Histogram, x, nbins=10)`, `ecdf(x)` | StatsBase [mera] |
+| fit a distribution | `fit(Normal, x)` | Distributions |
+| draw from one | `rand(Normal(0, 1), 100)` | Distributions |
+| statistical tests | `OneSampleTTest(x)`, `ApproximateTwoSampleKSTest(x, y)` | HypothesisTests |
+| linear regression | `lm(@formula(y ~ x), df)` | GLM |
+| nonlinear fit | `curve_fit(model, xdata, ydata, p0)` | LsqFit |
+| polynomial fit | `Polynomials.fit(x, y, 3)` | Polynomials |
+| spline | `Spline1D(x, y)` | Dierckx |
 
-> **Quick wins and idioms for users migrating from Python, MATLAB, or IDL:**
+```julia
+using LsqFit
+model(x, p) = @. p[1] * exp(-p[2] * x)
+f = curve_fit(model, xdata, ydata, [1.0, 1.0])
+f.param
+```
 
-### Python → Julia
+Mera bins simulation data for you: see [`profile`](../api.md) rather than histogramming
+by hand.
 
-### MATLAB → Julia
-| MATLAB | Julia | Notes |
-| :-- | :-- | :-- |
-| `A = zeros(3,4)` | `A = zeros(3,4)` | Same |
-| `A(:,2)` | `A[:,2]` | 1-based |
-| `A(2,3)` | `A[2,3]` | Brackets |
-| `length(A)` | `length(A)` | Same |
-| `mean(A)` | `mean(A)` | Same |
-| `A.*B` | `A .* B` | Same |
-| `A.^2` | `A .^ 2` | Same |
-| `plot(x,y)` | `plot(x,y)` | PyPlot/Makie |
-| `for i=1:10` | `for i in 1:10` | `end` closes block |
-| `function f(x)` | `f(x) = ...` | Short syntax |
+## 8. Tables
 
-### IDL → Julia
-| IDL | Julia | Notes |
-| :-- | :-- | :-- |
-| `a = findgen(10)` | `a = collect(0:9)` | 0-based in IDL |
-| `where(a GT 0)` | `findall(>(0), a)` | Boolean indexing |
-| `mean(a)` | `mean(a)` | Same |
-| `plot, x, y` | `plot(x, y)` | PyPlot/Makie |
-| `for i=0,9 do ... endfor` | `for i in 1:10 ... end` | 1-based |
+`DataFrames.jl` is the equivalent of pandas, `CSV.jl` reads and writes the files.
 
----
+| task | code |
+|---|---|
+| create | `df = DataFrame(x=[1,2,3], y=["a","b","c"])` |
+| read, write | `CSV.read("f.csv", DataFrame)`, `CSV.write("out.csv", df)` |
+| look at it | `first(df, 5)`, `describe(df)` |
+| filter rows | `filter(row -> row.x > 1, df)` |
+| pick columns | `select(df, :x, :y)` |
+| group and aggregate | `combine(groupby(df, :g), :v => mean)` |
+| join | `innerjoin(df1, df2, on=:id)` |
 
-## Finding Packages & Getting Help
+## 9. Units and uncertainties
 
-> - Search for packages: [juliahub.com](https://juliahub.com/) or [pkg.julialang.org](https://pkg.julialang.org/)
-> - Read error messages from the bottom up for the root cause.
-> - Use `] activate .` in your project folder for local environments.
-> - Use `Project.toml` and `Manifest.toml` for reproducibility.
-> - For Python: `using PythonCall; pyimport("numpy")`  |  For R: `using RCall; R"..."`
-> - Save/load data with JLD2, HDF5, CSV (not the whole workspace).
-> - Community: Julia Discourse, Slack, Zulip, StackOverflow, GitHub.
+| task | code | package |
+|---|---|---|
+| attach a unit | `v = 10u"km/s"` | Unitful |
+| astronomical units | `1u"pc"`, `1u"Msun"`, `1u"yr"` | UnitfulAstro |
+| convert | `uconvert(u"m/s", v)` | Unitful |
+| value with an error | `a = 3.1 ± 0.2` | Measurements |
+| propagate it | `c = a + b`, `d = a * b` | Measurements |
 
----
+Mera does not use Unitful. It carries its own scale factors, so you ask for a unit by
+name: `getvar(gas, :rho, :nH)`. See [Units and constants](../units_and_constants.md).
 
-## I. Essential Packages & Ecosystem
+## 10. Control flow
 
-> **Julia's package ecosystem is designed for scientific and technical computing.**
-> This section lists the most important packages, grouped by domain. Packages marked [base] are included with Julia; [extra] require installation.
-
-### Core \& Data Packages
-
-| **Package** | **Purpose/Domain** | **Base?** | **Key Functions** |
-| :-- | :-- | :-- | :-- |
-| LinearAlgebra | Dense/sparse matrix ops | [base] | `det`, `inv`, `eigen`, `svd`, `norm` |
-| Statistics | Basic statistics | [base] | `mean`, `std`, `var`, `cor`, `cov` |
-| Random | Random numbers | [base] | `rand`, `randn`, `shuffle` |
-| Printf | C-like formatting | [base] | `@printf`, `@sprintf` |
-| Dates | Date/time handling | [base] | `Date`, `DateTime`, `now`, `today` |
-| Profile | Code profiler | [base] | `@profile`, `Profile.clear()` |
-| DelimitedFiles | Delimited text I/O | [base] | `readdlm`, `writedlm` |
-| DataFrames | Tabular data, analysis | [extra] | `DataFrame`, `select`, `filter`, `groupby` |
-| CSV | CSV file I/O | [extra] | `CSV.read`, `CSV.write` |
-| Measurements | Error propagation | [extra] | `±`, `measurement`, `value`, `uncertainty` |
-| Unitful, UnitfulAstro | Units (SI, astro) | [extra] | `u"m"`, `u"pc"`, `uconvert` |
-| AstroLib | Astronomical utilities | [extra] | `radec2gal`, `helio_jd`, `planck` |
-| SpecialFunctions | Γ, ζ, Bessel, Airy, etc. | [extra] | `gamma`, `beta`, `erf`, `besselj` |
-| Distributions | Statistical distributions | [extra] | `Normal`, `Poisson`, `fit`, `rand` |
-| FFTW | Fast Fourier transform | [extra] | `fft`, `ifft`, `plan_fft` |
-| Roots | Find roots/zeros | [extra] | `find_zero`, `fzero` |
-| DifferentialEquations | ODEs, PDEs, SDEs, DDEs | [extra] | `ODEProblem`, `solve`, `CallbackSet` |
-| HypothesisTests | Statistical tests | [extra] | `OneSampleTTest`, `KSTest` |
-| StatsBase | Extended statistics | [extra] | `fit`, `Histogram`, `ecdf`, `sample` |
-| StatsModels, GLM | Statistical modeling | [extra] | `lm`, `glm`, `@formula` |
-| LsqFit | Curve fitting | [extra] | `curve_fit`, `@.` |
-| Optim, NLopt | Optimization | [extra] | `optimize`, `BFGS`, `NelderMead` |
-| MLJ, Flux, Knet | Machine learning | [extra] | `machine`, `Chain`, `Dense` |
-| ProgressMeter | Progress bars | [extra] | `@showprogress`, `Progress` |
-| BenchmarkTools | Accurate benchmarking | [extra] | `@benchmark`, `@btime` |
-| Revise | Live code reloading | [extra] | Auto-reload on file change |
-| Debugger | Debugging | [extra] | `@enter`, `@run`, `@bp` |
-
-### File Formats \& I/O Packages
-
-| **Package** | **Format** | **Key Functions** |
-| :-- | :-- | :-- |
-| JLD2 | Julia native binary | `@save`, `@load`, `jldopen` |
-| HDF5 | HDF5 scientific data | `h5open`, `h5read`, `h5write` |
-| MAT | MATLAB .mat files | `matread`, `matwrite` |
-| FITSIO | FITS (astronomy) | `FITS`, `read`, `write` |
-| NetCDF | NetCDF scientific | `NetCDF.open`, `ncread`, `ncwrite` |
-| NPZ | NumPy .npy/.npz | `npzread`, `npzwrite` |
-| Npy | NumPy .npy (mmap) | `NpyArray`, `npyread`, `npywrite` |
-
-### Language Interoperability
-
-| **Package** | **Interop With** | **Key Functions** |
-| :-- | :-- | :-- |
-| PythonCall | Python (modern) | `pyimport`, `@py`, `Py` |
-| PyCall | Python | `@pyimport`, `py"..."`, `pyeval` |
-| RCall | R | `R"..."`, `@rget`, `@rput` |
-| CxxWrap | C++ | Wrap C++ code |
-| JavaCall | Java | Call Java methods |
-| **ccall** | C/Fortran | `ccall((:func, "lib"), RetType, (ArgTypes,), args...)` |
-
-### Plotting \& Visualization
-
-| **Package** | **Backend** | **Key Functions** |
-| :-- | :-- | :-- |
-| CairoMakie | 2D publication | `Figure`, `Axis`, `lines!`, `scatter!` |
-| GLMakie | 3D interactive | `activate!`, `meshscatter!`, `surface!` |
-| WGLMakie | Web/browser | Web-based interactive plots |
-| PyPlot | Matplotlib | `plot`, `scatter`, `hist`, `xlabel` |
-
-### Development \& Interactive
-
-| **Package** | **Purpose** | **Key Functions** |
-| :-- | :-- | :-- |
-| IJulia | Jupyter notebooks, JupyterLab | `notebook()`, JupyterLab, Jupyter integration |
-| Pluto | Reactive notebooks | `Pluto.run()`, reactive environment |
-| Quarto | Scientific/technical docs, notebooks | `.qmd` files, multi-language, Jupyter/Pluto support |
-| Weave | Literate programming | `weave("file.jmd")`, markdown+code |
-| ProfileView | Profile visualization | `@profview`, visual profiler |
-
-### Editors & IDEs for Julia
-
-| **Editor/IDE** | **Type** | **Notes** |
-| :-- | :-- | :-- |
-| VS Code | IDE | Julia extension, debugging, plotting |
-| Juno (Atom) | IDE | Discontinued, but still used |
-| Vim/Neovim | Editor | Julia syntax, plugins available |
-| Emacs | Editor | julia-mode, lsp-julia |
-| Sublime Text | Editor | Julia syntax support |
-| JupyterLab | Notebook/IDE | With IJulia kernel |
-| Pluto | Notebook | Reactive, browser-based |
-| Quarto | Notebook/docs | Multi-language, Julia support |
-| Weave | Literate programming | Markdown+code, report generation |
-
-
----
-
-## IIa. Control Flow & Loops
-
-> Julia's control flow is similar to Python, but uses `end` to close blocks. For best performance with arrays, use vectorized/broadcasted operations or type-stable, pre-allocated loops.
-
-### Conditionals
+Blocks close with `end`.
 
 ```julia
 if x > 0
@@ -266,561 +217,172 @@ elseif x < 0
 else
     println("zero")
 end
-```
 
-### For Loops
-
-```julia
 for i in 1:10
     println(i)
 end
 
-# Loop over arrays
-for x in arr
+for x in arr           # over values
     println(x)
 end
-```
 
-### While Loops
-
-```julia
 i = 1
 while i <= 10
-    println(i)
     i += 1
 end
 ```
 
-square_all!(y, x)
+`for i in eachindex(A)` is the safe way to walk an array: it works for any index type
+and never goes out of bounds.
 
+## 11. Functions and multiple dispatch
 
-### Performance Tips for Loops
+A function can have many methods. Julia picks one from the types of **all** the
+arguments, not just the first. This is the language's central idea, and it is what lets
+Mera give `getvar` or `projection` the same name for hydro, particle and clump data.
 
-- Prefer vectorized or broadcasted operations: `y = sin.(x)`
-- For custom loops, pre-allocate output arrays: `result = similar(x)`
-- Use concrete types and avoid changing array types inside loops
-- Use `@inbounds` to skip bounds checking (safe if you know indices are valid)
-- Avoid global variables in loops; wrap code in functions for speed
+```julia
+area(r::Real)            = π * r^2          # a circle
+area(w::Real, h::Real)   = w * h            # a rectangle
 
-Example (fast, 1D):
+abstract type Shape end
+struct Circle    <: Shape; r; end
+struct Rectangle <: Shape; w; h; end
+
+area(c::Circle)    = π * c.r^2
+area(r::Rectangle) = r.w * r.h
+
+areas = area.([Circle(1), Rectangle(2, 3)])   # the dot maps over the array
+```
+
+Structs hold data, methods live outside them, and there is no `obj.method()`. Only
+abstract types can be inherited from.
+
+Functions are values: pass them, return them, write them inline.
+
+```julia
+map(sin, 0:0.1:π)
+filter(isodd, 1:10)
+reduce(+, 1:100)
+f = x -> x^2 + 1        # anonymous
+g(x) = x^2 + 1          # named, same thing
+```
+
+## 12. Writing fast Julia
+
+Five rules cover most of it.
+
+1. **Put code in functions.** Code at the top level of the REPL or a script cannot be
+   optimised, because a global's type can change at any moment. This one rule is
+   usually worth more than the other four together.
+2. **Keep types concrete and stable.** `Vector{Float64}`, not `Vector{Any}`, and do not
+   reassign a variable to a different type inside a function.
+3. **Pre-allocate.** Build the output array once outside the loop, not on every pass.
+4. **Broadcast or loop, both are fast.** Julia loops compile to the same machine code
+   as C, so an explicit loop needs no vectorising to be quick. Write whichever reads
+   better.
+5. **Measure before you change anything.** `@btime` from BenchmarkTools, then
+   `@profview` when you need to know where the time goes.
+
 ```julia
 function square_all!(y, x)
     @inbounds for i in eachindex(x)
         y[i] = x[i]^2
     end
 end
+
 y = similar(x)
 square_all!(y, x)
 ```
 
-#### Nested Loops for Multi-Dimensional Arrays (Performance)
+Loop the **first** index innermost, because that is how the memory is laid out:
 
-> For best performance with multi-dimensional arrays, use nested loops with `@inbounds` and access elements in column-major order (first index fastest in Julia). This avoids temporary allocations and leverages Julia's memory layout.
-
-Example (2D array, fill with sum of indices):
 ```julia
 function fill_sum!(A)
-    @inbounds for j in axes(A,2)   # columns outer
-        for i in axes(A,1)         # rows inner (fastest)
-            A[i,j] = i + j
+    @inbounds for j in axes(A, 2)      # columns outer
+        for i in axes(A, 1)            # rows inner, fastest moving
+            A[i, j] = i + j
         end
     end
 end
-A = zeros(1000,1000)
-fill_sum!(A)
-```
-> **Why:** Julia stores arrays in column-major order (like Fortran/MATLAB), so looping with the first index innermost is cache-friendly and fastest.
-
----
-
-> **General Performance Tips:**
-> - Write code inside functions, not at global scope  
->   *(Functions are much faster than global code in Julia)*
-> - Use concrete types for arrays and variables  
->   *(E.g., `Vector{Float64}` not `Vector{Any}`; concrete types allow Julia to generate fast code)*
-> - Avoid type changes in variables (type instability)  
->   *(Don't assign different types to the same variable; e.g., keep `x` always a `Float64`)*
-> - Use `@btime` from BenchmarkTools for timing  
->   *(Accurate benchmarking, better than `@time`)*
-> - Prefer `eachindex(A)` for array iteration  
->   *(`eachindex(A)` gives the most efficient and safe way to loop over all indices of `A`, even for non-contiguous arrays)*
-> - Use broadcasting (`.`) for elementwise ops  
->   *(E.g., `sin.(x)` applies `sin` to every element of `x`)*
-> - Avoid unnecessary memory allocations  
->   *(Pre-allocate arrays outside loops; don't create new arrays in every iteration)*
-> - Use `@inbounds` and `@views` for advanced speedups  
->   *(`@inbounds` skips bounds checking; `@views` avoids copying slices)*
-> - Profile with `@profile` and visualize with ProfileView  
->   *(Find bottlenecks in your code)*
-
----
-
-## II. Arrays, Math, Stats & Data Operations
-
-> **Julia's array and math syntax is similar to MATLAB and Python (NumPy), but with 1-based indexing!**
-> This section covers array creation, indexing, math, statistics, and data operations. See notes for common pitfalls.
-
-
-### Arrays and Indexing (1-based!)
-
-> **Note:** Julia arrays are 1-based (first element is at index 1, not 0). Slicing is inclusive. Broadcasting uses the dot (`.`) syntax.
-
-| Task | Julia Code | Notes |
-| :-- | :-- | :-- |
-| Row vector, col vector | `[1 2 3]`, `[1; 2; 3]` | 2D shapes (1,3), (3,1) |
-| 1D vector, matrix | `[1, 2, 3]`, `[1 2; 3 4]` |  |
-| Zeros, ones, identity | `zeros(2,2)`, `ones(2,2)`, `I` |  |
-| Range, linspace, logspace | `1:2:9`, `range(0,1,length=10)`, `exp10.(range(log10(1), log10(100), length=5))` |  |
-| Reshape, flatten | `reshape(A, 3,4)`, `vec(A)` |  |
-| Indexing/slicing | `A[2:4, 1:2]`, `A[end, 1:end-1]` | Inclusive ranges |
-| Boolean indexing | `A[A .> 0]` | Broadcast comparison |
-
-
-### Linear Algebra & Math
-
-> Julia's `LinearAlgebra` standard library provides efficient matrix and vector operations. Use `using LinearAlgebra` to access advanced features.
-
-| Task | Julia Code | Package |
-| :-- | :-- | :-- |
-| Matrix multiply | `A * B` | [base] |
-| Elemwise multiply | `A .* B` | [base] |
-| Dot product | `dot(a, b)`, `a ⋅ b` | LinearAlgebra |
-| Norm, inv, det | `norm(A)`, `inv(A)`, `det(A)` | LinearAlgebra |
-| Eigenvalues | `vals, vecs = eigen(A)` | LinearAlgebra |
-| SVD | `U, S, V = svd(A)` | LinearAlgebra |
-| Cholesky | `cholesky(A)` | LinearAlgebra |
-| QR factorization | `Q, R = qr(A)` | LinearAlgebra |
-| Solve Ax = b | `A \ b` | [base] |
-| FFT | `fft(x)`, `ifft(X)` | FFTW |
-
-
-### Statistics & Distributions
-
-> Julia's `Statistics` and `Distributions` packages provide a rich set of statistical tools. Use `using Statistics, Distributions` to access these functions.
-
-| Task | Julia Code | Package |
-| :-- | :-- | :-- |
-| Basic stats | `mean(x)`, `std(x)`, `var(x)` | Statistics |
-| Quantiles | `quantile(x, [0.25,0.5,0.75])` | Statistics |
-| Correlation/covariance | `cor(x, y)`, `cov(x, y)` | Statistics |
-| Histogram | `fit(Histogram, x, nbins=10)` | StatsBase |
-| ECDF | `ecdf(x)` | StatsBase |
-| Statistical tests | `OneSampleTTest(x)`, `KSTest(x,y)` | HypothesisTests |
-| Fit distributions | `fit(Normal, x)`, `fit(Gamma, x)` | Distributions |
-| Sample from distribution | `rand(Normal(0,1), 100)` | Distributions |
-| Curve fitting (nonlinear) | `@. model(x, p) = p[1]*exp(-p[2]*x)`<br>`fit = curve_fit(model, xdata, ydata, p0)` | LsqFit |
-| Linear regression | `fit(LinearModel, @formula(y ~ x), df)` | GLM |
-| Polynomial fit | `polyfit(x, y, deg)` | Polynomials |
-| Robust fit | `fit(LinearModel, @formula(y ~ x), df, contrasts=Dict(:x=>DummyCoding()))` | GLM |
-| Spline fit | `Spline1D(x, y)` | Dierckx |
-| Quantile regression | `fit(QuantRegModel, @formula(y ~ x), df)` | QuantileReg |
-
-
-### Units, Measurements & Astronomy
-
-> Julia supports physical units, error propagation, and astronomy-specific calculations via dedicated packages. Use `using Unitful, Measurements, AstroLib` as needed.
-
-| Task | Julia Code | Package |
-| :-- | :-- | :-- |
-| Attach units | `v = 10u"km/s"` | Unitful |
-| Astronomical units | `d = 1u"pc"`, `t = 1u"yr"` | UnitfulAstro |
-| Unit conversion | `uconvert(u"m/s", v)` | Unitful |
-| Measurement with error | `a = 3.1 ± 0.2` | Measurements |
-| Error propagation | `c = a + b; d = a*b` | Measurements |
-| Coordinate conversion | `radec2gal(ra, dec)` | AstroLib |
-| Julian date | `jdcnv(year, month, day)` | AstroLib |
-
-
-### DataFrames & CSV Operations
-
-> For tabular data, use `DataFrames.jl` (like pandas in Python). For CSV I/O, use `CSV.jl`. Always check for missing data and column types.
-
-| Task | Julia Example | Package |
-| :-- | :-- | :-- |
-| Create DataFrame | `df = DataFrame(x=[1,2,3], y=["a","b","c"])` | DataFrames |
-| Load/save CSV | `CSV.read("file.csv", DataFrame)`<br>`CSV.write("out.csv", df)` | CSV |
-| Quick view | `first(df, 5)`, `describe(df)` | DataFrames |
-| Filter rows | `filter(row -> row.x > 1, df)` | DataFrames |
-| Select columns | `select(df, :x, :y)` | DataFrames |
-| Group + aggregate | `combine(groupby(df, :group), :value => mean)` | DataFrames |
-| Join tables | `innerjoin(df1, df2, on=:id)` | DataFrames |
-
-
----
-
-## IVa. Multiple Dispatch, Functional & Object-Oriented Programming
-
-> Julia is built around multiple dispatch and functional programming, with minimal object orientation. This enables flexible, high-performance code.
-
-### Multiple Dispatch (Core Paradigm)
-
-> Functions can have many methods, chosen by argument types. This is more general than single-dispatch OOP.
-
-```julia
-# Example: area for different shapes
-area(r::Real) = π * r^2              # Circle
-area(w::Real, h::Real) = w * h       # Rectangle
-struct Triangle; base; height; end
-area(t::Triangle) = 0.5 * t.base * t.height
-
-area(2.0)                # Circle
-area(3.0, 4.0)           # Rectangle
-area(Triangle(3, 4))     # Triangle
 ```
 
-### Functional Programming
+| tool | what it is for | package |
+|---|---|---|
+| `@btime f(x)` | honest timing, runs it many times | BenchmarkTools [mera] |
+| `@time f(x)` | one run, includes compilation | [base] |
+| `@profview f(x)` | where the time goes | ProfileView |
+| `@code_warntype f(x)` | find type instability | [base] |
+| `@inbounds`, `@views` | skip bounds checks, avoid slice copies | [base] |
+| `using Revise` | reload edited code without restarting | Revise |
 
-> Functions are first-class: pass them as arguments, return them, use anonymous functions.
+Two things dominate real analysis work and have their own pages:
+[compile-time latency and memory discipline](../julia_for_simulation_analysis.md), and
+[threading](../multi-threading/multi-threading_intro.md).
 
-```julia
-map(sin, 0:0.1:π)                # Apply sin to each element
-filter(isodd, 1:10)               # Keep only odd numbers
-reduce(+, 1:100)                  # Sum all numbers
-f = x -> x^2 + 1                  # Anonymous function
-g(x) = x^2 + 1                    # Named function
-```
+Beyond threads, Julia also offers `Distributed` (`pmap`, `@distributed`) for several
+processes, `MPI.jl` for clusters, and `CUDA.jl` for GPUs. Mera itself is threaded, not
+distributed.
 
-### Minimal Object Orientation
+## 13. Plotting
 
-> Julia uses structs for data, but methods are defined outside structs (no classes). Inheritance is limited to abstract types.
+Makie is the current standard. Pick a backend by which package you load.
 
-```julia
-abstract type Shape end
-struct Circle <: Shape; r; end
-struct Rectangle <: Shape; w; h; end
-area(s::Shape) = error("not implemented")
-area(c::Circle) = π * c.r^2
-area(r::Rectangle) = r.w * r.h
-
-shapes = [Circle(1), Rectangle(2,3)]
-areas = area.(shapes)   # Broadcasting over array of shapes
-```
-
-> **Note:** There is no method overloading by object (no `obj.method()`), but you can use `do` blocks and closures for encapsulation.
-
----
-
-
-
-## III. Visualization & Plotting
-
-> Julia offers several plotting libraries. Makie.jl is modern and flexible; PyPlot provides a matplotlib-like interface. Choose the backend that fits your needs.
-
-### Makie.jl Backends (Comprehensive Plotting)
-
-| Backend | Use Case | Activation |
-| :-- | :-- | :-- |
-| CairoMakie | Publication 2D plots | `using CairoMakie; activate!()` |
-| GLMakie | Interactive 3D plots | `using GLMakie; activate!()` |
-| WGLMakie | Web-based plots | `using WGLMakie; activate!()` |
-
-### Common Plotting Examples
+| backend | for |
+|---|---|
+| CairoMakie | 2D figures for papers, writes PNG, PDF, SVG |
+| GLMakie | interactive 3D in a window |
+| WGLMakie | the same, in a browser |
 
 ```julia
-# Makie basic plotting
 using CairoMakie
-fig = Figure()
-ax = Axis(fig[1, 1], xlabel="x", ylabel="y")
+
+fig = Figure(size=(600, 450))
+ax  = Axis(fig[1, 1], xlabel="x [kpc]", ylabel="y [kpc]")
 lines!(ax, 1:10, rand(10))
 scatter!(ax, 1:10, rand(10))
 fig
-
-# 3D with GLMakie
-using GLMakie
-x = y = -10:0.5:10
-z = [sin(sqrt(i^2 + j^2)) for i in x, j in y]
-surface(x, y, z)
-
-# PyPlot (matplotlib style)
-using PyPlot
-plot(1:10, rand(10))
-scatter(1:5, rand(5))
-xlabel("x"); ylabel("y")
 ```
 
-
-
----
-
-
----
-
-
----
-
-
----
-
-## IVb. Metaprogramming
-
-> Julia supports powerful metaprogramming: you can generate, inspect, and transform code at runtime using macros and expressions. This enables advanced code reuse, domain-specific languages, and performance optimizations.
-
-### Macros and Expressions
-
-> Macros operate on code before it runs. Use `@macro` to transform code, and `:expr` to represent code as data.
-
-```julia
-# Example: @show macro prints code and value
-@show 2 + 2
-# Output: 2 + 2 = 4
-
-# Build and evaluate expressions
-ex = :(a + b^2)
-eval(ex)   # Evaluates the expression in global scope
-
-# Define your own macro
-macro sayhello(name)
-    :(println("Hello, $name!"))
-end
-@sayhello "Julia"
-```
-
-> **Advantages:**
-> - Write code that writes code (DRY principle)
-> - Create custom control structures and DSLs
-> - Enable compile-time checks and optimizations
-> - Used for performance tools (e.g., `@btime`, `@inbounds`, `@views`)
-
----
-
-
-
-## IV. Scientific Programming & Performance
-
-> Julia's multiple dispatch, macros, and performance tools enable high-performance scientific code. This section covers idiomatic Julia programming and optimization.
-
-
-### Functions & Multiple Dispatch
-
-> **Multiple dispatch** is Julia's core paradigm: functions can have different methods for different argument types. Use broadcasting (`.`) to apply functions elementwise.
-
-```julia
-# Short function syntax
-f(x) = x^2
-
-# Multiple dispatch
-area(r::Real) = π * r^2                    # Circle
-area(w::Real, h::Real) = w * h             # Rectangle
-area(triangle::Triangle) = 0.5 * triangle.base * triangle.height
-
-# Broadcasting
-sin.(x)                                    # Apply sin to each element
-my_function.(array)                        # Works with any function
-```
-
-
-
-### Performance Tools
-
-> Use these tools to benchmark, profile, and optimize your Julia code. Start with `@btime` for quick timing, and use `@profile` for deeper analysis.
-
-| Task | Julia Code | Package |
-| :-- | :-- | :-- |
-| Precise timing | `@btime func(x)` | BenchmarkTools |
-| Profile code | `@profile func(x)`<br>`ProfileView.@profview func(x)` | [base]/ProfileView |
-| Progress bar | `@showprogress for i in 1:N ... end` | ProgressMeter |
-| Live reload | `using Revise` (auto-reload files) | Revise |
-
-
-### Parallelism & GPU
-
-> Julia supports multithreading, distributed computing, and GPU acceleration. Use the appropriate macros and packages for your hardware.
-
-| Task | Julia Code | Package |
-| :-- | :-- | :-- |
-| Multithreading | `Threads.@threads for i in 1:N ... end` | [base] |
-| Distributed for | `@distributed for i in 1:N ... end` | Distributed |
-| Parallel map | `pmap(f, xs)` | Distributed |
-| Shared arrays | `SharedArray{T}(dims)` | SharedArrays |
-| MPI (cluster) | `using MPI; MPI.Init(); ...` | MPI.jl |
-| Task-based DAG | `@spawnat`, `@async`, `@sync` | [base] |
-| Dagger DAG | `using Dagger; delayed(f)(args...)` | Dagger.jl |
-| GPU arrays | `using CUDA; x = CuArray(rand(1000))` | CUDA |
-| Multi-GPU | `CUDA.devices()`, `CUDA.@sync` | CUDA |
-| ThreadsX | `ThreadsX.map(f, xs)` | ThreadsX |
-| FLoops | `@floop for ... end` | FLoops |
-
-
----
-
-
----
-
-## V. Language Interoperability & File I/O
-
-> Julia can call C, Fortran, Python, R, and more. It also supports many scientific file formats. This section summarizes the main interop and I/O options.
-
-
-### Calling Other Languages
-
-> Call C/Fortran directly with `ccall`, or use packages for Python, R, and C++. For details, see the official Julia documentation.
-
-| Language | Method | Example |
-| :-- | :-- | :-- |
-| **Fortran** | `ccall` with mangled names | `ccall((:__module_MOD_func, "lib.so"), Float64, (Ref{Float64},), x)` |
-| **C** | `ccall` direct | `ccall((:cos, "libm"), Float64, (Float64,), x)` |
-| **Python** | PythonCall.jl (modern) | `py = pyimport("numpy"); py.array([^1][^2][^3])` |
-| **R** | RCall.jl | `R"mean(c(1,2,3))"` |
-| **C++** | CxxWrap.jl | Wrap C++ classes/functions |
-
-
-### Calling Julia FROM Other Languages
-
-> Julia can be embedded in Python, R, C/C++, or called as a compiled executable. See the relevant package docs for setup.
-
-| Language | Method | Reference |
-| :-- | :-- | :-- |
-| **Python** | PythonCall.jl (bidirectional) | Use `JuliaCall` from Python side |
-| **R** | JuliaCall package | `library(JuliaCall); julia_setup()` |
-| **C/C++** | Embed libjulia | Use `julia.h`, call `jl_init()` |
-| **Executable** | PackageCompiler.jl | `create_app(src, dest)` |
-| **Binary executable** | PackageCompiler.jl | `create_executable("file.jl", "myprog")` |
-| **From Fortran** | C interface | Call `jl_init()`, `jl_eval_string()` from Fortran via C interoperability |
-
-
-### File Format Examples
-
-> Common scientific file formats are supported via dedicated packages. Always check read/write options and data types.
-
-| Format | Write Example | Read Example |
-| :-- | :-- | :-- |
-| **JLD2** | `@save "data.jld2" x y z` | `@load "data.jld2" x y z` |
-| **HDF5** | `h5write("file.h5", "dataset", array)` | `data = h5read("file.h5", "dataset")` |
-| **NPY** | `npzwrite("data.npy", array)` | `array = npzread("data.npy")` |
-| **MAT** | `matwrite("data.mat", Dict("A"=>A))` | `vars = matread("data.mat")` |
-| **FITS** | `FITS("img.fits", "w") do f; write(f, data); end` | `f = FITS("img.fits"); data = read(f[^1])` |
-| **CSV** | `CSV.write("data.csv", df)` | `df = CSV.read("data.csv", DataFrame)` |
-
-
----
-
-
----
-
-## VI. Migration Tips: Python → Julia
-
-> Key differences: Julia uses 1-based indexing, inclusive slicing, and multiple dispatch. Broadcasting is explicit with `.`. See table for common mappings.
-
-### Key Syntax Differences
-
-| Concept | Python | Julia | Notes |
-| :-- | :-- | :-- | :-- |
-| **Indexing** | `A` (0-based) | `A[^1]` (1-based) | Major difference! |
-| **Slicing** | `A[1:3]` (excludes 3) | `A[2:3]` (includes 3) | Inclusive in Julia |
-| **Broadcasting** | `np.sin(A)` (ufuncs) | `sin.(A)` (universal) | Dot works on all functions |
-| **Power** | `A**2` | `A.^2` (elementwise) | `^` is matrix power |
-| **String interp** | `f"x = {x}"` | `"x = $x"` | Dollar sign syntax |
-| **Boolean ops** | `and`, `or`, `not` | `&&`, `||`, `!` |  |
-| **Comments** | `# single`, `"""multi"""` | `# single`, `#= multi =#` |  |
-
-### Performance \& Ecosystem
-
-- **Speed**: loops run at compiled speed, so hand-written per-element code needs no vectorising to be fast
-- **Compilation**: First run slower (JIT), subsequent runs fast
-- **Type system**: Optional but helpful for performance
-- **Multiple dispatch**: Natural in Julia, not available in Python
-- **Package maturity**: Python has broader ecosystem, Julia growing rapidly
-- **Scientific focus**: Julia designed for scientific computing from ground up
-
-
-### Common Function Mappings
-
-| Python (NumPy) | Julia | Package |
-| :-- | :-- | :-- |
-| `np.array([^1][^2][^3])` | `[^1][^2][^3]` | [base] |
-| `np.zeros((2,3))` | `zeros(2, 3)` | [base] |
-| `np.linspace(0,1,10)` | `range(0, 1, length=10)` | [base] |
-| `np.random.randn(100)` | `randn(100)` | Random |
-| `np.mean(x)` | `mean(x)` | Statistics |
-| `np.linalg.solve(A,b)` | `A \ b` | [base] |
-| `scipy.optimize.minimize` | `optimize(f, x0)` | Optim |
-| `pd.DataFrame()` | `DataFrame()` | DataFrames |
-| `plt.plot(x, y)` | `plot(x, y)` | PyPlot/Makie |
-
-
----
-
-
----
-
-## VII. Essential One-Liners & Common Patterns
-
-> Handy Julia idioms for scientific computing. Try these in the REPL or a notebook.
-
-```julia
-# Create and manipulate arrays
-A = rand(3, 3)                           # 3×3 random matrix
-B = A .+ 1                               # Add 1 to each element
-C = A * B                                # Matrix multiplication
-x = A \ rand(3)                          # Solve linear system
-
-# Statistics and fitting
-data = randn(1000)                       # 1000 random samples
-μ = mean(data)                           # Sample mean
-dist = fit(Normal, data)                 # Fit normal distribution
-samples = rand(dist, 100)                # Generate new samples
-
-# Units and measurements
-d = 10u"km"                              # Distance with units  
-t = 2u"hr"                               # Time with units
-v = d/t                                  # Velocity (automatic units)
-measurement = 5.0 ± 0.1                  # Value with uncertainty
-
-# File I/O
-@save "results.jld2" A B x               # Save multiple variables
-@load "results.jld2" A B x               # Load them back
-df = CSV.read("data.csv", DataFrame)     # Read CSV file
-
-# Plotting
-using CairoMakie
-scatter(1:10, rand(10))                  # Quick scatter plot
-lines!(1:10, sin.(1:10))                 # Add line to same plot
-
-# Performance and profiling
-@btime sort(rand(1000))                  # Benchmark operation
-@showprogress for i in 1:10^6 end       # Progress bar
-```
-
-
-
----
-
-
----
-
-## VIII. Resources & Further Learning
-
-> Explore the Julia ecosystem and community. Use `?func` in the REPL for help on any function.
-
-
-- **Official docs**: [docs.julialang.org](https://docs.julialang.org/)
-- **Julia Academy (free courses)**: [juliaacademy.com](https://juliaacademy.com/)
-- **Julia Discourse (forum)**: [discourse.julialang.org](https://discourse.julialang.org/)
-- **JuliaLang YouTube channel**: [youtube.com/c/JuliaLanguage](https://www.youtube.com/c/JuliaLanguage)
-- **JuliaCon (conference talks)**: [juliacon.org](https://juliacon.org/)
-- **Package discovery**: [juliahub.com](https://juliahub.com/)
-- **General package registry**: [pkg.julialang.org](https://pkg.julialang.org/)
-- **Plotting**: [docs.makie.org](https://docs.makie.org/)
-- **Data science**: [juliadatascience.io](https://juliadatascience.io/)
-- **Scientific ML**: [sciml.ai](https://sciml.ai/)
-- **Astronomy**: [astrojulia.org](https://astrojulia.org/)
-- **Books:**
-  - *Julia Programming for Scientists and Engineers* by C. Rackauckas (free: [book.sciml.ai](https://book.sciml.ai/))
-  - *Julia for Data Science* by Zacharias Voulgaris
-  - *Think Julia* by Ben Lauwens & Allen B. Downey (free: [greenteapress.com/thinkjulia](https://greenteapress.com/thinkjulia/))
-  - *Julia High Performance* by Avik Sengupta
-- **Help in REPL**: `?function_name` for documentation
-
-
-### Quick Help Commands
-
-- `?func` - Get help for function
-- `names(Module)` - List exported names
-- `methods(func)` - Show all methods
-- `@which func(args)` - Show which method is called
-- `typeof(x)` - Show type of variable
-
-
----
-
-
+The pattern is: build a `Figure`, put an `Axis` in a grid cell, then draw into it. Plot
+functions ending in `!` add to an existing axis, those without create a new figure.
+
+`PyPlot.jl` gives a matplotlib interface if you prefer one.
+
+## 14. Files in and out
+
+| format | write | read |
+|---|---|---|
+| JLD2, Julia native | `@save "d.jld2" x y` | `@load "d.jld2" x y` |
+| HDF5 | `h5write("f.h5", "data", A)` | `h5read("f.h5", "data")` |
+| CSV | `CSV.write("d.csv", df)` | `CSV.read("d.csv", DataFrame)` |
+| FITS | `FITS("i.fits", "w") do f; write(f, data); end` | `f = FITS("i.fits"); read(f[1])` |
+| NumPy `.npy` | `npzwrite("d.npy", A)` | `npzread("d.npy")` |
+| MATLAB `.mat` | `matwrite("d.mat", Dict("A"=>A))` | `matread("d.mat")` |
+
+Save named variables, not a whole workspace. JLD2, HDF5 and CSV are Mera dependencies,
+so they need no install. Mera's own format is JLD2: see
+[Export and import](../examples/ExportImportData.md).
+
+## 15. Calling other languages
+
+| language | how | example |
+|---|---|---|
+| C | `ccall` | `ccall((:cos, "libm"), Float64, (Float64,), x)` |
+| Fortran | `ccall` with the mangled name | `ccall((:__mod_MOD_f, "lib.so"), Float64, (Ref{Float64},), x)` |
+| Python | PythonCall.jl | `np = pyimport("numpy"); np.array([1, 2, 3])` |
+| R | RCall.jl | `R"mean(c(1,2,3))"` |
+| C++ | CxxWrap.jl | wrap classes and functions |
+
+The other direction works too: `JuliaCall` from Python or R, `jl_init()` from C, and
+`PackageCompiler.jl` to build a standalone executable.
+
+## 16. Where to go next
+
+- [Essential Packages](03_packages.md), what to install and in what order
+- [Resources & Community](06_resources.md), tutorials, books, and where to ask
+- [Julia for Simulation Analysis](../julia_for_simulation_analysis.md), the parts that
+  matter for this kind of work
+- [Switching to Mera](../switching_to_mera.md), if you are arriving from another
+  analysis tool
+- [The Julia manual](https://docs.julialang.org/) for anything this page compressed too far
