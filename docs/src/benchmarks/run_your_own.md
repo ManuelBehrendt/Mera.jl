@@ -24,6 +24,9 @@ run_merafile_benchmark("path/to/merafiles", 300, 3)
 # 4. Projection cost and thread scaling
 gas = gethydro(getinfo(300, "path/to/simulation"))
 benchmark_projection_hydro(gas, [1, 2, 4, 8], 3, "my_bench")   # writes my_bench.{json,csv}
+
+# 5. Is converting to a MERA file worth it for YOUR data?
+benchmark_conversion("path/to/simulation", 300)
 ```
 
 Start Julia with the thread count you want to test, `julia -t 8`. Benchmarks 1, 2 and 4
@@ -33,8 +36,29 @@ sweep or accept thread counts internally.
 |---|---|---|
 | how many threads to read with | 1 | where IOPS stops climbing |
 | what a full read costs you | 2 | per-component times and GC share |
-| whether converting is worth it | 2 then 3 | the ratio between them |
+| how fast a MERA file re-reads | 3 | cold and warm times |
 | how many threads a projection uses | 4 | where the speedup flattens |
+| **whether converting is worth it** | **5** | **a break-even in re-reads** |
+
+### The break-even
+
+`benchmark_conversion` is the one to run if you only run one. Everything on the
+Performance page recommends converting a snapshot you touch more than once, and this
+turns that advice into a number for your data and your storage:
+
+```
+  read from RAMSES     :    53.3 ms
+  savedata write       :    14.7 ms
+  one-off conversion   :    68.0 ms
+  MERA re-read (warm)  :     4.1 ms   (13.0x faster)
+  size on disk         :     1.6 MB -> 295.7 KB  (82% smaller)
+  Converting pays for itself after 1.4 re-reads.
+```
+
+Read it twice and you are already ahead. Compilation is excluded from both halves,
+which matters more than it sounds: unwarmed, this same fixture reports 750x and a
+break-even of 68, almost all of it Julia compiling rather than anything about the file
+format.
 
 There is a fifth, `clumpfind_benchmarks(gas; threshold=1e2, threshold_unit=:nH)`, which
 times each structure finder, the three boundedness potentials (`:approx`, `:direct`,

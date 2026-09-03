@@ -60,6 +60,7 @@ saturates when the storage does.
 benchmark_projection_hydro
 run_reading_benchmark
 run_merafile_benchmark
+benchmark_conversion
 benchmark_mera_io
 benchmark_buffer_sizes
 ```

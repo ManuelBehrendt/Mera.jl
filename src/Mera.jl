@@ -388,6 +388,7 @@ export
     plot_results,
     run_reading_benchmark,
     run_merafile_benchmark,
+    benchmark_conversion,
     clumpfind_benchmarks
 
 include("types.jl")
@@ -520,6 +521,7 @@ include("macros/filter_data.jl")
 include("benchmarks/IO/IOperformance.jl")
 include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
 include("benchmarks/JLD2_reading/merafile_reading_stats.jl")
+include("benchmarks/Conversion/conversion_benchmark.jl")
 include("benchmarks/Projections/projection_benchmarks.jl")
 include("benchmarks/Clumpfind/clumpfind_benchmarks.jl")
 
