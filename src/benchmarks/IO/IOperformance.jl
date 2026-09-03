@@ -13,19 +13,80 @@
 Prints Julia version, OS, CPU threads, timestamp, hostname, working directory,
 and project dependencies for reproducibility.
 """
-function log_env()
+# Best-effort shell probe. Anything here is optional colour for the log, so a missing
+# command or an unusual platform must never take the benchmark down with it.
+function _probe(cmd)
+    try
+        return strip(read(cmd, String))
+    catch
+        return ""
+    end
+end
+
+"""
+    filesystem_info(path) -> NamedTuple
+
+What kind of storage `path` sits on: `type` (lustre, gpfs, nfs, ext4, xfs, apfs, ...),
+`mount` point, and `stripe` for Lustre. Empty strings where it cannot be determined.
+
+A read benchmark without this is not reproducible. A number from a Lustre scratch
+filesystem and the same number from a local NVMe describe different machines.
+"""
+function filesystem_info(path::AbstractString)
+    p = abspath(path)
+    fstype, mount, stripe = "", "", ""
+    if Sys.islinux()
+        # stat -f -c %T names the filesystem directly: lustre, gpfs, nfs, ext4, xfs
+        fstype = _probe(`stat -f -c %T $p`)
+        out    = _probe(`df --output=target $p`)
+        mount  = isempty(out) ? "" : strip(last(split(out, '\n')))
+        if occursin("lustre", lowercase(fstype))
+            stripe = replace(_probe(`lfs getstripe -d $p`), '\n' => " ")
+        end
+    elseif Sys.isapple()
+        # macOS stat -f %T gives the file type, not the filesystem, so read the
+        # mount table instead: "/dev/disk3s5 on / (apfs, local, journaled)"
+        dev = _probe(pipeline(`df -P $p`, `tail -1`))
+        if !isempty(dev)
+            fields = split(dev)
+            length(fields) >= 6 && (mount = fields[end])
+            line = _probe(pipeline(`mount`, `grep -F " on $(mount) "`))
+            m = match(r"\(([^,)]+)", line)
+            m !== nothing && (fstype = m.captures[1])
+        end
+    end
+    return (type=fstype, mount=strip(mount), stripe=stripe)
+end
+
+function log_env(path::AbstractString="")
     println("═"^80, "\nBENCHMARK ENVIRONMENT\n", "═"^80)
-    println("Julia version   : ", VERSION)
-    println("OS kernel       : ", Sys.KERNEL)
-    println("CPU threads     : ", Sys.CPU_THREADS)
     println("Timestamp       : ", Dates.format(now(), "yyyy-mm-dd HH:MM:SS"))
     println("Hostname        : ", gethostname())
-    println("Working dir     : ", pwd())
-    println("Dependencies    :")
-    for (pkg, _) in Pkg.project().dependencies
-        println("  ", pkg)
+    println("Julia version   : ", VERSION)
+    println("Mera version    : ", _mera_version())
+    println("OS kernel       : ", Sys.KERNEL, " ", Sys.MACHINE)
+    cpu = Sys.cpu_info()
+    println("CPU             : ", isempty(cpu) ? "unknown" : first(cpu).model)
+    println("CPU threads     : ", Sys.CPU_THREADS)
+    println("Total RAM       : ", round(Sys.total_memory() / 1024^3, digits=1), " GB")
+    println("Julia threads   : ", Threads.nthreads(),
+            " compute, ", Threads.ngcthreads(), " GC")
+    if !isempty(path)
+        fs = filesystem_info(path)
+        println("Data path       : ", path)
+        println("Filesystem      : ", isempty(fs.type) ? "unknown" : fs.type)
+        !isempty(fs.mount)  && println("Mount           : ", fs.mount)
+        !isempty(fs.stripe) && println("Lustre stripe   : ", replace(fs.stripe, "\n" => " "))
     end
     println("═"^80)
+end
+
+function _mera_version()
+    try
+        return string(pkgversion(@__MODULE__))
+    catch
+        return "unknown"
+    end
 end
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -266,7 +327,7 @@ hundreds of gigabytes. Raise `nfiles` for a larger sample if the storage can tak
 """
 function run_benchmark(folder; runs=1, nfiles::Int=64)
     total_start = time()
-    log_env()
+    log_env(string(folder))
 
     files = joinpath.(folder, filter(f->isfile(joinpath(folder,f)), readdir(folder)))
     isempty(files) && error("No files in $folder")

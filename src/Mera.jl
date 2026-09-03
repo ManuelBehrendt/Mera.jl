@@ -389,6 +389,7 @@ export
     run_reading_benchmark,
     run_merafile_benchmark,
     benchmark_conversion,
+    filesystem_info,
     clumpfind_benchmarks
 
 include("types.jl")
