@@ -13,7 +13,7 @@ Everything here is exported. `using Mera` is all you need, there is nothing to d
 using Mera
 
 # 1. Storage limits: how many concurrent readers your filesystem rewards
-run_benchmark("path/to/simulation/output_00300"; runs=2)
+run_benchmark("path/to/simulation/output_00300"; runs=2)   # nfiles= caps the read sample
 
 # 2. Reading the RAMSES output, per component, with GC accounting
 run_reading_benchmark(300, "path/to/simulation"; runs=3)
@@ -86,6 +86,12 @@ your install, and it lets you read the output format before pointing it at somet
 
 Most people analysing large RAMSES output are on a cluster, not a laptop, and several
 things change there.
+
+**The throughput test samples, it does not read everything.** It reads file contents
+once per thread level per run, so against a whole snapshot the total would be
+size times levels times runs. On a 54 GB output with nine thread levels that is close
+to a terabyte. It defaults to 64 files and prints how much it sampled. Raise `nfiles`
+only if your storage can take it.
 
 **Measure a subregion, not the whole box.** A full read of a large snapshot repeated
 several times is not a benchmark, it is an outage. Both reading benchmarks accept the

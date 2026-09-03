@@ -253,12 +253,18 @@ struct IOBenchmark
 end
 
 """
-    run_benchmark(folder; runs=1) → IOBenchmark
+    run_benchmark(folder; runs=1, nfiles=64) → IOBenchmark
 
 Executes IOPS, throughput, and open/close tests. Returns all samples, stats,
 timings, and thread configurations as an [`IOBenchmark`](@ref).
+
+Point it at one snapshot directory. IOPS and open/close only open and close files,
+so they use the whole directory cheaply. The throughput test reads file contents
+once per thread level per run, so it samples `nfiles` files rather than the whole
+snapshot: on a large output, reading everything at every thread level would move
+hundreds of gigabytes. Raise `nfiles` for a larger sample if the storage can take it.
 """
-function run_benchmark(folder; runs=1)
+function run_benchmark(folder; runs=1, nfiles::Int=64)
     total_start = time()
     log_env()
 
@@ -268,12 +274,25 @@ function run_benchmark(folder; runs=1)
     max_t = min(Threads.nthreads(), 64)
     levels = [x for x in (1,2,4,8,16,24,32,48,64) if x ≤ max_t]
 
+    # The throughput test reads file CONTENTS, once per thread level per run, and
+    # warms the cache once beforehand. Against a whole snapshot that is
+    # size x levels x runs bytes: on a 54 GB output with nine levels and two runs it
+    # would read about a terabyte. Sample a bounded number of files instead. The
+    # IOPS and open/close tests only open and close, so they stay cheap.
+    n_thr = min(nfiles, length(files))
+    sampled_bytes = Float64(sum(filesize, files[1:n_thr]))
+
     println("\n🚀 Starting benchmark on $(length(levels)) thread configs: $levels")
     println("   Files: $(length(files)), Runs per test: $runs")
+    println("   Throughput sample: $n_thr of $(length(files)) files " *
+            "($(_fmt_bytes(sampled_bytes))), read $(length(levels)) x $runs times")
+    if n_thr < length(files)
+        println("   Raise with nfiles= if you want a larger sample.")
+    end
 
     iops       = iops_test(files; runs=runs, levels=levels)
-    throughput = throughput_test(files; runs=runs, N=length(files), levels=levels)
-    openclose  = openclose_test(files; runs=runs, N=length(files), levels=levels)
+    throughput = throughput_test(files; runs=runs, N=n_thr, levels=levels)
+    openclose  = openclose_test(files; runs=runs, N=min(50, length(files)), levels=levels)
 
     total_elapsed = time() - total_start
 
