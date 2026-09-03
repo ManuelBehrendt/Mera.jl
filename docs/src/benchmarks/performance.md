@@ -25,6 +25,8 @@ hardware at all. One `du` reproduces it.
 
 LZ4 compressed, all three components on both sides.
 
+*Measured with `du` on `mw_L10/output_00300` and its converted `output_00300.jld2`.*
+
 ## Projection: threads only pay when there is work per cell
 
 A published null result, because it is the one most people get wrong.
@@ -35,6 +37,8 @@ A published null result, because it is the one most people get wrong.
 | ten variables, one call | 21.0 s | 13.3 s | 13.3 s | 12.9 s | **1.63x** |
 
 Live-heap delta about 1.1 GiB.
+
+*`benchmark_projection_hydro(gas, [1,2,4,8], 3)`, session started with 8 Julia threads.*
 
 **Giving a single light projection more threads does nothing.** There is too little
 arithmetic per cell to cover the coordination cost, so it stays flat at every thread
@@ -66,8 +70,15 @@ threaded and the RAMSES side is not, so this is not a serial straw man: the comp
 is task to task, the honest question being how long it takes to get the same data into
 memory.
 
+*RAMSES side: `run_reading_benchmark(300, path)`, 10 repetitions, 8 compute and 8 GC
+threads. MERA side: `run_merafile_benchmark(path, 300, 3)`, single threaded. The reading
+benchmark has since gained a warm-up run and now defaults to `runs=3`, so reproducing the
+figure above needs `runs=10` and will land slightly lower.*
+
 Peak memory while reading was 13.0 GB for RAMSES against 8.0 GB for the MERA file,
-about 35% lower, because RAMSES reading needs per-file parse buffers.
+about 35% lower, because RAMSES reading needs per-file parse buffers. These peak-RSS
+figures come from an earlier single-threaded run, so treat them as the ratio rather than
+as paired with the times above.
 
 Where the RAMSES time goes:
 

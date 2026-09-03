@@ -105,6 +105,8 @@ Same machine and dataset as the [Performance](performance.md) page, via
 
 Open/close latency at 8 threads: 42.7 μs (median).
 
+*`run_benchmark(dir; runs=2)` on `mw_L10/output_00300`, 2,570 files, 8 Julia threads.*
+
 IOPS keeps climbing with concurrency on this machine, which is the shape you want to
 find on your own storage: the point where it stops climbing is the thread count worth
 using.
