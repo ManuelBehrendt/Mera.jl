@@ -63,6 +63,7 @@ run_merafile_benchmark
 benchmark_conversion
 benchmark_report
 filesystem_info
+allocated_cpus
 benchmark_mera_io
 benchmark_buffer_sizes
 ```

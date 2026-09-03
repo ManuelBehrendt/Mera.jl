@@ -27,6 +27,30 @@ benchmark_report("/path/to/simulation", 250; lmax=11, merapath="/path/with/space
 Use `stages=[:storage]` to run only part of it. The individual functions below are
 still there if you want one measurement on its own.
 
+### It will not take more cores than your job owns
+
+Every stage is capped at `min(Threads.nthreads(), allocated_cpus())`.
+`allocated_cpus()` reads `SLURM_CPUS_PER_TASK`, `SLURM_JOB_CPUS_PER_NODE`, `PBS_NP`,
+`NSLOTS` and `OMP_NUM_THREADS` before falling back to `Sys.CPU_THREADS`, because on a
+shared node the machine's core count is not what your job may use.
+
+The storage sweep stops at that number too, rather than climbing the default ladder to
+64 threads. If Julia was started with more threads than the job owns, the report says
+so and names the right value:
+
+```
+Allocated CPUs  : 16  (machine has 128, this job may use 16)
+Julia threads   : 128 compute, 128 GC
+WARNING         : Julia has more threads than this job is allocated.
+                  Restart with  julia -t 16  or the benchmark will oversubscribe.
+```
+
+To leave headroom on a busy node, cap it yourself:
+
+```julia
+benchmark_report(path, 250; max_threads=8, merapath="...")
+```
+
 ## The four measurements
 
 ```julia

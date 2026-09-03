@@ -1,7 +1,9 @@
 # Get information about the current thread configuration at Julia startup
-function get_startup_thread_info()
-    # Number of compute threads available (for parallel processing)
-    compute_threads = Threads.nthreads()
+function get_startup_thread_info(max_threads::Int=0)
+    # What this job may use, not what the machine has. On a shared node those differ,
+    # and sizing a benchmark by the machine takes cores belonging to other jobs.
+    compute_threads = max_threads > 0 ? min(max_threads, Threads.nthreads()) :
+                                        min(Threads.nthreads(), allocated_cpus())
     
     # Number of garbage collector (GC) threads
     gc_threads = try
@@ -205,9 +207,10 @@ Used to produce the parallel RAMSES-reading benchmark in the documentation; run 
 thread setting to build the scaling curve.
 """
 function run_reading_benchmark(output_number, path; runs::Int=3, lmax=missing,
-                               outdir::AbstractString=pwd(), kwargs...)
+                               outdir::AbstractString=pwd(), max_threads::Int=0,
+                               kwargs...)
     # Gather thread configuration info
-    thread_info = get_startup_thread_info()
+    thread_info = get_startup_thread_info(max_threads)
     
     # Run the benchmark for this configuration
     results = run_single_reading_benchmark(path, output_number, thread_info;

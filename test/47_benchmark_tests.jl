@@ -156,3 +156,41 @@ end
         @info "benchmark_report data-backed tests skipped (set MERA_TEST_DATA)"
     end
 end
+
+# ============================================================================
+# thread budgeting — a shared node must not be oversubscribed
+# ============================================================================
+@testset "thread allocation" begin
+    # allocated_cpus reads the scheduler before trusting the machine's core count
+    withenv("SLURM_CPUS_PER_TASK" => "4") do
+        @test allocated_cpus() == 4
+    end
+    # SLURM_JOB_CPUS_PER_NODE can carry a multiplier suffix
+    withenv("SLURM_CPUS_PER_TASK" => nothing, "SLURM_JOB_CPUS_PER_NODE" => "16(x2)") do
+        @test allocated_cpus() == 16
+    end
+    withenv("SLURM_CPUS_PER_TASK" => nothing, "SLURM_JOB_CPUS_PER_NODE" => nothing,
+            "PBS_NP" => "12", "OMP_NUM_THREADS" => nothing, "NSLOTS" => nothing) do
+        @test allocated_cpus() == 12
+    end
+    # nonsense values are ignored rather than propagated as a thread count
+    withenv("SLURM_CPUS_PER_TASK" => "not-a-number", "SLURM_JOB_CPUS_PER_NODE" => nothing,
+            "PBS_NP" => nothing, "NSLOTS" => nothing, "OMP_NUM_THREADS" => nothing) do
+        @test allocated_cpus() == Sys.CPU_THREADS
+    end
+    # no scheduler at all falls back to the machine
+    withenv("SLURM_CPUS_PER_TASK" => nothing, "SLURM_JOB_CPUS_PER_NODE" => nothing,
+            "PBS_NP" => nothing, "NSLOTS" => nothing, "OMP_NUM_THREADS" => nothing) do
+        @test allocated_cpus() == Sys.CPU_THREADS
+    end
+
+    # the storage sweep must not climb past the allocation. With two CPUs it may
+    # only test 1 and 2 threads, never the default ladder up to 64.
+    dir = mktempdir()
+    for i in 1:8
+        write(joinpath(dir, "f$i.bin"), rand(UInt8, 2_000))
+    end
+    res = run_benchmark(dir; runs=1, nfiles=4, max_threads=2, logenv=false)
+    @test maximum(res.threads) <= 2
+    @test all(t -> t <= 2, keys(res.iops.stats))
+end

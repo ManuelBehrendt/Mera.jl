@@ -71,7 +71,10 @@ function benchmark_conversion(path::AbstractString, output::Int;
                               merapath::AbstractString=mktempdir(),
                               components=nothing,
                               runs::Int=3,
+                              max_threads::Int=0,
                               verbose::Bool=true)
+    nthr = max_threads > 0 ? min(max_threads, Threads.nthreads()) :
+                             min(Threads.nthreads(), allocated_cpus())
     info = getinfo(output, string(path), verbose=false)
 
     # Only convert what the snapshot has. Asking for an absent component would throw
@@ -86,6 +89,7 @@ function benchmark_conversion(path::AbstractString, output::Int;
 
     verbose && println("\n", "="^64,
                        "\nConversion benchmark: output $output",
+                       "\n  threads    : ", nthr,
                        "\n  components : ", join(comps, ", "),
                        "\n  MERA file  : ", merapath, "\n", "="^64)
 
@@ -95,9 +99,9 @@ function benchmark_conversion(path::AbstractString, output::Int;
     # several hundred x, none of which is the file format.
     verbose && println("\nWarm-up read (not timed) ...")
     try
-        first(comps) === :hydro     ? gethydro(info,     verbose=false, show_progress=false) :
-        first(comps) === :gravity   ? getgravity(info,   verbose=false, show_progress=false) :
-                                      getparticles(info, verbose=false, show_progress=false)
+        first(comps) === :hydro     ? gethydro(info,     verbose=false, show_progress=false, max_threads=nthr) :
+        first(comps) === :gravity   ? getgravity(info,   verbose=false, show_progress=false, max_threads=nthr) :
+                                      getparticles(info, verbose=false, show_progress=false, max_threads=nthr)
         GC.gc()
     catch e
         verbose && println("  warm-up failed: ", typeof(e))
@@ -107,9 +111,9 @@ function benchmark_conversion(path::AbstractString, output::Int;
     verbose && println("Reading from the RAMSES output ...")
     loaded = Dict{Symbol,Any}()
     read_time = @elapsed for c in comps
-        loaded[c] = c === :hydro     ? gethydro(info,     verbose=false, show_progress=false) :
-                    c === :gravity   ? getgravity(info,   verbose=false, show_progress=false) :
-                                       getparticles(info, verbose=false, show_progress=false)
+        loaded[c] = c === :hydro     ? gethydro(info,     verbose=false, show_progress=false, max_threads=nthr) :
+                    c === :gravity   ? getgravity(info,   verbose=false, show_progress=false, max_threads=nthr) :
+                                       getparticles(info, verbose=false, show_progress=false, max_threads=nthr)
     end
     verbose && @printf("  %.2f s\n", read_time)
 

@@ -40,6 +40,10 @@ the format advantage is largest.
 - `nfiles`: how many files the throughput sweep samples. It reads file contents once
   per thread level per run, so this is deliberately bounded.
 - `outdir`: where the report and the raw JSON/CSV go.
+- `max_threads`: thread budget for every stage. Defaults to
+  `min(Threads.nthreads(), allocated_cpus())`, so on a batch node it follows the
+  scheduler's allocation rather than the machine's core count. Set it lower to leave
+  headroom on a shared node.
 - `force`: run a full read even when it looks too large for the machine's memory.
 - `stages`: `:all`, or any of `:storage`, `:reading`, `:conversion` to run a subset.
 
@@ -55,6 +59,13 @@ benchmark_report("/data/sim/MilkyWay", 250; merapath="/data/merafiles")
 benchmark_report("/data/sim/MilkyWay", 250; lmax=11, merapath="/data/merafiles")
 ```
 
+!!! note "It will not take more cores than the job owns"
+    Every stage is capped at `min(Threads.nthreads(), allocated_cpus())`, where
+    [`allocated_cpus`](@ref) reads `SLURM_CPUS_PER_TASK` and friends before falling
+    back to `Sys.CPU_THREADS`. The storage sweep also stops at that number rather
+    than climbing to 64. If Julia was started with more threads than the job owns,
+    the environment log says so and names the right `-t` value.
+
 !!! warning "Refuses reads that would not fit"
     If the estimated in-memory size exceeds 60% of this machine's RAM, the reading
     and conversion stages are skipped with a message naming the `lmax` to use
@@ -68,8 +79,14 @@ function benchmark_report(path::AbstractString, output::Int;
                           nfiles::Int=64,
                           outdir::AbstractString=homedir(),
                           force::Bool=false,
+                          max_threads::Int=0,
                           stages=:all)
     want(s) = stages === :all || s in stages
+
+    # One thread budget for every stage. Defaults to what this job is entitled to,
+    # which on a shared node is smaller than what the machine has.
+    nthr = max_threads > 0 ? min(max_threads, Threads.nthreads()) :
+                             min(Threads.nthreads(), allocated_cpus())
 
     snapdir = joinpath(string(path), "output_$(lpad(output,5,'0'))")
     isdir(snapdir) || error("snapshot directory not found: $snapdir")
@@ -94,6 +111,11 @@ function benchmark_report(path::AbstractString, output::Int;
     @printf("size on disk      : %s\n", _fmt_bytes(bytes))
     @printf("components        : hydro=%s gravity=%s particles=%s\n",
             info.hydro, info.gravity, info.particles)
+    @printf("threads for this run: %d  (Julia started with %d, job allocated %d)\n",
+            nthr, Threads.nthreads(), allocated_cpus())
+    if nthr < Threads.nthreads()
+        println("  capped below the Julia thread count, so other jobs on this node keep their cores")
+    end
 
     # A RAMSES read needs several times the on-disk size in memory. Refuse rather
     # than push a shared node into swap.
@@ -113,17 +135,19 @@ function benchmark_report(path::AbstractString, output::Int;
 
     if want(:storage)
         println("\n", "#"^78, "\n# Storage\n", "#"^78)
-        storage = run_benchmark(snapdir; runs=2, nfiles=nfiles)
+        # the environment block is already printed above; do not repeat it
+        storage = run_benchmark(snapdir; runs=2, nfiles=nfiles, max_threads=nthr, logenv=false)
     end
     if want(:reading) && !too_big
         println("\n", "#"^78, "\n# Reading the RAMSES output\n", "#"^78)
-        reading = run_reading_benchmark(output, string(path); runs=runs, lmax=lmax, outdir=dest)
+        reading = run_reading_benchmark(output, string(path); runs=runs, lmax=lmax,
+                                        outdir=dest, max_threads=nthr)
     end
     if want(:conversion) && !too_big
         println("\n", "#"^78, "\n# Conversion break-even\n", "#"^78)
         mkpath(merapath)
-        conversion = benchmark_conversion(string(path), output;
-                                          merapath=merapath, components=components, runs=runs)
+        conversion = benchmark_conversion(string(path), output; merapath=merapath,
+                                          components=components, runs=runs, max_threads=nthr)
     end
 
     reportfile = joinpath(dest, "MERA_BENCHMARK.txt")

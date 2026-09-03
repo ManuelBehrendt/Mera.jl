@@ -58,6 +58,32 @@ function filesystem_info(path::AbstractString)
     return (type=fstype, mount=strip(mount), stripe=stripe)
 end
 
+"""
+    allocated_cpus() -> Int
+
+How many CPUs this process is actually entitled to, rather than how many the machine
+has. Reads the batch scheduler's own variables first (`SLURM_CPUS_PER_TASK`,
+`SLURM_JOB_CPUS_PER_NODE`, `PBS_NP`, `NSLOTS`, `OMP_NUM_THREADS`), then falls back to
+`Sys.CPU_THREADS`.
+
+On a shared node `Sys.CPU_THREADS` reports the whole machine, so using it to size a
+benchmark takes cores that belong to other jobs and produces numbers shaped by the
+contention you caused.
+"""
+function allocated_cpus()
+    for var in ("SLURM_CPUS_PER_TASK", "SLURM_JOB_CPUS_PER_NODE", "PBS_NP",
+                "NSLOTS", "OMP_NUM_THREADS")
+        raw = get(ENV, var, "")
+        isempty(raw) && continue
+        # SLURM_JOB_CPUS_PER_NODE can read "16" or "16(x2)"; take the leading integer
+        m = match(r"^(\d+)", raw)
+        m === nothing && continue
+        n = parse(Int, m.captures[1])
+        n > 0 && return n
+    end
+    return Sys.CPU_THREADS
+end
+
 function log_env(path::AbstractString="")
     println("═"^80, "\nBENCHMARK ENVIRONMENT\n", "═"^80)
     println("Timestamp       : ", Dates.format(now(), "yyyy-mm-dd HH:MM:SS"))
@@ -69,8 +95,16 @@ function log_env(path::AbstractString="")
     println("CPU             : ", isempty(cpu) ? "unknown" : first(cpu).model)
     println("CPU threads     : ", Sys.CPU_THREADS)
     println("Total RAM       : ", round(Sys.total_memory() / 1024^3, digits=1), " GB")
+    alloc = allocated_cpus()
+    println("Allocated CPUs  : ", alloc,
+            alloc < Sys.CPU_THREADS ? "  (machine has $(Sys.CPU_THREADS), this job may use $alloc)" : "")
     println("Julia threads   : ", Threads.nthreads(),
             " compute, ", Threads.ngcthreads(), " GC")
+    if Threads.nthreads() > alloc
+        println("WARNING         : Julia has more threads than this job is allocated.")
+        println("                  Restart with  julia -t ", alloc,
+                "  or the benchmark will oversubscribe.")
+    end
     if !isempty(path)
         fs = filesystem_info(path)
         println("Data path       : ", path)
@@ -325,15 +359,20 @@ once per thread level per run, so it samples `nfiles` files rather than the whol
 snapshot: on a large output, reading everything at every thread level would move
 hundreds of gigabytes. Raise `nfiles` for a larger sample if the storage can take it.
 """
-function run_benchmark(folder; runs=1, nfiles::Int=64)
+function run_benchmark(folder; runs=1, nfiles::Int=64,
+                       max_threads::Int=min(Threads.nthreads(), allocated_cpus()),
+                       logenv::Bool=true)
     total_start = time()
-    log_env(string(folder))
+    logenv && log_env(string(folder))
 
     files = joinpath.(folder, filter(f->isfile(joinpath(folder,f)), readdir(folder)))
     isempty(files) && error("No files in $folder")
 
-    max_t = min(Threads.nthreads(), 64)
+    # Never sweep past what this job may use: on a shared node the extra threads are
+    # other people's cores, and the numbers they produce measure the contention.
+    max_t = min(Threads.nthreads(), max_threads, 64)
     levels = [x for x in (1,2,4,8,16,24,32,48,64) if x ≤ max_t]
+    isempty(levels) && (levels = [1])
 
     # The throughput test reads file CONTENTS, once per thread level per run, and
     # warms the cache once beforehand. Against a whole snapshot that is
@@ -351,7 +390,9 @@ function run_benchmark(folder; runs=1, nfiles::Int=64)
         println("   Raise with nfiles= if you want a larger sample.")
     end
 
-    iops       = iops_test(files; runs=runs, levels=levels)
+    # iops_test unions max_threads into its own level list, so it must be told the
+    # cap too: passing only `levels` let it add Threads.nthreads() straight back in.
+    iops       = iops_test(files; runs=runs, levels=levels, max_threads=max_t)
     throughput = throughput_test(files; runs=runs, N=n_thr, levels=levels)
     openclose  = openclose_test(files; runs=runs, N=min(50, length(files)), levels=levels)
 

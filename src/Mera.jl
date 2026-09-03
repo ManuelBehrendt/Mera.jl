@@ -391,6 +391,7 @@ export
     benchmark_conversion,
     benchmark_report,
     filesystem_info,
+    allocated_cpus,
     clumpfind_benchmarks
 
 include("types.jl")
