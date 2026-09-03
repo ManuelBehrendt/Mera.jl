@@ -45,7 +45,9 @@ the format advantage is largest.
   scheduler's allocation rather than the machine's core count. Set it lower to leave
   headroom on a shared node.
 - `force`: run a full read even when it looks too large for the machine's memory.
-- `stages`: `:all`, or any of `:storage`, `:reading`, `:conversion` to run a subset.
+- `stages`: `:all`, or any of `:storage`, `:reading`, `:conversion`, `:sweep` to run a
+  subset. `:sweep` is never part of `:all`: it runs one full read per thread count per
+  repetition, so it must be asked for by name, `stages=[:storage, :sweep]`.
 
 # Returns
 A `NamedTuple` with `info`, `nfiles_total`, `bytes`, `filesystem`, `storage`,
@@ -131,7 +133,7 @@ function benchmark_report(path::AbstractString, output::Int;
         println("!"^78)
     end
 
-    storage = reading = conversion = nothing
+    storage = reading = conversion = sweep = nothing
 
     if want(:storage)
         println("\n", "#"^78, "\n# Storage\n", "#"^78)
@@ -142,6 +144,12 @@ function benchmark_report(path::AbstractString, output::Int;
         println("\n", "#"^78, "\n# Reading the RAMSES output\n", "#"^78)
         reading = run_reading_benchmark(output, string(path); runs=runs, lmax=lmax,
                                         outdir=dest, max_threads=nthr)
+    end
+    # Opt-in, because it is the only stage whose cost multiplies: one full read per
+    # thread count per run. Ask for it with stages=[:storage, :sweep].
+    if want(:sweep) && stages !== :all && !too_big
+        println("\n", "#"^78, "\n# Reading thread sweep\n", "#"^78)
+        sweep = reading_sweep(output, string(path); runs=2, lmax=lmax)
     end
     if want(:conversion) && !too_big
         println("\n", "#"^78, "\n# Conversion break-even\n", "#"^78)
@@ -154,18 +162,18 @@ function benchmark_report(path::AbstractString, output::Int;
     open(reportfile, "w") do f
         for io in (stdout, f)
             _write_report(io, path, output, info, files, bytes, fs,
-                          storage, reading, conversion, lmax)
+                          storage, reading, conversion, sweep, lmax)
         end
     end
     println("\nReport saved: ", reportfile)
 
     return (info=info, nfiles_total=length(files), bytes=bytes, filesystem=fs,
-            storage=storage, reading=reading, conversion=conversion,
+            storage=storage, reading=reading, conversion=conversion, sweep=sweep,
             reportfile=reportfile)
 end
 
 function _write_report(io, path, output, info, files, bytes, fs,
-                       storage, reading, conversion, lmax)
+                       storage, reading, conversion, sweep, lmax)
     cpu = Sys.cpu_info()
     println(io, "\n", "="^78)
     println(io, "MERA BENCHMARK REPORT")
@@ -220,6 +228,22 @@ function _write_report(io, path, output, info, files, bytes, fs,
                     100*(1 - c.size_mera/c.size_ramses))
         end
         isfinite(c.breakeven) && @printf(io, "  break-even         : %.1f re-reads\n", c.breakeven)
+        println(io, "  memory to load the same data:")
+        @printf(io, "    allocated RAMSES : %10s\n", _fmt_bytes(c.ramses_allocated))
+        @printf(io, "    allocated MERA   : %10s", _fmt_bytes(c.mera_allocated))
+        c.mera_allocated > 0 && @printf(io, "   (%.1fx less churn)",
+                                        c.ramses_allocated / c.mera_allocated)
+        println(io)
+        @printf(io, "    GC RAMSES / MERA : %s / %s\n",
+                _fmt_secs(c.ramses_gctime), _fmt_secs(c.mera_gctime))
+    end
+
+    if sweep !== nothing
+        println(io, "\nReading thread sweep (:", sweep.component, "):")
+        for (i, n) in enumerate(sweep.threads)
+            @printf(io, "  %3d threads : %10s  %.2fx\n", n, _fmt_secs(sweep.times[i]), sweep.speedup[i])
+        end
+        @printf(io, "  fastest %d threads, sweet spot %d threads\n", sweep.best, sweep.sweet_spot)
     end
 
     if storage !== nothing

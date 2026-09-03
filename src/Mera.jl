@@ -387,6 +387,7 @@ export
     IOBenchmark,
     plot_results,
     run_reading_benchmark,
+    reading_sweep,
     run_merafile_benchmark,
     benchmark_conversion,
     benchmark_report,
@@ -523,6 +524,7 @@ include("macros/filter_data.jl")
 # Benchmarks
 include("benchmarks/IO/IOperformance.jl")
 include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
+include("benchmarks/RAMSES_reading/reading_sweep.jl")
 include("benchmarks/JLD2_reading/merafile_reading_stats.jl")
 include("benchmarks/Conversion/conversion_benchmark.jl")
 include("benchmarks/Report/benchmark_report.jl")

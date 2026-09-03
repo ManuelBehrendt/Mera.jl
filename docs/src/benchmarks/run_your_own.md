@@ -27,6 +27,51 @@ benchmark_report("/path/to/simulation", 250; lmax=11, merapath="/path/with/space
 Use `stages=[:storage]` to run only part of it. The individual functions below are
 still there if you want one measurement on its own.
 
+### Which stages sweep, and which do not
+
+Worth knowing before you read the output:
+
+| stage | thread counts tested |
+|---|---|
+| storage | **sweeps** 1, 2, 4, 8, 16, ... up to the budget |
+| reading | one, at the budget |
+| conversion | one, at the budget |
+| reading sweep | **sweeps**, but only when you ask for it |
+
+The reading sweep is the one that answers "how many threads should I read with", and it
+is opt-in because it is the only stage whose cost multiplies: one full read per thread
+count per repetition.
+
+```julia
+reading_sweep(250, "/path/to/simulation"; lmax=11)
+
+# or as part of the report
+benchmark_report(path, 250; stages=[:storage, :sweep], lmax=11)
+```
+
+It prints how many full reads it will do before starting, and ends with the number to
+use:
+
+```
+  threads          time    speedup   efficiency
+  1             56.9 ms      1.00x         100%
+  2             56.6 ms      1.01x          50%
+  4             48.6 ms      1.17x          29%
+  8             47.8 ms      1.19x          15%
+  Fastest    : 8 threads (47.8 ms)
+  Sweet spot : 4 threads, within 5% of the best for 50% of the cores
+```
+
+The sweet spot, not the fastest, is the number to use: it is the smallest thread count
+within 5% of the best, so the remaining threads buy almost nothing and on a shared node
+cost other jobs their cores.
+
+Bound it on a large snapshot with `lmax`, a subregion, or fewer `threads` values:
+
+```julia
+reading_sweep(250, path; threads=[1, 8, 16], runs=1, lmax=11)
+```
+
 ### It will not take more cores than your job owns
 
 Every stage is capped at `min(Threads.nthreads(), allocated_cpus())`.
@@ -98,6 +143,25 @@ turns that advice into a number for your data and your storage:
   size on disk         :     1.6 MB -> 295.7 KB  (82% smaller)
   Converting pays for itself after 1.4 re-reads.
 ```
+
+It also reports what each path costs in **memory**, which is the half that disk size
+and read time do not show:
+
+```
+  Memory to get the same data into RAM:
+    allocated, RAMSES  :      7.2 MB
+    allocated, MERA    :      2.9 MB   (2.5x less churn)
+    GC time, RAMSES    :     47.0 ms
+    GC time, MERA      :      0.0 ms
+```
+
+Both paths end with the same data in memory. The difference is what they churn through
+getting there: RAMSES parsing needs buffers for every per-CPU Fortran file, so on a
+snapshot with thousands of files it allocates far more and pays for it in garbage
+collection. That allocation is why reading a large RAMSES output can press against a
+node's memory limit when the data itself would fit comfortably.
+
+The ratio grows with the file count, so a small fixture understates it.
 
 Read it twice and you are already ahead. Compilation is excluded from both halves,
 which matters more than it sounds: unwarmed, this same fixture reports 750x and a

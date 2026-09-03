@@ -194,3 +194,69 @@ end
     @test maximum(res.threads) <= 2
     @test all(t -> t <= 2, keys(res.iops.stats))
 end
+
+# ============================================================================
+# reading_sweep — the "how many threads should I read with" answer
+# ============================================================================
+@testset "reading_sweep" begin
+    datadir = get(ENV, "MERA_TEST_DATA", "")
+    simpath = joinpath(datadir, "RAMSES-PUBLIC", "sedov3d_amr")
+    if !isempty(datadir) && isdir(simpath)
+        r = reading_sweep(7, simpath; threads=[1, 2], runs=1, verbose=false)
+
+        @test r.threads == [1, 2]
+        @test length(r.times) == 2 && all(>(0), r.times)
+        @test r.speedup[1] ≈ 1.0                       # first point is the baseline
+        @test r.best in r.threads
+        @test r.sweet_spot in r.threads
+        # the sweet spot is the cheapest point within 5% of the best, so it can never
+        # cost more cores than the fastest one
+        @test r.sweet_spot <= r.best
+        @test r.component === :hydro
+
+        # a component the snapshot does not have is refused up front, not after reads
+        @test_throws ErrorException reading_sweep(7, simpath; component=:gravity, verbose=false)
+        @test_throws ErrorException reading_sweep(7, simpath; component=:nonsense, verbose=false)
+
+        # the sweep is opt-in: :all must not trigger it, since its cost multiplies
+        out = mktempdir()
+        rall = benchmark_report(simpath, 7; merapath=joinpath(out, "mf"), outdir=out)
+        @test rall.sweep === nothing
+    else
+        @info "reading_sweep tests skipped (set MERA_TEST_DATA)"
+    end
+end
+
+# ============================================================================
+# memory accounting — the other half of what a MERA file buys
+# ============================================================================
+@testset "conversion memory figures" begin
+    # _read_cost must use the monotonic allocation counter. gc_num().allocd resets at
+    # every collection, so differencing it across an allocating call that triggers GC
+    # reports near zero, which is how this was wrong the first time.
+    cost = Mera._read_cost() do
+        x = zeros(UInt8, 8_000_000)   # 8 MB, well above any measurement noise
+        sum(x)
+    end
+    @test cost.allocated > 4_000_000
+    @test cost.time > 0
+    @test cost.gctime >= 0
+
+    # a call that allocates nothing measurable must not report megabytes
+    cheap = Mera._read_cost(() -> 1 + 1)
+    @test cheap.allocated < 1_000_000
+
+    datadir = get(ENV, "MERA_TEST_DATA", "")
+    simpath = joinpath(datadir, "RAMSES-PUBLIC", "sedov3d_amr")
+    if !isempty(datadir) && isdir(simpath)
+        out = mktempdir()
+        r = benchmark_conversion(simpath, 7; merapath=joinpath(out, "mf"),
+                                 runs=2, verbose=false)
+        @test r.ramses_allocated > 0
+        @test r.mera_allocated   > 0
+        # parsing per-CPU Fortran files allocates more than deserialising one table
+        @test r.ramses_allocated > r.mera_allocated
+        @test r.ramses_gctime >= 0 && r.mera_gctime >= 0
+        @test r.ramses_rss >= 0
+    end
+end

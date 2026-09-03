@@ -59,6 +59,7 @@ saturates when the storage does.
 ```@docs; canonical=false
 benchmark_projection_hydro
 run_reading_benchmark
+reading_sweep
 run_merafile_benchmark
 benchmark_conversion
 benchmark_report

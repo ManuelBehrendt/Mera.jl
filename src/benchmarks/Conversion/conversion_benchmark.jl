@@ -7,6 +7,32 @@
 # This measures both halves on the user's own data, so the recommendation becomes a
 # number rather than a slogan: after how many re-reads has converting paid for itself.
 
+# What one read costs in memory. Three different things, reported separately because
+# they answer different questions:
+#   retained  - what the result holds afterwards. Both paths end with the SAME data in
+#               memory, so this is a check that the comparison is fair, not a saving.
+#   allocated - total bytes churned through during the read. This is where the two
+#               differ: RAMSES parsing needs per-file buffers for every one of the
+#               (often thousands of) Fortran files, the MERA path deserialises one table.
+#   gctime    - garbage collection the read provoked, which is the cost of that churn.
+function _read_cost(f)
+    GC.gc()
+    live0  = Base.gc_live_bytes()
+    # gc_bytes() is the monotonic total-allocated counter, which is what @allocated
+    # uses. gc_num().allocd resets at every collection, so differencing it across a
+    # read that triggers GC reports near zero.
+    alloc0 = Base.gc_bytes()
+    gc0    = Base.gc_num().total_time
+    t      = @elapsed f()
+    gc1    = Base.gc_num().total_time
+    alloc1 = Base.gc_bytes()
+    live1  = Base.gc_live_bytes()
+    return (time=t,
+            retained  = Float64(live1 - live0),
+            allocated = Float64(alloc1 - alloc0),
+            gctime    = (gc1 - gc0) / 1e9)
+end
+
 _fmt_bytes(b) = !isfinite(b) ? "n/a" :
     b >= 1024^3 ? string(round(b/1024^3, digits=2), " GB") :
     b >= 1024^2 ? string(round(b/1024^2, digits=1), " MB") :
@@ -77,6 +103,10 @@ function benchmark_conversion(path::AbstractString, output::Int;
                              min(Threads.nthreads(), allocated_cpus())
     info = getinfo(output, string(path), verbose=false)
 
+    # Create the destination rather than failing after the read: a path like
+    # /scratch/merafiles usually does not exist yet on a server.
+    mkpath(merapath)
+
     # Only convert what the snapshot has. Asking for an absent component would throw
     # in the middle of a timed section.
     avail = Symbol[]
@@ -110,12 +140,18 @@ function benchmark_conversion(path::AbstractString, output::Int;
     # read the RAMSES output, which is the cost conversion has to beat
     verbose && println("Reading from the RAMSES output ...")
     loaded = Dict{Symbol,Any}()
-    read_time = @elapsed for c in comps
-        loaded[c] = c === :hydro     ? gethydro(info,     verbose=false, show_progress=false, max_threads=nthr) :
-                    c === :gravity   ? getgravity(info,   verbose=false, show_progress=false, max_threads=nthr) :
-                                       getparticles(info, verbose=false, show_progress=false, max_threads=nthr)
+    rss0 = Sys.maxrss()
+    ramses_cost = _read_cost() do
+        for c in comps
+            loaded[c] = c === :hydro     ? gethydro(info,     verbose=false, show_progress=false, max_threads=nthr) :
+                        c === :gravity   ? getgravity(info,   verbose=false, show_progress=false, max_threads=nthr) :
+                                           getparticles(info, verbose=false, show_progress=false, max_threads=nthr)
+        end
     end
-    verbose && @printf("  %.2f s\n", read_time)
+    read_time  = ramses_cost.time
+    ramses_rss = Float64(Sys.maxrss() - rss0)
+    verbose && @printf("  %s, allocated %s, GC %s\n", _fmt_secs(read_time),
+                       _fmt_bytes(ramses_cost.allocated), _fmt_secs(ramses_cost.gctime))
 
     # savedata needs the same courtesy as the readers. Its first call in a session
     # is dominated by compilation, which would otherwise be charged to the
@@ -140,12 +176,20 @@ function benchmark_conversion(path::AbstractString, output::Int;
 
     verbose && println("Reading the MERA file back, $runs times ...")
     back = Float64[]
+    mera_cost = nothing
     for i in 1:runs
-        t = @elapsed for c in comps
-            loaddata(output, merapath, c, verbose=false)
+        cost = _read_cost() do
+            for c in comps
+                loaddata(output, merapath, c, verbose=false)
+            end
         end
-        push!(back, t)
-        verbose && @printf("  read %d: %.3f s\n", i, t)
+        push!(back, cost.time)
+        # keep the cheapest run's memory figures, matching how the warm time is taken
+        if mera_cost === nothing || cost.time < mera_cost.time
+            mera_cost = cost
+        end
+        verbose && @printf("  read %d: %s, allocated %s\n", i,
+                           _fmt_secs(cost.time), _fmt_bytes(cost.allocated))
         GC.gc()
     end
     first_read = first(back)
@@ -172,6 +216,20 @@ function benchmark_conversion(path::AbstractString, output::Int;
                     100 * (1 - size_mera/size_ramses))
         end
         println("-"^64)
+        println("  Memory to get the same data into RAM:")
+        @printf("    allocated, RAMSES  : %10s\n", _fmt_bytes(ramses_cost.allocated))
+        @printf("    allocated, MERA    : %10s", _fmt_bytes(mera_cost.allocated))
+        if ramses_cost.allocated > 0 && mera_cost.allocated > 0
+            @printf("   (%.1fx less churn)", ramses_cost.allocated / mera_cost.allocated)
+        end
+        println()
+        @printf("    GC time, RAMSES    : %10s\n", _fmt_secs(ramses_cost.gctime))
+        @printf("    GC time, MERA      : %10s\n", _fmt_secs(mera_cost.gctime))
+        if ramses_cost.allocated > 0
+            @printf("    allocated per byte on disk, RAMSES: %.1fx\n",
+                    ramses_cost.allocated / max(size_ramses, 1))
+        end
+        println("-"^64)
         println("  Compilation is excluded from both halves: the readers and savedata")
         println("  are each called once, untimed, before the timed section.")
         if isfinite(breakeven)
@@ -186,6 +244,10 @@ function benchmark_conversion(path::AbstractString, output::Int;
     end
 
     return (read_time=read_time, write_time=write_time,
+            ramses_allocated=ramses_cost.allocated, mera_allocated=mera_cost.allocated,
+            ramses_gctime=ramses_cost.gctime,       mera_gctime=mera_cost.gctime,
+            ramses_retained=ramses_cost.retained,   mera_retained=mera_cost.retained,
+            ramses_rss=ramses_rss,
             convert_total=read_time + write_time,
             first_read=first_read, warm_read=warm_read,
             size_ramses=size_ramses, size_mera=size_mera,
