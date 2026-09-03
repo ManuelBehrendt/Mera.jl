@@ -72,11 +72,11 @@ faster. Whether that works depends entirely on how much arithmetic each cell cos
 |---|---:|---:|---:|
 | one variable, `:sd` | 1.56 s | 1.62 s | **0.96x**, flat |
 | ten variables, one call | 21.0 s | 12.9 s | **1.63x** |
-| off-axis `:exact` kernel | | | **3.8x** |
 
 A single light projection is dominated by its serial fraction and will not speed up
 no matter how many threads you give it. Once there is real work per cell, threading
-earns its keep.
+earns its keep. Note the gain arrives almost entirely between 1 and 2 threads
+(21.0 to 13.3 s), then flattens (13.3, 13.3, 12.9).
 
 The practical consequence is a one-line change:
 

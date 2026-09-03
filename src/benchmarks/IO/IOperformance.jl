@@ -117,7 +117,10 @@ function iops_test(files; runs=3, levels=[1,2,4,8,16,24,32,48,64],
                     release(sem)
                 end
             end
-            append!(rates, fill(length(batch)/t, length(batch)))
+            # One batch is ONE measurement. Repeating it once per file would report
+            # length(batch) identical samples, which narrows the confidence interval by
+            # sqrt(n) without any extra evidence behind it.
+            push!(rates, length(batch)/t)
             next!(p; step=length(batch))
         end
 
@@ -147,6 +150,14 @@ function throughput_test(files; runs=1, N=5,
     start = time()
     println("\n\n", "═"^80, "\nTHROUGHPUT TEST\n", "═"^80)
     sel = files[1:min(N, end)]
+
+    # Warm every file once before the sweep. Without this the levels are compared from
+    # different cache states, not different thread counts: the first level pays the cold
+    # read and the rest are served from the page cache, which produces a spurious peak at
+    # low thread counts and per-stream rates above what the link can carry.
+    for f in sel
+        read(f)
+    end
 
     samples = Dict{Int, Vector{Float64}}()
     stats   = Dict{Int, Tuple{Float64,Float64,Float64}}()

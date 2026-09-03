@@ -61,9 +61,9 @@ coordination cost. The same effect is measured in
 [Julia for Simulation Analysis](../../julia_for_simulation_analysis.md).
 
 **Threading pays in proportion to the compute per cell.** Ten variables in one
-call gains 1.63x before saturating on this machine's memory bandwidth, and the
-off-axis `:exact` deposit kernel, which does far more work per cell, reaches
-3.8x at 8 threads on the same hardware.
+call gains 1.63x before saturating on this machine's memory bandwidth. The gain
+arrives almost entirely between 1 and 2 threads (21.0 to 13.3 s) and then
+flattens, so 2 threads captures nearly all of it here.
 
 **So ask for several variables in one call.** It is the cheaper request in two
 independent ways: the data is walked once instead of ten times, and the work is

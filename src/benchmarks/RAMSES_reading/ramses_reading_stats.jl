@@ -26,8 +26,26 @@ function get_startup_thread_info()
     )
 end
 
+# One place where a component name becomes a reader call, so the warm-up and the timed
+# runs cannot drift apart. `lmax` and any selection keywords (xrange, center, range_unit)
+# are forwarded, which is what makes this usable on a large server snapshot: without them
+# the only option is reading the whole box.
+function _read_component(info, component::AbstractString, max_threads::Int, lmax; kwargs...)
+    common = (verbose=false, show_progress=false, max_threads=max_threads)
+    lmax_kw = ismissing(lmax) ? NamedTuple() : (lmax=lmax,)
+    if component == "hydro"
+        return gethydro(info; common..., lmax_kw..., kwargs...)
+    elseif component == "particles"
+        return getparticles(info; common..., kwargs...)
+    elseif component == "gravity"
+        return getgravity(info; common..., lmax_kw..., kwargs...)
+    end
+    error("unknown component: $component")
+end
+
 # Run a single benchmark for a specific RAMSES output and thread configuration
-function run_single_reading_benchmark(path::String, output_number::Int, thread_info::Dict)
+function run_single_reading_benchmark(path::String, output_number::Int, thread_info::Dict;
+                                      runs::Int=3, lmax=missing, kwargs...)
     println("=" ^ 60)
     println("MERA: reading RAMSES files Benchmark - Single Configuration")
     println("Compute threads: $(thread_info["compute_threads"])")
@@ -49,10 +67,29 @@ function run_single_reading_benchmark(path::String, output_number::Int, thread_i
     )
     
     # Number of times to repeat each component benchmark for statistics
-    num_runs = 10
-    
+    num_runs = runs
+
+    # Only benchmark what this snapshot actually contains. A run without gravity is
+    # ordinary, and asking for it would otherwise cost `runs` failed reads per component.
+    present = String[]
+    info.hydro     && push!(present, "hydro")
+    info.particles && push!(present, "particles")
+    info.gravity   && push!(present, "gravity")
+    isempty(present) && error("output $output_number in $path has no hydro, particle or gravity data to read.")
+    println("\nComponents present: ", join(present, ", "))
+
+    # One untimed warm-up read so the reported times exclude first-call compilation.
+    # Without it the first run carries the JIT cost and drags the mean up.
+    println("Warm-up read (not timed) ...")
+    try
+        _read_component(info, first(present), thread_info["compute_threads"], lmax; kwargs...)
+        GC.gc()
+    catch e
+        println("  warm-up failed: $(typeof(e))")
+    end
+
     # Loop over each RAMSES data component to benchmark
-    for component in ["hydro", "particles", "gravity"]
+    for component in present
         println("\nTesting $component reader...")
         times = Float64[]
         
@@ -67,16 +104,7 @@ function run_single_reading_benchmark(path::String, output_number::Int, thread_i
             
             try
                 # Read the specific component with the current thread config
-                if component == "hydro"
-                    data = gethydro(info, verbose=false, show_progress=false, 
-                                  max_threads=thread_info["compute_threads"])
-                elseif component == "particles"
-                    data = getparticles(info, verbose=false, show_progress=false, 
-                                      max_threads=thread_info["compute_threads"])
-                elseif component == "gravity"
-                    data = getgravity(info, verbose=false, show_progress=false, 
-                                    max_threads=thread_info["compute_threads"])
-                end
+                data = _read_component(info, component, thread_info["compute_threads"], lmax; kwargs...)
                 
                 read_time = time() - start_time
                 push!(times, read_time)
@@ -105,15 +133,18 @@ function run_single_reading_benchmark(path::String, output_number::Int, thread_i
             results["$(component)_min"] = minimum(filter(!isnan, times))
             results["$(component)_status"] = "success"
         else
+            results["$(component)_mean"] = NaN
             results["$(component)_median"] = NaN
             results["$(component)_std"] = NaN
             results["$(component)_min"] = NaN
             results["$(component)_status"] = "failed"
         end
     end
-    
-    # Combine results for total reading time
-    total_times = [results["hydro_mean"], results["particles_mean"], results["gravity_mean"]]
+
+    results["components"] = present
+
+    # Combine results for total reading time, over the components actually read
+    total_times = [results["$(c)_mean"] for c in present]
     if !any(isnan, total_times)
         results["total_mean"] = sum(total_times)
         results["total_status"] = "success"
@@ -146,7 +177,7 @@ function save_thread_statistics(results::Dict, filename::String)
     end
     
     # Prepare to append summary line to CSV file
-    csv_file = "thread_statistics.csv"
+    csv_file = joinpath(dirname(filename), "thread_statistics.csv")
     
     # If CSV does not exist, write header
     if !isfile(csv_file)
@@ -173,12 +204,14 @@ Time reading one RAMSES output under the current thread configuration and save t
 Used to produce the parallel RAMSES-reading benchmark in the documentation; run it once per
 thread setting to build the scaling curve.
 """
-function run_reading_benchmark(output_number, path)
+function run_reading_benchmark(output_number, path; runs::Int=3, lmax=missing,
+                               outdir::AbstractString=pwd(), kwargs...)
     # Gather thread configuration info
     thread_info = get_startup_thread_info()
     
     # Run the benchmark for this configuration
-    results = run_single_reading_benchmark(path, output_number, thread_info)
+    results = run_single_reading_benchmark(path, output_number, thread_info;
+                                           runs=runs, lmax=lmax, kwargs...)
     
     # Print a summary of the benchmark results
     println("\n" * "=" ^ 60)
@@ -186,21 +219,23 @@ function run_reading_benchmark(output_number, path)
     println("=" ^ 60)
     println("Configuration: $(thread_info["compute_threads"]) compute, $(thread_info["gc_threads"]) GC threads")
     
+    for c in results["components"]
+        st = results["$(c)_status"]
+        if st == "success"
+            println(rpad(uppercasefirst(c) * ":", 11),
+                    "$(round(results["$(c)_mean"], digits=2))s ± $(round(results["$(c)_std"], digits=2))s")
+        else
+            println(rpad(uppercasefirst(c) * ":", 11), st)
+        end
+    end
     if results["total_status"] == "success"
-        println("Hydro:     $(round(results["hydro_mean"], digits=2))s ± $(round(results["hydro_std"], digits=2))s")
-        println("Particles: $(round(results["particles_mean"], digits=2))s ± $(round(results["particles_std"], digits=2))s")
-        println("Gravity:   $(round(results["gravity_mean"], digits=2))s ± $(round(results["gravity_std"], digits=2))s")
-        println("Total:     $(round(results["total_mean"], digits=2))s")
-    else
-        println("Some components failed:")
-        println("Hydro:     $(results["hydro_status"])")
-        println("Particles: $(results["particles_status"])")
-        println("Gravity:   $(results["gravity_status"])")
+        println(rpad("Total:", 11), "$(round(results["total_mean"], digits=2))s")
     end
     
     # Save results to JSON and CSV
     timestamp = Dates.format(now(), "yyyymmdd_HHMMSS")
-    filename = "thread_stats_$(thread_info["compute_threads"])t_$(thread_info["gc_threads"])gc_$timestamp.json"
+    filename = joinpath(outdir,
+        "thread_stats_$(thread_info["compute_threads"])t_$(thread_info["gc_threads"])gc_$timestamp.json")
     save_thread_statistics(results, filename)
     
     return results
