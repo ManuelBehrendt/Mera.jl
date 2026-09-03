@@ -17,97 +17,92 @@
 - **Benchmark** each threaded function to find your server's optimal thread counts  
 - Examples to transform your existing code into parallel workflows with minimal changes
 
-## Quick Start
+## 1 Turning threading on
 
-Start Julia with multiple threads and confirm Mera sees them:
+Julia starts with one thread. Give it more at startup, then check Mera sees them:
 
 ```bash
-julia -t 8          # or: JULIA_NUM_THREADS=8 julia
+julia -t 8            # explicit count, the safe default
+julia -t auto         # every core on the machine
 ```
 ```julia
-using Mera
-Threads.nthreads()  # number of available threads
+using Mera, Base.Threads
+nthreads()            # > 1 means threading is available
 ```
 
-Mera's heavy readers and `projection` are internally threaded and accept a
-`max_threads` keyword. The rest of this page explains when threading helps, how
-to avoid oversubscription, and how to parallelise your own analysis safely; see
-the [API reference](../api/multithreading.md) for the threading options.
+That is the whole setup. Mera's readers and `projection` are threaded internally and
+need nothing further; the rest of this page is about when that helps and how not to
+oversubscribe the machine.
 
-## Quick Reference
+!!! warning "Never use `-t auto` on a shared node"
+    On an HPC system `auto` claims every core it can see, which may be 64 or more and is
+    almost certainly not what you were allocated. Use an explicit count that matches your
+    allocation:
 
-### Essential Commands
+    ```bash
+    #SBATCH --cpus-per-task=16
+    julia --threads=16,2 --gcthreads=8
+    ```
+
+    Check what you actually have before starting:
+
+    ```bash
+    echo "Allocated CPUs: $SLURM_CPUS_PER_TASK"
+    julia -e 'println("Detected CPUs: ", Sys.CPU_THREADS)'
+    ```
+
+### Thread pools and the GC
+
+Julia 1.10+ runs two thread pools and a parallel garbage collector. `--threads=8,2` means
+eight compute threads plus two interactive ones, which keeps the REPL responsive while a
+long read is running; `--gcthreads` sets the collector's own threads.
+
+```bash
+julia --threads=8,2 --gcthreads=4
+```
+
+To see what you ended up with:
+
 ```julia
-# Start Julia with threading
-julia -t auto  # Uses all available CPU cores
-
-# Check threading status
-using Base.Threads
-nthreads()  # Should be > 1
-
-# Basic verification test
-@threads for i in 1:nthreads()
-    println("Thread $(threadid()) working")
-end
+using Base.Threads, LinearAlgebra
+nthreads(:default)          # compute pool
+nthreads(:interactive)      # interactive pool
+Threads.ngcthreads()        # garbage collector
+BLAS.get_num_threads()      # BLAS has its own pool, see below
 ```
 
-### Core Patterns
+BLAS threads multiply with Julia's rather than sharing them, so on a machine where you
+want at most N busy cores, keep `Julia threads × BLAS threads ≤ N`:
 
-| Pattern | When to Use | Code Template |
-|---------|-------------|---------------|
-| **Outer-Loop** | Multiple snapshots/parameters | `@threads for item in items`<br/>`  mera_func(item; max_threads=1)` |
-| **Inner-Kernel** | Single large dataset | `mera_func(data)  # Uses all threads`<br/>`projection(data, [:var1, :var2])` |
-| **Mixed** | Controlled resource allocation | `@spawn mera_func(data; max_threads=N)` |
-
-### Function Threading Support
-
-| Function | Internal Threading | `max_threads` | Notes |
-|----------|-------------------|---------------|-------|
-| `gethydro` | ✅ | ✅ | Parallel file loading |
-| `getgravity` | ✅ | ✅ | Same as gethydro |
-| `getparticles` | ✅ | ✅ | Same as gethydro |
-| `projection` (cells) | ✅ | ✅ | 1 thread per variable |
-| `projection` (particles) | ✅ | ✅ | Pixels or particle chunks |
-| `getrt` | ✅ | ✅ | Same as gethydro |
-| `export_vtk` | ✅ | ✗ | Auto-threading only |
-| `getinfo` | ✗ | ✗ | Lightweight, single-thread |
-
-### Thread-Safe Data Collection
 ```julia
-# ✅ Safe: Pre-allocated arrays
-results = Vector{Float64}(undef, n)
-@threads for i in 1:n
-    results[i] = compute(i)  # Each thread → different index
-end
-
-# ✅ Safe: Atomic operations  
-total = Atomic{Float64}(0.0)
-@threads for i in 1:n
-    atomic_add!(total, compute(i))
-end
-
-# ❌ Unsafe: Race conditions
-total = 0.0
-@threads for i in 1:n
-    global total += compute(i)  # Multiple threads → same variable
-end
+BLAS.set_num_threads(min(4, nthreads()))
 ```
 
-### Common Gotchas
-- **Resource contention**: Use `max_threads` to optimize I/O and memory bandwidth usage
-- **Memory allocation**: High GC time (>15%) → pre-allocate arrays
-- **Thread verification**: Always check `nthreads() > 1` before threading
-- **Error handling**: Wrap threaded code in `try-catch` blocks
+### Starting points
 
-### Performance Rules of Thumb
-- **I/O bound**: More threads (4-8) help
-- **CPU bound**: Match physical cores
-- **Memory bound**: Fewer threads (2-4) 
-- **Network storage**: Even fewer threads, benefit from compression
+| machine | start with |
+|---|---|
+| laptop or workstation, 4–8 cores | `julia -t auto --gcthreads=auto` |
+| server, 16+ cores | `julia --threads=12,2 --gcthreads=6` |
+| server, 32+ cores | `julia --threads=32,4 --gcthreads=16` |
+| shared HPC node | an explicit count matching your allocation, never `auto` |
 
-## 1 What Mera parallelises
+These are starting points, not recommendations: measure on your own data, see
+[Measuring](#5-Measuring,-memory-and-the-GC).
 
-### 5.1 Overview of Threaded Functions
+### The three patterns
+
+Everything later on this page is one of these:
+
+| pattern | when | shape |
+|---|---|---|
+| **outer loop** | many snapshots or parameters | `@threads for i in eachindex(items)` with `max_threads=1` inside |
+| **inner kernel** | one large dataset | `projection(gas, [:rho, :T])`, Mera threads it for you |
+| **mixed** | you want to bound both | `@spawn f(data; max_threads=N)` |
+
+## 2 What Mera threads for you
+
+### The threaded functions
 
 **Mera Function Threading Architecture:**
 ```
@@ -190,341 +185,59 @@ usually I/O bound, so it saturates once the storage does; see
     scales well; the deposition schemes are memory-bandwidth bound and gain roughly 2 to 4×. Costs
     per scheme are documented on the `multicode` branch, with the GADGET/AREPO reader.
 
-## 2 Setting Up Julia for Threading
+## 3 How many threads, and `max_threads`
 
-### 4.1 Quick Setup Verification
+Threading pays when there is enough independent work of the right kind. It does not pay
+for a single small calculation, on a memory-starved machine, or when the storage is
+already the limit.
 
-**Step 1: Check Your Current Threading Status**
+| you have | do this |
+|---|---|
+| many snapshots or parameter sets | thread the **outer** loop, and pass `max_threads=1` inside |
+| one large dataset, several variables | let Mera thread it: `projection(gas, [:rho, :T, :vx])` |
+| one small array | do not thread it; the overhead exceeds the work |
+| unsure | measure both, see [Measuring](#5-Measuring,-memory-and-the-GC) |
 
-Run this to see your current configuration:
+### Why an outer loop needs `max_threads`
+
+Julia's threading is composable, so nesting will not break: the scheduler will not create
+more OS threads than it should. What it cannot prevent is **resource contention**. Eight
+outer tasks, each internally threaded, still hit one set of disks and one memory bus:
+
 ```julia
-using Base.Threads
-
-println("Julia Threading Environment:")
-println("=" ^ 50)
-println("Number of threads available: ", nthreads())
-println("Thread IDs: ", 1:nthreads())
-println("Current thread: ", threadid())
-
-# Check if we have multiple threads
-if nthreads() == 1
-    println("\n⚠️  WARNING: Running with only 1 thread!")
-    println("To enable multithreading:")
-    println("1. Exit Julia")
-    println("2. Restart with: julia -t auto (uses all available CPU cores)")
-    println("3. Or use: julia -t 4 (for exactly 4 threads)")
-    println("4. Most benefits of this tutorial require multiple threads")
-else
-    println("\n✅ SUCCESS: Multi-threading is available!")
-    println("You have ", nthreads(), " threads ready for parallel processing")
+# every one of the 8 tasks reads with all threads, all at the same time
+@threads for i in eachindex(snapshots)
+    gas = gethydro(info; lmax=10)
+    projection(gas, [:rho, :T, :vx, :vy])
 end
 ```
 
-**Step 2: Basic Threading Test**
+The cores are rarely the limit. Memory bandwidth and storage are:
 
-Verify threading works by running this simple test:
+- **memory bandwidth** saturates before the cores do on large AMR reads
+- **network storage** is usually *faster* with fewer concurrent readers, not more
+- **CPU caches** thrash when many memory-heavy tasks interleave
+- **multi-socket machines** pay a penalty whenever a thread reaches across sockets
+
+`max_threads` is the throttle for exactly this. It is not there to stop Julia breaking; it
+is there to match the concurrency to the hardware:
+
 ```julia
-# Basic threading demonstration
-println("\nBasic Threading Test:")
-println("Available threads: ", nthreads())
-
-# Simple parallel task - each thread identifies itself
-@threads for i in 1:nthreads()
-    println("Thread ", threadid(), " processing task ", i)
-    sleep(0.1)  # Simulate work
+@threads for i in eachindex(snapshots)                 # 8 outer tasks
+    gas = gethydro(info; lmax=10, max_threads=2)       # bound the concurrent I/O
+    projection(gas, [:rho, :T]; max_threads=2)         # bound the memory pressure
 end
-
-println("✅ Basic threading test completed!")
-println("Note: If you see output from multiple thread IDs, threading is working correctly.")
 ```
 
-### 4.2 Important Notes on Thread Count Selection
+| value | meaning |
+|---|---|
+| `Threads.nthreads()` | the default: use everything available |
+| `N` | at most N concurrent operations inside the call |
+| `1` | run this call serially, which is what an outer loop usually wants |
 
-!!! warning "HPC Cluster Usage"
-    **On shared HPC systems and large compute clusters:**
-    - `julia -t auto` uses **ALL available CPU cores** on the node, which may be 32, 64, or more cores
-    - This can cause **oversubscription** and poor performance on shared systems
-    - Always check available cores first: `julia -e "println(\"CPU cores: \", Sys.CPU_THREADS)"`
-    - **Recommended:** Use explicit thread counts instead: `julia -t 16` or `julia -t 32`
-    - Consider your job scheduler's resource allocation (e.g., SLURM `--cpus-per-task`)
+## 4 Benchmarking & Performance Tuning
 
-!!! tip "Choosing Thread Counts"
-    **Personal computers/workstations:** `julia -t auto` is usually optimal
-    
-    **HPC clusters:** Check system resources first:
-    ```bash
-    # Check total CPU cores
-    julia -e "println(\"Total CPU cores: \", Sys.CPU_THREADS)"
-    
-    # Check NUMA topology (if available)
-    lscpu | grep -E "CPU\(s\)|NUMA"
-    
-    # Use explicit counts based on your allocation
-    julia -t 16  # For 16-core allocation
-    julia -t 32  # For 32-core allocation
-    ```
-
-### 4.3 Basic Thread Configuration
-
-By default, Julia starts with a single thread:
-```julia
-julia> Threads.nthreads()
-1
-```
-
-Enable multi-threading at startup:
-```bash
-# Command line argument (recommended)
-julia --threads=8                    # 8 threads total
-julia --threads=auto                 # Uses all available CPU cores
-julia -t 4                          # Short form (explicit count)
-
-# Environment variable method
-export JULIA_NUM_THREADS=8
-julia
-```
-
-### 4.4 Advanced Configuration (Julia 1.10+)
-
-Julia 1.10+ supports **two thread pools** and **parallel GC**:
-
-```bash
-# 8 compute threads, 2 interactive threads, 4 GC threads
-julia --threads=8,2 --gcthreads=4
-
-# Auto-configure everything (recommended for beginners)
-julia --threads=auto --gcthreads=auto  # Uses all available CPU cores
-```
-
-**Thread Pools:**
-- **`:default`** pool: Compute-intensive tasks
-- **`:interactive`** pool: UI and responsive operations (keeps REPL responsive)
-
-**Verification:**
-```julia
-using Base.Threads
-
-println("Compute threads: ", nthreads(:default))
-println("Interactive threads: ", nthreads(:interactive))  
-println("Current thread: ", threadid())
-println("Current pool: ", threadpool())
-println("GC threads: ", Threads.ngcthreads())
-
-# Optimize BLAS for linear algebra
-using LinearAlgebra
-BLAS.set_num_threads(min(4, nthreads()))
-println("BLAS threads: ", BLAS.get_num_threads())
-```
-
-### 4.5 Recommended Configurations
-
-**For laptops/workstations (4-8 cores):**
-```bash
-julia --threads=auto --gcthreads=auto  # Uses all available CPU cores
-```
-
-**For smaller servers (16+ cores):**
-```bash
-julia --threads=12,2 --gcthreads=6
-```
-
-**For larger servers (32+ cores):**
-```bash
-julia --threads=32,4 --gcthreads=16
-```
-
-!!! warning "HPC Cluster Configurations"
-    **Always use explicit thread counts on shared HPC systems:**
-    
-    **SLURM job with 16 cores:**
-    ```bash
-    #SBATCH --cpus-per-task=16
-    julia --threads=16,2 --gcthreads=8
-    ```
-    
-    **SLURM job with 32 cores:**
-    ```bash
-    #SBATCH --cpus-per-task=32
-    julia --threads=32,4 --gcthreads=16
-    ```
-    
-    **Check your allocation before starting:**
-    ```bash
-    echo "Allocated CPUs: $SLURM_CPUS_PER_TASK"
-    echo "Total node CPUs: $(nproc)"
-    julia -e "println(\"Detected CPUs: \", Sys.CPU_THREADS)"
-    ```
-    
-    **Never use `julia -t auto` on shared nodes**: it may claim all 64+ cores!
-
-## 3 Choosing a thread count
-
-### When TO Use Threading
-
-**✅ Perfect for Threading:**
-- Processing multiple snapshots/parameters in parallel
-- Analyzing single large datasets with multiple variables
-- Time series analysis across many simulation outputs
-- Parameter sweeps with independent calculations
-- I/O-heavy operations (loading, exporting data)
-
-**📊 Threading Decision Tree:**
-```
-Do you have multiple independent tasks?
-├─ YES → Use Outer-Loop Pattern (@threads + max_threads=1)
-│   └─ Examples: Multiple snapshots, parameter studies
-│
-└─ NO → Is your dataset large with multiple variables?
-    ├─ YES → Use Inner-Kernel Pattern (full threading)
-    │   └─ Examples: Multi-variable projections, complex analysis
-    │
-    └─ NO → Consider Mixed Pattern or stay single-threaded
-        └─ Examples: Small datasets, simple calculations
-```
-
-### When NOT to Use Threading
-
-**❌ Threading Won't Help:**
-- **Single small calculations**: Threading overhead > benefit
-- **Memory-starved systems**: Will make GC worse
-- **Single snapshot + single variable**: Already optimized
-- **Network bottlenecked I/O**: May actually slow things down
-- **Thread-unsafe external libraries**: Will cause crashes
-
-**⚖️ Cost-Benefit Analysis:**
-```
-Threading Overhead vs. Parallel Benefit
-
-HIGH BENEFIT:                    LOW/NEGATIVE BENEFIT:
-▓▓▓▓▓▓▓▓░░ Many snapshots        ░░▓▓░░░░░░ Single calculation
-▓▓▓▓▓▓▓░░░ Large datasets        ░▓▓▓░░░░░░ Small arrays
-▓▓▓▓▓▓░░░░ I/O bound tasks       ░░▓▓▓▓░░░░ CPU saturated
-▓▓▓▓▓░░░░░ Multiple variables    ░░░▓▓▓▓▓░░ Memory limited
-```
-
-**🧠 Quick Decision Checklist:**
-1. **Multiple independent items?** → Threading likely beneficial
-2. **Single item but large/complex?** → Inner parallelism may help
-3. **Small, simple calculation?** → Skip threading
-4. **Unsure?** → Benchmark both approaches (see Section 10)
-
-## 4 Resource Contention & `max_threads`
-
-Note: With Julia-only threading you typically don't oversubscribe OS threads; the main risk in nested parallel workflows is resource contention (I/O, memory bandwidth, cache/NUMA).
-
-### 3.1 What Is Oversubscription?
-
-**Oversubscription** occurs when you have more runnable threads than physical CPU cores. The operating system must constantly switch between threads, leading to:
-
-- **Context switch overhead**: Saving and restoring thread state takes time
-- **Cache thrashing**: Threads compete for the same CPU caches, reducing efficiency
-- **Memory bandwidth contention**: Multiple threads saturate memory channels
-- **False sharing**: Different threads modify variables on the same cache line
-
-### 3.2 Why Resource Contention Happens with Mera
-
-**Great question!** Julia's composable threading *does* work excellently, and since Mera uses only Julia's native threading capabilities, the scheduler should coordinate everything properly. However, there are still practical scenarios where controlling threading improves performance:
-
-**1. Resource Contention vs Thread Management**
-Julia prevents creating too many OS threads, but it can't prevent resource bottlenecks:
-
-```julia
-# Julia manages this perfectly at the thread level:
-@threads for snapshot in snapshots              # 8 tasks
-    gas = gethydro(info; lmax=10)               # Each uses all threads internally
-    projection(gas, [:rho, :T, :vx, :vy])      # More internal threading
-end
-# But all 8 processes hit storage/memory simultaneously
-```
-
-**2. Memory Bandwidth Saturation**
-
-**System Resource Bottleneck Visualization:**
-```
-┌─────── CPU CORES (8 available) ────────┐
-│ [Core1] [Core2] [Core3] [Core4]        │
-│ [Core5] [Core6] [Core7] [Core8]        │  ✓ Usually not the bottleneck
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌──────── MEMORY BANDWIDTH ──────────────┐
-│ RAM: 64 GB                             │
-│ Bandwidth: 25.6 GB/s ←── BOTTLENECK   │  ⚠️ Often saturated first!
-│ 8 threads × 2GB/s = 16GB/s (63% util) │
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────── STORAGE I/O ────────────────┐
-│ SSD: 500 MB/s                          │
-│ Network Storage: 100 MB/s ←── BOTTLENECK│  ⚠️ Worst with many threads
-│ 8 concurrent reads = 800 MB/s demand   │
-└─────────────────────────────────────────┘
-```
-
-Multiple threads reading large AMR datasets can saturate:
-- **Memory bandwidth**: 8 threads × 2GB/thread = 16GB/s (may exceed RAM bandwidth)
-- **Storage I/O**: Network filesystems often perform better with fewer concurrent readers
-- **CPU caches**: Context switching between many active memory-intensive tasks
-
-**3. NUMA Effects on Multi-Socket Systems**
-
-**NUMA Architecture Visualization:**
-```
-┌─── SOCKET 0 ────┐    ┌─── SOCKET 1 ────┐
-│ [CPU0-3] MEM0   │    │ [CPU4-7] MEM1   │
-│      ▲          │    │      ▲          │
-│      │ FAST     │    │      │ FAST     │
-└──────┼──────────┘    └──────┼──────────┘
-       │                      │
-       └──── SLOW LINK ───────┘
-              (QPI/UPI)
-
-OPTIMAL:              SUBOPTIMAL:
-Thread1@CPU0 → MEM0   Thread1@CPU0 → MEM1  ← Cross-socket penalty
-Thread2@CPU1 → MEM0   Thread2@CPU4 → MEM0  ← Cross-socket penalty
-```
-
-On large servers with multiple CPU sockets:
-- Memory access is faster when threads stay on the same NUMA node
-- Too many concurrent threads can cause cross-socket memory traffic
-
-**4. Julia's Fair Scheduling vs Performance Optimization**
-Julia's scheduler is fair but not necessarily optimal for scientific workloads:
-- Equal resource sharing among all tasks
-- May not account for the specific I/O patterns of large file reads
-
-### 3.3 The `max_threads` Solution
-
-Mera functions accept a `max_threads::Integer` keyword to provide explicit control over resource usage:
-
-```julia
-# SOLUTION: Optimize resource usage rather than prevent contention
-@threads for snapshot in snapshots              # 8 outer threads (Julia tasks)
-    gas = gethydro(info; lmax=10, max_threads=2)    # Limit concurrent I/O
-    projection(gas, [:rho, :T]; max_threads=2)      # Control memory pressure
-end
-# Result: Better memory/I/O utilization patterns
-```
-
-**Why Use `max_threads` With Julia's Smart Scheduling?**
-
-1. **I/O Optimization**: Network storage often performs better with fewer concurrent readers
-2. **Memory Bandwidth**: Large datasets benefit from controlled memory access patterns  
-3. **Cache Efficiency**: Fewer active threads = better CPU cache utilization
-4. **NUMA Awareness**: Better memory locality on multi-socket systems
-5. **Performance Tuning**: Precise optimization for your specific hardware and data sizes
-
-**`max_threads` Options:**
-- `max_threads = Threads.nthreads()` (default): Use all available threads
-- `max_threads = 1`: Run completely serially
-- `max_threads = N`: Optimize for N concurrent operations
-
-**The Real Benefit**: `max_threads` isn't about preventing Julia from breaking, it's about optimizing for the physical realities of large scientific datasets, storage systems, and memory hierarchies.  
-
-
-## 5 Benchmarking & Performance Tuning
-
-### 10.1 Finding Optimal `max_threads` Values
+### Finding Optimal `max_threads` Values
 
 Different functions have different optimal thread counts. Benchmark systematically:
 
@@ -587,7 +300,7 @@ stays flat at every thread count. Threads pay off when there is enough independe
 here the ten-variable projection gains about 1.6× and then saturates. Expect that shape
 rather than linear scaling, and measure your own case before provisioning threads.
 
-### 10.2 Memory Usage Monitoring
+### Memory Usage Monitoring
 
 Monitor memory allocation and GC performance:
 
@@ -630,7 +343,7 @@ end
 result = monitor_memory_usage(test_analysis, 100:10:150)
 ```
 
-### 10.3 Thread Utilization Analysis
+### Thread Utilization Analysis
 
 Check if threads are being used efficiently:
 
@@ -687,9 +400,9 @@ function analyze_thread_utilization(workload_function, args...; tasks=Threads.nt
 end
 ```
 
-## 6 Memory Management & Garbage Collection
+## 5 Memory Management & Garbage Collection
 
-### 2.1 Stack vs Heap Memory
+### Stack vs Heap Memory
 
 Understanding Julia's memory model helps optimize threaded code:
 
@@ -736,7 +449,7 @@ function memory_example()
 end
 ```
 
-### 2.2 Julia's Garbage Collector Explained
+### Julia's Garbage Collector Explained
 
 Julia implements a **generational, mark-and-sweep collector**:
 
@@ -771,7 +484,7 @@ Total:     [████████████──]  Total:       [███
            ↑ 12 time units                ↑ 8 time units
 ```
 
-### 2.3 Monitoring GC Performance
+### Monitoring GC Performance
 
 Use `@time` to monitor GC impact:
 ```julia
@@ -782,7 +495,7 @@ Use `@time` to monitor GC impact:
 
 The **15.2% gc time** indicates that over 15% of execution time was spent in garbage collection. Values above 10-20% suggest optimization opportunities.
 
-### 2.4 GC Optimization Strategies
+### GC Optimization Strategies
 
 **Minimize Allocations**
 ```julia
@@ -861,9 +574,9 @@ function update_fast!(state, forces, dt)
 end
 ```
 
-## 7 Writing your own threaded analysis
+## 6 Writing your own threaded analysis
 
-### 6.1 Pattern 1: Outer-Loop Parallelism
+### Pattern 1: Outer-Loop Parallelism
 
 **When to use:** Processing multiple independent snapshots, parameter combinations, or spatial regions.
 
@@ -904,7 +617,7 @@ results = Vector{NamedTuple}(undef, length(snapshots))
 end
 ```
 
-### 6.2 Pattern 2: Inner-Kernel Parallelism
+### Pattern 2: Inner-Kernel Parallelism
 
 **When to use:** Processing a single large dataset with multiple analysis types.
 
@@ -923,7 +636,7 @@ vars = [:rho, :p, :T, :vx, :vy, :vz]
 p = projection(gas, vars; lmax=11) # or use: projections = projection(gas, vars; pxsize=[100., :pc]) 
 ```
 
-### 6.3 Pattern 3: Mixed Parallelism
+### Pattern 3: Mixed Parallelism
 
 **When to use:** Balancing multiple tasks with controlled resource allocation.
 
@@ -963,9 +676,9 @@ function analyze_simulation_comprehensive(info)
 end
 ```
 
-## 8 Advanced Threading Patterns
+## 7 Advanced Threading Patterns
 
-### 7.1 Producer-Consumer Pipeline
+### Producer-Consumer Pipeline
 
 **Use case:** Streaming data processing with multiple stages.
 
@@ -1030,7 +743,7 @@ analysis_functions = [
     (:mass_array, gas -> getvar(gas, :mass))]
 ```
 
-### 7.2 Adaptive Load Balancing
+### Adaptive Load Balancing
 
 **Use case:** Workloads with highly variable execution times (Pseudocode).
 
@@ -1061,9 +774,9 @@ end
 ```
 
 
-## 9 Thread-Safe Programming
+## 8 Thread-Safe Programming
 
-### 8.1 Race Conditions and Thread Safety
+### Race Conditions and Thread Safety
 
 **Race conditions** occur when multiple threads access shared data simultaneously without synchronization, leading to unpredictable results:
 
@@ -1076,7 +789,7 @@ end
 println(total)  # Result is unpredictable!
 ```
 
-### 8.2 Atomic Operations
+### Atomic Operations
 
 **Atomic variables** provide thread-safe operations for simple data types:
 
@@ -1104,7 +817,7 @@ println(" counter=",counter)
 println(" success=",success)
 ```
 
-### 8.3 Thread-Safe Data Collection Patterns
+### Thread-Safe Data Collection Patterns
 
 **Pattern 1: Pre-allocated Output Arrays**
 ```julia
@@ -1144,7 +857,7 @@ function thread_safe_stellar_histogram(particle_data)
 end
 ```
 
-### 8.4 Locks for Complex Data Structures
+### Locks for Complex Data Structures
 
 For complex shared data structures that can't use atomics:
 
@@ -1165,9 +878,9 @@ shared_results = Dict{String, Vector{Float64}}()
 end
 ```
 
-## 10 Transforming Single-Threaded Tutorials
+## 9 Transforming Single-Threaded Tutorials
 
-### 9.1 Tutorial Transformation Overview
+### Tutorial Transformation Overview
 
 | Original Tutorial                     | Multi-Threading Opportunity            | Pattern Type     |
 |---------------------------------------|----------------------------------------|------------------|
@@ -1179,7 +892,7 @@ end
 | 08_hydro_VTK_export.ipynb            | Export multiple outputs simultaneously | Outer-loop       |
 | 08_particles_VTK_export.ipynb        | Parallel particle exports             | Mixed            |
 
-### 9.2 Example 1: Parallel First Inspection  
+### Example 1: Parallel First Inspection  
 *Transforming 01_hydro_First_Inspection.ipynb*
 
 **Original (single-threaded):**
@@ -1224,7 +937,7 @@ for r in results
 end
 ```
 
-### 9.3 Example 2: Parallel Selections  
+### Example 2: Parallel Selections  
 *Transforming 02_hydro_Load_Selections.ipynb*
 
 **Original (single-threaded):**
@@ -1280,7 +993,7 @@ for r in results
 end
 ```
 
-### 9.4 Example 3: Parallel Projections  
+### Example 3: Parallel Projections  
 *Transforming 06_hydro_Projection.ipynb*
 
 **Original (single-threaded):**
@@ -1317,7 +1030,7 @@ tasks = [Threads.@spawn projection(gas, var; direction=:z, lmax=9, max_threads=2
 projection_results = fetch.(tasks)
 ```
 
-### 9.5 Example 4: Parallel VTK Export  
+### Example 4: Parallel VTK Export  
 *Transforming 08_hydro_VTK_export.ipynb*
 
 **Original (single-threaded):**
@@ -1367,9 +1080,9 @@ end
 println("VTK export completed for $(length(snapshots)) snapshots")
 ```
 
-## 11 Best Practices & Troubleshooting
+## 10 Best Practices & Troubleshooting
 
-### 11.1 Threading Best Practices
+### Threading Best Practices
 
 **1. Choose One Level of Parallelism**
 ```julia
@@ -1427,7 +1140,7 @@ Profile.print()
 end
 ```
 
-### 11.2 Common Issues and Solutions
+### Common Issues and Solutions
 
 **Issue 1: Poor Scaling Performance**
 ```
@@ -1473,7 +1186,7 @@ Symptom: Program crashes, hangs, or produces wrong answers
 - **Unsafe library usage**: Many C libraries aren't thread-safe  
 - **Stack overflow**: Large recursion depths on multiple threads
 
-### 11.3 Debugging with `verbose_threads`
+### Debugging with `verbose_threads`
 
 Pass `verbose_threads=true` to Mera's threaded functions to print per-thread
 diagnostics (work distribution and per-thread timing). This helps spot load
@@ -1481,9 +1194,9 @@ imbalance and oversubscription. See the
 [API reference](../api/multithreading.md) for the available options and the full
 output format.
 
-## 12 Complete Working Examples
+## 11 Complete Working Examples
 
-### 12.1 Multi-Simulation Analysis Pipeline
+### Multi-Simulation Analysis Pipeline
 
 ```julia
 using Mera, Base.Threads
@@ -1572,7 +1285,7 @@ for sim_result in results
 end
 ```
 
-### 12.2 Parameter Study with Threading
+### Parameter Study with Threading
 
 ```julia
 using Mera, Base.Threads
@@ -1659,7 +1372,7 @@ end
 study_results = parallel_parameter_study()
 ```
 
-### 12.3 Time Series Analysis with Memory Management
+### Time Series Analysis with Memory Management
 
 ```julia
 using Mera, Base.Threads
@@ -1749,7 +1462,7 @@ println("  Time range: $(minimum(results.times)) - $(maximum(results.times)) Myr
 println("  Gas mass range: $(minimum(results.gas_masses)) - $(maximum(results.gas_masses)) Msol")
 ```
 
-### 12.4 Time Series from Single-File JLD2 “Mera Files”
+### Time Series from Single-File JLD2 “Mera Files”
 
 ```julia
 using Base.Threads, Mera
@@ -1828,11 +1541,11 @@ println("Mean density range (nH): ", (minimum(res.mean_density), maximum(res.mea
 Notes:
 - Uses Mera.loaddata(output, dir, datatype) to read canonical “Mera files.”
 - Adjust metrics for non-hydro data (e.g., particles don’t have :rho).
-- Tune parallelism by batching outputs if your storage is slow; see Section 3 on I/O contention.
+- Tune parallelism by batching outputs if your storage is slow; see [How many threads](#3-How-many-threads,-and-`max_threads`) on I/O contention.
 
 ## Background: threading and the GC
 
-### 1.1 Why Multi-Threading Matters for Scientists
+### Why Multi-Threading Matters for Scientists
 
  Julia's **native multi-threading** lets you utilize your available cores within pure Julia code, no external libraries, MPI, or complex setup required.
 
@@ -1842,7 +1555,7 @@ Notes:
 - **Projection creation** (`projection`) spawns one thread per variable for hydro data
 - **VTK export** (`export_vtk`) writes chunks simultaneously  
 
-### 1.2 Julia's Unique Advantage: Composable Threading
+### Julia's Unique Advantage: Composable Threading
 
 Unlike languages that retrofit parallelism, Julia was designed with **composable threading** from the ground up. When one multi-threaded function calls another multi-threaded function, Julia's scheduler coordinates all threads globally without oversubscribing resources.
 
@@ -1852,7 +1565,7 @@ This architectural advantage is crucial for scientific computing where you might
 - Export visualization data while computing results
 - Perform parameter sweeps with thousands of iterations
 
-### 1.3 Parallel Garbage Collection
+### Parallel Garbage Collection
 
 Julia 1.10+ introduces **parallel garbage collection**, the GC's mark phase runs on multiple threads, dramatically reducing pause times for allocation-heavy applications. This is especially important when processing large RAMSES datasets that create many temporary objects.
 
