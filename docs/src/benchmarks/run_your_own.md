@@ -7,6 +7,26 @@ and how many threads a projection of your data can actually use.
 
 Everything here is exported. `using Mera` is all you need, there is nothing to download.
 
+## Everything at once
+
+One call runs all of it and prints a report you can paste anywhere, with the machine,
+the filesystem and the snapshot's own file count attached:
+
+```julia
+using Mera
+benchmark_report("/path/to/simulation", 250; merapath="/path/with/space")
+```
+
+That is the whole setup. It refuses to start a read whose in-memory size would exceed
+60% of the machine's RAM, and tells you the `lmax` cap to use instead:
+
+```julia
+benchmark_report("/path/to/simulation", 250; lmax=11, merapath="/path/with/space")
+```
+
+Use `stages=[:storage]` to run only part of it. The individual functions below are
+still there if you want one measurement on its own.
+
 ## The four measurements
 
 ```julia

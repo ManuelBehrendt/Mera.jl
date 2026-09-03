@@ -389,6 +389,7 @@ export
     run_reading_benchmark,
     run_merafile_benchmark,
     benchmark_conversion,
+    benchmark_report,
     filesystem_info,
     clumpfind_benchmarks
 
@@ -523,6 +524,7 @@ include("benchmarks/IO/IOperformance.jl")
 include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
 include("benchmarks/JLD2_reading/merafile_reading_stats.jl")
 include("benchmarks/Conversion/conversion_benchmark.jl")
+include("benchmarks/Report/benchmark_report.jl")
 include("benchmarks/Projections/projection_benchmarks.jl")
 include("benchmarks/Clumpfind/clumpfind_benchmarks.jl")
 

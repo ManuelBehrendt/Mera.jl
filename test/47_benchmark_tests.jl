@@ -105,3 +105,54 @@ end
         @info "benchmark_conversion data-backed tests skipped (set MERA_TEST_DATA)"
     end
 end
+
+# ============================================================================
+# benchmark_report — the single entry point a server user runs
+# ============================================================================
+@testset "benchmark_report" begin
+    datadir = get(ENV, "MERA_TEST_DATA", "")
+    simpath = joinpath(datadir, "RAMSES-PUBLIC", "sedov3d_amr")
+
+    # filesystem_info must answer on any platform and never throw, since a benchmark
+    # that dies while describing its own environment is worse than one with no label
+    fs = filesystem_info(pwd())
+    @test fs isa NamedTuple
+    @test haskey(fs, :type) && haskey(fs, :mount) && haskey(fs, :stripe)
+    @test fs.type isa AbstractString
+    @test filesystem_info("/definitely/not/a/path") isa NamedTuple   # must not throw
+
+    if !isempty(datadir) && isdir(simpath)
+        out = mktempdir()
+
+        # a missing snapshot is a clear error, not a failure part way through
+        @test_throws ErrorException benchmark_report(simpath, 99999; outdir=out)
+
+        # stage selection: only what was asked for runs
+        r1 = benchmark_report(simpath, 7; stages=[:storage], outdir=out)
+        @test r1.storage !== nothing
+        @test r1.reading === nothing && r1.conversion === nothing
+
+        # the full run
+        r = benchmark_report(simpath, 7; merapath=joinpath(out, "mf"), outdir=out)
+        @test r.nfiles_total == 24
+        @test r.bytes > 0
+        @test r.storage !== nothing && r.reading !== nothing && r.conversion !== nothing
+        # reading returns a JSON-shaped Dict (string values), conversion a NamedTuple
+        # (symbols). Each matches its own container; assert both so the difference
+        # is recorded rather than rediscovered.
+        @test r.reading["components"] == ["hydro"]     # fixture is hydro only
+        @test r.conversion.components == [:hydro]
+        @test r.conversion.breakeven > 0
+
+        # the report file is the deliverable, and must carry the provenance that
+        # makes a server number defensible
+        @test isfile(r.reportfile)
+        txt = read(r.reportfile, String)
+        for field in ("Host", "CPU", "RAM", "Filesystem", "Julia", "Mera",
+                      "ncpu", "files", "on disk")
+            @test occursin(field, txt)
+        end
+    else
+        @info "benchmark_report data-backed tests skipped (set MERA_TEST_DATA)"
+    end
+end
