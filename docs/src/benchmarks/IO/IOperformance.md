@@ -176,7 +176,7 @@ cmd-line % julia -t 32 -e 'using Mera, CairoMakie; save("io.png", plot_results(r
 
 ## Reference results: laptop (2026-07)
 
-Provenance: Apple M2 Pro (12 cores), macOS 15, Julia 1.12.3, Mera revamp/2026,
+Provenance: Apple M2 Pro (12 cores), macOS 26, Julia 1.12.3, Mera revamp/2026,
 8 Julia threads; dataset `mw_L10/output_00300` (2,570 files) on an external
 Thunderbolt SSD (`FASTStorage`); `run_benchmark(dir; runs=2)`.
 

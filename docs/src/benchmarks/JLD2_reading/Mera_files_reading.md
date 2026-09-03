@@ -6,9 +6,9 @@ This guide shows how to benchmark the reading speed of compressed MERA files usi
 
 **Why MERA files read faster.** A MERA `.jld2` file stores the *already-parsed* data table. Reading it (`loaddata`) just deserializes and decompresses that table. Reading the original RAMSES output instead re-parses every per-CPU Fortran binary file (often hundreds to thousands of files per component) and rebuilds the AMR structure from scratch on every read. Skipping that parse work is the dominant effect, so the MERA read advantage holds **even on a fast local SSD**, and grows further on servers with networked/parallel filesystems where opening the many RAMSES files adds latency.
 
-**Two robust benefits (measured, fair comparison, same data both sides):**
+**Three robust benefits (measured, fair comparison, same data both sides):**
 
-- **Much faster reads.** Loading hydro + particles + gravity of one output: **~1.2 to 1.4 s from the MERA file vs ~49 s from RAMSES (single thread): roughly 30 to 40× faster**: even on a local NVMe SSD, and even versus multi-threaded RAMSES reading (~71 s, still ~30×). See the table below.
+- **Much faster reads.** Loading hydro + particles + gravity of one output: **~1.2 to 1.4 s warm from the MERA file, against 49.2 s reading the same snapshot from the RAMSES output: ~35 to 40× faster**, even on a local NVMe SSD. The RAMSES side is the multi-threaded reference run (8 compute + 8 GC threads), so this is not a serial straw man. See the table below.
 - **Smaller on disk.** A complete MERA file is **~62% smaller / ~2.6×** than the RAMSES output it was made from.
 - **Lower peak memory.** MERA-file reading peaked **~35% below** single-threaded RAMSES in the reference run (8.0 vs 13.0 GB), avoiding the per-file parse buffers.
 

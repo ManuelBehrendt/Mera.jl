@@ -206,6 +206,7 @@ If you already know what you want to compute:
 | compute masses and other quantities | [Basic Calculations](04_multi_Basic_Calculations.md) |
 | store or share a snapshot | [MERA Files](07_multi_Mera_Files.md) |
 | make it faster | [Multi-Threading](multi-threading/multi-threading_intro.md) |
+| know what it costs before you run it | [Performance](benchmarks/performance.md) |
 | look up a function | [Complete API](api.md) |
 
 Coming from another analysis tool, or new to Julia:
