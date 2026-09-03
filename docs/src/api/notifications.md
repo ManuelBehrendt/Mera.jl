@@ -1,37 +1,28 @@
 # Notifications API Reference
 
-Functions for notifications and progress tracking.
+Docstrings for telling you when long-running work has finished. The narrative guides are
+[Setup & Usage](../notifications/setup_and_usage.md) for configuring a channel, and
+[Examples](../notifications/examples.md) for what to send.
 
-**⚠️ Platform Support**: Tested on macOS and Linux. Windows support not tested.
+Three channels are available, and every function below can use any of them:
 
-## Notification Functions
+| channel | reaches you | needs |
+|---|---|---|
+| bell | the machine you are sitting at | nothing |
+| email | anywhere | an address in the config |
+| Zulip | a team chat stream | a bot token in the config |
 
-- [`bell`](@ref) - Audio notifications
-- [`notifyme`](@ref) - General notification system
-- [`send_results`](@ref) - Send computation results
-- [`timed_notify`](@ref) - Time-based notifications
+Configuration lives in `~/.mera.toml`, found by [`mera_config_path`](@ref), which checks
+`$MERA_CONFIG`, then `~/.mera.toml`, then `~/.config/mera/config.toml`. Environment
+variables take precedence over the file, which keeps secrets off disk. The older
+`~/email.txt`, `~/zulip.txt` and `~/bell.txt` are still read when no TOML config exists.
 
-## Progress Tracking
+!!! note "Platform support"
+    Tested on macOS and Linux. Windows is not tested. The bell depends on the system
+    sound command, so it is the one most likely to be silent elsewhere; email and Zulip
+    are plain network calls and are not platform specific.
 
-- [`create_progress_tracker`](@ref) - Create progress trackers
-- [`update_progress!`](@ref) - Update progress status
-- [`complete_progress!`](@ref) - Mark progress complete
-
-## Utility Functions
-
-- [`safe_execute`](@ref) - Safe function execution
-- [`optimize_image_for_zulip`](@ref) - shrink an image before upload
-
-## Notification Types
-
-- **Bell Notifications** - Local audio alerts
-- **Email Notifications** - Remote email alerts
-- **Zulip Notifications** - Team chat integration
-
----
-*For complete function documentation, see the [Complete API Reference](../api.md).*
-
-## Function Reference
+## Sending a notification
 
 ```@docs
 notifyme
@@ -40,10 +31,10 @@ timed_notify
 send_results
 ```
 
-## Progress Tracking
+## Progress tracking
 
-A tracker reports long-running work as it goes, rather than only at the end.
-Create one, update it inside the loop, and complete it when the work is done.
+A tracker reports long-running work as it goes, rather than only at the end. Create one,
+update it inside the loop, and complete it when the work is done.
 
 ```@docs
 create_progress_tracker
@@ -57,3 +48,9 @@ complete_progress!
 safe_execute
 optimize_image_for_zulip
 ```
+
+## Related
+
+- [Setup & Usage](../notifications/setup_and_usage.md), configuring bell, email and Zulip
+- [Examples](../notifications/examples.md), notifications around real analysis runs
+- [Complete API Reference](../api.md)
