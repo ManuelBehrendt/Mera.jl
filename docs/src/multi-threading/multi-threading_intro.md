@@ -196,36 +196,59 @@ already the limit.
 | one small array | do not thread it; the overhead exceeds the work |
 | unsure | measure both, see [Measuring](#5-Measuring,-memory-and-the-GC) |
 
-### Why an outer loop needs `max_threads`
+### Do not thread a threaded function without a budget
 
-Julia's threading is composable, so nesting will not break: the scheduler will not create
-more OS threads than it should. What it cannot prevent is **resource contention**. Eight
-outer tasks, each internally threaded, still hit one set of disks and one memory bus:
+This is the mistake worth avoiding. Everything in the table above is **already threaded**,
+so the moment you put `@threads` around a Mera call you are nesting two levels of
+parallelism, and the inner level still defaults to every thread you have.
 
 ```julia
-# every one of the 8 tasks reads with all threads, all at the same time
+# 8 outer tasks, each reading with all 8 threads: 64 concurrent readers on one disk
 @threads for i in eachindex(snapshots)
     gas = gethydro(info; lmax=10)
     projection(gas, [:rho, :T, :vx, :vy])
 end
 ```
 
-The cores are rarely the limit. Memory bandwidth and storage are:
+Julia will not fall over: its threading is composable and it will not spawn 64 OS threads.
+What it cannot prevent is **resource contention**, and the resource is almost never the
+cores:
 
 - **memory bandwidth** saturates before the cores do on large AMR reads
 - **network storage** is usually *faster* with fewer concurrent readers, not more
 - **CPU caches** thrash when many memory-heavy tasks interleave
-- **multi-socket machines** pay a penalty whenever a thread reaches across sockets
 
-`max_threads` is the throttle for exactly this. It is not there to stop Julia breaking; it
-is there to match the concurrency to the hardware:
+#### The budget
+
+You have `Threads.nthreads()` threads. Spend them once:
+
+> **outer tasks × inner `max_threads` ≈ `nthreads()`**
+
+`@threads` runs `min(number of items, nthreads())` iterations at a time, so the outer half
+of that product is something you can work out rather than guess. On eight threads:
+
+| items in the loop | outer tasks | give each call | why |
+|---|---|---|---|
+| 100 snapshots | 8 | `max_threads=1` | the loop already uses every thread |
+| 8 snapshots | 8 | `max_threads=1` | same |
+| 4 snapshots | 4 | `max_threads=2` | half the budget is idle otherwise |
+| 2 snapshots | 2 | `max_threads=4` | |
+| 1 snapshot | none, do not use `@threads` | leave the default | let Mera thread it |
 
 ```julia
-@threads for i in eachindex(snapshots)                 # 8 outer tasks
-    gas = gethydro(info; lmax=10, max_threads=2)       # bound the concurrent I/O
-    projection(gas, [:rho, :T]; max_threads=2)         # bound the memory pressure
+# many items: the outer loop owns the threads
+@threads for i in eachindex(snapshots)
+    gas = gethydro(info; lmax=10, max_threads=1)
+    projection(gas, [:rho, :T]; max_threads=1)
 end
+
+# one item: no outer loop at all, ask for the variables together
+proj = projection(gas, [:sd, :T, :vx, :vy])
 ```
+
+Treat it as a starting point, not a law. Reading is I/O bound, so on slow or networked
+storage fewer concurrent readers often beat the arithmetic: try `max_threads=1` with **four**
+outer tasks rather than eight. Measure it, see the next section.
 
 | value | meaning |
 |---|---|
@@ -322,8 +345,10 @@ masses  = Vector{Float64}(undef, length(outputs))
 end
 ```
 
-Note `@threads for i in eachindex(...)`, then index inside. `@threads` needs an indexable
-range, so `for (i, x) in enumerate(xs)` does not work and throws at run time.
+Two things to note. `@threads for i in eachindex(...)`, then index inside: `@threads` needs
+an indexable range, so `for (i, x) in enumerate(xs)` throws at run time. And `max_threads=1`
+is there because `gethydro` is already threaded, see
+[the budget](#Do-not-thread-a-threaded-function-without-a-budget).
 
 **Inner kernel**, for one dataset and several quantities. Ask for them in one call and Mera
 threads across them:
