@@ -74,9 +74,9 @@ are documented with the rest of the I/O controls in the
 
 - [Multi-Threading](../multi-threading/multi-threading_intro.md): the guide, including what
   to expect from more threads and the measured numbers
-- [Projection benchmarks](../benchmarks/Projection/multi_projections.md): thread scaling for
+- [Performance](../benchmarks/performance.md): thread scaling for
   single- and multi-variable projections
-- [Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md): read scaling
+- [Run Your Own Benchmarks](../benchmarks/run_your_own.md): read scaling
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*

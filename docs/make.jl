@@ -205,11 +205,8 @@ makedocs(modules = [Mera],
                               "Notifications"       => Any[ "Overview"      => "notifications/index.md",
                                                             "Setup & Usage" => "notifications/setup_and_usage.md",
                                                             "Examples"      => "notifications/examples.md"]],
-                          "Benchmarks" => Any[ "Performance Overview"          => "benchmarks/performance.md",
-                                               "Server IO"                     => "benchmarks/IO/IOperformance.md",
-                                               "Parallel RAMSES-Files Reading" => "benchmarks/RAMSES_reading/ramses_reading.md",
-                                               "Mera-Files Reading"            => "benchmarks/JLD2_reading/Mera_files_reading.md",
-                                               "Projections"                   => "benchmarks/Projection/multi_projections.md"],
+                          "Benchmarks" => Any[ "Performance"          => "benchmarks/performance.md",
+                                               "Run Your Own"         => "benchmarks/run_your_own.md"],
                           # Getting Started already answers "coming from another tool"
                           # (switching_to_mera) and "Julia for this kind of work"
                           # (julia_for_simulation_analysis), in curated pages roughly a tenth of

@@ -162,7 +162,7 @@ export JULIA_NUM_THREADS=8
 See [Multi-Threading](multi-threading/multi-threading_intro.md). Note that more threads is
 not automatically faster, a single light projection is serial-fraction dominated and stays
 flat; the measured numbers are in
-[Projection benchmarks](benchmarks/Projection/multi_projections.md).
+[Performance](benchmarks/performance.md).
 
 ## Out of memory on a large output
 

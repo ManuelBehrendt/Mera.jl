@@ -158,7 +158,7 @@ projection(gas, [:sd, :T, :vx, :vy, :vz, :σ, :σx, :σy, :σz], :km_s)
 ```
 
 Measured on an M2 Pro (12 cores) with `mw_L10` output 300, 28.3M cells, the numbers behind
-this are in [Projection benchmarks](../benchmarks/Projection/multi_projections.md):
+this are in [Performance](../benchmarks/performance.md):
 
 | Threads | single-var `:sd` | 10 vars |
 |---:|---:|---:|
@@ -170,7 +170,7 @@ this are in [Projection benchmarks](../benchmarks/Projection/multi_projections.m
 A single light projection is **serial-fraction dominated and stays flat**, that is expected,
 not a misconfiguration. The ten-variable case gains about 1.6× and then saturates. Reading is
 usually I/O bound, so it saturates once the storage does; see
-[Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md).
+[Performance](../benchmarks/performance.md).
 
 !!! note "Particle projection splits differently"
     The particle backend parallelises *inside* one map rather than across variables, so a
@@ -288,8 +288,8 @@ Two things to expect, both normal rather than misconfiguration:
   variables you ask for, not within one
 
 Published numbers for both are in
-[Projection benchmarks](../benchmarks/Projection/multi_projections.md) and
-[Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md).
+[Performance](../benchmarks/performance.md) and
+[Performance](../benchmarks/performance.md).
 
 ## 5 Allocations and the garbage collector
 
