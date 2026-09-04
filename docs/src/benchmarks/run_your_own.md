@@ -69,7 +69,8 @@ benchmark_report(path, 250; stages=[:storage, :sweep], lmax=11)
 ```
 
 It prints how many full reads it will do before starting, and ends with the number to
-use:
+use. With `runs` above 1 it also reports the **spread** between fastest and slowest run
+at each thread count, which is how you tell a quiet node from a busy one:
 
 ```
   threads          time    speedup   efficiency
@@ -80,6 +81,13 @@ use:
   Fastest    : 8 threads (47.8 ms)
   Sweet spot : 4 threads, within 5% of the best for 50% of the cores
 ```
+
+It also fits Amdahl's law to the rising part of the curve, which turns the measurement
+into an answer about the code rather than just the machine: what fraction of the read is
+actually parallel, how much of it is irreducibly serial, and the ceiling no number of
+threads can pass. The figure draws perfect scaling as a diagonal and shades the gap to
+the measurement, so how much of each added thread is being converted into speed is
+visible rather than inferred.
 
 The sweet spot, not the fastest, is the number to use: it is the smallest thread count
 within 5% of the best, so the remaining threads buy almost nothing and on a shared node

@@ -32,8 +32,11 @@ yourself on a large snapshot: pass `lmax`, a subregion through `kwargs`, or fewe
   `max_threads`, or at `min(Threads.nthreads(), allocated_cpus())` when that is unset.
 - `max_threads`: ceiling for the default ladder.
 - `component`: `:hydro`, `:gravity` or `:particles`.
-- `runs`: repetitions per thread count. The minimum is reported, since the fastest run
-  is the one least disturbed by other load on the node.
+- `runs`: repetitions per thread count. The minimum is the reported estimate, since the
+  fastest run is the one least disturbed by other load on the node, but every run is
+  kept and the spread between fastest and slowest is reported alongside it. A spread of
+  a few percent means the node was quiet; a large one means it was not, and the numbers
+  should be treated accordingly.
 - `lmax`, and any selection keyword (`xrange`, `center`, `range_unit`) forwarded to the
   reader, which is how you keep this affordable on a big box.
 
@@ -97,37 +100,68 @@ function reading_sweep(output::Int, path::AbstractString;
         verbose && println("  warm-up failed: ", typeof(e))
     end
 
-    times = Float64[]
+    times    = Float64[]      # the estimate used everywhere: minimum, least disturbed
+    all_runs = Vector{Float64}[]
     for n in ladder
-        best = Inf
+        rt = Float64[]
         for r in 1:runs
             GC.gc()
             t = @elapsed _read_component(info, string(component), n, lmax; kwargs...)
-            best = min(best, t)
+            push!(rt, t)
             verbose && @printf("  %3d threads, run %d: %s\n", n, r, _fmt_secs(t))
             GC.gc()
         end
-        push!(times, best)
+        push!(all_runs, rt)
+        push!(times, minimum(rt))
     end
+    # Spread as a percentage of the estimate. A benchmark that does not say how stable
+    # it was is not a measurement, and on a shared node this is the number that says
+    # whether the run was disturbed.
+    spread = [length(rt) > 1 ? 100 * (maximum(rt) - minimum(rt)) / minimum(rt) : 0.0
+              for rt in all_runs]
 
     base    = first(times)
     speedup = base ./ times
     ibest   = argmin(times)
+
+    # Amdahl: T(n) = T1 * ((1-p) + p/n). Fitting p says what fraction of the read is
+    # actually parallel, and 1/(1-p) is the most this code could ever gain no matter how
+    # many threads it is given. Fit only up to the peak: past it the curve turns over,
+    # which Amdahl cannot describe, and including those points would flatter the fit.
+    rise  = ladder[1:ibest]
+    trise = times[1:ibest]
+    pfrac, mxspeed = NaN, NaN
+    if length(rise) >= 2
+        best_err, best_p = Inf, NaN
+        for q in 0.001:0.001:0.999
+            err = sum((base * ((1 - q) + q / n) - t)^2 for (n, t) in zip(rise, trise))
+            err < best_err && ((best_err, best_p) = (err, q))
+        end
+        pfrac   = best_p
+        mxspeed = 1 / (1 - best_p)
+    end
     # The smallest thread count within 5% of the best: past it you are spending cores
     # for nothing, which on a shared machine is worse than nothing.
     isweet  = findfirst(t -> t <= times[ibest] * 1.05, times)
 
     if verbose
         println("\n", "-"^66)
-        @printf("  %-8s %12s %10s %12s\n", "threads", "time", "speedup", "efficiency")
+        @printf("  %-8s %12s %8s %10s %11s\n",
+                "threads", "time", "spread", "speedup", "efficiency")
         for (i, n) in enumerate(ladder)
-            @printf("  %-8d %12s %9.2fx %11.0f%%\n",
-                    n, _fmt_secs(times[i]), speedup[i], 100 * speedup[i] / n)
+            @printf("  %-8d %12s %7.2f%% %9.2fx %10.0f%%\n",
+                    n, _fmt_secs(times[i]), spread[i], speedup[i], 100 * speedup[i] / n)
         end
         println("-"^66)
         @printf("  Fastest    : %d threads (%s)\n", ladder[ibest], _fmt_secs(times[ibest]))
         @printf("  Sweet spot : %d threads, within 5%% of the best for %.0f%% of the cores\n",
                 ladder[isweet], 100 * ladder[isweet] / ladder[ibest])
+        if isfinite(pfrac)
+            @printf("  Parallel   : %.0f%% of the read; the other %.0f%% is serial (%s)\n",
+                    100 * pfrac, 100 * (1 - pfrac), _fmt_secs(base * (1 - pfrac)))
+            @printf("  Ceiling    : %.2fx however many threads you add; %d threads reaches %.0f%% of it\n",
+                    mxspeed, ladder[ibest], 100 * speedup[ibest] / mxspeed)
+        end
         if ladder[isweet] < ladder[ibest]
             println("  Use the sweet spot: the extra threads buy under 5% and cost cores")
             println("  other jobs could use.")
@@ -135,6 +169,9 @@ function reading_sweep(output::Int, path::AbstractString;
         println("="^66, "\n")
     end
 
-    return (threads=ladder, times=times, speedup=speedup,
+    return (threads=ladder, times=times, all_runs=all_runs, spread=spread, runs=runs,
+            speedup=speedup, efficiency=speedup ./ ladder,
+            parallel_fraction=pfrac, max_speedup=mxspeed,
+            serial_time=isfinite(pfrac) ? base * (1 - pfrac) : NaN,
             best=ladder[ibest], sweet_spot=ladder[isweet], component=component)
 end

@@ -11,6 +11,27 @@
 # only setup step.
 
 """
+    BenchmarkReport
+
+What [`benchmark_report`](@ref) returns. Fields: `info`, `nfiles_total`, `bytes`,
+`storage_split` (bytes per component), `filesystem`, `storage`, `reading`,
+`conversion`, `sweep`, `work_threads`, `reportfile`. Stages that were not run are `nothing`.
+"""
+struct BenchmarkReport
+    info
+    nfiles_total::Int
+    bytes::Float64
+    storage_split
+    filesystem
+    storage
+    reading
+    conversion
+    sweep
+    work_threads::Int
+    reportfile::String
+end
+
+"""
     benchmark_report(path, output; merapath, components=[:hydro], lmax=missing,
                      runs=3, nfiles=64, outdir=homedir(), force=false, stages=:all)
 
@@ -116,6 +137,26 @@ function benchmark_report(path::AbstractString, output::Int;
     @printf("size on disk      : %s\n", _fmt_bytes(bytes))
     @printf("components        : hydro=%s gravity=%s particles=%s\n",
             info.hydro, info.gravity, info.particles)
+
+    # Where the bytes actually are. A snapshot is not one thing: the AMR structure,
+    # the hydro state and the particles are separate file families with very different
+    # sizes, and which of them dominates decides what converting is worth.
+    storage_split = try
+        so = storageoverview(info, verbose=false)
+        pairs = [(k, Float64(v)) for (k, v) in so if k !== :folder && Float64(v) > 0]
+        sort!(pairs, by=last, rev=true)
+        if !isempty(pairs)
+            tot = sum(last, pairs)
+            println("\nstorage by component:")
+            for (k, v) in pairs
+                @printf("  %-10s %10s  %5.1f%%\n", k, _fmt_bytes(v), 100v/tot)
+            end
+        end
+        pairs
+    catch e
+        println("  (storage breakdown unavailable: ", typeof(e), ")")
+        Tuple{Symbol,Float64}[]
+    end
     @printf("threads for this run: %d  (Julia started with %d, job allocated %d)\n",
             nthr, Threads.nthreads(), allocated_cpus())
     if nthr < Threads.nthreads()
@@ -151,7 +192,7 @@ function benchmark_report(path::AbstractString, output::Int;
     # thread count per run. Ask for it with stages=[:storage, :sweep].
     if want(:sweep) && stages !== :all && !too_big
         println("\n", "#"^78, "\n# Reading thread sweep\n", "#"^78)
-        sweep = reading_sweep(output, string(path); runs=2, lmax=lmax, max_threads=nthr)
+        sweep = reading_sweep(output, string(path); runs=runs, lmax=lmax, max_threads=nthr)
     end
 
     # Use the sweep's answer for everything that follows, unless the caller pinned
@@ -182,14 +223,14 @@ function benchmark_report(path::AbstractString, output::Int;
     open(reportfile, "w") do f
         for io in (stdout, f)
             _write_report(io, path, output, info, files, bytes, fs,
-                          storage, reading, conversion, sweep, lmax, workthr)
+                          storage, reading, conversion, sweep, lmax, workthr,
+                          storage_split)
         end
     end
     println("\nReport saved: ", reportfile)
 
-    result = (info=info, nfiles_total=length(files), bytes=bytes, filesystem=fs,
-              storage=storage, reading=reading, conversion=conversion, sweep=sweep,
-              work_threads=workthr, reportfile=reportfile)
+    result = BenchmarkReport(info, length(files), bytes, storage_split, fs,
+                             storage, reading, conversion, sweep, workthr, reportfile)
 
     # Only if the user already loaded a Makie backend. Mera does not depend on one, so
     # a headless run without CairoMakie still produces the text report and the CSVs.
@@ -204,13 +245,12 @@ function benchmark_report(path::AbstractString, output::Int;
         println("or call benchmarkplot(result) afterwards.")
     end
 
-    return (info=info, nfiles_total=length(files), bytes=bytes, filesystem=fs,
-            storage=storage, reading=reading, conversion=conversion, sweep=sweep,
-            work_threads=workthr, reportfile=reportfile)
+    return result
 end
 
 function _write_report(io, path, output, info, files, bytes, fs,
-                       storage, reading, conversion, sweep, lmax, workthr)
+                       storage, reading, conversion, sweep, lmax, workthr,
+                       storage_split)
     cpu = Sys.cpu_info()
     println(io, "\n", "="^78)
     println(io, "MERA BENCHMARK REPORT")
@@ -275,6 +315,14 @@ function _write_report(io, path, output, info, files, bytes, fs,
                 _fmt_secs(c.ramses_gctime), _fmt_secs(c.mera_gctime))
     end
 
+    if !isempty(storage_split)
+        tot = sum(last, storage_split)
+        println(io, "\nStorage by component:")
+        for (k, v) in storage_split
+            @printf(io, "  %-10s %10s  %5.1f%%\n", k, _fmt_bytes(v), 100v/tot)
+        end
+    end
+
     if sweep !== nothing
         println(io, "\nReading thread sweep (:", sweep.component, "):")
         for (i, n) in enumerate(sweep.threads)
@@ -311,6 +359,6 @@ r = benchmark_report("/data/sim", 250; stages=[:storage, :sweep, :conversion])
 Makie.save("bench.png", benchmarkplot(r))
 ```
 """
-benchmarkplot(r; kwargs...) = _plot_benchmark_report(r; kwargs...)
+benchmarkplot(r::BenchmarkReport; kwargs...) = _plot_benchmark_report(r; kwargs...)
 _plot_benchmark_report(r; kwargs...) =
     error("benchmarkplot needs a Makie backend, load one first: `using CairoMakie` (or GLMakie).")

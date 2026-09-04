@@ -391,6 +391,7 @@ export
     run_merafile_benchmark,
     benchmark_conversion,
     benchmark_report,
+    BenchmarkReport,
     benchmarkplot,
     filesystem_info,
     allocated_cpus,

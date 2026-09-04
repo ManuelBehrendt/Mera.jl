@@ -483,20 +483,73 @@ Mera._plot_overview(d::Mera.DataSetType; kwargs...) =
 # One picture for a whole benchmark run. Panels are added only for the stages that ran, so a
 # storage-only run gives one panel rather than three empty ones.
 
-function _bench_sweep!(ax, sw)
-    Makie.lines!(ax, sw.threads, sw.times, color=:steelblue)
-    Makie.scatter!(ax, sw.threads, sw.times, color=:steelblue, markersize=10)
-    # mark the two numbers the sweep exists to produce
+# Speedup against threads, with perfect scaling drawn as the diagonal. The gap between
+# the diagonal and the measurement is the whole point: it shows at a glance how much of
+# each added thread is actually being converted into speed.
+function _bench_speedup!(ax, sw)
+    t = Float64.(sw.threads)
+
+    # perfect scaling, and the region lost to it
+    Makie.lines!(ax, t, t, color=(:grey40, 0.9), linestyle=:dash, label="ideal (100%)")
+    Makie.band!(ax, t, Float64.(sw.speedup), t, color=(:grey70, 0.18))
+
+    # what Amdahl says this code can ever reach, given the serial fraction measured
+    if isfinite(sw.max_speedup)
+        p = sw.parallel_fraction
+        fine = range(minimum(t), maximum(t), length=100)
+        Makie.lines!(ax, fine, [1 / ((1 - p) + p / n) for n in fine],
+                     color=:indianred, linestyle=:dot,
+                     label="Amdahl fit (p=$(round(p, digits=2)))")
+        Makie.hlines!(ax, [sw.max_speedup], color=(:indianred, 0.5), linestyle=:dashdot,
+                      label="ceiling $(round(sw.max_speedup, digits=2))x")
+    end
+
+    Makie.lines!(ax, t, Float64.(sw.speedup), color=:steelblue)
+    Makie.scatter!(ax, t, Float64.(sw.speedup), color=:steelblue, markersize=10,
+                   label="measured")
+
     ib = findfirst(==(sw.best), sw.threads)
     is = findfirst(==(sw.sweet_spot), sw.threads)
-    ib !== nothing && Makie.scatter!(ax, [sw.threads[ib]], [sw.times[ib]],
-                                     color=:seagreen, markersize=18, marker=:star5,
-                                     label="fastest ($(sw.best))")
+    ib !== nothing && Makie.scatter!(ax, [t[ib]], [sw.speedup[ib]], color=:seagreen,
+                                     markersize=18, marker=:star5, label="fastest ($(sw.best))")
     is !== nothing && sw.sweet_spot != sw.best &&
-        Makie.scatter!(ax, [sw.threads[is]], [sw.times[is]],
-                       color=:darkorange, markersize=15, marker=:diamond,
-                       label="sweet spot ($(sw.sweet_spot))")
-    Makie.axislegend(ax, position=:rt, framevisible=false, labelsize=10)
+        Makie.scatter!(ax, [t[is]], [sw.speedup[is]], color=:darkorange,
+                       markersize=15, marker=:diamond, label="sweet spot ($(sw.sweet_spot))")
+    Makie.axislegend(ax, position=:lt, framevisible=true, labelsize=8,
+                     backgroundcolor=(:white, 0.75), padding=(4, 4, 2, 2),
+                     rowgap=0, patchsize=(14, 8))
+end
+
+# Efficiency is the same information stated as "what fraction of each thread is doing
+# useful work", which is the number that tells you when to stop adding them.
+function _bench_efficiency!(ax, sw)
+    t = Float64.(sw.threads)
+    eff = 100 .* Float64.(sw.efficiency)
+    Makie.hlines!(ax, [100.0], color=(:grey40, 0.9), linestyle=:dash)
+    Makie.text!(ax, last(t), 100, text="perfect ", align=(:right, :bottom),
+                fontsize=9, color=:grey40, offset=(0, 2))
+    Makie.barplot!(ax, t, eff, color=[e >= 50 ? :seagreen : e >= 25 ? :goldenrod : :indianred
+                                      for e in eff], width=t .* 0.5)
+    for (x, e) in zip(t, eff)
+        Makie.text!(ax, x, e, text=string(round(Int, e), "%"), align=(:center, :bottom),
+                    fontsize=9, offset=(0, 3))
+    end
+    Makie.ylims!(ax, 0, 118)
+end
+
+# Read time with the spread across repeats, so a noisy node is visible rather than hidden
+function _bench_sweep!(ax, sw)
+    t = Float64.(sw.threads)
+    if hasproperty(sw, :all_runs) && sw.runs > 1
+        lo = [minimum(r) for r in sw.all_runs]
+        hi = [maximum(r) for r in sw.all_runs]
+        Makie.rangebars!(ax, t, lo, hi, color=:steelblue, whiskerwidth=8)
+    end
+    Makie.lines!(ax, t, sw.times, color=:steelblue)
+    Makie.scatter!(ax, t, sw.times, color=:steelblue, markersize=10)
+    ib = findfirst(==(sw.best), sw.threads)
+    ib !== nothing && Makie.scatter!(ax, [t[ib]], [sw.times[ib]], color=:seagreen,
+                                     markersize=18, marker=:star5)
 end
 
 # Pick one unit for the pair from the larger value, so a small fixture does not print
@@ -553,9 +606,9 @@ function _bench_iops!(ax, st)
     Makie.scatter!(ax, ks, ys, color=:purple, markersize=10)
 end
 
-function Mera._plot_benchmark_report(r; size=(1000, 760))
+function Mera._plot_benchmark_report(r::Mera.BenchmarkReport; size=(1000, 760))
     panels = Any[]
-    r.sweep      !== nothing && push!(panels, :sweep)
+    r.sweep      !== nothing && append!(panels, [:speedup, :efficiency, :sweep])
     r.conversion !== nothing && append!(panels, [:readtime, :memory, :disk])
     r.storage    !== nothing && push!(panels, :iops)
     isempty(panels) && error("nothing to plot: the report has no completed stages.")
@@ -566,9 +619,21 @@ function Mera._plot_benchmark_report(r; size=(1000, 760))
 
     for (i, p) in enumerate(panels)
         row, col = fldmod1(i, ncols)
-        if p === :sweep
+        if p === :speedup
+            ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="speedup",
+                            title="Does threading pay? (:$(r.sweep.component))",
+                            xscale=Makie.log2)
+            ax.xticks = (Float64.(r.sweep.threads), string.(r.sweep.threads))
+            _bench_speedup!(ax, r.sweep)
+        elseif p === :efficiency
+            ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="efficiency [%]",
+                            title="Work per thread", xscale=Makie.log2)
+            ax.xticks = (Float64.(r.sweep.threads), string.(r.sweep.threads))
+            _bench_efficiency!(ax, r.sweep)
+        elseif p === :sweep
             ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="read time [s]",
-                            title="Reading sweep (:$(r.sweep.component))", xscale=Makie.log2)
+                            title="Read time" * (r.sweep.runs > 1 ? " (bars: $(r.sweep.runs) runs)" : ""),
+                            xscale=Makie.log2)
             ax.xticks = (Float64.(r.sweep.threads), string.(r.sweep.threads))
             _bench_sweep!(ax, r.sweep)
         elseif p === :readtime
