@@ -479,4 +479,121 @@ end
 Mera._plot_overview(d::Mera.DataSetType; kwargs...) =
     error("overviewplot: no visual overview defined for $(typeof(d)) — supported: HydroDataType, GravDataType, PartDataType.")
 
+# ── benchmark_report figure (Mera.benchmarkplot) ─────────────────────────────────────────────
+# One picture for a whole benchmark run. Panels are added only for the stages that ran, so a
+# storage-only run gives one panel rather than three empty ones.
+
+function _bench_sweep!(ax, sw)
+    Makie.lines!(ax, sw.threads, sw.times, color=:steelblue)
+    Makie.scatter!(ax, sw.threads, sw.times, color=:steelblue, markersize=10)
+    # mark the two numbers the sweep exists to produce
+    ib = findfirst(==(sw.best), sw.threads)
+    is = findfirst(==(sw.sweet_spot), sw.threads)
+    ib !== nothing && Makie.scatter!(ax, [sw.threads[ib]], [sw.times[ib]],
+                                     color=:seagreen, markersize=18, marker=:star5,
+                                     label="fastest ($(sw.best))")
+    is !== nothing && sw.sweet_spot != sw.best &&
+        Makie.scatter!(ax, [sw.threads[is]], [sw.times[is]],
+                       color=:darkorange, markersize=15, marker=:diamond,
+                       label="sweet spot ($(sw.sweet_spot))")
+    Makie.axislegend(ax, position=:rt, framevisible=false, labelsize=10)
+end
+
+# Pick one unit for the pair from the larger value, so a small fixture does not print
+# "0.0 GB" and a large one does not print six digits of MB.
+function _byte_unit(maxv)
+    maxv >= 1024^3 && return (1024^3, "GB", 2)
+    maxv >= 1024^2 && return (1024^2, "MB", 1)
+    return (1024.0, "KB", 1)
+end
+_time_unit(maxv) = maxv >= 1 ? (1.0, "s", 2) : (1e-3, "ms", 1)
+
+# Bars with the value written above each one. Makie autoscales to the data, so a label
+# drawn at the bar top lands outside the axis; the explicit headroom keeps it visible.
+function _bench_bars!(ax, vals, labels, div, unit, digits, title)
+    scaled = vals ./ div
+    Makie.barplot!(ax, 1:length(scaled), scaled, color=[:indianred, :seagreen], width=0.6)
+    for (i, v) in enumerate(scaled)
+        Makie.text!(ax, i, v, text=string(round(v, digits=digits), " ", unit),
+                    align=(:center, :bottom), fontsize=11, offset=(0, 4))
+    end
+    ax.xticks = (1:length(scaled), labels)
+    Makie.ylims!(ax, 0, maximum(scaled) * 1.18)
+    ax.ylabel = unit
+    isempty(title) || (ax.title = title)
+end
+
+const _BENCH_LBL = ["RAMSES", "MERA file"]
+
+function _bench_readtime!(ax, c)
+    v = [c.read_time, c.warm_read]
+    d, u, n = _time_unit(maximum(v))
+    _bench_bars!(ax, v, _BENCH_LBL, d, u, n,
+                 c.warm_read > 0 ? "Read time: $(round(c.read_time/c.warm_read, digits=1))x faster" : "")
+end
+
+function _bench_memory!(ax, c)
+    v = [c.ramses_allocated, c.mera_allocated]
+    d, u, n = _byte_unit(maximum(v))
+    _bench_bars!(ax, v, _BENCH_LBL, d, u, n,
+                 c.mera_allocated > 0 ? "Memory churned: $(round(c.ramses_allocated/c.mera_allocated, digits=1))x less" : "")
+end
+
+function _bench_disk!(ax, c)
+    v = [c.size_ramses, c.size_mera]
+    d, u, n = _byte_unit(maximum(v))
+    _bench_bars!(ax, v, _BENCH_LBL, d, u, n,
+                 c.size_ramses > 0 ? "On disk: $(round(Int, 100*(1 - c.size_mera/c.size_ramses)))% smaller" : "")
+end
+
+function _bench_iops!(ax, st)
+    ks = sort(collect(keys(st.iops.stats)))
+    ys = [st.iops.stats[k][1] for k in ks]
+    Makie.lines!(ax, ks, ys, color=:purple)
+    Makie.scatter!(ax, ks, ys, color=:purple, markersize=10)
+end
+
+function Mera._plot_benchmark_report(r; size=(1000, 760))
+    panels = Any[]
+    r.sweep      !== nothing && push!(panels, :sweep)
+    r.conversion !== nothing && append!(panels, [:readtime, :memory, :disk])
+    r.storage    !== nothing && push!(panels, :iops)
+    isempty(panels) && error("nothing to plot: the report has no completed stages.")
+
+    ncols = length(panels) <= 2 ? length(panels) : 2
+    nrows = cld(length(panels), ncols)
+    fig = Makie.Figure(size=size)
+
+    for (i, p) in enumerate(panels)
+        row, col = fldmod1(i, ncols)
+        if p === :sweep
+            ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="read time [s]",
+                            title="Reading sweep (:$(r.sweep.component))", xscale=Makie.log2)
+            ax.xticks = (Float64.(r.sweep.threads), string.(r.sweep.threads))
+            _bench_sweep!(ax, r.sweep)
+        elseif p === :readtime
+            ax = Makie.Axis(fig[row, col], ylabel="time [s]")
+            _bench_readtime!(ax, r.conversion)
+        elseif p === :memory
+            ax = Makie.Axis(fig[row, col], ylabel="allocated [MB]")
+            _bench_memory!(ax, r.conversion)
+        elseif p === :disk
+            ax = Makie.Axis(fig[row, col], ylabel="size [GB]")
+            _bench_disk!(ax, r.conversion)
+        elseif p === :iops
+            ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="IOPS",
+                            title="Storage scaling", xscale=Makie.log2)
+            ks = sort(collect(keys(r.storage.iops.stats)))
+            ax.xticks = (Float64.(ks), string.(ks))
+            _bench_iops!(ax, r.storage)
+        end
+    end
+
+    Makie.Label(fig[0, :],
+        "Mera benchmark: $(r.info.ncpu) CPU files, $(r.nfiles_total) files, " *
+        "$(Mera._fmt_bytes(r.bytes)) on $(isempty(r.filesystem.type) ? "unknown fs" : r.filesystem.type)",
+        fontsize=14, font=:bold)
+    return fig
+end
+
 end # module

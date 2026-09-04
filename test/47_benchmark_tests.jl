@@ -260,3 +260,19 @@ end
         @test r.ramses_rss >= 0
     end
 end
+
+# ============================================================================
+# benchmarkplot — graphs are optional, and their absence must not break a run
+# ============================================================================
+@testset "benchmarkplot" begin
+    # Mera has no Makie dependency, so without a backend this must fail with a hint
+    # rather than a MethodError, and benchmark_report must still finish.
+    if Base.find_package("CairoMakie") === nothing && Base.find_package("GLMakie") === nothing
+        @test_throws ErrorException benchmarkplot((sweep=nothing, storage=nothing,
+                                                   conversion=nothing))
+    end
+
+    # unit picking: a small run must not be labelled in GB, a large one not in KB
+    @test Mera._fmt_bytes(1.6 * 1024^2) == "1.6 MB"
+    @test Mera._fmt_bytes(5.69 * 1024^3) == "5.69 GB"
+end

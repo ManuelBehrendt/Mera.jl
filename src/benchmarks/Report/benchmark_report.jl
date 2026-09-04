@@ -167,6 +167,23 @@ function benchmark_report(path::AbstractString, output::Int;
     end
     println("\nReport saved: ", reportfile)
 
+    result = (info=info, nfiles_total=length(files), bytes=bytes, filesystem=fs,
+              storage=storage, reading=reading, conversion=conversion, sweep=sweep,
+              reportfile=reportfile)
+
+    # Only if the user already loaded a Makie backend. Mera does not depend on one, so
+    # a headless run without CairoMakie still produces the text report and the CSVs.
+    figfile = joinpath(dest, "MERA_BENCHMARK.png")
+    try
+        fig = benchmarkplot(result)
+        Base.invokelatest(getfield(Base.loaded_modules[Base.PkgId(
+            Base.UUID("ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"), "Makie")], :save), figfile, fig)
+        println("Figure saved: ", figfile)
+    catch
+        println("No figure written. For graphs, `using CairoMakie` before benchmark_report,")
+        println("or call benchmarkplot(result) afterwards.")
+    end
+
     return (info=info, nfiles_total=length(files), bytes=bytes, filesystem=fs,
             storage=storage, reading=reading, conversion=conversion, sweep=sweep,
             reportfile=reportfile)
@@ -254,3 +271,26 @@ function _write_report(io, path, output, info, files, bytes, fs,
     end
     println(io, "="^78)
 end
+
+
+# ── Plotting (provided by the Makie package extension MeraMakieExt) ───────────
+"""
+    benchmarkplot(r; size=(1000, 760)) -> Makie.Figure
+
+Turn a [`benchmark_report`](@ref) result into one figure: the reading thread sweep,
+the read-time comparison, the memory each path churns through, and storage IOPS
+against thread count. Panels for stages that were not run are omitted.
+
+Needs a Makie backend, so `using CairoMakie` first. The `Figure` is returned; save it
+with `Makie.save("bench.png", fig)`. `benchmark_report` saves one automatically when a
+backend is already loaded.
+
+```julia
+using Mera, CairoMakie
+r = benchmark_report("/data/sim", 250; stages=[:storage, :sweep, :conversion])
+Makie.save("bench.png", benchmarkplot(r))
+```
+"""
+benchmarkplot(r; kwargs...) = _plot_benchmark_report(r; kwargs...)
+_plot_benchmark_report(r; kwargs...) =
+    error("benchmarkplot needs a Makie backend, load one first: `using CairoMakie` (or GLMakie).")

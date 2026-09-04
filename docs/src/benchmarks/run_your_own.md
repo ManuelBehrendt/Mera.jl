@@ -27,6 +27,25 @@ benchmark_report("/path/to/simulation", 250; lmax=11, merapath="/path/with/space
 Use `stages=[:storage]` to run only part of it. The individual functions below are
 still there if you want one measurement on its own.
 
+### Graphs
+
+Mera does not depend on a plotting package, so a bare install writes the text report and
+the CSV/JSON only. Load a Makie backend and you get a figure as well, saved next to the
+report automatically:
+
+```julia
+using Mera, CairoMakie          # add CairoMakie once: ] add CairoMakie
+benchmark_report(path, 250; stages=[:storage, :sweep, :conversion])
+```
+
+The figure has one panel per stage that ran: the reading sweep with the fastest and
+sweet-spot thread counts marked, read time, memory churned, size on disk, and storage
+IOPS against thread count. `CairoMakie` works headless, so it is fine over SSH with no
+display.
+
+Without a backend nothing fails, the run just says no figure was written and you can
+call `benchmarkplot(result)` later.
+
 ### Which stages sweep, and which do not
 
 Worth knowing before you read the output:
