@@ -29,7 +29,8 @@ yourself on a large snapshot: pass `lmax`, a subregion through `kwargs`, or fewe
 
 # Keywords
 - `threads`: thread counts to test. Defaults to a `1, 2, 4, 8, ...` ladder capped at
-  `min(Threads.nthreads(), allocated_cpus())`.
+  `max_threads`, or at `min(Threads.nthreads(), allocated_cpus())` when that is unset.
+- `max_threads`: ceiling for the default ladder.
 - `component`: `:hydro`, `:gravity` or `:particles`.
 - `runs`: repetitions per thread count. The minimum is reported, since the fastest run
   is the one least disturbed by other load on the node.
@@ -51,9 +52,16 @@ function reading_sweep(output::Int, path::AbstractString;
                        component::Symbol=:hydro,
                        runs::Int=2,
                        lmax=missing,
+                       max_threads::Int=0,
                        verbose::Bool=true,
                        kwargs...)
-    budget = min(Threads.nthreads(), allocated_cpus())
+    # Named explicitly rather than left to kwargs: forwarded to the reader it would
+    # override the per-level thread count and make every point of the sweep identical,
+    # silently, which is the one failure a sweep must not have.
+    haskey(kwargs, :max_threads) && error(
+        "pass the ceiling as max_threads=..., it must not reach the reader as a keyword.")
+    budget = max_threads > 0 ? min(max_threads, Threads.nthreads()) :
+                               min(Threads.nthreads(), allocated_cpus())
     ladder = threads === nothing ?
              [t for t in (1, 2, 4, 8, 16, 24, 32, 48, 64) if t <= budget] :
              sort(unique(Int.(threads)))

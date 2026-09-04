@@ -276,3 +276,34 @@ end
     @test Mera._fmt_bytes(1.6 * 1024^2) == "1.6 MB"
     @test Mera._fmt_bytes(5.69 * 1024^3) == "5.69 GB"
 end
+
+# ============================================================================
+# the sweep must drive the stages that follow it
+# ============================================================================
+@testset "sweep drives later stages" begin
+    simpath = joinpath(get(ENV, "MERA_TEST_DATA", ""), "RAMSES-PUBLIC", "sedov3d_amr")
+
+    # max_threads must be a named parameter of reading_sweep. If it reached the reader
+    # through kwargs it would override the per-level count and make every point of the
+    # sweep identical, without erroring: the one way a sweep can be silently useless.
+    @test hasmethod(reading_sweep, Tuple{Int, String})
+    # max_threads is a declared keyword, not swallowed by kwargs...
+    @test :max_threads in Base.kwarg_decl(first(methods(reading_sweep)))
+
+    if isdir(simpath) && Threads.nthreads() >= 2
+        r = reading_sweep(7, simpath; runs=1, max_threads=2, verbose=false)
+        @test maximum(r.threads) <= 2                       # ceiling respected
+        @test length(unique(r.times)) == length(r.times)    # levels really differed
+
+        out = mktempdir()
+        rep = benchmark_report(simpath, 7; stages=[:sweep, :reading, :conversion],
+                               merapath=joinpath(out, "mf"), outdir=out)
+        # the later stages must run at the sweep's answer, not the full budget
+        @test rep.work_threads == rep.sweep.sweet_spot
+
+        # an explicit max_threads pins everything and overrides the sweep's answer
+        rep2 = benchmark_report(simpath, 7; stages=[:sweep, :reading], max_threads=1,
+                                outdir=out)
+        @test rep2.work_threads == 1
+    end
+end

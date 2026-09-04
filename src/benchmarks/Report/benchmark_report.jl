@@ -40,7 +40,10 @@ the format advantage is largest.
 - `nfiles`: how many files the throughput sweep samples. It reads file contents once
   per thread level per run, so this is deliberately bounded.
 - `outdir`: where the report and the raw JSON/CSV go.
-- `max_threads`: thread budget for every stage. Defaults to
+- `max_threads`: thread budget for every stage. When the `:sweep` stage runs and this
+  is left at its default, the reading and conversion stages use the **sweet spot the
+  sweep found** rather than the full budget, since that is the configuration the report
+  goes on to recommend. Setting it explicitly pins every stage to your number instead. Defaults to
   `min(Threads.nthreads(), allocated_cpus())`, so on a batch node it follows the
   scheduler's allocation rather than the machine's core count. Set it lower to leave
   headroom on a shared node.
@@ -140,36 +143,49 @@ function benchmark_report(path::AbstractString, output::Int;
         # the environment block is already printed above; do not repeat it
         storage = run_benchmark(snapdir; runs=2, nfiles=nfiles, max_threads=nthr, logenv=false)
     end
-    if want(:reading) && !too_big
-        println("\n", "#"^78, "\n# Reading the RAMSES output\n", "#"^78)
-        reading = run_reading_benchmark(output, string(path); runs=runs, lmax=lmax,
-                                        outdir=dest, max_threads=nthr)
-    end
+
+    # The sweep runs BEFORE the stages that read, because its whole purpose is to find
+    # the thread count those stages should use. Running them first at the full budget
+    # would report a configuration the same report then recommends against.
     # Opt-in, because it is the only stage whose cost multiplies: one full read per
     # thread count per run. Ask for it with stages=[:storage, :sweep].
     if want(:sweep) && stages !== :all && !too_big
         println("\n", "#"^78, "\n# Reading thread sweep\n", "#"^78)
-        sweep = reading_sweep(output, string(path); runs=2, lmax=lmax)
+        sweep = reading_sweep(output, string(path); runs=2, lmax=lmax, max_threads=nthr)
+    end
+
+    # Use the sweep's answer for everything that follows, unless the caller pinned
+    # max_threads explicitly, in which case their number wins.
+    workthr = (sweep !== nothing && max_threads == 0) ? sweep.sweet_spot : nthr
+    if sweep !== nothing && workthr != nthr
+        println("\nUsing the sweep's sweet spot, $workthr threads, for the stages below ",
+                "(budget is $nthr).")
+    end
+
+    if want(:reading) && !too_big
+        println("\n", "#"^78, "\n# Reading the RAMSES output\n", "#"^78)
+        reading = run_reading_benchmark(output, string(path); runs=runs, lmax=lmax,
+                                        outdir=dest, max_threads=workthr)
     end
     if want(:conversion) && !too_big
         println("\n", "#"^78, "\n# Conversion break-even\n", "#"^78)
         mkpath(merapath)
         conversion = benchmark_conversion(string(path), output; merapath=merapath,
-                                          components=components, runs=runs, max_threads=nthr)
+                                          components=components, runs=runs, max_threads=workthr)
     end
 
     reportfile = joinpath(dest, "MERA_BENCHMARK.txt")
     open(reportfile, "w") do f
         for io in (stdout, f)
             _write_report(io, path, output, info, files, bytes, fs,
-                          storage, reading, conversion, sweep, lmax)
+                          storage, reading, conversion, sweep, lmax, workthr)
         end
     end
     println("\nReport saved: ", reportfile)
 
     result = (info=info, nfiles_total=length(files), bytes=bytes, filesystem=fs,
               storage=storage, reading=reading, conversion=conversion, sweep=sweep,
-              reportfile=reportfile)
+              work_threads=workthr, reportfile=reportfile)
 
     # Only if the user already loaded a Makie backend. Mera does not depend on one, so
     # a headless run without CairoMakie still produces the text report and the CSVs.
@@ -186,11 +202,11 @@ function benchmark_report(path::AbstractString, output::Int;
 
     return (info=info, nfiles_total=length(files), bytes=bytes, filesystem=fs,
             storage=storage, reading=reading, conversion=conversion, sweep=sweep,
-            reportfile=reportfile)
+            work_threads=workthr, reportfile=reportfile)
 end
 
 function _write_report(io, path, output, info, files, bytes, fs,
-                       storage, reading, conversion, sweep, lmax)
+                       storage, reading, conversion, sweep, lmax, workthr)
     cpu = Sys.cpu_info()
     println(io, "\n", "="^78)
     println(io, "MERA BENCHMARK REPORT")
@@ -221,7 +237,7 @@ function _write_report(io, path, output, info, files, bytes, fs,
     !isempty(fs.stripe) && println(io, "  Lustre stripe: ", fs.stripe)
 
     if reading !== nothing
-        println(io, "\nReading the RAMSES output:")
+        println(io, "\nReading the RAMSES output (", workthr, " threads):")
         for c in reading["components"]
             if reading["$(c)_status"] == "success"
                 @printf(io, "  %-10s : %8.2f s +- %.2f s\n", c, reading["$(c)_mean"], reading["$(c)_std"])
@@ -233,7 +249,7 @@ function _write_report(io, path, output, info, files, bytes, fs,
 
     if conversion !== nothing
         c = conversion
-        println(io, "\nConversion (", join(c.components, ", "), "):")
+        println(io, "\nConversion (", join(c.components, ", "), ", ", workthr, " threads):")
         @printf(io, "  read from RAMSES   : %8.2f s\n", c.read_time)
         @printf(io, "  savedata write     : %8.2f s\n", c.write_time)
         @printf(io, "  one-off conversion : %8.2f s\n", c.convert_total)

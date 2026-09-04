@@ -85,6 +85,12 @@ The sweet spot, not the fastest, is the number to use: it is the smallest thread
 within 5% of the best, so the remaining threads buy almost nothing and on a shared node
 cost other jobs their cores.
 
+When the sweep runs inside `benchmark_report`, it runs **first** and the reading and
+conversion stages then use the sweet spot it found, not the full thread budget. That
+keeps one report internally consistent: it would be odd to recommend 16 threads and
+measure the conversion at 24. Setting `max_threads` yourself pins every stage to your
+number instead.
+
 Bound it on a large snapshot with `lmax`, a subregion, or fewer `threads` values:
 
 ```julia
