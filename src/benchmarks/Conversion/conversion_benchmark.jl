@@ -70,6 +70,9 @@ Above it, convert.
   is left in place so you can inspect or delete it.
 - `components`: which of `:hydro`, `:gravity`, `:particles` to include. Defaults to
   every component the snapshot actually has, so a run without gravity is fine.
+- `lmax`, and any selection keyword (`xrange`, `center`, `range_unit`), forwarded to
+  the readers. Without them the conversion reads the whole box, which on a large
+  snapshot is slow and not comparable with a sweep that was capped.
 - `runs`: how many times to read the MERA file back. The first is reported separately
   because it carries compilation; the warm figure is the minimum of the rest.
 - `verbose`: print the report. The values are returned either way.
@@ -98,7 +101,9 @@ function benchmark_conversion(path::AbstractString, output::Int;
                               components=nothing,
                               runs::Int=3,
                               max_threads::Int=0,
-                              verbose::Bool=true)
+                              lmax=missing,
+                              verbose::Bool=true,
+                              kwargs...)
     nthr = max_threads > 0 ? min(max_threads, Threads.nthreads()) :
                              min(Threads.nthreads(), allocated_cpus())
     info = getinfo(output, string(path), verbose=false)
@@ -120,6 +125,7 @@ function benchmark_conversion(path::AbstractString, output::Int;
     verbose && println("\n", "="^64,
                        "\nConversion benchmark: output $output",
                        "\n  threads    : ", nthr,
+                       ismissing(lmax) ? "" : "\n  lmax       : $lmax",
                        "\n  components : ", join(comps, ", "),
                        "\n  MERA file  : ", merapath, "\n", "="^64)
 
@@ -129,9 +135,7 @@ function benchmark_conversion(path::AbstractString, output::Int;
     # several hundred x, none of which is the file format.
     verbose && println("\nWarm-up read (not timed) ...")
     try
-        first(comps) === :hydro     ? gethydro(info,     verbose=false, show_progress=false, max_threads=nthr) :
-        first(comps) === :gravity   ? getgravity(info,   verbose=false, show_progress=false, max_threads=nthr) :
-                                      getparticles(info, verbose=false, show_progress=false, max_threads=nthr)
+        _read_component(info, string(first(comps)), nthr, lmax; kwargs...)
         GC.gc()
     catch e
         verbose && println("  warm-up failed: ", typeof(e))
@@ -143,9 +147,7 @@ function benchmark_conversion(path::AbstractString, output::Int;
     rss0 = Sys.maxrss()
     ramses_cost = _read_cost() do
         for c in comps
-            loaded[c] = c === :hydro     ? gethydro(info,     verbose=false, show_progress=false, max_threads=nthr) :
-                        c === :gravity   ? getgravity(info,   verbose=false, show_progress=false, max_threads=nthr) :
-                                           getparticles(info, verbose=false, show_progress=false, max_threads=nthr)
+            loaded[c] = _read_component(info, string(c), nthr, lmax; kwargs...)
         end
     end
     read_time  = ramses_cost.time

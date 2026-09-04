@@ -170,8 +170,12 @@ function benchmark_report(path::AbstractString, output::Int;
     if want(:conversion) && !too_big
         println("\n", "#"^78, "\n# Conversion break-even\n", "#"^78)
         mkpath(merapath)
+        # lmax must reach this stage too. Without it the conversion read the whole box
+        # while the sweep and the reading stage were capped, so the report compared two
+        # different amounts of data under one heading.
         conversion = benchmark_conversion(string(path), output; merapath=merapath,
-                                          components=components, runs=runs, max_threads=workthr)
+                                          components=components, runs=runs,
+                                          max_threads=workthr, lmax=lmax)
     end
 
     reportfile = joinpath(dest, "MERA_BENCHMARK.txt")

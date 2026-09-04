@@ -307,3 +307,29 @@ end
         @test rep2.work_threads == 1
     end
 end
+
+# ============================================================================
+# lmax must reach every stage, or the report compares different amounts of data
+# ============================================================================
+@testset "lmax reaches the conversion stage" begin
+    # benchmark_conversion silently read the whole box while the sweep and the reading
+    # stage honoured lmax, so one report held two different workloads under one heading.
+    @test :lmax in Base.kwarg_decl(first(methods(benchmark_conversion)))
+
+    simpath = joinpath(get(ENV, "MERA_TEST_DATA", ""), "RAMSES-PUBLIC", "sedov3d_amr")
+    if isdir(simpath)
+        out = mktempdir()
+        capped = benchmark_conversion(simpath, 7; lmax=5, runs=1, verbose=false,
+                                      merapath=joinpath(out, "a"))
+        whole  = benchmark_conversion(simpath, 7; runs=1, verbose=false,
+                                      merapath=joinpath(out, "b"))
+        # lmax=5 is used rather than 6: this fixture has no cells above level 6, so
+        # capping at 6 is a no-op and would pass whether or not lmax reached the reader
+        @test capped.size_mera < whole.size_mera
+
+        # and it must survive the trip through benchmark_report
+        rep = benchmark_report(simpath, 7; stages=[:conversion], lmax=5,
+                               merapath=joinpath(out, "c"), outdir=out)
+        @test rep.conversion.size_mera < whole.size_mera
+    end
+end
