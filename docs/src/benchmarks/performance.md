@@ -110,24 +110,47 @@ is where the physics is, so an analysis of a galaxy needs the levels that resolv
 Reading at a reduced `lmax` is for a quick look, or for regions that are genuinely coarse
 anyway, the low-density gas outside the galaxy in the run measured here.
 
-**RAMSES can read part of a box; a MERA file cannot.** This is the important asymmetry.
-RAMSES output is decomposed along a Hilbert curve, so asking `gethydro` for a subregion
-opens only the CPU files whose domains intersect it and never touches the rest. A MERA
-file holds one table: [`loaddata`](@ref) accepts `xrange` and friends, but it loads
-everything stored and then cuts the subregion in memory, and it has no `lmax` option at
-all.
+**RAMSES can read part of a box; a MERA file is read whole.** RAMSES output is
+decomposed along a Hilbert curve, so asking `gethydro` for a subregion opens only the CPU
+files whose domains intersect it and never touches the rest. A MERA file holds one table:
+[`loaddata`](@ref) accepts `xrange` and friends, but it reads everything stored and then
+cuts in memory, and it has no `lmax` option.
+
+That sounds like a limitation, and it stops being one as soon as you stop thinking of a
+MERA file as a copy of the snapshot. **Make the file be the selection.** Use the RAMSES
+partial read once, for exactly the data you keep coming back to, and save that:
+
+```julia
+# read once, cheaply: only the CPU files intersecting this region are opened
+gas = gethydro(getinfo(250, "/path/to/sim"),
+               xrange=[-10, 10], yrange=[-10, 10], zrange=[-2, 2],
+               center=[:bc], range_unit=:kpc, lmax=11)
+
+savedata(gas, "/scratch/merafiles", :write)      # a MERA file of just that selection
+
+# from now on, every pass over that data is the fast path
+gas = loaddata(250, "/scratch/merafiles", :hydro)
+```
+
+The two properties now work together rather than against each other: the partial read
+keeps the one-off cost down, and the MERA file is small because it contains nothing you
+did not ask for. "Loaded whole" is exactly what you want when the whole file is your
+region of interest.
+
+Nothing stops you keeping several of them, one per region, resolution or component, and
+they are cheap to hold: the selection above is a fraction of the full-box file.
 
 So the decision is about your access pattern, not about which format is faster:
 
 | how you read | what to do |
 |---|---|
 | the whole box, or most of it, more than once | **convert.** This is what the numbers above measure |
-| the same subregion many times | **convert that subregion**, with the selection applied at `savedata` time |
+| the same subregion many times | **save that subregion as its own MERA file**, as above |
 | scattered small subregions of a large box, each once | RAMSES partial reads are competitive: they skip most files entirely |
 | one pass over a snapshot you will not revisit | do not convert; you would pay the write for nothing |
 
-Converting a subregion once and re-reading it is the case where both effects work
-together, and it is the one worth setting up if your analysis is iterative.
+The middle two rows are where most iterative analysis actually lives, and they are the
+ones worth setting up deliberately.
 
 If you read the same data more than once, convert it.
 
@@ -145,10 +168,11 @@ If you read the same data more than once, convert it.
 - Peak RSS and Julia live-heap deltas measure different things. RSS covers the whole
   process including the loaded dataset; the live-heap delta covers only what the
   operation itself adds. They are reported separately and never mixed.
-- A MERA file is loaded whole. `loaddata` takes a spatial range, but it reads the stored
+- A MERA file is read whole. `loaddata` takes a spatial range, but it reads the stored
   table and then cuts, so a small subregion of a large MERA file costs what the whole
-  file costs. RAMSES reading has the opposite property. Partial loading from MERA files
-  is a genuine gap, not a tuning matter.
+  file costs. The practical answer is to save the selection as its own file rather than
+  to carve one out of a full-box file; reading part of a large MERA file directly is a
+  real gap.
 
 ## Next
 
