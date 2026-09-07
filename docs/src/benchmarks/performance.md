@@ -98,7 +98,38 @@ those opens is a round trip to a metadata server shared with every other user on
 machine. That is the part a laptop's local SSD makes look *cheap*. Treat the ratio above
 as a floor.
 
-If you touch a snapshot more than once, convert it.
+### When converting pays, and when it does not
+
+The measurement above is deliberately the **worst case for the MERA format's advantage
+to be judged against**: the whole box, every level, which is the most expensive thing you
+can ask RAMSES for. It is a ceiling on cost, not a typical workload, and whether it
+describes yours depends on how you read.
+
+**Full resolution is the normal case for a result you intend to publish.** The refinement
+is where the physics is, so an analysis of a galaxy needs the levels that resolve it.
+Reading at a reduced `lmax` is for a quick look, or for regions that are genuinely coarse
+anyway, the low-density gas outside the galaxy in the run measured here.
+
+**RAMSES can read part of a box; a MERA file cannot.** This is the important asymmetry.
+RAMSES output is decomposed along a Hilbert curve, so asking `gethydro` for a subregion
+opens only the CPU files whose domains intersect it and never touches the rest. A MERA
+file holds one table: [`loaddata`](@ref) accepts `xrange` and friends, but it loads
+everything stored and then cuts the subregion in memory, and it has no `lmax` option at
+all.
+
+So the decision is about your access pattern, not about which format is faster:
+
+| how you read | what to do |
+|---|---|
+| the whole box, or most of it, more than once | **convert.** This is what the numbers above measure |
+| the same subregion many times | **convert that subregion**, with the selection applied at `savedata` time |
+| scattered small subregions of a large box, each once | RAMSES partial reads are competitive: they skip most files entirely |
+| one pass over a snapshot you will not revisit | do not convert; you would pay the write for nothing |
+
+Converting a subregion once and re-reading it is the case where both effects work
+together, and it is the one worth setting up if your analysis is iterative.
+
+If you read the same data more than once, convert it.
 
 ## Honest limits
 
@@ -114,8 +145,10 @@ If you touch a snapshot more than once, convert it.
 - Peak RSS and Julia live-heap deltas measure different things. RSS covers the whole
   process including the loaded dataset; the live-heap delta covers only what the
   operation itself adds. They are reported separately and never mixed.
-- The conversion cost of `savedata` itself has not been measured, so "convert once" has
-  no published break-even yet.
+- A MERA file is loaded whole. `loaddata` takes a spatial range, but it reads the stored
+  table and then cuts, so a small subregion of a large MERA file costs what the whole
+  file costs. RAMSES reading has the opposite property. Partial loading from MERA files
+  is a genuine gap, not a tuning matter.
 
 ## Next
 
