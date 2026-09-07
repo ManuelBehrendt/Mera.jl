@@ -53,8 +53,9 @@ the format advantage is largest.
 # Keywords
 - `merapath`: where to write the MERA file in step 4. Give it a real filesystem, not
   a small `/tmp`.
-- `components`: which components to convert. Defaults to `[:hydro]` because step 4
-  holds everything it converts in memory at once.
+- `components`: which components to convert. Defaults to every component the snapshot
+  has, so the comparison covers the whole dataset. Pass `[:hydro]` on a snapshot too
+  large to hold all components in memory at once.
 - `lmax`: cap the refinement level when reading. The honest way to benchmark a box
   too large to read whole.
 - `runs`: repetitions per timed measurement.
@@ -99,7 +100,7 @@ benchmark_report("/data/sim/MilkyWay", 250; lmax=11, merapath="/data/merafiles")
 """
 function benchmark_report(path::AbstractString, output::Int;
                           merapath::AbstractString=joinpath(homedir(), "merafiles"),
-                          components=[:hydro],
+                          components=nothing,
                           lmax=missing,
                           runs::Int=3,
                           nfiles::Int=64,
@@ -300,9 +301,11 @@ function _write_report(io, path, output, info, files, bytes, fs,
         @printf(io, "  MERA re-read warm  : %8s   (%.1fx faster)\n",
                 _fmt_secs(c.warm_read), c.warm_read > 0 ? c.read_time/c.warm_read : NaN)
         if isfinite(c.size_mera) && c.size_ramses > 0
-            @printf(io, "  size on disk       : %s -> %s  (%.0f%% smaller)\n",
+            @printf(io, "  size on disk       : %s -> %s%s\n",
                     _fmt_bytes(c.size_ramses), _fmt_bytes(c.size_mera),
-                    100*(1 - c.size_mera/c.size_ramses))
+                    ismissing(lmax) ? @sprintf("  (%.0f%% smaller)",
+                                               100*(1 - c.size_mera/c.size_ramses)) :
+                                      "   (levels up to $lmax only, not comparable)")
         end
         isfinite(c.breakeven) && @printf(io, "  break-even         : %.1f re-reads\n", c.breakeven)
         println(io, "  memory to load the same data:")
@@ -313,6 +316,13 @@ function _write_report(io, path, output, info, files, bytes, fs,
         println(io)
         @printf(io, "    GC RAMSES / MERA : %s / %s\n",
                 _fmt_secs(c.ramses_gctime), _fmt_secs(c.mera_gctime))
+        if isfinite(c.ramses_peak_rss) && isfinite(c.mera_peak_rss)
+            @printf(io, "    peak RSS RAMSES  : %10s\n", _fmt_bytes(c.ramses_peak_rss))
+            @printf(io, "    peak RSS MERA    : %10s", _fmt_bytes(c.mera_peak_rss))
+            c.mera_peak_rss > 0 && @printf(io, "   (%.1fx lower)",
+                                           c.ramses_peak_rss / c.mera_peak_rss)
+            println(io)
+        end
     end
 
     if !isempty(storage_split)

@@ -15,6 +15,25 @@
 #               differ: RAMSES parsing needs per-file buffers for every one of the
 #               (often thousands of) Fortran files, the MERA path deserialises one table.
 #   gctime    - garbage collection the read provoked, which is the cost of that churn.
+# Resident set size right now, in bytes. Sys.maxrss() is a high-water mark that never
+# falls, so it cannot compare two operations inside one process: the second always
+# inherits the first one's peak. Current RSS does fall after a collection, so sampling
+# it during each read gives peaks that can honestly be put side by side.
+# Linux exposes it in /proc; elsewhere this returns NaN and the peak is simply not shown.
+function _current_rss()
+    @static if Sys.islinux()
+        try
+            fields = split(read("/proc/self/statm", String))
+            return parse(Float64, fields[2]) * Float64(Sys.PAGESIZE)
+        catch
+            return NaN
+        end
+    else
+        return NaN
+    end
+end
+
+# Run `f`, sampling RSS while it works, and report time, allocation, GC and peak memory.
 function _read_cost(f)
     GC.gc()
     live0  = Base.gc_live_bytes()
@@ -23,14 +42,31 @@ function _read_cost(f)
     # read that triggers GC reports near zero.
     alloc0 = Base.gc_bytes()
     gc0    = Base.gc_num().total_time
-    t      = @elapsed f()
+    rss0   = _current_rss()
+
+    peak    = Threads.Atomic{Float64}(isnan(rss0) ? 0.0 : rss0)
+    sampling = Threads.Atomic{Bool}(true)
+    sampler = isnan(rss0) ? nothing : Threads.@spawn begin
+        while sampling[]
+            r = _current_rss()
+            isnan(r) || (peak[] = max(peak[], r))
+            sleep(0.05)
+        end
+    end
+
+    t = @elapsed f()
+
+    sampling[] = false
+    sampler === nothing || wait(sampler)
     gc1    = Base.gc_num().total_time
     alloc1 = Base.gc_bytes()
     live1  = Base.gc_live_bytes()
     return (time=t,
             retained  = Float64(live1 - live0),
             allocated = Float64(alloc1 - alloc0),
-            gctime    = (gc1 - gc0) / 1e9)
+            gctime    = (gc1 - gc0) / 1e9,
+            peak_rss  = isnan(rss0) ? NaN : peak[],
+            rss_delta = isnan(rss0) ? NaN : peak[] - rss0)
 end
 
 _fmt_bytes(b) = !isfinite(b) ? "n/a" :
@@ -197,7 +233,23 @@ function benchmark_conversion(path::AbstractString, output::Int;
     first_read = first(back)
     warm_read  = length(back) > 1 ? minimum(back[2:end]) : first_read
 
-    size_ramses = _dirsize(joinpath(string(path), "output_$(lpad(output,5,'0'))"))
+    # Compare like with like. The whole snapshot directory is the wrong denominator:
+    # converting hydro means you needed the hydro files AND the amr files that describe
+    # the grid, but not gravity, particles, sinks or RT. Charging those to the RAMSES
+    # side inflates the saving.
+    size_ramses = try
+        so = storageoverview(info, verbose=false)
+        needed = Symbol[:amr]                       # every field component needs the grid
+        for c in comps
+            c === :hydro     && push!(needed, :hydro)
+            c === :gravity   && push!(needed, :gravity)
+            c === :particles && push!(needed, :particle)
+        end
+        v = sum(Float64(get(so, k, 0.0)) for k in unique(needed))
+        v > 0 ? v : _dirsize(joinpath(string(path), "output_$(lpad(output,5,'0'))"))
+    catch
+        _dirsize(joinpath(string(path), "output_$(lpad(output,5,'0'))"))
+    end
     mfile = joinpath(merapath, "output_$(lpad(output,5,'0')).jld2")
     size_mera = isfile(mfile) ? Float64(filesize(mfile)) : NaN
 
@@ -213,9 +265,14 @@ function benchmark_conversion(path::AbstractString, output::Int;
         @printf("  MERA re-read (warm)  : %10s   (%.1fx faster)\n",
                 _fmt_secs(warm_read), warm_read > 0 ? read_time / warm_read : NaN)
         if isfinite(size_mera) && size_ramses > 0
-            @printf("  size on disk         : %10s -> %s  (%.0f%% smaller)\n",
+            @printf("  size on disk         : %10s -> %s%s\n",
                     _fmt_bytes(size_ramses), _fmt_bytes(size_mera),
-                    100 * (1 - size_mera/size_ramses))
+                    ismissing(lmax) ? @sprintf("  (%.0f%% smaller)",
+                                               100 * (1 - size_mera/size_ramses)) : "")
+            if !ismissing(lmax)
+                println("    (no percentage: the RAMSES files hold every level, the MERA file")
+                println("     only the levels up to lmax=$lmax, so the two are not comparable)")
+            end
         end
         println("-"^64)
         println("  Memory to get the same data into RAM:")
@@ -227,6 +284,13 @@ function benchmark_conversion(path::AbstractString, output::Int;
         println()
         @printf("    GC time, RAMSES    : %10s\n", _fmt_secs(ramses_cost.gctime))
         @printf("    GC time, MERA      : %10s\n", _fmt_secs(mera_cost.gctime))
+        if isfinite(ramses_cost.peak_rss) && isfinite(mera_cost.peak_rss)
+            @printf("    peak RSS, RAMSES   : %10s\n", _fmt_bytes(ramses_cost.peak_rss))
+            @printf("    peak RSS, MERA     : %10s", _fmt_bytes(mera_cost.peak_rss))
+            mera_cost.peak_rss > 0 && @printf("   (%.1fx lower)",
+                                              ramses_cost.peak_rss / mera_cost.peak_rss)
+            println()
+        end
         if ramses_cost.allocated > 0
             @printf("    allocated per byte on disk, RAMSES: %.1fx\n",
                     ramses_cost.allocated / max(size_ramses, 1))
@@ -248,6 +312,7 @@ function benchmark_conversion(path::AbstractString, output::Int;
     return (read_time=read_time, write_time=write_time,
             ramses_allocated=ramses_cost.allocated, mera_allocated=mera_cost.allocated,
             ramses_gctime=ramses_cost.gctime,       mera_gctime=mera_cost.gctime,
+            ramses_peak_rss=ramses_cost.peak_rss,   mera_peak_rss=mera_cost.peak_rss,
             ramses_retained=ramses_cost.retained,   mera_retained=mera_cost.retained,
             ramses_rss=ramses_rss,
             convert_total=read_time + write_time,
