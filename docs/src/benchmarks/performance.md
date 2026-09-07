@@ -8,8 +8,12 @@ To measure your own machine instead, go to [Run Your Own Benchmarks](run_your_ow
 
 !!! note "Where these numbers come from"
     Intel Xeon Gold 6534, 32 threads, 1511 GB RAM, btrfs, Julia 1.12.7, 24 compute and
-    24 GC threads. Dataset `L13_SN5_CD_only` output 390: `ncpu = 5120`, 20489 files,
-    53.18 GB on disk, `levelmax = 13`. All three components converted.
+    24 GC threads.
+
+    The data is a production Milky-Way run from the AVALON simulation suite
+    (Behrendt et al., in preparation), output 390: `ncpu = 5120`, 20489 files, 53.18 GB on
+    disk, `levelmax = 13`, 5.9 pc finest cell. All three components converted. These are
+    real research data at full resolution, not a synthetic case chosen to look good.
 
     The raw reports are in the repository under
     [`benchmark_results/server_L13_output390`](https://github.com/ManuelBehrendt/Mera.jl/tree/master/benchmark_results/server_L13_output390),
@@ -87,6 +91,19 @@ way: RAMSES parsing needs buffers for every one of 20489 files, so it allocates 
 deliver a 53 GB snapshot and spends a minute collecting the result. That allocation, not
 the data, is what presses a read against a node's memory limit.
 
+### Threading helps reading, but only so far
+
+![Reading thread scaling](../assets/benchmarks/thread_scaling.png)
+
+Reading gains **1.61x from 1 to 16 threads** and then turns over: 24 threads is slower
+than 16. Fitting Amdahl's law to the rising part gives a parallel fraction of 0.41, so
+about **420 s of the 710 s single-thread read is irreducibly serial** and no thread count
+can beat 1.69x. Sixteen threads already reaches 95% of that ceiling.
+
+The efficiency panel is the same fact stated usefully: by 16 threads each thread is doing
+10% of the work a single thread does. The threads past the sweet spot are not buying
+speed, and on a shared node they are taking cores from other jobs.
+
 Where the RAMSES time goes:
 
 | component | time |
@@ -119,10 +136,13 @@ snapshot:
 | 12 | 299.8 s | 11.98 s | 25x | 6.83 GB |
 | 13 | 514.9 s | 22.69 s | **23x** | 12.73 GB |
 
-The mechanism is visible in the shape. **RAMSES read cost is dominated by parsing every
-one of the 20489 files whatever you asked for**, so it falls only slowly as `lmax` drops.
-The MERA path reads what you actually requested, so it falls fast. The ratio between them
-therefore grows as the request narrows.
+![Cost against refinement level](../assets/benchmarks/levels_overview.png)
+
+The mechanism is visible in the shape rather than in the numbers. **RAMSES read cost is
+dominated by parsing every one of the 20489 files whatever you asked for**, so its curve
+is nearly flat across eight levels. The MERA path reads only what was requested, so its
+curve falls by more than two orders of magnitude. The ratio between them is the gap
+between those two lines, which is why it grows as the request narrows.
 
 Which number applies to you depends on what you read. **Full resolution is the case a
 published result rests on**, and there the honest figure is 23x. A reduced `lmax` is a
