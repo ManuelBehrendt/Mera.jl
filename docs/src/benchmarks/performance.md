@@ -104,6 +104,38 @@ The efficiency panel is the same fact stated usefully: by 16 threads each thread
 10% of the work a single thread does. The threads past the sweet spot are not buying
 speed, and on a shared node they are taking cores from other jobs.
 
+**How much threading helps depends on how much you read**, and it is worth knowing which
+regime you are in:
+
+| `lmax` | 1 thread | best | speedup |
+|---:|---:|---:|---:|
+| 6 | 128.9 s | 23.2 s | **5.55x** |
+| 8 | 204.4 s | 53.2 s | 3.84x |
+| 10 | 297.3 s | 92.3 s | 3.22x |
+| 12 | 502.6 s | 240.4 s | 2.09x |
+| 13 | 709.6 s | 442.1 s | **1.61x** |
+
+#### Why it degrades: reading is allocation bound, not I/O bound
+
+Garbage collection is not the explanation. Its share of the read *falls* from 29% at
+level 6 to 12% at level 13, the opposite of what would be needed.
+
+The measurement that does explain it is this. Across all eight levels, a tenfold range of
+data volume, read time tracks bytes allocated almost exactly:
+
+- **1.30 GB/s sustained**, with the rate never leaving 1.21 to 1.36 GB/s
+- **R² = 0.9985** for read time against bytes allocated
+
+So a RAMSES read costs what it costs to allocate, and that rate does not improve when you
+add threads. At low `lmax` there is little to allocate and the per-file parsing work, which
+does parallelise, dominates, so threading pays. At full resolution the 665 GB of
+allocation dominates, and threads cannot make the allocator go faster.
+
+The practical consequence: at full resolution, **the way to read faster is to allocate
+less, not to add threads**. Reading a subregion or a capped `lmax` reduces allocation
+directly, which is why those reads are so much cheaper, and it is the same reason a MERA
+file is fast: it allocates a fourteenth of what parsing does.
+
 Where the RAMSES time goes:
 
 | component | time |
