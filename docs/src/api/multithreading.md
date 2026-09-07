@@ -63,6 +63,8 @@ reading_sweep
 run_merafile_benchmark
 benchmark_conversion
 benchmark_report
+benchmark_levels
+collect_levels
 BenchmarkReport
 benchmarkplot
 filesystem_info

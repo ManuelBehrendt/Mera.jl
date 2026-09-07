@@ -391,6 +391,8 @@ export
     run_merafile_benchmark,
     benchmark_conversion,
     benchmark_report,
+    benchmark_levels,
+    collect_levels,
     BenchmarkReport,
     benchmarkplot,
     filesystem_info,
@@ -530,6 +532,8 @@ include("benchmarks/RAMSES_reading/reading_sweep.jl")
 include("benchmarks/JLD2_reading/merafile_reading_stats.jl")
 include("benchmarks/Conversion/conversion_benchmark.jl")
 include("benchmarks/Report/benchmark_report.jl")
+include("benchmarks/Report/benchmark_levels.jl")
+include("benchmarks/Report/collect_levels.jl")
 include("benchmarks/Projections/projection_benchmarks.jl")
 include("benchmarks/Clumpfind/clumpfind_benchmarks.jl")
 

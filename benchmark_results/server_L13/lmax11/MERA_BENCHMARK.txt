@@ -1,0 +1,59 @@
+
+==============================================================================
+MERA BENCHMARK REPORT
+==============================================================================
+Date         : 2026-09-04
+Host         : op4pgn
+CPU          : INTEL(R) XEON(R) GOLD 6534 (32 threads)
+RAM          : 1511.41 GB
+Filesystem   : btrfs   mount /data1
+Julia        : 1.12.7, 24 compute + 24 GC threads
+Mera         : 1.8.0
+
+Dataset      : L13_SN5_CD_only output 250
+  ncpu       : 5120
+  levelmax   : 13   (read capped at lmax=11)
+  files      : 20489
+  on disk    : 54.17 GB
+
+Reading the RAMSES output (16 threads):
+  hydro      :   135.84 s +- 2.31 s
+  particles  :     2.50 s +- 1.20 s
+  gravity    :    52.39 s +- 7.97 s
+  TOTAL      :   190.73 s
+
+Conversion (hydro, 16 threads):
+  read from RAMSES   :   141.32 s
+  savedata write     :     5.18 s
+  one-off conversion :   146.50 s
+  MERA re-read warm  :   3.24 s   (43.6x faster)
+  size on disk       : 54.17 GB -> 2.07 GB  (96% smaller)
+  break-even         : 1.1 re-reads
+  memory to load the same data:
+    allocated RAMSES :  172.39 GB
+    allocated MERA   :    7.54 GB   (22.9x less churn)
+    GC RAMSES / MERA : 17.37 s / 82.2 ms
+
+Storage by component:
+  hydro        25.46 GB   47.0%
+  gravity      17.82 GB   32.9%
+  amr          10.85 GB   20.0%
+  particle      39.5 MB    0.1%
+
+Reading thread sweep (:hydro):
+    1 threads :   370.73 s  1.00x
+    2 threads :    243.4 s  1.52x
+    4 threads :   184.31 s  2.01x
+    8 threads :   155.17 s  2.39x
+   16 threads :   137.16 s  2.70x
+   24 threads :   153.45 s  2.42x
+  fastest 16 threads, sweet spot 16 threads
+
+Storage, IOPS by thread count:
+    1 threads :     104362 IOPS
+    2 threads :     184575 IOPS
+    4 threads :     219512 IOPS
+    8 threads :     261620 IOPS
+   16 threads :     286997 IOPS
+   24 threads :     294247 IOPS
+==============================================================================
