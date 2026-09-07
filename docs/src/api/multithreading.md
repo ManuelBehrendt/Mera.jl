@@ -65,6 +65,7 @@ benchmark_conversion
 benchmark_report
 benchmark_levels
 collect_levels
+levelsplot
 BenchmarkReport
 benchmarkplot
 filesystem_info

@@ -253,6 +253,11 @@ function benchmark_conversion(path::AbstractString, output::Int;
     mfile = joinpath(merapath, "output_$(lpad(output,5,'0')).jld2")
     size_mera = isfile(mfile) ? Float64(filesize(mfile)) : NaN
 
+    # A cap only makes the two sides incomparable when it actually removes levels.
+    # lmax == levelmax is a no-op, and suppressing the percentage there hides a
+    # comparison that is perfectly fair.
+    capped = !ismissing(lmax) && lmax < info.levelmax
+
     # Converting costs (read + write) once. Each later re-read saves (read - warm).
     saving    = read_time - warm_read
     breakeven = saving > 0 ? (read_time + write_time) / saving : NaN
@@ -267,9 +272,9 @@ function benchmark_conversion(path::AbstractString, output::Int;
         if isfinite(size_mera) && size_ramses > 0
             @printf("  size on disk         : %10s -> %s%s\n",
                     _fmt_bytes(size_ramses), _fmt_bytes(size_mera),
-                    ismissing(lmax) ? @sprintf("  (%.0f%% smaller)",
-                                               100 * (1 - size_mera/size_ramses)) : "")
-            if !ismissing(lmax)
+                    capped ? "" : @sprintf("  (%.0f%% smaller)",
+                                            100 * (1 - size_mera/size_ramses)))
+            if capped
                 println("    (no percentage: the RAMSES files hold every level, the MERA file")
                 println("     only the levels up to lmax=$lmax, so the two are not comparable)")
             end

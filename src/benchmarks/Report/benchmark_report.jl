@@ -303,9 +303,9 @@ function _write_report(io, path, output, info, files, bytes, fs,
         if isfinite(c.size_mera) && c.size_ramses > 0
             @printf(io, "  size on disk       : %s -> %s%s\n",
                     _fmt_bytes(c.size_ramses), _fmt_bytes(c.size_mera),
-                    ismissing(lmax) ? @sprintf("  (%.0f%% smaller)",
-                                               100*(1 - c.size_mera/c.size_ramses)) :
-                                      "   (levels up to $lmax only, not comparable)")
+                    (ismissing(lmax) || lmax >= info.levelmax) ?
+                        @sprintf("  (%.0f%% smaller)", 100*(1 - c.size_mera/c.size_ramses)) :
+                        "   (levels up to $lmax only, not comparable)")
         end
         isfinite(c.breakeven) && @printf(io, "  break-even         : %.1f re-reads\n", c.breakeven)
         println(io, "  memory to load the same data:")

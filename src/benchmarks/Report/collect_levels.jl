@@ -86,3 +86,28 @@ function collect_levels(dir::AbstractString)
     println("\nWrote ", csv)
     return reports
 end
+
+
+# ── Plotting (provided by the Makie package extension MeraMakieExt) ───────────
+"""
+    levelsplot(reports; size=(1000, 700)) -> Makie.Figure
+
+Plot a whole [`collect_levels`](@ref) series against refinement level: read time for both
+paths, the speedup, memory allocated, and size on disk.
+
+One level is a point; the series is the argument. It shows why a single speedup number
+is misleading: RAMSES read cost is dominated by parsing every file whatever you ask for,
+while the MERA path scales with what you actually requested, so the ratio grows as the
+request narrows.
+
+Needs a Makie backend (`using CairoMakie`).
+
+```julia
+using Mera, CairoMakie
+rs = collect_levels("/scratch/levels")
+Makie.save("levels.png", levelsplot(rs))
+```
+"""
+levelsplot(reports::AbstractVector; kwargs...) = _plot_levels(reports; kwargs...)
+_plot_levels(reports; kwargs...) =
+    error("levelsplot needs a Makie backend, load one first: `using CairoMakie` (or GLMakie).")

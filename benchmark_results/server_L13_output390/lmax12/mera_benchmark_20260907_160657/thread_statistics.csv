@@ -1,0 +1,2 @@
+timestamp,compute_threads,gc_threads,hydro_mean,particles_mean,gravity_mean,total_mean,hydro_status,particles_status,gravity_status,total_status
+20260907_181209,16,24,245.68247469266257,3.332716623942057,52.96122908592224,301.97642040252686,success,success,success,success

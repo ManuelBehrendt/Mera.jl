@@ -7,25 +7,32 @@ judge it on numbers rather than adjectives.
 To measure your own machine instead, go to [Run Your Own Benchmarks](run_your_own.md).
 
 !!! note "Where these numbers come from"
-    Apple M2 Pro, 12 cores, 32 GB RAM, macOS 26, Julia 1.12.3, Mera `revamp/2026`,
-    external Thunderbolt SSD. Dataset `mw_L10` output 300: 28.3M cells, `ncpu = 640`,
-    so roughly 1,900 Fortran files per snapshot, 4.05 GB once in memory.
+    Intel Xeon Gold 6534, 32 threads, 1511 GB RAM, btrfs, Julia 1.12.7, 24 compute and
+    24 GC threads. Dataset `L13_SN5_CD_only` output 390: `ncpu = 5120`, 20489 files,
+    53.18 GB on disk, `levelmax = 13`. All three components converted.
 
-    One laptop, one simulation. **Ratios travel between machines, absolute times do
+    The raw reports are in the repository under
+    [`benchmark_results/server_L13_output390`](https://github.com/ManuelBehrendt/Mera.jl/tree/master/benchmark_results/server_L13_output390),
+    one directory per refinement level, so every figure quoted here can be checked
+    against the run that produced it.
+
+    One machine, one simulation. **Ratios travel between machines, absolute times do
     not.** Every number below is produced by a function you can run yourself.
 
-## Disk: a MERA file is 62% smaller
+## Disk: a MERA file is 76% smaller
 
 The most checkable claim first, because it needs no timing and does not depend on your
 hardware at all. One `du` reproduces it.
 
-| output_00300 | RAMSES | MERA `.jld2` | |
+| output 390, all components | RAMSES | MERA `.jld2` | |
 |---|---:|---:|---|
-| size on disk | 5.69 GB | 2.16 GB | **62% smaller, 2.6x** |
+| size on disk | 53.18 GB | 12.73 GB | **76% smaller, 4.2x** |
 
-LZ4 compressed, all three components on both sides.
+LZ4 compressed, hydro, gravity and particles on both sides, plus the AMR files the
+RAMSES side needs to describe its grid.
 
-*Measured with `du` on `mw_L10/output_00300` and its converted `output_00300.jld2`.*
+The snapshot splits as hydro 24.94 GB (47%), gravity 17.52 GB (33%), AMR 10.66 GB (20%)
+and particles 65 MB (0.1%), which is worth knowing before deciding what to convert.
 
 ## Projection: threads only pay when there is work per cell
 
@@ -57,46 +64,70 @@ proj = projection(gas, [:sd, :T, :vx, :vy])    # one pass over the data, threads
 `savedata` writes a MERA file holding the already-parsed table. Reading a RAMSES output
 re-parses every per-CPU Fortran file and rebuilds the AMR tree, every single time.
 
-Matched pairs, same snapshot, same three components, same 4.05 GB in memory:
+Same snapshot, same three components, same data in memory at the end:
 
-| reading hydro + gravity + particles | time |
+| getting hydro + gravity + particles into memory | time |
 |---|---:|
-| RAMSES output, 8 compute + 8 GC threads | 49.2 s |
-| MERA file, first read, cold file cache | 11.5 s |
-| MERA file, re-read warm | 1.15 to 1.39 s |
+| from the RAMSES output, 16 threads | 514.9 s |
+| from the MERA file, warm | 22.7 s |
 
-So about **4x faster cold** and **35 to 40x faster warm**. The MERA side is single
-threaded and the RAMSES side is not, so this is not a serial straw man: the comparison
-is task to task, the honest question being how long it takes to get the same data into
-memory.
+So about **23x faster**, and the conversion pays for itself after **1.1 re-reads**:
+writing the file cost 27.6 s on top of one read it had to do anyway.
 
-*RAMSES side: `run_reading_benchmark(300, path)`, 10 repetitions, 8 compute and 8 GC
-threads. MERA side: `run_merafile_benchmark(path, 300, 3)`, single threaded. The reading
-benchmark has since gained a warm-up run and now defaults to `runs=3`, so reproducing the
-figure above needs `runs=10` and will land slightly lower.*
+Memory is the larger effect, and the one that decides whether a read fits at all:
 
-Peak memory while reading was 13.0 GB for RAMSES against 8.0 GB for the MERA file,
-about 35% lower, because RAMSES reading needs per-file parse buffers. These peak-RSS
-figures come from an earlier single-threaded run, so treat them as the ratio rather than
-as paired with the times above.
+| | RAMSES | MERA file | |
+|---|---:|---:|---|
+| allocated getting there | 665.4 GB | 47.4 GB | **14x less churn** |
+| peak resident memory | 115.2 GB | 60.2 GB | **1.9x lower** |
+| garbage collection | 61.8 s | 1.6 s | |
+
+Both paths finish holding the same data. The difference is what they churn through on the
+way: RAMSES parsing needs buffers for every one of 20489 files, so it allocates 665 GB to
+deliver a 53 GB snapshot and spends a minute collecting the result. That allocation, not
+the data, is what presses a read against a node's memory limit.
 
 Where the RAMSES time goes:
 
 | component | time |
 |---|---:|
-| hydro | 43.3 s ± 1.4 s |
-| gravity | 4.6 s ± 2.6 s |
-| particles | 1.3 s ± 0.9 s |
-| **total** | **49.2 s** |
+| hydro | 448.0 s ± 7.0 s |
+| gravity | 80.5 s ± 23.6 s |
+| particles | 3.6 s ± 1.3 s |
+| **total** | **532.0 s** |
 
-Garbage collection is about 9% of the hydro read, which is why the reading guidance is
-as much about GC threads as compute threads.
+*`benchmark_report(path, 390; runs=3)` at `lmax=13`, 16 threads, the sweet spot its own
+sweep found. Gravity's spread is large because it is the component most exposed to other
+load on a shared node.*
 
 **This gap grows on a server, it does not shrink.** The cost Mera avoids is opening and
-parsing ~1,900 files. On a parallel filesystem such as Lustre or GPFS, every one of
-those opens is a round trip to a metadata server shared with every other user on the
-machine. That is the part a laptop's local SSD makes look *cheap*. Treat the ratio above
-as a floor.
+parsing 20489 files. On a parallel filesystem such as Lustre or GPFS, every one of those
+opens is a round trip to a metadata server shared with every other user on the machine.
+The measurement above is on local btrfs, so treat its ratio as a floor rather than a
+ceiling.
+
+### The speedup depends on how much you ask for
+
+One number would be misleading. Measured across every refinement level of the same
+snapshot:
+
+| `lmax` | RAMSES read | MERA re-read | speedup | MERA file |
+|---:|---:|---:|---:|---:|
+| 6 | 51.1 s | 0.09 s | **602x** | 74.7 MB |
+| 8 | 83.5 s | 1.87 s | 45x | 819 MB |
+| 10 | 141.0 s | 4.04 s | 35x | 2.19 GB |
+| 12 | 299.8 s | 11.98 s | 25x | 6.83 GB |
+| 13 | 514.9 s | 22.69 s | **23x** | 12.73 GB |
+
+The mechanism is visible in the shape. **RAMSES read cost is dominated by parsing every
+one of the 20489 files whatever you asked for**, so it falls only slowly as `lmax` drops.
+The MERA path reads what you actually requested, so it falls fast. The ratio between them
+therefore grows as the request narrows.
+
+Which number applies to you depends on what you read. **Full resolution is the case a
+published result rests on**, and there the honest figure is 23x. A reduced `lmax` is a
+preview, or a region that is genuinely coarse anyway, and the very large numbers there are
+real but describe that use.
 
 ### When converting pays, and when it does not
 

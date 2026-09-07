@@ -661,4 +661,48 @@ function Mera._plot_benchmark_report(r::Mera.BenchmarkReport; size=(1000, 760))
     return fig
 end
 
+# ── level series (Mera.levelsplot) ───────────────────────────────────────────────────────────
+function Mera._plot_levels(reports::AbstractVector; size=(1000, 700))
+    lv  = [r.lmax for r in reports]
+    fig = Makie.Figure(size=size)
+
+    ax1 = Makie.Axis(fig[1, 1], xlabel="lmax", ylabel="read time [s]", yscale=log10,
+                     title="Read time")
+    Makie.lines!(ax1, lv, [r.ramses for r in reports], color=:indianred)
+    Makie.scatter!(ax1, lv, [r.ramses for r in reports], color=:indianred, label="RAMSES")
+    Makie.lines!(ax1, lv, [r.mera for r in reports], color=:seagreen)
+    Makie.scatter!(ax1, lv, [r.mera for r in reports], color=:seagreen, label="MERA file")
+    Makie.axislegend(ax1, position=:lt, framevisible=false, labelsize=9)
+
+    ax2 = Makie.Axis(fig[1, 2], xlabel="lmax", ylabel="times faster", yscale=log10,
+                     title="Re-read speedup")
+    sp = [r.ramses / r.mera for r in reports]
+    Makie.lines!(ax2, lv, sp, color=:steelblue)
+    Makie.scatter!(ax2, lv, sp, color=:steelblue, markersize=10)
+    for (x, y) in zip(lv, sp)
+        Makie.text!(ax2, x, y, text=string(round(Int, y), "x"), fontsize=9,
+                    align=(:center, :bottom), offset=(0, 5))
+    end
+    # headroom for the label above the highest point, which the autoscale clips
+    Makie.ylims!(ax2, minimum(sp) * 0.8, maximum(sp) * 1.6)
+
+    ax3 = Makie.Axis(fig[2, 1], xlabel="lmax", ylabel="allocated [GB]", yscale=log10,
+                     title="Memory churned to load the same data")
+    Makie.lines!(ax3, lv, [r.alloc_r/1024^3 for r in reports], color=:indianred)
+    Makie.scatter!(ax3, lv, [r.alloc_r/1024^3 for r in reports], color=:indianred, label="RAMSES")
+    Makie.lines!(ax3, lv, [r.alloc_m/1024^3 for r in reports], color=:seagreen)
+    Makie.scatter!(ax3, lv, [r.alloc_m/1024^3 for r in reports], color=:seagreen, label="MERA file")
+    Makie.axislegend(ax3, position=:lt, framevisible=false, labelsize=9)
+
+    ax4 = Makie.Axis(fig[2, 2], xlabel="lmax", ylabel="MERA file [GB]",
+                     title="What the converted file costs on disk")
+    Makie.barplot!(ax4, lv, [r.size_mera/1024^3 for r in reports], color=:seagreen, width=0.6)
+
+    for ax in (ax1, ax2, ax3, ax4)
+        ax.xticks = (Float64.(lv), string.(Int.(lv)))
+    end
+    Makie.Label(fig[0, :], "Cost against refinement level", fontsize=15, font=:bold)
+    return fig
+end
+
 end # module
