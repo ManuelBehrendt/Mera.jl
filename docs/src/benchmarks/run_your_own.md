@@ -301,12 +301,15 @@ your storage rewards. Note that this is **not** the same as the thread count wor
 a read, which the [reading sweep](#The-break-even) settles separately and which turned out
 to be lower.
 
-!!! note "Throughput is measured but not tabulated here"
-    `run_benchmark` reports throughput alongside IOPS, and the sweep now warms every file
-    before measuring, which fixes an earlier version that compared cache states rather
-    than thread counts and produced a per-stream rate above what the link could carry.
-    The report writer records IOPS and open/close latency only, so there is no published
-    throughput table yet. The figures are in the returned `IOBenchmark` if you want them.
+The report now records throughput and open/close latency beside IOPS. The table above
+predates that, so it has no throughput column; a fresh run fills one in.
+
+!!! note "Reading the throughput column"
+    It is **per concurrent read**, not aggregate, and it carries a confidence interval
+    because the spread matters: a mean without one hides whether the storage was steady.
+    An earlier version of this sweep compared cache states rather than thread counts and
+    reported a per-stream rate above what the link could physically carry. Every file is
+    warmed before the sweep now, so the levels differ by concurrency alone.
 
 ## Knowing what is in a snapshot
 

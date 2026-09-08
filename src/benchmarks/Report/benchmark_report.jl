@@ -342,9 +342,27 @@ function _write_report(io, path, output, info, files, bytes, fs,
     end
 
     if storage !== nothing
-        println(io, "\nStorage, IOPS by thread count:")
+        # Throughput was measured all along and only IOPS was written down, so the
+        # published tables could never show it. Both are recorded now, with the spread,
+        # since a throughput mean without one is hard to trust.
+        println(io, "\nStorage by thread count:")
+        @printf(io, "  %8s %12s %14s\n", "threads", "IOPS", "MB/s per read")
         for n in sort(collect(keys(storage.iops.stats)))
-            @printf(io, "  %3d threads : %10.0f IOPS\n", n, storage.iops.stats[n][1])
+            thr = get(storage.throughput.stats, n, nothing)
+            if thr === nothing
+                @printf(io, "  %8d %12.0f %14s\n", n, storage.iops.stats[n][1], "n/a")
+            else
+                @printf(io, "  %8d %12.0f %9.1f ± %-4.1f\n",
+                        n, storage.iops.stats[n][1], thr[1], thr[3])
+            end
+        end
+        if haskey(storage.openclose, :stats)
+            ks = sort(collect(keys(storage.openclose.stats)))
+            # stats are kept in seconds; `factor` converts to the reported unit
+            !isempty(ks) && @printf(io, "  open/close at %d threads: %.1f %s\n",
+                                    last(ks),
+                                    storage.openclose.stats[last(ks)][1] * storage.openclose.factor,
+                                    storage.openclose.unit)
         end
     end
     println(io, "="^78)
