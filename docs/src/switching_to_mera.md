@@ -72,11 +72,23 @@ something it does not provide.
 
 Two conventions worth internalising on day one:
 
-!!! warning "Ranges and radii in `range_unit=:standard` are box fractions"
-    The default `:standard` unit means *fractions of the box* (0…1), not physical lengths.
-    `xrange=[0.4, 0.6]` is the central 20% of the box; a sphere `radius=0.2` spans 20% of
-    `boxlen`. Pass `range_unit=:kpc` (or `:pc`, `:Mpc`, …) with `center=[…]` to work in
-    physical units, the examples below do.
+!!! tip "Work in whatever length unit suits the problem"
+    Every function that takes a range or a radius also takes `range_unit`, and any length
+    Mera knows is accepted: `:Mpc`, `:kpc`, `:pc`, `:mpc`, `:ly`, `:Au`, `:km`, `:m`, `:cm`,
+    `:mm`, `:μm`. Pair it with `center=` and you can describe a region the way you think
+    about it:
+
+    ```julia
+    gethydro(info; xrange=[-10, 10], yrange=[-10, 10], zrange=[-2, 2],
+             center=[:bc], range_unit=:kpc)          # a 20 x 20 x 4 kpc slab, box-centred
+    subregion(gas, :sphere; radius=500, center=[:bc], range_unit=:pc)
+    ```
+
+    The one thing to know is the **default**: `range_unit=:standard` means *fractions of the
+    box* (0…1), not physical lengths. So `xrange=[0.4, 0.6]` is the central 20% of the box,
+    and a sphere of `radius=0.2` spans 20% of `boxlen`. Both forms describe the same region,
+    and `center=[:bc]` centres on the box in either. Pick whichever reads better; the
+    examples below use physical units.
 
 - **Loading is eager, selection is cheap.** Load once (possibly windowed), then slice, filter,
   and project the in-memory table as often as you like, each step returns a normal Mera object.
