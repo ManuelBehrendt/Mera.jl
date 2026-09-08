@@ -40,6 +40,36 @@ control RAM at load time (level cap, spatial window), not through deferred evalu
 | unit handling | a `scale` factor table: multiply, or pass the unit symbol (`:g_cm3`, `:km_s`, `:Msol_pc2`) |
 | saving processed data | `savedata`/`loaddata`, LZ4-compressed JLD2, the fast Mera-native round-trip. Julia-side only: it stores the Mera object, so h5py cannot reconstruct the table, use `export_vtk`, write columns out yourself, or call Mera from Python via JuliaCall |
 
+### Why a table of columns, and how to get plain arrays back
+
+The table is not a wrapper you have to work through. Underneath it is a **struct of
+arrays**: each quantity is its own contiguous `Vector`, and the table is sorted on
+`(:level, :cx, :cy, :cz)`, the AMR level and integer cell coordinates.
+
+Three things follow, and they are the reason for the design:
+
+- **You only pay for the columns you touch.** Density lives in one contiguous block, so a
+  pass over `:rho` reads only density bytes; the velocities and pressure never enter cache.
+  On the hydro table above, one column is about a ninth of the row data. An array of structs
+  would drag every field of every cell through memory to do the same work.
+- **Cells that are near each other in the grid are near each other in memory**, because the
+  table is sorted by level and cell index. That locality is what makes spatial selection and
+  projection fast, rather than any indexing trick layered on top.
+- **The arrays are always there, and taking them costs nothing.** `getvar` hands you a plain
+  `Vector{Float64}`, and `select(gas.data, :rho)` returns the stored column itself, not a
+  copy or a view type.
+
+```julia
+rho = getvar(gas, :rho, :g_cm3)        # Vector{Float64}, units applied
+raw = select(gas.data, :rho)           # the stored column itself, no copy
+rho isa Vector{Float64}                # true
+```
+
+So nothing is locked away. Hand those vectors to `Statistics`, to a fitting routine, to
+BLAS, to your own loop, to any plotting package. Mera's own functions are ordinary
+functions over these columns, and you can write the same ones yourself when you need
+something it does not provide.
+
 Two conventions worth internalising on day one:
 
 !!! warning "Ranges and radii in `range_unit=:standard` are box fractions"
@@ -188,10 +218,15 @@ round-trip ok: true  (4060.3 MB on disk)
 
 ## Differences to expect, honestly
 
-- **First call is slower, loops are fast.** Julia compiles on first use (see
-  [Julia for Simulation Analysis](julia_for_simulation_analysis.md)); after that, custom
-  per-cell analysis loops run at compiled speed, no need to push work into vectorised
-  library calls for performance.
+- **Loops are fast, and you can write them.** Custom per-cell analysis runs at compiled
+  speed, so there is no need to push work into vectorised library calls to make it quick.
+  Julia compiles on first use, but the cost is a **one-off few seconds per session**, not
+  per call: measured on a small test snapshot, the first `gethydro` took about 6 s more
+  than the second, and every later call was unaffected. Against a read of minutes, or a
+  session of any length, that is noise. Mera also precompiles its hot numerical kernels
+  (the off-axis deposit, binning and weighted reductions) at install time, so much of it is
+  already paid before you start. See
+  [Julia for Simulation Analysis](julia_for_simulation_analysis.md).
 - **Units are explicit, not attached.** Quantities are plain arrays; units enter as scale
   factors or unit symbols. This keeps everything zero-overhead but means *you* choose the unit
   at each call.
