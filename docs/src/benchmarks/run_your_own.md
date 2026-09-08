@@ -38,10 +38,21 @@ using Mera, CairoMakie          # add CairoMakie once: ] add CairoMakie
 benchmark_report(path, 250; stages=[:storage, :sweep, :conversion])
 ```
 
-The figure has one panel per stage that ran: the reading sweep with the fastest and
-sweet-spot thread counts marked, read time, memory churned, size on disk, and storage
-IOPS against thread count. `CairoMakie` works headless, so it is fine over SSH with no
-display.
+![Example benchmark report](../assets/benchmarks/example_report.png)
+
+That figure is a real run of the snippet above on `sedov3d_grav_part`, one of the public
+test simulations, so you can reproduce it in a couple of minutes before pointing anything
+at a large snapshot. It has one panel per stage: the thread sweep against perfect scaling
+with the fastest and sweet-spot counts marked, work per thread, read time with bars across
+the repeats, then read time, memory churned and size on disk against the MERA file, and
+storage IOPS.
+
+Read it as a demonstration of the output, not as a result: at 10.5 MB and 8 CPU files this
+fixture is far too small to say anything about performance. The
+[Performance](performance.md) page has the same figure shape on a 53 GB production
+snapshot.
+
+`CairoMakie` works headless, so it is fine over SSH with no display.
 
 Without a backend nothing fails, the run just says no figure was written and you can
 call `benchmarkplot(result)` later.

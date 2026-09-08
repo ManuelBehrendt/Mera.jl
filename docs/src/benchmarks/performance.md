@@ -20,8 +20,14 @@ To measure your own machine instead, go to [Run Your Own Benchmarks](run_your_ow
     one directory per refinement level, so every figure quoted here can be checked
     against the run that produced it.
 
-    One machine, one simulation. **Ratios travel between machines, absolute times do
-    not.** Every number below is produced by a function you can run yourself.
+    **This is one simulation on one machine.** A deeply refined run with 5120 CPU files
+    on local storage. Its AMR structure, its file count and its filesystem all shape the
+    numbers below, and a run built differently will not reproduce them. Ratios travel
+    between machines better than absolute times do, but neither travels unconditionally,
+    so see [Where this may not hold](#Where-this-may-not-hold) before carrying anything
+    here to your own setup.
+
+    Every number below is produced by a function you can run on your own data.
 
 ## Disk: a MERA file is 76% smaller
 
