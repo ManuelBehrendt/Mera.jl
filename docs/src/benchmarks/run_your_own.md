@@ -100,9 +100,17 @@ threads can pass. The figure draws perfect scaling as a diagonal and shades the 
 the measurement, so how much of each added thread is being converted into speed is
 visible rather than inferred.
 
-The sweet spot, not the fastest, is the number to use: it is the smallest thread count
-within 5% of the best, so the remaining threads buy almost nothing and on a shared node
-cost other jobs their cores.
+It reports three numbers, and the last is usually the one to act on:
+
+- **fastest**, the lowest time measured
+- **sweet spot**, the smallest count within 5% of it
+- **economical**, the smallest count within 10%
+
+On a flat curve the 5% band is nearly arbitrary, so the sweep also prints the trade in
+plain terms, for instance *"going from 4 to 16 threads costs 4x the cores for 9% more
+speed"*. Take the economical point when the machine is shared or you have more snapshots
+to read: those cores do more good elsewhere, which the
+[Performance](performance.md) page measures.
 
 When the sweep runs inside `benchmark_report`, it runs **first** and the reading and
 conversion stages then use the sweet spot it found, not the full thread budget. That

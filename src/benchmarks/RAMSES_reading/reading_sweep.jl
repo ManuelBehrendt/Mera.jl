@@ -42,8 +42,12 @@ yourself on a large snapshot: pass `lmax`, a subregion through `kwargs`, or fewe
 
 # Returns
 `(threads=..., times=..., speedup=..., best=..., sweet_spot=...)`. `best` is the fastest
-thread count; `sweet_spot` is the smallest thread count within 5% of it, which is the one
-worth using because the rest buys nothing.
+thread count, `sweet_spot` the smallest within 5% of it, and `economical` the smallest
+within 10%.
+
+Prefer `economical` when the machine is shared or you have other snapshots waiting. A flat
+curve makes the 5% band arbitrary: on one measured run 8 threads missed it by half a
+second, so `sweet_spot` was 16, which costs twice the cores for five percent more speed.
 
 ```julia
 reading_sweep(250, "/data/sim"; lmax=11)
@@ -143,6 +147,11 @@ function reading_sweep(output::Int, path::AbstractString;
     # The smallest thread count within 5% of the best: past it you are spending cores
     # for nothing, which on a shared machine is worse than nothing.
     isweet  = findfirst(t -> t <= times[ibest] * 1.05, times)
+    # A 5% band is a knife edge when the curve is flat: on one measured run 8 threads
+    # missed it by half a second and the rule picked 16, which costs twice the cores for
+    # five percent. The 10% point is reported beside it so the trade is visible rather
+    # than decided by a threshold.
+    iecon   = findfirst(t -> t <= times[ibest] * 1.10, times)
 
     if verbose
         println("\n", "-"^66)
@@ -162,14 +171,23 @@ function reading_sweep(output::Int, path::AbstractString;
             @printf("  Ceiling    : %.2fx however many threads you add; %d threads reaches %.0f%% of it\n",
                     mxspeed, ladder[ibest], 100 * speedup[ibest] / mxspeed)
         end
-        if ladder[isweet] < ladder[ibest]
-            println("  Use the sweet spot: the extra threads buy under 5% and cost cores")
-            println("  other jobs could use.")
+        if ladder[iecon] < ladder[isweet]
+            @printf("  Economical : %d threads, within 10%% of the best for %.0f%% of the cores\n",
+                    ladder[iecon], 100 * ladder[iecon] / ladder[ibest])
+        end
+        # State the trade in cores rather than leaving it to be inferred from the table.
+        if ladder[iecon] < ladder[ibest]
+            @printf("  Going from %d to %d threads costs %.0fx the cores for %.0f%% more speed.\n",
+                    ladder[iecon], ladder[ibest], ladder[ibest] / ladder[iecon],
+                    100 * (times[iecon] / times[ibest] - 1))
+            println("  On a shared machine, or when you have other snapshots to read, those")
+            println("  cores are usually worth more elsewhere.")
         end
         println("="^66, "\n")
     end
 
     return (threads=ladder, times=times, all_runs=all_runs, spread=spread, runs=runs,
+            economical=ladder[iecon],
             speedup=speedup, efficiency=speedup ./ ladder,
             parallel_fraction=pfrac, max_speedup=mxspeed,
             serial_time=isfinite(pfrac) ? base * (1 - pfrac) : NaN,

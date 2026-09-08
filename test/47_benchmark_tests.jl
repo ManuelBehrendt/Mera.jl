@@ -343,3 +343,20 @@ end
         @test rep.conversion.size_mera < whole.size_mera
     end
 end
+
+# ============================================================================
+# the economical point: a flat curve makes the 5% band arbitrary
+# ============================================================================
+@testset "economical thread count" begin
+    simpath = joinpath(get(ENV, "MERA_TEST_DATA", ""), "RAMSES-PUBLIC", "sedov3d_amr")
+    if isdir(simpath) && Threads.nthreads() >= 4
+        r = reading_sweep(7, simpath; threads=[1, 2, 4], runs=1, verbose=false)
+        @test haskey(r, :economical)
+        # a 10% band cannot be tighter than a 5% one, so it can never cost more cores
+        @test r.economical <= r.sweet_spot <= r.best
+        # and every reported point must be one that was actually measured
+        for k in (r.best, r.sweet_spot, r.economical)
+            @test k in r.threads
+        end
+    end
+end

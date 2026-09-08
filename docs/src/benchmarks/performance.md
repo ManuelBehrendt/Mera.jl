@@ -107,8 +107,28 @@ about **420 s of the 710 s single-thread read is irreducibly serial** and no thr
 can beat 1.69x. Sixteen threads already reaches 95% of that ceiling.
 
 The efficiency panel is the same fact stated usefully: by 16 threads each thread is doing
-10% of the work a single thread does. The threads past the sweet spot are not buying
-speed, and on a shared node they are taking cores from other jobs.
+10% of the work a single thread does.
+
+#### 16 threads is the fastest, and probably not the one to use
+
+The curve is flat enough that the fastest point is poor value:
+
+| threads | time | share of best | cores |
+|---:|---:|---:|---:|
+| 4 | 484.0 s | 91% | 4 |
+| 8 | 464.7 s | 95% | 8 |
+| 16 | **442.1 s** | 100% | 16 |
+
+Going from **4 to 16 threads costs four times the cores for 9% more speed**, and 8 to 16
+costs twice the cores for 5%. Four threads already reach 91% of the best time.
+
+Mera reports both points for this reason. `sweet_spot` is the smallest count within 5% of
+the fastest, `economical` the smallest within 10%. On a flat curve the 5% band is close to
+arbitrary: here 8 threads missed it by **half a second**, which is what pushed the answer
+to 16.
+
+Prefer the economical point whenever the machine is shared or other snapshots are waiting,
+because the next section shows those spare cores are worth considerably more elsewhere.
 
 **How much threading helps depends on how much you read**, and it is worth knowing which
 regime you are in:
