@@ -325,6 +325,23 @@ Julia collects garbage while your code runs, and collection pauses every thread.
 allocation a threading problem: the more you allocate, the less threading buys you. You do
 not need to know how the collector works, only how to allocate less.
 
+For Mera this is not a general nicety. **Reading a snapshot is allocation bound**: read
+time tracks bytes allocated at a steady 1.30 GB/s, measured across a tenfold range of data
+on a production run, and a full-resolution read allocated 665 GB and spent 62 s collecting.
+That is why the reading thread sweep flattens where it does, and it is the reason to give
+the collector its own threads:
+
+```
+julia -t 16,8      # 16 compute threads, 8 GC threads
+```
+
+The second number is the GC pool, set at startup like the first, and
+`Threads.ngcthreads()` reports what you got. The reference benchmarks ran 24 of each. It
+also follows that a recent Julia is worth running: allocator and collector work lands
+straight on Mera's dominant cost. The package keeps 1.10 as its supported floor so it
+keeps working, not because it is the version to choose. See
+[Performance](../benchmarks/performance.md) for the measurements.
+
 ```julia
 # allocates a temporary array per operation
 total = sum(rho .* volume .* factor)

@@ -42,17 +42,6 @@ path = "$MERA_EXAMPLES/RAMSES/mw_L10"
 output = 300;
 ```
 
-```
-*__   __ _______ ______   _______
-|  |_|  |       |    _ | |   _   |
-|       |    ___|   | || |  |_|  |
-|       |   |___|   |_||_|       |
-|       |    ___|    __  |       |
-| ||_|| |   |___|   |  | |   _   |
-|_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-```
-
 ## Step 1: what you get for free
 
 `read=false` reads only the header. No cell is touched, no particle is read, and it returns
@@ -70,7 +59,7 @@ q0 = quicklook(output; path=path, read=false);
 │ time       : 445.9 Myr  (non-cosmological)
 │ particles  : 544515 total  —  stars 544515 · DM 0
 │ (header only — call quicklook(output) to read a sample)
-└─ 0.12 s ──────────────────────────────────
+└─ 0.15 s ──────────────────────────────────
 ```
 
 Note what is already known: the box size, the AMR level range and therefore the finest cell, the

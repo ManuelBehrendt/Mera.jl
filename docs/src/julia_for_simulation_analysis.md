@@ -105,6 +105,35 @@ The levers, in the order to reach for them:
    snapshots).
 4. **Watch it**: `usedmemory(gas)` for objects, `storageoverview(info)` before loading.
 
+### Why the Julia version matters more here than for most packages
+
+Reading a RAMSES snapshot is **allocation bound**. Measured across eight refinement levels
+of a production run, read time tracks bytes allocated almost exactly, at a steady
+1.30 GB/s with an R^2 of 0.9985 over a tenfold range of data. A full-resolution read
+allocated 665 GB to deliver a 53 GB snapshot, and spent 62 s in garbage collection.
+
+Two consequences:
+
+- Work in Julia's **allocator and garbage collector** lands directly on Mera's dominant
+  cost, more than it would for a package whose time goes on arithmetic. That is the
+  reason to run a recent Julia rather than the oldest supported one, and Mera keeps 1.10
+  as its floor only so it keeps working, not because it is the version to choose.
+- **Give the GC threads.** Julia runs garbage collection in parallel, and the thread count
+  is set at startup, separately from compute threads:
+
+  ```
+  julia -t 16,8      # 16 compute threads, 8 GC threads
+  ```
+
+  `Threads.ngcthreads()` reports what you got. The reference benchmarks ran with 24 of
+  each. On an allocation-bound workload this is not a detail.
+
+Mera's own numbers come from Julia 1.12, and the package is tested on 1.10, 1.11 and 1.12
+on every push. What is not published is a like-for-like comparison **between** those
+versions on the same data: nobody has run one, so treat "newer is better here" as
+following from the mechanism above rather than from a measurement. If you want the real
+answer for your workload, `benchmark_report` gives it in one call per version.
+
 ```julia
 small = gethydro(info; lmax=6, xrange=[-8., 8.], yrange=[-8., 8.], zrange=[-2., 2.],
                  center=[:bc], range_unit=:kpc, vars=[:rho], verbose=false, show_progress=false)
