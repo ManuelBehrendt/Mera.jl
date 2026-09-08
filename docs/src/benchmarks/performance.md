@@ -131,8 +131,42 @@ add threads. At low `lmax` there is little to allocate and the per-file parsing 
 does parallelise, dominates, so threading pays. At full resolution the 665 GB of
 allocation dominates, and threads cannot make the allocator go faster.
 
+#### The consequence: run one process per snapshot
+
+If the ceiling is per-process, then separate processes should each get their own share.
+Measured, reading two outputs at `lmax=11` with a budget of 16 threads:
+
+| | wall time | aggregate allocation rate |
+|---|---:|---:|
+| one at a time, 16 threads each | 303.1 s | 1.65 GB/s |
+| **two at once, 8 threads each** | **177.4 s** | **2.82 GB/s** |
+
+**1.71x faster**, and the aggregate allocation rate rose by the same factor, which is the
+signature of a per-process limit rather than a machine-wide one. Halving the threads given
+to each output while also sharing the machine cost only 14% per output.
+
+Put beside the thread sweep, this is the point: **the entire 1 to 16 thread sweep on one
+read gained 1.61x. Running two snapshots at once gained 1.71x**, with half the threads
+each. For multi-snapshot work, processes are the axis that pays, not threads.
+
+```julia
+# better than one process with all the threads
+@sync for out in outputs
+    Threads.@spawn run(`julia -t 8 --project=. analyse.jl $out`)
+end
+```
+
+Two caveats. This is two data points at one refinement level, so it shows the effect
+exists but not where it saturates. And N concurrent reads need N times the peak resident
+memory, 115 GB each at full resolution here, so the thread budget stops being the binding
+constraint and RAM starts.
+
+The script is
+[`benchmark_results/parallel_outputs.jl`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/benchmark_results/parallel_outputs.jl)
+if you want to find the crossover on your own machine.
+
 The practical consequence: at full resolution, **the way to read faster is to allocate
-less, not to add threads**. Reading a subregion or a capped `lmax` reduces allocation
+less or to run more processes, not to add threads to one read**. Reading a subregion or a capped `lmax` reduces allocation
 directly, which is why those reads are so much cheaper, and it is the same reason a MERA
 file is fast: it allocates a fourteenth of what parsing does.
 

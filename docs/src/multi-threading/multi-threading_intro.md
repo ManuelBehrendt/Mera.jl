@@ -246,6 +246,28 @@ end
 proj = projection(gas, [:sd, :T, :vx, :vy])
 ```
 
+### For reading many snapshots, use processes rather than threads
+
+The budget above splits threads inside one Julia process. For **reading**, that is often
+the wrong axis. Mera's RAMSES reading is allocation bound, and the allocation rate
+saturates near 1.5 GB/s per process however many threads it is given. Julia's allocator
+and GC are per-process, so a second process gets its own share while a second thread does
+not.
+
+Measured on a 32-thread server, reading two snapshots with a 16-thread budget:
+
+| | wall time |
+|---|---:|
+| one at a time, 16 threads each | 303 s |
+| two at once, 8 threads each | **177 s** |
+
+1.71x, from halving the threads per read. For comparison, the whole 1 to 16 thread sweep
+on a single read gained 1.61x. See [Performance](../benchmarks/performance.md).
+
+So when you have many snapshots to get through, launch one process per snapshot with a
+modest thread count each, rather than one process working through them with everything.
+Watch memory instead: N concurrent reads need N times the peak.
+
 Treat it as a starting point, not a law. Reading is I/O bound, so on slow or networked
 storage fewer concurrent readers often beat the arithmetic: try `max_threads=1` with **four**
 outer tasks rather than eight. Measure it, see the next section.
