@@ -42,10 +42,19 @@ benchmark_report(path, 250; stages=[:storage, :sweep, :conversion])
 
 That figure is a real run of the snippet above on `sedov3d_grav_part`, one of the public
 test simulations, so you can reproduce it in a couple of minutes before pointing anything
-at a large snapshot. It has one panel per stage: the thread sweep against perfect scaling
-with the fastest and sweet-spot counts marked, work per thread, read time with bars across
-the repeats, then read time, memory churned and size on disk against the MERA file, and
-storage IOPS.
+at a large snapshot.
+
+Panel by panel, and only the stages that ran appear:
+
+| panel | what it plots | what to look for |
+|---|---|---|
+| **Does threading pay?** | measured speedup against the dashed diagonal of perfect scaling, with the shaded gap between them | how much of each added thread becomes speed; the dotted Amdahl fit and its ceiling say how much is left to gain at all |
+| **Work per thread** | efficiency, speedup divided by thread count, against a 100% line | where added threads stop earning their core; green above 50%, red below 25% |
+| **Read time** | time against thread count, bars spanning the repeats | the spread: wide bars mean a busy machine and numbers you should not trust |
+| **Read time RAMSES vs MERA** | the same data read both ways | the ratio in the title |
+| **Memory churned** | bytes allocated by each path | both end holding the same data, so this is the cost of getting there |
+| **On disk** | size of the RAMSES files against the MERA file | mostly leaf-cell storage rather than compression, see [Performance](performance.md) |
+| **Storage scaling** | IOPS against thread count | where it stops climbing, which is the concurrency your filesystem rewards |
 
 Read it as a demonstration of the output, not as a result: at 10.5 MB and 8 CPU files this
 fixture is far too small to say anything about performance. The
@@ -280,6 +289,33 @@ under many concurrent readers can slow down. Sweep, do not assume.
 
 **Say what you measured.** A benchmark without the filesystem type, the node, the thread
 count and whether the cache was cold is not reproducible, including by you in six months.
+
+### What the storage numbers mean
+
+`run_benchmark` runs three separate tests, and they answer different questions. Each is
+repeated across thread counts, so what you are reading is how the storage behaves as
+concurrency rises.
+
+**IOPS, input/output operations per second.** It opens a file and immediately closes it
+again, doing nothing in between, then counts how many of those complete per second. It
+deliberately never reads content, so it measures the cost of the *operation* rather than
+the cost of the data: path lookup, permission checks and, on a networked filesystem, the
+round trip to the metadata server. This is the number that matters when a snapshot has
+20489 files, because opening them is work before a single byte is read.
+
+**Throughput, MB/s per concurrent read.** It reads whole file contents and divides bytes
+by elapsed time. Reported per read rather than aggregated, so with 8 threads the total the
+storage delivered is roughly eight times the figure shown. Every file is warmed first, so
+the thread levels differ by concurrency and not by which of them happened to find the data
+in the page cache.
+
+**Open/close latency.** The time for a single open and close, reported as a median. Where
+IOPS tells you the rate the storage sustains in aggregate, this tells you what one
+operation costs, which is what you feel when a read walks thousands of files in sequence.
+
+Read them together. IOPS climbing while open/close latency stays flat means the storage is
+absorbing the concurrency. Latency rising while IOPS flattens means you have found its
+limit.
 
 ## Reference: IO on the laptop
 
