@@ -1,7 +1,10 @@
 # Server benchmark: L13_SN5_CD_only, output 390
 
-The current reference series. Eight runs, one per refinement level, all components
-converted. Supersedes `../server_L13`, which measured hydro only.
+The reference series. Eight runs, one per refinement level, all components converted.
+
+An earlier hydro-only series on output 250 was removed: it predated fixes to the
+disk-size accounting and measured only one component, so its ratios were not
+like for like. It remains in the git history if ever needed.
 
 | | |
 |---|---|

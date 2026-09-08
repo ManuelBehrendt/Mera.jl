@@ -265,11 +265,21 @@ end
 # benchmarkplot — graphs are optional, and their absence must not break a run
 # ============================================================================
 @testset "benchmarkplot" begin
-    # Mera has no Makie dependency, so without a backend this must fail with a hint
-    # rather than a MethodError, and benchmark_report must still finish.
+    # benchmarkplot dispatches on BenchmarkReport, so the Makie extension adds a method
+    # instead of overwriting the stub. A NamedTuple is therefore a MethodError, and this
+    # test asserts the signature rather than the old untyped one.
+    @test_throws MethodError benchmarkplot((sweep=nothing, storage=nothing, conversion=nothing))
+    @test only(methods(benchmarkplot)).sig.parameters[2] === Mera.BenchmarkReport
+
+    # Mera has no Makie dependency. Without a backend the stub must fail with a readable
+    # hint rather than a MethodError, and benchmark_report must still finish. This branch
+    # only runs on a bare install, which is what CI has and a dev machine usually has not.
     if Base.find_package("CairoMakie") === nothing && Base.find_package("GLMakie") === nothing
-        @test_throws ErrorException benchmarkplot((sweep=nothing, storage=nothing,
-                                                   conversion=nothing))
+        empty_report = Mera.BenchmarkReport(nothing, 0, 0.0, Tuple{Symbol,Float64}[],
+                                            (type="", mount="", stripe=""),
+                                            nothing, nothing, nothing, nothing, 1, "")
+        @test_throws ErrorException benchmarkplot(empty_report)
+        @test_throws ErrorException levelsplot(Any[])
     end
 
     # unit picking: a small run must not be labelled in GB, a large one not in KB
