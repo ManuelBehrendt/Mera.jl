@@ -537,7 +537,11 @@ function _bench_efficiency!(ax, sw)
     Makie.ylims!(ax, 0, 118)
 end
 
-# Read time with the spread across repeats, so a noisy node is visible rather than hidden
+# Read time with the spread across repeats, so a noisy node is visible rather than hidden.
+# The marker is the MINIMUM, which is the estimate reported everywhere else, so the bar can
+# only ever extend upward from it. That is not an asymmetric error bar: it is the fastest
+# run, with a whisker reaching the slowest. The title says so, because a one-sided bar
+# otherwise reads as a plotting bug.
 function _bench_sweep!(ax, sw)
     t = Float64.(sw.threads)
     if hasproperty(sw, :all_runs) && sw.runs > 1
@@ -632,7 +636,8 @@ function Mera._plot_benchmark_report(r::Mera.BenchmarkReport; size=(1000, 760))
             _bench_efficiency!(ax, r.sweep)
         elseif p === :sweep
             ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="read time [s]",
-                            title="Read time" * (r.sweep.runs > 1 ? " (bars: $(r.sweep.runs) runs)" : ""),
+                            title="Read time" * (r.sweep.runs > 1 ?
+                                    " (fastest of $(r.sweep.runs), bar to slowest)" : ""),
                             xscale=Makie.log2)
             ax.xticks = (Float64.(r.sweep.threads), string.(r.sweep.threads))
             _bench_sweep!(ax, r.sweep)

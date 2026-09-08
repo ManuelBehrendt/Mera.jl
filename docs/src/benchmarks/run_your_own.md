@@ -50,7 +50,7 @@ Panel by panel, and only the stages that ran appear:
 |---|---|---|
 | **Does threading pay?** | measured speedup against the dashed diagonal of perfect scaling, with the shaded gap between them | how much of each added thread becomes speed; the dotted Amdahl fit and its ceiling say how much is left to gain at all |
 | **Work per thread** | efficiency, speedup divided by thread count, against a 100% line | where added threads stop earning their core; green above 50%, red below 25% |
-| **Read time** | time against thread count, bars spanning the repeats | the spread: wide bars mean a busy machine and numbers you should not trust |
+| **Read time** | time against thread count. The marker is the **fastest** run, the bar reaches the **slowest**, so it is one-sided by construction rather than an asymmetric error bar | how tall the bars are: a wide spread means a busy machine and numbers you should not trust |
 | **Read time RAMSES vs MERA** | the same data read both ways | the ratio in the title |
 | **Memory churned** | bytes allocated by each path | both end holding the same data, so this is the cost of getting there |
 | **On disk** | size of the RAMSES files against the MERA file | mostly leaf-cell storage rather than compression, see [Performance](performance.md) |
