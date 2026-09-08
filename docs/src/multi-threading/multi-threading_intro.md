@@ -167,10 +167,14 @@ this are in [Performance](../benchmarks/performance.md):
 | 4 | 1.58 s | 13.3 s |
 | 8 | 1.62 s | 12.9 s |
 
-A single light projection is **serial-fraction dominated and stays flat**, that is expected,
-not a misconfiguration. The ten-variable case gains about 1.6× and then saturates. Reading is
-usually I/O bound, so it saturates once the storage does; see
-[Performance](../benchmarks/performance.md).
+A single variable **stays flat by construction**, not through misconfiguration and not
+because the work is too light. An axis-aligned projection divides its work across the
+variables you ask for, taking `min(max_threads, nthreads(), number_of_variables)` threads,
+so one variable runs on one thread whatever you offer it. The ten-variable case has ten
+ways to split and gains about 1.6x before saturating.
+
+Off-axis and `:exact` projections divide by cell instead, so there a single variable does
+use every thread. See [Performance](../benchmarks/performance.md) for both measured.
 
 !!! note "Particle projection splits differently"
     The particle backend parallelises *inside* one map rather than across variables, so a
@@ -312,12 +316,12 @@ Two things to expect, both normal rather than misconfiguration:
 
 - **reading saturates** once the storage does, so more threads stop helping and may hurt on
   network filesystems
-- **a single light projection stays flat**, because cell projection parallelises across the
-  variables you ask for, not within one
+- **a single axis-aligned projection stays flat**, because it parallelises across the
+  variables you ask for, not within one; ask for several in a single call
+- **off-axis and `:exact` projections parallelise by cell**, so one variable already uses
+  every thread
 
-Published numbers for both are in
-[Performance](../benchmarks/performance.md) and
-[Performance](../benchmarks/performance.md).
+Published numbers are in [Performance](../benchmarks/performance.md).
 
 ## 5 Allocations and the garbage collector
 

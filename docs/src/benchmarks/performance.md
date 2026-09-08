@@ -89,16 +89,23 @@ Live-heap delta about 1.1 GiB.
 
 *`benchmark_projection_hydro(gas, [1,2,4,8], 3)`, session started with 8 Julia threads.*
 
-**Giving a single light projection more threads does nothing.** There is too little
-arithmetic per cell to cover the coordination cost, so it stays flat at every thread
-count. Once there is real work per cell the picture changes, but note *where* the gain
+**Giving a single light projection more threads does nothing**, and the reason is
+structural rather than a matter of workload size. An axis-aligned `projection` divides its
+work **by variable**: it uses `min(max_threads, nthreads(), number_of_variables)` threads,
+so one quantity runs on exactly one thread whatever you offer it. Ten quantities can use
+ten.
+
+The rotated and off-axis deposit kernels divide **by cell** instead, so there a single
+quantity does use every thread. The `:exact` kernel reaches 2.0x on one variable for that
+reason, not because it is merely heavier. Once there is real work per cell the picture changes, but note *where* the gain
 appears: almost all of it arrives between 1 and 2 threads, then it flattens. Two
 threads captures nearly all of what is available here.
 
-The practical consequence is one line:
+The practical consequence is one line, and it buys twice: the data is walked once instead
+of four times, **and** the four variables are what makes the threading possible at all.
 
 ```julia
-proj = projection(gas, [:sd, :T, :vx, :vy])    # one pass over the data, threads used
+proj = projection(gas, [:sd, :T, :vx, :vy])    # one pass, and four threads' worth of work
 ```
 
 ## Reading: convert once, then re-read far faster

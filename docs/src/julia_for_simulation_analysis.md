@@ -160,10 +160,13 @@ Start Julia with threads (`julia -t 8` or `JULIA_NUM_THREADS=8`) and Mera's heav
 throttle a single call. Three rules of thumb:
 
 - results are **independent of the thread count** (per-thread buffers, summed at the end);
-- **threading pays where the compute is.** A light call on a small dataset is dominated by its
-  serial parts (column access, setup) and shows little gain, an axis-aligned projection of this
-  small fixture runs in ~0.6 s regardless of threads. Give the threads real work and the
-  picture changes: below, the compute-heavy off-axis `:exact` deposit kernel on the same data;
+- **threading pays where there is something to divide**, and different paths divide different
+  things. An axis-aligned `projection` splits the work **by variable**: internally it takes
+  `min(max_threads, nthreads(), number_of_variables)` threads, so asking for one quantity uses
+  exactly one thread however many you offer it, while several quantities in one call run in
+  parallel. The rotated and off-axis deposit kernels split **by cell** instead, so a single
+  quantity already uses every thread. That is why the off-axis `:exact` example below scales on
+  one variable where an axis-aligned projection of the same quantity would stay flat;
 - BLAS keeps its own thread pool, keep `Julia threads × BLAS threads` within your core budget.
 
 Measured on this machine (8 Julia threads; **illustrative, not a benchmark**, your times will
@@ -198,8 +201,19 @@ max_threads=8  52.13 s   speedup ×1.98
 
 ![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_4.png)
 
-The dashed line is ideal scaling; the gap to it is the serial fraction. Throttle
-individual calls (`max_threads=4`) when you run several analyses at once or share the machine.
+The dashed line is ideal scaling; the gap to it is the serial fraction.
+
+**Which path you are on decides what to do.** For an axis-aligned projection, ask for the
+quantities you need in one call rather than looping: one call for four variables threads four
+ways, four calls of one variable each thread one way and walk the data four times.
+
+```julia
+proj = projection(gas, [:sd, :T, :vx, :vy])    # threads over the four variables
+```
+
+For off-axis or `:exact` work a single quantity already uses the threads, so nothing extra is
+needed. Throttle individual calls (`max_threads=4`) when you run several analyses at once or
+share the machine.
 The examples throughout these docs use at most 8 threads, treat that as a sensible laptop
 ceiling, not a recommendation to buy more cores.
 
