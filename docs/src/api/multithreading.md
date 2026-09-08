@@ -67,6 +67,7 @@ benchmark_levels
 collect_levels
 levelsplot
 BenchmarkReport
+IOBenchmark
 benchmarkplot
 filesystem_info
 allocated_cpus

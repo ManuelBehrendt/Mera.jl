@@ -24,8 +24,19 @@ That is the whole setup. It refuses to start a read whose in-memory size would e
 benchmark_report("/path/to/simulation", 250; lmax=11, merapath="/path/with/space")
 ```
 
-Use `stages=[:storage]` to run only part of it. The individual functions below are
-still there if you want one measurement on its own.
+`stages` selects which parts run. There are four:
+
+| stage | what it measures | cost |
+|---|---|---|
+| `:storage` | IOPS, throughput and open/close across thread counts | seconds, it samples |
+| `:reading` | reading each component from the RAMSES output, with GC | one read per component per repeat |
+| `:conversion` | write a MERA file, read it back, compare time, memory and disk | one read plus one write |
+| `:sweep` | how read time varies with thread count | **one full read per thread count per repeat** |
+
+`:all` is the default and runs the first three. **`:sweep` is never included in `:all`**,
+because it is the only one whose cost multiplies; ask for it by name. To run just the cheap
+part first, `stages=[:storage]`. The individual functions below are still there if you want
+one measurement on its own.
 
 ### Graphs
 

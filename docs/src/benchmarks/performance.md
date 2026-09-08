@@ -20,6 +20,11 @@ To measure your own machine instead, go to [Run Your Own Benchmarks](run_your_ow
     one directory per refinement level, so every figure quoted here can be checked
     against the run that produced it.
 
+    The **reading, memory and disk** sections below come from this setup. The
+    **projection** section is a separate measurement on a laptop, an Apple M2 Pro with
+    `mw_L10` output 300, and says so where it appears; the two are never mixed in one
+    table.
+
     **This is one simulation on one machine.** A deeply refined run with 5120 CPU files
     on local storage. Its AMR structure, its file count and its filesystem all shape the
     numbers below, and a run built differently will not reproduce them. Ratios travel
@@ -87,7 +92,10 @@ A published null result, because it is the one most people get wrong.
 
 Live-heap delta about 1.1 GiB.
 
-*`benchmark_projection_hydro(gas, [1,2,4,8], 3)`, session started with 8 Julia threads.*
+*Apple M2 Pro, 12 cores, `mw_L10` output 300, 28.3M cells, 8 Julia threads;
+`benchmark_projection_hydro(gas, [1,2,4,8], 3)`. A laptop measurement, not the server run
+the rest of this page uses: the point here is which axis the work divides along, which does
+not depend on the machine.*
 
 **Giving a single light projection more threads does nothing**, and the reason is
 structural rather than a matter of workload size. An axis-aligned `projection` divides its
@@ -96,7 +104,7 @@ so one quantity runs on exactly one thread whatever you offer it. Ten quantities
 ten.
 
 The rotated and off-axis deposit kernels divide **by cell** instead, so there a single
-quantity does use every thread. Measured on a laptop, the off-axis `:exact` kernel on a
+quantity does use every thread. On the same laptop, the off-axis `:exact` kernel on a
 single variable reaches **3.56x at 8 threads**, which an axis-aligned projection of the
 same quantity cannot approach at any thread count. The difference is what gets divided,
 not how heavy the work is. Once there is real work per cell the picture changes, but note *where* the gain
