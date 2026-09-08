@@ -31,8 +31,12 @@ stack with `] instantiate`. Start Julia with `julia --project=.` to use it.
 
 ## 2. Compile-time latency: pay once per session
 
-Julia compiles functions the first time they run with a given argument type. The first
-projection of a session takes seconds of compilation; the second is pure runtime:
+Julia compiles functions the first time they run with a given argument type. Mera
+precompiles its analysis paths at install time, so the ones you reach first are already
+compiled: in a fresh session a first `projection` takes about 0.05 s and a first `getvar`
+about 0.04 s, the same as every later call. What still carries a one-off cost is the
+readers, roughly 4 s on the first `gethydro` and nothing after it. The pattern below is
+worth knowing anyway, because it applies to any function you write yourself:
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the

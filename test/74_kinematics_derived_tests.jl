@@ -16,6 +16,7 @@
 # pass by coincidence (scale.kpc == 1 has hidden real bugs in this repo). boxlen is likewise
 # NOT 1: with boxlen == 1 a box fraction and a code length are numerically identical, which is
 # exactly how a units bug once survived every test here.
+using IndexedTables, Random   # used below; do not rely on another test file importing it
 function _zoom_info(; boxlen::Float64=100.0)
     info = Mera.InfoType()
     info.boxlen    = boxlen

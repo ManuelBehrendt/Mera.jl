@@ -77,6 +77,7 @@
 # Explicit import: in the full suite an earlier figure test loads CairoMakie, which re-exports
 # `Sphere`/`Cylinder` from GeometryBasics and would shadow Mera's region types. The explicit
 # `using` overrides that ambiguity so bare `Sphere(...)`/`Cylinder(...)` resolve to Mera's here.
+using IndexedTables   # used below; do not rely on another test file importing it
 using Mera: Sphere, Cylinder
 
 if !DATA_AVAILABLE

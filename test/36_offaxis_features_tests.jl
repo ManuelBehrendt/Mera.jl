@@ -7,6 +7,7 @@
 
 # Data-free profile/phase unit tests (pure-function kernels — run even without simulation data):
 # binning input-validation guards and weighted-statistic oracles against hand-computed values.
+using JLD2   # used below; do not rely on another test file importing it
 @testset "profile: binning guards + weighted-stat oracles (data-free)" begin
     # --- binning input validation (silent-mis-bin guards) ---
     @test_throws ArgumentError Mera._edges_by_step(10.0, 1.0, 1.0)               # reversed range (binsize)

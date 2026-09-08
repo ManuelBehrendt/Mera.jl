@@ -43,6 +43,7 @@
 #   a RAMSES output (the PLUTO-based variant is on the `multicode` branch).
 # ==============================================================================
 
+using IndexedTables   # used below; do not rely on another test file importing it
 using JLD2
 using CodecLz4
 

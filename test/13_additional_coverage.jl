@@ -54,6 +54,7 @@
 # If DATA_AVAILABLE is false the file's data-dependent testsets are
 # skipped via @test_skip.
 
+using IndexedTables   # used below; do not rely on another test file importing it
 @testset "Helper & Overview Functions" begin
 
 if !DATA_AVAILABLE

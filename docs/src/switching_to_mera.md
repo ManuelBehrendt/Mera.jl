@@ -232,12 +232,11 @@ round-trip ok: true  (4060.3 MB on disk)
 
 - **Loops are fast, and you can write them.** Custom per-cell analysis runs at compiled
   speed, so there is no need to push work into vectorised library calls to make it quick.
-  Julia compiles on first use, but the cost is a **one-off few seconds per session**, not
-  per call: measured on a small test snapshot, the first `gethydro` took about 6 s more
-  than the second, and every later call was unaffected. Against a read of minutes, or a
-  session of any length, that is noise. Mera also precompiles its hot numerical kernels
-  (the off-axis deposit, binning and weighted reductions) at install time, so much of it is
-  already paid before you start. See
+  Julia compiles on first use, but Mera precompiles its analysis paths at install time, so
+  in practice you do not wait for them. Measured in a fresh session on a small snapshot:
+  the first `projection` takes 0.05 s and the first `getvar` 0.04 s, the same as every
+  later call. Only the readers still carry a one-off cost, about 4 s on the first
+  `gethydro`, and none on any call after it. Against a read of minutes that is noise. See
   [Julia for Simulation Analysis](julia_for_simulation_analysis.md).
 - **Units are explicit, not attached.** Quantities are plain arrays; units enter as scale
   factors or unit symbols. This keeps everything zero-overhead but means *you* choose the unit

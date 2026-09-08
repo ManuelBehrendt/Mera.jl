@@ -6,6 +6,7 @@
 #   PART B (data-backed) — frames from the 3-D Sedov series + GIF round-trip.
 # ============================================================================
 
+using JLD2   # used below; do not rely on another test file importing it
 const MV_PATH = joinpath(SIMULATION_PATH, "RAMSES/timeseries_sedov3d")
 
 @testset "getmovie / savemovie" begin

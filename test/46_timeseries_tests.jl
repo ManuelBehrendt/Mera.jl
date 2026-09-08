@@ -12,6 +12,7 @@
 # ============================================================================
 
 # Fully-qualified accessor so the test needs only `using Mera`.
+using IndexedTables   # used below; do not rely on another test file importing it
 _cols(t) = Mera.IndexedTables.columns(t)
 
 # Explicit import: in the full suite an earlier figure test loads CairoMakie, which also exports
