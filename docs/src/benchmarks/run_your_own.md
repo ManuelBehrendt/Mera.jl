@@ -283,46 +283,49 @@ count and whether the cache was cold is not reproducible, including by you in si
 
 ## Reference: IO on the laptop
 
-Same machine and dataset as the [Performance](performance.md) page, via
-`run_benchmark(dir; runs=2)` on `mw_L10/output_00300`, 2,570 files.
+Same machine and data as the [Performance](performance.md) page: AVALON output 390,
+20489 files on local btrfs, via `run_benchmark(dir; runs=2)`.
 
 | Threads | IOPS (mean) |
 |---:|---:|
-| 1 | 11,970 |
-| 2 | 37,681 |
-| 4 | 51,819 |
-| 8 | 69,872 |
+| 1 | 100,336 |
+| 2 | 174,244 |
+| 4 | 195,868 |
+| 8 | 237,871 |
+| 16 | 252,068 |
+| 24 | 283,008 |
 
-Open/close latency at 8 threads: 42.7 μs (median).
+IOPS keeps climbing all the way to 24 threads on this filesystem, which is the shape you
+want to find on your own storage: the point where it stops climbing is the thread count
+your storage rewards. Note that this is **not** the same as the thread count worth giving
+a read, which the [reading sweep](#The-break-even) settles separately and which turned out
+to be lower.
 
-*`run_benchmark(dir; runs=2)` on `mw_L10/output_00300`, 2,570 files, 8 Julia threads.*
+!!! note "Throughput is measured but not tabulated here"
+    `run_benchmark` reports throughput alongside IOPS, and the sweep now warms every file
+    before measuring, which fixes an earlier version that compared cache states rather
+    than thread counts and produced a per-stream rate above what the link could carry.
+    The report writer records IOPS and open/close latency only, so there is no published
+    throughput table yet. The figures are in the returned `IOBenchmark` if you want them.
 
-IOPS keeps climbing with concurrency on this machine, which is the shape you want to
-find on your own storage: the point where it stops climbing is the thread count worth
-using.
+## Knowing what is in a snapshot
 
-!!! note "Throughput is not reported here"
-    The throughput column that used to sit beside this table was measuring the operating
-    system page cache rather than the storage. The sweep read the same files at every
-    thread level in ascending order, so the first level paid the cold read and the rest
-    were served from memory, which produced a per-stream rate above what the Thunderbolt
-    link can physically carry. The sweep now warms every file first, and the column will
-    return once it has been re-measured.
-
-## A server example
-
-A production server running the suite on a RAMSES output of a different scale, for a
-sense of what these simulations look like at size:
+`benchmark_report` prints the storage split before it measures anything, so you can see
+where the bytes are before deciding what to convert. On the reference snapshot:
 
 ```
-AMR-Files:      10.85 GB    <2.17 MB>/file
-Hydro-Files:    25.46 GB    <5.09 MB>/file
-Gravity-Files:  17.82 GB    <3.56 MB>/file
-Particle-Files: 39.53 MB    <7.9 KB>/file
-Total Data Size: ~54.3 GB
+storage by component:
+  hydro        24.94 GB   46.9%
+  gravity      17.52 GB   32.9%
+  amr          10.66 GB   20.1%
+  particle      65.0 MB    0.1%
 ```
 
-At this size the argument for converting to MERA files is no longer about convenience.
+That matters for what you convert. Here gravity is a third of the data, so converting
+hydro alone leaves most of the snapshot behind. The AMR files are needed by every field
+component and are counted on the RAMSES side of any size comparison for that reason.
+
+[`storageoverview`](@ref) gives the same breakdown on its own if you only want the numbers.
 
 ## Reading the output
 
