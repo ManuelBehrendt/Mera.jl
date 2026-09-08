@@ -51,6 +51,9 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (4), wrong source (1), dep missing source (1), mismatched flags (2))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (8), wrong source (2), dep missing source (2), mismatched flags (4))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -58,8 +61,12 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-first call: 14.71 s   second call: 0.044 s
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (1))
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (2))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
+first call: 13.67 s   second call: 0.061 s
 ```
 
 Keep one session alive while you work (REPL, Jupyter, VS Code) instead of re-launching
@@ -146,11 +153,11 @@ usedmemory(small)
 
 ```
 576 cells (windowed, lmax=6, :rho only)  vs  590311 full (lmax=7)
-Memory used: 481.448 KB
+Memory used: 481.456 KB
 ```
 
 ```
-(481.4482421875, "KB")
+(481.4560546875, "KB")
 ```
 
 ## 5. Multithreading, measured
@@ -195,14 +202,14 @@ fig
 ```
 
 ```
-Julia threads: 4
-max_threads=1  103.48 s   speedup ×1.0
-max_threads=2  74.81 s   speedup ×1.38
-max_threads=4  51.85 s   speedup ×2.0
-max_threads=8  52.13 s   speedup ×1.98
+Julia threads: 8  ->  testing [1, 2, 4, 8]
+max_threads=1  105.12 s   speedup ×1.0
+max_threads=2  76.07 s   speedup ×1.38
+max_threads=4  52.85 s   speedup ×1.99
+max_threads=8  29.5 s   speedup ×3.56
 ```
 
-![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_4.png)
+![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_5.png)
 
 The dashed line is ideal scaling; the gap to it is the serial fraction.
 
@@ -214,8 +221,9 @@ ways, four calls of one variable each thread one way and walk the data four time
 proj = projection(gas, [:sd, :T, :vx, :vy])    # threads over the four variables
 ```
 
-For off-axis or `:exact` work a single quantity already uses the threads, so nothing extra is
-needed. Throttle individual calls (`max_threads=4`) when you run several analyses at once or
+For off-axis or `:exact` work a single quantity already uses the threads: the sweep above
+reaches 3.56x at 8 threads on one variable, which the axis-aligned path cannot do at any
+thread count. Nothing extra is needed there. Throttle individual calls (`max_threads=4`) when you run several analyses at once or
 share the machine.
 The examples throughout these docs use at most 8 threads, treat that as a sensible laptop
 ceiling, not a recommendation to buy more cores.

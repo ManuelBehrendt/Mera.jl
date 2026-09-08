@@ -96,8 +96,10 @@ so one quantity runs on exactly one thread whatever you offer it. Ten quantities
 ten.
 
 The rotated and off-axis deposit kernels divide **by cell** instead, so there a single
-quantity does use every thread. The `:exact` kernel reaches 2.0x on one variable for that
-reason, not because it is merely heavier. Once there is real work per cell the picture changes, but note *where* the gain
+quantity does use every thread. Measured on a laptop, the off-axis `:exact` kernel on a
+single variable reaches **3.56x at 8 threads**, which an axis-aligned projection of the
+same quantity cannot approach at any thread count. The difference is what gets divided,
+not how heavy the work is. Once there is real work per cell the picture changes, but note *where* the gain
 appears: almost all of it arrives between 1 and 2 threads, then it flattens. Two
 threads captures nearly all of what is available here.
 
