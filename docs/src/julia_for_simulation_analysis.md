@@ -169,16 +169,19 @@ throttle a single call. Three rules of thumb:
   one variable where an axis-aligned projection of the same quantity would stay flat;
 - BLAS keeps its own thread pool, keep `Julia threads × BLAS threads` within your core budget.
 
-Measured on this machine (8 Julia threads; **illustrative, not a benchmark**, your times will
-differ):
+Measured on whatever this session was started with, and the sweep stops there: asking for
+more than `Threads.nthreads()` is clamped internally, so the extra points would just repeat
+the last one. **Illustrative, not a benchmark**, your times will differ:
 
 ```julia
-println("Julia threads: ", Threads.nthreads())
+# Sweep only up to the threads this session actually has: max_threads is clamped to
+# Threads.nthreads() internally, so asking for more silently repeats the last point.
+nts = [n for n in (1, 2, 4, 8, 16, 24) if n <= Threads.nthreads()]
+println("Julia threads: ", Threads.nthreads(), "  ->  testing ", nts)
 # compute-heavy workload: off-axis projection with the analytic :exact deposit kernel
 heavy(nt) = projection(gas, :sd; inclination=60, azimuth=30, pxsize=[0.05, :kpc],
                        binning=:exact, max_threads=nt, verbose=false, show_progress=false)
 heavy(1)                                             # compile once
-nts = [1, 2, 4, 8]
 times = [minimum(@elapsed(heavy(nt)) for _ in 1:2) for nt in nts]
 for (nt, t) in zip(nts, times)
     println(rpad("max_threads=$nt", 15), round(t, digits=2), " s   speedup ×",
