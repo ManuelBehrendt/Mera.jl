@@ -551,6 +551,34 @@ end
 # workload hiccup can never break precompilation. (The full read→project workload needs a bundled mini
 # output, which we don't ship yet.)
 @setup_workload begin
+    # A synthetic hydro object, built from numbers rather than files, so the table-level
+    # paths (getvar and the projection wrapper around it) can be precompiled too. Measured:
+    # a first projection costs ~10 s cold, and ~7 s of that is the getvar machinery rather
+    # than the deposit kernels, which is why precompiling the kernels alone bought nothing.
+    _pc_gas = try
+        _i = InfoType()
+        _i.boxlen = 1.0; _i.levelmin = 4; _i.levelmax = 6
+        _i.unit_l = 3.086e21; _i.unit_d = 1.0e-24; _i.unit_t = 3.156e13; _i.unit_m = 1.989e33
+        _i.constants = createconstants()
+        _i.scale = createscales(_i.unit_l, _i.unit_d, _i.unit_t, _i.unit_m, _i.constants)
+        _n = 64
+        _o = ones(_n)
+        _t = IndexedTables.table(fill(6, _n), collect(1:_n), fill(1, _n), fill(1, _n),
+                                 _o, _o, _o, _o, _o;
+                                 names = [:level,:cx,:cy,:cz,:rho,:vx,:vy,:vz,:p],
+                                 pkey  = [:level,:cx,:cy,:cz])
+        _g = HydroDataType()
+        _g.data = _t; _g.info = _i
+        _g.lmin = 4; _g.lmax = 6; _g.boxlen = 1.0
+        _g.ranges = [0.,1.,0.,1.,0.,1.]
+        _g.selected_hydrovars = [1,2,3,4,5]
+        _g.used_descriptors = Dict{Any,Any}()
+        _g.smallr = 0.0; _g.smallc = 0.0; _g.scale = _i.scale
+        _g
+    catch
+        nothing
+    end
+
     @compile_workload begin
         try
             r, u, w = build_camera_basis([0.3, 0.2, 1.0])
@@ -566,6 +594,22 @@ end
             cs = fill(0.1, 60); vv = ones(60); ww = ones(60); ext = (-2.0, 2.0, -2.0, 2.0)
             deposit_rotated_cells_overlap!(zeros(nx,ny), zeros(nx,ny), xc, yc, cs, vv, ww, r, u, ext, (nx,ny); nmax=8, max_threads=1)
             deposit_rotated_cells_exact!(  zeros(nx,ny), zeros(nx,ny), xc, yc, cs, vv, ww, r, u, w, ext, (nx,ny); max_threads=1)
+
+            # Table-level paths: this is where the first-call cost actually sits.
+            if _pc_gas !== nothing
+                getvar(_pc_gas, :rho)
+                getvar(_pc_gas, :mass)
+                getvar(_pc_gas, :cellsize)
+                getvar(_pc_gas, :vx)
+                projection(_pc_gas, :sd, verbose=false, show_progress=false)
+            end
+        catch
+        end
+        # A once-per-session hint records itself in a const Set, which would otherwise be
+        # serialised into the image and silence the hint for every user. Clear it so the
+        # build leaves no trace in observable behaviour.
+        try
+            empty!(_HINT_SHOWN)
         catch
         end
     end
