@@ -115,7 +115,7 @@ regime you are in:
 | 12 | 502.6 s | 240.4 s | 2.09x |
 | 13 | 709.6 s | 442.1 s | **1.61x** |
 
-#### Why it degrades: reading is allocation bound, not I/O bound
+#### Why it degrades: on this machine, reading is allocation bound
 
 Garbage collection is not the explanation. Its share of the read *falls* from 29% at
 level 6 to 12% at level 13, the opposite of what would be needed.
@@ -126,8 +126,10 @@ data volume, read time tracks bytes allocated almost exactly:
 - **1.30 GB/s sustained**, with the rate never leaving 1.21 to 1.36 GB/s
 - **R² = 0.9985** for read time against bytes allocated
 
-So a RAMSES read costs what it costs to allocate, and that rate does not improve when you
-add threads. At low `lmax` there is little to allocate and the per-file parsing work, which
+So on this machine a RAMSES read costs what it costs to allocate, and that rate does not
+improve when you add threads. The relationship is tight enough to be a real property of
+the reader rather than a coincidence, but it was measured on local storage, where I/O is
+cheap. See the caveats below before carrying it to a networked filesystem. At low `lmax` there is little to allocate and the per-file parsing work, which
 does parallelise, dominates, so threading pays. At full resolution the 665 GB of
 allocation dominates, and threads cannot make the allocator go faster.
 
@@ -161,9 +163,31 @@ exists but not where it saturates. And N concurrent reads need N times the peak 
 memory, 115 GB each at full resolution here, so the thread budget stops being the binding
 constraint and RAM starts.
 
-The script is
-[`benchmark_results/parallel_outputs.jl`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/benchmark_results/parallel_outputs.jl)
-if you want to find the crossover on your own machine.
+#### Where this may not hold
+
+Everything above is one simulation on one machine, and three of its properties are doing
+real work in the result. Check yours before assuming the conclusion transfers.
+
+**File count.** This snapshot has `ncpu = 5120` and 20489 files. Per-file parsing is a
+large share of the read, and it is the part that parallelises. A run with `ncpu` in the
+tens has far less of it, so the balance between parsing and allocation shifts and the
+thread sweep will look different.
+
+**The AMR structure.** How much data sits at each level decides how the cost divides
+between walking the hierarchy and allocating cells. A shallower or more uniformly
+refined run will not give the same curve across `lmax`.
+
+**The filesystem, and this is the one most likely to flip the answer.** These
+measurements are on local btrfs, where reading is allocation bound rather than I/O bound.
+On Lustre, GPFS or NFS, thousands of file opens become round trips to a shared metadata
+server, and I/O can dominate instead. If it does, running several processes at once may
+*hurt* rather than help, because they contend for the same metadata service. The
+allocation ceiling is a property of Julia; the I/O ceiling is a property of your storage,
+and which one binds first is a question about your machine.
+
+Measure before adopting the pattern. The script is
+[`benchmark_results/parallel_outputs.jl`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/benchmark_results/parallel_outputs.jl),
+and it takes a few minutes.
 
 The practical consequence: at full resolution, **the way to read faster is to allocate
 less or to run more processes, not to add threads to one read**. Reading a subregion or a capped `lmax` reduces allocation

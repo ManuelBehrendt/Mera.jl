@@ -28,6 +28,12 @@ gained 1.71x with half the threads each.
 
 ## Limits
 
+One simulation, one machine, one filesystem. `ncpu = 5120` gives this run an unusually
+large share of per-file parsing, which is the part that parallelises; a run with far fewer
+CPU files will behave differently. Most importantly the storage is **local btrfs**, where
+reading is allocation bound. On Lustre, GPFS or NFS the limit may be metadata I/O instead,
+and concurrent processes could then contend rather than scale.
+
 Two data points at one refinement level. It shows the effect exists, not where it
 saturates. Four or eight processes may do better or may not; the crossover is untested.
 

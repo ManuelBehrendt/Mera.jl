@@ -264,9 +264,15 @@ Measured on a 32-thread server, reading two snapshots with a 16-thread budget:
 1.71x, from halving the threads per read. For comparison, the whole 1 to 16 thread sweep
 on a single read gained 1.61x. See [Performance](../benchmarks/performance.md).
 
-So when you have many snapshots to get through, launch one process per snapshot with a
+So when you have many snapshots to get through, try one process per snapshot with a
 modest thread count each, rather than one process working through them with everything.
-Watch memory instead: N concurrent reads need N times the peak.
+
+Two things decide whether that transfers to your setup. **Memory**: N concurrent reads
+need N times the peak, so RAM becomes the binding constraint before threads do. And
+**your filesystem**: this was measured on local storage, where reading is allocation
+bound. On a networked filesystem such as Lustre or GPFS, thousands of file opens may make
+I/O the limit instead, and then several processes contend for one metadata server and can
+be slower than one. Measure it rather than assume, it takes a few minutes.
 
 Treat it as a starting point, not a law. Reading is I/O bound, so on slow or networked
 storage fewer concurrent readers often beat the arithmetic: try `max_threads=1` with **four**
