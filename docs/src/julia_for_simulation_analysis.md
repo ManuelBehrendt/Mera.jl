@@ -118,15 +118,17 @@ Two consequences:
   cost, more than it would for a package whose time goes on arithmetic. That is the
   reason to run a recent Julia rather than the oldest supported one, and Mera keeps 1.10
   as its floor only so it keeps working, not because it is the version to choose.
-- **Give the GC threads.** Julia runs garbage collection in parallel, and the thread count
-  is set at startup, separately from compute threads:
+- **Know what the GC threads are.** Julia collects in parallel, and the mark phase gets
+  as many threads as you have compute threads by default, so you already have them:
 
   ```
-  julia -t 16,8      # 16 compute threads, 8 GC threads
+  julia -t 16                    # 16 compute, and 16 GC by default
+  julia -t 16 --gcthreads=8      # 16 compute, 8 for the GC mark phase
   ```
 
-  `Threads.ngcthreads()` reports what you got. The reference benchmarks ran with 24 of
-  each. On an allocation-bound workload this is not a detail.
+  `-t N,M` does **not** set GC threads; the second number is the interactive pool. Use
+  `--gcthreads` or `JULIA_NUM_GC_THREADS`, and check with `Threads.ngcthreads()`. The
+  reference benchmarks ran 24 compute and 24 GC, which is simply the default.
 
 Mera's own numbers come from Julia 1.12, and the package is tested on 1.10, 1.11 and 1.12
 on every push. What is not published is a like-for-like comparison **between** those

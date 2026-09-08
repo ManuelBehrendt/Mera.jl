@@ -332,11 +332,14 @@ That is why the reading thread sweep flattens where it does, and it is the reaso
 the collector its own threads:
 
 ```
-julia -t 16,8      # 16 compute threads, 8 GC threads
+julia -t 16                      # 16 compute threads, and 16 GC threads by default
+julia -t 16 --gcthreads=8        # 16 compute, 8 for the GC mark phase
 ```
 
-The second number is the GC pool, set at startup like the first, and
-`Threads.ngcthreads()` reports what you got. The reference benchmarks ran 24 of each. It
+GC threads default to the compute thread count, so you already have them. Note that
+`-t N,M` does **not** set them: the second number there is the interactive thread pool.
+The flag is `--gcthreads`, or `JULIA_NUM_GC_THREADS`, and `Threads.ngcthreads()` reports
+what you actually got. The reference benchmarks ran 24 compute and 24 GC, the default. It
 also follows that a recent Julia is worth running: allocator and collector work lands
 straight on Mera's dominant cost. The package keeps 1.10 as its supported floor so it
 keeps working, not because it is the version to choose. See
