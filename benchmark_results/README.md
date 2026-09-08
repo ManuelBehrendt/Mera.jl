@@ -19,8 +19,11 @@ Three properties of that setup do real work in the results:
 
 - **the file count.** Per-file parsing is a large share of the read here, and it is the
   part that parallelises. A run with far fewer CPU files behaves differently.
-- **the AMR structure.** How much data sits at each level decides how cost splits between
-  walking the hierarchy and allocating cells.
+- **the AMR structure.** It decides how cost splits between walking the hierarchy and
+  allocating cells, and it also drives the disk saving: a MERA file stores only leaf
+  cells, so a deeply refined run loses many internal grids and shrinks a lot, while a
+  nearly uniform run has few to drop and would shrink much less. The reduction is not
+  mainly compression.
 - **the filesystem**, which is most likely to change the answer. On local storage reading
   is allocation bound. On Lustre, GPFS or NFS, thousands of file opens may make metadata
   I/O the limit instead, and conclusions that follow from an allocation ceiling, notably

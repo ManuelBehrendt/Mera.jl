@@ -29,20 +29,52 @@ To measure your own machine instead, go to [Run Your Own Benchmarks](run_your_ow
 
     Every number below is produced by a function you can run on your own data.
 
-## Disk: a MERA file is 76% smaller
+## Disk: a MERA file is 76% smaller on this simulation
 
-The most checkable claim first, because it needs no timing and does not depend on your
-hardware at all. One `du` reproduces it.
+The most checkable claim first, because it needs no timing and no special hardware. One
+`du` reproduces it.
 
 | output 390, all components | RAMSES | MERA `.jld2` | |
 |---|---:|---:|---|
 | size on disk | 53.18 GB | 12.73 GB | **76% smaller, 4.2x** |
 
-LZ4 compressed, hydro, gravity and particles on both sides, plus the AMR files the
-RAMSES side needs to describe its grid.
+Hydro, gravity and particles on both sides, plus the AMR files the RAMSES side needs to
+describe its grid. The snapshot splits as hydro 24.94 GB (47%), gravity 17.52 GB (33%),
+AMR 10.66 GB (20%) and particles 65 MB (0.1%).
 
-The snapshot splits as hydro 24.94 GB (47%), gravity 17.52 GB (33%), AMR 10.66 GB (20%)
-and particles 65 MB (0.1%), which is worth knowing before deciding what to convert.
+### Where the saving comes from, and why it is simulation specific
+
+It is not mainly compression. Two separate things are happening, and only one of them is:
+
+1. **A MERA file stores only leaf cells.** RAMSES output holds the whole AMR hierarchy,
+   every internal grid of the tree as well as the cells you analyse. Mera keeps a cell
+   only where it is not refined further, so the internal levels are never written.
+2. **What remains is LZ4 compressed.**
+
+Measured separately on a small public fixture, by saving once with `compress=false` and
+once normally:
+
+| | size | |
+|---|---:|---|
+| RAMSES, hydro + AMR | 1.6 MB | |
+| MERA, uncompressed | 625.6 KB | leaf cells only, **61% of the reduction** |
+| MERA, LZ4 | 295.7 KB | compression adds the rest |
+
+So the larger share comes from **not storing the tree**, and that share depends entirely
+on the AMR structure. A deeply refined run carries many internal grids and loses a lot by
+dropping them; a shallow or nearly uniform run carries few and would save much less. The
+76% above is a property of this simulation as much as of the format.
+
+Check yours the same way:
+
+```julia
+gas = gethydro(getinfo(output, path))
+savedata(gas, "/tmp/raw",  :write, compress=false)   # leaf cells, no compression
+savedata(gas, "/tmp/lz4",  :write)                   # and compressed
+```
+
+The two effects also explain why the read is fast: a MERA file has less to read *and*
+less to reconstruct, because there is no hierarchy to walk.
 
 ## Projection: threads only pay when there is work per cell
 

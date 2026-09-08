@@ -31,6 +31,11 @@ particles 65 MB (0.1%).
 | garbage collection | 61.8 s | 1.6 s | |
 | on disk | 53.18 GB | 12.73 GB | 76% smaller |
 
+The disk reduction is not mainly compression. A MERA file stores only leaf cells, while
+RAMSES output holds the whole AMR hierarchy, so most of the saving comes from not writing
+the internal grids of the tree. That share depends on the AMR structure and is specific to
+this simulation.
+
 Break-even 1.1 re-reads. Reading scales 1.61x from 1 to 16 threads, and 16 is the sweet
 spot; 24 threads is slower than 16.
 
