@@ -120,8 +120,7 @@ Mera v1.8.0 | Julia 1.12.7 | 4 threads
 ```
 
 `info` already knows everything about the snapshot (levels, box size, which files exist,
-the unit system) without touching the heavy data. When you want several components, one
-`loadall` call reads them all with the same selection, see [Pipelines](pipelines.md). Loading is the explicit step, and the place
+the unit system) without touching the heavy data. Loading is the explicit step, and the place
 to bound memory with a level cap and/or a spatial window:
 
 ```julia
@@ -141,6 +140,9 @@ Memory used: 12.146 GB
 ```
 (12.145861252211034, "GB")
 ```
+
+That call reads one component. When you want several, `loadall` reads them all with
+the same selection, see [Pipelines](pipelines.md).
 
 Derived quantities are computed on demand from the loaded columns, with units as
 symbols (every available scale is listed by `viewfields(info.scale)`):
