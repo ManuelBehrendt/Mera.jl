@@ -42,6 +42,17 @@ path = "$MERA_EXAMPLES/RAMSES/mw_L10"
 output = 300;
 ```
 
+```
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+```
+
 ## Step 1: what you get for free
 
 `read=false` reads only the header. No cell is touched, no particle is read, and it returns
@@ -87,12 +98,13 @@ q = quicklook(output; path=path);
 ```
 
 ```
-[Mera]: quicklook output 300, reading gas: 2026-08-31T14:15:39.607
+[Mera]: quicklook output 300, reading gas: 2026-09-09T18:46:06.212
    640 CPU file(s), levels 6-8 of 10  (budgeted to ~2000000 cells)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:12 (19.08 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:12 (19.00 ms/it)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 9959076 cells
-[Mera]: quicklook output 300, reading particles: 2026-08-31T14:16:00.987
+[Mera]: quicklook output 300, reading particles: 2026-09-09T18:46:25.464
+[ Info: sfr_snapshot: using eta_sn=0.2 from the run's namelist to rebuild birth masses from the current :mass. Stars older than 5.0 Myr are scaled by 1/(1-eta_sn), which RAISES the rate. Pass eta_sn=0 to switch this off, or eta_sn=<value> to set it.
 ┌─ Mera quicklook ── output 300 (RAMSES) ───────────────
 │ box        : 48.0 kpc      levels 6–10  (finest 46.88 pc)
 │ grid       : ndim 3 · ncpu 640 · nvarh 7
@@ -103,9 +115,9 @@ Processing files: 100%|███████████████████
 │ nH range   : 8.112e-8 … 19.47 cm⁻³  ⚠ peaks smoothed (lower bound)
 │ T  range   : 30.22 … 2.41e7 K  ⚠ peaks smoothed (lower bound)
 │ star mass  : 4.385e8 M⊙        DM mass : 0.0 M⊙
-│ current SFR: 1.377 (10 Myr) · 1.148 (100 Myr) M⊙/yr
-└─ 27.54 s ──────────────────────────────────
-[Mera]: quicklook output 300 finished: 2026-08-31T14:16:07.144
+│ current SFR: 1.55 (10 Myr) · 1.418 (100 Myr) M⊙/yr
+└─ 26.14 s ──────────────────────────────────
+[Mera]: quicklook output 300 finished: 2026-09-09T18:46:32.349
 ```
 
 ### What came back
@@ -127,7 +139,7 @@ q.summary
 ```
 
 ```
-(output = 300, simcode = "RAMSES", box_kpc = 48.00000000003111, levelmin = 6, levelmax = 10, finest_cell_pc = 46.87500000003038, ncpu = 640, ndim = 3, nvarh = 7, time_Myr = 445.8861174695, redshift = nothing, npart = 544515, nstars = 544515, ndm = 0, nsinks = 0, ncells = 9959076, lmax_used = 8, sampled = true, gas_mass_Msol = 7.060719565110762e9, particle_subsample = 1.0, stellar_mass_Msol = 4.38466e8, dm_mass_Msol = 0.0, sfr10 = 1.377, sfr100 = 1.14778, nH_range = (8.111842617338044e-8, 19.474166141696692), T_range_K = (30.216649542865262, 2.4096147641221385e7), bmag_range_muG = nothing, beta_range = nothing, seconds = 27.52463388442993)
+(output = 300, simcode = "RAMSES", box_kpc = 48.00000000003111, levelmin = 6, levelmax = 10, finest_cell_pc = 46.87500000003038, ncpu = 640, ndim = 3, nvarh = 7, time_Myr = 445.8861174695, redshift = nothing, npart = 544515, nstars = 544515, ndm = 0, nsinks = 0, ncells = 9959076, lmax_used = 8, sampled = true, gas_mass_Msol = 7.060719565110762e9, particle_subsample = 1.0, stellar_mass_Msol = 4.38466e8, dm_mass_Msol = 0.0, sfr10 = 1.54955, sfr100 = 1.417555, nH_range = (8.111842617338044e-8, 19.474166141696692), T_range_K = (30.216649542865262, 2.4096147641221385e7), bmag_range_muG = nothing, beta_range = nothing, seconds = 26.127853870391846)
 ```
 
 ```julia
@@ -145,7 +157,7 @@ q.budget
 ```
 
 ```
-(gas_mass_Msol = 7.060719565110762e9, stellar_mass_Msol = 4.38466e8, dm_mass_Msol = 0.0, n_stars = 544515, n_dm = 0, sfr10 = 1.377, sfr100 = 1.14778, sfr_mean = 0.986498525911278, has_particles = true)
+(gas_mass_Msol = 7.060719565110762e9, stellar_mass_Msol = 4.38466e8, dm_mass_Msol = 0.0, n_stars = 544515, n_dm = 0, sfr10 = 1.54955, sfr100 = 1.417555, sfr_mean = 1.2292556033118338, has_particles = true)
 ```
 
 ### Plotting it
@@ -233,7 +245,7 @@ q_sub.budget
 ```
 
 ```
-(gas_mass_Msol = nothing, stellar_mass_Msol = 4.7834e8, dm_mass_Msol = 0.0, n_stars = 594020, n_dm = 0, sfr10 = 1.4944, sfr100 = 1.259296, sfr_mean = 1.0782870241030595, has_particles = true)
+(gas_mass_Msol = nothing, stellar_mass_Msol = 4.7834e8, dm_mass_Msol = 0.0, n_stars = 594020, n_dm = 0, sfr10 = 1.6883, sfr100 = 1.55615, sfr_mean = 1.3437966627699716, has_particles = true)
 ```
 
 ### How far to trust a coarse read
@@ -357,7 +369,7 @@ calibrate!(output; path=path)
 ```
 
 ```
-CostModel(0.005, 3.0e-7, 1.0e-6, 1.0e-8, 5.0e-9, 5.0e-8, 1.0e-6, Dict(:map => 17.453832180060985, :phase => 14.020969628182414, :read => 0.6741532372499657, :profile => 69.10562215673266, :scalar => 1.3110765100102504), true)
+CostModel(0.005, 3.0e-7, 1.0e-6, 1.0e-8, 5.0e-9, 5.0e-8, 1.0e-6, Dict(:map => 19.392021885441416, :phase => 14.540485944328022, :read => 0.6238442032603373, :profile => 64.4918934967661, :scalar => 1.3610936986940925), true)
 ```
 
 ```julia
@@ -366,7 +378,7 @@ estimate(plan)
 ```
 
 ```
-(per_card = [("hydro_sd_map", :map, :hydro, 1.36352e6, 1.3818408382940441), ("rho_T_phase", :phase, :hydro, 1.36352e6, 0.1000760728181148)], read_s = 2.708823212432934, compute_s = 1.4819169111121588, total_s = 4.190740123545093, level = 8, cells = 1363520, sampled = true, calibrated = true)
+(per_card = [("hydro_sd_map", :map, :hydro, 1.36352e6, 1.5352896430966594), ("rho_T_phase", :phase, :hydro, 1.36352e6, 0.1037841724762357)], read_s = 2.5066758792508006, compute_s = 1.639073815572895, total_s = 4.145749694823696, level = 8, cells = 1363520, sampled = true, calibrated = true)
 ```
 
 If the estimate is larger than you want to wait, `downsample` reduces the plan to fit a target
