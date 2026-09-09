@@ -55,9 +55,6 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (4), wrong source (1), dep missing source (1), mismatched flags (2))
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (8), wrong source (2), dep missing source (2), mismatched flags (4))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -66,9 +63,6 @@ SYSTEM: caught exception of type :MethodError while trying to print a failed Tas
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (1))
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (2))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 [ Info: Mera v1.8.0
 first call: 13.67 s   second call: 0.061 s
 ```

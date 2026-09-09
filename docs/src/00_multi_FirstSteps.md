@@ -32,12 +32,7 @@ pkgversion(Mera)
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (1), dep missing source (1), mismatched flags (6))
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), dep missing source (2), mismatched flags (12))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -45,7 +40,6 @@ SYSTEM: caught exception of type :MethodError while trying to print a failed Tas
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 ```
 
 ```
@@ -433,13 +427,7 @@ fig
 ```
 
 ```
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (3), incompatible header (6))
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), incompatible header (12))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 [ Info: Mera v1.8.0
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 ```
 
 ![](00_multi_FirstSteps_files/00_multi_FirstSteps_12_6.png)

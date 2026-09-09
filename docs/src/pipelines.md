@@ -77,9 +77,6 @@ zoom = withargs(args; xrange=[-4., 4.], yrange=[-4., 4.])
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (4), wrong source (1), dep missing source (1), mismatched flags (2))
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (8), wrong source (2), dep missing source (2), mismatched flags (4))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -88,10 +85,6 @@ SYSTEM: caught exception of type :MethodError while trying to print a failed Tas
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (2))
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (4))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.8.0
 ```
 
 ```
@@ -124,11 +117,12 @@ the same things:
 
 ```julia
 d = loadall(path, 300)
-keys(d)          # (:hydro, :gravity, :particles, :info)  — or fewer
+keys(d)          # (:hydro, :gravity, :particles, :info), or fewer
 ```
 
-All six readers are covered, and each is only attempted when `info` says the snapshot holds
-it:
+**All six readers are covered**, not just the three above. Clump catalogues, sink particles
+and radiative-transfer data come back the same way, and each reader is only attempted when
+`info` says the snapshot holds it:
 
 | component | reader |
 |---|---|
@@ -218,7 +212,7 @@ loadall(path, 300; components=(:hydro,), lmax=9)      # keywords work inline too
 
 ```
 loadall: output 300 (RAMSES output), components: hydro, particles
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.24 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.54 ms/it)
 ✓ File processing complete! Combining results...
 ┌ Warning: getparticles: the `lmax` level cap is not yet supported for particles; loading the full level range (lmax=10). The `lmax` argument is currently ignored.
 └ @ Mera ~/code-github/Mera.jl/src/read_data/RAMSES/getparticles.jl:246
@@ -235,6 +229,38 @@ msum(hydro, :Msol)
 
 ```
 6.7859604858483305e9
+```
+
+### More than gas, gravity and stars
+
+Most snapshots hold hydro, gravity and particles, which is why the examples name those.
+Nothing is limited to them. Ask for clumps, sinks or radiative transfer by name, in the
+function or in the macro:
+
+```julia
+(; hydro, rt)     = loadall(path, 7;   components=(:hydro, :rt))
+(; clumps, sinks) = loadall(path, 300; components=(:clumps, :sinks))
+
+@loadall path 7 hydro rt          # the macro takes them too
+@loadall path 300 hydro clumps sinks
+```
+
+Left to itself `loadall` reads whatever `info` reports, so **one line covers snapshots that
+hold different things**. Three public test simulations, the same call on each:
+
+```julia
+# three small public fixtures, each carrying something different
+for (name, out) in (("stromgren3d", 7), ("clumps3d", 4), ("sinks3d", 2))
+    path = download_testdata(name, verbose=false)
+    d    = loadall(path, out, verbose=false, show_progress=false)
+    println("$(rpad(name, 14)) output $out  ->  $(keys(d))")
+end
+```
+
+```
+stromgren3d    output 7  ->  (:hydro, :rt, :info)
+clumps3d       output 4  ->  (:hydro, :gravity, :clumps, :info)
+sinks3d        output 2  ->  (:hydro, :gravity, :particles, :sinks, :info)
 ```
 
 ## The macro, and when not to reach for it
@@ -255,12 +281,17 @@ Bundles work here too, so the macro loses nothing:
 ```julia
 @loadall path 300 hydro gravity myargs=args
 @loadall path 300 hydro particles lmax=10 range_unit=:kpc
+@loadall path 300 hydro rt clumps sinks
 ```
 
-The one place to think twice is **inside a function or a package**, where a macro that
-introduces locals interacts with scoping and closures in ways a plain assignment does not,
-and where static analysis has less to go on. There the explicit form is the safer default,
-and it costs a few characters:
+The macro creates the variables as it expands, so there is no assignment to `hydro` or
+`gravity` written anywhere in your file. In a script or a notebook that reads fine: the
+`@loadall` line sits right above and names everything it creates.
+
+**Inside a longer function, or in package code, prefer the explicit form.** Someone reading
+it sees where `hydro` came from on the line itself, and editors, linters and "go to
+definition" can follow a plain assignment, which they cannot always do through a macro. It
+costs a few characters:
 
 ```julia
 (; hydro, gravity, particles) = loadall(path, 300; myargs=args)
@@ -277,7 +308,7 @@ length(hydro.data)
 
 ```
 loadall: output 300 (RAMSES output), components: hydro
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (26.09 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:21 (33.46 ms/it)
 ✓ File processing complete! Combining results...
 ```
 
@@ -348,7 +379,7 @@ anything else `projection` accepts:
 ```
 
 ```
-[Mera]: 2026-09-09T17:09:48.038
+[Mera]: 2026-09-09T17:33:44.255
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.25 :: 0.75  	==> 12.0 [kpc] :: 36.0 [kpc]
@@ -382,7 +413,7 @@ end
 fig
 ```
 
-![](pipelines_files/pipelines_11_1.png)
+![](pipelines_files/pipelines_13_1.png)
 
 ```julia
 # off-axis needs no separate macro: the keywords pass straight through
@@ -391,7 +422,7 @@ size(sd)
 ```
 
 ```
-[Mera]: 2026-09-09T17:10:00.683
+[Mera]: 2026-09-09T17:33:58.540
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.25 :: 0.75  	==> 12.0 [kpc] :: 36.0 [kpc]
