@@ -1,4 +1,15 @@
+```@raw html
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: pipelines.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+```
+
 # Pipelines: writing less of the same thing
+
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook**: [open / download `pipelines.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/pipelines.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 
 Most analysis scripts open the same way. A `getinfo`, then one getter per component, each
 repeating the selection you already decided on:
@@ -13,6 +24,12 @@ part = getparticles(info, lmax=10, xrange=[-10., 10.], center=[:bc], range_unit=
 Nothing there is wrong, but three quarters of it is repetition, and repetition is where a
 selection quietly drifts between components. Mera gives you two independent ways to remove
 it, and they compose.
+
+!!! tip "Run this yourself"
+    This page is also an executable **Jupyter notebook**:
+    [open / download `pipelines.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/pipelines.ipynb).
+    The notebooks run end-to-end and double as part of Mera's test suite, so every number and
+    figure below was produced by the code above it.
 
 ## One bundle for the selection
 
@@ -39,6 +56,47 @@ zoom   = withargs(args; xrange=[-2., 2.], yrange=[-2., 2.])
 
 Without it that is a `deepcopy` and an assignment, with the original one slip away from
 being edited in place.
+
+```julia
+using Mera, CairoMakie
+CairoMakie.activate!()
+
+# This page runs on mw_L10 output 300, a 48 kpc Milky-Way box with 640 CPU files.
+# Point MW at any RAMSES output or converted MERA file of your own: every step below
+# works the same either way.
+MW = get(ENV, "MERA_MW", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10")
+
+# the selection, written once
+args = ArgumentsType(lmax=9,
+                     xrange=[-12., 12.], yrange=[-12., 12.], zrange=[-2., 2.],
+                     center=[:bc], range_unit=:kpc)
+
+# a variant, without touching the original
+zoom = withargs(args; xrange=[-4., 4.], yrange=[-4., 4.])
+(args.xrange, zoom.xrange)
+```
+
+```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (4), wrong source (1), dep missing source (1), mismatched flags (2))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (8), wrong source (2), dep missing source (2), mismatched flags (4))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (2))
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (4))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
+```
+
+```
+([-12.0, 12.0], [-4.0, 4.0])
+```
 
 ## One call for the loading
 
@@ -151,6 +209,34 @@ loadall(path, 300; components=(:hydro, :particles), myargs=args)
 loadall(path, 300; components=(:hydro,), lmax=9)      # keywords work inline too
 ```
 
+```julia
+# getinfo and every getter in one call, honouring the bundle
+(; hydro, particles, info) = loadall(MW, 300; components=(:hydro, :particles), myargs=args)
+
+(cells = length(hydro.data), particles = length(particles.data), levelmax = info.levelmax)
+```
+
+```
+loadall: output 300 (RAMSES output), components: hydro, particles
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.24 ms/it)
+✓ File processing complete! Combining results...
+┌ Warning: getparticles: the `lmax` level cap is not yet supported for particles; loading the full level range (lmax=10). The `lmax` argument is currently ignored.
+└ @ Mera ~/code-github/Mera.jl/src/read_data/RAMSES/getparticles.jl:246
+```
+
+```
+(cells = 2761245, particles = 541797, levelmax = 10)
+```
+
+```julia
+# a number from the same region
+msum(hydro, :Msol)
+```
+
+```
+6.7859604858483305e9
+```
+
 ## The macro, and when not to reach for it
 
 [`@loadall`](@ref) is a thin wrapper that expands to exactly the destructuring above:
@@ -182,6 +268,22 @@ and it costs a few characters:
 
 Both forms call the same function and return the same objects; pick whichever reads better
 where you are.
+
+```julia
+# the macro form binds the names directly
+@loadall MW 300 hydro myargs=args
+length(hydro.data)
+```
+
+```
+loadall: output 300 (RAMSES output), components: hydro
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (26.09 ms/it)
+✓ File processing complete! Combining results...
+```
+
+```
+2761245
+```
 
 ## One call for the projection
 
@@ -237,6 +339,73 @@ anything else `projection` accepts:
 
     The test suite pins the equivalence rather than assuming it: for each argument shape,
     the macro's result must equal the explicit call's.
+
+```julia
+# maps in physical units, bound to names; `proj` carries the extent and the rest
+@project hydro sd=>:Msol_pc2 T=>:K myargs=args
+
+(sd = size(sd), T = size(T), extent_kpc = round.(proj.extent, digits=1))
+```
+
+```
+[Mera]: 2026-09-09T17:09:48.038
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+domain:
+xmin::xmax: 0.25 :: 0.75  	==> 12.0 [kpc] :: 36.0 [kpc]
+ymin::ymax: 0.25 :: 0.75  	==> 12.0 [kpc] :: 36.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+Selected var(s)=(:sd, :T)
+Weighting      = :mass
+Effective resolution: 512^2
+Map size: 256 x 256
+Pixel size: 93.75 [pc]
+Simulation min.: 93.75 [pc]
+Available threads: 8
+Requested max_threads: 8
+Variables: 2 (T, sd)
+Processing mode: Variable-based parallel (2 threads)
+```
+
+```
+(sd = (256, 256), T = (256, 256), extent_kpc = [12.0, 36.0, 12.0, 36.0])
+```
+
+```julia
+fig = Figure(size=(950, 420))
+for (i, (m, lab, cm)) in enumerate(((sd, "log Σ  [M⊙/pc²]", :inferno),
+                                    (T,  "log T  [K]",      :plasma)))
+    ax = Axis(fig[1, i], aspect=DataAspect(), xlabel="x [kpc]", ylabel="y [kpc]",
+              title = i == 1 ? "mw_L10 output 300, face-on" : "")
+    hm = heatmap!(ax, proj.extent[1:2], proj.extent[3:4], log10.(max.(m, eps())); colormap=cm)
+    Colorbar(fig[2, i], hm, label=lab, vertical=false)
+end
+fig
+```
+
+![](pipelines_files/pipelines_11_1.png)
+
+```julia
+# off-axis needs no separate macro: the keywords pass straight through
+@project hydro sd=>:Msol_pc2 inclination=60 azimuth=30 myargs=args
+size(sd)
+```
+
+```
+[Mera]: 2026-09-09T17:10:00.683
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+domain:
+xmin::xmax: 0.25 :: 0.75  	==> 12.0 [kpc] :: 36.0 [kpc]
+ymin::ymax: 0.25 :: 0.75  	==> 12.0 [kpc] :: 36.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+Selected var(s)=(:sd,)
+Weighting      = :mass
+Off-axis LOS   = [0.433, -0.75, 0.5]  (binning=:overlap)
+Effective resolution: 512^2  →  map size: 353 x 215
+```
+
+```
+(353, 215)
+```
 
 ## Selecting inside the table
 
