@@ -155,6 +155,9 @@ show_threading_info
 ```
 
 ---
+[`@project`](@ref) projects several quantities in one line and binds each map to a name of
+its own. See [Pipelines](../pipelines.md).
+
 *For complete function documentation: see the [Complete API Reference](../api.md).*
 
 ## Function Reference

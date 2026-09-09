@@ -73,6 +73,18 @@ info = getinfo(300, "/path/to/simulation")   # reads output_00300
 gas  = gethydro(info)
 ```
 
+Loading several components means writing the same selection on each call. One call does all of
+it, and the same line works on a converted MERA file:
+
+```julia
+(; hydro, particles, info) = loadall("/path/to/simulation", 300;
+                                     lmax=10, xrange=[-10., 10.],
+                                     center=[:bc], range_unit=:kpc)
+```
+
+See [Pipelines](pipelines.md) for that, for the matching projection shorthand, and for keeping
+one selection in step across a whole script.
+
 **Next: [First Look](first_look.md).** It shows what one command tells you about an unfamiliar
 output, and what it costs on a large one. From there the sidebar follows the order you will
 actually work in: inspect, load, select, compute, project.

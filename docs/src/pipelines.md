@@ -348,7 +348,7 @@ anything else `projection` accepts:
 
 ```julia
 @project gas sd inclination=60 azimuth=30 binning=:exact
-@project gas sd res=512 direction=:x
+@project gas sd pxsize=[100., :pc] direction=:x
 @project gas sd mask=my_mask xrange=[-5., 5.] center=[:bc] range_unit=:kpc
 ```
 
@@ -433,16 +433,6 @@ Effective resolution: 512^2  →  map size: 353 x 215
 (353, 215)
 ```
 
-## Selecting inside the table
-
-Two more macros work on a loaded object rather than on the loading. They are documented with
-the features they belong to, and listed here so the pipeline story is in one place:
-
-| | |
-|---|---|
-| [`@filter`](@ref), [`@where`](@ref), [`@apply`](@ref) | value-based selection on the table, see [Masking and Filtering](05_multi_Masking_Filtering.md) |
-| [`@region`](@ref) | compose geometric regions, see [Get Subregions](03_hydro_Get_Subregions.md) |
-
 ## A whole opening, in three lines
 
 ```julia
@@ -455,6 +445,16 @@ args = ArgumentsType(lmax=10, xrange=[-10., 10.], yrange=[-10., 10.],
 The selection appears once, the loading appears once, and the projection reuses both. Three
 lines that in full would be a `getinfo`, two getters repeating the same six keywords, a
 `projection` repeating them again, and two dictionary lookups.
+
+## Selecting inside the table
+
+Two more macros work on a loaded object rather than on the loading. They are documented with
+the features they belong to, and listed here so the pipeline story is in one place:
+
+| | |
+|---|---|
+| [`@filter`](@ref), [`@where`](@ref), [`@apply`](@ref) | value-based selection on the table, see [Masking and Filtering](05_multi_Masking_Filtering.md) |
+| [`@region`](@ref) | compose geometric regions, see [Get Subregions](03_hydro_Get_Subregions.md) |
 
 ## A complete workflow
 

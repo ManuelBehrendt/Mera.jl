@@ -7,6 +7,10 @@ All of these take the [`InfoType`](@ref) returned by [`getinfo`](@ref) and accep
 selection keywords (`xrange`/`yrange`/`zrange`, `center`, `range_unit`, `lmax`), so you read
 only the part of the box you need rather than filtering afterwards.
 
+[`loadall`](@ref) calls `getinfo` and every getter at once, and [`withargs`](@ref) derives a
+variant of an argument bundle. [Pipelines](../pipelines.md) shows both in use, with the macro
+forms; [Bundling Arguments](../bundled_arguments.md) covers the bundle itself.
+
 ## Loaders
 
 ```@docs; canonical=false
