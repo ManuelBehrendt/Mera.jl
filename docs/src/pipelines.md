@@ -59,6 +59,19 @@ d = loadall(path, 300)
 keys(d)          # (:hydro, :gravity, :particles, :info)  — or fewer
 ```
 
+All six readers are covered, and each is only attempted when `info` says the snapshot holds
+it:
+
+| component | reader |
+|---|---|
+| `:hydro`, `:gravity`, `:particles` | `gethydro`, `getgravity`, `getparticles` |
+| `:clumps`, `:sinks`, `:rt` | `getclumps`, `getsinks`, `getrt` |
+
+The keywords you pass are forwarded only to the readers that accept them. `getsinks`, for
+instance, takes no `myargs`, and a sink catalogue has no spatial selection to apply anyway;
+passing a bundle for the other components does not disturb it. If a component does fail to
+read you get a warning and `nothing` in that field, never a silent gap.
+
 Ask for a subset by name, with or without a bundle:
 
 ```julia
@@ -74,17 +87,29 @@ loadall(path, 300; components=(:hydro,), lmax=9)      # keywords work inline too
 @loadall path 300 hydro gravity particles
 ```
 
-It is shorter, and that is its only advantage. It binds `hydro`, `gravity`, `particles` and
-`info` in your scope without an assignment a reader can point at, and static tooling cannot
-follow them.
+It binds `hydro`, `gravity`, `particles` and `info` in your scope. That is a normal thing
+for a Julia macro to do, in the same family as `@unpack`, `@variables` and `@parameters`,
+and it is fine in scripts and notebooks alike: the line that produced the names is right
+there above them.
 
-At the REPL or in a notebook, where you can see the line that produced the names, that trade
-is fine. In a script or a package, prefer the explicit form. It is a few characters longer
-and says where each name came from:
+Bundles work here too, so the macro loses nothing:
 
 ```julia
-(; hydro, gravity, particles) = loadall(path, 300)
+@loadall path 300 hydro gravity myargs=args
+@loadall path 300 hydro particles lmax=10 range_unit=:kpc
 ```
+
+The one place to think twice is **inside a function or a package**, where a macro that
+introduces locals interacts with scoping and closures in ways a plain assignment does not,
+and where static analysis has less to go on. There the explicit form is the safer default,
+and it costs a few characters:
+
+```julia
+(; hydro, gravity, particles) = loadall(path, 300; myargs=args)
+```
+
+Both forms call the same function and return the same objects; pick whichever reads better
+where you are.
 
 ## Selecting inside the table
 

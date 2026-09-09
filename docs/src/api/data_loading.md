@@ -12,6 +12,7 @@ only the part of the box you need rather than filtering afterwards.
 ```@docs; canonical=false
 loadall
 @loadall
+withargs
 gethydro
 getparticles
 getgravity

@@ -17,6 +17,7 @@ On a periodic run a structure sitting on a box face is split across opposite edg
 which is exact for an axis-aligned map because a whole-pixel shift is a translation of the box.
 
 ```@docs
+@project
 periodic_recenter
 ```
 

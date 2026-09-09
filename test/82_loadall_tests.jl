@@ -53,6 +53,44 @@ using Mera, Test
 
         # unknown components fail with a message naming the valid ones, not a MethodError
         @test_throws ErrorException loadall(multi, 2; components=(:nonsense,))
+
+        # withargs derives a variant without touching the original
+        base = ArgumentsType(lmax=6, range_unit=:kpc)
+        derived = withargs(base; lmax=5)
+        @test derived.lmax == 5
+        @test base.lmax == 6                      # original untouched
+        @test derived.range_unit == :kpc          # other fields carried over
+        @test_throws ErrorException withargs(base; nonsense=1)
+
+        # @project must agree with the explicit projection, which is its whole contract
+        gasx = d.hydro
+        ref = projection(gasx, [:sd, :T], verbose=false, show_progress=false)
+        @project gasx sd T verbose=false show_progress=false
+        @test sd == ref.maps[:sd]
+        @test T  == ref.maps[:T]
+        @test proj isa Mera.HydroMapsType         # the full object stays reachable
+        # keywords reach the call, so off-axis needs no separate macro
+        @project gasx sd inclination=60 azimuth=30 verbose=false show_progress=false
+        @test size(sd, 1) > 0
+    end
+
+    # every component the getter table claims, checked on a fixture that has it
+    for (fixture, output, expect) in (("clumps3d", 4, :clumps),
+                                      ("sinks3d", 1, :sinks),
+                                      ("ramses_rt_dirac", 1, :rt))
+        d = joinpath(datadir, "RAMSES-PUBLIC", fixture)
+        isdir(d) || continue
+        @testset "loadall detects :$expect" begin
+            info = getinfo(output, d, verbose=false)
+            r = loadall(d, output; verbose=false)
+            # what loadall returns must match what info says the snapshot holds
+            @test expect in keys(r)
+            @test r[expect] !== nothing
+            @test getfield(info, expect) == true
+            # and asking for it by name gives the same thing
+            one = loadall(d, output; components=(expect,), verbose=false)
+            @test Set(keys(one)) == Set((expect, :info))
+        end
     end
 
     if isdir(hydro_only)

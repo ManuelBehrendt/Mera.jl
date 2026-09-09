@@ -392,6 +392,8 @@ export
     benchmark_conversion,
     loadall,
     @loadall,
+    withargs,
+    @project,
     benchmark_report,
     benchmark_levels,
     collect_levels,

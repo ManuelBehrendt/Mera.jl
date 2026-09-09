@@ -94,10 +94,23 @@ function loadall(path::AbstractString, output::Int;
 
     vals = map(wanted) do c
         getfield(avail, c) || return nothing
+        g = _LOADALL_GETTERS[c]
+        # Not every getter takes the same keywords: getsinks has no myargs, and a sink
+        # catalogue has no spatial selection to apply anyway. Forward only what the method
+        # actually accepts, rather than assuming they are uniform.
+        accepted = Base.kwarg_decl(first(methods(g)))
+        kw = Any[]
+        :myargs in accepted && push!(kw, :myargs => myargs)
+        for (k, v) in kwargs
+            (k in accepted || :kwargs in accepted) && push!(kw, k => v)
+        end
+        :verbose in accepted && push!(kw, :verbose => false)
         try
-            _LOADALL_GETTERS[c](info; myargs=myargs, verbose=false, kwargs...)
+            g(info; kw...)
         catch e
-            verbose && println("  $c failed to read: ", typeof(e))
+            # never silent: a component that fails is reported even with verbose=false,
+            # because a quiet `nothing` looks identical to a component that is absent
+            @warn "loadall: reading $c failed, returning nothing for it" exception=e
             nothing
         end
     end
@@ -152,4 +165,95 @@ macro loadall(path, output, args...)
     # (; a, b, info) = loadall(...)  — the same destructuring a user would write by hand
     lhs = Expr(:tuple, Expr(:parameters, esc.([names..., :info])...))
     return Expr(:(=), lhs, call)
+end
+
+"""
+    withargs(args; kwargs...) -> ArgumentsType
+
+A copy of `args` with some fields changed, leaving the original untouched.
+
+Deriving a variant of a bundle otherwise means `deepcopy` and then assignment, two lines
+and a mutable original one step away from being edited by accident:
+
+```julia
+base = ArgumentsType(lmax=10, xrange=[-10., 10.], center=[:bc], range_unit=:kpc)
+coarse = withargs(base; lmax=7)          # same region, fewer levels
+zoom   = withargs(base; xrange=[-2., 2.], yrange=[-2., 2.])
+```
+
+`base` is unchanged in both cases.
+
+See also: [`ArgumentsType`](@ref), [`loadall`](@ref).
+"""
+function withargs(args::ArgumentsType; kwargs...)
+    out = deepcopy(args)
+    for (k, v) in kwargs
+        hasfield(ArgumentsType, k) ||
+            error("withargs: ArgumentsType has no field `$k`. Fields: " *
+                  join(fieldnames(ArgumentsType), ", "))
+        setfield!(out, k, v)
+    end
+    return out
+end
+
+"""
+    @project data quantity... [keyword=value...]
+
+Project several quantities and bind each map to a variable of that name.
+
+`projection` returns one object whose `maps` is a dictionary, so pulling several quantities
+out of it is a line of lookups:
+
+```julia
+pj = projection(gas, [:sd, :T], myargs=args)
+sd = pj.maps[:sd]; T = pj.maps[:T]
+```
+
+This does the same in one line, and asks for the quantities together, which is also the form
+that lets the projection use its threads (see
+[Performance](benchmarks/performance.md)):
+
+```julia
+@project gas sd T myargs=args
+# sd and T are now the maps, and proj is the full projection object
+```
+
+Keywords pass straight through, so off-axis works the same way:
+
+```julia
+@project gas sd inclination=60 azimuth=30 binning=:exact
+```
+
+The full object is bound as `proj`, so the extent, units and everything else stay reachable:
+
+```julia
+heatmap(proj.extent[1:2], proj.extent[3:4], sd)
+```
+
+Like [`@loadall`](@ref), this binds names in your scope. Inside a function or a package,
+prefer the explicit form above.
+
+See also: [`projection`](@ref), [`@loadall`](@ref).
+"""
+macro project(data, args...)
+    names, kws = Symbol[], Any[]
+    for a in args
+        if a isa Symbol
+            push!(names, a)
+        elseif a isa Expr && a.head === :(=)
+            push!(kws, Expr(:kw, a.args[1], esc(a.args[2])))
+        else
+            error("@project: expected quantity names and keyword arguments, got $a")
+        end
+    end
+    isempty(names) && error("@project: name at least one quantity, e.g. `@project gas sd`")
+    quants = Expr(:vect, QuoteNode.(names)...)
+    call = Expr(:call, :projection, esc(data), quants, kws...)
+    # bind `proj`, then one variable per requested map. `proj` must be escaped on BOTH
+    # sides: escaped only in the assignment, the lookups below resolve inside Mera instead
+    # of the caller's scope and fail with an UndefVarError.
+    pv = esc(:proj)
+    assigns = [Expr(:(=), esc(n), Expr(:ref, Expr(:., pv, QuoteNode(:maps)), QuoteNode(n)))
+               for n in names]
+    return Expr(:block, Expr(:(=), pv, call), assigns..., pv)
 end
