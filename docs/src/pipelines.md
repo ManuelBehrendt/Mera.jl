@@ -122,10 +122,27 @@ args = ArgumentsType(xrange=[-4., 4.], yrange=[-4., 4.], zrange=[-1., 1.],
 `info` comes back in the `NamedTuple` either way, so you never need to decide whether to
 call `getinfo` or `infodata` yourself.
 
-Keep in mind what that selection does on each side: on a RAMSES output it is applied while
-reading, so the rest is never touched, while a MERA file is read whole and then cut. See
+### Two differences to know about
+
+**The spatial selection costs differently.** On a RAMSES output it is applied while reading,
+so the rest is never touched. A MERA file is read whole and then cut. See
 [Performance](benchmarks/performance.md) for why, and for when to save the subregion as its
 own file instead.
+
+**`lmax` does not apply to a MERA file.** A converted file holds the levels it was written
+with, and `loaddata` has no level cap, so every stored level comes back. The same bundle
+therefore gives different cell counts on the two routes. Measured on `mw_L10` output 300, a
+24 x 24 x 4 kpc slab with `lmax=9`:
+
+| | cells | gas mass |
+|---|---:|---:|
+| RAMSES output | 2,761,245 | 6.786e9 M⊙ |
+| MERA file | 8,329,355 | 6.786e9 M⊙ |
+
+The **mass is identical**, because capping the level coarsens cells without losing any of
+them; only the cell count differs. `loadall` warns when you pass `lmax` on the MERA-file
+route rather than quietly returning something else than you asked for. If you want a coarser
+file, apply the cap when you convert.
 
 Ask for a subset by name, with or without a bundle:
 

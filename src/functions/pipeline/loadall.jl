@@ -109,6 +109,14 @@ function loadall(path::AbstractString, output::Int;
             # myargs must be forwarded too: without it the bundle is silently ignored and
             # you get the whole snapshot back while the call still looks like it worked.
             accepted_ld = Base.kwarg_decl(first(methods(loaddata)))
+            # loaddata has no level cap: a MERA file stores the levels it was written with.
+            # Saying so is the difference between a surprising cell count and a known one.
+            asked_lmax = !ismissing(myargs.lmax) || haskey(kwargs, :lmax)
+            asked_lmax && @warn("loadall: `lmax` has no effect when reading a MERA file, " *
+                                "which holds the levels it was saved with. Every stored " *
+                                "level is returned; the RAMSES path would have capped it. " *
+                                "Convert with the cap applied if you want a coarser file.",
+                                maxlog=1)
             kw_ld = Any[]
             :myargs in accepted_ld && push!(kw_ld, :myargs => myargs)
             for (k, v) in kwargs
