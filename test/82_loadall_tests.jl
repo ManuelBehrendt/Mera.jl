@@ -176,6 +176,16 @@ using Mera, Test
             @project hydro sd verbose=false show_progress=false
             @test sd == projection(ref, [:sd], [:standard],
                                    verbose=false, show_progress=false).maps[:sd]
+
+            # A bundle must reach loaddata. It was forwarded for the RAMSES path only, so a
+            # MERA-file read returned the whole snapshot while the call still looked fine:
+            # a wrong answer, not an error. Both routes must select the same cells.
+            ar = ArgumentsType(xrange=[0.4, 0.6], yrange=[0.4, 0.6], center=[:bc])
+            viaargs = loadall(merapath, 7; components=(:hydro,), myargs=ar, verbose=false)
+            viakw   = loadall(merapath, 7; components=(:hydro,), xrange=[0.4, 0.6],
+                              yrange=[0.4, 0.6], center=[:bc], verbose=false)
+            @test length(viaargs.hydro.data) == length(viakw.hydro.data)
+            @test length(viaargs.hydro.data) < length(ref.data)      # actually selected
         end
     end
 

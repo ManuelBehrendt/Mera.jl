@@ -84,9 +84,15 @@ read you get a warning and `nothing` in that field, never a silent gap.
 
 ### The same call on a converted snapshot
 
-`loadall` looks for `output_NNNNN.jld2` in the folder and reads it with `loaddata` when it
-is there, or the RAMSES readers when it is not. **The call does not change**, so converting
-your data does not mean rewriting your scripts:
+`loadall` looks for `output_NNNNN.jld2` in the folder and dispatches accordingly:
+
+| | RAMSES output | converted MERA file |
+|---|---|---|
+| metadata | `getinfo` | `infodata` |
+| components | `gethydro`, `getgravity`, … | `loaddata` |
+
+You call neither directly, and **the call does not change**, so converting your data does
+not mean rewriting your scripts:
 
 ```julia
 (; hydro, gravity, particles) = loadall("/path/to/ramses",    300)   # RAMSES output
@@ -102,6 +108,19 @@ d = loadall(merapath, 300; components=(:hydro,),
             center=[:bc], range_unit=:kpc)
 # 2,777,683 cells of 28,320,979
 ```
+
+The macros work the same way on both, and so do bundles:
+
+```julia
+args = ArgumentsType(xrange=[-4., 4.], yrange=[-4., 4.], zrange=[-1., 1.],
+                     center=[:bc], range_unit=:kpc)
+
+@loadall merapath 300 hydro gravity myargs=args
+@project hydro sd=>:Msol_pc2 T=>:K
+```
+
+`info` comes back in the `NamedTuple` either way, so you never need to decide whether to
+call `getinfo` or `infodata` yourself.
 
 Keep in mind what that selection does on each side: on a RAMSES output it is applied while
 reading, so the rest is never touched, while a MERA file is read whole and then cut. See

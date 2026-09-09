@@ -106,10 +106,16 @@ function loadall(path::AbstractString, output::Int;
 
         # A MERA file is read back with loaddata, not the RAMSES readers.
         if merafile
+            # myargs must be forwarded too: without it the bundle is silently ignored and
+            # you get the whole snapshot back while the call still looks like it worked.
+            accepted_ld = Base.kwarg_decl(first(methods(loaddata)))
+            kw_ld = Any[]
+            :myargs in accepted_ld && push!(kw_ld, :myargs => myargs)
+            for (k, v) in kwargs
+                k in accepted_ld && push!(kw_ld, k => v)
+            end
             return try
-                loaddata(output, string(path), c; verbose=false,
-                         filter(kv -> first(kv) in Base.kwarg_decl(first(methods(loaddata))),
-                                collect(kwargs))...)
+                loaddata(output, string(path), c; verbose=false, kw_ld...)
             catch e
                 @warn "loadall: reading $c from the MERA file failed" exception=e
                 nothing
