@@ -208,6 +208,11 @@ Two tutorial pages already use data you can obtain: the radiative-transfer page 
 published test simulations, and the cosmology page carries download instructions for the yt
 project's public sample dataset.
 
+Three pages need no download at all. [Clump Finding: Synthetic Example](clumpfind_synthetic.md),
+[Statistics (PDFs)](statistics.md) and [Uniform Grid / Resampling](covering_grid.md) build their
+data in memory as they run, and the clump-finding page scores the finder against known positions
+rather than eyeballing the result.
+
 Every tutorial builds its paths from one variable, so you do not have to edit the cells. Point it
 at your own simulations and the examples run against them:
 

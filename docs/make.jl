@@ -148,6 +148,7 @@ makedocs(modules = [Mera],
                               "Star-Formation Rate"         => "sfr.md"],
                           "Time Series & Movies" => Any[
                               "Time Series (multi-snapshot)"=> "timeseries.md",
+                              "Load from Existing Outputs"  => "examples/LoadFromExistingOutputs.md",
                               "Movies (getmovie)"           => "movie.md"]],
 
                       # projection IS map-making; overlay/absorption/mock-observe operate on its
@@ -171,11 +172,11 @@ makedocs(modules = [Mera],
                       "Data & Visualization" => Any[
                           "MERA-Files"          => Any[ "Mera-Files" => "07_multi_Mera_Files.md",
                                                         "Converter"  => "07_1_multi_Mera_Files_Converter.md"],
+                          "Export/Import (ASCII, binary)" => "examples/ExportImportData.md",
                           "Volume Rendering"    => Any[ "Intro"     => "paraview/paraview_intro.md",
                                                         "Hydro"     => "paraview/08_hydro_VTK_export.md",
                                                         "Particles" => "paraview/08_particles_VTK_export.md"]],
 
-                      # --- one home for all the formerly-scattered per-topic API pages ---
                       # Grouped by what the reader is trying to do, not by how advanced it is.
                       # Notifications sit here because telling you a long read has finished is part
                       # of running one, and multi-threading sits with the benchmarks because one
@@ -209,9 +210,9 @@ makedocs(modules = [Mera],
                       # notebook are kept, just not offered as a route.
                       "Project & Misc" => Any[
                           "Testing Framework"   => "advanced_features/testing_guide.md",
-                          "Examples"            => "examples.md",
                           "Logo"                => "logo.md"],
 
+                      # --- one home for all the formerly-scattered per-topic API pages ---
                       "API Reference" => Any[
                           "Data Inspection"     => "api/data_inspection.md",
                           "Data Loading"        => "api/data_loading.md",
