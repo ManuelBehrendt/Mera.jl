@@ -99,7 +99,14 @@ end
 function _sfr_history(tform::AbstractVector, massv::AbstractVector, t0::Real, t1::Real,
                       tbinsize::Real, mode::Symbol, closed::Symbol)
     t1 > t0 || return Float64[], Float64[]                      # nothing to bin (e.g. DM-only) → empty SFH
-    edges = Float64(t0):Float64(tbinsize):Float64(t1)
+    # The bin count must ROUND UP, or the youngest stars are dropped: a plain `t0:tbinsize:t1`
+    # stops at or before t1, so a span that is not a whole number of bins loses its remainder.
+    # With 50 Myr bins on this 444 Myr history that silently discarded 11.6 % of the stellar
+    # mass, all of it from the most recent 44 Myr, the part of an SFH one actually looks at.
+    # Rounding up makes the integral independent of `tbinsize`, which is what a rate histogram
+    # has to promise.
+    nb    = max(1, ceil(Int, (Float64(t1) - Float64(t0)) / Float64(tbinsize)))
+    edges = range(Float64(t0); step=Float64(tbinsize), length=nb + 1)
     length(edges) < 2 && return Float64[], Float64[]
     h = StatsBase.fit(StatsBase.Histogram, collect(Float64, tform),
                       StatsBase.weights(collect(Float64, massv)), edges; closed=closed)

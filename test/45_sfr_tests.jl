@@ -19,6 +19,17 @@
         tn, sn = Mera._sfr_history([-15.0, -5.0], [2e6, 2e6], -20.0, 0.0, 10.0, :none, :left)
         @test length(sn) == 2 && all(>(0.0), sn)
         @test isapprox(sum(sn) * 10 * 1e6, 4e6)
+        # REGRESSION: a span that is not a whole number of bins must not lose its remainder.
+        # `t0:tbinsize:t1` stopped at or before t1, dropping the youngest stars; with 50 Myr
+        # bins on a 444 Myr history that was 11.6 % of the mass. The integral must therefore be
+        # independent of the bin width.
+        tf = [1.0, 100.0, 200.0, 300.0, 440.0]          # span 439, divisible by none of the widths
+        mf = [1e6, 2e6, 3e6, 4e6, 5e6]
+        for bw in (2.0, 5.0, 10.0, 20.0, 50.0, 100.0)
+            _, sb = Mera._sfr_history(tf, mf, minimum(tf), maximum(tf), bw, :none, :left)
+            @test isapprox(sum(sb) * bw * 1e6, sum(mf); rtol=1e-9)   # nothing dropped, any width
+        end
+
         # degenerate ranges → empty
         @test Mera._sfr_history(Float64[], Float64[], 0.0, 0.0, 10.0, :none, :left) == (Float64[], Float64[])
         @test Mera._sfr_history([1.0], [1.0], 5.0, 5.0, 1.0, :none, :left) == (Float64[], Float64[])

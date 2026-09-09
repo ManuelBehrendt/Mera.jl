@@ -47,7 +47,7 @@ println("hydro cells      : ", length(gas.data))
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[Mera]: 2026-09-09T18:40:09.061
+[Mera]: 2026-09-09T19:08:00.202
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -86,7 +86,7 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get particle data: 2026-09-09T18:40:13.027
+[Mera]: Get particle data: 2026-09-09T19:08:04.228
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
@@ -100,7 +100,7 @@ Combining results from 8 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :38.428720474243164 MB
 -------------------------------------------------------
-[Mera]: Get hydro data: 2026-09-09T18:40:16.490
+[Mera]: Get hydro data: 2026-09-09T19:08:07.695
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -112,7 +112,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 8
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.78 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.43 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -122,7 +122,7 @@ Creating Table from 28320979 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 41.563 seconds
+✓ Table created in 39.77 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 particles loaded : 544515
@@ -151,15 +151,15 @@ println("mean SFR     [M☉/yr] : ", sum(s)/length(s))
 
 ```
 [ Info: sfr: using eta_sn=0.2 from the run's namelist to rebuild birth masses from the current :mass. Stars older than 5.0 Myr are scaled by 1/(1-eta_sn), which RAISES the rate. Pass eta_sn=0 to switch this off, or eta_sn=<value> to set it.
-number of time bins  : 22
-time range     [Myr] : (1.419158337486011, 421.419158337486)
+number of time bins  : 23
+time range     [Myr] : (1.419158337486011, 441.419158337486)
 peak SFR     [M☉/yr] : 1.485425
-mean SFR     [M☉/yr] : 1.227753409090909
-sum(s) * 20.0 * 1.0e6 = 5.402115e8
+mean SFR     [M☉/yr] : 1.1877467391304348
+sum(s) * 20.0 * 1.0e6 = 5.463635e8
 ```
 
 ```
-5.402115e8
+5.463635e8
 ```
 
 ### SN mass-loss correction
@@ -265,15 +265,42 @@ per-cell t_ff [Myr] range : (4.434042095351683, 158141.82257929075)
 
 ## Plot: the star-formation history
 
-A CairoMakie step plot of SFR(t), the standard SFH figure.
+The same history at three bin widths. The coarse curves are running means of the fine one, and the
+integral printed in the legend is the same for all three: **the rate you see depends on the binning,
+the mass that formed does not.** That is the check worth making on any SFH.
+
+The final bin reaches past the youngest star, so it averages over time the run does not cover. It is
+left out of the curves and kept in the integral.
 
 ```julia
 using CairoMakie
 
-fig = Figure(size=(800, 380))
-ax = Axis(fig[1,1]; xlabel="time [Myr]", ylabel="SFR [M☉/yr]",
-          title="Star-formation history (mw_L10, output 300)")
-stairs!(ax, t, s; step=:post, color=:steelblue)
+# `t` holds LEFT bin edges. Drop the final bin, which reaches past the youngest star, and close
+# the staircase on the right edge of the last complete one.
+function steps(t, s, bw)
+    n = length(t) - 1
+    vcat(t[1:n], t[n] + bw), vcat(s[1:n], s[n])
+end
+
+bins  = [5.0, 20.0, 50.0]
+style = [(color=(:steelblue, 0.35), linewidth=1.0),
+         (color=(:steelblue, 1.00), linewidth=2.2),
+         (color=(:firebrick,  1.00), linewidth=2.6)]
+
+fig = Figure(size=(880, 430))
+ax  = Axis(fig[1, 1]; xlabel="time [Myr]", ylabel="SFR [M☉/yr]",
+           title="Star-formation history, mw_L10 output 300",
+           xgridvisible=false, ygridvisible=false)
+
+for (bw, st) in zip(bins, style)
+    tb, sb = sfr(parts; tbinsize=bw)
+    M      = sum(sb) * bw * 1e6                    # every bin, the partial last one included
+    tc, sc = steps(tb, sb, bw)
+    stairs!(ax, tc, sc; step=:post, st...,
+            label="$(Int(bw)) Myr bins,  \u222b = $(round(M/1e8, digits=3))e8 M\u2299")
+end
+axislegend(ax; position=:lt, framevisible=false, labelsize=12)
+xlims!(ax, 0, nothing); ylims!(ax, 0, nothing)
 fig
 ```
 
