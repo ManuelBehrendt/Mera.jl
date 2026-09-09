@@ -155,6 +155,30 @@ using Mera, Test
         end
     end
 
+    # MERA files: the same call must work on a converted snapshot, because a script
+    # should not change shape just because the data was converted.
+    merapath = joinpath(datadir, "RAMSES-PUBLIC", "sedov3d_amr_mera")
+    if isdir(merapath)
+        @testset "loadall on a MERA file" begin
+            @test Mera._is_merafile(merapath, 7)
+            @test !Mera._is_merafile(joinpath(datadir, "RAMSES-PUBLIC", "sedov3d_amr"), 7)
+
+            d = loadall(merapath, 7; components=(:hydro,), verbose=false)
+            ref = loaddata(7, merapath, :hydro, verbose=false)
+            @test getvar(d.hydro, :rho) == getvar(ref, :rho)
+            @test d.info isa Mera.InfoType
+
+            # the macro form too
+            @loadall merapath 7 hydro verbose=false
+            @test getvar(hydro, :rho) == getvar(ref, :rho)
+
+            # and the projection macro downstream of a MERA-file load
+            @project hydro sd verbose=false show_progress=false
+            @test sd == projection(ref, [:sd], [:standard],
+                                   verbose=false, show_progress=false).maps[:sd]
+        end
+    end
+
     if isdir(hydro_only)
         # a snapshot missing components returns fewer fields rather than failing
         g = loadall(hydro_only, 7; verbose=false)

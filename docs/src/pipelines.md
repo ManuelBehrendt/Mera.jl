@@ -82,6 +82,32 @@ instance, takes no `myargs`, and a sink catalogue has no spatial selection to ap
 passing a bundle for the other components does not disturb it. If a component does fail to
 read you get a warning and `nothing` in that field, never a silent gap.
 
+### The same call on a converted snapshot
+
+`loadall` looks for `output_NNNNN.jld2` in the folder and reads it with `loaddata` when it
+is there, or the RAMSES readers when it is not. **The call does not change**, so converting
+your data does not mean rewriting your scripts:
+
+```julia
+(; hydro, gravity, particles) = loadall("/path/to/ramses",    300)   # RAMSES output
+(; hydro, gravity, particles) = loadall("/path/to/merafiles", 300)   # converted, same line
+```
+
+Selection works on both. Measured on a 28.3M-cell snapshot, taking a 10 x 10 x 4 kpc slab
+out of a MERA file:
+
+```julia
+d = loadall(merapath, 300; components=(:hydro,),
+            xrange=[-5., 5.], yrange=[-5., 5.], zrange=[-2., 2.],
+            center=[:bc], range_unit=:kpc)
+# 2,777,683 cells of 28,320,979
+```
+
+Keep in mind what that selection does on each side: on a RAMSES output it is applied while
+reading, so the rest is never touched, while a MERA file is read whole and then cut. See
+[Performance](benchmarks/performance.md) for why, and for when to save the subregion as its
+own file instead.
+
 Ask for a subset by name, with or without a bundle:
 
 ```julia

@@ -22,6 +22,12 @@ _loadall_available(info) = (hydro     = info.hydro,
                             sinks     = info.sinks,
                             rt        = info.rt)
 
+# A converted snapshot is `output_NNNNN.jld2` in the folder; a RAMSES one is a directory.
+# Detecting it here means the same call works on either, which is the point: a script should
+# not change shape because you converted the data.
+_is_merafile(path, output) =
+    isfile(joinpath(string(path), "output_" * lpad(output, 5, '0') * ".jld2"))
+
 """
     loadall(path, output; components, myargs, verbose, kwargs...) -> NamedTuple
 
@@ -75,7 +81,9 @@ function loadall(path::AbstractString, output::Int;
                  myargs::ArgumentsType=ArgumentsType(),
                  verbose::Bool=verbose_mode === nothing ? true : verbose_mode,
                  kwargs...)
-    info = getinfo(output, string(path), verbose=false)
+    merafile = _is_merafile(path, output)
+    info  = merafile ? infodata(output, string(path), verbose=false) :
+                       getinfo(output, string(path), verbose=false)
     avail = _loadall_available(info)
 
     wanted = components === nothing ?
@@ -87,13 +95,27 @@ function loadall(path::AbstractString, output::Int;
                               "Known: $(join(keys(_LOADALL_GETTERS), ", ")).")
 
     if verbose
-        println("loadall: output $output, components: ", join(wanted, ", "))
+        println("loadall: output $output (", merafile ? "MERA file" : "RAMSES output",
+                "), components: ", join(wanted, ", "))
         missing_ = filter(c -> !getfield(avail, c), wanted)
         isempty(missing_) || println("  not present in this snapshot: ", join(missing_, ", "))
     end
 
     vals = map(wanted) do c
         getfield(avail, c) || return nothing
+
+        # A MERA file is read back with loaddata, not the RAMSES readers.
+        if merafile
+            return try
+                loaddata(output, string(path), c; verbose=false,
+                         filter(kv -> first(kv) in Base.kwarg_decl(first(methods(loaddata))),
+                                collect(kwargs))...)
+            catch e
+                @warn "loadall: reading $c from the MERA file failed" exception=e
+                nothing
+            end
+        end
+
         g = _LOADALL_GETTERS[c]
         # Not every getter takes the same keywords: getsinks has no myargs, and a sink
         # catalogue has no spatial selection to apply anyway. Forward only what the method
