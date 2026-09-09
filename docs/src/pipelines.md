@@ -30,6 +30,16 @@ proj = projection(gas, :sd, myargs=args)     # the same bundle, further down the
 Change the region once and every step follows. Nothing can drift, because there is only one
 copy of the numbers.
 
+When you need a variant, [`withargs`](@ref) derives one and leaves the original alone:
+
+```julia
+coarse = withargs(args; lmax=7)                      # same region, fewer levels
+zoom   = withargs(args; xrange=[-2., 2.], yrange=[-2., 2.])
+```
+
+Without it that is a `deepcopy` and an assignment, with the original one slip away from
+being edited in place.
+
 ## One call for the loading
 
 [`loadall`](@ref) does the other half: `getinfo` and every getter in a single call, returning
@@ -111,6 +121,37 @@ and it costs a few characters:
 Both forms call the same function and return the same objects; pick whichever reads better
 where you are.
 
+## One call for the projection
+
+`projection` returns a single object whose `maps` is a dictionary, so pulling several
+quantities out of it is a line of lookups:
+
+```julia
+pj = projection(gas, [:sd, :T], myargs=args)
+sd = pj.maps[:sd]; T = pj.maps[:T]
+```
+
+[`@project`](@ref) does that in one line, and asking for the quantities together is also the
+form that lets the projection use its threads, see
+[Performance](benchmarks/performance.md):
+
+```julia
+@project gas sd T myargs=args
+```
+
+`sd` and `T` are now the maps, and `proj` is the full object, so the extent and everything
+else stay reachable:
+
+```julia
+heatmap(proj.extent[1:2], proj.extent[3:4], sd)
+```
+
+Keywords pass straight through, so **off-axis needs no separate macro**:
+
+```julia
+@project gas sd inclination=60 azimuth=30 binning=:exact
+```
+
 ## Selecting inside the table
 
 Two more macros work on a loaded object rather than on the loading. They are documented with
@@ -127,10 +168,12 @@ the features they belong to, and listed here so the pipeline story is in one pla
 args = ArgumentsType(lmax=10, xrange=[-10., 10.], yrange=[-10., 10.],
                      center=[:bc], range_unit=:kpc)
 (; hydro, particles) = loadall(path, 300; components=(:hydro, :particles), myargs=args)
-proj = projection(hydro, [:sd, :T], myargs=args)
+@project hydro sd T myargs=args
 ```
 
-The selection appears once, the loading appears once, and the projection reuses both.
+The selection appears once, the loading appears once, and the projection reuses both. Three
+lines that in full would be a `getinfo`, two getters repeating the same six keywords, a
+`projection` repeating them again, and two dictionary lookups.
 
 ## See also
 
