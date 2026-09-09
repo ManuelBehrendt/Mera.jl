@@ -390,6 +390,8 @@ export
     reading_sweep,
     run_merafile_benchmark,
     benchmark_conversion,
+    loadall,
+    @loadall,
     benchmark_report,
     benchmark_levels,
     collect_levels,
@@ -527,6 +529,7 @@ include("functions/data/export_particles_to_vtk.jl")
 include("macros/filter_data.jl")
 
 # Benchmarks
+include("functions/pipeline/loadall.jl")
 include("benchmarks/IO/IOperformance.jl")
 include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
 include("benchmarks/RAMSES_reading/reading_sweep.jl")

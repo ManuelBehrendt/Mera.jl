@@ -10,6 +10,8 @@ only the part of the box you need rather than filtering afterwards.
 ## Loaders
 
 ```@docs; canonical=false
+loadall
+@loadall
 gethydro
 getparticles
 getgravity

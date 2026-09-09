@@ -199,6 +199,7 @@ makedocs(modules = [Mera],
                       "More" => Any[
                           "Advanced Features" => Any[
                               "Bundling Arguments (myargs)" => "bundled_arguments.md",
+                              "Pipelines"                   => "pipelines.md",
                               "Verbose & Progress Switches" => "verbose_progress_switches.md",
                               "Multi-Threading"     => "multi-threading/multi-threading_intro.md",
                               "Testing Framework"   => "advanced_features/testing_guide.md",
