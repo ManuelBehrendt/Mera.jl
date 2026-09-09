@@ -28,6 +28,14 @@ part = getparticles(info, myargs=myargs)
 p    = projection(gas, :sd, :Msun_pc2, myargs=myargs)
 ```
 
+`ArgumentsType` also takes the same fields as keywords, which is shorter when you know them
+up front:
+
+```julia
+myargs = ArgumentsType(pxsize=[100., :pc], xrange=[-10., 10.], yrange=[-10., 10.],
+                       zrange=[-2., 2.], center=[:boxcenter], range_unit=:kpc)
+```
+
 Every field left `missing` is ignored, so a bundle only overrides what you set. A value you
 pass **explicitly** still wins over the bundle, so you can share a base bundle and tweak one
 call:
@@ -54,6 +62,34 @@ See the current contents of a bundle with [`viewfields`](@ref):
 viewfields(myargs)
 ```
 
+## Deriving a variant: `withargs`
+
+A bundle is mutable, so changing a field changes it for every later call. When you want a
+variant, [`withargs`](@ref) returns a **copy** with some fields replaced and leaves the
+original alone:
+
+```julia
+base   = ArgumentsType(lmax=10, xrange=[-10., 10.], center=[:boxcenter], range_unit=:kpc)
+
+coarse = withargs(base; lmax=7)                            # same region, fewer levels
+zoom   = withargs(base; xrange=[-2., 2.], yrange=[-2., 2.])  # same levels, smaller region
+
+gas    = gethydro(info, myargs=base)
+gas_c  = gethydro(info, myargs=coarse)
+```
+
+`base` is untouched in both cases. The copy is deep, so editing `zoom.xrange` in place cannot
+reach back into `base`.
+
+Without it you would write `deepcopy` and then an assignment, and a plain assignment
+(`variant = base`) is the trap: it gives you the *same* bundle under a second name, and the
+next field you set changes both.
+
+```julia
+variant = base            # NOT a copy: variant and base are one object
+variant = withargs(base)  # a copy, safe to change
+```
+
 ## What you can bundle
 
 `ArgumentsType` collects the arguments shared across the loading, region, and projection
@@ -71,7 +107,8 @@ functions:
 !!! note
     Any function that accepts these arguments accepts the `myargs` bundle: `getinfo`,
     `gethydro`/`getparticles`/`getgravity`/`getclumps`/`getrt`, `subregion`/`shellregion`,
-    `projection`, and the data converters.
+    `projection`, [`loadall`](@ref), and the data converters. `getsinks` is the exception: a
+    sink catalogue has no spatial selection to apply, so it takes no bundle.
 
 ## A silent, reusable bundle
 
@@ -145,3 +182,5 @@ keywords in the same call.
 
 - [Verbose & progress switches](verbose_progress_switches.md): global master switch for messages and progress bars.
 - [`gethydro`](@ref), [`projection`](@ref), [`subregion`](@ref): the functions that accept `myargs`.
+- [`withargs`](@ref): derive a variant of a bundle without touching the original.
+- [Pipelines](pipelines.md): bundles combined with `loadall` and the projection macros.

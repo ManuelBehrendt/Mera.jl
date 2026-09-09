@@ -247,7 +247,7 @@ sd = pj.maps[:sd]; T = pj.maps[:T]
 
 This does the same in one line, and asks for the quantities together, which is also the form
 that lets the projection use its threads (see
-[Performance](benchmarks/performance.md)):
+[Performance](@ref)):
 
 ```julia
 @project gas sd T myargs=args
