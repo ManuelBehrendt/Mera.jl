@@ -137,8 +137,19 @@ format, with Hilbert space-filling curve support, correct level weighting, and p
 conserve mass across refinement boundaries.
 
 **Built for large outputs on ordinary machines.** Selective loading and an IndexedTables.jl
-backend keep memory in hand, multi-threaded IO is measured rather than assumed, and MERA-files
-store snapshots compressed for fast time-series work.
+backend keep memory in hand, and the numbers are measured rather than assumed. Convert a
+snapshot once with `savedata` and reading it back is the same data, far cheaper:
+
+| reading one snapshot, all components | from the RAMSES output | from the MERA file |
+|---|---:|---:|
+| time | 514.9 s | **22.7 s** |
+| memory allocated | 665.4 GB | **47.4 GB** |
+| size on disk | 53.18 GB | **12.73 GB** |
+
+A production run with 5120 CPU files and 20489 files on disk, read at full resolution. The
+gain comes from not re-parsing every Fortran file and not storing the AMR hierarchy, so it
+grows with the file count and depends on your simulation. [Performance](benchmarks/performance.md)
+has the method, the limits, and the raw reports.
 
 **Physics on demand.** Nothing is precomputed and nothing is stored twice: ask for a quantity by
 name and Mera derives it from what the snapshot actually holds, in the unit you ask for.
