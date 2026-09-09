@@ -199,6 +199,60 @@ The selection appears once, the loading appears once, and the projection reuses 
 lines that in full would be a `getinfo`, two getters repeating the same six keywords, a
 `projection` repeating them again, and two dictionary lookups.
 
+## A complete workflow
+
+From a path to a figure and a number, with every tool on this page doing its part.
+
+```julia
+using Mera, CairoMakie
+
+path = "/path/to/simulation"
+
+# 1. the selection, written once
+args = ArgumentsType(lmax=10,
+                     xrange=[-15., 15.], yrange=[-15., 15.], zrange=[-3., 3.],
+                     center=[:bc], range_unit=:kpc)
+
+# 2. everything the snapshot has, in one call, honouring that selection
+(; hydro, particles, info) = loadall(path, 300; myargs=args)
+
+# 3. a number: total gas mass in the region
+mass = msum(hydro, :Msol)
+println("gas mass in the slab: ", round(mass, sigdigits=4), " Msol")
+
+# 4. maps in physical units, bound to names
+@project hydro sd=>:Msol_pc2 T=>:K myargs=args
+
+# 5. a figure, using the extent the projection recorded
+fig = Figure(size=(900, 380))
+for (i, (m, label)) in enumerate(((sd, "Σ [M⊙/pc²]"), (T, "T [K]")))
+    ax = Axis(fig[1, i], aspect=DataAspect(), xlabel="x [kpc]", ylabel="y [kpc]")
+    hm = heatmap!(ax, proj.extent[1:2], proj.extent[3:4], log10.(m); colormap=:inferno)
+    Colorbar(fig[2, i], hm, label="log10 " * label, vertical=false)
+end
+fig
+```
+
+Two things worth noticing. `args` is written once and reaches the loading **and** the
+projection, so the map and the mass describe the same region by construction. And `proj`
+carries the extent, so the axes are in kpc without you tracking the conversion yourself.
+
+To narrow the region without touching the original bundle:
+
+```julia
+zoom = withargs(args; xrange=[-3., 3.], yrange=[-3., 3.])
+(; hydro) = loadall(path, 300; components=(:hydro,), myargs=zoom)
+@project hydro sd=>:Msol_pc2 myargs=zoom
+```
+
+And the same, in the explicit form, for a script or a package:
+
+```julia
+d    = loadall(path, 300; myargs=args)
+proj = projection(d.hydro, [:sd, :T], [:Msol_pc2, :K], myargs=args)
+sd, T = proj.maps[:sd], proj.maps[:T]
+```
+
 ## See also
 
 - [Bundled Arguments](bundled_arguments.md), `myargs` in depth
