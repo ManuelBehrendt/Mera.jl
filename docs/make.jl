@@ -176,6 +176,35 @@ makedocs(modules = [Mera],
                                                         "Particles" => "paraview/08_particles_VTK_export.md"]],
 
                       # --- one home for all the formerly-scattered per-topic API pages ---
+                      "Advanced Features" => Any[
+                          "Bundling Arguments (myargs)" => "bundled_arguments.md",
+                          "Pipelines"                   => "pipelines.md",
+                          "Verbose & Progress Switches" => "verbose_progress_switches.md",
+                          "Multi-Threading"     => "multi-threading/multi-threading_intro.md",
+                          "Testing Framework"   => "advanced_features/testing_guide.md",
+                          "Notifications"       => Any[ "Overview"      => "notifications/index.md",
+                                                        "Setup & Usage" => "notifications/setup_and_usage.md",
+                                                        "Examples"      => "notifications/examples.md"]],
+                      "Benchmarks" => Any[ "Performance"          => "benchmarks/performance.md",
+                                           "Run Your Own"         => "benchmarks/run_your_own.md"],
+                      # Getting Started already answers "coming from another tool"
+                      # (switching_to_mera) and "Julia for this kind of work"
+                      # (julia_for_simulation_analysis), in curated pages roughly a tenth of
+                      # the length. Only the pages adding something beyond those stay listed.
+                      # The rest are still built and still reachable by link.
+                      "Quick Reference" => Any[ "Essential Packages"      => "quickreference/03_packages.md",
+                                                "Resources & Community"   => "quickreference/06_resources.md",
+                                                "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md"],
+                      # "Miscellaneous" is deliberately not listed: its four sections (myargs,
+                      # verbose/progress switches, bell, notifyme) each have a dedicated page in
+                      # a page of its own, and its notification sections are pasted `?bell`
+                      # / `?notifyme` REPL output that api.md already renders properly. Meeting the
+                      # same four topics twice, at two levels of quality, is what the docs panel
+                      # flagged. The page and its notebook are kept, just not offered as a route.
+                      "Examples & Misc" => Any[ "Examples"             => "examples.md",
+                                                "Recommended Packages" => "recommended_packages.md",
+                                                "Logo"                 => "logo.md"],
+
                       "API Reference" => Any[
                           "Data Inspection"     => "api/data_inspection.md",
                           "Data Loading"        => "api/data_loading.md",
@@ -193,38 +222,7 @@ makedocs(modules = [Mera],
                           "Movies"              => "api/movies.md",
                           "Configuration"       => "api/configuration.md",
                           "Notifications"       => "api/notifications.md",
-                          "Complete API"        => "api.md"],
-
-                      # --- advanced / reference material, collapsed under one group ---
-                      "More" => Any[
-                          "Advanced Features" => Any[
-                              "Bundling Arguments (myargs)" => "bundled_arguments.md",
-                              "Pipelines"                   => "pipelines.md",
-                              "Verbose & Progress Switches" => "verbose_progress_switches.md",
-                              "Multi-Threading"     => "multi-threading/multi-threading_intro.md",
-                              "Testing Framework"   => "advanced_features/testing_guide.md",
-                              "Notifications"       => Any[ "Overview"      => "notifications/index.md",
-                                                            "Setup & Usage" => "notifications/setup_and_usage.md",
-                                                            "Examples"      => "notifications/examples.md"]],
-                          "Benchmarks" => Any[ "Performance"          => "benchmarks/performance.md",
-                                               "Run Your Own"         => "benchmarks/run_your_own.md"],
-                          # Getting Started already answers "coming from another tool"
-                          # (switching_to_mera) and "Julia for this kind of work"
-                          # (julia_for_simulation_analysis), in curated pages roughly a tenth of
-                          # the length. Only the pages adding something beyond those stay listed.
-                          # The rest are still built and still reachable by link.
-                          "Quick Reference" => Any[ "Essential Packages"      => "quickreference/03_packages.md",
-                                                    "Resources & Community"   => "quickreference/06_resources.md",
-                                                    "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md"],
-                          # "Miscellaneous" is deliberately not listed: its four sections (myargs,
-                          # verbose/progress switches, bell, notifyme) each have a dedicated page in
-                          # this same "More" section, and its notification sections are pasted `?bell`
-                          # / `?notifyme` REPL output that api.md already renders properly. Meeting the
-                          # same four topics twice, at two levels of quality, is what the docs panel
-                          # flagged. The page and its notebook are kept, just not offered as a route.
-                          "Examples & Misc" => Any[ "Examples"             => "examples.md",
-                                                    "Recommended Packages" => "recommended_packages.md",
-                                                    "Logo"                 => "logo.md"]]
+                          "Complete API"        => "api.md"]
                     ]
 )
 
