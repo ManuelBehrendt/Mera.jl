@@ -176,34 +176,41 @@ makedocs(modules = [Mera],
                                                         "Particles" => "paraview/08_particles_VTK_export.md"]],
 
                       # --- one home for all the formerly-scattered per-topic API pages ---
-                      "Advanced Features" => Any[
+                      # Grouped by what the reader is trying to do, not by how advanced it is.
+                      # Notifications sit here because telling you a long read has finished is part
+                      # of running one, and multi-threading sits with the benchmarks because one
+                      # measures the other.
+                      "Working Efficiently" => Any[
                           "Bundling Arguments (myargs)" => "bundled_arguments.md",
                           "Pipelines"                   => "pipelines.md",
                           "Verbose & Progress Switches" => "verbose_progress_switches.md",
-                          "Multi-Threading"     => "multi-threading/multi-threading_intro.md",
-                          "Testing Framework"   => "advanced_features/testing_guide.md",
                           "Notifications"       => Any[ "Overview"      => "notifications/index.md",
                                                         "Setup & Usage" => "notifications/setup_and_usage.md",
                                                         "Examples"      => "notifications/examples.md"]],
-                      "Benchmarks" => Any[ "Performance"          => "benchmarks/performance.md",
-                                           "Run Your Own"         => "benchmarks/run_your_own.md"],
+                      "Performance & Benchmarks" => Any[
+                          "Multi-Threading"          => "multi-threading/multi-threading_intro.md",
+                          "Measured Performance"     => "benchmarks/performance.md",
+                          "Run Your Own Benchmarks"  => "benchmarks/run_your_own.md"],
                       # Getting Started already answers "coming from another tool"
                       # (switching_to_mera) and "Julia for this kind of work"
                       # (julia_for_simulation_analysis), in curated pages roughly a tenth of
                       # the length. Only the pages adding something beyond those stay listed.
                       # The rest are still built and still reachable by link.
-                      "Quick Reference" => Any[ "Essential Packages"      => "quickreference/03_packages.md",
-                                                "Resources & Community"   => "quickreference/06_resources.md",
-                                                "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md"],
+                      "Julia & Ecosystem" => Any[
+                          "Essential Packages"             => "quickreference/03_packages.md",
+                          "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md",
+                          "Recommended Packages"           => "recommended_packages.md",
+                          "Resources & Community"          => "quickreference/06_resources.md"],
                       # "Miscellaneous" is deliberately not listed: its four sections (myargs,
-                      # verbose/progress switches, bell, notifyme) each have a dedicated page in
-                      # a page of its own, and its notification sections are pasted `?bell`
-                      # / `?notifyme` REPL output that api.md already renders properly. Meeting the
-                      # same four topics twice, at two levels of quality, is what the docs panel
-                      # flagged. The page and its notebook are kept, just not offered as a route.
-                      "Examples & Misc" => Any[ "Examples"             => "examples.md",
-                                                "Recommended Packages" => "recommended_packages.md",
-                                                "Logo"                 => "logo.md"],
+                      # verbose/progress switches, bell, notifyme) each have a page of their own,
+                      # and its notification sections are pasted `?bell` / `?notifyme` REPL output
+                      # that api.md already renders properly. Meeting the same four topics twice, at
+                      # two levels of quality, is what the docs panel flagged. The page and its
+                      # notebook are kept, just not offered as a route.
+                      "Project & Misc" => Any[
+                          "Testing Framework"   => "advanced_features/testing_guide.md",
+                          "Examples"            => "examples.md",
+                          "Logo"                => "logo.md"],
 
                       "API Reference" => Any[
                           "Data Inspection"     => "api/data_inspection.md",
