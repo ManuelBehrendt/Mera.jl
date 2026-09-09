@@ -60,6 +60,10 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   `Manifest.toml`), record what produced each number with `provenance()`, and check the install
   against test simulations that have known answers. See
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
+- **Less boilerplate** — write a selection once as an argument bundle and reuse it across loading and
+  projection, read every component of a snapshot in one `loadall()` call, and select in value space
+  with `filterdata()` on any quantity `getvar()` can compute. See
+  [Pipelines](https://manuelbehrendt.github.io/Mera.jl/stable/pipelines/).
 - **Derived quantities on demand** — thermodynamics (temperature, sound speed, five entropy measures,
   cooling time), kinematics and Mach numbers in Cartesian/cylindrical/spherical frames, magnetic
   fields (magnitude, pressure, plasma beta, Alfvén speed, magnetosonic Mach numbers), gravity

@@ -2,7 +2,7 @@
 
 This page explains how the suite is organised, what each tier proves, and which simulation data
 backs which test — so that a reader (or a reviewer) can tell what has actually been verified
-without reading 60 test files.
+without reading 66 test files.
 
 ## Quick start
 
@@ -77,6 +77,8 @@ Key files:
 | `55_region_algebra_tests.jl` | composable regions + exact cell splitting vs analytic volumes |
 | `54_clumpfind_synthetic_tests.jl` | all finders scored against synthetic ground truth |
 | `75_mask_equivalence_tests.jl` | masking commutes with per-cell evaluation, on every data type |
+| `82_loadall_tests.jl` | `loadall` and `@loadall` must return exactly what `getinfo` plus the getters do |
+| `45_sfr_tests.jl` | star-formation history: binning conserves mass at any bin width, SN mass-loss correction |
 | `78_download_testdata_tests.jl` | the fixture fetcher: catalogue, on-disk layout, already-present short-circuit |
 | `22_types_tests.jl`, `69_config_tests.jl`, `65_io_coverage_tests.jl` | type system, config resolution, IO layer |
 
