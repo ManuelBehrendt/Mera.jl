@@ -22,9 +22,14 @@ using Mera, Test
         ref_h = gethydro(info, verbose=false, show_progress=false)
         ref_g = getgravity(info, verbose=false, show_progress=false)
         d = loadall(multi, 2; components=(:hydro, :gravity), verbose=false)
-        @test length(d.hydro.data) == length(ref_h.data)
-        @test length(d.gravity.data) == length(ref_g.data)
-        @test getvar(d.hydro, :rho) == getvar(ref_h, :rho)
+        # column-by-column, not just row counts: the whole contract is that the
+        # convenience layer returns what the explicit calls return
+        for q in (:rho, :vx, :vy, :vz, :p, :cx, :cy, :cz, :level)
+            @test getvar(d.hydro, q) == getvar(ref_h, q)
+        end
+        @test getvar(d.gravity, :epot) == getvar(ref_g, :epot)
+        @test d.hydro.lmax == ref_h.lmax && d.hydro.boxlen == ref_h.boxlen
+        @test d.hydro.ranges == ref_h.ranges
 
         # info comes back too, so nothing is lost by not calling getinfo yourself
         @test d.info isa Mera.InfoType
@@ -53,6 +58,63 @@ using Mera, Test
 
         # unknown components fail with a message naming the valid ones, not a MethodError
         @test_throws ErrorException loadall(multi, 2; components=(:nonsense,))
+
+        # ---- macro must equal the function, across the argument shapes people use ----
+        # A macro's only job is to expand to the call; if any shape diverges, the
+        # convenience layer is lying about what it does.
+        @testset "@loadall == loadall" begin
+            # bare
+            @loadall multi 2 hydro verbose=false
+            @test getvar(hydro, :rho) == getvar(loadall(multi, 2; components=(:hydro,), verbose=false).hydro, :rho)
+
+            # with a plain keyword
+            @loadall multi 2 hydro lmax=6 verbose=false
+            @test getvar(hydro, :rho) == getvar(loadall(multi, 2; components=(:hydro,), lmax=6, verbose=false).hydro, :rho)
+
+            # with a bundle
+            ar = ArgumentsType(lmax=6)
+            @loadall multi 2 hydro gravity myargs=ar verbose=false
+            fn = loadall(multi, 2; components=(:hydro, :gravity), myargs=ar, verbose=false)
+            @test getvar(hydro, :rho) == getvar(fn.hydro, :rho)
+            @test getvar(gravity, :epot) == getvar(fn.gravity, :epot)
+
+            # with a spatial selection
+            @loadall multi 2 hydro xrange=[0.4, 0.6] center=[:bc] verbose=false
+            fn2 = loadall(multi, 2; components=(:hydro,), xrange=[0.4, 0.6], center=[:bc], verbose=false)
+            @test getvar(hydro, :rho) == getvar(fn2.hydro, :rho)
+        end
+
+        @testset "@project == projection" begin
+            g = d.hydro
+            # bare
+            @project g sd verbose=false show_progress=false
+            @test sd == projection(g, [:sd], [:standard], verbose=false, show_progress=false).maps[:sd]
+
+            # per-quantity units
+            @project g sd=>:Msol_pc2 T=>:K verbose=false show_progress=false
+            r2 = projection(g, [:sd, :T], [:Msol_pc2, :K], verbose=false, show_progress=false)
+            @test sd == r2.maps[:sd]
+            @test T  == r2.maps[:T]
+
+            # a unit on one quantity only, the other defaults to :standard
+            @project g sd=>:Msol_pc2 T verbose=false show_progress=false
+            r3 = projection(g, [:sd, :T], [:Msol_pc2, :standard], verbose=false, show_progress=false)
+            @test sd == r3.maps[:sd] && T == r3.maps[:T]
+
+            # off-axis, through the same keyword path
+            @project g sd inclination=60 azimuth=30 verbose=false show_progress=false
+            r4 = projection(g, [:sd], [:standard], inclination=60, azimuth=30,
+                            verbose=false, show_progress=false)
+            @test sd == r4.maps[:sd]
+
+            # the bound maps ARE the object's maps, not copies
+            @project g sd T verbose=false show_progress=false
+            @test sd === proj.maps[:sd]
+            @test T  === proj.maps[:T]
+
+            # a shape the macro cannot express fails with a message naming what it accepts
+            @test_throws LoadError @eval @project $g sd bad...
+        end
 
         # withargs derives a variant without touching the original
         base = ArgumentsType(lmax=6, range_unit=:kpc)

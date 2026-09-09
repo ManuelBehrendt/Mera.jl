@@ -146,11 +146,35 @@ else stay reachable:
 heatmap(proj.extent[1:2], proj.extent[3:4], sd)
 ```
 
-Keywords pass straight through, so **off-axis needs no separate macro**:
+Units go with the quantity they belong to, so adding a third cannot silently misalign a
+positional list:
+
+```julia
+@project gas sd=>:Msol_pc2 T=>:K myargs=args
+@project gas sd=>:Msol_pc2 T                  # anything without a unit stays :standard
+```
+
+Keywords pass straight through, so **off-axis needs no separate macro**, and neither does
+anything else `projection` accepts:
 
 ```julia
 @project gas sd inclination=60 azimuth=30 binning=:exact
+@project gas sd res=512 direction=:x
+@project gas sd mask=my_mask xrange=[-5., 5.] center=[:bc] range_unit=:kpc
 ```
+
+!!! note "The macros only expand to the calls"
+    Both macros forward every `keyword=value` verbatim, so a keyword added to `projection`
+    or the getters tomorrow works here without any change. The one thing they cannot do is
+    splat a keyword collection, `kws...`: a macro sees syntax, not values. That form fails
+    with a message naming what it accepts, and the function takes it directly:
+
+    ```julia
+    projection(gas, [:sd]; kws...)
+    ```
+
+    The test suite pins the equivalence rather than assuming it: for each argument shape,
+    the macro's result must equal the explicit call's.
 
 ## Selecting inside the table
 

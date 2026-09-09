@@ -236,19 +236,25 @@ prefer the explicit form above.
 See also: [`projection`](@ref), [`@loadall`](@ref).
 """
 macro project(data, args...)
-    names, kws = Symbol[], Any[]
+    names, units, kws = Symbol[], Any[], Any[]
     for a in args
-        if a isa Symbol
-            push!(names, a)
-        elseif a isa Expr && a.head === :(=)
+        if a isa Symbol                                   # sd
+            push!(names, a); push!(units, :(:standard))
+        elseif a isa Expr && a.head === :call && a.args[1] === :(=>)   # sd => :Msol_pc2
+            n = a.args[2]
+            n isa Symbol || error("@project: expected a quantity name left of `=>`, got $(a.args[2])")
+            push!(names, n); push!(units, esc(a.args[3]))
+        elseif a isa Expr && a.head === :(=)              # keyword=value
             push!(kws, Expr(:kw, a.args[1], esc(a.args[2])))
         else
-            error("@project: expected quantity names and keyword arguments, got $a")
+            error("@project: expected `name`, `name => :unit`, or `keyword=value`, got $a")
         end
     end
     isempty(names) && error("@project: name at least one quantity, e.g. `@project gas sd`")
     quants = Expr(:vect, QuoteNode.(names)...)
-    call = Expr(:call, :projection, esc(data), quants, kws...)
+    # units are positional in `projection`, one per quantity; bare names get :standard
+    unitvec = Expr(:vect, units...)
+    call = Expr(:call, :projection, esc(data), quants, unitvec, kws...)
     # bind `proj`, then one variable per requested map. `proj` must be escaped on BOTH
     # sides: escaped only in the assignment, the lookups below resolve inside Mera instead
     # of the caller's scope and fail with an UndefVarError.
