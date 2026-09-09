@@ -395,5 +395,7 @@ ReportPlan(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10", Rep
 - [Hydro: First Inspection](01_hydro_First_Inspection.md), the manual version of what `quicklook`
   automates
 - [Bundling Arguments](bundled_arguments.md), for reusing the same window across calls
+- [Pipelines](pipelines.md), for loading every component in one call and keeping one
+  selection across loading and projection
 - [Multi-Threading](multi-threading/multi-threading_intro.md), since the reader threads over CPU
   files and this is where that pays off

@@ -707,3 +707,9 @@ Here are some common issues and how to resolve them:
    - Print small samples before processing large datasets.
 
 These tips will help you work efficiently with RAMSES data in Mera.
+
+## Next steps
+
+- [Hydro: First Inspection](01_hydro_First_Inspection.md), the same steps applied to gas
+- [Bundling Arguments](bundled_arguments.md), writing a selection once and reusing it
+- [Pipelines](pipelines.md), `getinfo` and every getter in a single call

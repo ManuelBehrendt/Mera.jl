@@ -120,7 +120,8 @@ Mera v1.8.0 | Julia 1.12.7 | 4 threads
 ```
 
 `info` already knows everything about the snapshot (levels, box size, which files exist,
-the unit system) without touching the heavy data. Loading is the explicit step, and the place
+the unit system) without touching the heavy data. When you want several components, one
+`loadall` call reads them all with the same selection, see [Pipelines](pipelines.md). Loading is the explicit step, and the place
 to bound memory with a level cap and/or a spatial window:
 
 ```julia
