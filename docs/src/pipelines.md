@@ -25,12 +25,6 @@ Nothing there is wrong, but three quarters of it is repetition, and repetition i
 selection quietly drifts between components. Mera gives you two independent ways to remove
 it, and they compose.
 
-!!! tip "Run this yourself"
-    This page is also an executable **Jupyter notebook**:
-    [open / download `pipelines.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/pipelines.ipynb).
-    The notebooks run end-to-end and double as part of Mera's test suite, so every number and
-    figure below was produced by the code above it.
-
 ## One bundle for the selection
 
 [`ArgumentsType`](@ref), usually written `myargs`, holds the selection once and travels with
@@ -358,18 +352,19 @@ anything else `projection` accepts:
 @project gas sd mask=my_mask xrange=[-5., 5.] center=[:bc] range_unit=:kpc
 ```
 
-!!! note "The macros only expand to the calls"
-    Both macros forward every `keyword=value` verbatim, so a keyword added to `projection`
-    or the getters tomorrow works here without any change. The one thing they cannot do is
-    splat a keyword collection, `kws...`: a macro sees syntax, not values. That form fails
-    with a message naming what it accepts, and the function takes it directly:
+!!! note "One limit worth knowing"
+    Every `keyword=value` you write is handed straight to the underlying function, so any
+    keyword the getters or `projection` accept works here too, including ones added later.
+
+    What a macro cannot take is a ready-made collection of keywords. Use the function for
+    that:
 
     ```julia
     projection(gas, [:sd]; kws...)
     ```
 
-    The test suite pins the equivalence rather than assuming it: for each argument shape,
-    the macro's result must equal the explicit call's.
+    The macro says so if you try. A test checks that each macro gives the same result as
+    the call it stands for.
 
 ```julia
 # maps in physical units, bound to names; `proj` carries the extent and the rest
