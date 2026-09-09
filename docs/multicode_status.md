@@ -26,11 +26,50 @@ signature, so the code-specific entry points below are rarely called directly.
 | **Chombo / PLUTO-AMR** (HDF5) | yes | yes | - | - | - | - | - | - |
 | **Athena++** (`.athdf`) | yes | yes | - | - | - | - | - | - |
 | **FLASH** (PARAMESH HDF5) | yes | yes | - | - | - | - | - | - |
-| **GADGET family** (GADGET, AREPO, SWIFT, GIZMO) | yes | see note | yes | - | - | - | yes | yes |
+| **GADGET family** (GADGET, AREPO, SWIFT, GIZMO) | yes | see below | yes | - | - | - | yes | yes |
 
 **Note on the GADGET family.** Gas is particle data there, not a grid, so it loads with
 `getparticles(info)` and comes back as a `PartDataType`. There is no `gethydro` for it, and code
 that assumes gas means `HydroDataType` will not work unchanged.
+
+## AREPO and IllustrisTNG
+
+AREPO is read through the GADGET-HDF5 reader, but it is the code with the most handling of its own,
+in 19 files. It is worth its own section because the differences change answers rather than just
+field names.
+
+**Gas is a moving mesh, carried as particles with a volume.** An AREPO `PartType0` cell arrives as
+`PartDataType` with a `:volume` column, so it is neither a grid cell nor a point. That column is
+what makes the difference: `covering_grid` accepts AREPO gas *because* it has `:volume`, and
+refuses star or DM particles, which do not. `:cellsize` is derived as `volume^(1/3)`, not from a
+refinement level, and `:volume` itself comes from `mass/rho` rather than from a cell geometry.
+
+**`getvar(gas, :T)` depends on what you loaded, not only on the snapshot.** Temperature needs the
+internal energy `:u`, and takes the mean molecular weight from the electron abundance `:ne` when
+that column was loaded, falling back to a neutral-primordial μ ≈ 1.22 when it was not. **The two
+differ by up to about 2x in ionised gas.** The field system models this as an optional dependency
+so `getvar_requirements` can say so; if you compare temperatures between two loads, check that both
+included `:ne`.
+
+**Stellar ages come from a formation scale factor, not a birth time.** AREPO and TNG write
+`GFM_StellarFormationTime`, exposed as `:aform`, where RAMSES writes a birth time. `sfr` and
+`sfr_snapshot` select stars by `:aform > 0` on this path, which also excludes **wind particles**:
+TNG marks those with a negative formation time, and on one R200c cube they were 630,504 of
+8,044,495 `PartType4` entries, 7.8% that a `!= 0` test would have counted as stars.
+
+**Fields that exist only here:** `:coolrate` (from `GFM_CoolingRate`) feeding `:t_cool` and
+`:l_cool`; the magnetic field `:bx`/`:by`/`:bz` as stored leaves, feeding `:v_alfven` and
+`:e_magnetic`; and `:highresgasmass` (from `HighResGasMass`) used by `contamination`.
+
+**`contamination` is a zoom-simulation safety check** and has no RAMSES equivalent. It answers
+whether low-resolution boundary particles have entered your region, which invalidates every mass,
+profile and dynamical quantity taken from it, and nothing else in the analysis will warn you. On one
+AREPO zoom the boundary families were 43x heavier than the high-resolution ones. Check its `clean`
+and `conclusive` fields before quoting numbers from a zoom.
+
+**Verified by** `73_arepo_realdata_validation.jl` (18 testsets against real data) and
+`74_zoom_kinematics_tests.jl` (19 testsets, data-free, pinning `:cellsize = volume^(1/3)` and the
+unit handling).
 
 A dash means the reader does not implement it, usually because the code does not write that data
 separately. RAMSES is the only code with dedicated `getgravity`, `getrt` and `getclumps` readers,
@@ -89,6 +128,22 @@ so a new reader can be checked against it before there is any data to load.
   Weighting by `:volume` needs a volume field, which not every snapshot carries.
 - **CI covers the data-free tier only.** Four of the nine files are data-free; the five
   data-backed ones are verified on the maintainer's machine.
+
+## Branch currency
+
+**This branch is behind `master`.** As of 2026-09-09:
+
+| | |
+|---|---|
+| last merge from master | 2026-08-31 (`772bbf5f3`) |
+| master commits not yet here | **118** |
+| commits unique to multicode | 19 |
+
+Those 118 include changes that touch code paths this branch depends on, among them the
+star-formation defaults (`eta_sn=:auto`, and the bin count that no longer drops the youngest stars)
+and the RT-aware thermal term in the dispersions. Both reach AREPO through the shared analysis
+layer, so the numbers here will move at the next merge. Merge and run the full suite before
+trusting a result from this branch.
 
 ## Working on this branch
 
