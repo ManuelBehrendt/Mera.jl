@@ -56,6 +56,25 @@ function _sfr_mass_field(p::PartDataType, mass::Symbol)
     return :mass
 end
 
+# Resolve `eta_sn=:auto` to the value the run itself recorded. RAMSES writes `eta_sn` in
+# &PHYSICS_PARAMS and `getinfo` parses it into `info.part_info.eta_sn`, so the correction can use
+# the run's own feedback fraction instead of asking the user to look it up. Only meaningful when
+# integrating the current `:mass`: an initial-mass column is already the birth mass. Says so on
+# screen, because it changes the numbers.
+function _sfr_resolve_eta(p::PartDataType, eta_sn, mfield::Symbol, t_sn_delay::Real, fname::String)
+    eta_sn === :auto || return eta_sn
+    mfield === :mass || return 0.0                       # initial-mass column: nothing to reconstruct
+    eta = 0.0
+    if hasproperty(p.info, :part_info) && hasproperty(p.info.part_info, :eta_sn)
+        eta = Float64(p.info.part_info.eta_sn)
+    end
+    (0.0 < eta < 1.0) || return 0.0                      # not recorded (or nonsense): stay a no-op
+    @info "$fname: using eta_sn=$eta from the run's namelist to rebuild birth masses from the " *
+          "current :mass. Stars older than $t_sn_delay Myr are scaled by 1/(1-eta_sn), which " *
+          "RAISES the rate. Pass eta_sn=0 to switch this off, or eta_sn=<value> to set it." maxlog=1
+    return eta
+end
+
 # Reconstruct the INITIAL stellar mass from the current mass when no initial-mass column is stored:
 # a star older than `t_sn_delay` (the SN onset) has already shed a fraction `eta_sn` of its birth mass,
 # so m_birth = m_current / (1 - eta_sn). Younger stars have not yet had SNe → unchanged. Applied only
@@ -91,8 +110,8 @@ function _sfr_history(tform::AbstractVector, massv::AbstractVector, t0::Real, t1
 end
 
 """
-    sfr(p::PartDataType; tbinsize=10.0, trange=[0.0, missing], mass=:auto, mask=[false],
-        mode=:none, closed=:left) -> (t_Myr, sfr)
+    sfr(p::PartDataType; tbinsize=10.0, trange=[missing, missing], mass=:auto, mask=[false],
+        mode=:none, closed=:left, eta_sn=:auto, t_sn_delay=5.0) -> (t_Myr, sfr)
 
 Star-formation history from the star particles: `t_Myr` are the left bin edges [Myr] and `sfr`
 is the star-formation rate per bin [M⊙/yr] (mass formed ÷ bin width).
@@ -118,23 +137,28 @@ test is *not* reliable. The **formation-time axis is physical** and RAMSES-versi
 * `mode` — `:none` (M⊙/yr) or `:probability` (normalised SFH fraction).
 * `eta_sn`, `t_sn_delay` — **SN mass-loss correction** for runs that store only the *current* mass:
   a star older than `t_sn_delay` Myr (SN onset, default 5) has shed a fraction `eta_sn` of its birth
-  mass, so its mass is rescaled by `1/(1-eta_sn)` to recover the initial mass. Default `eta_sn=0` is a
-  no-op; ignored (with a warning) when an initial-mass field is used — it is already the birth mass.
+  mass, so its mass is rescaled by `1/(1-eta_sn)` to recover the initial mass. The default `:auto`
+  takes the fraction the run itself recorded (`info.part_info.eta_sn`, from RAMSES `&PHYSICS_PARAMS`)
+  and says on screen that it did, because it changes the numbers. `eta_sn=0` switches it off, a number
+  sets it by hand. Ignored (with a warning) when an initial-mass field is used, which is already the
+  birth mass, and a no-op when the run records no `eta_sn`.
 
 ```julia
 t, s = sfr(parts; tbinsize=50.0)            # SFR [M⊙/yr] vs t [Myr]
 t, s = sfr(parts; mass=:minit)              # force a specific initial-mass field
-t, s = sfr(parts; eta_sn=0.2)               # reconstruct birth mass from current mass (20% SN loss)
+t, s = sfr(parts; eta_sn=0.2)               # set the SN mass-loss fraction by hand
+t, s = sfr(parts; eta_sn=0)                 # switch the correction off (current mass as stored)
 ```
 
 See also [`sfr_snapshot`](@ref) for the current SFR from a single snapshot.
 """
 function sfr(p::PartDataType; tbinsize::Real=10.0, trange=[missing, missing], mass::Symbol=:auto,
              mask=[false], mode::Symbol=:none, closed::Symbol=:left,
-             eta_sn::Real=0.0, t_sn_delay::Real=5.0)
+             eta_sn::Union{Real,Symbol}=:auto, t_sn_delay::Real=5.0)
     mfield = _sfr_mass_field(p, mass)
+    eta    = _sfr_resolve_eta(p, eta_sn, mfield, t_sn_delay, "sfr")
     massv  = getvar(p, mfield, :Msol)                     # initial (preferred) or current mass [M⊙]
-    massv  = _sn_correct_mass!(p, massv, mfield, eta_sn, t_sn_delay, :Myr)  # reconstruct birth mass if asked
+    massv  = _sn_correct_mass!(p, massv, mfield, eta, t_sn_delay, :Myr)  # reconstruct birth mass
     isstar = _sfr_star_mask(p)                            # :birth != 0 (RAMSES) or :aform > 0 (AREPO)
     tform  = _sfr_formation_time_Myr(p)                   # physical cosmic formation time [Myr]
     if length(mask) > 1
@@ -150,7 +174,7 @@ end
 
 """
     sfr_snapshot(p::PartDataType; windows=[5.0, 10.0, 100.0], time_unit=:Myr, mass=:auto,
-                 mask=[false]) -> NamedTuple
+                 mask=[false], eta_sn=:auto, t_sn_delay=5.0) -> NamedTuple
 
 Star-formation rate from a **single snapshot**, from the star particles (`birth ≠ 0`;
 cosmological birth times are converted to ages via `stellar_age`). Two complementary measures:
@@ -163,14 +187,20 @@ cosmological birth times are converted to ages via `stellar_age`). Two complemen
 `mass` selects the mass field; `:auto` (default) prefers a stored **initial-mass** column and
 falls back to current `:mass` — SFR should use the initial stellar mass (current mass is reduced
 by post-formation mass loss). Returns
-`(; windows, time_unit, sfr, sfr_mean, n_stars, stellar_mass_Msol, oldest_age, mass_field)` where
-`sfr` is the per-window vector aligned to `windows`. With no star particles every rate is `0.0`.
+`(; windows, time_unit, sfr, sfr_mean, n_stars, stellar_mass_Msol, oldest_age, mass_field, eta_sn)`
+where `sfr` is the per-window vector aligned to `windows`. With no star particles every rate is `0.0`.
+
+`eta_sn`, `t_sn_delay` work exactly as in [`sfr`](@ref): when only the current `:mass` is stored, the
+default `:auto` rebuilds birth masses with the fraction the run recorded, and the returned `eta_sn`
+says which value was applied (`0.0` when nothing was). The shortest window is usually younger than
+`t_sn_delay`, so it is unaffected; the 100 Myr window and the lifetime mean move the most.
 
 ```julia
 s = sfr_snapshot(parts)            # default 5/10/100 Myr windows + mean (auto initial-mass)
 s.sfr                              # [SFR(5 Myr), SFR(10 Myr), SFR(100 Myr)]  M⊙/yr
 s.sfr_mean                         # lifetime-averaged SFR  M⊙/yr
 s.mass_field                       # which mass field was used (e.g. :minit or :mass)
+s.eta_sn                           # the SN mass-loss fraction applied (0.0 if none)
 ```
 
 !!! note "Switching to an initial-mass column moves the old bins far more than the young ones"
@@ -194,11 +224,13 @@ s.mass_field                       # which mass field was used (e.g. :minit or :
 See also [`sfr`](@ref) for the full star-formation history SFR(t).
 """
 function sfr_snapshot(p::PartDataType; windows=[5.0, 10.0, 100.0], time_unit::Symbol=:Myr,
-                      mass::Symbol=:auto, mask=[false], eta_sn::Real=0.0, t_sn_delay::Real=5.0)
+                      mass::Symbol=:auto, mask=[false],
+                      eta_sn::Union{Real,Symbol}=:auto, t_sn_delay::Real=5.0)
     mfield = _sfr_mass_field(p, mass)
+    eta   = _sfr_resolve_eta(p, eta_sn, mfield, t_sn_delay, "sfr_snapshot")
     age  = getvar(p, :age, time_unit)                    # age since formation (cosmological-correct)
     massv = getvar(p, mfield, :Msol)                     # initial (preferred) or current mass [M⊙]
-    massv = _sn_correct_mass!(p, massv, mfield, eta_sn, t_sn_delay, time_unit)  # birth-mass reconstruction
+    massv = _sn_correct_mass!(p, massv, mfield, eta, t_sn_delay, time_unit)  # birth-mass reconstruction
     star = _sfr_star_mask(p)                             # :birth != 0 (RAMSES) or :aform > 0 (AREPO)
     if length(mask) > 1
         length(mask) == length(age) ||
@@ -212,7 +244,8 @@ function sfr_snapshot(p::PartDataType; windows=[5.0, 10.0, 100.0], time_unit::Sy
     oldest = any(star) ? maximum(age[star]) : 0.0
     sfr_mean = oldest > 0 ? Mstar / (oldest * yr_per_unit) : 0.0
     return (windows=ws, time_unit=time_unit, sfr=sfrw, sfr_mean=sfr_mean,
-            n_stars=count(star), stellar_mass_Msol=Mstar, oldest_age=oldest, mass_field=mfield)
+            n_stars=count(star), stellar_mass_Msol=Mstar, oldest_age=oldest, mass_field=mfield,
+            eta_sn=eta)
 end
 
 """

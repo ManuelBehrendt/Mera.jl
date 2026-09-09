@@ -37,13 +37,13 @@
             mst = getvar(p, mfield, :Msol)[star]
             ft  = getvar(p, :birth, :Myr)
             tb  = 50.0
-            t, s = sfr(p; trange=[minimum(ft[star]), maximum(ft[star]) + 2tb], tbinsize=tb)
+            t, s = sfr(p; trange=[minimum(ft[star]), maximum(ft[star]) + 2tb], tbinsize=tb, eta_sn=0)
             @test !isempty(s) && any(>(0.0), s)                # stars ARE counted (was empty before the fix)
             @test all(>=(0.0), s) && length(t) == length(s)
             @test isapprox(sum(s) * tb * 1e6, sum(mst); rtol=1e-6)   # ∫SFR dt = total initial stellar mass
             # masking to half the stars halves the integrated mass
             half = star .& (axes(b,1) .<= length(b) ÷ 2)
-            th, sh = sfr(p; mask=half, trange=[minimum(ft[star]), maximum(ft[star]) + 2tb], tbinsize=tb)
+            th, sh = sfr(p; mask=half, trange=[minimum(ft[star]), maximum(ft[star]) + 2tb], tbinsize=tb, eta_sn=0)
             @test isapprox(sum(sh) * tb * 1e6, sum(getvar(p, mfield, :Msol)[half]); rtol=1e-6)
         end
 
@@ -77,7 +77,7 @@
             tb = 50.0; tr = [minimum(ft[star]), maximum(ft[star]) + 2tb]
             # eta_sn forces the :mass fallback (so the reconstruction actually applies) and must RAISE
             # the SFR of stars older than t_sn_delay by exactly 1/(1-eta_sn); younger stars unchanged.
-            t0, s0 = sfr(p; mass=:mass, trange=tr, tbinsize=tb)
+            t0, s0 = sfr(p; mass=:mass, trange=tr, tbinsize=tb, eta_sn=0)
             t2, s2 = sfr(p; mass=:mass, eta_sn=0.25, t_sn_delay=5.0, trange=tr, tbinsize=tb)
             @test all(s2 .>= s0 .- 1e-9)                       # never decreases
             @test sum(s2) > sum(s0)                            # old stars get rescaled up
@@ -86,6 +86,23 @@
             # eta_sn=0 is a no-op (backward compatible)
             tz, sz = sfr(p; mass=:mass, eta_sn=0.0, trange=tr, tbinsize=tb)
             @test sz == s0
+
+            # `:auto` (the default) takes the fraction the run itself recorded, so the
+            # correction is applied without the caller having to look it up. spiral_ugrid's
+            # namelist carries eta_sn=0.2; asking for it explicitly must give the same answer,
+            # and eta_sn=0 must reproduce the uncorrected baseline exactly.
+            eta_run = info.part_info.eta_sn
+            @test eta_run == 0.2
+            ta, sa = sfr(p; mass=:mass, trange=tr, tbinsize=tb)                    # :auto
+            te, se = sfr(p; mass=:mass, trange=tr, tbinsize=tb, eta_sn=eta_run)
+            @test sa == se                                                          # auto == explicit
+            @test sum(sa) > sum(s0)                                                 # and it is applied
+            snap_a = sfr_snapshot(p; mass=:mass)
+            @test snap_a.eta_sn == eta_run                                          # provenance reported
+            @test sfr_snapshot(p; mass=:mass, eta_sn=0).eta_sn == 0
+            # the shortest window is younger than t_sn_delay, so it must NOT move
+            @test snap_a.sfr[1] == sfr_snapshot(p; mass=:mass, eta_sn=0).sfr[1]
+            @test snap_a.sfr_mean > sfr_snapshot(p; mass=:mass, eta_sn=0).sfr_mean
 
             # depletion_time on the matching hydro region
             gas = gethydro(info, verbose=false, show_progress=false)
