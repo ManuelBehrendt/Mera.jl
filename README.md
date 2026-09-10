@@ -53,7 +53,8 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
 - **RAMSES-native**: direct binary reading of AMR outputs with automatic unit conversion and full
   multi-level support; load only what you need with spatial and refinement-level filtering.
 - **Conservation-correct**: projections and covering grids conserve mass to machine precision with
-  proper per-level cell volumes.
+  proper per-level cell volumes, and this is checked on every release by a data-free oracle suite
+  rather than asserted.
 - **Multi-threaded by default**: `gethydro()` and `projection()` use all available cores
   automatically; benchmarking guides included for system tuning.
 - **Reproducible by construction**: pin your stack with a Julia project (`Project.toml` +
@@ -232,17 +233,6 @@ phase(gas, :rho, :T)              # ρ–T phase diagram
 ```
 
 Write the analysis once; it works on every data type.
-
-## How MERA compares
-
-- **vs. `yt`**: a Julia-native code path (no Python/Cython split) for custom, auditable analyses,
-  and a **pluggable clump/halo finder** with several modern algorithms behind one interface.
-- **vs. `pynbody`**: direct RAMSES AMR reading, multi-threaded out of the box, and research-grade
-  derived physics (spherical/cylindrical velocities, Jeans/virial, magnetosonic Mach, tidal truncation).
-- **vs. hand-written scripts**: conservation treated as a *tested* property (a data-free oracle suite
-  checks weighted statistics, projection/covering-grid mass conservation, and the flux estimator
-  against the analytic surface integral on every release), and every result can carry a
-  `provenance()` record of the versions, output and units behind it.
 
 ## Documentation
 
