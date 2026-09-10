@@ -155,6 +155,9 @@ show_threading_info
 ```
 
 ---
+Not sure which of Mera's map-making tools you want? [Projections: which tool](../projection_which_tool.md)
+compares them and says when to reach for each.
+
 [`@project`](@ref) projects several quantities in one line and binds each map to a name of
 its own. See [Pipelines](../pipelines.md).
 

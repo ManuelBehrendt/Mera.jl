@@ -103,6 +103,9 @@ Pkg.add("PyPlot")       # only the projection pages that import it
 Mera's Makie support ships as a package extension: it activates by itself once a Makie backend
 such as CairoMakie is loaded, with nothing further to install.
 
+For the wider ecosystem around a Mera workflow, tables, units, statistics and IO, see
+[Recommended Packages](recommended_packages.md).
+
 **Requirements**: Julia 1.10 or newer, **1.12+ recommended**, and 8GB+ RAM
 **Platforms**: macOS (including Apple Silicon), Linux, Windows
 **Tested on every push**: Julia 1.10 / 1.11 / 1.12 × Linux, macOS and Windows, nine jobs

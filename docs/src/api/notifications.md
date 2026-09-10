@@ -51,6 +51,7 @@ optimize_image_for_zulip
 
 ## Related
 
+- [Overview](../notifications/index.md), what Mera can send and when it is worth it
 - [Setup & Usage](../notifications/setup_and_usage.md), configuring bell, email and Zulip
 - [Examples](../notifications/examples.md), notifications around real analysis runs
 - [Complete API Reference](../api.md)

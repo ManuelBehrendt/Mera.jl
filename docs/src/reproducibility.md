@@ -131,6 +131,9 @@ ENV["MERA_TEST_DATA"] = download_testdata()
 using Pkg; Pkg.test("Mera")
 ```
 
+What each tier of that suite proves, and which simulation backs which test, is set out in
+the [Testing Framework](advanced_features/testing_guide.md).
+
 That runs the suite against real RAMSES output on your machine, with your versions. Without the
 data it still runs and passes, covering every analytic correctness check; see
 [`test/README.md`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/test/README.md).
