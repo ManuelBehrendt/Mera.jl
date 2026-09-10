@@ -138,7 +138,7 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 - **`projection`**: mass-conserving 2-D maps of any quantity, on- or off-axis (arbitrary line of
   sight, face-on/edge-on, angular-momentum-aligned), with hole-free footprint deposition
 - **`covering_grid` / `slice`**: resample AMR onto a dense uniform grid for FFTs, power spectra,
-  volume rendering or ML inputs (with a memory estimator that refuses to over-allocate)
+  volume rendering, or machine-learning inputs (with a memory estimator that refuses to over-allocate)
 
 ### Profiles & phase diagrams
 - **`profile`**: weighted 1-D profiles of any quantity vs. any axis (radius, height, density…), with
@@ -170,7 +170,7 @@ Barnes–Hut self-potential, SUBFIND-style unbinding and tidal (Hill-radius) tru
 | Feature | Use case |
 |---|---|
 | Clump catalogs | star-forming clouds, halo substructure, dense cores |
-| Covering grids | FFTs, power spectra, ML inputs |
+| Covering grids | power spectra, FFTs, structure functions |
 | Phase diagrams | gas thermodynamics, phase structure |
 | Derived fields | temperature, Mach, Jeans, angular momentum |
 | Profiles | radial density, SFR, metallicity |
