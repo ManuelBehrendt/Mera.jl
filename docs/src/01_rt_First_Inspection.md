@@ -300,3 +300,7 @@ Everything the other cell-data types can do, RT can do, because it is on the sam
 - [Radiative Transfer](10_multi_RadiativeTransfer.md), what RT data is actually for
 - [Hydro: First Inspection](01_hydro_First_Inspection.md), the same mechanics on the other grid type
 - [How Quantities Are Computed](computation_reference.md), where the derived quantities are defined
+
+---
+
+**The same steps on the other data types:** [Hydro](01_hydro_First_Inspection.md) · [Gravity](01_gravity_First_Inspection.md) · [Particles](01_particles_First_Inspection.md) · [Clumps](01_clumps_First_Inspection.md) · [Sinks](01_sinks_First_Inspection.md)

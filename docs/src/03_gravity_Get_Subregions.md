@@ -813,3 +813,7 @@ the simulation was run at.
   [clumps](03_clumps_Get_Subregions.md).
 - [Masking & Filtering](05_multi_Masking_Filtering.md), select by *value*
   instead of by place, and combine the two.
+
+---
+
+**The same steps on the other data types:** [Hydro](03_hydro_Get_Subregions.md) · [Particles](03_particles_Get_Subregions.md) · [Clumps](03_clumps_Get_Subregions.md) · [Sinks](03_sinks_Get_Subregions.md)

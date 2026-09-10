@@ -683,3 +683,7 @@ Now that you understand gravity data fundamentals, you can explore:
 - **Multi-physics analysis**: Combining gravity data with hydro and particle data
 - **Time series analysis**: Working with multiple simulation outputs to study gravitational evolution
 - **Performance optimization**: Advanced techniques for large-scale gravity data processing
+
+---
+
+**The same steps on the other data types:** [Hydro](01_hydro_First_Inspection.md) · [Particles](01_particles_First_Inspection.md) · [Clumps](01_clumps_First_Inspection.md) · [Sinks](01_sinks_First_Inspection.md) · [RT](01_rt_First_Inspection.md)

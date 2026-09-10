@@ -67,16 +67,16 @@ center_of_mass(gas, mask=clump, periodic=true)
 center_of_mass(gas, mask=clump, periodic=(x=true, y=true, z=false))   # mixed boundaries
 
 # every region shape reaches around a face, on every data type
-subregionsphere(gas,     radius=0.1,         center=[0., 0., 0.], periodic=true)
-shellregionsphere(gas,   radius=[0.05, 0.1], center=[0., 0., 0.], periodic=true)
-subregioncylinder(gas,   radius=0.1, height=0.5, center=[0., 0., 0.], periodic=true)
-subregioncuboid(gas, xrange=[-0.05, 0.05], yrange=[-0.05, 0.05], zrange=[-0.05, 0.05],
-                center=[0., 0., 0.], periodic=true)
+subregion(gas,   :sphere;   radius=0.1,         center=[0., 0., 0.], periodic=true)
+shellregion(gas, :sphere;   radius=[0.05, 0.1], center=[0., 0., 0.], periodic=true)
+subregion(gas,   :cylinder; radius=0.1, height=0.5, center=[0., 0., 0.], periodic=true)
+subregion(gas,   :cuboid;   xrange=[-0.05, 0.05], yrange=[-0.05, 0.05], zrange=[-0.05, 0.05],
+                            center=[0., 0., 0.], periodic=true)
 
 # a uniform grid that continues around a face instead of stopping at it
 covering_grid(gas, [:rho], [:standard], lmax=6, center=[0., 0., 0.],
               xrange=[-0.08, 0.08], yrange=[-0.08, 0.08], zrange=[-0.08, 0.08], periodic=true)
-shellregioncylinder(gas, radius=[0.05, 0.1], height=0.5, center=[0., 0., 0.], periodic=true)
+shellregion(gas, :cylinder; radius=[0.05, 0.1], height=0.5, center=[0., 0., 0.], periodic=true)
 ```
 
 `periodic` accepts `true` for all axes, or a per-axis form, because a RAMSES run can close some

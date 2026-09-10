@@ -814,3 +814,7 @@ Now that you understand hydro data fundamentals, you can explore:
 - **Multi-physics analysis**: Combining hydro data with gravity and particle data
 - **Time series analysis**: Working with multiple simulation outputs
 - **Performance optimization**: Advanced techniques for large-scale data processing
+
+---
+
+**The same steps on the other data types:** [Gravity](01_gravity_First_Inspection.md) · [Particles](01_particles_First_Inspection.md) · [Clumps](01_clumps_First_Inspection.md) · [Sinks](01_sinks_First_Inspection.md) · [RT](01_rt_First_Inspection.md)

@@ -803,3 +803,7 @@ Now that you understand particle data fundamentals, you can explore:
 - **Multi-physics analysis**: Combining particle data with hydro and gravity data
 - **Time series analysis**: Working with multiple simulation outputs to study evolution
 - **Performance optimization**: Advanced techniques for large-scale particle data processing
+
+---
+
+**The same steps on the other data types:** [Hydro](01_hydro_First_Inspection.md) · [Gravity](01_gravity_First_Inspection.md) · [Clumps](01_clumps_First_Inspection.md) · [Sinks](01_sinks_First_Inspection.md) · [RT](01_rt_First_Inspection.md)

@@ -1709,3 +1709,7 @@ insurance a mass budget can buy.
   [clumps](03_clumps_Get_Subregions.md).
 - [Projections: Off-Axis](06_offaxis_Projection.md), view along a tilted
   region's axis.
+
+---
+
+**The same steps on the other data types:** [Gravity](03_gravity_Get_Subregions.md) · [Particles](03_particles_Get_Subregions.md) · [Clumps](03_clumps_Get_Subregions.md) · [Sinks](03_sinks_Get_Subregions.md)
