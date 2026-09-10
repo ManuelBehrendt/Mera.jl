@@ -202,12 +202,10 @@ makedocs(modules = [Mera],
                           "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md",
                           "Recommended Packages"           => "recommended_packages.md",
                           "Resources & Community"          => "quickreference/06_resources.md"],
-                      # "Miscellaneous" is deliberately not listed: its four sections (myargs,
-                      # verbose/progress switches, bell, notifyme) each have a page of their own,
-                      # and its notification sections are pasted `?bell` / `?notifyme` REPL output
-                      # that api.md already renders properly. Meeting the same four topics twice, at
-                      # two levels of quality, is what the docs panel flagged. The page and its
-                      # notebook are kept, just not offered as a route.
+                      # The old "Miscellaneous" page was retired in favour of the four pages that
+                      # cover its topics properly: bundled_arguments.md (myargs),
+                      # verbose_progress_switches.md, and api/notifications.md for bell/notifyme.
+                      # Its notebook is parked in the notebooks repo under _superseded/.
                       "Project & Misc" => Any[
                           "Testing Framework"   => "advanced_features/testing_guide.md",
                           "Logo"                => "logo.md"],
