@@ -60,3 +60,42 @@ html.theme--documenter-dark .mera-tab-btn-active:hover {
     .mera-tabs-js > .mera-tab { display: block; }
     .mera-tab-bar { display: none; }
 }
+/* Gallery cards -------------------------------------------------------------
+   One card per recipe, each showing the thumbnail make_thumb.jl produces. The
+   thumbnails are all 800x450, so the grid stays even however many there are. */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 1.3rem;
+    margin: 1.6rem 0;
+}
+.gallery-card {
+    display: block;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 6px;
+    overflow: hidden;
+    text-decoration: none !important;
+    color: inherit !important;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.gallery-card:hover {
+    border-color: rgba(128, 128, 128, 0.8);
+    transform: translateY(-2px);
+}
+.gallery-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+}
+.gallery-card .gallery-title {
+    display: block;
+    font-weight: 600;
+    padding: 0.7rem 0.85rem 0.15rem;
+}
+.gallery-card .gallery-meta {
+    display: block;
+    font-size: 0.82rem;
+    opacity: 0.75;
+    padding: 0 0.85rem 0.85rem;
+}
