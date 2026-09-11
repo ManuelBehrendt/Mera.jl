@@ -184,3 +184,4 @@ keywords in the same call.
 - [`gethydro`](@ref), [`projection`](@ref), [`subregion`](@ref): the functions that accept `myargs`.
 - [`withargs`](@ref): derive a variant of a bundle without touching the original.
 - [Pipelines](pipelines.md): bundles combined with `loadall` and the projection macros.
+- [Gallery](gallery.md): complete workflows that use a bundle across a whole analysis.

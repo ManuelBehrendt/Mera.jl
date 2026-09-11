@@ -85,6 +85,9 @@ it, and the same line works on a converted MERA file:
 See [Pipelines](pipelines.md) for that, for the matching projection shorthand, and for keeping
 one selection in step across a whole script.
 
+Once you are past the tutorials, the [Gallery](gallery.md) holds complete workflows you can point
+at your own simulation, and is where to share the analysis behind a paper.
+
 **Next: [First Look](first_look.md).** It shows what one command tells you about an unfamiliar
 output, and what it costs on a large one. From there the sidebar follows the order you will
 actually work in: inspect, load, select, compute, project.
