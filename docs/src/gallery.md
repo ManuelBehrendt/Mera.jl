@@ -47,35 +47,25 @@ folder, or post it in
 ### Every recipe says who wrote it
 
 A gallery cannot promise that shared code is correct, and it would be dishonest to imply otherwise.
-What it can do is make every recipe **attributable and checkable**, so a reader can judge it rather
-than trust it. Each notebook opens with a block like this:
+What it can do is make every recipe **attributable**, so a reader can judge it rather than trust it.
+Three lines, and one of them writes itself:
 
 ```
-Author      Jane Doe, University of Somewhere
-Contact     jane.doe@somewhere.edu  ·  github.com/janedoe  ·  ORCID 0000-0000-0000-0000
-Written for Mera v1.8.0, Julia 1.12
-Run on      a 48 kpc RAMSES disc, 51.5M cells, 9 GB, about 1 minute per frame on 8 threads
-Provenance  Mera v1.8.0 | AV05CD/output_00390 | 445.9 Myr | L=48.0 ndim=3 lmin=6 lmax=12
-Paper       https://doi.org/...   (if it belongs to one)
+Author       Jane Doe, University of Somewhere
+Contact      jane.doe@somewhere.edu
+Provenance   Mera v1.8.0 | AV05CD/output_00390 | 445.9 Myr | L=48.0 ndim=3 lmin=6 lmax=12
 ```
 
-The **Provenance** line is not typed by hand. Paste the output of
-[`provenance_string`](@ref) from the run that produced the figures, which records the Mera version,
-the snapshot and the grid it actually read. It takes a second and it pins the claim to a real run.
+The **Provenance** line comes from [`provenance_string`](@ref) on the data the recipe actually read.
+It records the Mera version, the snapshot and the grid, so it cannot be written without having run
+the thing. A name makes someone accountable; a provenance line makes the claim concrete; a contact
+lets a reader ask.
 
-Why this is the right guarantee to offer, rather than a promise of correctness:
+**Start from the template.** `TEMPLATE.ipynb` in the gallery folder has the skeleton and a cell that
+prints the block for you to paste, so the only things you type are your name and how to reach you.
 
-- **A name carries weight.** Someone attaching their name and institution to a notebook has a
-  reason to have run it.
-- **A version makes failure legible.** When a recipe breaks two releases later, "written for Mera
-  v1.8.0" turns a mystery into a known cause.
-- **A cost makes the claim testable.** "51.5M cells, a minute per frame" tells a reader whether
-  their own run behaved, and is the first thing to compare when it does not.
-- **A contact closes the loop.** A reader who hits something can ask the person who wrote it.
-
-Recipes are marked **contributed** until someone else has run them. A maintainer who reproduces one
-notes the date, and it becomes **checked**. Neither label is a guarantee; both are more information
-than an unsigned script.
+Recipes are marked **contributed** until someone else has run them, then **checked** with the date.
+Neither is a guarantee; both beat an unsigned script.
 
 What makes a recipe useful to someone else:
 

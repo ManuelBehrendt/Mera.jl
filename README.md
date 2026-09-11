@@ -250,10 +250,10 @@ lets others reproduce your method on their data, and teaches the parts of an ana
 make it into a figure caption.
 
 **Every recipe says who wrote it.** A gallery cannot promise that shared code is correct, so instead
-each notebook opens with its author and contact, the Mera and Julia versions it was written for,
-what it was run on and what that cost, and a `provenance_string` line from the run that produced
-the figures. Recipes are marked *contributed* until someone else has run one, then *checked* with
-the date. A reader can judge a recipe rather than trust it.
+each notebook opens with three lines: author, contact, and a `provenance_string` line recording the
+Mera version, snapshot and grid the recipe actually read, which cannot be written without having run
+it. A template notebook prints that block for you. Recipes are marked *contributed* until someone
+else has run one, then *checked* with the date.
 
 Contributions are welcome by pull request, or via
 [Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions). The
