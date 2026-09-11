@@ -42,7 +42,7 @@ gas  = gethydro(info);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-08-31T14:33:34.479
+[Mera]: 2026-09-11T08:44:24.298
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -75,12 +75,13 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
+boundaries:       not periodic (&BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-08-31T14:33:36.972
+[Mera]: Get hydro data: 2026-09-11T08:44:26.143
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -92,7 +93,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:19 (30.45 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:19 (29.97 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -102,7 +103,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 36.996 seconds
+✓ Table created in 42.567 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
@@ -119,7 +120,7 @@ println(p)
 
 ```
 Provenance:
-  Mera version : 1.8.0
+  Mera version : v1.8.0
   simulation   : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   output       : 300  (RAMSES, written 2025-06-21T18:31:24.020)
   time         : 445.89 Myr
@@ -155,6 +156,7 @@ output produce identical provenance, safe to use in tests and comparisons.
 
 ```julia
 @show p.mera_version
+@show p.mera_build
 @show p.path
 @show p.output
 @show p.simcode
@@ -168,6 +170,7 @@ output produce identical provenance, safe to use in tests and comparisons.
 
 ```
 p.mera_version = v"1.8.0"
+p.mera_build = "1.8.0"
 p.path = "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10"
 p.output = 300
 p.simcode = "RAMSES"
@@ -197,6 +200,32 @@ println(s)
 Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
 ```
 
+### Release build or development build
+
+`pkgversion` reports the same `v1.8.0` whether Mera came from the registry or from a checkout
+of a branch, so a notebook written against a development version would look like it was written
+against the release. The version field therefore names the build whenever it can tell.
+
+On a normal install it is just the version:
+
+```
+Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+```
+
+On a git checkout it carries the branch and the commit, and it marks a working tree with
+uncommitted changes, because then the commit alone does not say what ran:
+
+```
+Mera v1.9.0-DEV (dev multicode @ 3a91f2c) | mw_L10/output_00300 | 445.89 Myr | ...
+Mera v1.8.0 (dev revamp/2026 @ 4f2a9c1 +uncommitted) | mw_L10/output_00300 | 445.89 Myr | ...
+```
+
+This is what makes a shared script honest about what produced it. The Gallery page uses the
+same line in its attribution block, so a reader can tell a released Mera from somebody's branch.
+
+Set `MERA_PROVENANCE_PLAIN=1` to force the plain version. These pages are rendered that way, so
+the examples above show a release rather than the checkout the documentation was built from.
+
 ## Where it applies
 
 `provenance` works on **any object that carries an `InfoType`**, every data object, the
@@ -214,7 +243,7 @@ println("from a map    : ", provenance_string(sd))
 
 ```
 from InfoType : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-[Mera]: 2026-08-31T14:34:46.087
+[Mera]: 2026-09-11T08:45:32.748
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -243,7 +272,7 @@ println("gravity   : ", provenance_string(grav))
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-31T14:34:51.811
+[Mera]: Get particle data: 2026-09-11T08:45:36.849
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
@@ -257,7 +286,7 @@ Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :38.428720474243164 MB
 -------------------------------------------------------
-[Mera]: Get gravity data: 2026-08-31T14:34:56.503
+[Mera]: Get gravity data: 2026-09-11T08:45:41.917
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -269,7 +298,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.82 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.55 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -279,7 +308,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 2.945 seconds
+✓ Table created in 4.26 seconds
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 particles : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
@@ -288,8 +317,9 @@ gravity   : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=
 
 ## Deterministic
 
-The record depends only on the snapshot's own metadata, never on the wall clock, so two
-independent reads of the same output produce identical provenance.
+The record depends on the snapshot's own metadata and on the Mera build, never on the wall clock,
+so two independent reads of the same output in the same session produce identical provenance. That
+is what makes it safe to compare in a test.
 
 ```julia
 p2 = provenance(gethydro(info))
@@ -297,7 +327,7 @@ println("identical to first read : ", provenance_string(p2) == provenance_string
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-31T14:35:14.614
+[Mera]: Get hydro data: 2026-09-11T08:46:01.581
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -309,7 +339,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.66 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.62 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -319,7 +349,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 39.186 seconds
+✓ Table created in 45.671 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 identical to first read : true

@@ -148,6 +148,7 @@ export
     pdf,
     provenance,
     provenance_string,
+    mera_build,
     Provenance,
 
 # basic calcs

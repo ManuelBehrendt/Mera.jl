@@ -65,6 +65,8 @@ mkdir -p executed/examples executed/paraview
 run_nb () {  # $1 = notebook path w/o .ipynb, $2 = output subdir
     local nb="$1" outdir="$2"
     echo "    -- $nb"
+    # plain version in provenance lines, so rendered pages do not carry this checkout's commit
+    MERA_PROVENANCE_PLAIN=1 \
     jupyter nbconvert --to notebook --execute --allow-errors \
         --ExecutePreprocessor.kernel_name="$COV_KERNEL" \
         --ExecutePreprocessor.timeout=1800 \
