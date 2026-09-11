@@ -242,11 +242,6 @@ Complete workflows you can point at your own simulation: download a notebook, ch
 the output number, run it. The first is an animation that tips a galaxy from face-on onto its edge
 and tumbles it like a spun coin, in surface density, line-of-sight velocity and temperature.
 
-These sit apart from the tutorials on purpose. They are not executed when the docs are built and
-are not part of the test suite, so a recipe needing an hour of compute or an outside tool cannot
-break a release, and a contributor does not have to meet the test suite's standards to share
-something useful.
-
 - **[Gallery](https://manuelbehrendt.github.io/Mera.jl/stable/gallery/)**, and the notebooks behind
   it in the [Notebooks repository](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery)
 - Contributions are welcome, by pull request there or via
