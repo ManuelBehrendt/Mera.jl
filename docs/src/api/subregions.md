@@ -8,20 +8,23 @@ Both functions dispatch on `DataSetType`, so they work on **every** data type Me
 the four with tutorial pages. The tutorials cover hydro, gravity, particles and clumps; RT and
 sinks are not written up but are supported by the same code.
 
-| data type | `subregion` | `shellregion` | `cell=` | smooth boundary |
+| data type | `subregion` | `shellregion` | `cell=` | `:fraction` |
 |---|---|---|---|---|
-| hydro | yes | yes | yes | yes, on `:cylinder` |
-| gravity | yes | yes | yes | no |
-| RT | yes | yes | yes | no |
+| hydro | yes | yes | yes | yes |
+| gravity | yes | yes | yes | yes |
+| RT | yes | yes | yes | yes |
 | particles | yes | yes | ignored (points) | no |
 | clumps | yes | yes | ignored (points) | no |
 | sinks | yes | yes | ignored (points) | no |
 
-`cell=` decides whether a cell straddling the border is included whole or by its centre, so it is
+`cell=` decides whether a cell on the border is included whole or by its centre, so it is
 meaningful only for AMR cell data. Particles, clumps and sinks are points: they are in or out, and
 the keyword is accepted and ignored.
 
-The smooth-boundary keywords are implemented only for the hydro cylinder.
+`:fraction` is the better answer for cell data. Use the region value form,
+`subregion(gas, Sphere(10.))`, and each border cell carries the part of it that lies inside, which
+`getvar(:mass)` and `getvar(:volume)` then apply. The shape symbols shown here (`:sphere`,
+`:cylinder`, `:cuboid`) keep the whole-or-nothing rule.
 
 !!! warning "Regions do not wrap at periodic boundaries"
     Neither function applies the minimum-image convention. A sphere or shell centred near a box

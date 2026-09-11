@@ -387,74 +387,6 @@ function get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell,
 end
 
 """
-    smooth_transition(distance_to_boundary, boundary_width)
-
-Calculate smooth transition weight for boundary cells.
-
-Creates a smooth transition zone that eliminates sharp cutoffs while maintaining
-the overall cylindrical geometry. Uses a cosine-based transition function.
-
-# Arguments
-- `distance_to_boundary`: Signed distance from cylinder boundary (negative = inside)
-- `boundary_width`: Width of transition zone
-
-# Returns
-- `Float64`: Weight between 0.0 (excluded) and 1.0 (fully included)
-"""
-function smooth_transition(distance_to_boundary::Float64, boundary_width::Float64)
-    if distance_to_boundary <= -boundary_width
-        return 1.0  # Full inclusion (well inside cylinder)
-    elseif distance_to_boundary >= boundary_width
-        return 0.0  # Full exclusion (well outside cylinder)
-    else
-        # Smooth transition using cosine function
-        # distance_to_boundary ranges from -boundary_width to +boundary_width
-        # We want weight 1.0 at -boundary_width and weight 0.0 at +boundary_width
-        t = (distance_to_boundary + boundary_width) / (2 * boundary_width)
-        return 0.5 * (1 + cos(π * t))
-    end
-end
-
-"""
-    get_cylinder_inclusion_weight(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, 
-                                 radius_shift, height_shift, cell, smooth_boundary, boundary_width)
-
-Calculate inclusion weight for a cell in cylindrical subregion with optional smooth boundaries.
-
-# Returns
-- `Float64`: Weight between 0.0 (excluded) and 1.0 (fully included)
-"""
-function get_cylinder_inclusion_weight(cx, cy, cz, level, cx_shift, cy_shift, cz_shift,
-                                     radius_shift::Float64, height_shift::Float64, cell::Bool,
-                                     smooth_boundary::Bool, boundary_width::Float64)
-    # Get distances to cylinder boundaries
-    radial_distance = get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell)
-    height_distance = get_height_cylinder(cz, level, cz_shift, cell)
-    
-    if !smooth_boundary
-        # Original sharp boundary logic
-        if radial_distance <= radius_shift && height_distance <= height_shift
-            return 1.0
-        else
-            return 0.0
-        end
-    else
-        # Smooth boundary logic
-        # Calculate signed distances from boundaries (negative = inside)
-        radial_distance_from_boundary = radial_distance - radius_shift
-        height_distance_from_boundary = height_distance - height_shift
-        
-        # Calculate weights for both radial and height boundaries
-        radial_weight = smooth_transition(radial_distance_from_boundary, boundary_width * radius_shift)
-        height_weight = smooth_transition(height_distance_from_boundary, boundary_width * height_shift)
-        
-        # Use minimum weight (most restrictive boundary)
-        return min(radial_weight, height_weight)
-    end
-end
-
-
-"""
     get_height_cylinder(cz, level, cz_shift, cell)
 
 Calculate distance from cell to cylinder center plane for cylindrical subregion selection.
@@ -526,48 +458,24 @@ It supports both cell-based and point-based selection modes for precise boundary
   region touches a face: without it the part outside the box is dropped, not wrapped, so a
   sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
   (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
-- `smooth_boundary::Bool=false`: Enable smooth boundary transitions (eliminates grid artifacts)
-- `boundary_width::Real=0.1`: Relative width of smooth transition zone (0.0-1.0)
 - `verbose::Bool=verbose_mode`: Print progress information
 
 # Selection Modes
 - **Cell-based (`cell=true`)**: Includes cells that intersect the cylinder boundary
 - **Point-based (`cell=false`)**: Includes only cells whose centers lie within the cylinder
 
-# Smooth Boundaries (OPTIONAL)
-When `smooth_boundary=true`, cells near the cylinder boundary receive fractional weights
-instead of binary inclusion/exclusion. This eliminates sharp grid artifacts while
-maintaining overall cylindrical geometry:
-- `boundary_width=0.1`: 10% of radius/height used for smooth transition (default)
-- `boundary_width=0.05`: 5% transition (sharper but still smooth)
-- Cells well inside: weight = 1.0 (full inclusion)
-- Cells in transition zone: weight = smooth function (0.0 to 1.0)
-- Cells well outside: weight = 0.0 (excluded)
-
-The default behavior uses sharp boundaries for backward compatibility.
+For a boundary cell counted by the fraction of it that actually lies inside, use the region
+value form, `subregion(gas, Cylinder(radius, height))`, which attaches a `:fraction` column that
+`getvar(:mass)` and `getvar(:volume)` apply.
 
 # Returns
 - `HydroDataType`: New hydro data object containing filtered cells
-- When `smooth_boundary=true`, adds `cylinder_weight` column for boundary cells with smooth transitions
 
 # Examples
 ```julia
-# Default cylindrical selection (sharp boundaries)
 subregion = subregioncylinder(gas,
     radius=5., height=4., center=[:boxcenter],
     range_unit=:kpc, direction=:z)
-
-# Enhanced smooth boundary selection (eliminates grid artifacts)
-smooth_subregion = subregioncylinder(gas,
-    radius=5., height=4., center=[:boxcenter],
-    range_unit=:kpc, direction=:z,
-    smooth_boundary=true)
-
-# Custom smooth transition width
-fine_subregion = subregioncylinder(gas,
-    radius=5., height=4., center=[:boxcenter],
-    range_unit=:kpc, direction=:z,
-    smooth_boundary=true, boundary_width=0.05)  # 5% transition zone
 ```
 
 # See Also
@@ -583,8 +491,6 @@ function subregioncylinder(dataobject::HydroDataType;
                             direction::Symbol=:z,
                             cell::Bool=true,
                             inverse::Bool=false,
-                            smooth_boundary::Bool=false,
-                            boundary_width::Real=0.1,
                             periodic=false,
                             verbose::Bool=verbose_mode)
     cflags = _periodic_flags(periodic)
@@ -607,60 +513,14 @@ function subregioncylinder(dataobject::HydroDataType;
     ranges, cx_shift, cy_shift, cz_shift, radius_shift, height_shift = prepranges(dataobject.info, center, radius, height, range_unit, verbose)
 
     if inverse == false
-        if smooth_boundary
-            # Enhanced filtering with smooth boundaries and weighted cells
-            if verbose
-                println("   Using smooth cylindrical boundaries with transition width: $(boundary_width * 100)%")
-            end
-            
-            # Calculate weights for all cells
-            weights = Float64[]
-            included_indices = Int[]
-            
-            for (i, row) in enumerate(dataobject.data)
-                if isamr
-                    weight = get_cylinder_inclusion_weight(row.cx, row.cy, row.cz, row.level, 
-                                                         cx_shift, cy_shift, cz_shift,
-                                                         radius_shift, height_shift, cell,
-                                                         smooth_boundary, boundary_width)
-                else
-                    weight = get_cylinder_inclusion_weight(row.cx, row.cy, row.cz, lmax,
-                                                         cx_shift, cy_shift, cz_shift,
-                                                         radius_shift, height_shift, cell,
-                                                         smooth_boundary, boundary_width)
-                end
-                
-                if weight > 0.0  # Include cells with any positive weight
-                    push!(weights, weight)
-                    push!(included_indices, i)
-                end
-            end
-            
-            # Create filtered dataset
-            sub_data = dataobject.data[included_indices]
-            
-            # Add weight column for boundary cells (weights < 1.0)
-            boundary_cells = weights .< 1.0
-            if any(boundary_cells)
-                # For IndexedTables, add the weight column using insertcolsafter
-                Nafter = IndexedTables.ncols(sub_data)
-                sub_data = IndexedTables.insertcolsafter(sub_data, Nafter, :cylinder_weight => weights)
-                if verbose
-                    n_boundary = sum(boundary_cells)
-                    println("   - Added smooth transition weights to $n_boundary boundary cells")
-                end
-            end
-        else
-            # Original sharp boundary filtering
-            if isamr
-                sub_data = _subset_table(dataobject.data,
-                                   _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) <= radius_shift &&
-                                    get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) <= height_shift))
-            else # for uniform grid
-                sub_data = _subset_table(dataobject.data,
-                                   _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) <= radius_shift &&
-                                    get_height_cylinder(c.cz[i], lmax, cz_shift, cell) <= height_shift))
-            end
+        if isamr
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) <= radius_shift &&
+                                get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) <= height_shift))
+        else # for uniform grid
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) <= radius_shift &&
+                                get_height_cylinder(c.cz[i], lmax, cz_shift, cell) <= height_shift))
         end
 
     else # inverse == true
