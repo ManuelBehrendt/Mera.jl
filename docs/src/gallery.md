@@ -12,14 +12,46 @@ run it.
 
 ## What is there
 
-| recipe | reads | what it makes |
-|---|---|---|
-| [A spun-coin movie of your own galaxy](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/gallery/coin_flip_movie.ipynb) | RAMSES | a three-panel animation, surface density, line-of-sight velocity and temperature, with the camera tipping from face-on onto its edge, turning in place, tumbling like a spun coin and falling flat, as a seamless loop |
+```@raw html
+<div class="gallery-grid">
 
-**Reads** is the simulation code a recipe was written against. Most of Mera's analysis is
-code-agnostic, so a RAMSES recipe usually transfers to another code with no change beyond the path.
-Readers for codes other than RAMSES are in development on the `multicode` branch and are not part of
-a 1.x release, so a recipe needing one should say so in its opening paragraph. See
+<a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/001_coin_flip_movie">
+  <img src="assets/gallery/coin_flip_movie_thumb.png"
+       alt="Three panels of the same galaxy seen edge-on: surface density, line-of-sight velocity and temperature">
+  <span class="gallery-title">A spun-coin movie of your own galaxy</span>
+  <span class="gallery-meta">RAMSES · three panels, surface density, line-of-sight velocity and
+  temperature, with the camera tipping from face-on onto its edge, turning in place, tumbling like
+  a spun coin and falling flat, as a seamless loop</span>
+</a>
+
+</div>
+```
+
+Each card links to a folder, not a bare notebook. A recipe is the notebook plus the environment it
+ran in:
+
+```
+001_coin_flip_movie/
+  coin_flip_movie.ipynb
+  Project.toml        which packages, and which versions are allowed
+  Manifest.toml       the exact versions that ran, down to every dependency
+  media/              the figures, the animation, and the thumbnail on the card
+```
+
+The notebook's first cell activates that environment, so you run it against the versions the author
+ran, not against whatever is installed on your machine. Add the provenance line in the notebook
+header, which names the Mera build and the exact snapshot, and a reader has everything needed to get
+the same numbers rather than a description of them. [Reproducibility](reproducibility.md) covers the
+same idea for your own work.
+
+The leading number is the order recipes arrived. It never changes, so it stays a stable way to refer
+to one even if the title does.
+
+The code named at the start of each card is the simulation code that recipe was written against.
+Most of Mera's analysis is code-agnostic, so a RAMSES recipe usually transfers to another code with
+no change beyond the path. Readers for codes other than RAMSES are in development on the `multicode`
+branch and are not part of a 1.x release, so a recipe needing one should say so in its opening
+paragraph. See
 [Other Simulation Codes](other_codes.md).
 
 ## Why share the workflow behind your paper
@@ -46,7 +78,7 @@ explains why it does it that way, is more useful than a framework nobody runs.
 ## How to contribute one
 
 Recipes from users are welcome. Open a
-[pull request](https://github.com/ManuelBehrendt/Notebooks) adding a notebook to the `gallery`
+[pull request](https://github.com/ManuelBehrendt/Notebooks) adding a folder to the `gallery`
 folder, or post it in
 [Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions) and it can be added for you.
 
@@ -54,33 +86,68 @@ folder, or post it in
 
 A gallery cannot promise that shared code is correct, and it would be dishonest to imply otherwise.
 What it can do is make every recipe **attributable**, so a reader can judge it rather than trust it.
-Three lines, and one of them writes itself:
+The template prints this block, and only the first two lines are typed:
 
 ```
 Author       Jane Doe, University of Somewhere
 Contact      jane.doe@somewhere.edu
 Reads        RAMSES
-Mera         v1.8.0, Julia 1.12          (or: v1.9.0-DEV (dev multicode @ 3a91f2c), Julia 1.12)
+Mera         1.8.0, Julia 1.12     (or: 1.9.0-DEV (dev multicode @ 3a91f2c), Julia 1.12)
 Provenance   Mera v1.8.0 | AV05CD/output_00390 | 445.9 Myr | L=48.0 ndim=3 lmin=6 lmax=12
+Status       contributed 2026-09-11
 ```
 
-**Reads** and **Provenance** both come from the data: `info.simcode` and
-[`provenance_string`](@ref) on what the recipe actually loaded.
+The rest writes itself from the data: `info.simcode` gives **Reads**, [`mera_build`](@ref) gives
+**Mera**, and [`provenance_string`](@ref) on what the recipe actually loaded gives **Provenance**.
+The provenance line records the version, the snapshot and the grid, so it cannot be written without
+having run the thing.
 
 **The Mera line matters if you were running a development version.** `pkgversion` reports the same
-"v1.8.0" whether that came from the registry or from a checkout of a branch, so a recipe written
+"1.8.0" whether that came from the registry or from a checkout of a branch, so a recipe written
 against `multicode`, or against your own fork, would look like it was written against the release.
-The template detects a git checkout and records the branch and commit instead, and flags a working
-tree with uncommitted changes, because then the commit alone does not identify what ran.
-It records the Mera version, the snapshot and the grid, so it cannot be written without having run
-the thing. A name makes someone accountable; a provenance line makes the claim concrete; a contact
-lets a reader ask.
+[`mera_build`](@ref) detects a git checkout and records the branch and commit instead, and marks a
+working tree with uncommitted changes, because then the commit alone does not identify what ran.
+The same build appears in the provenance line, so one line is enough to tell the two apart.
 
-**Start from the template.** `TEMPLATE.ipynb` in the gallery folder has the skeleton and a cell that
-prints the block for you to paste, so the only things you type are your name and how to reach you.
+A name makes someone accountable; a provenance line makes the claim concrete; a contact lets a
+reader ask.
+
+**Start from the template.** Copy the `TEMPLATE/` folder to `NNN_your_recipe/`, taking the next free
+number. It has the skeleton, a `Project.toml` to fill in, and a cell that prints the block for you to
+paste, so the only things you type are your name and how to reach you.
 
 Recipes are marked **contributed** until someone else has run them, then **checked** with the date.
 Neither is a guarantee; both beat an unsigned script.
+
+### Every recipe shows a thumbnail
+
+The card above is the thumbnail. Pick the one picture that says best what your recipe makes, and
+let Mera size it. There is nothing to download: [`makethumb`](@ref) ships with Mera.
+
+```julia
+using Mera
+makethumb("media/my_figure.png", "media/my_recipe_thumb.png")
+```
+
+The whole picture is kept and the spare space padded with your figure's own background colour, so
+a wide multi-panel figure keeps its outer panels rather than losing them to a crop. Pass
+`mode=:crop` if you would rather fill the card. Give it an animated gif and it takes a frame
+part-way in, because an animation that opens on a static pose makes a dull preview from frame zero.
+
+A movie is not read. Decoding video would add a large binary dependency to every Mera install for a
+job done once, so save a frame from the code that made the movie, or point it at the preview gif. A
+rendered frame is the better source anyway: sharper, and it compresses smaller than an upscaled gif.
+
+From the gallery folder there is a wrapper that knows the layout, so it finds your recipe's `media/`
+and names the file after your notebook:
+
+```
+julia make_thumb.jl 002_my_recipe
+```
+
+It runs in your recipe's own environment, which already pins Mera, so there is nothing extra to
+install. Set `MERA_DIR` to a Mera.jl checkout and the thumbnail is copied into the documentation at
+the same time, so nobody has to move it by hand.
 
 What makes a recipe useful to someone else:
 
@@ -96,6 +163,14 @@ What makes a recipe useful to someone else:
   simulations from `download_testdata()`. A recipe that only runs on unpublished data is a
   showcase, and should say so.
 - **State the cost**, memory and time, and how to try a cheap version first.
+- **Ship the environment.** Commit the `Project.toml` with `[compat]` bounds, and the
+  `Manifest.toml` alongside it. Pkg's own words are that an independent project lets you check in a
+  `Project.toml` "and even a `Manifest.toml` if you wish", and that `instantiate` then installs
+  packages "in the same state that is given by that manifest". Gitignoring the manifest is a
+  convention for **packages**, which must work across a range of dependency versions; a recipe is an
+  application, and its job is to reproduce one result. Two limits to note in your notebook: a
+  manifest records the Julia version it was resolved on, and it pins Julia packages only, so say
+  what else has to be installed.
 
 ## See also
 
