@@ -60,11 +60,18 @@ Three lines, and one of them writes itself:
 Author       Jane Doe, University of Somewhere
 Contact      jane.doe@somewhere.edu
 Reads        RAMSES
+Mera         v1.8.0, Julia 1.12          (or: v1.9.0-DEV (dev multicode @ 3a91f2c), Julia 1.12)
 Provenance   Mera v1.8.0 | AV05CD/output_00390 | 445.9 Myr | L=48.0 ndim=3 lmin=6 lmax=12
 ```
 
 **Reads** and **Provenance** both come from the data: `info.simcode` and
 [`provenance_string`](@ref) on what the recipe actually loaded.
+
+**The Mera line matters if you were running a development version.** `pkgversion` reports the same
+"v1.8.0" whether that came from the registry or from a checkout of a branch, so a recipe written
+against `multicode`, or against your own fork, would look like it was written against the release.
+The template detects a git checkout and records the branch and commit instead, and flags a working
+tree with uncommitted changes, because then the commit alone does not identify what ran.
 It records the Mera version, the snapshot and the grid, so it cannot be written without having run
 the thing. A name makes someone accountable; a provenance line makes the claim concrete; a contact
 lets a reader ask.
