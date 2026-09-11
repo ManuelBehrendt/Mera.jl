@@ -16,10 +16,7 @@ run it.
 |---|---|
 | [A spun-coin movie of your own galaxy](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/gallery/coin_flip_movie.ipynb) | a three-panel animation, surface density, line-of-sight velocity and temperature, with the camera tipping from face-on onto its edge, turning in place, tumbling like a spun coin and falling flat, as a seamless loop |
 
-Each recipe changes the simulation path and the output number in one place near the top. Nothing
-else in them is specific to the data they were written against.
-
-## Share the workflow behind your paper
+## Why share the workflow behind your paper
 
 The most useful recipes are the ones that already exist: the analysis you wrote for a publication.
 Putting it here does three things at once.
@@ -30,17 +27,17 @@ and cite your own work in the notebook.
 
 **It lets people reproduce you.** Someone who can take your notebook, point it at their own
 simulation and get the same kind of figure can check your method against their data instead of
-guessing at it from a caption. That is worth more to your result than another paragraph of
-description.
+guessing at it from a caption. That does more for the result than another paragraph of method
+description can.
 
 **It teaches.** Most of what is hard in an analysis never reaches the paper: which quantity to
-weight by, why a frame has to be held fixed, what you tried first that did not work. A student
-reading your notebook learns in an afternoon what took you a month.
+weight by, which limits to fix and which to let float, what you tried first that did not work. A
+student reading your notebook learns in an afternoon what took you a month.
 
-Nothing here has to be polished or general. A recipe that does one thing, on one kind of data, with
-the reasoning written down, is more useful than a framework nobody runs.
+Nothing here has to be polished or general. A recipe that does one thing, on one kind of data, and
+explains why it does it that way, is more useful than a framework nobody runs.
 
-## Contributing one
+## How to contribute one
 
 Recipes from users are welcome. Open a
 [pull request](https://github.com/ManuelBehrendt/Notebooks) adding a notebook to the `gallery`
@@ -66,5 +63,5 @@ What makes a recipe useful to someone else:
 
 - [Pipelines](pipelines.md), the shorthands that make the compact version of a recipe short
 - [Bundling Arguments](bundled_arguments.md), for reusing one selection across a whole workflow
-- [Examples](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1), the
-  tutorial notebooks behind every page on this site
+- [The tutorial notebooks](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1)
+  behind every page on this site
