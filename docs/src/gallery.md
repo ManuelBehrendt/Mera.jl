@@ -12,9 +12,15 @@ run it.
 
 ## What is there
 
-| recipe | what it makes |
-|---|---|
-| [A spun-coin movie of your own galaxy](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/gallery/coin_flip_movie.ipynb) | a three-panel animation, surface density, line-of-sight velocity and temperature, with the camera tipping from face-on onto its edge, turning in place, tumbling like a spun coin and falling flat, as a seamless loop |
+| recipe | reads | what it makes |
+|---|---|---|
+| [A spun-coin movie of your own galaxy](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/gallery/coin_flip_movie.ipynb) | RAMSES | a three-panel animation, surface density, line-of-sight velocity and temperature, with the camera tipping from face-on onto its edge, turning in place, tumbling like a spun coin and falling flat, as a seamless loop |
+
+**Reads** is the simulation code a recipe was written against. Most of Mera's analysis is
+code-agnostic, so a RAMSES recipe usually transfers to another code with no change beyond the path.
+Readers for codes other than RAMSES are in development on the `multicode` branch and are not part of
+a 1.x release, so a recipe needing one should say so in its opening paragraph. See
+[Other Simulation Codes](other_codes.md).
 
 ## Why share the workflow behind your paper
 
@@ -53,10 +59,12 @@ Three lines, and one of them writes itself:
 ```
 Author       Jane Doe, University of Somewhere
 Contact      jane.doe@somewhere.edu
+Reads        RAMSES
 Provenance   Mera v1.8.0 | AV05CD/output_00390 | 445.9 Myr | L=48.0 ndim=3 lmin=6 lmax=12
 ```
 
-The **Provenance** line comes from [`provenance_string`](@ref) on the data the recipe actually read.
+**Reads** and **Provenance** both come from the data: `info.simcode` and
+[`provenance_string`](@ref) on what the recipe actually loaded.
 It records the Mera version, the snapshot and the grid, so it cannot be written without having run
 the thing. A name makes someone accountable; a provenance line makes the claim concrete; a contact
 lets a reader ask.
