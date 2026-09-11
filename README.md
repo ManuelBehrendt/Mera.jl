@@ -236,6 +236,8 @@ Write the analysis once; it works on every data type.
 
 ## Recipes and shared workflows
 
+<img src="docs/src/assets/gallery/coin_small.gif" alt="A galaxy tipping from face-on to edge-on and tumbling, in surface density, line-of-sight velocity and temperature" width="640">
+
 Complete workflows you can point at your own simulation: download a notebook, change the path and
 the output number, run it. The first is an animation that tips a galaxy from face-on onto its edge
 and tumbles it like a spun coin, in surface density, line-of-sight velocity and temperature.

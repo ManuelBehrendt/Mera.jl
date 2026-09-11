@@ -8,6 +8,8 @@ The tutorial pages on this site teach one function at a time and are executed on
 gallery recipe is the other shape: a whole workflow, start to finish, with the reasoning written
 down. Download it, change two lines, run it.
 
+![A galaxy tipping from face-on to edge-on and tumbling](assets/gallery/coin_small.gif)
+
 ## What is there
 
 | recipe | what it makes |
