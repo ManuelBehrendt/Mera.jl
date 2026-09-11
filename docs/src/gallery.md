@@ -19,6 +19,27 @@ run it.
 Each recipe changes the simulation path and the output number in one place near the top. Nothing
 else in them is specific to the data they were written against.
 
+## Share the workflow behind your paper
+
+The most useful recipes are the ones that already exist: the analysis you wrote for a publication.
+Putting it here does three things at once.
+
+**It gives your work a second life.** A figure in a paper shows the result. The workflow that made
+it shows how, and it keeps being read long after the paper stops being new. Link it from the paper
+and cite your own work in the notebook.
+
+**It lets people reproduce you.** Someone who can take your notebook, point it at their own
+simulation and get the same kind of figure can check your method against their data instead of
+guessing at it from a caption. That is worth more to your result than another paragraph of
+description.
+
+**It teaches.** Most of what is hard in an analysis never reaches the paper: which quantity to
+weight by, why a frame has to be held fixed, what you tried first that did not work. A student
+reading your notebook learns in an afternoon what took you a month.
+
+Nothing here has to be polished or general. A recipe that does one thing, on one kind of data, with
+the reasoning written down, is more useful than a framework nobody runs.
+
 ## Contributing one
 
 Recipes from users are welcome. Open a

@@ -247,6 +247,10 @@ and tumbles it like a spun coin, in surface density, line-of-sight velocity and 
 - Contributions are welcome, by pull request there or via
   [Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions)
 
+Sharing the workflow behind a paper is especially welcome: it gives your own work a second life,
+lets others reproduce your method on their data, and teaches the parts of an analysis that never
+make it into a figure caption.
+
 ## Documentation
 
 - **[Stable documentation & API reference](https://manuelbehrendt.github.io/Mera.jl/stable/)**
