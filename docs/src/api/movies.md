@@ -21,4 +21,5 @@ getmovie
 savemovie
 loadmovie
 moviefromframes
+makethumb
 ```

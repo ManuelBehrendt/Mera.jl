@@ -149,6 +149,7 @@ export
     provenance,
     provenance_string,
     mera_build,
+    makethumb,
     Provenance,
 
 # basic calcs
@@ -520,6 +521,7 @@ include("functions/galaxy_frame.jl")
 include("functions/gridoverlay.jl")
 include("functions/statistics.jl")
 include("functions/provenance.jl")
+include("functions/thumbnail.jl")
 include("functions/movie.jl")
 # ============================================
 
