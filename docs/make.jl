@@ -207,6 +207,7 @@ makedocs(modules = [Mera],
                       # verbose_progress_switches.md, and api/notifications.md for bell/notifyme.
                       # Its notebook is parked in the notebooks repo under _superseded/.
                       "Project & Misc" => Any[
+                          "Gallery & Workflows" => "gallery.md",
                           "Testing Framework"   => "advanced_features/testing_guide.md",
                           "Logo"                => "logo.md"],
 
