@@ -4,9 +4,9 @@ Complete recipes that do one thing end to end, written so you can point them at 
 and run them. They live beside the tutorial notebooks, in the
 [Notebooks repository](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery).
 
-The tutorial pages on this site teach one function at a time and are executed on every build. A
-gallery recipe is the other shape: a whole workflow, start to finish, with the reasoning written
-down. Download it, change two lines, run it.
+The tutorial pages on this site teach one function at a time. A gallery recipe is the other shape:
+a whole workflow, start to finish, with the reasoning written down. Download it, change two lines,
+run it.
 
 ![A galaxy tipping from face-on to edge-on and tumbling](assets/gallery/coin_small.gif)
 
@@ -18,20 +18,6 @@ down. Download it, change two lines, run it.
 
 Each recipe changes the simulation path and the output number in one place near the top. Nothing
 else in them is specific to the data they were written against.
-
-## How these differ from the tutorials
-
-|  | tutorial pages | gallery recipes |
-|---|---|---|
-| scope | one function, one idea | a whole workflow |
-| executed on every docs build | yes | no |
-| part of the test suite | yes | no |
-| outputs stored | yes, every number comes from the code above it | no, you produce them by running |
-| maintained by | the package | the contributor, with the Mera version stated |
-
-Keeping them out of the build is deliberate. A recipe that needs a specific dataset, an hour of
-compute or an outside tool such as `ffmpeg` should not be able to break a release, and a
-contributor should not have to meet the test suite's standards to share something useful.
 
 ## Contributing one
 
