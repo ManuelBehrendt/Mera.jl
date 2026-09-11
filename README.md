@@ -52,6 +52,15 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   two-language barrier for custom, performance-sensitive analyses.
 - **RAMSES-native**: direct binary reading of AMR outputs with automatic unit conversion and full
   multi-level support; load only what you need with spatial and refinement-level filtering.
+- **Cells are split, not counted**: a sphere is round, but cells are boxes, so some cells lie half
+  in and half out. The usual rule looks at the cell centre and takes the whole cell or nothing.
+  `subregion(gas, Sphere(10.))` instead keeps the part that is really inside: every cell on the edge
+  gets a fraction between 0 and 1, and `getvar(:mass)`, `:volume` and `msum` use it. So the parts add
+  up to the whole, and a 10 kpc sphere is exactly the 5 kpc sphere plus the 5 to 10 kpc shell.
+  Counting whole cells is usually off by less than a percent, but a shell through the densest cell of
+  the `mw_L10` test galaxy comes out 14 % too heavy. `projection(..., binning=:exact)` measures how
+  much of each cell falls on each pixel, for the same reason. See
+  [Subregions](https://manuelbehrendt.github.io/Mera.jl/stable/api/subregions/).
 - **Conservation-correct**: projections and covering grids conserve mass to machine precision with
   proper per-level cell volumes, and this is checked on every release by a data-free oracle suite
   rather than asserted.
