@@ -44,6 +44,39 @@ Recipes from users are welcome. Open a
 folder, or post it in
 [Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions) and it can be added for you.
 
+### Every recipe says who wrote it
+
+A gallery cannot promise that shared code is correct, and it would be dishonest to imply otherwise.
+What it can do is make every recipe **attributable and checkable**, so a reader can judge it rather
+than trust it. Each notebook opens with a block like this:
+
+```
+Author      Jane Doe, University of Somewhere
+Contact     jane.doe@somewhere.edu  ·  github.com/janedoe  ·  ORCID 0000-0000-0000-0000
+Written for Mera v1.8.0, Julia 1.12
+Run on      a 48 kpc RAMSES disc, 51.5M cells, 9 GB, about 1 minute per frame on 8 threads
+Provenance  Mera v1.8.0 | AV05CD/output_00390 | 445.9 Myr | L=48.0 ndim=3 lmin=6 lmax=12
+Paper       https://doi.org/...   (if it belongs to one)
+```
+
+The **Provenance** line is not typed by hand. Paste the output of
+[`provenance_string`](@ref) from the run that produced the figures, which records the Mera version,
+the snapshot and the grid it actually read. It takes a second and it pins the claim to a real run.
+
+Why this is the right guarantee to offer, rather than a promise of correctness:
+
+- **A name carries weight.** Someone attaching their name and institution to a notebook has a
+  reason to have run it.
+- **A version makes failure legible.** When a recipe breaks two releases later, "written for Mera
+  v1.8.0" turns a mystery into a known cause.
+- **A cost makes the claim testable.** "51.5M cells, a minute per frame" tells a reader whether
+  their own run behaved, and is the first thing to compare when it does not.
+- **A contact closes the loop.** A reader who hits something can ask the person who wrote it.
+
+Recipes are marked **contributed** until someone else has run them. A maintainer who reproduces one
+notes the date, and it becomes **checked**. Neither label is a guarantee; both are more information
+than an unsigned script.
+
 What makes a recipe useful to someone else:
 
 - **Two lines to change, at the top.** The path and the output number. If a reader has to hunt for

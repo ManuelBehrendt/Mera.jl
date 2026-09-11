@@ -244,12 +244,21 @@ and tumbles it like a spun coin, in surface density, line-of-sight velocity and 
 
 - **[Gallery](https://manuelbehrendt.github.io/Mera.jl/stable/gallery/)**, and the notebooks behind
   it in the [Notebooks repository](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery)
-- Contributions are welcome, by pull request there or via
-  [Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions)
 
 Sharing the workflow behind a paper is especially welcome: it gives your own work a second life,
 lets others reproduce your method on their data, and teaches the parts of an analysis that never
 make it into a figure caption.
+
+**Every recipe says who wrote it.** A gallery cannot promise that shared code is correct, so instead
+each notebook opens with its author and contact, the Mera and Julia versions it was written for,
+what it was run on and what that cost, and a `provenance_string` line from the run that produced
+the figures. Recipes are marked *contributed* until someone else has run one, then *checked* with
+the date. A reader can judge a recipe rather than trust it.
+
+Contributions are welcome by pull request, or via
+[Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions). The
+**[full instructions are in the documentation](https://manuelbehrendt.github.io/Mera.jl/stable/gallery/#How-to-contribute-one)**,
+including what the attribution block should contain and what makes a recipe usable by someone else.
 
 ## Documentation
 
