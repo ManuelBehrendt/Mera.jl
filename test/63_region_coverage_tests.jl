@@ -540,3 +540,32 @@ if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
         @test_throws ErrorException getvar(ga, hb, :total_binding_energy)
     end
 end
+
+# -----------------------------------------------------------------------------
+# profile / pdf / phase on a gravity object
+# -----------------------------------------------------------------------------
+# All three weight by :mass unless told otherwise, and gravity carries no density,
+# so the default fails. The failure used to point at `hydro_data`, which none of
+# these three accept, sending the reader from a clear error into a MethodError.
+# The message now names `weight=:volume`, so check that it is the truth.
+if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
+    @testset "Gravity: profile/pdf/phase need an explicit weight" begin
+        info = load_test_info(:spiral_clumps)
+        grav = getgravity(info, verbose=false, show_progress=false)
+
+        # the default weight is refused, and the message says what to do instead
+        err = try
+            profile(grav, :r_cylinder, :epot, center=[:bc]); nothing
+        catch e
+            sprint(showerror, e)
+        end
+        @test err !== nothing
+        @test occursin("weight=:volume", err)      # the fix that works
+        @test !occursin("Consider providing hydro_data", err)   # the fix that does not
+
+        # and the advice is true for all three
+        @test profile(grav, :r_cylinder, :epot, center=[:bc], weight=:volume) !== nothing
+        @test phase(grav, :epot, :a_magnitude, weight=:volume) !== nothing
+        @test pdf(grav, :epot, weight=:volume, logbins=false) !== nothing
+    end
+end

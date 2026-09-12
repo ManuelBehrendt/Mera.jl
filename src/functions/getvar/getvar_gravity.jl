@@ -434,7 +434,17 @@ function get_data(dataobject::GravDataType,
                     error("Variable :$i not found in gravity data and could not be retrieved from hydro data. Error: $e")
                 end
             else
-                error("Variable :$i not found in gravity data. Consider providing hydro_data keyword argument to access hydro variables")
+                # `:mass` is the one people hit, because it is the default weight of profile,
+                # pdf and phase and gravity carries no density. Those three take no `hydro_data`,
+                # so naming it here would send the reader into a MethodError; `weight=:volume` is
+                # the fix that works. `hydro_data` is a getvar keyword and is offered as such.
+                extra = i === :mass ?
+                    " Gravity has no density, so there is no cell mass on this object. `profile`, " *
+                    "`pdf` and `phase` weight by `:mass` unless told otherwise: pass " *
+                    "`weight=:volume` to use the cells instead." : ""
+                error("Variable :$i is not in the gravity data.$extra For `getvar` you can borrow " *
+                      "a hydro column by passing `hydro_data=gethydro(info)` loaded over the same " *
+                      "cells.")
             end
         end
 

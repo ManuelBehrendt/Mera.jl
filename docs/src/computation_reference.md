@@ -330,6 +330,20 @@ to use it, any more than you need to split the Earth into crust and mantle to we
 So: use these for the gas, in the field it sits in. For anything that needs to know *which* mass
 made the field, the snapshot does not carry the answer.
 
+**`profile`, `pdf` and `phase` on a gravity object.** They work, but they weight by `:mass` unless
+told otherwise, and gravity carries no density, so there is no mass on that object. Weight by the
+cells instead:
+
+```julia
+profile(gravity, :r_cylinder, :epot; center=[:bc], weight=:volume)
+phase(gravity, :epot, :a_magnitude; weight=:volume)
+pdf(gravity, :epot; weight=:volume, logbins=false)   # phi is negative, so no log bins
+```
+
+`hydro` and `particles` need none of this: both carry a mass, so the default weight works. To bring
+a hydro column onto the gravity object for `getvar` itself, pass `hydro_data=gethydro(info)` loaded
+over the same cells.
+
 
 ### From gravity alone
 
