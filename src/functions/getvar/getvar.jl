@@ -227,6 +227,21 @@ end
     particles/clumps are points, with no fraction by construction. See [`subregion`](@ref) and
     [`msum`](@ref).
 
+!!! note "Gravity energies and forces need the hydro object"
+    A potential is energy **per unit mass** and an acceleration is force **per unit mass**, so
+    `:gravitational_energy`, `:total_binding_energy`, `:Fg` and the `:F…` components need the cell
+    mass. Gravity carries no density, so that mass comes from the hydro object and both are passed:
+
+    ```julia
+    getvar(gravity, hydro, :total_binding_energy, :erg)   # either object order works
+    ```
+
+    On gravity alone they raise an error naming the fix. The two objects must describe the **same
+    cells**: load them with the same `lmax` and ranges, and on a sub-region cut both with the same
+    region value, since the boundary `:fraction` that weights the mass is the hydro object's. Mera
+    compares the cell indices of the two, not just how many there are, so a mismatched pair is
+    refused rather than pairing a mass with another cell's potential.
+
 
 ```julia
 getvar(   dataobject::DataSetType, var::Symbol;
