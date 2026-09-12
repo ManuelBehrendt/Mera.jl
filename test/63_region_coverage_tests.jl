@@ -462,3 +462,43 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
         @test 0 < length(shp.data) < length(rt.data)
     end
 end
+
+# -----------------------------------------------------------------------------
+# An empty selection is legal, not an error
+# -----------------------------------------------------------------------------
+# A region can genuinely contain nothing: a sphere smaller than one cell, or a cut
+# that misses the data. Derived quantities are built by mapping over the rows, and
+# with no rows the element type is unknown, so this used to fail inside the table
+# machinery with a message about internal fields. Every cell type is checked,
+# because each has its own getvar file.
+if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
+    @testset "Empty region: derived quantities stay empty" begin
+        info = load_test_info(:spiral_clumps)
+        tiny = Sphere(1e-6, center=[:bc], range_unit=:standard)
+
+        for loader in (gethydro, getgravity)
+            d = loader(info, verbose=false, show_progress=false)
+            e = subregion(d, tiny, verbose=false)
+            @test length(e.data) == 0
+            @test isempty(getvar(e, :cellsize))
+            @test sum(getvar(e, :volume)) == 0.0
+        end
+
+        gas = gethydro(info, verbose=false, show_progress=false)
+        e   = subregion(gas, tiny, verbose=false)
+        @test msum(e, :Msol) == 0.0
+        @test isempty(getvar(e, :mass))
+    end
+end
+
+if haskey(DATASETS, :rt_stromgren) && isdir(DATASETS[:rt_stromgren].path)
+    @testset "Empty region: RT derived quantities stay empty" begin
+        ds   = DATASETS[:rt_stromgren]
+        info = getinfo(ds.output, ds.path, verbose=false)
+        rt   = getrt(info, verbose=false, show_progress=false)
+        e    = subregion(rt, Sphere(1e-6, center=[:bc], range_unit=:standard), verbose=false)
+        @test length(e.data) == 0
+        @test isempty(getvar(e, :cellsize))
+        @test sum(getvar(e, :volume)) == 0.0
+    end
+end

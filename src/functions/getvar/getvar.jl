@@ -158,6 +158,18 @@ const _CENTER_RELATIVE_VARS = Set{Symbol}([
     :r_sphere_periodic, :r_cylinder_periodic,
 ])
 
+"""
+    _map_col(f, table) -> Vector{Float64}
+
+`map` over a data table, returning a typed empty vector when the table has no rows.
+
+A region can legitimately select nothing: a sphere smaller than one cell, or a cut that misses
+the data. Mapping over the empty table then leaves the element type unknown, and the table
+machinery cannot build a result from it, which surfaces as an error naming internal fields
+instead of the empty selection that caused it. Every column here is a Float64, so say so.
+"""
+@inline _map_col(f, table) = isempty(table) ? Float64[] : map(f, table)
+
 function _center_hint(vars, center)
     # Cheap guard first: in the common (correct) case an origin was given, and this returns
     # before `hint_once` is ever reached. Bookkeeping is shared — see checks.jl.
