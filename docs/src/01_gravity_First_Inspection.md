@@ -595,8 +595,8 @@ hs = subregion(gas, R)          # the same region, so the same boundary cells
 getvar(gs, hs, :total_binding_energy, :erg)
 ```
 
-Two cuts of different sizes fail with a length error. Two different cuts of the same size cannot
-be told apart, and would give a wrong answer quietly, so build both from one region value. See
+Mera compares the cells of the two objects, so a mismatched pair is refused rather than pairing a
+mass with another cell's potential. See
 [Subregions](https://manuelbehrendt.github.io/Mera.jl/stable/api/subregions/) for what the cell
 fraction is applied to.
 

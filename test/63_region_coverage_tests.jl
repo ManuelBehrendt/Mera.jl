@@ -502,3 +502,41 @@ if haskey(DATASETS, :rt_stromgren) && isdir(DATASETS[:rt_stromgren].path)
         @test sum(getvar(e, :volume)) == 0.0
     end
 end
+
+# -----------------------------------------------------------------------------
+# Gravity energies take their mass from hydro: the two must be the same cells
+# -----------------------------------------------------------------------------
+# A potential is per unit mass, so an energy or a force needs the cell mass, which
+# lives on the hydro object. Pairing a mass with another cell's potential returns a
+# plausible wrong number, so the pairing is checked on the cell indices themselves
+# and not only on how many there are: two different cuts can hold the same count.
+if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
+    @testset "Gravity/hydro pairing is validated" begin
+        info = load_test_info(:spiral_clumps)
+        gas  = gethydro(info,   verbose=false, show_progress=false)
+        grav = getgravity(info, verbose=false, show_progress=false)
+        R    = Sphere(0.2, center=[:bc], range_unit=:standard)
+
+        # matching pair: works, and the boundary fraction is carried through
+        gs, hs = subregion(grav, R, verbose=false), subregion(gas, R, verbose=false)
+        be = sum(getvar(gs, hs, :total_binding_energy))
+        @test isfinite(be)
+        gn, hn = subregion(grav, R, split=false, verbose=false),
+                 subregion(gas,  R, split=false, verbose=false)
+        @test be != sum(getvar(gn, hn, :total_binding_energy))   # fraction reached the mass
+
+        # different sizes: refused by count
+        @test_throws ErrorException getvar(gs, gas, :total_binding_energy)
+
+        # same count, different cells: refused on the indices. A uniform grid gives
+        # equal-sized boxes the same cell count wherever they sit.
+        gasu  = gethydro(info,   lmax=info.levelmin, verbose=false, show_progress=false)
+        gravu = getgravity(info, lmax=info.levelmin, verbose=false, show_progress=false)
+        box(x) = Cuboid(xrange=[x, x+0.2], yrange=[-0.1, 0.1], zrange=[-0.1, 0.1],
+                        range_unit=:standard)
+        ga = subregion(gravu, box(-0.3), verbose=false)
+        hb = subregion(gasu,  box( 0.1), verbose=false)
+        @test length(ga.data) == length(hb.data) > 0      # the case a count cannot catch
+        @test_throws ErrorException getvar(ga, hb, :total_binding_energy)
+    end
+end

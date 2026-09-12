@@ -306,10 +306,9 @@ spellings too: `:Fphi_cylinder` is the same quantity as `:Fϕ_cylinder`, exactly
 `:vphi_cylinder` is for velocity.
 
 Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Load both
-over the identical `lmax` and ranges: Mera compares how many cells each object holds, so a
-mismatched pair fails rather than pairing a mass with another cell's potential. The comparison is
-on the count alone, so two different cuts that happen to hold the same number of cells cannot be
-told apart.
+over the identical `lmax` and ranges: Mera compares the cell indices of the two objects, not just
+how many there are, so a mass can never be paired with another cell's potential. Two different cuts
+holding the same number of cells are refused as well.
 
 On a **subregion** this matters twice over, because the cell fraction that weights boundary cells
 comes from the hydro object. Cut both with the same region value:

@@ -56,11 +56,9 @@ total_photons = sum(getvar(s, :Np_total) .* getvar(s, :volume))
     sum(getvar(gs, hs, :total_binding_energy))
     ```
 
-    Passing a hydro object that was cut a different way, or not cut at all, fails: the two cell
-    sets have different lengths, and you get a `DimensionMismatch`. The case to watch is two
-    *different* cuts that happen to hold the same number of cells, which cannot be detected by
-    length and would give a wrong answer quietly. Build both from the same region value and the
-    question does not arise.
+    Passing a hydro object that was cut a different way, or not cut at all, is refused: Mera
+    compares the cell indices of the two objects, so a different cut fails even when it happens to
+    hold the same number of cells. The error names what to fix.
 
 !!! warning "Regions do not wrap at periodic boundaries"
     Neither function applies the minimum-image convention. A sphere or shell centred near a box
