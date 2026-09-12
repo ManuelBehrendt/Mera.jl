@@ -301,6 +301,36 @@ acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
     "Total" in `:total_binding_energy` distinguishes it from `:specific_gravitational_energy`,
     which is per unit mass. It does not mean the total for the system.
 
+### What gravity can and cannot answer today
+
+Mera pairs **gravity with hydro**. Everything below is the gas measured against the field the run
+produced, and that is the whole of what a snapshot supports without re-solving Poisson.
+
+**Available now**
+
+| | |
+|---|---|
+| the field itself | `:epot`, `:ax/:ay/:az` and their cylindrical and spherical components |
+| force on a gas cell | ``\mathbf F = m_\mathrm{gas}\,\mathbf a``, complete: `a` already contains every source |
+| energy of gas in that field | ``E = m_\mathrm{gas}\,\phi``, likewise complete |
+| local stability | `:jeanslength`, `:jeansmass`, `:virial_parameter_local`, built from the cell's own gas and never from ``\phi`` |
+
+These are correct as they stand. You do not have to know which source produced the field in order
+to use it, any more than you need to split the Earth into crust and mantle to weigh yourself.
+
+**Not available from a snapshot**
+
+| | why |
+|---|---|
+| splitting ``\phi`` or ``\mathbf a`` by source | RAMSES writes one summed field, `(:epot, :ax, :ay, :az)`. The decomposition is not in the output, and recovering it would mean solving Poisson again with a subset of the mass |
+| the self-binding of one structure | a clump's own binding needs the pairs *within* that clump. Summing ``-m\,\phi`` over its cells gives its binding to the whole galaxy and the external halo instead, a much larger and different number |
+| the system's gravitational self-energy | ``W = \tfrac12\int\rho\,\phi\,dV``. The sum of ``m\,\phi`` has no factor ½ and omits the particles' own binding |
+| forces or energies on **particles** | the gravity quantities pair with hydro only, and particles carry no potential column. Stars and dark matter contribute to ``\phi``, but Mera does not interpolate the field back onto them |
+
+So: use these for the gas, in the field it sits in. For anything that needs to know *which* mass
+made the field, the snapshot does not carry the answer.
+
+
 ### From gravity alone
 
 These need nothing but the gravity object. Every component measured about an axis or a centre

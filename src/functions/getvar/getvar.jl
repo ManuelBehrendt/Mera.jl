@@ -249,6 +249,14 @@ end
     include the particles' own binding. "Total" in `:total_binding_energy` marks it as extensive,
     against `:specific_gravitational_energy`; it does not mean the total for the system.
 
+    These quantities pair **gravity with hydro**, and that is their scope: the gas measured against
+    the field the run produced. They are complete for that, because `a` and `phi` already contain
+    every source. What a snapshot cannot give you is which source made the field: RAMSES writes one
+    summed `(:epot, :ax, :ay, :az)`, so the potential cannot be split into gas, particles and
+    external parts, a single structure's own self-binding is not `-m * phi` summed over its cells
+    (that is its binding to everything), and there is no particle counterpart, since particles carry
+    no potential column. See the Gravity section of the Computation Reference.
+
 
 ```julia
 getvar(   dataobject::DataSetType, var::Symbol;
