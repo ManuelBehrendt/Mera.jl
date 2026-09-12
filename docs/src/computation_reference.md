@@ -305,9 +305,21 @@ Either object order works in both calls, so `getvar(hydro, gravity, …)` and
 spellings too: `:Fphi_cylinder` is the same quantity as `:Fϕ_cylinder`, exactly as
 `:vphi_cylinder` is for velocity.
 
-Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Mera
-also checks that the two objects describe the same cells in the same order, so a mass can never be
-paired with another cell's potential; load both over the identical `lmax` and ranges.
+Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Load both
+over the identical `lmax` and ranges: Mera compares how many cells each object holds, so a
+mismatched pair fails rather than pairing a mass with another cell's potential. The comparison is
+on the count alone, so two different cuts that happen to hold the same number of cells cannot be
+told apart.
+
+On a **subregion** this matters twice over, because the cell fraction that weights boundary cells
+comes from the hydro object. Cut both with the same region value:
+
+```julia
+R  = Sphere(10.)
+getvar(subregion(gravity, R), subregion(hydro, R), :total_binding_energy, :erg)
+```
+
+See [Subregions](api/subregions.md) for what the fraction is applied to.
 
 | Quantity | Formula | Unit |
 |---|---|---|

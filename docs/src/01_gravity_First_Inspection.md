@@ -585,6 +585,21 @@ getvar(gravity, hydro, :Fg, :dyne)
 
 Called on gravity alone they raise an error that names the fix, rather than guessing a mass.
 
+If you work on a **subregion**, cut both objects with the same region. The mass comes from the
+hydro object, so the boundary cells that count are the hydro ones:
+
+```julia
+R  = Sphere(10.)
+gs = subregion(grav, R)
+hs = subregion(gas, R)          # the same region, so the same boundary cells
+getvar(gs, hs, :total_binding_energy, :erg)
+```
+
+Two cuts of different sizes fail with a length error. Two different cuts of the same size cannot
+be told apart, and would give a wrong answer quietly, so build both from one region value. See
+[Subregions](https://manuelbehrendt.github.io/Mera.jl/stable/api/subregions/) for what the cell
+fraction is applied to.
+
 ```julia
 gas = gethydro(info, verbose=false, show_progress=false);
 
