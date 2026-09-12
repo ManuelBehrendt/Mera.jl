@@ -26,6 +26,42 @@ the keyword is accepted and ignored.
 `getvar(:mass)` and `getvar(:volume)` then apply. The shape symbols shown here (`:sphere`,
 `:cylinder`, `:cuboid`) keep the whole-or-nothing rule.
 
+### What the fraction is applied to
+
+Only quantities that measure **how much** there is in a cell are scaled by the fraction: mass,
+volume, and the energies built from them. A quantity that describes what the gas is *like* keeps
+its value, because that value is the same whichever part of the cell you keep. Density,
+temperature, potential and field strength are all of this second kind.
+
+Everything follows from `:volume`. Hydro also scales `:mass`, because it is the only cell type
+that carries a density. Magnetic energy is `0.5·B²·V`, so it is scaled through the volume, while
+`:bmag` itself is not. RT has nothing to scale: `:Np_total`, `:rad_energy_density` and
+`:photoionizations` are all per unit volume already. For an RT total, multiply by the volume
+yourself and the fraction comes with it:
+
+```julia
+s = subregion(rt, Sphere(10.))
+total_photons = sum(getvar(s, :Np_total) .* getvar(s, :volume))
+```
+
+!!! tip "Gravity energies: cut the hydro object the same way"
+    `:gravitational_energy`, `:total_binding_energy` and `:Fg` are a mass times something, and
+    gravity carries no density, so the mass is taken from the hydro object you pass in. The
+    fraction that matters is therefore the **hydro** object's. Cut both with the same region:
+
+    ```julia
+    R  = Sphere(10.)
+    gs = subregion(grav, R)
+    hs = subregion(gas,  R)        # same region, so the same boundary cells
+    sum(getvar(gs, hs, :total_binding_energy))
+    ```
+
+    Passing a hydro object that was cut a different way, or not cut at all, fails: the two cell
+    sets have different lengths, and you get a `DimensionMismatch`. The case to watch is two
+    *different* cuts that happen to hold the same number of cells, which cannot be detected by
+    length and would give a wrong answer quietly. Build both from the same region value and the
+    question does not arise.
+
 !!! warning "Regions do not wrap at periodic boundaries"
     Neither function applies the minimum-image convention. A sphere or shell centred near a box
     face is clipped at the boundary rather than wrapped, silently: you get a partial region and a
