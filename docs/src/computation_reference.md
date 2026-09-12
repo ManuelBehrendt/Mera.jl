@@ -274,6 +274,33 @@ the cell mass:
 *Data: **gravity** (`getgravity`), which stores the potential ``\phi`` (`:epot`) and the
 acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
 
+!!! warning "`:epot` is the run's **total** potential, not the gas's own"
+    RAMSES solves Poisson once, for everything that gravitates. The ``\phi`` in `:epot` therefore
+    already contains the gas, the particles (stars and dark matter), the sinks, and any external
+    analytic potential the run was configured with. Mera stores it exactly as written.
+
+    What is in it is a property of the run, not of Mera. `gravity_type` in `&POISSON_PARAMS` says
+    which: `0` self-gravity only, `3` external potential only, `-3` external potential **and**
+    self-gravity. Both test galaxies used here are `-3`, so their ``\phi`` includes an external
+    halo that no amount of gas or particle data would reproduce:
+
+    ```julia
+    info.namelist_content["&POISSON_PARAMS"]["gravity_type"]
+    ```
+
+    Two consequences for the quantities below:
+
+    - ``m\,\phi`` is the energy of **that cell's gas** in the **total** field. It is not the
+      energy of the gas in its own field, and the difference is not small: particles carry 5.8 %
+      of the mass in the `mw_L10` box and dominate in a cosmological zoom.
+    - Summing ``m\,\phi`` over cells is **not** the system's gravitational self-energy. Self-energy
+      is ``W = \tfrac{1}{2}\int \rho\,\phi\,dV``, and the factor ½ is there because each pair of
+      mass elements would otherwise be counted twice. The sum here has no ½, and it also omits the
+      particles' own binding. Use it as what it is, the gas measured against the field it sits in.
+
+    "Total" in `:total_binding_energy` distinguishes it from `:specific_gravitational_energy`,
+    which is per unit mass. It does not mean the total for the system.
+
 ### From gravity alone
 
 These need nothing but the gravity object. Every component measured about an axis or a centre

@@ -577,6 +577,20 @@ A potential is energy **per unit mass** and an acceleration is force **per unit 
 energy or a force you need the mass of the cell, and the mass lives on the hydro object, not the
 gravity one.
 
+One thing to be clear about before using the numbers: `:epot` is the **total** potential. RAMSES
+solves Poisson once, for everything that gravitates, so it already contains the gas, the particles,
+the sinks and any external analytic potential the run was set up with. This run is `gravity_type
+= -3`, external potential **and** self-gravity:
+
+```julia
+info.namelist_content["&POISSON_PARAMS"]["gravity_type"]
+```
+
+So `m * phi` is the energy of that cell's **gas** in the **total** field. Summing it over cells is
+not the system's gravitational self-energy: that is `W = (1/2) * integral of rho * phi`, and the
+factor 1/2 is there because otherwise every pair of mass elements is counted twice. The sum also
+leaves out the particles' own binding. Read it as the gas measured against the field it sits in.
+
 So these quantities take both objects. Either order works, gravity first or hydro first:
 
 ```julia

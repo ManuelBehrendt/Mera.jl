@@ -242,6 +242,13 @@ end
     compares the cell indices of the two, not just how many there are, so a mismatched pair is
     refused rather than pairing a mass with another cell's potential.
 
+    `:epot` is the run's **total** potential: RAMSES solves Poisson once, so it already contains
+    the gas, the particles, the sinks and any external analytic potential (`gravity_type` in
+    `&POISSON_PARAMS` says which). So `m * phi` is the energy of that cell's gas in the **total**
+    field, and summing it is not the system's self-energy, which carries a factor 1/2 and would
+    include the particles' own binding. "Total" in `:total_binding_energy` marks it as extensive,
+    against `:specific_gravitational_energy`; it does not mean the total for the system.
+
 
 ```julia
 getvar(   dataobject::DataSetType, var::Symbol;
