@@ -21,10 +21,10 @@ sinks are not written up but are supported by the same code.
 meaningful only for AMR cell data. Particles, clumps and sinks are points: they are in or out, and
 the keyword is accepted and ignored.
 
-`:fraction` is the better answer for cell data. Use the region value form,
-`subregion(gas, Sphere(10.))`, and each border cell carries the part of it that lies inside, which
-`getvar(:mass)` and `getvar(:volume)` then apply. The shape symbols shown here (`:sphere`,
-`:cylinder`, `:cuboid`) keep the whole-or-nothing rule.
+`:fraction` is the better answer for cell data: the region value form,
+`subregion(gas, Sphere(10.))`, gives each border cell the part of it that lies inside. The shape
+symbols shown here (`:sphere`, `:cylinder`, `:cuboid`) keep the whole-or-nothing rule. See
+**What the fraction is applied to** below.
 
 ### What the fraction is applied to
 
@@ -45,9 +45,10 @@ total_photons = sum(getvar(s, :Np_total) .* getvar(s, :volume))
 ```
 
 !!! tip "Gravity energies: cut the hydro object the same way"
-    `:gravitational_energy`, `:total_binding_energy` and `:Fg` are a mass times something, and
-    gravity carries no density, so the mass is taken from the hydro object you pass in. The
-    fraction that matters is therefore the **hydro** object's. Cut both with the same region:
+    `:gravitational_energy`, `:total_binding_energy` and `:Fg` are each a mass multiplied by a
+    field quantity, the potential or the acceleration. Gravity carries no density, so the mass comes
+    from the hydro object you pass in, and the fraction that matters is therefore the **hydro**
+    object's. Cut both with the same region:
 
     ```julia
     R  = Sphere(10.)
@@ -56,9 +57,9 @@ total_photons = sum(getvar(s, :Np_total) .* getvar(s, :volume))
     sum(getvar(gs, hs, :total_binding_energy))
     ```
 
-    Passing a hydro object that was cut a different way, or not cut at all, is refused: Mera
-    compares the cell indices of the two objects, so a different cut fails even when it happens to
-    hold the same number of cells. The error names what to fix.
+    Mera refuses a hydro object that was cut a different way, or not cut at all. It compares the
+    cell indices of both objects, not only how many there are, so a different cut is refused even
+    when it holds the same number of cells. The error names what to fix.
 
 !!! warning "Regions do not wrap at periodic boundaries"
     Neither function applies the minimum-image convention. A sphere or shell centred near a box

@@ -236,26 +236,14 @@ end
     getvar(gravity, hydro, :total_binding_energy, :erg)   # either object order works
     ```
 
-    On gravity alone they raise an error naming the fix. The two objects must describe the **same
-    cells**: load them with the same `lmax` and ranges, and on a sub-region cut both with the same
-    region value, since the boundary `:fraction` that weights the mass is the hydro object's. Mera
-    compares the cell indices of the two, not just how many there are, so a mismatched pair is
-    refused rather than pairing a mass with another cell's potential.
+    The two must describe the **same cells**: load them with the same `lmax` and ranges, and on a
+    sub-region cut both with the same region value, because the boundary `:fraction` that weights
+    the mass is the hydro object's. Mera compares the cell indices of the two, so a mismatched pair
+    is refused rather than pairing a mass with another cell's potential.
 
-    `:epot` is the run's **total** potential: RAMSES solves Poisson once, so it already contains
-    the gas, the particles, the sinks and any external analytic potential (`gravity_type` in
-    `&POISSON_PARAMS` says which). So `m * phi` is the energy of that cell's gas in the **total**
-    field, and summing it is not the system's self-energy, which carries a factor 1/2 and would
-    include the particles' own binding. "Total" in `:total_binding_energy` marks it as extensive,
-    against `:specific_gravitational_energy`; it does not mean the total for the system.
-
-    These quantities pair **gravity with hydro**, and that is their scope: the gas measured against
-    the field the run produced. They are complete for that, because `a` and `phi` already contain
-    every source. What a snapshot cannot give you is which source made the field: RAMSES writes one
-    summed `(:epot, :ax, :ay, :az)`, so the potential cannot be split into gas, particles and
-    external parts, a single structure's own self-binding is not `-m * phi` summed over its cells
-    (that is its binding to everything), and there is no particle counterpart, since particles carry
-    no potential column. See the Gravity section of the Computation Reference.
+    `:epot` is the run's **total** potential: gas, particles, sinks and any external analytic
+    potential, so `m * phi` is that cell's gas measured in the total field. The Gravity section of
+    the Computation Reference says what follows from that, and what a snapshot cannot tell you.
 
 
 ```julia

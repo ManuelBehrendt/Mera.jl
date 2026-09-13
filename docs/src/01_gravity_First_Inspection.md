@@ -35,7 +35,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-08-31T13:19:38.548
+[Mera]: 2026-09-13T10:48:43.279
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -68,6 +68,7 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
+boundaries:       not periodic (&BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
@@ -204,7 +205,7 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-31T13:19:42.231
+[Mera]: Get gravity data: 2026-09-13T10:48:46.678
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -216,7 +217,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:11 (17.70 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (21.94 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -226,7 +227,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 2.576 seconds
+✓ Table created in 2.738 seconds
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 ```
@@ -280,7 +281,7 @@ viewfields(grav)
 
 ```
 data ==> IndexedTables: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
-info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :boundaries, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
 lmin	= 6
 lmax	= 10
 boxlen	= 48.0
@@ -586,15 +587,15 @@ the sinks and any external analytic potential the run was set up with. This run 
 info.namelist_content["&POISSON_PARAMS"]["gravity_type"]
 ```
 
-So `m * phi` is the energy of that cell's **gas** in the **total** field. Summing it over cells is
-not the system's gravitational self-energy: that is `W = (1/2) * integral of rho * phi`, and the
-factor 1/2 is there because otherwise every pair of mass elements is counted twice. The sum also
-leaves out the particles' own binding. Read it as the gas measured against the field it sits in.
+So `m * phi` is the energy of that cell's **gas** in the **total** field. Summing it over cells
+does not give the system's gravitational self-energy. That is `W = (1/2) * integral of rho * phi`.
+The factor 1/2 is needed because each pair of mass elements would otherwise be counted twice, and
+the sum here also leaves out the particles' own binding.
 
 So these quantities take both objects. Either order works, gravity first or hydro first:
 
 ```julia
-getvar(gravity, hydro, :Fg, :dyne)
+getvar(grav, gas, :Fg, :dyne)     # `grav` and `gas` are the objects this page loads
 ```
 
 Called on gravity alone they raise an error that names the fix, rather than guessing a mass.
@@ -603,16 +604,16 @@ If you work on a **subregion**, cut both objects with the same region. The mass 
 hydro object, so the boundary cells that count are the hydro ones:
 
 ```julia
-R  = Sphere(10.)
-gs = subregion(grav, R)
-hs = subregion(gas, R)          # the same region, so the same boundary cells
+gas = gethydro(info, verbose=false, show_progress=false)   # loaded in the cell below too
+R   = Sphere(10.)
+gs  = subregion(grav, R)
+hs  = subregion(gas,  R)         # the same region, so the same boundary cells
 getvar(gs, hs, :total_binding_energy, :erg)
 ```
 
 Mera compares the cells of the two objects, so a mismatched pair is refused rather than pairing a
 mass with another cell's potential. See
-[Subregions](https://manuelbehrendt.github.io/Mera.jl/stable/api/subregions/) for what the cell
-fraction is applied to.
+[Subregions](api/subregions.md) for what the cell fraction is applied to.
 
 ```julia
 gas = gethydro(info, verbose=false, show_progress=false);

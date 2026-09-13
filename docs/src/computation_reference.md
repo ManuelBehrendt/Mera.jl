@@ -293,10 +293,8 @@ acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
     - ``m\,\phi`` is the energy of **that cell's gas** in the **total** field. It is not the
       energy of the gas in its own field, and the difference is not small: particles carry 5.8 %
       of the mass in the `mw_L10` box and dominate in a cosmological zoom.
-    - Summing ``m\,\phi`` over cells is **not** the system's gravitational self-energy. Self-energy
-      is ``W = \tfrac{1}{2}\int \rho\,\phi\,dV``, and the factor ½ is there because each pair of
-      mass elements would otherwise be counted twice. The sum here has no ½, and it also omits the
-      particles' own binding. Use it as what it is, the gas measured against the field it sits in.
+    - Summing ``m\,\phi`` over cells is **not** the system's gravitational self-energy. The table
+      below says why, along with the other questions a snapshot cannot answer.
 
     "Total" in `:total_binding_energy` distinguishes it from `:specific_gravitational_energy`,
     which is per unit mass. It does not mean the total for the system.
@@ -315,8 +313,8 @@ produced, and that is the whole of what a snapshot supports without re-solving P
 | energy of gas in that field | ``E = m_\mathrm{gas}\,\phi``, likewise complete |
 | local stability | `:jeanslength`, `:jeansmass`, `:virial_parameter_local`, built from the cell's own gas and never from ``\phi`` |
 
-These are correct as they stand. You do not have to know which source produced the field in order
-to use it, any more than you need to split the Earth into crust and mantle to weigh yourself.
+These are correct as they stand. You can use the field without knowing which mass made it: the
+potential and the acceleration already contain every source.
 
 **Not available from a snapshot**
 
@@ -326,9 +324,6 @@ to use it, any more than you need to split the Earth into crust and mantle to we
 | the self-binding of one structure | a clump's own binding needs the pairs *within* that clump. Summing ``-m\,\phi`` over its cells gives its binding to the whole galaxy and the external halo instead, a much larger and different number |
 | the system's gravitational self-energy | ``W = \tfrac12\int\rho\,\phi\,dV``. The sum of ``m\,\phi`` has no factor ½ and omits the particles' own binding |
 | forces or energies on **particles** | the gravity quantities pair with hydro only, and particles carry no potential column. Stars and dark matter contribute to ``\phi``, but Mera does not interpolate the field back onto them |
-
-So: use these for the gas, in the field it sits in. For anything that needs to know *which* mass
-made the field, the snapshot does not carry the answer.
 
 **`profile`, `pdf` and `phase` on a gravity object.** They work, but they weight by `:mass` unless
 told otherwise, and gravity carries no density, so there is no mass on that object. Weight by the

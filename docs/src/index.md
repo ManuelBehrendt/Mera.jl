@@ -192,40 +192,28 @@ the ionisation states need radiative transfer. `getvar()` prints the current lis
 round. The cells are boxes. Some cells lie half in and half out, and you have to decide what to do
 with them.
 
-The usual rule is to look at the centre of each cell. If the centre is inside, the whole cell counts.
-If it is outside, the whole cell is dropped. Mera can instead keep the part of the cell that is
-really inside:
+The usual rule looks at the centre of each cell and takes the whole cell or nothing. Mera can keep
+the part that is really inside:
 
 ```julia
 sph = subregion(gas, Sphere(10.))   # 10 kpc around the box centre
 msum(sph, :Msol)                    # the mass inside 10 kpc
 ```
 
-Every cell on the edge gets a `:fraction`, a number between 0 and 1. It says how much of that cell
-lies inside. `getvar(:mass)` and `getvar(:volume)` both use it. Cells well inside have
-`fraction = 1`, so nothing changes for them.
+Every cell on the edge gets a `:fraction`, a number between 0 and 1, saying how much of it lies
+inside. `getvar(:mass)` and `getvar(:volume)` both use it. This gives you one thing you can rely
+on: **the parts add up to the whole.** A sphere of 10 kpc is exactly the 5 kpc sphere plus the
+shell from 5 to 10 kpc.
 
-This gives you one thing you can rely on: **the parts add up to the whole.** A sphere of 10 kpc is
-exactly the 5 kpc sphere plus the shell from 5 to 10 kpc. Nothing is lost. Nothing is counted twice.
+How much this changes a number depends on what the edge passes through. Around a large region in
+ordinary gas the two mistakes, gas wrongly added and gas wrongly dropped, cancel to well under a
+percent. They stop cancelling when the edge cuts something heavy: in the `mw_L10` test galaxy a
+thin shell with its edge on the densest cell comes out **14 % too heavy**. Splitting removes the
+question, so you do not need to know which case you are in.
 
-How big is the error if you take the whole cell whenever its centre is inside? It depends on what
-the edge passes through. The rule makes two mistakes at the same time. Cells that count but stick out add gas that is really outside.
-Cells that are dropped take away gas that is really inside. Often the two mistakes are about the same
-size, so they cancel, and the answer is off by less than a percent.
-
-They stop cancelling when the edge cuts through something heavy. In the `mw_L10` test galaxy, a
-thin shell two cells deep, with its outer edge on the densest cell, comes out **14 % too heavy**. The dense cells are
-counted whole, and there are no empty cells to balance them. Radial profiles have this problem all
-the time, because the gas outside a bin is thinner than the gas inside, so the mistakes do not
-cancel. The error also grows when cells are large compared with the region.
-
-Splitting removes the question, so you do not need to know which case you are in.
-
-You get this from the region value, `Sphere(10.)` and the other shapes. Other ways of cutting do not
-give you fractions: the `xrange`/`yrange`/`zrange` options when loading, the older style with
-symbols, and `covering_grid`. Stars, dark matter and clumps are points, not boxes, so there is
-nothing to split. For the same reason,
-`projection(..., binning=:exact)` measures how much of each cell falls on each pixel. See
+Only the region values do this, `Sphere(10.)` and the other shapes. The `xrange`/`yrange`/`zrange`
+options when loading, the older style with symbols, and `covering_grid` all count whole cells.
+Stars, dark matter and clumps are points, so there is nothing to split. See
 [Subregions](api/subregions.md).
 
 **Results you can defend.** Pin versions with a `Project.toml` and `Manifest.toml` in your own

@@ -75,7 +75,7 @@ info = getinfo(27, joinpath(MERA_EXAMPLES, "RAMSES/ramses_mhd_128"));
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-09-13T10:38:25.075
+[Mera]: 2026-09-13T10:47:14.709
 [ Info: Mera: no hydro descriptor and nvarh=11 (≥11) on a 3D run — assuming a RAMSES MHD layout (B faces at 5–10, pressure at 11). If this is hydro with ≥6 passive scalars instead, the names are positional (:var6…).
 Code: RAMSES
 output [27] summary:
@@ -112,14 +112,18 @@ patchfile:        false
 
 Read this before any plot below, because it decides how the numbers should be read.
 
-**It is a 1-D MHD shock tube along `x`**, extruded in `y` and `z` on a 128³ grid. Small, fast, and
-the answer is known, which makes it a good place to check that post-processing does what you expect
-before pointing it at a production run. Two consequences: `Bx` must be **uniform**, because in a 1-D
-problem ``\nabla\cdot\mathbf B = 0`` forces the field along the tube to be constant, and maps are
-flat in `y` and `z` by construction, so the structure lives in profiles along `x`.
+**It is a 1-D MHD shock tube along `x`**, extruded in `y` and `z` on a 128³ grid. It is small, it
+is fast, and the answer is known. That makes it a good place to check that post-processing does what
+you expect, before you use it on a production run.
+
+This has two consequences. First, `Bx` must be **uniform**: in a 1-D problem
+``\nabla\cdot\mathbf B = 0`` forces the field along the tube to be constant. Second, nothing varies
+in `y` or `z`, so maps are flat in those directions and the profiles along `x` are where the
+structure shows.
 
 **It carries no physical scaling.** This is a dimensionless test: RAMSES wrote `unit_l = unit_d =
-unit_t = 1`, so the box is literally 2 cm and a "temperature" of ``10^{-8}`` K is not a temperature.
+unit_t = 1`. Mera applies that conversion faithfully and reports a box of 2 cm and a temperature of
+``10^{-8}`` K, but the run never chose a physical size, so neither number means anything.
 Mera will convert to any unit you ask for, and on this run the physical-looking answers are
 meaningless. The right choice here is **code units**, and that is what the rest of the page uses.
 
@@ -194,9 +198,10 @@ conversion) are listed in
 
 ## A free correctness check: div B = 0
 
-The tube gives us an oracle. Because nothing varies across the tube, ``\nabla\cdot\mathbf B = 0``
-reduces to ``\partial B_x/\partial x = 0``, so `Bx` has to be constant to machine precision. If the
-face-to-centre averaging were wrong, this is where it would show.
+The tube has a known answer, so we can check Mera against it. Because nothing varies across the
+tube, ``\nabla\cdot\mathbf B = 0`` reduces to ``\partial B_x/\partial x = 0``, so `Bx` has to be
+constant to machine precision. If the face-to-centre averaging were wrong, this is where it would
+show.
 
 ```julia
 using Statistics
@@ -248,12 +253,13 @@ fig
 ```
 
 ```
+[ Info: Mera v1.8.0
 rho    0.1144 .. 1.0
 by     0.0 .. 1.6525
 beta   0.074 .. 4.0
 ```
 
-![](magnetic_fields_files/magnetic_fields_11_3.png)
+![](magnetic_fields_files/magnetic_fields_11_6.png)
 
 `profile` returns more than the mean. Each field also carries `std`, `min`, `max`, `median`,
 `quantiles` and the effective count per bin, so a spread check costs no extra pass over the data.
@@ -276,9 +282,9 @@ cells averaged into one bin           : 16384
 
 ## Distributions: which states does the gas occupy?
 
-A profile follows one coordinate. A **PDF** throws the coordinate away and asks how much gas sits
-at each value, which is the right question for "is this run magnetically or thermally dominated".
-Weight by mass, so the answer is a mass fraction rather than a cell count.
+A profile follows one coordinate. A **PDF** ignores the coordinate and shows how much gas has each
+value. That answers a different question: is this run dominated by the magnetic field or by thermal
+pressure? Weight by mass, so the answer is a mass fraction and not a cell count.
 
 ```julia
 pb = pdf(gas, :beta; weight=:mass)
@@ -336,13 +342,13 @@ fig
 
 Nothing above assumed a uniform grid. The second fixture is the same tube with refinement, so cells
 differ in size by a factor of eight and every quantity has to carry its level. The calls are
-identical, with one thing to watch that is worth meeting here rather than on your own data.
+identical. There is one thing to watch, and it is better to learn it here than on your own data.
 
 **Choose the bin count from the coarsest cell, not from the finest.** This run refines to level 8,
 but its coarse region is level 5, where a cell is `boxlen/2^5 = 0.0625` wide. Ask for 128 bins
 across the box and each coarse cell lands in one bin out of four, leaving the other three with no
-cell centre in them at all: 69 of the 128 bins come back empty. It is not a loading problem, it is
-a grid you are sampling more finely than it exists.
+cell centre in them at all: 69 of the 128 bins come back empty. This is not a loading problem. You
+asked for more bins than the coarse grid has cells, so some bins hold no cell centre.
 
 ```julia
 info_amr = getinfo(19, joinpath(MERA_EXAMPLES, "RAMSES/ramses_mhd_amr"), verbose=false)
@@ -363,6 +369,14 @@ end
 nb_max = round(Int, info_amr.boxlen / (info_amr.boxlen / 2^info_amr.levelmin))
 pr_amr = profile(amr, :x, [:rho, :beta]; center=[:bc], nbins=nb_max, weight=:volume)
 println("using ", nb_max, " bins: ", count(isnan, pr_amr.fields[:rho].mean), " empty")
+
+# the analysis itself, on the refined grid
+fig = Figure(size=(880, 300))
+for (n, (q, lab)) in enumerate(((:rho, "density"), (:beta, "plasma beta")))
+    ax = Axis(fig[1, n]; xlabel="x", ylabel=lab, yscale = q === :beta ? log10 : identity)
+    lines!(ax, pr_amr.x, pr_amr.fields[q].mean)
+end
+fig
 ```
 
 ```
@@ -376,6 +390,8 @@ nbins=64   empty bins: 20/64
 nbins=32   empty bins: 0/32
 using 32 bins: 0 empty
 ```
+
+![](magnetic_fields_files/magnetic_fields_21_8.png)
 
 The two runs are at different times, so the profiles are not expected to lie on top of each other.
 The point is that `profile`, `pdf` and `phase` work unchanged on a refined grid: the level is
