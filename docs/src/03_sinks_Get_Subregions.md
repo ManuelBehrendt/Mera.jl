@@ -174,11 +174,10 @@ the x < centre half of the box -> [5]
 
 ## What does not apply to points
 
-Two keywords exist on the region functions for **cell** data and are meaningless here:
+One keyword exists on the region functions for **cell** data and is meaningless here:
 
 - `cell=` decides whether a cell straddling the border is taken whole or by its centre. A point does
   not straddle anything, so it is accepted and ignored.
-- the smooth-boundary keywords are implemented only for the hydro cylinder.
 
 And one limitation that does apply, and that no keyword fixes:
 

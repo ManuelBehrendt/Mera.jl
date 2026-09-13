@@ -75,7 +75,7 @@ info = getinfo(27, joinpath(MERA_EXAMPLES, "RAMSES/ramses_mhd_128"));
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-09-12T17:23:36.979
+[Mera]: 2026-09-13T10:38:25.075
 [ Info: Mera: no hydro descriptor and nvarh=11 (≥11) on a 3D run — assuming a RAMSES MHD layout (B faces at 5–10, pressure at 11). If this is hydro with ≥6 passive scalars instead, the names are positional (:var6…).
 Code: RAMSES
 output [27] summary:
@@ -204,14 +204,18 @@ using Statistics
 bx = getvar(gas, :bx)
 println("Bx uniform (div B = 0 in 1-D)  : ", all(bx .== first(bx)))
 println("Bz identically zero            : ", all(iszero, getvar(gas, :bz)))
-println("structure is along x only      : ",
-        std(getvar(gas, :rho)[getvar(gas, :x) .< -0.9]) < 1e-12)
+
+# :x is measured from the box CORNER unless you give it an origin, so pass the centre.
+# Without it the test below selects no cells at all and quietly reports false.
+xc = getvar(gas, :x, center=[:bc])
+println("nothing varies across the tube : ",
+        std(getvar(gas, :rho)[xc .< -0.9]) < 1e-12)
 ```
 
 ```
 Bx uniform (div B = 0 in 1-D)  : true
 Bz identically zero            : true
-structure is along x only      : false
+nothing varies across the tube : true
 ```
 
 ## The tube, as a profile along x
@@ -251,19 +255,23 @@ beta   0.074 .. 4.0
 
 ![](magnetic_fields_files/magnetic_fields_11_3.png)
 
-`profile` returns more than the mean. Each field carries `std`, `min`, `max`, `median`,
-`quantiles` and the effective count per bin, so a scatter band or a spread check costs no extra
-pass over the data.
+`profile` returns more than the mean. Each field also carries `std`, `min`, `max`, `median`,
+`quantiles` and the effective count per bin, so a spread check costs no extra pass over the data.
+
+Here the spread is zero in every bin, and that is the right answer rather than a dull one. We asked
+for 128 bins across 128 cell columns, so each bin collects exactly one column: 16384 cells that all
+hold the same state, because nothing varies across the tube. Bins only show spread once they are
+wider than the structure.
 
 ```julia
-m, s = pr.fields[:rho].mean, pr.fields[:rho].std
-println("bins with real spread (std > 1e-9): ", count(>(1e-9), s), " of ", length(s))
-println("=> the tube is resolved: most bins hold one state, a few straddle a wave")
+s = pr.fields[:rho].std
+println("bins whose cells disagree (std > 1e-9): ", count(>(1e-9), s), " of ", length(s))
+println("cells averaged into one bin           : ", Int(round(pr.count[1])))
 ```
 
 ```
-bins with real spread (std > 1e-9): 0 of 128
-=> the tube is resolved: most bins hold one state, a few straddle a wave
+bins whose cells disagree (std > 1e-9): 0 of 128
+cells averaged into one bin           : 16384
 ```
 
 ## Distributions: which states does the gas occupy?
