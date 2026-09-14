@@ -221,8 +221,10 @@ analysis project, and record what produced each number with [`provenance`](prove
 [Reproducibility](reproducibility.md) for how the pieces fit together. VTK
 export preserves AMR structure for ParaView and VisIt.
 
-Mera supports RAMSES stable-17.09 through stable-19.10, plus RAMSES 2025.05 (beta), and is in
-active use and active development.
+Mera supports RAMSES stable-17.09 through stable-19.10, and the 2025.05 and 2026.05 releases. The
+public test simulations are produced with RAMSES 2026.05 and checked against its own reference
+solutions on every release, so that support is exercised rather than assumed. Mera is in active use
+and active development.
 
 ## About the data in these tutorials
 

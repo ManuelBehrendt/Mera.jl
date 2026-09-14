@@ -61,7 +61,6 @@ function ensure_optimal_io!(info::InfoType; force_reoptimize=false, verbose=fals
             buffer_config["write_buffer_kb"] = 32
             buffer_config["parallel_files"] = min(4, Threads.nthreads())
             optimization_tier = "Small Scale"
-            expected_improvement = "15-25%"
             
         elseif info.ncpu <= 1024
             # Medium simulations: Balanced approach
@@ -69,7 +68,6 @@ function ensure_optimal_io!(info::InfoType; force_reoptimize=false, verbose=fals
             buffer_config["write_buffer_kb"] = 64
             buffer_config["parallel_files"] = min(8, Threads.nthreads())
             optimization_tier = "Medium Scale"
-            expected_improvement = "20-35%"
             
         else
             # Large simulations: Aggressive optimization
@@ -77,7 +75,6 @@ function ensure_optimal_io!(info::InfoType; force_reoptimize=false, verbose=fals
             buffer_config["write_buffer_kb"] = 128
             buffer_config["parallel_files"] = min(16, Threads.nthreads())
             optimization_tier = "Large Scale"
-            expected_improvement = "25-40%"
         end
         
         # Apply the configuration using environment variables (safer approach)
@@ -93,7 +90,6 @@ function ensure_optimal_io!(info::InfoType; force_reoptimize=false, verbose=fals
             println("✅ I/O optimization applied automatically")
             println("   Buffer size: $(buffer_config["read_buffer_kb"]) KB")
             println("   Optimization tier: $optimization_tier")
-            println("   Expected improvement: $expected_improvement")
             println("   Total files: $total_files")
         end
         
@@ -153,6 +149,6 @@ function show_auto_optimization_status()
     println("💡 Automatic optimization:")
     println("  • Activates transparently on first gethydro/getparticles/getgravity call")
     println("  • Analyzes simulation size and applies optimal buffer settings")
-    println("  • Provides 20-40% performance improvement with no user action required")
+    println("  • Buffer sizes follow the file count; the gain depends on your storage")
     println("  • Call reset_auto_optimization!() to force re-optimization")
 end

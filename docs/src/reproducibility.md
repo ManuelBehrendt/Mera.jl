@@ -115,7 +115,7 @@ p = provenance(gas)
 println(p)
 ```
 
-`provenance` returns the Mera and Julia versions, the simulation code and output, the units in use
+`provenance` returns the Mera version and build, the simulation code and output, the units in use
 and a timestamp. Print it into your log, or save it beside the figure. Together with the committed
 `Manifest.toml` it answers "what produced this?" completely. See
 [Provenance](provenance.md) for the full record and how to store it.

@@ -51,7 +51,9 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
 - **Julia-native**: compiled-language performance in a single, introspectable code path; no Python/C
   two-language barrier for custom, performance-sensitive analyses.
 - **RAMSES-native**: direct binary reading of AMR outputs with automatic unit conversion and full
-  multi-level support; load only what you need with spatial and refinement-level filtering.
+  multi-level support; load only what you need with spatial and refinement-level filtering. Covers
+  stable-17.09 through stable-19.10 and the 2025.05 and 2026.05 releases, checked on every release
+  against RAMSES's own reference solutions.
 - **Cells are split, not counted**: a sphere is round, but cells are boxes, so some lie half in and
   half out. `subregion(gas, Sphere(10.))` keeps the part really inside, so `msum` and `getvar` count
   it by its fraction and the parts add up to the whole. Taking whole cells by their centre can be

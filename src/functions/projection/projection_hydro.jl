@@ -1196,7 +1196,6 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
             println("   ├─ Variables: $num_variables across AMR levels $lmin to $simlmax")
             println("   ├─ Total cells: $total_cells")
             println("   ├─ Cells per variable: $(div(total_cells, num_variables))")
-            println("   └─ Expected efficiency: 85-95% (no combining overhead)")
         elseif verbose && verbose_threads && !use_parallel
             # Explain why sequential processing was chosen
             if num_variables < min_variables_for_parallel
@@ -1325,13 +1324,14 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                     total_cells = length(xval)
                     total_operations = total_cells * n_variables  # Each cell processed for each variable
                     cells_per_second = total_operations / parallel_processing_time
-                    theoretical_sequential_time = parallel_processing_time * effective_threads
-                    parallel_efficiency = (theoretical_sequential_time / parallel_processing_time / effective_threads) * 100
+                    # A real efficiency number needs a single-thread run to compare against, which
+                    # this call does not have. The line that used to sit here computed
+                    # (t * k) / t / k * 100, exactly 100.0 whatever happened, so it printed a
+                    # constant as if it were a measurement. See the benchmarks for real scaling.
                     
                     println("   📊 Performance Metrics:")
                     println("      ├─ Total operations: $total_operations ($(total_cells) cells × $n_variables vars)")
                     println("      ├─ Processing rate: $(round(Int, cells_per_second)) cells/second")
-                    println("      ├─ Parallel efficiency: $(round(parallel_efficiency, digits=1))% (target: 85-95%)")
                     println("      ├─ Threads utilized: $effective_threads / $(Threads.nthreads()) available")
                     println("      └─ Memory benefit: Direct allocation (no intermediate combining buffers)")
                 end
@@ -3348,11 +3348,12 @@ The system provides multiple specialized mapping algorithms:
 
 ### 5. Performance Optimizations
 
-#### Threading Architecture  
-- **Variable-Based Parallelization**: Revolutionary approach where each thread processes one complete variable
-- **Zero Combining Overhead**: Eliminates the 98s data combining bottleneck of traditional chunked approaches
-- **Parallel Efficiency**: Achieves 85-95% efficiency by eliminating shared mutable state
-- **Automatic Selection**: Intelligent choice between parallel and sequential based on data characteristics
+#### Threading Architecture
+- **Variable-Based Parallelization**: each thread processes one complete variable, so the work
+  splits across the variables you ask for, not across cells. Asking for several quantities in one
+  call is therefore what gains from threads; a single-variable call does not.
+- **Zero Combining Overhead**: no chunk-merging phase, because threads write to separate outputs
+- **Automatic Selection**: parallel or sequential is chosen from the data characteristics
 
 #### Memory Management
 - **Direct Allocation**: Thread-safe memory patterns without complex pool management  
