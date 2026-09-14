@@ -535,7 +535,7 @@ getlogs_gadget(info::InfoType; kwargs...) = getlogs(info, :physics; kwargs...)
 # Strings (paths, numbers and flags are mixed); `namelist(info)` then views it exactly as it
 # views a RAMSES namelist.
 """
-    sf_threshold(info::InfoType, data=nothing; method=:auto, unit=:cm3)
+    sf_threshold(info::InfoType, data=nothing; method=:auto, unit=:nH)
         -> (value, unit, method, note)
 
 The **star-formation density threshold** of the run, together with *how it was obtained*.

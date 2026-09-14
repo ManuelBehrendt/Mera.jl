@@ -709,10 +709,14 @@ about the COM : inner bin holds 0 cells
 
 ### What does not carry over
 
-`slice` and `covering_grid` are grid operations: they need a mesh with a level or index structure
-to cut along or sample onto. A Voronoi tessellation has neither — its cells are polyhedra of
-arbitrary shape and position — so these raise a `MethodError` rather than a Mera-level refusal.
-For a plane through AREPO gas, project a thin slab instead (`zrange` a few cell sizes deep).
+`slice` needs a mesh with a level or index structure to cut along. A Voronoi tessellation has
+neither, since its cells are polyhedra of arbitrary shape and position, so `slice` raises a
+`MethodError` rather than a Mera-level refusal. For a plane through AREPO gas, project a thin slab
+instead (`zrange` a few cell sizes deep).
+
+`covering_grid` does work on moving-mesh gas. It takes a separate path: instead of replicating
+coarse cells and averaging fine ones, each output cell centre takes the value of the nearest
+generator, found with a KD-tree. See [AREPO](arepo_reader.md#Resampling-onto-a-uniform-grid).
 
 `timeseries` needs to enumerate a run's outputs, and it recognises RAMSES, PLUTO, Athena++, FLASH
 and Chombo numbering — not AREPO `snapdir_NNN`. That is a discovery gap, not a data-model one, so

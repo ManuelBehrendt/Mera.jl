@@ -30,8 +30,16 @@ gas  = getparticles(info; families=[0])      # PartType0 gas → :x,:y,:z,:vx,:v
 msum(gas, :Msol); getvar(gas, :T, :K)        # the usual particle analysis, unchanged
 ```
 
-`:family` is the particle type (0 gas, 1 DM, 4 stars, 5 BH); `families=` restricts the load.
-Use [`getparticles_gadget`](@ref) directly for the `families=` option on huge snapshots.
+`:family` is the particle type (0 gas, 1 DM, 4 stars, 5 BH). On a large snapshot, load one type
+instead of all of them to keep memory down:
+
+```julia
+gas = getparticles(info; families=[0])       # the gas cells only
+```
+
+`families=` is a GADGET/AREPO option, and the generic `getparticles` passes it through to the
+reader, so you do not need a code-specific call. [`getparticles_gadget`](@ref) is the same
+function under its own name.
 
 ## Gas-cell physics
 

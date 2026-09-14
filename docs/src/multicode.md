@@ -99,8 +99,13 @@ This is the most useful thing anyone outside the project can do, and it needs no
 ```julia
 using Mera
 info = getinfo("/path/to/your/output")   # the reader is chosen from the files it finds
-gas  = gethydro(info)                    # from here on, every tutorial on this site applies
+
+gas = gethydro(info)                     # grid codes: RAMSES, PLUTO, Chombo, Athena++, FLASH
+gas = getparticles(info; families=[0])   # GADGET and AREPO: the gas lives in the particle file
 ```
+
+From either line onwards, every tutorial on this site applies. `capabilities(info)` lists what your
+file supports, and asking for something it does not carry fails with a message naming what it does.
 
 **Why every tutorial applies.** The readers differ, but what they produce does not. Each one returns
 the same Julia objects, a `HydroDataType` for gas cells and a `PartDataType` for particles, with the

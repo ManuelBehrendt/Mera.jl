@@ -43,9 +43,13 @@ function register_builtin_readers!()
         hydro = gethydro_flash)
 
     register_reader!(:gadget;
+        # These are different codes. They share one HDF5 snapshot layout, which is why one reader
+        # serves them: the routing is by the `simcode` string the file reports, not by the code
+        # being the same thing. SWIFT and GIZMO stay here so a file that identifies as one still
+        # loads; the docs list only the two that are exercised.
         simcodes = ["GADGET", "AREPO", "SWIFT", "GIZMO"],
-        name = "GADGET-HDF5 family",
-        note = "Gas in the GADGET-HDF5 family is particle data — load it with getparticles(info).",
+        name = "GADGET HDF5 snapshot layout",
+        note = "Gas in this layout is particle data: load it with getparticles(info).",
         info = getinfo_gadget,
         particles = getparticles_gadget,
         groups = getgroups_gadget,

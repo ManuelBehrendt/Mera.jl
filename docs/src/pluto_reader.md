@@ -135,12 +135,13 @@ reader):
 
 - **`grid.out`** — geometry, per-axis cell count and edges → the cell centres.
 - **`dbl.out`** — one row per snapshot: time, file mode (`single_file`), endianness, variable names.
-- **`data.NNNN.dbl`** — the raw double-precision data (single-file, x1 fastest).
+- **`data.NNNN.dbl`**: the raw double-precision data (single-file, x1 fastest).
 
 It fills the existing `InfoType` / `HydroDataType` (`simcode = "PLUTO"`, `levelmin == levelmax`,
 `boxlen`, the `scale`, the cell table in the RAMSES convention). The one thing the reader must get
-exactly right is the cell-coordinate mapping (`cell centre = (c − 0.5)·boxlen/2^level`); it is
-validated against `pyPLUTO` — the density peak and every value match cell-for-cell.
+exactly right is the cell-coordinate mapping (`cell centre = (c − 0.5)·boxlen/2^level`). The test
+suite pins it: `grid.out` cell centres are parsed and compared against the values the format
+defines, and a synthetic snapshot is written and read back so a shifted index cannot pass.
 
 ## PLUTO particles
 
@@ -190,7 +191,8 @@ refined by a finer level) and maps each cell to Mera's `(level, cx, cy, cz)` con
 level-0 of `N₀` cells per axis becomes Mera level `log₂N₀`, each finer level adds one
 (`ref_ratio = 2`). Variable names map per code: PLUTO (`rho`, `vx1…`, `prs`) directly; Orion
 (`density`, `X/Y/Z-momentum`, `energy-density`) with velocity = momentum/density and pressure derived
-from the energy. The leaf extraction is validated cell-for-cell against an independent reader.
+from the energy. The suite covers leaf extraction on a synthetic multi-level file, so a cell
+covered by a finer level is checked to be dropped exactly once.
 
 A windowed load **prunes box I/O** here too: with `xrange`/`yrange`/`zrange` set, only the Chombo
 boxes whose extent intersects the window are read from the HDF5 file, so a sub-region costs a
@@ -221,11 +223,11 @@ a self-gravitating isothermal sphere, Mera levels 6 → 7):
 
 This frontend is built to agree with the *origin* tools — the readers that define PLUTO's formats:
 
-- **`pyPLUTO`** — PLUTO's own Python reader, which documents the static-grid (`grid.out` + `.dbl`)
-  layout. Mera's coordinate mapping is validated against it cell-for-cell.
-- **[yt](https://yt-project.org)** — reads PLUTO's Chombo-HDF5 AMR output through its `chombo`
+- **`pyPLUTO`**, PLUTO's own Python reader, documents the static-grid (`grid.out` + `.dbl`) layout
+  that Mera's coordinate mapping follows.
+- **[yt](https://yt-project.org)** reads PLUTO's Chombo-HDF5 AMR output through its `chombo`
   frontend, selecting sub-volumes lazily via *data objects* (`ds.box`, `ds.sphere`, `ds.r[...]`).
-  Mera's load-time `xrange`/`yrange`/`zrange` mirrors that region-selector behaviour.
+  Mera's load-time `xrange`/`yrange`/`zrange` selects at the same stage.
 
 ## See also
 

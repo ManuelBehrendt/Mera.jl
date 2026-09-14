@@ -49,14 +49,17 @@ part = getparticles(info)                      # a PartDataType (:x,:y,:z,:vx,:v
 msum(part); center_of_mass(part); getvar(part, :vx)
 ```
 
-`:family` is the GADGET particle type — **0** gas, **1** halo/DM, **2** disk, **3** bulge, **4**
-stars, **5** boundary/BH. On a large snapshot, restrict to a subset with the frontend directly to
-keep RAM bounded:
+`:family` is the GADGET particle type: **0** gas, **1** halo/DM, **2** disk, **3** bulge, **4**
+stars, **5** boundary/BH. On a large snapshot, load one type at a time to keep memory bounded:
 
 ```julia
-stars = getparticles_gadget(info; families=[4])      # just the star particles
-dm    = getparticles_gadget(info; families=[1])      # just the dark matter
+stars = getparticles(info; families=[4])      # just the star particles
+dm    = getparticles(info; families=[1])      # just the dark matter
 ```
+
+`families=` is specific to this reader, and the generic `getparticles` passes it straight through,
+so the code-blind call works. [`getparticles_gadget`](@ref) is the same function under its own name,
+useful when you want to be explicit about which reader runs.
 
 Masses come from each type's `Masses` dataset, or from `Header/MassTable` for types that store a
 single per-type value (e.g. dark matter).

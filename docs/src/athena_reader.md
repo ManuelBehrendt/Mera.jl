@@ -44,8 +44,8 @@ gas = gethydro(info; xrange=[-0.05, 0.05], yrange=[-0.05, 0.05], zrange=[-0.05, 
 gas = gethydro(info; xrange=[-200, 200], center=[:bc], range_unit=:pc)
 ```
 
-This is the leaf-cell analogue of Athena++'s **own** reader and of yt — the upstream tools Mera's
-selection mirrors (and is validated against), see [Reference readers](#Reference-readers) below.
+This is the leaf-cell analogue of the window in Athena++'s **own** reader and in yt, the upstream
+tools whose behaviour Mera's selection mirrors. See [Reference readers](#Reference-readers) below.
 Because Mera keeps the **leaf cells** (each point covered by exactly one cell at its finest level),
 a spatial window is an *exact, hole-free* filter; the returned object records it in `gas.ranges`.
 Resolution/level is chosen later at analysis time (`projection(…, pxsize=…)`), not at load — a level
@@ -225,15 +225,16 @@ checks that a value written at a known cell reads back at the right `(:level,:cx
 
 ## Reference readers
 
-This frontend is built to agree with — and is validated against — Athena++'s **own** tooling and
-the wider community readers, which are the *origin* of the `.athdf` format and its selection
-semantics:
+This frontend is built to agree with Athena++'s **own** tooling and the wider community readers,
+which are the *origin* of the `.athdf` format and its selection semantics. The test suite pins
+Mera's side of that agreement by writing `.athdf` files in the documented schema and reading them
+back, so a misread dataset or a shifted block index fails the suite:
 
-- **`athena_read.py`** — the official reader shipped with Athena++ (`athena/vis/python/athena_read.py`),
+- **`athena_read.py`**, the official reader shipped with Athena++ (`athena/vis/python/athena_read.py`),
   whose `athdf()` function reads a snapshot and supports a spatial window (`x1_min`/`x1_max`/…) and a
   level argument. Mera's load-time `xrange`/`yrange`/`zrange` is the leaf-cell analogue of that
   window. See the [Athena++ wiki](https://github.com/PrincetonUniversity/athena/wiki).
-- **[yt](https://yt-project.org)** — its `athena_pp` frontend reads `.athdf` lazily through *data
+- **[yt](https://yt-project.org)**: its `athena_pp` frontend reads `.athdf` lazily through *data
   objects* (`ds.box`, `ds.sphere`, `ds.r[...]`), touching only the MeshBlocks a region intersects.
   Mera's spatial selection mirrors that region-selector behaviour on the leaf-cell list. The AM06
   sample used above comes from the [yt sample-data collection](https://yt-project.org/data/).
