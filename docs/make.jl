@@ -212,10 +212,8 @@ makedocs(modules = [Mera],
                               "Notifications"       => Any[ "Overview"      => "notifications/index.md",
                                                             "Setup & Usage" => "notifications/setup_and_usage.md",
                                                             "Examples"      => "notifications/examples.md"]],
-                          "Benchmarks" => Any[ "Server IO"                     => "benchmarks/IO/IOperformance.md",
-                                               "Parallel RAMSES-Files Reading" => "benchmarks/RAMSES_reading/ramses_reading.md",
-                                               "Mera-Files Reading"            => "benchmarks/JLD2_reading/Mera_files_reading.md",
-                                               "Projections"                   => "benchmarks/Projection/multi_projections.md"],
+                          "Benchmarks" => Any[ "Measured Performance"    => "benchmarks/performance.md",
+                                              "Run Your Own Benchmarks" => "benchmarks/run_your_own.md"],
                           # Getting Started already answers "coming from another tool"
                           # (switching_to_mera) and "Julia for this kind of work"
                           # (julia_for_simulation_analysis), in curated pages roughly a tenth of
@@ -230,8 +228,7 @@ makedocs(modules = [Mera],
                           # / `?notifyme` REPL output that api.md already renders properly. Meeting the
                           # same four topics twice, at two levels of quality, is what the docs panel
                           # flagged. The page and its notebook are kept, just not offered as a route.
-                          "Examples & Misc" => Any[ "Examples"             => "examples.md",
-                                                    "Recommended Packages" => "recommended_packages.md"]]
+                          "Examples & Misc" => Any[ "Recommended Packages" => "recommended_packages.md"]]
                     ]
 )
 

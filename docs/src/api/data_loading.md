@@ -11,6 +11,9 @@ only the part of the box you need rather than filtering afterwards.
 ## Loaders
 
 ```@docs; canonical=false
+loadall
+@loadall
+withargs
 gethydro
 getparticles
 getgravity
@@ -51,4 +54,8 @@ see the [Mera-Files API](mera_files.md).
 ```@docs
 covering_grid
 covering_grid_memory
+```
+
+```@docs
+download_testdata
 ```

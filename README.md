@@ -28,6 +28,26 @@ Coverage is deepest for RAMSES, which is the only code with gravity, radiative-t
 support. The others provide gas; AREPO and GADGET additionally provide particles and SUBFIND halo
 catalogues.
 
+**Trying it on your own simulation.** The readers differ, but what they produce does not: every one
+returns the same objects, so the analysis never learns which code wrote the file. In practice that
+means you can follow any tutorial and change one line.
+
+```julia
+info = getinfo("/path/to/your/output")   # the reader is picked from the files it finds
+gas  = gethydro(info)                    # from here on, every example applies unchanged
+```
+
+**This branch wants testers more than anything else.** The non-RAMSES readers are checked against
+files built to match each format specification, which pins the format down but cannot cover what
+real projects produce. If you point one at your own run, we want to hear the result either way:
+that it disagreed with a tool you trust, that it could not read your file, or that it simply worked.
+The last one is the rarest report and is evidence we cannot get any other way. A small shareable
+snapshot is even better, since it turns a format check into a lasting behaviour check.
+
+You do not need to know Mera to help. See
+[Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/dev/multicode/) for what each
+reader implements today and where it is likely to be thin.
+
 *Coverage is measured by the maintainer on a local run (the RAMSES test datasets are too large for
 GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see **Testing** below.*
 

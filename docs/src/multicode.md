@@ -168,6 +168,46 @@ projection(gas, :xCII)                       # ionized carbon, at the UV-exposed
 
 ![Athena++ six-ray PDR: the UV radiation field `:Np1` shielded toward the centre (left), molecular `:xH2` forming in the shielded interior (middle), and ionized carbon `:xCII` at the irradiated surface (right) — the textbook PDR stratification, read code-blind via canonical names.](assets/athena/pdr_sixray.png)
 
+## Can I just follow the RAMSES examples?
+
+Yes, and that is the point of the design. Everything on this site that is not about *reading* a
+file works the same whatever code produced it.
+
+The reason is worth one paragraph, because it tells you when to trust it and when to be careful.
+
+**The readers differ. What they produce does not.** Reading a PLUTO file and reading a RAMSES file
+are different jobs, and each code has its own reader. But every one of them hands back the *same
+Julia object*: a `HydroDataType` for gas cells, a `PartDataType` for particles, with the same
+columns, the same units and the same cell convention. `projection`, `profile`, `phase`,
+`subregion`, `getvar` and the rest are written against those objects. They never ask which code the
+data came from, because nothing in them can tell.
+
+So the practical answer for someone arriving with their own simulation:
+
+```julia
+info = getinfo("/path/to/your/output")   # the reader is chosen from the files it finds
+gas  = gethydro(info)                    # from here on, every tutorial on this site applies
+```
+
+Take any tutorial page, change that path, and the rest of the code is unchanged. If a page shows
+`projection(gas, :rho, :Msol_pc2)` on a RAMSES run, the same line works on your Athena++ run.
+
+**Where to be careful.** Three things do depend on the code, and they are worth knowing before you
+plan work around one:
+
+1. **Not every reader reads everything.** The table below says what each one implements. If your
+   code stores gravity or radiation inside its snapshot, a reader may map it to the standard field,
+   but only RAMSES has separate `getgravity`, `getrt` and `getclumps` entry points.
+2. **A quantity needs the data behind it.** `getvar(:T)` needs a pressure and a density;
+   `:mach_alfven` needs a magnetic field. If the snapshot does not carry them, the call says so
+   rather than guessing.
+3. **The non-RAMSES readers have seen fewer real runs.** They are checked against fixtures that pin
+   the file format, not against the variety of configurations real projects produce. Your run may be
+   the first of its kind that a reader has met.
+
+None of that is a reason to avoid them. It is a reason to check your first result against something
+you already trust, and to tell us if it disagrees.
+
 ## The shared contract
 
 Whatever the source code, a loaded object obeys the same rules — this is what makes the analysis
@@ -190,14 +230,18 @@ code-blind, and what the cross-reader test (`test/59_multicode_contract_tests.jl
 Mera was built for RAMSES and grew outward, so the readers are **not equally mature**, and it is
 worth being plain about that before you plan work around one.
 
-| Code | What is implemented | How it is tested | Use it for |
-|---|---|---|---|
-| **RAMSES** | `getinfo`, `gethydro`, `getparticles`, `getgravity`, `getrt`, `getclumps` | real simulation outputs, the great majority of the suite's ~6100 assertions | production work; this is the path everything else is measured against |
-| **GADGET** family (GADGET, AREPO, SWIFT, GIZMO, TNG) | `getinfo`, `getparticles`, `getgroups` | ~230 assertions against synthetic HDF5 fixtures | particle and gas-cell analysis; the widest non-RAMSES coverage |
-| **PLUTO** | `getinfo`, `gethydro`, `getparticles` | ~80 assertions against synthetic fixtures | uniform-grid and Chombo-AMR runs |
-| **Athena++** | `getinfo`, `gethydro` | ~66 assertions against synthetic fixtures | grid/MHD analysis |
-| **Chombo** | `getinfo`, `gethydro` | ~26 assertions against synthetic fixtures | AMR hydro analysis |
-| **FLASH** | `getinfo`, `gethydro` | ~40 assertions against synthetic fixtures | grid/MHD analysis |
+| Code | Reads | Gas cells | Particles | Groups | Checked against |
+|---|---|---|---|---|---|
+| **RAMSES** | AMR, native | yes | yes | clumps | real simulations, in depth |
+| **GADGET** family (GADGET, AREPO, SWIFT, GIZMO, TNG) | HDF5 snapshots | as particles | yes | `getgroups` | format fixtures |
+| **PLUTO** | uniform grid, and Chombo AMR | yes | yes | no | format fixtures |
+| **Athena++** | AMR, MHD | yes | no | no | format fixtures |
+| **Chombo** | AMR | yes | no | no | format fixtures |
+| **FLASH** | AMR, MHD | yes | no | no | format fixtures |
+
+"Format fixtures" means files built to match the format specification exactly, which pin down
+geometry, units and cell conventions. They do not cover the variety of real production runs. That
+is the gap real data from you would close.
 
 Two honest caveats:
 
@@ -217,24 +261,43 @@ you trust, and to tell us when it disagrees.
 
 ## Help us widen this
 
-The analysis layer is code-blind by design, so **broadening code support is mostly reader work, not
-core work** — which makes it unusually good ground for contributions.
+The analysis layer does not know which code produced the data, so **supporting another code is
+reader work, not core work**. A reader is a few hundred lines that turns one file format into the
+standard objects. Everything downstream, every projection, profile, phase diagram and region, comes
+free the moment it does.
 
-The most useful things you can do, roughly in order of value to other users:
+That makes this unusually good ground for a contribution: the surface you have to understand is
+small, and the payoff is the whole analysis layer.
 
-- **Report a mismatch.** If a reader disagrees with the code's own tools, or with yt, on the same
-  snapshot, that is the highest-value bug report we can get. Open an issue with the code, the
-  configuration, and what differed.
-- **Share a small real snapshot.** The synthetic fixtures are what limit confidence above. A
-  compact, redistributable output from a real run — especially with an unusual setup — lets us turn
-  a contract test into a behaviour test.
-- **Extend a reader.** Adding particles to a grid code, or gravity where the snapshot carries it, is
-  self-contained work; see [Adding a reader](#Adding-a-reader).
-- **Write a new reader.** The contract is small and the downstream analysis comes free.
+**The most useful thing is a real snapshot.** The readers are checked against files built to match
+each format specification. Those pin the format down, but they cannot cover what real projects
+actually produce: unusual refinement, extra fields, a version of the writer nobody anticipated. One
+compact, shareable output from a real run turns a format check into a behaviour check, and it keeps
+working for everyone who comes after you.
 
-Questions and work-in-progress are welcome in
-[issues and discussions](https://github.com/ManuelBehrendt/Mera.jl/issues) — including "is this
-supposed to work?", which is often the fastest way to find a gap in the docs.
+It does not need to be big. A single small output, ideally a few hundred MB or less, with whatever
+makes your setup unusual, is worth more than a large ordinary one. If it can be published we will
+add it to the public test set and credit you; if it cannot, tell us anyway and we can work out what
+is possible.
+
+**If you are testing a reader, these are the things worth telling us**, roughly in order of value:
+
+- **It disagrees with something you trust.** A reader giving a different answer from your code's own
+  tools on the same snapshot is the single most valuable report. Send the code, the configuration,
+  and what differed.
+- **It failed to read your file.** A format variant nobody has met is a normal outcome here, not an
+  embarrassment. The error and a description of how the run was configured is usually enough.
+- **It worked.** Genuinely useful, and almost nobody reports it. Knowing that a reader handled a real
+  production run of a kind we have never seen is evidence we cannot get any other way.
+- **Something is missing.** Particles on a grid code, gravity where the snapshot carries it. Adding
+  one is self-contained; see [Adding a reader](#Adding-a-reader).
+
+You do not need to know Mera to be useful here. Loading your own snapshot and looking at whether the
+numbers are right is the test that matters, and it is the one only you can run.
+
+Questions and work in progress are welcome in
+[issues and discussions](https://github.com/ManuelBehrendt/Mera.jl/issues), including "is this
+supposed to work?", which is often the fastest way to find a gap in these pages.
 
 ## Reference readers
 
