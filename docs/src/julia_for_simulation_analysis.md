@@ -135,7 +135,7 @@ Two consequences:
   `--gcthreads` or `JULIA_NUM_GC_THREADS`, and check with `Threads.ngcthreads()`. The
   reference benchmarks ran 24 compute and 24 GC, which is simply the default.
 
-Mera's own numbers come from Julia 1.12, and the package is tested on 1.10, 1.11 and 1.12
+Mera's own numbers come from Julia 1.12, and the package is tested on 1.10, 1.11, 1.12 and 1.13
 on every push. What is not published is a like-for-like comparison **between** those
 versions on the same data: nobody has run one, so treat "newer is better here" as
 following from the mechanism above rather than from a measurement. If you want the real

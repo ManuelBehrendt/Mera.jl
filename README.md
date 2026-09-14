@@ -214,15 +214,15 @@ Pkg.add(url="https://github.com/ManuelBehrendt/Mera.jl", rev="multicode")
 
 To go back to the released version afterwards, `pkg> free Mera` (or `pkg> add Mera`).
 
-**Requirements**: Julia 1.10 or newer, with **1.12+ recommended** for the faster compiler and the
-current GC. **Platforms**: macOS (incl. Apple Silicon), Linux, Windows.
+**Requirements**: Julia 1.10 or newer, with **1.12 or newer recommended** for the faster compiler
+and the current GC. **Platforms**: macOS (incl. Apple Silicon), Linux, Windows.
 
-**Tested on every push**: Julia 1.10 (the minimum supported), 1.11 and 1.12 on Linux, macOS **and
-Windows**: every supported version on every supported platform, nine jobs. CI runners have no
+**Tested on every push**: Julia 1.10 (the minimum supported), 1.11, 1.12 and 1.13 on Linux, macOS
+**and Windows**: every supported version on every supported platform, twelve jobs. CI runners have no
 access to simulation data, so they run the data-free
 tiers: the analytic conservation oracles, the reader registry, the IO layer, the derived-field
 registry and the mera-file round-trips. The full suite runs against real snapshots locally, on
-one configuration: **Julia 1.12 on macOS (Apple Silicon)**. So the nine-job matrix covers the
+one configuration: **Julia 1.12 on macOS (Apple Silicon)**. So the twelve-job matrix covers the
 data-free tiers everywhere, while the data-backed tier is verified on a single platform.
 
 ## One name, many types: multiple dispatch

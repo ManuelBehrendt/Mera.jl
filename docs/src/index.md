@@ -111,7 +111,7 @@ For the wider ecosystem around a Mera workflow, tables, units, statistics and IO
 
 **Requirements**: Julia 1.10 or newer, **1.12+ recommended**, and 8GB+ RAM
 **Platforms**: macOS (including Apple Silicon), Linux, Windows
-**Tested on every push**: Julia 1.10 / 1.11 / 1.12 × Linux, macOS and Windows, nine jobs
+**Tested on every push**: Julia 1.10 / 1.11 / 1.12 / 1.13 × Linux, macOS and Windows, twelve jobs
 
 Julia 1.10 is the minimum the package supports (`julia = "1.10"` in `Project.toml`) and stays in
 CI so it keeps working. 1.12 is what we recommend running: the compiler is faster and the garbage

@@ -188,10 +188,20 @@ subregion(gas, !Sphere(20.0; range_unit=:kpc))                                  
 
 ### Tilted cylinders, disks and shells (arbitrary axis)
 
-`Cylinder` **and `CylindricalShell`** take an `axis` (any non-zero 3-vector, normalised
-internally), their symmetry direction, so you can select an inclined disk, cylinder or annulus,
-for example along a galaxy's spin vector. The default `[0,0,1]` is the classic z-aligned case, and
-the volume does not depend on the orientation. A thin cylinder is a disk:
+`Cylinder` **and `CylindricalShell`** take an `axis`, their symmetry direction, so you can select
+an inclined disk, cylinder or annulus. The default `[0,0,1]` is the classic z-aligned case, and the
+volume does not depend on the orientation.
+
+`axis` is **any non-zero 3-vector giving a direction in the simulation's own x, y, z frame**. Three
+things do not matter, so you rarely have to tidy a vector before passing it:
+
+- **Its length.** It is normalised internally, so `[0,0,1]` and `[0,0,7.3]` select the same cells.
+- **Its sign.** It marks an axis, not a way up, so `[0,0,1]` and `[0,0,-1]` are the same region.
+- **Its element type.** `[1,0,2]` and `[1.0,0.0,2.0]` behave identically.
+
+It carries no units, because it is a direction: `range_unit` applies to the radius and height, never
+to `axis`. Anything that yields a 3-vector will do, a hand-written direction, an eigenvector, a
+field direction, or a measured angular momentum. A thin cylinder is a disk:
 
 ```julia
 subregion(gas, Cylinder(15.0, 1.0; axis=[1,0,2], range_unit=:kpc))   # a thin disk, tilted in the x-z plane
