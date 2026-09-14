@@ -45,8 +45,8 @@ The last one is the rarest report and is evidence we cannot get any other way. A
 snapshot is even better, since it turns a format check into a lasting behaviour check.
 
 You do not need to know Mera to help. See
-[Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/dev/multicode/) for what each
-reader implements today and where it is likely to be thin.
+[Other Simulation Codes](docs/src/multicode.md) for what each reader implements today, how to check
+a first result, and where it is likely to be thin.
 
 *Coverage is measured by the maintainer on a local run (the RAMSES test datasets are too large for
 GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see **Testing** below.*

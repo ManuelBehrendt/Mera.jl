@@ -7,34 +7,34 @@
     fields, a load-time sub-region, and a save/load round-trip — and runs end-to-end as part of
     Mera's test suite.
 
-Mera began as a RAMSES tool, but its analysis layer is **code-blind**: every quantity
-([`getvar`](@ref)), map ([`projection`](@ref)), region ([`subregion`](@ref)), filter
-([`filterdata`](@ref)), profile, PDF, time-series and clump finder works on a *generic* uniform/AMR
-cell list — not on any particular file format. A reader for another simulation code therefore only
-has to do one thing: fill the standard Mera structs (an `InfoType` + a `HydroDataType` whose cells
-follow Mera's `(:level, :cx, :cy, :cz, <vars…>)` convention). Everything downstream then runs
-unchanged.
+**This branch reads RAMSES, PLUTO, Chombo, Athena++, FLASH and the GADGET family through one API.**
+It is development work, not part of any 1.x release. Install it with:
 
-That is the whole design: **a new code = "write a reader that fills the structs", not "rework Mera".**
+```julia
+] add https://github.com/ManuelBehrendt/Mera.jl#multicode
+```
 
-## Supported codes
+## Where we stand
 
-The normal [`getinfo`](@ref) / [`gethydro`](@ref) entry points **auto-detect** the code from the
-files in the directory (override with `code=`); the detected code is stored in `info.simcode`.
+`getinfo` detects the code from the files it finds, and stores it in `info.simcode`. Override with
+`code=` if you need to.
 
-| Code | File format | Grid | Data types | Native units | Load-time window | Block I/O pruning | Reader page |
-|---|---|---|---|---|---|---|---|
-| **RAMSES** | RAMSES binary | AMR | hydro · gravity · particles · RT · clumps | physical (from `info`) | ✅ | — (native) | (the tutorials) |
-| **PLUTO** | `grid.out` + `.dbl` | uniform | hydro · particles | code (dimensionless) | ✅ | n/a (one `.dbl` read) | [PLUTO](pluto_reader.md) |
-| **PLUTO-AMR / Chombo** | Chombo HDF5 | AMR | hydro | code | ✅ | ✅ (per box) | [PLUTO](pluto_reader.md#PLUTO-AMR-(Chombo)) |
-| **Athena++** | `.athdf` HDF5 | AMR | hydro · MHD | code | ✅ | ✅ (per MeshBlock) | [Athena++](athena_reader.md) |
-| **FLASH** | HDF5 PARAMESH | AMR | hydro · MHD | CGS | ✅ | ✅ (per leaf block) | [FLASH](flash_reader.md) |
-| **GADGET** (+ GIZMO/AREPO/SWIFT/TNG) | HDF5 `PartType*` | particles | particles · **gas-cell physics** (ρ · T · Z · …) | physical (a/h applied) | ✅ | ✅ (per type, on read) | [GADGET](gadget_reader.md) |
+| Code | Format | Grid | What you get | Tested against | Reader page |
+|---|---|---|---|---|---|
+| **RAMSES** | native binary | AMR | gas, gravity, particles, RT, clumps | real simulations, in depth | native |
+| **PLUTO** | `grid.out` + `.dbl` | uniform | gas, particles | format fixtures | [PLUTO](pluto_reader.md) |
+| **Chombo** (PLUTO-AMR) | Chombo HDF5 | AMR | gas | format fixtures | [PLUTO](pluto_reader.md#PLUTO-AMR-(Chombo)) |
+| **Athena++** | `.athdf` HDF5 | AMR | gas, MHD | format fixtures | [Athena++](athena_reader.md) |
+| **FLASH** | HDF5 PARAMESH | AMR | gas, MHD | format fixtures | [FLASH](flash_reader.md) |
+| **GADGET** family (GIZMO, AREPO, SWIFT, TNG) | HDF5 `PartType*` | particles | particles, gas-cell physics, SUBFIND groups | format fixtures | [GADGET](gadget_reader.md) |
 
-The same support at a glance — which capability each code carries (MHD, particle gas-cell
-physics, cosmological a/h, projection deposition modes):
+**Only RAMSES has separate `getgravity`, `getrt` and `getclumps`**, because RAMSES writes those to
+their own files. Where another code keeps the same physics inside its snapshot, the reader maps it
+to the standard field, but there is no separate entry point.
 
-![Capability matrix: each supported code (RAMSES, PLUTO, Chombo, Athena++, FLASH, GADGET, AREPO/TNG) versus its capabilities — geometry, hydro/gravity/particles/MHD, particle gas-cell physics, comoving→physical cosmology, units returned, projection deposition, and lazy load-time windowing. RAMSES is native; grid/AMR codes return code units; GADGET/AREPO carry gas physics and AREPO adds mass/volume/SPH/Voronoi projection.](assets/MulticodeCapabilities.png)
+**"Format fixtures"** means files built to match each format specification exactly. They pin down
+geometry, units and cell conventions. They do not cover the variety that real production runs
+produce, and closing that gap is what a snapshot from you would do.
 
 ### Which entry point works on which code
 
@@ -86,6 +86,38 @@ RAMSES halo or a GADGET galaxy. (Athena++/FLASH particle reading is not yet wire
 [`getmovie`](@ref)/[`savemovie`](@ref) discover the output numbers in a directory per format
 (`*.NNNNN.athdf`, `*_hdf5_plt_cnt_NNNN`, PLUTO's `dbl.out`, …) and iterate them through the generic
 loader — so a time-series or movie reduction runs the same call on every supported code.
+
+## Testing it on your own simulation
+
+This is the most useful thing anyone outside the project can do, and it needs no knowledge of Mera.
+
+```julia
+using Mera
+info = getinfo("/path/to/your/output")   # the reader is chosen from the files it finds
+gas  = gethydro(info)                    # from here on, every tutorial on this site applies
+```
+
+**Why every tutorial applies.** The readers differ, but what they produce does not. Each one returns
+the same Julia objects, a `HydroDataType` for gas cells and a `PartDataType` for particles, with the
+same columns, units and cell convention. `projection`, `profile`, `phase`, `subregion` and `getvar`
+are written against those objects and never ask which code wrote the file. Take any page on this
+site, change the path, and the rest of the code is unchanged.
+
+**What is worth checking first**, in the order that finds problems fastest:
+
+1. **Does it read at all?** `getinfo` then `gethydro`. A format variant nobody has met is a normal
+   outcome here.
+2. **Is the geometry right?** `sum(getvar(gas, :volume))` should equal the box volume, and
+   `extrema(getvar(gas, :x))` should span the box. This one check catches most reader bugs.
+3. **Are the numbers right?** Compare a density range, a total mass, or one projection against the
+   tool you already use for this code. Disagreement is the single most valuable thing you can report.
+4. **Does the analysis work?** A projection, a radial profile, a phase diagram. If the object loaded
+   correctly, these follow.
+
+**Where to be careful.** A derived quantity needs the data behind it: `getvar(:T)` needs pressure
+and density, `:mach_alfven` needs a magnetic field. If the snapshot does not carry them, the call
+says so rather than guessing. And these readers have met far fewer real runs than the RAMSES one,
+so your simulation may be the first of its kind one has seen.
 
 ## Worked examples: self-built runs
 
@@ -168,46 +200,6 @@ projection(gas, :xCII)                       # ionized carbon, at the UV-exposed
 
 ![Athena++ six-ray PDR: the UV radiation field `:Np1` shielded toward the centre (left), molecular `:xH2` forming in the shielded interior (middle), and ionized carbon `:xCII` at the irradiated surface (right) — the textbook PDR stratification, read code-blind via canonical names.](assets/athena/pdr_sixray.png)
 
-## Can I just follow the RAMSES examples?
-
-Yes, and that is the point of the design. Everything on this site that is not about *reading* a
-file works the same whatever code produced it.
-
-The reason is worth one paragraph, because it tells you when to trust it and when to be careful.
-
-**The readers differ. What they produce does not.** Reading a PLUTO file and reading a RAMSES file
-are different jobs, and each code has its own reader. But every one of them hands back the *same
-Julia object*: a `HydroDataType` for gas cells, a `PartDataType` for particles, with the same
-columns, the same units and the same cell convention. `projection`, `profile`, `phase`,
-`subregion`, `getvar` and the rest are written against those objects. They never ask which code the
-data came from, because nothing in them can tell.
-
-So the practical answer for someone arriving with their own simulation:
-
-```julia
-info = getinfo("/path/to/your/output")   # the reader is chosen from the files it finds
-gas  = gethydro(info)                    # from here on, every tutorial on this site applies
-```
-
-Take any tutorial page, change that path, and the rest of the code is unchanged. If a page shows
-`projection(gas, :rho, :Msol_pc2)` on a RAMSES run, the same line works on your Athena++ run.
-
-**Where to be careful.** Three things do depend on the code, and they are worth knowing before you
-plan work around one:
-
-1. **Not every reader reads everything.** The table below says what each one implements. If your
-   code stores gravity or radiation inside its snapshot, a reader may map it to the standard field,
-   but only RAMSES has separate `getgravity`, `getrt` and `getclumps` entry points.
-2. **A quantity needs the data behind it.** `getvar(:T)` needs a pressure and a density;
-   `:mach_alfven` needs a magnetic field. If the snapshot does not carry them, the call says so
-   rather than guessing.
-3. **The non-RAMSES readers have seen fewer real runs.** They are checked against fixtures that pin
-   the file format, not against the variety of configurations real projects produce. Your run may be
-   the first of its kind that a reader has met.
-
-None of that is a reason to avoid them. It is a reason to check your first result against something
-you already trust, and to tell us if it disagrees.
-
 ## The shared contract
 
 Whatever the source code, a loaded object obeys the same rules — this is what makes the analysis
@@ -225,39 +217,8 @@ code-blind, and what the cross-reader test (`test/59_multicode_contract_tests.jl
   load argument — on a leaf-cell list a level cap would leave holes — it is chosen at analysis time
   (`projection(…, res=)`).
 
-## How mature is each reader?
-
-Mera was built for RAMSES and grew outward, so the readers are **not equally mature**, and it is
-worth being plain about that before you plan work around one.
-
-| Code | Reads | Gas cells | Particles | Groups | Checked against |
-|---|---|---|---|---|---|
-| **RAMSES** | AMR, native | yes | yes | clumps | real simulations, in depth |
-| **GADGET** family (GADGET, AREPO, SWIFT, GIZMO, TNG) | HDF5 snapshots | as particles | yes | `getgroups` | format fixtures |
-| **PLUTO** | uniform grid, and Chombo AMR | yes | yes | no | format fixtures |
-| **Athena++** | AMR, MHD | yes | no | no | format fixtures |
-| **Chombo** | AMR | yes | no | no | format fixtures |
-| **FLASH** | AMR, MHD | yes | no | no | format fixtures |
-
-"Format fixtures" means files built to match the format specification exactly, which pin down
-geometry, units and cell conventions. They do not cover the variety of real production runs. That
-is the gap real data from you would close.
-
-Two honest caveats:
-
-**Only RAMSES has dedicated `getgravity`, `getrt` and `getclumps`**, because RAMSES writes those to
-separate files. Where another code stores the same physics inside its snapshot, the reader maps it
-to the canonical field — but there is no separate entry point, and no equivalent of the clump finder's
-RAMSES-specific catalogue reader.
-
-**The non-RAMSES readers are exercised against synthetic fixtures**, which pin down the format
-contract — geometry, units, cell conventions, the [shared contract](#The-shared-contract) below —
-rather than behaviour across the full variety of real runs. They are correct on what they are tested
-for. If you point one at a production simulation with an unusual configuration, you are in less
-well-trodden territory than a RAMSES user is.
-
-None of this is a reason to avoid them. It is a reason to check your first result against something
-you trust, and to tell us when it disagrees.
+None of this is a reason to avoid the non-RAMSES readers. It is a reason to check your first
+result against something you already trust, and to tell us when it disagrees.
 
 ## Help us widen this
 
