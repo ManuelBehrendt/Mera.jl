@@ -186,12 +186,12 @@ subregion(gas, Sphere(20.0; range_unit=:kpc) ∩ Cuboid(xrange=[-10,10], yrange=
 subregion(gas, !Sphere(20.0; range_unit=:kpc))                                        # everything outside the ball
 ```
 
-### Tilted cylinders / disks (arbitrary axis)
+### Tilted cylinders, disks and shells (arbitrary axis)
 
-`Cylinder` takes an `axis` (any non-zero 3-vector, normalised internally), its symmetry
-direction, so you can select an inclined disk or cylinder, e.g. along a galaxy's spin vector.
-The default `[0,0,1]` is the classic z-aligned cylinder; the volume is invariant under the
-orientation. A thin cylinder is a disk:
+`Cylinder` **and `CylindricalShell`** take an `axis` (any non-zero 3-vector, normalised
+internally), their symmetry direction, so you can select an inclined disk, cylinder or annulus,
+for example along a galaxy's spin vector. The default `[0,0,1]` is the classic z-aligned case, and
+the volume does not depend on the orientation. A thin cylinder is a disk:
 
 ```julia
 subregion(gas, Cylinder(15.0, 1.0; axis=[1,0,2], range_unit=:kpc))   # a thin disk, tilted in the x-z plane
@@ -206,6 +206,19 @@ subregion(gas, Cylinder(15.0, 1.0; axis=spin, center=[:bc], range_unit=:kpc))
 
 *The same thin disk projected along z for three `axis` directions, face-on (a circle) and two
 tilts (foreshortened ellipses).*
+
+A shell tilts the same way, which is what you want for an annulus in the plane of an inclined disk:
+
+```julia
+subregion(gas, CylindricalShell(5.0, 10.0, 4.0; axis=spin, center=[:bc], range_unit=:kpc))
+```
+
+Two shapes need no `axis`. `Sphere` and `SphericalShell` are the same in every orientation, so
+tilting them would change nothing. `Cuboid` is **axis-aligned only**: its faces are always parallel
+to the box axes. That is deliberate rather than an oversight, because an axis-aligned box is the one
+shape whose inside-fraction is computed analytically, exact to machine precision, rather than by
+sampling. For a tilted slab use a thin `Cylinder`, which gives the same selection with an
+orientation.
 
 ### Accuracy of the splitting
 
