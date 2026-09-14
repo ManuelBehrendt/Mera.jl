@@ -46,15 +46,23 @@ Either way you get canonical names and the cell-centred field `:bx`, `:by`, `:bz
     `nvar = 11` and would be read as MHD. Modern RAMSES writes the descriptor, which removes the
     ambiguity; if you hit this, the columns are still available positionally (`:var6…`).
 
-## A reproducible example (yt sample dataset)
+!!! note "MHD support is still growing"
+    Reading and the derived quantities are in place and tested against RAMSES's own reference
+    solutions. Higher-level MHD tooling is still being added, so if something you need is missing,
+    say so on the issue tracker.
 
-The yt project hosts a small RAMSES MHD test (a 3-D MHD tube). Download and extract it:
+## The example data
 
-```julia
-# in a shell:
-#   curl -LO https://yt-project.org/data/ramses_mhd_128.tar.gz
-#   tar -xzf ramses_mhd_128.tar.gz
-```
+Two public test simulations are used here. Both are fetched with `download_testdata`, so every
+cell on this page runs on data you can get.
+
+| | what it is | why it is here |
+|---|---|---|
+| `ramses_abc_flow` | a 3-D MHD dynamo, 32³ cells | the working example: real field structure in all three directions |
+| `ramses_mhd_128` | a 1-D shock tube, 128³ | a known answer, used once to check the reader |
+
+Everything below the first section uses the 3-D run. Analysis on a real simulation looks the same:
+only the path changes.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -62,8 +70,7 @@ The yt project hosts a small RAMSES MHD test (a 3-D MHD tube). Download and extr
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
 using Mera
-# getinfo prints the MHD-layout note + the overview (note the magnetic-field line)
-info = getinfo(27, joinpath(MERA_EXAMPLES, "RAMSES/ramses_mhd_128"));
+info = getinfo(2, "$MERA_EXAMPLES/RAMSES-PUBLIC/ramses_abc_flow");
 ```
 
 ```
@@ -75,104 +82,85 @@ info = getinfo(27, joinpath(MERA_EXAMPLES, "RAMSES/ramses_mhd_128"));
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-09-13T10:47:14.709
-[ Info: Mera: no hydro descriptor and nvarh=11 (≥11) on a 3D run — assuming a RAMSES MHD layout (B faces at 5–10, pressure at 11). If this is hydro with ≥6 passive scalars instead, the names are positional (:var6…).
+[Mera]: 2026-09-14T15:13:42.228
 Code: RAMSES
-output [27] summary:
-mtime: 2026-06-17T09:26:06.094
-ctime: 2026-06-17T09:26:06.094
+output [2] summary:
+mtime: 2026-08-26T15:14:12.234
+ctime: 2026-08-26T15:14:12.234
 =======================================================
-simulation time: 161.02 [ms]
-boxlen: 2.0 [cm]
-ncpu: 4
+simulation time: 10.0 [s]
+boxlen: 1.0 [cm]
+ncpu: 8
 ndim: 3
 cosmological:  false
 -------------------------------------------------------
 amr:           true
-level of uniform grid: 7 --> cellsize(s): 156.25 [μm]
+level of uniform grid: 5 --> cellsize(s): 312.5 [μm]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  11  --> (:rho, :vx, :vy, :vz, :bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right, :p)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :B_x_left, :B_y_left, :B_z_left, :B_x_right, :B_y_right, :B_z_right, :pressure)
 magnetic field:   true (MHD, constrained transport) --> cell-centred :bx, :by, :bz = ½(left+right)
 γ: 1.6666667
 gravity:       false
 particles:     false
 rt:            false
 clumps:           false
-namelist-file:    false
-boundaries:       unknown (no namelist; not recorded in info_*.txt)
-timer-file:       false
-compilation-file: false
-makefile:         false
-patchfile:        false
+-------------------------------------------------------
+namelist-file: ("&HYDRO_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&AMR_PARAMS", "&OUTPUT_PARAMS", "&REFINE_PARAMS")
+-------------------------------------------------------
+boundaries:       periodic in x, y, z
+timer-file:       true
+compilation-file: true
+makefile:         true
+patchfile:        true
 =======================================================
 ```
 
-## What this run is, and what its numbers mean
+`getinfo` prints the MHD note above: it found the six face-centred B components and moved the
+pressure to index 11. Nothing else is needed to read an MHD run.
 
-Read this before any plot below, because it decides how the numbers should be read.
-
-**It is a 1-D MHD shock tube along `x`**, extruded in `y` and `z` on a 128³ grid. It is small, it
-is fast, and the answer is known. That makes it a good place to check that post-processing does what
-you expect, before you use it on a production run.
-
-This has two consequences. First, `Bx` must be **uniform**: in a 1-D problem
-``\nabla\cdot\mathbf B = 0`` forces the field along the tube to be constant. Second, nothing varies
-in `y` or `z`, so maps are flat in those directions and the profiles along `x` are where the
-structure shows.
-
-**It carries no physical scaling.** This is a dimensionless test: RAMSES wrote `unit_l = unit_d =
-unit_t = 1`. Mera applies that conversion faithfully and reports a box of 2 cm and a temperature of
-``10^{-8}`` K, but the run never chose a physical size, so neither number means anything.
-Mera will convert to any unit you ask for, and on this run the physical-looking answers are
-meaningless. The right choice here is **code units**, and that is what the rest of the page uses.
+The field is an Arnold-Beltrami-Childress flow, a standard dynamo test. The gas has uniform density
+and nearly uniform pressure, so all the structure is in **B**, which is what we want on this page.
 
 ```julia
-println("unit_l, unit_d, unit_t : ", (info.unit_l, info.unit_d, info.unit_t))
-println("box size               : ", info.boxlen, " code units = ",
-        info.boxlen * info.scale.cm, " cm")
-
 gas = gethydro(info, verbose=false, show_progress=false);
-println("cells loaded           : ", length(gas.data))
-println("density   rho          : ", extrema(getvar(gas, :rho)))
-println("pressure  p            : ", extrema(getvar(gas, :p)))
-println("Bx, By, Bz             : ", extrema(getvar(gas, :bx)), " ",
-        extrema(getvar(gas, :by)), " ", extrema(getvar(gas, :bz)))
 
-# the same call in a physical unit: Mera converts, but the run gives it no meaning
-println()
-println("T in Kelvin, if you ask : ", extrema(getvar(gas, :T, :K)))
-println("   ...which is nonsense here, because the run set no physical units.")
+println("cells            : ", length(gas.data))
+println("density  rho     : ", extrema(getvar(gas, :rho)))
+println("pressure p       : ", extrema(getvar(gas, :p)))
+println("Bx               : ", extrema(getvar(gas, :bx)))
+println("By               : ", extrema(getvar(gas, :by)))
+println("Bz               : ", extrema(getvar(gas, :bz)))
 ```
 
 ```
-unit_l, unit_d, unit_t : (1.0, 1.0, 1.0)
-box size               : 2.0 code units = 2.0 cm
-cells loaded           : 2097152
-density   rho          : (0.11443603998566221, 1.0)
-pressure  p            : (0.13653329586664678, 1.9999999999999998)
-Bx, By, Bz             : (1.0, 1.0) (9.971840159730391e-27, 1.6525454539866162) (0.0, 0.0)
-T in Kelvin, if you ask : (1.0812393953743894e-8, 3.1640344885858596e-8)
-   ...which is nonsense here, because the run set no physical units.
+cells            : 32768
+density  rho     : (1.0, 1.0)
+pressure p       : (0.659861938296692, 0.6692781818855303)
+Bx               : (-0.8097685225907696, 0.8097685225907915)
+By               : (-0.8097685225907656, 0.8097685225907907)
+Bz               : (-0.19385135316944382, 0.9874378684150922)
 ```
 
 ## Derived magnetic quantities
 
-All of these are **built-in `getvar` quantities** computed from the cell-centred field, no manual
-arithmetic needed, and each takes the units shown:
+These are **built-in `getvar` quantities**, computed from the cell-centred field. No manual
+arithmetic, and each takes a unit. This run is dimensionless (it sets `unit_l = unit_d = unit_t = 1`),
+so the numbers below are code units; on a run with physical scaling the same calls give μG, km/s
+and erg.
 
 ```julia
-beta = getvar(gas, :beta)          # plasma beta, dimensionless either way
-bmag = getvar(gas, :bmag)          # |B|, code units
-va   = getvar(gas, :v_alfven)      # Alfven speed, code units
-mA   = getvar(gas, :mach_alfven)   # Mach numbers are ratios, so always dimensionless
-mf   = getvar(gas, :mach_fast)
+bmag = getvar(gas, :bmag)          # |B|
+beta = getvar(gas, :beta)          # plasma beta = p_thermal / p_magnetic
+va   = getvar(gas, :v_alfven)      # Alfven speed
+mA   = getvar(gas, :mach_alfven)   # Mach numbers are ratios, dimensionless in any unit system
 
-println("|B|            : ", extrema(bmag))
-println("plasma beta    : ", extrema(beta))
-println("Alfven speed   : ", extrema(va))
-println("Mach_alfven    : ", extrema(mA))
-println("Mach_fast      : ", extrema(mf))
+println("|B|           : ", extrema(bmag))
+println("plasma beta   : ", extrema(beta))
+println("  spanning    : ", round(log10(maximum(beta)/minimum(beta)), digits=1), " decades")
+println("Alfven speed  : ", extrema(va))
+println("Mach_alfven   : ", extrema(mA))
 ```
 
 ```
@@ -180,12 +168,15 @@ println("Mach_fast      : ", extrema(mf))
              Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
              `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
              (shown once per session; verbose(false) silences Mera's messages)
-|B|            : (1.0, 1.9315554554534105)
-plasma beta    : (0.07401400537131442, 3.9999999999999996)
-Alfven speed   : (1.0, 5.603087067452775)
-Mach_alfven    : (6.808121583990544e-27, 0.8753825660118536)
-Mach_fast      : (3.270515795217101e-27, 0.835115020871922)
+|B|           : (0.0015395372898541501, 1.401162752947759)
+plasma beta   : (0.6807865656874684, 562546.4074980728)
+  spanning    : 5.9 decades
+Alfven speed  : (0.0015395372898541501, 1.401162752947759)
+Mach_alfven   : (0.0989300985252919, 1346.9642077736057)
 ```
+
+Plasma beta runs over nearly six decades here, from magnetically dominated (β < 1) to strongly
+thermally dominated. That range is what makes the plots below worth looking at.
 
 Almost no new units were needed: `B` reuses the field-strength scales (`:Gauss`, `:muG`, `:microG`,
 `:nG`, `:Tesla`), magnetic pressure/energy-density reuse the pressure scales (`:Ba`, `:g_cm_s2`), the
@@ -196,103 +187,55 @@ The exact formulas (incl. the RAMSES code-unit convention `P_mag = B²/2` and th
 conversion) are listed in
 [How Quantities Are Computed](computation_reference.md#Magnetic-quantities).
 
-## A free correctness check: div B = 0
+## Maps
 
-The tube has a known answer, so we can check Mera against it. Because nothing varies across the
-tube, ``\nabla\cdot\mathbf B = 0`` reduces to ``\partial B_x/\partial x = 0``, so `Bx` has to be
-constant to machine precision. If the face-to-centre averaging were wrong, this is where it would
-show.
-
-```julia
-using Statistics
-
-bx = getvar(gas, :bx)
-println("Bx uniform (div B = 0 in 1-D)  : ", all(bx .== first(bx)))
-println("Bz identically zero            : ", all(iszero, getvar(gas, :bz)))
-
-# :x is measured from the box CORNER unless you give it an origin, so pass the centre.
-# Without it the test below selects no cells at all and quietly reports false.
-xc = getvar(gas, :x, center=[:bc])
-println("nothing varies across the tube : ",
-        std(getvar(gas, :rho)[xc .< -0.9]) < 1e-12)
-```
-
-```
-Bx uniform (div B = 0 in 1-D)  : true
-Bz identically zero            : true
-nothing varies across the tube : true
-```
-
-## The tube, as a profile along x
-
-`profile` bins any quantity against any other. Here the tube's own coordinate is the natural
-x-axis, so one call gives the density, the transverse field and the plasma beta across the whole
-solution. Weight by `:volume`: the cells are what we are averaging, not the mass in them.
-
-The wave structure of the Riemann problem appears directly: the density steps, `By` rotates, and
-`beta` swings by almost two orders of magnitude between the magnetically and thermally dominated
-sides.
+The cell-centred components project like any other quantity. A map of `|B|` shows where the field
+is strong; a map of a single component shows its sign, so it wants a diverging colour scale.
 
 ```julia
 using CairoMakie
 
-pr = profile(gas, :x, [:rho, :by, :beta]; center=[:bc], nbins=128, weight=:volume)
+p = projection(gas, [:bmag, :bz]; verbose=false, show_progress=false)
 
-for q in (:rho, :by, :beta)
-    m = pr.fields[q].mean
-    println(rpad(q, 6), " ", round(minimum(m), digits=4), " .. ", round(maximum(m), digits=4))
-end
-
-fig = Figure(size=(880, 300))
-for (n, (q, lab)) in enumerate(((:rho, "density"), (:by, "By"), (:beta, "plasma beta")))
-    ax = Axis(fig[1, n]; xlabel="x", ylabel=lab,
-              yscale = q === :beta ? log10 : identity)
-    lines!(ax, pr.x, pr.fields[q].mean)
-end
+fig = Figure(size=(880, 360))
+ax1 = Axis(fig[1,1]; title="|B| (mass-weighted)", aspect=DataAspect(), xlabel="x", ylabel="y")
+ax2 = Axis(fig[1,2]; title="Bz, signed",          aspect=DataAspect(), xlabel="x", ylabel="y")
+heatmap!(ax1, p.maps[:bmag]; colormap=:viridis)
+heatmap!(ax2, p.maps[:bz];   colormap=:balance)
 fig
 ```
 
-```
-[ Info: Mera v1.8.0
-rho    0.1144 .. 1.0
-by     0.0 .. 1.6525
-beta   0.074 .. 4.0
-```
+![](magnetic_fields_files/magnetic_fields_11_1.png)
 
-![](magnetic_fields_files/magnetic_fields_11_6.png)
-
-`profile` returns more than the mean. Each field also carries `std`, `min`, `max`, `median`,
-`quantiles` and the effective count per bin, so a spread check costs no extra pass over the data.
-
-Here the spread is zero in every bin, and that is the right answer rather than a dull one. We asked
-for 128 bins across 128 cell columns, so each bin collects exactly one column: 16384 cells that all
-hold the same state, because nothing varies across the tube. Bins only show spread once they are
-wider than the structure.
+A projection sums along the line of sight, so it averages away some of the structure. To see a
+plane of the box instead, restrict the third axis: this is a slice one cell thick.
 
 ```julia
-s = pr.fields[:rho].std
-println("bins whose cells disagree (std > 1e-9): ", count(>(1e-9), s), " of ", length(s))
-println("cells averaged into one bin           : ", Int(round(pr.count[1])))
+dz = info.boxlen / 2^info.levelmin          # one cell at the coarse level
+sl = projection(gas, :bmag; zrange=[0.5 - dz/2, 0.5 + dz/2], center=[:bc],
+                range_unit=:standard, verbose=false, show_progress=false)
+
+fig = Figure(size=(440, 380))
+ax  = Axis(fig[1,1]; title="|B| in the mid-plane", aspect=DataAspect(), xlabel="x", ylabel="y")
+heatmap!(ax, sl.maps[:bmag]; colormap=:viridis)
+fig
 ```
 
-```
-bins whose cells disagree (std > 1e-9): 0 of 128
-cells averaged into one bin           : 16384
-```
+![](magnetic_fields_files/magnetic_fields_13_1.png)
 
-## Distributions: which states does the gas occupy?
+## Distributions
 
-A profile follows one coordinate. A **PDF** ignores the coordinate and shows how much gas has each
-value. That answers a different question: is this run dominated by the magnetic field or by thermal
-pressure? Weight by mass, so the answer is a mass fraction and not a cell count.
+A **PDF** answers a question a map cannot: how much of the gas sits at each value. Weight by mass,
+so the answer is a mass fraction and not a cell count. Here it shows how the volume divides between
+magnetically and thermally dominated gas, with β = 1 marking the boundary.
 
 ```julia
 pb = pdf(gas, :beta; weight=:mass)
 
 fig = Figure(size=(460, 320))
-ax  = Axis(fig[1, 1]; xlabel="plasma beta", ylabel="mass PDF", xscale=log10)
+ax  = Axis(fig[1,1]; xlabel="plasma beta", ylabel="mass PDF", xscale=log10)
 lines!(ax, pb.centers, pb.pdf)
-vlines!(ax, [1.0]; color=:grey, linestyle=:dash)     # beta = 1: the equipartition line
+vlines!(ax, [1.0]; color=:grey, linestyle=:dash)     # equipartition
 fig
 ```
 
@@ -301,102 +244,121 @@ fig
 ## Phase diagrams
 
 `phase` is the two-dimensional version: a weighted histogram of one quantity against another. On a
-production run this is the classic density-temperature diagram. Here, because every `x` holds a
-single state, the gas traces a **curve** through the plane rather than filling it, which is exactly
-what a 1-D Riemann solution should look like and a useful thing to recognise.
+production run this is the classic density-temperature diagram. Here, with density uniform, the
+informative pair is field strength against plasma beta, and the two are tightly related because the
+pressure hardly varies.
 
 ```julia
-ph = phase(gas, :rho, :beta; weight=:mass)
+# log-spaced bins, so both axes can be shown on a log scale
+ph = phase(gas, :bmag, :beta; weight=:mass, xscale=:log, yscale=:log)
 
-fig = Figure(size=(460, 340))
-ax  = Axis(fig[1, 1]; xlabel="density", ylabel="plasma beta", yscale=log10)
-heatmap!(ax, ph.xedges[1:end-1], ph.yedges[1:end-1], replace(ph.H, 0.0 => NaN);
-         colormap=:viridis)
+fig = Figure(size=(460, 360))
+ax  = Axis(fig[1,1]; xlabel="|B|", ylabel="plasma beta", xscale=log10, yscale=log10)
+heatmap!(ax, ph.xedges[1:end-1], ph.yedges[1:end-1], replace(ph.H, 0.0 => NaN); colormap=:viridis)
 fig
 ```
 
 ![](magnetic_fields_files/magnetic_fields_17_1.png)
 
-## Projecting the field
+## Profiles
 
-The cell-centred components project like any other quantity. On **this** run, remember what the
-setup implies: a map down `z` averages over a direction in which nothing varies, and `Bx` is
-uniform, so a `Bx` map is a single flat colour. `By` is the component that carries the structure,
-so that is the one worth looking at here. On a production run you would map `:bmag` or `:beta` the
-same way and see real morphology.
+`profile` bins any quantity against any other. A radial profile about the box centre shows how the
+field strength is organised with distance. Weight by `:volume`, because we are averaging cells and
+this run has uniform density anyway.
 
 ```julia
-p = projection(gas, [:by, :rho]; direction=:z, verbose=false, show_progress=false)
+pr = profile(gas, :r_sphere, [:bmag, :beta]; center=[:bc], nbins=16, weight=:volume)
 
-fig = Figure(size=(880, 340))
-ax1 = Axis(fig[1, 1]; title="By  (mass-weighted)", xlabel="x", ylabel="y")
-ax2 = Axis(fig[1, 2]; title="density", xlabel="x", ylabel="y")
-heatmap!(ax1, p.maps[:by]'; colormap=:balance)
-heatmap!(ax2, p.maps[:rho]'; colormap=:inferno)
+fig = Figure(size=(880, 300))
+for (n, (q, lab)) in enumerate(((:bmag, "|B|"), (:beta, "plasma beta")))
+    ax = Axis(fig[1, n]; xlabel="r", ylabel=lab, yscale = q === :beta ? log10 : identity)
+    lines!(ax, pr.x, pr.fields[q].mean)
+end
 fig
 ```
 
 ![](magnetic_fields_files/magnetic_fields_19_1.png)
 
-## The same analysis on an AMR run
-
-Nothing above assumed a uniform grid. The second fixture is the same tube with refinement, so cells
-differ in size by a factor of eight and every quantity has to carry its level. The calls are
-identical. There is one thing to watch, and it is better to learn it here than on your own data.
-
-**Choose the bin count from the coarsest cell, not from the finest.** This run refines to level 8,
-but its coarse region is level 5, where a cell is `boxlen/2^5 = 0.0625` wide. Ask for 128 bins
-across the box and each coarse cell lands in one bin out of four, leaving the other three with no
-cell centre in them at all: 69 of the 128 bins come back empty. This is not a loading problem. You
-asked for more bins than the coarse grid has cells, so some bins hold no cell centre.
+Each field carries more than the mean: `std`, `min`, `max`, `median`, `quantiles` and the
+effective count per bin come back in the same pass, so a spread band costs nothing extra.
 
 ```julia
-info_amr = getinfo(19, joinpath(MERA_EXAMPLES, "RAMSES/ramses_mhd_amr"), verbose=false)
-amr      = gethydro(info_amr, verbose=false, show_progress=false)
+m, s = pr.fields[:bmag].mean, pr.fields[:bmag].std
+println("bins                : ", length(m))
+println("cells in the first  : ", Int(round(pr.count[1])))
+println("spread/mean, bin 1  : ", round(s[1]/m[1], digits=3))
+```
 
-lv = getvar(amr, :level)
-for l in sort(unique(lv))
-    println("level ", Int(l), ": ", count(==(l), lv), " cells")
-end
+```
+bins                : 16
+cells in the first  : 56
+spread/mean, bin 1  : 0.438
+```
 
-# too fine for the coarse region, so bins fall between cell centres
-for n in (128, 64, 32)
-    m = profile(amr, :x, [:rho]; center=[:bc], nbins=n, weight=:volume).fields[:rho].mean
-    println("nbins=", rpad(n, 4), " empty bins: ", count(isnan, m), "/", n)
-end
+## Selecting part of the box
 
-# coarsest cell is boxlen/2^levelmin, so this many bins is the honest maximum
-nb_max = round(Int, info_amr.boxlen / (info_amr.boxlen / 2^info_amr.levelmin))
-pr_amr = profile(amr, :x, [:rho, :beta]; center=[:bc], nbins=nb_max, weight=:volume)
-println("using ", nb_max, " bins: ", count(isnan, pr_amr.fields[:rho].mean), " empty")
+A region behaves the same on MHD data as on any other. Because the selection carries a per-cell
+fraction for the cells the boundary cuts, a magnetic energy summed over a sphere is the energy
+inside the sphere, not the energy of every cell the sphere touches.
 
-# the analysis itself, on the refined grid
-fig = Figure(size=(880, 300))
-for (n, (q, lab)) in enumerate(((:rho, "density"), (:beta, "plasma beta")))
-    ax = Axis(fig[1, n]; xlabel="x", ylabel=lab, yscale = q === :beta ? log10 : identity)
-    lines!(ax, pr_amr.x, pr_amr.fields[q].mean)
-end
-fig
+```julia
+# CairoMakie also exports a `Sphere`, so qualify Mera's region type once the
+# plotting package is loaded. `Mera.Sphere` is unambiguous either way.
+region = Mera.Sphere(0.3; center=[:bc], range_unit=:standard)
+
+sph = subregion(gas, region, verbose=false)
+println("cells in the sphere   : ", length(sph.data))
+println("magnetic energy       : ", round(sum(getvar(sph, :e_magnetic)), sigdigits=6))
+println("  counting whole cells: ",
+        round(sum(getvar(subregion(gas, region, split=false, verbose=false), :e_magnetic)),
+              sigdigits=6))
+```
+
+```
+cells in the sphere   : 4632
+magnetic energy       : 0.000906972
+  counting whole cells: 0.000891642
+```
+
+## Checking the reader against a known answer
+
+The 3-D run above shows what the tools do. This last section does something different: it checks
+that the **reader** is right, using a problem whose answer is known in advance.
+
+`ramses_mhd_128` is a 1-D MHD shock tube along `x`, extruded in `y` and `z`. Nothing varies across
+the tube, so ``\nabla\cdot\mathbf B = 0`` reduces to ``\partial B_x/\partial x = 0``: `Bx` has to
+be constant everywhere, to machine precision. RAMSES stores the field on cell **faces**, and Mera
+averages opposing faces to get the cell-centred value. If that averaging were wrong, a constant
+would not come back constant, so this is a real test and it costs nothing to run.
+
+The third line checks the other half of the setup, that nothing varies across the tube. Note the
+`center=[:bc]`: `getvar(:x)` measures from the box **corner** unless you give it an origin, so
+without it the selection would be empty and the test would pass by accident.
+
+```julia
+using Statistics
+
+tube = gethydro(getinfo(27, "$MERA_EXAMPLES/RAMSES/ramses_mhd_128", verbose=false),
+                verbose=false, show_progress=false)
+
+bx = getvar(tube, :bx)
+println("Bx constant (div B = 0 in 1-D) : ", all(bx .== first(bx)))
+println("Bz identically zero            : ", all(iszero, getvar(tube, :bz)))
+
+xc = getvar(tube, :x, center=[:bc])
+println("nothing varies across the tube : ",
+        std(getvar(tube, :rho)[xc .< -0.9]) < 1e-12)
 ```
 
 ```
 [ Info: Mera: no hydro descriptor and nvarh=11 (≥11) on a 3D run — assuming a RAMSES MHD layout (B faces at 5–10, pressure at 11). If this is hydro with ≥6 passive scalars instead, the names are positional (:var6…).
-level 5: 20480 cells
-level 6: 36864 cells
-level 7: 147456 cells
-level 8: 2752512 cells
-nbins=128  empty bins: 69/128
-nbins=64   empty bins: 20/64
-nbins=32   empty bins: 0/32
-using 32 bins: 0 empty
+Bx constant (div B = 0 in 1-D) : true
+Bz identically zero            : true
+nothing varies across the tube : true
 ```
 
-![](magnetic_fields_files/magnetic_fields_21_8.png)
-
-The two runs are at different times, so the profiles are not expected to lie on top of each other.
-The point is that `profile`, `pdf` and `phase` work unchanged on a refined grid: the level is
-carried through, so a coarse cell is weighted by its real volume and not counted as one sample
-alongside a cell 512 times smaller.
+Three `true` values. The same check is part of the test suite, run against RAMSES's own published
+reference solution for this problem, so it is not only checked here.
 
 On an MHD run the [first-look dashboard](report.md) does this for you: `quicklook(output)` adds a
 face-on `|B|` panel and reports the `|B|` and plasma-β ranges automatically.
@@ -409,3 +371,5 @@ face-on `|B|` panel and reports the `|B|` and plasma-β ranges automatically.
   `:bx_left`, `:bx_right`, … if you need the divergence-free face representation.
 - On a non-MHD run, `:bx/:by/:bz`, the derived quantities (`:bmag`, `:pmag`, `:beta`, `:v_alfven`,
   `:e_magnetic`) and the magnetosonic Mach numbers all error with a clear message.
+- The face-centred components stay available as `:bx_left`, `:bx_right` and so on, if you need the
+  divergence-free face representation rather than the cell-centred average.
