@@ -1,13 +1,12 @@
 # Multi-code support
 
-!!! tip "Run it yourself"
-    All of the readers below are exercised in one executable **Jupyter notebook** —
-    [open / download `16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/16_multi_OtherCodes.ipynb).
-    It loads PLUTO / Chombo / Athena++ / FLASH / GADGET, shows MHD / gravity / chemistry / RT
-    fields, a load-time sub-region, and a save/load round-trip — and runs end-to-end as part of
-    Mera's test suite.
+!!! note "There is no public demo dataset for these codes yet"
+    The readers are exercised end to end in Mera's own test suite, but the fixtures that suite uses
+    are not published: every simulation in the public test set is RAMSES. So the way to try a reader
+    is to point it at **your own** output, which is also the contribution this branch most needs.
+    See [Testing it on your own simulation](#Testing-it-on-your-own-simulation) below.
 
-**This branch reads RAMSES, PLUTO, Chombo, Athena++, FLASH and the GADGET family through one API.**
+**This branch reads RAMSES, PLUTO, Chombo, Athena++, FLASH, GADGET and AREPO through one API.**
 It is development work, not part of any 1.x release. Install it with:
 
 ```julia
@@ -26,7 +25,13 @@ It is development work, not part of any 1.x release. Install it with:
 | **Chombo** (PLUTO-AMR) | Chombo HDF5 | AMR | gas | format fixtures | [PLUTO](pluto_reader.md#PLUTO-AMR-(Chombo)) |
 | **Athena++** | `.athdf` HDF5 | AMR | gas, MHD | format fixtures | [Athena++](athena_reader.md) |
 | **FLASH** | HDF5 PARAMESH | AMR | gas, MHD | format fixtures | [FLASH](flash_reader.md) |
-| **GADGET** family (GIZMO, AREPO, SWIFT, TNG) | HDF5 `PartType*` | particles | particles, gas-cell physics, SUBFIND groups | format fixtures | [GADGET](gadget_reader.md) |
+| **GADGET** | HDF5 `PartType*` | SPH particles | particles, SUBFIND groups | format fixtures | [GADGET](gadget_reader.md) |
+| **AREPO** | HDF5 `PartType*` | moving mesh | gas cells (with `:volume`), particles, SUBFIND groups | format fixtures | [AREPO](arepo_reader.md) |
+
+GADGET and AREPO are different codes, one smoothed-particle, one moving-mesh, but they write the
+same HDF5 snapshot layout, so one reader serves both and each has its own page for what differs.
+GIZMO writes that layout too. Data sets produced with these codes, IllustrisTNG among them, are read
+through the same path.
 
 **Only RAMSES has separate `getgravity`, `getrt` and `getclumps`**, because RAMSES writes those to
 their own files. Where another code keeps the same physics inside its snapshot, the reader maps it
@@ -78,7 +83,7 @@ the [Radiative transfer (PDR)](#Radiative-transfer-(PDR)) example below is one s
 reading of all 12 species and the 8 photon-group fields is independent of the solver.
 
 **Particles** load through [`getparticles`](@ref) into a `PartDataType`, code-blind too: PLUTO
-Lagrangian particles, and the **GADGET HDF5** family (GADGET/GIZMO/AREPO/SWIFT/EAGLE/TNG) with its
+Lagrangian particles, and the **GADGET HDF5** snapshot layout, written by GADGET, AREPO and GIZMO, with its
 gas/DM/star particle types — so `msum`, `center_of_mass`, `getvar` and projections run the same on a
 RAMSES halo or a GADGET galaxy. (Athena++/FLASH particle reading is not yet wired.)
 

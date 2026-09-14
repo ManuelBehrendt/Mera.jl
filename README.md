@@ -55,8 +55,17 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
 
 - **Julia-native**, compiled-language performance in a single, introspectable code path; no Python/C
   two-language barrier for custom, performance-sensitive analyses.
+- **One table, one row per cell**: columns keyed on the cell's grid address, so the refinement
+  level travels with every cell and nothing is resampled onto a uniform grid first. Masks select
+  rows as views instead of copying columns, filtering works in value space on anything `getvar`
+  computes, and a region or filter returns the same kind of object, so calls chain.
 - **RAMSES-native**, direct binary reading of AMR outputs with automatic unit conversion and full
   multi-level support; load only what you need with spatial and refinement-level filtering.
+- **Cells are split, not counted**: a sphere is round, but cells are boxes, so some lie half in and
+  half out. `subregion(gas, Sphere(10.))` keeps the part really inside, so `msum` and `getvar` count
+  it by its fraction and the parts add up to the whole. Taking whole cells by their centre can be
+  14 % off on a thin shell. See
+  [Subregions](https://manuelbehrendt.github.io/Mera.jl/stable/api/subregions/).
 - **Conservation-correct**, projections and covering grids conserve mass to machine precision with
   proper per-level cell volumes; flux budgets through surfaces split inflow/outflow explicitly.
 - **Multi-threaded by default**, `gethydro()` and `projection()` use all available cores
@@ -294,6 +303,21 @@ inspired by astrophysics.
   &nbsp;·&nbsp;
   <a href="https://youtube.com/playlist?list=OLAK5uy_mlavbfbMJji-L-Z49pyTUVQtP7aWr_MqM">YouTube</a>
 </p>
+
+## Staying up to date
+
+Mera changes between releases, so if your analysis has to stay reproducible it is worth knowing
+when a new version ships and what moved in it.
+
+- **Be told about releases only.** On the GitHub page press **Watch**, choose **Custom**, and tick
+  **Releases**. You then hear about versions and not about every issue and commit.
+- **Or subscribe without a GitHub account.** The release feed is
+  <https://github.com/ManuelBehrendt/Mera.jl/releases.atom>, which any feed reader accepts.
+- **Check before you upgrade.** `pkg> status --outdated` shows what a new version would change, and
+  the release notes say what changed in it. Read them before `pkg> up`, not after.
+- **Pin what a paper depends on.** A `Project.toml` and `Manifest.toml` in your analysis folder keep
+  today's versions available whatever ships later. See
+  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
 
 ## Get involved
 
