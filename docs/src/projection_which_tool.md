@@ -91,6 +91,8 @@ serves both.
   kinematics, slices, orbit movies, and what works on which data type
 * [Hydro](06_hydro_Projection.md) and [Particles](06_particles_Projection.md), the axis-aligned
   tutorials
+* [Pipelines](pipelines.md), projecting several quantities in one line and reusing one
+  selection across loading and projection
 * [Auto-Frame](galaxyframe.md), finding an object's own orientation
 * [Movies](movie.md), assembling and writing them
 * `projection()` with no arguments prints the whole keyword surface, which is the fastest way to

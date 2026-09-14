@@ -285,3 +285,7 @@ per-sink, and they change.
 
 - [Sinks: Get Subregions](03_sinks_Get_Subregions.md), selecting by shape on a loaded catalogue
 - [Sinks: First Inspection](01_sinks_First_Inspection.md), what a catalogue is and what its units mean
+
+---
+
+**The same steps on the other data types:** [Hydro](02_hydro_Load_Selections.md) · [Gravity](02_gravity_Load_Selections.md) · [Particles](02_particles_Load_Selections.md) · [Clumps](02_clumps_Load_Selections.md)

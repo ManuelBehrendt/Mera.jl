@@ -88,6 +88,344 @@ else
         (n*sum(x .* y) - sum(x)*sum(y)) / (n*sum(x .^ 2) - sum(x)^2)
     end
 
+    # ------------------------------------------------------------ periodic boundary handling
+    # sedov3d_amr is the fixture for this: RAMSES's own namelist puts the explosion at
+    # the ORIGIN of a periodic box, so the shell straddles every face. That makes it the
+    # one published simulation where the periodic code paths can be checked against a
+    # known answer instead of against themselves.
+    @testset "sedov3d_amr: periodic paths agree with the minimum image" begin
+        f = PUBLIC_FIXTURES[:sedov3d_amr]; P = f.path
+        info = getinfo(f.outputs, P, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+
+        @test info.boundaries === :periodic          # inferred from the namelist
+        @test Mera.periodic_axes(info.namelist_content) == (x=true, y=true, z=true)
+
+        # --- centre of mass of the shell, which sits on the origin ------------------
+        shell = getvar(gas, :rho) .> 1.15
+        @test count(shell) > 100                      # the shell is actually resolved
+        com_naive = center_of_mass(gas, mask=shell)
+        com_per   = center_of_mass(gas, mask=shell, periodic=true)
+        half = info.boxlen / 2
+        # the naive answer collapses to the middle of the box, the furthest point from
+        # the truth; the circular mean has to land near the origin instead
+        @test all(abs.(com_naive .- half) .< 0.05 * info.boxlen)
+        for c in com_per
+            @test min(abs(c), abs(c - info.boxlen)) < 0.10 * info.boxlen
+        end
+
+        # --- spherical subregion reaching around the faces --------------------------
+        R_box  = 0.1                       # :standard radius is in box units
+        R_code = R_box * info.boxlen
+        rp = getvar(gas, :r_sphere_periodic, center=[0., 0., 0.])
+        rn = getvar(gas, :r_sphere,          center=[0., 0., 0.])
+        sp = Mera.subregionsphere(gas, radius=R_box, center=[0., 0., 0.],
+                                  cell=false, periodic=true,  verbose=false)
+        sn = Mera.subregionsphere(gas, radius=R_box, center=[0., 0., 0.],
+                                  cell=false, periodic=false, verbose=false)
+        # point-based selection must reproduce the corresponding radius mask exactly
+        @test length(sp.data) == count(rp .< R_code)
+        @test length(sn.data) == count(rn .< R_code)
+        # and wrapping must actually find more: the naive sphere keeps one octant
+        @test length(sp.data) > length(sn.data)
+    end
+
+    # The three boundary cases all have a published fixture, so the inference is
+    # checked against real namelists rather than hand-written dictionaries.
+    @testset "boundary inference on the published fixtures" begin
+        cases = ((:sedov3d_amr, :periodic,    (x=true,  y=true,  z=true)),   # no &BOUNDARY_PARAMS
+                 (:mhdtube3d,   :mixed,       (x=false, y=true,  z=true)),   # shock tube: x closed
+                 (:stromgren3d, :nonperiodic, (x=false, y=false, z=false)))  # all six faces closed
+        for (key, expect, axes) in cases
+            haskey(PUBLIC_FIXTURES, key) || continue
+            f = PUBLIC_FIXTURES[key]
+            isdir(f.path) || continue
+            info = getinfo(1, f.path, verbose=false)
+            @test info.boundaries === expect
+            @test Mera.periodic_axes(info.namelist_content) == axes
+        end
+    end
+
+    @testset "sedov3d_amr: shells and mixed axes wrap correctly" begin
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = info.boxlen
+        mi(d) = d .- L .* round.(d ./ L)
+
+        # --- spherical shell straddling the faces -----------------------------------
+        lo, hi = 0.05, 0.12                        # box units
+        loc, hic = lo * L, hi * L
+        rp = getvar(gas, :r_sphere_periodic, center=[0., 0., 0.])
+        rn = getvar(gas, :r_sphere,          center=[0., 0., 0.])
+        sp = Mera.shellregionsphere(gas, radius=[lo, hi], center=[0., 0., 0.],
+                                    cell=false, periodic=true,  verbose=false)
+        sn = Mera.shellregionsphere(gas, radius=[lo, hi], center=[0., 0., 0.],
+                                    cell=false, periodic=false, verbose=false)
+        @test length(sp.data) == count(loc .<= rp .<= hic)
+        @test length(sn.data) == count(loc .<= rn .<= hic)
+        @test length(sp.data) > length(sn.data)
+
+        # --- a MIXED request: wrap x and y, leave z alone ---------------------------
+        # mhdtube3d is a real mixed run, but its structure does not touch a face; this
+        # asserts the per-axis plumbing itself against a mask built by hand.
+        x = getvar(gas, :x); y = getvar(gas, :y); z = getvar(gas, :z)
+        R = 0.1; Rc = R * L
+        r_mixed = sqrt.(mi(x) .^ 2 .+ mi(y) .^ 2 .+ z .^ 2)
+        sm = Mera.subregionsphere(gas, radius=R, center=[0., 0., 0.], cell=false,
+                                  periodic=(x=true, y=true, z=false), verbose=false)
+        @test length(sm.data) == count(r_mixed .< Rc)
+        # and it must sit strictly between the all-off and all-on answers
+        s_off = Mera.subregionsphere(gas, radius=R, center=[0., 0., 0.], cell=false,
+                                     periodic=false, verbose=false)
+        s_on  = Mera.subregionsphere(gas, radius=R, center=[0., 0., 0.], cell=false,
+                                     periodic=true,  verbose=false)
+        @test length(s_off.data) < length(sm.data) < length(s_on.data)
+    end
+
+    @testset "cuboids wrap on the point data types too" begin
+        L(i) = i.boxlen
+        mi(v, l) = v .- l .* round.(v ./ l)
+        h = 0.05
+
+        # particles: 124,990 tracers surrounding the origin
+        f = PUBLIC_FIXTURES[:sedov3d_grav_part]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        part = getparticles(info, verbose=false, show_progress=false)
+        l = L(info); hc = h * l
+        x = getvar(part, :x); y = getvar(part, :y); z = getvar(part, :z)
+        cp = Mera.subregioncuboid(part, xrange=[-h,h], yrange=[-h,h], zrange=[-h,h],
+                                  center=[0.,0.,0.], periodic=true,  verbose=false)
+        cn = Mera.subregioncuboid(part, xrange=[-h,h], yrange=[-h,h], zrange=[-h,h],
+                                  center=[0.,0.,0.], periodic=false, verbose=false)
+        ip = Mera.subregioncuboid(part, xrange=[-h,h], yrange=[-h,h], zrange=[-h,h],
+                                  center=[0.,0.,0.], periodic=true, inverse=true, verbose=false)
+        @test length(cp.data) == count((abs.(mi(x,l)) .<= hc) .& (abs.(mi(y,l)) .<= hc) .& (abs.(mi(z,l)) .<= hc))
+        @test length(cn.data) == count((0 .<= x .<= hc) .& (0 .<= y .<= hc) .& (0 .<= z .<= hc))
+        @test length(cp.data) > length(cn.data)
+        @test length(cp.data) + length(ip.data) == length(part.data)
+
+        # clumps: four blobs, addressed through peak_x/y/z rather than x/y/z
+        if haskey(PUBLIC_FIXTURES, :clumps3d) && isdir(PUBLIC_FIXTURES[:clumps3d].path)
+            fc = PUBLIC_FIXTURES[:clumps3d]
+            ic = getinfo(2, fc.path, verbose=false)
+            cl = getclumps(ic, verbose=false)
+            lc = L(ic); hh = 0.3; hhc = hh * lc
+            px = getvar(cl, :peak_x); py = getvar(cl, :peak_y); pz = getvar(cl, :peak_z)
+            kp = Mera.subregioncuboid(cl, xrange=[-hh,hh], yrange=[-hh,hh], zrange=[-hh,hh],
+                                      center=[0.,0.,0.], periodic=true,  verbose=false)
+            kn = Mera.subregioncuboid(cl, xrange=[-hh,hh], yrange=[-hh,hh], zrange=[-hh,hh],
+                                      center=[0.,0.,0.], periodic=false, verbose=false)
+            @test length(kp.data) == count((abs.(mi(px,lc)) .<= hhc) .& (abs.(mi(py,lc)) .<= hhc) .& (abs.(mi(pz,lc)) .<= hhc))
+            @test length(kn.data) == count((0 .<= px .<= hhc) .& (0 .<= py .<= hhc) .& (0 .<= pz .<= hhc))
+            @test length(kp.data) > length(kn.data)
+        end
+
+        # sinks: one sink at the box centre, so put the request a whole box away.
+        # Only wrapping can reach it, which is the sharpest form of this test.
+        if haskey(PUBLIC_FIXTURES, :sinks3d) && isdir(PUBLIC_FIXTURES[:sinks3d].path)
+            fs = PUBLIC_FIXTURES[:sinks3d]
+            is = getinfo(2, fs.path, verbose=false)
+            sk = getsinks(is, verbose=false)
+            sp = Mera.subregioncuboid(sk, xrange=[-0.02,0.02], yrange=[-0.02,0.02], zrange=[-0.02,0.02],
+                                      center=[-0.5,-0.5,-0.5], periodic=true,  verbose=false)
+            sn = Mera.subregioncuboid(sk, xrange=[-0.02,0.02], yrange=[-0.02,0.02], zrange=[-0.02,0.02],
+                                      center=[-0.5,-0.5,-0.5], periodic=false, verbose=false)
+            @test length(sp.data) == 1
+            @test length(sn.data) == 0
+        end
+    end
+
+    @testset "the PUBLIC region API forwards periodic" begin
+        # The shape functions are internal. If `subregion`/`shellregion` stop forwarding
+        # the keyword, every periodic selection silently reverts to the clamped answer
+        # and nothing else in the suite would notice: the same class of bug the `cell`
+        # keyword hit before.
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = info.boxlen; R = 0.1; Rc = R * L
+        rp = getvar(gas, :r_sphere_periodic, center=[0., 0., 0.])
+        rn = getvar(gas, :r_sphere,          center=[0., 0., 0.])
+
+        sp = subregion(gas, :sphere, radius=R, center=[0., 0., 0.], cell=false, periodic=true,  verbose=false)
+        sn = subregion(gas, :sphere, radius=R, center=[0., 0., 0.], cell=false, periodic=false, verbose=false)
+        @test length(sp.data) == count(rp .< Rc)
+        @test length(sn.data) == count(rn .< Rc)
+        @test length(sp.data) > length(sn.data)
+
+        hp = shellregion(gas, :sphere, radius=[0.05, R], center=[0., 0., 0.],
+                         cell=false, periodic=true, verbose=false)
+        @test length(hp.data) == count(0.05 * L .<= rp .<= Rc)
+    end
+
+    @testset "sedov3d_amr: covering_grid continues around a face" begin
+        # The strongest check available: build the whole box at one level, then a window
+        # that reaches past the origin, and require every cell of the window to equal the
+        # corresponding cell of the full box under wrapping. Exact, not approximate.
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = 6; N = 2^L; h = 0.08
+
+        full = first(values(covering_grid(gas, [:rho], [:standard], lmax=L,
+                     xrange=[0., 1.], yrange=[0., 1.], zrange=[0., 1.], verbose=false).grid))
+        win  = first(values(covering_grid(gas, [:rho], [:standard], lmax=L, center=[0., 0., 0.],
+                     xrange=[-h, h], yrange=[-h, h], zrange=[-h, h], periodic=true, verbose=false).grid))
+        @test size(full) == (N, N, N)
+
+        g0 = round(Int, -h * N)
+        n  = size(win, 1)
+        mismatches = 0
+        for k in 1:n, j in 1:n, i in 1:n
+            a = win[i, j, k]
+            b = full[mod1(i + g0, N), mod1(j + g0, N), mod1(k + g0, N)]
+            isapprox(a, b; rtol=1e-10) || (mismatches += 1)
+        end
+        @test mismatches == 0
+
+        # without wrapping the same request is clamped at the face, so the window is
+        # narrower and covers only the part inside the box
+        clamped = first(values(covering_grid(gas, [:rho], [:standard], lmax=L, center=[0., 0., 0.],
+                        xrange=[-h, h], yrange=[-h, h], zrange=[-h, h], periodic=false, verbose=false).grid))
+        @test size(clamped, 1) < size(win, 1)
+    end
+
+    @testset "sedov3d_amr: radial profiles bin periodically" begin
+        # profile bins on any getvar quantity and forwards `center`, so a periodic
+        # radial profile needs no special support: bin on :r_sphere_periodic. This
+        # test exists to keep that true.
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+
+        pn = profile(gas, :r_sphere,          :rho, center=[0., 0., 0.], nbins=25, xrange=(0., 0.08))
+        pp = profile(gas, :r_sphere_periodic, :rho, center=[0., 0., 0.], nbins=25, xrange=(0., 0.08))
+
+        # the blast sits on the origin, so wrapping must reach cells the naive radius misses
+        @test sum(pp.count) > sum(pn.count)
+
+        okn = .!isnan.(pn.mean) .& (pn.count .> 0)
+        okp = .!isnan.(pp.mean) .& (pp.count .> 0)
+        @test any(okn) && any(okp)
+        # and it must recover a sharper shell, not merely more cells
+        @test maximum(pp.mean[okp]) > maximum(pn.mean[okn])
+    end
+
+    @testset "sedov3d_amr: periodic_recenter rolls a projection" begin
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+
+        for d in (:x, :y, :z)
+            p = projection(gas, :sd, :Msol_pc2, direction=d, verbose=false, show_progress=false)
+            q = periodic_recenter(p, center=[0., 0., 0.], direction=d, verbose=false)
+            m0, m1 = p.maps[:sd], q.maps[:sd]
+            # a whole-pixel roll: same values, reordered, so any total is untouched
+            @test isapprox(sum(m0), sum(m1); rtol=1e-12)
+            @test sort(vec(m0)) == sort(vec(m1))
+            # the blast sits on the origin, so its evacuated centre lands mid-map
+            n1, n2 = size(m1)
+            @test Tuple(argmin(m1)) == (n1 ÷ 2 + 1, n2 ÷ 2 + 1)
+            # coordinates are now measured from the requested centre
+            @test q.extent[1] ≈ -q.extent[2]
+            @test q.extent[3] ≈ -q.extent[4]
+        end
+
+        # an off-axis map has no pixel shift that is a periodic translation, so this
+        # must refuse rather than return something plausible
+        o = projection(gas, :sd, :Msol_pc2, los=[1., 1., 1.], verbose=false, show_progress=false)
+        @test_throws ErrorException periodic_recenter(o, center=[0., 0., 0.], verbose=false)
+        # and a non-axis direction is rejected
+        p = projection(gas, :sd, :Msol_pc2, verbose=false, show_progress=false)
+        @test_throws ErrorException periodic_recenter(p, direction=:q, verbose=false)
+    end
+
+    @testset "sedov3d_amr: cuboids wrap" begin
+        # A cuboid is the one shape where wrapping is not a distance test: in box
+        # coordinates a wrapped cuboid is two intervals per axis. Expressed as a
+        # distance from the range centre it stays one comparison, which is what the
+        # implementation does, so this checks it against an explicit two-sided mask.
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = info.boxlen; h = 0.05; hc = h * L
+        x = getvar(gas, :x); y = getvar(gas, :y); z = getvar(gas, :z)
+        mi(v) = v .- L .* round.(v ./ L)
+
+        cp = Mera.subregioncuboid(gas, xrange=[-h, h], yrange=[-h, h], zrange=[-h, h],
+                                  center=[0., 0., 0.], cell=false, periodic=true,  verbose=false)
+        cn = Mera.subregioncuboid(gas, xrange=[-h, h], yrange=[-h, h], zrange=[-h, h],
+                                  center=[0., 0., 0.], cell=false, periodic=false, verbose=false)
+        mp = (abs.(mi(x)) .< hc) .& (abs.(mi(y)) .< hc) .& (abs.(mi(z)) .< hc)
+        mn = (0 .<= x .< hc) .& (0 .<= y .< hc) .& (0 .<= z .< hc)
+        @test length(cp.data) == count(mp)
+        @test length(cn.data) == count(mn)
+        @test length(cp.data) > length(cn.data)
+
+        # inverse must stay the exact complement once wrapping is on
+        ip = Mera.subregioncuboid(gas, xrange=[-h, h], yrange=[-h, h], zrange=[-h, h],
+                                  center=[0., 0., 0.], cell=false, periodic=true,
+                                  inverse=true, verbose=false)
+        @test length(cp.data) + length(ip.data) == length(gas.data)
+    end
+
+    @testset "sedov3d_grav_part: point data wraps too" begin
+        f = PUBLIC_FIXTURES[:sedov3d_grav_part]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        part = getparticles(info, verbose=false, show_progress=false)
+        L = info.boxlen
+        mi(v) = v .- L .* round.(v ./ L)
+        x = getvar(part, :x); y = getvar(part, :y); z = getvar(part, :z)
+        rp = sqrt.(mi(x) .^ 2 .+ mi(y) .^ 2 .+ mi(z) .^ 2)
+        rn = sqrt.(x .^ 2 .+ y .^ 2 .+ z .^ 2)
+        R = 0.1; Rc = R * L
+        lo = 0.05; loc = lo * L
+
+        sp = Mera.subregionsphere(part, radius=R, center=[0., 0., 0.], periodic=true,  verbose=false)
+        sn = Mera.subregionsphere(part, radius=R, center=[0., 0., 0.], periodic=false, verbose=false)
+        @test length(sp.data) == count(rp .< Rc)
+        @test length(sn.data) == count(rn .< Rc)
+        @test length(sp.data) > length(sn.data)
+
+        hp = Mera.shellregionsphere(part, radius=[lo, R], center=[0., 0., 0.], periodic=true,  verbose=false)
+        hn = Mera.shellregionsphere(part, radius=[lo, R], center=[0., 0., 0.], periodic=false, verbose=false)
+        @test length(hp.data) == count(loc .<= rp .<= Rc)
+        @test length(hn.data) == count(loc .<= rn .<= Rc)
+
+        # a cylinder wraps in its two radial axes and NOT along its own height, the
+        # same way for subregion and shellregion; the masks below encode that
+        H = 0.2; Hc = H * L
+        rrp = sqrt.(mi(x) .^ 2 .+ mi(y) .^ 2)
+        rrn = sqrt.(x .^ 2 .+ y .^ 2)
+        cp = Mera.subregioncylinder(part, radius=R, height=H, center=[0., 0., 0.], periodic=true,  verbose=false)
+        cn = Mera.subregioncylinder(part, radius=R, height=H, center=[0., 0., 0.], periodic=false, verbose=false)
+        @test length(cp.data) == count((rrp .<= Rc) .& (abs.(z) .<= Hc))
+        @test length(cn.data) == count((rrn .<= Rc) .& (abs.(z) .<= Hc))
+        gp = Mera.shellregioncylinder(part, radius=[lo, R], height=H, center=[0., 0., 0.], periodic=true, verbose=false)
+        @test length(gp.data) == count((loc .<= rrp .<= Rc) .& (abs.(z) .<= Hc))
+    end
+
+    @testset "sedov3d_amr: cylinders wrap radially" begin
+        f = PUBLIC_FIXTURES[:sedov3d_amr]
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        L = info.boxlen; R = 0.1; Rc = R * L; H = 0.5
+
+        rp = getvar(gas, :r_cylinder_periodic, center=[0., 0., 0.])
+        rn = getvar(gas, :r_cylinder,          center=[0., 0., 0.])
+        zc = getvar(gas, :z)
+        # full height, so only the radial cut can differ; the height cut along the
+        # cylinder axis is NOT wrapped, which is why the test does not vary it
+        cp = Mera.subregioncylinder(gas, radius=R, height=H, center=[0., 0., 0.],
+                                    cell=false, periodic=true,  verbose=false)
+        cn = Mera.subregioncylinder(gas, radius=R, height=H, center=[0., 0., 0.],
+                                    cell=false, periodic=false, verbose=false)
+        @test length(cp.data) == count((rp .< Rc) .& (zc .<= H * L))
+        @test length(cn.data) == count((rn .< Rc) .& (zc .<= H * L))
+        @test length(cp.data) > length(cn.data)
+    end
+
     # ------------------------------------------------------------------ Sedov-Taylor blast
     @testset "sedov3d_amr: blast radius follows R ~ t^(2/5)" begin
         f = PUBLIC_FIXTURES[:sedov3d_amr]; P = f.path

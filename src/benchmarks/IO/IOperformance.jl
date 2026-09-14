@@ -13,19 +13,114 @@
 Prints Julia version, OS, CPU threads, timestamp, hostname, working directory,
 and project dependencies for reproducibility.
 """
-function log_env()
+# Best-effort shell probe. Anything here is optional colour for the log, so a missing
+# command or an unusual platform must never take the benchmark down with it.
+function _probe(cmd)
+    try
+        return strip(read(cmd, String))
+    catch
+        return ""
+    end
+end
+
+"""
+    filesystem_info(path) -> NamedTuple
+
+What kind of storage `path` sits on: `type` (lustre, gpfs, nfs, ext4, xfs, apfs, ...),
+`mount` point, and `stripe` for Lustre. Empty strings where it cannot be determined.
+
+A read benchmark without this is not reproducible. A number from a Lustre scratch
+filesystem and the same number from a local NVMe describe different machines.
+"""
+function filesystem_info(path::AbstractString)
+    p = abspath(path)
+    fstype, mount, stripe = "", "", ""
+    if Sys.islinux()
+        # stat -f -c %T names the filesystem directly: lustre, gpfs, nfs, ext4, xfs
+        fstype = _probe(`stat -f -c %T $p`)
+        out    = _probe(`df --output=target $p`)
+        mount  = isempty(out) ? "" : strip(last(split(out, '\n')))
+        if occursin("lustre", lowercase(fstype))
+            stripe = replace(_probe(`lfs getstripe -d $p`), '\n' => " ")
+        end
+    elseif Sys.isapple()
+        # macOS stat -f %T gives the file type, not the filesystem, so read the
+        # mount table instead: "/dev/disk3s5 on / (apfs, local, journaled)"
+        dev = _probe(pipeline(`df -P $p`, `tail -1`))
+        if !isempty(dev)
+            fields = split(dev)
+            length(fields) >= 6 && (mount = fields[end])
+            line = _probe(pipeline(`mount`, `grep -F " on $(mount) "`))
+            m = match(r"\(([^,)]+)", line)
+            m !== nothing && (fstype = m.captures[1])
+        end
+    end
+    return (type=fstype, mount=strip(mount), stripe=stripe)
+end
+
+"""
+    allocated_cpus() -> Int
+
+How many CPUs this process is actually entitled to, rather than how many the machine
+has. Reads the batch scheduler's own variables first (`SLURM_CPUS_PER_TASK`,
+`SLURM_JOB_CPUS_PER_NODE`, `PBS_NP`, `NSLOTS`, `OMP_NUM_THREADS`), then falls back to
+`Sys.CPU_THREADS`.
+
+On a shared node `Sys.CPU_THREADS` reports the whole machine, so using it to size a
+benchmark takes cores that belong to other jobs and produces numbers shaped by the
+contention you caused.
+"""
+function allocated_cpus()
+    for var in ("SLURM_CPUS_PER_TASK", "SLURM_JOB_CPUS_PER_NODE", "PBS_NP",
+                "NSLOTS", "OMP_NUM_THREADS")
+        raw = get(ENV, var, "")
+        isempty(raw) && continue
+        # SLURM_JOB_CPUS_PER_NODE can read "16" or "16(x2)"; take the leading integer
+        m = match(r"^(\d+)", raw)
+        m === nothing && continue
+        n = parse(Int, m.captures[1])
+        n > 0 && return n
+    end
+    return Sys.CPU_THREADS
+end
+
+function log_env(path::AbstractString="")
     println("═"^80, "\nBENCHMARK ENVIRONMENT\n", "═"^80)
-    println("Julia version   : ", VERSION)
-    println("OS kernel       : ", Sys.KERNEL)
-    println("CPU threads     : ", Sys.CPU_THREADS)
     println("Timestamp       : ", Dates.format(now(), "yyyy-mm-dd HH:MM:SS"))
     println("Hostname        : ", gethostname())
-    println("Working dir     : ", pwd())
-    println("Dependencies    :")
-    for (pkg, _) in Pkg.project().dependencies
-        println("  ", pkg)
+    println("Julia version   : ", VERSION)
+    println("Mera version    : ", _mera_version())
+    println("OS kernel       : ", Sys.KERNEL, " ", Sys.MACHINE)
+    cpu = Sys.cpu_info()
+    println("CPU             : ", isempty(cpu) ? "unknown" : first(cpu).model)
+    println("CPU threads     : ", Sys.CPU_THREADS)
+    println("Total RAM       : ", round(Sys.total_memory() / 1024^3, digits=1), " GB")
+    alloc = allocated_cpus()
+    println("Allocated CPUs  : ", alloc,
+            alloc < Sys.CPU_THREADS ? "  (machine has $(Sys.CPU_THREADS), this job may use $alloc)" : "")
+    println("Julia threads   : ", Threads.nthreads(),
+            " compute, ", Threads.ngcthreads(), " GC")
+    if Threads.nthreads() > alloc
+        println("WARNING         : Julia has more threads than this job is allocated.")
+        println("                  Restart with  julia -t ", alloc,
+                "  or the benchmark will oversubscribe.")
+    end
+    if !isempty(path)
+        fs = filesystem_info(path)
+        println("Data path       : ", path)
+        println("Filesystem      : ", isempty(fs.type) ? "unknown" : fs.type)
+        !isempty(fs.mount)  && println("Mount           : ", fs.mount)
+        !isempty(fs.stripe) && println("Lustre stripe   : ", replace(fs.stripe, "\n" => " "))
     end
     println("═"^80)
+end
+
+function _mera_version()
+    try
+        return string(pkgversion(@__MODULE__))
+    catch
+        return "unknown"
+    end
 end
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -117,7 +212,10 @@ function iops_test(files; runs=3, levels=[1,2,4,8,16,24,32,48,64],
                     release(sem)
                 end
             end
-            append!(rates, fill(length(batch)/t, length(batch)))
+            # One batch is ONE measurement. Repeating it once per file would report
+            # length(batch) identical samples, which narrows the confidence interval by
+            # sqrt(n) without any extra evidence behind it.
+            push!(rates, length(batch)/t)
             next!(p; step=length(batch))
         end
 
@@ -147,6 +245,14 @@ function throughput_test(files; runs=1, N=5,
     start = time()
     println("\n\n", "═"^80, "\nTHROUGHPUT TEST\n", "═"^80)
     sel = files[1:min(N, end)]
+
+    # Warm every file once before the sweep. Without this the levels are compared from
+    # different cache states, not different thread counts: the first level pays the cold
+    # read and the rest are served from the page cache, which produces a spurious peak at
+    # low thread counts and per-stream rates above what the link can carry.
+    for f in sel
+        read(f)
+    end
 
     samples = Dict{Int, Vector{Float64}}()
     stats   = Dict{Int, Tuple{Float64,Float64,Float64}}()
@@ -242,27 +348,53 @@ struct IOBenchmark
 end
 
 """
-    run_benchmark(folder; runs=1) → IOBenchmark
+    run_benchmark(folder; runs=1, nfiles=64) → IOBenchmark
 
 Executes IOPS, throughput, and open/close tests. Returns all samples, stats,
 timings, and thread configurations as an [`IOBenchmark`](@ref).
+
+Point it at one snapshot directory. IOPS and open/close only open and close files,
+so they use the whole directory cheaply. The throughput test reads file contents
+once per thread level per run, so it samples `nfiles` files rather than the whole
+snapshot: on a large output, reading everything at every thread level would move
+hundreds of gigabytes. Raise `nfiles` for a larger sample if the storage can take it.
 """
-function run_benchmark(folder; runs=1)
+function run_benchmark(folder; runs=1, nfiles::Int=64,
+                       max_threads::Int=min(Threads.nthreads(), allocated_cpus()),
+                       logenv::Bool=true)
     total_start = time()
-    log_env()
+    logenv && log_env(string(folder))
 
     files = joinpath.(folder, filter(f->isfile(joinpath(folder,f)), readdir(folder)))
     isempty(files) && error("No files in $folder")
 
-    max_t = min(Threads.nthreads(), 64)
+    # Never sweep past what this job may use: on a shared node the extra threads are
+    # other people's cores, and the numbers they produce measure the contention.
+    max_t = min(Threads.nthreads(), max_threads, 64)
     levels = [x for x in (1,2,4,8,16,24,32,48,64) if x ≤ max_t]
+    isempty(levels) && (levels = [1])
+
+    # The throughput test reads file CONTENTS, once per thread level per run, and
+    # warms the cache once beforehand. Against a whole snapshot that is
+    # size x levels x runs bytes: on a 54 GB output with nine levels and two runs it
+    # would read about a terabyte. Sample a bounded number of files instead. The
+    # IOPS and open/close tests only open and close, so they stay cheap.
+    n_thr = min(nfiles, length(files))
+    sampled_bytes = Float64(sum(filesize, files[1:n_thr]))
 
     println("\n🚀 Starting benchmark on $(length(levels)) thread configs: $levels")
     println("   Files: $(length(files)), Runs per test: $runs")
+    println("   Throughput sample: $n_thr of $(length(files)) files " *
+            "($(_fmt_bytes(sampled_bytes))), read $(length(levels)) x $runs times")
+    if n_thr < length(files)
+        println("   Raise with nfiles= if you want a larger sample.")
+    end
 
-    iops       = iops_test(files; runs=runs, levels=levels)
-    throughput = throughput_test(files; runs=runs, N=length(files), levels=levels)
-    openclose  = openclose_test(files; runs=runs, N=length(files), levels=levels)
+    # iops_test unions max_threads into its own level list, so it must be told the
+    # cap too: passing only `levels` let it add Threads.nthreads() straight back in.
+    iops       = iops_test(files; runs=runs, levels=levels, max_threads=max_t)
+    throughput = throughput_test(files; runs=runs, N=n_thr, levels=levels)
+    openclose  = openclose_test(files; runs=runs, N=min(50, length(files)), levels=levels)
 
     total_elapsed = time() - total_start
 

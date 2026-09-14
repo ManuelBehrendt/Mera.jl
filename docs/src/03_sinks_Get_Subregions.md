@@ -174,11 +174,10 @@ the x < centre half of the box -> [5]
 
 ## What does not apply to points
 
-Two keywords exist on the region functions for **cell** data and are meaningless here:
+One keyword exists on the region functions for **cell** data and is meaningless here:
 
 - `cell=` decides whether a cell straddling the border is taken whole or by its centre. A point does
   not straddle anything, so it is accepted and ignored.
-- the smooth-boundary keywords are implemented only for the hydro cylinder.
 
 And one limitation that does apply, and that no keyword fixes:
 
@@ -230,3 +229,7 @@ sink is a point.
 - [Sinks: Load Selections](02_sinks_Load_Selections.md), restricting at read time, and accretion
 - [Sinks: First Inspection](01_sinks_First_Inspection.md), the catalogue and its units
 - [Clumps: Get Subregions](03_clumps_Get_Subregions.md), the same shapes on the other point-like type
+
+---
+
+**The same steps on the other data types:** [Hydro](03_hydro_Get_Subregions.md) · [Gravity](03_gravity_Get_Subregions.md) · [Particles](03_particles_Get_Subregions.md) · [Clumps](03_clumps_Get_Subregions.md)

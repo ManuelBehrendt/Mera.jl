@@ -456,3 +456,7 @@ stellar objects spawned by a sink. Mera does not read that file yet.
 - [Clumps: First Inspection](01_clumps_First_Inspection.md), the other catalogue-style reader
 - [Basic Calculations](04_multi_Basic_Calculations.md), combining data types
 - [Mera Files](07_multi_Mera_Files.md), storing and reloading whole snapshots
+
+---
+
+**The same steps on the other data types:** [Hydro](01_hydro_First_Inspection.md) · [Gravity](01_gravity_First_Inspection.md) · [Particles](01_particles_First_Inspection.md) · [Clumps](01_clumps_First_Inspection.md) · [RT](01_rt_First_Inspection.md)

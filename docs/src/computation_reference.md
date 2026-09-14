@@ -111,7 +111,7 @@ table above, in particular ``\mu`` is **not** the constant 1.32 used for RAMSES:
 
 ``X_H = 0.76``. The electron abundance ``n_e`` comes from the `:ne` column when the snapshot
 carries one; without it Mera falls back to neutral primordial gas, ``\mu = 4/(1+3X_H) \approx
-1.22``. **If you are writing a methods section for an AREPO or IllustrisTNG analysis, cite
+1.22``. **If you are writing a methods section for an AREPO analysis, cite
 this ``\mu``, not the RAMSES constant above.**
 
 The magnetic quantities in [Magnetic quantities](#Magnetic-quantities) apply unchanged to
@@ -274,6 +274,72 @@ the cell mass:
 *Data: **gravity** (`getgravity`), which stores the potential ``\phi`` (`:epot`) and the
 acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
 
+!!! warning "`:epot` is the run's **total** potential, not the gas's own"
+    RAMSES solves Poisson once, for everything that gravitates. The ``\phi`` in `:epot` therefore
+    already contains the gas, the particles (stars and dark matter), the sinks, and any external
+    analytic potential the run was configured with. Mera stores it exactly as written.
+
+    What is in it is a property of the run, not of Mera. `gravity_type` in `&POISSON_PARAMS` says
+    which: `0` self-gravity only, `3` external potential only, `-3` external potential **and**
+    self-gravity. Both test galaxies used here are `-3`, so their ``\phi`` includes an external
+    halo that no amount of gas or particle data would reproduce:
+
+    ```julia
+    info.namelist_content["&POISSON_PARAMS"]["gravity_type"]
+    ```
+
+    Two consequences for the quantities below:
+
+    - ``m\,\phi`` is the energy of **that cell's gas** in the **total** field. It is not the
+      energy of the gas in its own field, and the difference is not small: particles carry 5.8 %
+      of the mass in the `mw_L10` box and dominate in a cosmological zoom.
+    - Summing ``m\,\phi`` over cells is **not** the system's gravitational self-energy. The table
+      below says why, along with the other questions a snapshot cannot answer.
+
+    "Total" in `:total_binding_energy` distinguishes it from `:specific_gravitational_energy`,
+    which is per unit mass. It does not mean the total for the system.
+
+### What gravity can and cannot answer today
+
+Mera pairs **gravity with hydro**. Everything below is the gas measured against the field the run
+produced, and that is the whole of what a snapshot supports without re-solving Poisson.
+
+**Available now**
+
+| | |
+|---|---|
+| the field itself | `:epot`, `:ax/:ay/:az` and their cylindrical and spherical components |
+| force on a gas cell | ``\mathbf F = m_\mathrm{gas}\,\mathbf a``, complete: `a` already contains every source |
+| energy of gas in that field | ``E = m_\mathrm{gas}\,\phi``, likewise complete |
+| local stability | `:jeanslength`, `:jeansmass`, `:virial_parameter_local`, built from the cell's own gas and never from ``\phi`` |
+
+These are correct as they stand. You can use the field without knowing which mass made it: the
+potential and the acceleration already contain every source.
+
+**Not available from a snapshot**
+
+| | why |
+|---|---|
+| splitting ``\phi`` or ``\mathbf a`` by source | RAMSES writes one summed field, `(:epot, :ax, :ay, :az)`. The decomposition is not in the output, and recovering it would mean solving Poisson again with a subset of the mass |
+| the self-binding of one structure | a clump's own binding needs the pairs *within* that clump. Summing ``-m\,\phi`` over its cells gives its binding to the whole galaxy and the external halo instead, a much larger and different number |
+| the system's gravitational self-energy | ``W = \tfrac12\int\rho\,\phi\,dV``. The sum of ``m\,\phi`` has no factor ½ and omits the particles' own binding |
+| forces or energies on **particles** | the gravity quantities pair with hydro only, and particles carry no potential column. Stars and dark matter contribute to ``\phi``, but Mera does not interpolate the field back onto them |
+
+**`profile`, `pdf` and `phase` on a gravity object.** They work, but they weight by `:mass` unless
+told otherwise, and gravity carries no density, so there is no mass on that object. Weight by the
+cells instead:
+
+```julia
+profile(gravity, :r_cylinder, :epot; center=[:bc], weight=:volume)
+phase(gravity, :epot, :a_magnitude; weight=:volume)
+pdf(gravity, :epot; weight=:volume, logbins=false)   # phi is negative, so no log bins
+```
+
+`hydro` and `particles` need none of this: both carry a mass, so the default weight works. To bring
+a hydro column onto the gravity object for `getvar` itself, pass `hydro_data=gethydro(info)` loaded
+over the same cells.
+
+
 ### From gravity alone
 
 These need nothing but the gravity object. Every component measured about an axis or a centre
@@ -305,9 +371,20 @@ Either object order works in both calls, so `getvar(hydro, gravity, …)` and
 spellings too: `:Fphi_cylinder` is the same quantity as `:Fϕ_cylinder`, exactly as
 `:vphi_cylinder` is for velocity.
 
-Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Mera
-also checks that the two objects describe the same cells in the same order, so a mass can never be
-paired with another cell's potential; load both over the identical `lmax` and ranges.
+Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Load both
+over the identical `lmax` and ranges: Mera compares the cell indices of the two objects, not just
+how many there are, so a mass can never be paired with another cell's potential. Two different cuts
+holding the same number of cells are refused as well.
+
+On a **subregion** this matters twice over, because the cell fraction that weights boundary cells
+comes from the hydro object. Cut both with the same region value:
+
+```julia
+R  = Sphere(10.)
+getvar(subregion(gravity, R), subregion(hydro, R), :total_binding_energy, :erg)
+```
+
+See [Subregions](api/subregions.md) for what the fraction is applied to.
 
 | Quantity | Formula | Unit |
 |---|---|---|

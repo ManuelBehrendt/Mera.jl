@@ -744,3 +744,7 @@ This notebook demonstrated comprehensive clump data selection techniques in Mera
 - **Coordinate Shortcuts:** Using box center notation for simplified clump positioning
 - **Quality Assurance:** Verifying loaded clump data ranges and property consistency
 - **Multi-Physics Integration:** Preparing clump data for combined hydrodynamic-structure analysis
+
+---
+
+**The same steps on the other data types:** [Hydro](02_hydro_Load_Selections.md) · [Gravity](02_gravity_Load_Selections.md) · [Particles](02_particles_Load_Selections.md) · [Sinks](02_sinks_Load_Selections.md)

@@ -43,6 +43,7 @@
 #   synthetic PLUTO snapshot (same recipe as 59_multicode_contract_tests.jl).
 # ==============================================================================
 
+using IndexedTables   # used below; do not rely on another test file importing it
 using JLD2
 using CodecLz4
 

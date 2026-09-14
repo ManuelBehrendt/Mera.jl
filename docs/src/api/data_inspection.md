@@ -70,6 +70,7 @@ capabilities
 supports
 provenance
 provenance_string
+mera_build
 quicklook
 quicklookplot
 ```

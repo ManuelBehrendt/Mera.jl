@@ -959,3 +959,7 @@ This notebook demonstrated comprehensive data selection techniques in Mera.jl, c
 - **Memory Management:** Balancing analysis needs with computational resources
 - **Coordinate Shortcuts:** Using box center notation for simplified positioning
 - **Quality Assurance:** Verifying loaded data ranges and dimensions
+
+---
+
+**The same steps on the other data types:** [Gravity](02_gravity_Load_Selections.md) · [Particles](02_particles_Load_Selections.md) · [Clumps](02_clumps_Load_Selections.md) · [Sinks](02_sinks_Load_Selections.md)

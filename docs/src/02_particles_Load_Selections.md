@@ -854,3 +854,7 @@ This notebook demonstrated comprehensive particle data selection techniques in M
 - **Coordinate Shortcuts:** Using box center notation for simplified particle positioning
 - **Quality Assurance:** Verifying loaded particle data ranges and population counts
 - **Multi-Physics Integration:** Preparing particle data for combined hydro-particle analysis
+
+---
+
+**The same steps on the other data types:** [Hydro](02_hydro_Load_Selections.md) · [Gravity](02_gravity_Load_Selections.md) · [Clumps](02_clumps_Load_Selections.md) · [Sinks](02_sinks_Load_Selections.md)

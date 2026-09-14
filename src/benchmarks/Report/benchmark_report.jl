@@ -1,0 +1,392 @@
+# benchmark_report.jl
+#
+# One call that produces every performance number for a snapshot, together with the
+# provenance needed to defend it: machine, filesystem, thread split, and the
+# snapshot's own file count and size.
+#
+# This exists because the interesting case is a large many-CPU output on a server,
+# and the person running it should not have to assemble four calls, remember which
+# ones read the whole box, or know that a full read of a big snapshot can swap the
+# node. It is a package function rather than a script so that `using Mera` is the
+# only setup step.
+
+"""
+    BenchmarkReport
+
+What [`benchmark_report`](@ref) returns. Fields: `info`, `nfiles_total`, `bytes`,
+`storage_split` (bytes per component), `filesystem`, `storage`, `reading`,
+`conversion`, `sweep`, `work_threads`, `reportfile`. Stages that were not run are `nothing`.
+"""
+struct BenchmarkReport
+    info
+    nfiles_total::Int
+    bytes::Float64
+    storage_split
+    filesystem
+    storage
+    reading
+    conversion
+    sweep
+    work_threads::Int
+    reportfile::String
+end
+
+"""
+    benchmark_report(path, output; merapath, components=[:hydro], lmax=missing,
+                     runs=3, nfiles=64, outdir=homedir(), force=false, stages=:all)
+
+Run Mera's performance benchmarks on one snapshot and print a report that can be
+pasted straight into an issue, a paper, or the documentation.
+
+Measures, in order:
+
+1. **the snapshot itself**, machine, filesystem, `ncpu`, file count, size on disk
+2. **storage**, IOPS and open/close cost across thread counts ([`run_benchmark`](@ref))
+3. **reading the RAMSES output**, per component with GC share ([`run_reading_benchmark`](@ref))
+4. **conversion**, what `savedata` costs and after how many re-reads it pays back
+   ([`benchmark_conversion`](@ref))
+
+A high `ncpu` is the interesting case: the per-file parsing that a MERA file avoids
+is exactly what a snapshot with thousands of files makes expensive, so that is where
+the format advantage is largest.
+
+# Keywords
+- `merapath`: where to write the MERA file in step 4. Give it a real filesystem, not
+  a small `/tmp`.
+- `components`: which components to convert. Defaults to every component the snapshot
+  has, so the comparison covers the whole dataset. Pass `[:hydro]` on a snapshot too
+  large to hold all components in memory at once.
+- `lmax`: cap the refinement level when reading. The honest way to benchmark a box
+  too large to read whole.
+- `runs`: repetitions per timed measurement.
+- `nfiles`: how many files the throughput sweep samples. It reads file contents once
+  per thread level per run, so this is deliberately bounded.
+- `outdir`: where the report and the raw JSON/CSV go.
+- `max_threads`: thread budget for every stage. When the `:sweep` stage runs and this
+  is left at its default, the reading and conversion stages use the **sweet spot the
+  sweep found** rather than the full budget, since that is the configuration the report
+  goes on to recommend. Setting it explicitly pins every stage to your number instead. Defaults to
+  `min(Threads.nthreads(), allocated_cpus())`, so on a batch node it follows the
+  scheduler's allocation rather than the machine's core count. Set it lower to leave
+  headroom on a shared node.
+- `force`: run a full read even when it looks too large for the machine's memory.
+- `stages`: `:all`, or any of `:storage`, `:reading`, `:conversion`, `:sweep` to run a
+  subset. `:sweep` is never part of `:all`: it runs one full read per thread count per
+  repetition, so it must be asked for by name, `stages=[:storage, :sweep]`.
+
+# Returns
+A `NamedTuple` with `info`, `nfiles_total`, `bytes`, `filesystem`, `storage`,
+`reading`, `conversion` and `reportfile`. Stages not run are `nothing`.
+
+```julia
+using Mera
+benchmark_report("/data/sim/MilkyWay", 250; merapath="/data/merafiles")
+
+# a box too large to read whole
+benchmark_report("/data/sim/MilkyWay", 250; lmax=11, merapath="/data/merafiles")
+```
+
+!!! note "It will not take more cores than the job owns"
+    Every stage is capped at `min(Threads.nthreads(), allocated_cpus())`, where
+    [`allocated_cpus`](@ref) reads `SLURM_CPUS_PER_TASK` and friends before falling
+    back to `Sys.CPU_THREADS`. The storage sweep also stops at that number rather
+    than climbing to 64. If Julia was started with more threads than the job owns,
+    the environment log says so and names the right `-t` value.
+
+!!! warning "Refuses reads that would not fit"
+    If the estimated in-memory size exceeds 60% of this machine's RAM, the reading
+    and conversion stages are skipped with a message naming the `lmax` to use
+    instead. Pass `force=true` to override.
+"""
+function benchmark_report(path::AbstractString, output::Int;
+                          merapath::AbstractString=joinpath(homedir(), "merafiles"),
+                          components=nothing,
+                          lmax=missing,
+                          runs::Int=3,
+                          nfiles::Int=64,
+                          outdir::AbstractString=homedir(),
+                          force::Bool=false,
+                          max_threads::Int=0,
+                          stages=:all)
+    want(s) = stages === :all || s in stages
+
+    # One thread budget for every stage. Defaults to what this job is entitled to,
+    # which on a shared node is smaller than what the machine has.
+    nthr = max_threads > 0 ? min(max_threads, Threads.nthreads()) :
+                             min(Threads.nthreads(), allocated_cpus())
+
+    snapdir = joinpath(string(path), "output_$(lpad(output,5,'0'))")
+    isdir(snapdir) || error("snapshot directory not found: $snapdir")
+
+    stamp = Dates.format(now(), "yyyymmdd_HHMMSS")
+    dest  = joinpath(string(outdir), "mera_benchmark_$(stamp)")
+    mkpath(dest)
+
+    # ---- 1. what we are about to measure ------------------------------------
+    println("\n", "#"^78, "\n# Snapshot and machine\n", "#"^78)
+    log_env(snapdir)
+
+    info  = getinfo(output, string(path), verbose=false)
+    files = filter(f -> isfile(joinpath(snapdir, f)), readdir(snapdir))
+    bytes = Float64(sum(f -> filesize(joinpath(snapdir, f)), files; init=0))
+    ram   = Float64(Sys.total_memory())
+    fs    = filesystem_info(snapdir)
+
+    @printf("\nncpu              : %d\n", info.ncpu)
+    @printf("levelmin/levelmax : %d / %d\n", info.levelmin, info.levelmax)
+    @printf("files in snapshot : %d\n", length(files))
+    @printf("size on disk      : %s\n", _fmt_bytes(bytes))
+    @printf("components        : hydro=%s gravity=%s particles=%s\n",
+            info.hydro, info.gravity, info.particles)
+
+    # Where the bytes actually are. A snapshot is not one thing: the AMR structure,
+    # the hydro state and the particles are separate file families with very different
+    # sizes, and which of them dominates decides what converting is worth.
+    storage_split = try
+        so = storageoverview(info, verbose=false)
+        pairs = [(k, Float64(v)) for (k, v) in so if k !== :folder && Float64(v) > 0]
+        sort!(pairs, by=last, rev=true)
+        if !isempty(pairs)
+            tot = sum(last, pairs)
+            println("\nstorage by component:")
+            for (k, v) in pairs
+                @printf("  %-10s %10s  %5.1f%%\n", k, _fmt_bytes(v), 100v/tot)
+            end
+        end
+        pairs
+    catch e
+        println("  (storage breakdown unavailable: ", typeof(e), ")")
+        Tuple{Symbol,Float64}[]
+    end
+    @printf("threads for this run: %d  (Julia started with %d, job allocated %d)\n",
+            nthr, Threads.nthreads(), allocated_cpus())
+    if nthr < Threads.nthreads()
+        println("  capped below the Julia thread count, so other jobs on this node keep their cores")
+    end
+
+    # A RAMSES read needs several times the on-disk size in memory. Refuse rather
+    # than push a shared node into swap.
+    too_big = ismissing(lmax) && !force && bytes * 3 > ram * 0.6
+    if too_big
+        println("\n", "!"^78)
+        @printf("Skipping the reading and conversion stages: a full read of %s is likely\n",
+                _fmt_bytes(bytes))
+        @printf("to need more than 60%% of this machine's %s of RAM.\n", _fmt_bytes(ram))
+        println("Re-run with a level cap, which is the honest way to benchmark a large box:")
+        println("    benchmark_report(path, $output; lmax=11, merapath=\"...\")")
+        println("or force=true if you know it fits.")
+        println("!"^78)
+    end
+
+    storage = reading = conversion = sweep = nothing
+
+    if want(:storage)
+        println("\n", "#"^78, "\n# Storage\n", "#"^78)
+        # the environment block is already printed above; do not repeat it
+        storage = run_benchmark(snapdir; runs=2, nfiles=nfiles, max_threads=nthr, logenv=false)
+    end
+
+    # The sweep runs BEFORE the stages that read, because its whole purpose is to find
+    # the thread count those stages should use. Running them first at the full budget
+    # would report a configuration the same report then recommends against.
+    # Opt-in, because it is the only stage whose cost multiplies: one full read per
+    # thread count per run. Ask for it with stages=[:storage, :sweep].
+    if want(:sweep) && stages !== :all && !too_big
+        println("\n", "#"^78, "\n# Reading thread sweep\n", "#"^78)
+        sweep = reading_sweep(output, string(path); runs=runs, lmax=lmax, max_threads=nthr)
+    end
+
+    # Use the sweep's answer for everything that follows, unless the caller pinned
+    # max_threads explicitly, in which case their number wins.
+    workthr = (sweep !== nothing && max_threads == 0) ? sweep.sweet_spot : nthr
+    if sweep !== nothing && workthr != nthr
+        println("\nUsing the sweep's sweet spot, $workthr threads, for the stages below ",
+                "(budget is $nthr).")
+    end
+
+    if want(:reading) && !too_big
+        println("\n", "#"^78, "\n# Reading the RAMSES output\n", "#"^78)
+        reading = run_reading_benchmark(output, string(path); runs=runs, lmax=lmax,
+                                        outdir=dest, max_threads=workthr)
+    end
+    if want(:conversion) && !too_big
+        println("\n", "#"^78, "\n# Conversion break-even\n", "#"^78)
+        mkpath(merapath)
+        # lmax must reach this stage too. Without it the conversion read the whole box
+        # while the sweep and the reading stage were capped, so the report compared two
+        # different amounts of data under one heading.
+        conversion = benchmark_conversion(string(path), output; merapath=merapath,
+                                          components=components, runs=runs,
+                                          max_threads=workthr, lmax=lmax)
+    end
+
+    reportfile = joinpath(dest, "MERA_BENCHMARK.txt")
+    open(reportfile, "w") do f
+        for io in (stdout, f)
+            _write_report(io, path, output, info, files, bytes, fs,
+                          storage, reading, conversion, sweep, lmax, workthr,
+                          storage_split)
+        end
+    end
+    println("\nReport saved: ", reportfile)
+
+    result = BenchmarkReport(info, length(files), bytes, storage_split, fs,
+                             storage, reading, conversion, sweep, workthr, reportfile)
+
+    # Only if the user already loaded a Makie backend. Mera does not depend on one, so
+    # a headless run without CairoMakie still produces the text report and the CSVs.
+    figfile = joinpath(dest, "MERA_BENCHMARK.png")
+    try
+        fig = benchmarkplot(result)
+        Base.invokelatest(getfield(Base.loaded_modules[Base.PkgId(
+            Base.UUID("ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"), "Makie")], :save), figfile, fig)
+        println("Figure saved: ", figfile)
+    catch
+        println("No figure written. For graphs, `using CairoMakie` before benchmark_report,")
+        println("or call benchmarkplot(result) afterwards.")
+    end
+
+    return result
+end
+
+function _write_report(io, path, output, info, files, bytes, fs,
+                       storage, reading, conversion, sweep, lmax, workthr,
+                       storage_split)
+    cpu = Sys.cpu_info()
+    println(io, "\n", "="^78)
+    println(io, "MERA BENCHMARK REPORT")
+    println(io, "="^78)
+    @printf(io, """
+    Date         : %s
+    Host         : %s
+    CPU          : %s (%d threads)
+    RAM          : %s
+    Filesystem   : %s   mount %s
+    Julia        : %s, %d compute + %d GC threads
+    Mera         : %s
+
+    Dataset      : %s output %d
+      ncpu       : %d
+      levelmax   : %d%s
+      files      : %d
+      on disk    : %s
+    """,
+    Dates.format(now(), "yyyy-mm-dd"), gethostname(),
+    isempty(cpu) ? "unknown" : first(cpu).model, Sys.CPU_THREADS,
+    _fmt_bytes(Float64(Sys.total_memory())),
+    isempty(fs.type) ? "unknown" : fs.type, fs.mount,
+    VERSION, Threads.nthreads(), Threads.ngcthreads(), _mera_version(),
+    basename(rstrip(string(path), '/')), output, info.ncpu, info.levelmax,
+    ismissing(lmax) ? "" : "   (read capped at lmax=$(lmax))",
+    length(files), _fmt_bytes(bytes))
+    !isempty(fs.stripe) && println(io, "  Lustre stripe: ", fs.stripe)
+
+    if reading !== nothing
+        println(io, "\nReading the RAMSES output (", workthr, " threads):")
+        for c in reading["components"]
+            if reading["$(c)_status"] == "success"
+                @printf(io, "  %-10s : %8.2f s +- %.2f s\n", c, reading["$(c)_mean"], reading["$(c)_std"])
+            end
+        end
+        reading["total_status"] == "success" &&
+            @printf(io, "  %-10s : %8.2f s\n", "TOTAL", reading["total_mean"])
+    end
+
+    if conversion !== nothing
+        c = conversion
+        println(io, "\nConversion (", join(c.components, ", "), ", ", workthr, " threads):")
+        @printf(io, "  read from RAMSES   : %8.2f s\n", c.read_time)
+        @printf(io, "  savedata write     : %8.2f s\n", c.write_time)
+        @printf(io, "  one-off conversion : %8.2f s\n", c.convert_total)
+        @printf(io, "  MERA re-read warm  : %8s   (%.1fx faster)\n",
+                _fmt_secs(c.warm_read), c.warm_read > 0 ? c.read_time/c.warm_read : NaN)
+        if isfinite(c.size_mera) && c.size_ramses > 0
+            @printf(io, "  size on disk       : %s -> %s%s\n",
+                    _fmt_bytes(c.size_ramses), _fmt_bytes(c.size_mera),
+                    (ismissing(lmax) || lmax >= info.levelmax) ?
+                        @sprintf("  (%.0f%% smaller)", 100*(1 - c.size_mera/c.size_ramses)) :
+                        "   (levels up to $lmax only, not comparable)")
+        end
+        isfinite(c.breakeven) && @printf(io, "  break-even         : %.1f re-reads\n", c.breakeven)
+        println(io, "  memory to load the same data:")
+        @printf(io, "    allocated RAMSES : %10s\n", _fmt_bytes(c.ramses_allocated))
+        @printf(io, "    allocated MERA   : %10s", _fmt_bytes(c.mera_allocated))
+        c.mera_allocated > 0 && @printf(io, "   (%.1fx less churn)",
+                                        c.ramses_allocated / c.mera_allocated)
+        println(io)
+        @printf(io, "    GC RAMSES / MERA : %s / %s\n",
+                _fmt_secs(c.ramses_gctime), _fmt_secs(c.mera_gctime))
+        if isfinite(c.ramses_peak_rss) && isfinite(c.mera_peak_rss)
+            @printf(io, "    peak RSS RAMSES  : %10s\n", _fmt_bytes(c.ramses_peak_rss))
+            @printf(io, "    peak RSS MERA    : %10s", _fmt_bytes(c.mera_peak_rss))
+            c.mera_peak_rss > 0 && @printf(io, "   (%.1fx lower)",
+                                           c.ramses_peak_rss / c.mera_peak_rss)
+            println(io)
+        end
+    end
+
+    if !isempty(storage_split)
+        tot = sum(last, storage_split)
+        println(io, "\nStorage by component:")
+        for (k, v) in storage_split
+            @printf(io, "  %-10s %10s  %5.1f%%\n", k, _fmt_bytes(v), 100v/tot)
+        end
+    end
+
+    if sweep !== nothing
+        println(io, "\nReading thread sweep (:", sweep.component, "):")
+        for (i, n) in enumerate(sweep.threads)
+            @printf(io, "  %3d threads : %10s  %.2fx\n", n, _fmt_secs(sweep.times[i]), sweep.speedup[i])
+        end
+        @printf(io, "  fastest %d threads, sweet spot %d threads\n", sweep.best, sweep.sweet_spot)
+    end
+
+    if storage !== nothing
+        # Throughput was measured all along and only IOPS was written down, so the
+        # published tables could never show it. Both are recorded now, with the spread,
+        # since a throughput mean without one is hard to trust.
+        println(io, "\nStorage by thread count:")
+        @printf(io, "  %8s %12s %14s\n", "threads", "IOPS", "MB/s per read")
+        for n in sort(collect(keys(storage.iops.stats)))
+            thr = get(storage.throughput.stats, n, nothing)
+            if thr === nothing
+                @printf(io, "  %8d %12.0f %14s\n", n, storage.iops.stats[n][1], "n/a")
+            else
+                @printf(io, "  %8d %12.0f %9.1f ± %-4.1f\n",
+                        n, storage.iops.stats[n][1], thr[1], thr[3])
+            end
+        end
+        if haskey(storage.openclose, :stats)
+            ks = sort(collect(keys(storage.openclose.stats)))
+            # stats are kept in seconds; `factor` converts to the reported unit
+            !isempty(ks) && @printf(io, "  open/close at %d threads: %.1f %s\n",
+                                    last(ks),
+                                    storage.openclose.stats[last(ks)][1] * storage.openclose.factor,
+                                    storage.openclose.unit)
+        end
+    end
+    println(io, "="^78)
+end
+
+
+# ── Plotting (provided by the Makie package extension MeraMakieExt) ───────────
+"""
+    benchmarkplot(r; size=(1000, 760)) -> Makie.Figure
+
+Turn a [`benchmark_report`](@ref) result into one figure: the reading thread sweep,
+the read-time comparison, the memory each path churns through, and storage IOPS
+against thread count. Panels for stages that were not run are omitted.
+
+Needs a Makie backend, so `using CairoMakie` first. The `Figure` is returned; save it
+with `Makie.save("bench.png", fig)`. `benchmark_report` saves one automatically when a
+backend is already loaded.
+
+```julia
+using Mera, CairoMakie
+r = benchmark_report("/data/sim", 250; stages=[:storage, :sweep, :conversion])
+Makie.save("bench.png", benchmarkplot(r))
+```
+"""
+benchmarkplot(r::BenchmarkReport; kwargs...) = _plot_benchmark_report(r; kwargs...)
+_plot_benchmark_report(r; kwargs...) =
+    error("benchmarkplot needs a Makie backend, load one first: `using CairoMakie` (or GLMakie).")

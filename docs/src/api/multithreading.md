@@ -59,7 +59,18 @@ saturates when the storage does.
 ```@docs; canonical=false
 benchmark_projection_hydro
 run_reading_benchmark
+reading_sweep
 run_merafile_benchmark
+benchmark_conversion
+benchmark_report
+benchmark_levels
+collect_levels
+levelsplot
+BenchmarkReport
+IOBenchmark
+benchmarkplot
+filesystem_info
+allocated_cpus
 benchmark_mera_io
 benchmark_buffer_sizes
 ```
@@ -74,9 +85,9 @@ are documented with the rest of the I/O controls in the
 
 - [Multi-Threading](../multi-threading/multi-threading_intro.md): the guide, including what
   to expect from more threads and the measured numbers
-- [Projection benchmarks](../benchmarks/Projection/multi_projections.md): thread scaling for
+- [Performance](../benchmarks/performance.md): thread scaling for
   single- and multi-variable projections
-- [Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md): read scaling
+- [Run Your Own Benchmarks](../benchmarks/run_your_own.md): read scaling
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*

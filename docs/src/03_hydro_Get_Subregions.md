@@ -1617,10 +1617,9 @@ radii and heights must be nonzero, a zero-sized region is an error. The
 `center` is never refused, but it defaults to the box **corner**, so omitting
 it on a sphere or cylinder places the region there and keeps only the octant
 inside the box; Mera notes that once per shape. A *single* zero component is
-perfectly good (a sphere on the `x = 0` face is a legitimate region). The hydro
-cylinder additionally offers `smooth_boundary=true`, an intermediate edge
-softening predating fraction splitting. `get_filtered_ranges` recovers the
-bounding ranges of any cut, ready to pass to `projection`.
+perfectly good (a sphere on the `x = 0` face is a legitimate region).
+`get_filtered_ranges` recovers the bounding ranges of any cut, ready to pass to
+`projection`.
 
 ```julia
 cub_c = subregion(gas, :cuboid; xrange=[-12, 12], yrange=[-12, 12], zrange=[-2, 2],
@@ -1709,3 +1708,7 @@ insurance a mass budget can buy.
   [clumps](03_clumps_Get_Subregions.md).
 - [Projections: Off-Axis](06_offaxis_Projection.md), view along a tilted
   region's axis.
+
+---
+
+**The same steps on the other data types:** [Gravity](03_gravity_Get_Subregions.md) · [Particles](03_particles_Get_Subregions.md) · [Clumps](03_clumps_Get_Subregions.md) · [Sinks](03_sinks_Get_Subregions.md)

@@ -25,6 +25,7 @@
 #
 # If DATA_AVAILABLE is false the whole file is skipped via @test_skip.
 
+using IndexedTables   # used below; do not rely on another test file importing it
 if !DATA_AVAILABLE
     @warn "Skipping Basic Calculations tests - simulation data not available"
     @test_skip "Simulation data not available"

@@ -31,8 +31,12 @@ stack with `] instantiate`. Start Julia with `julia --project=.` to use it.
 
 ## 2. Compile-time latency: pay once per session
 
-Julia compiles functions the first time they run with a given argument type. The first
-projection of a session takes seconds of compilation; the second is pure runtime:
+Julia compiles functions the first time they run with a given argument type. Mera
+precompiles its analysis paths at install time, so the ones you reach first are already
+compiled: in a fresh session a first `projection` takes about 0.05 s and a first `getvar`
+about 0.04 s, the same as every later call. What still carries a one-off cost is the
+readers, roughly 4 s on the first `gethydro` and nothing after it. The pattern below is
+worth knowing anyway, because it applies to any function you write yourself:
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -58,8 +62,9 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-first call: 14.71 s   second call: 0.044 s
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[ Info: Mera v1.8.0
+first call: 13.67 s   second call: 0.061 s
 ```
 
 Keep one session alive while you work (REPL, Jupyter, VS Code) instead of re-launching
@@ -105,6 +110,37 @@ The levers, in the order to reach for them:
    snapshots).
 4. **Watch it**: `usedmemory(gas)` for objects, `storageoverview(info)` before loading.
 
+### Why the Julia version matters more here than for most packages
+
+Reading a RAMSES snapshot is **allocation bound**. Measured across eight refinement levels
+of a production run, read time tracks bytes allocated almost exactly, at a steady
+1.30 GB/s with an R^2 of 0.9985 over a tenfold range of data. A full-resolution read
+allocated 665 GB to deliver a 53 GB snapshot, and spent 62 s in garbage collection.
+
+Two consequences:
+
+- Work in Julia's **allocator and garbage collector** lands directly on Mera's dominant
+  cost, more than it would for a package whose time goes on arithmetic. That is the
+  reason to run a recent Julia rather than the oldest supported one, and Mera keeps 1.10
+  as its floor only so it keeps working, not because it is the version to choose.
+- **Know what the GC threads are.** Julia collects in parallel, and the mark phase gets
+  as many threads as you have compute threads by default, so you already have them:
+
+  ```
+  julia -t 16                    # 16 compute, and 16 GC by default
+  julia -t 16 --gcthreads=8      # 16 compute, 8 for the GC mark phase
+  ```
+
+  `-t N,M` does **not** set GC threads; the second number is the interactive pool. Use
+  `--gcthreads` or `JULIA_NUM_GC_THREADS`, and check with `Threads.ngcthreads()`. The
+  reference benchmarks ran 24 compute and 24 GC, which is simply the default.
+
+Mera's own numbers come from Julia 1.12, and the package is tested on 1.10, 1.11, 1.12 and 1.13
+on every push. What is not published is a like-for-like comparison **between** those
+versions on the same data: nobody has run one, so treat "newer is better here" as
+following from the mechanism above rather than from a measurement. If you want the real
+answer for your workload, `benchmark_report` gives it in one call per version.
+
 ```julia
 small = gethydro(info; lmax=6, xrange=[-8., 8.], yrange=[-8., 8.], zrange=[-2., 2.],
                  center=[:bc], range_unit=:kpc, vars=[:rho], verbose=false, show_progress=false)
@@ -115,11 +151,11 @@ usedmemory(small)
 
 ```
 576 cells (windowed, lmax=6, :rho only)  vs  590311 full (lmax=7)
-Memory used: 481.448 KB
+Memory used: 481.456 KB
 ```
 
 ```
-(481.4482421875, "KB")
+(481.4560546875, "KB")
 ```
 
 ## 5. Multithreading, measured
@@ -129,22 +165,28 @@ Start Julia with threads (`julia -t 8` or `JULIA_NUM_THREADS=8`) and Mera's heav
 throttle a single call. Three rules of thumb:
 
 - results are **independent of the thread count** (per-thread buffers, summed at the end);
-- **threading pays where the compute is.** A light call on a small dataset is dominated by its
-  serial parts (column access, setup) and shows little gain, an axis-aligned projection of this
-  small fixture runs in ~0.6 s regardless of threads. Give the threads real work and the
-  picture changes: below, the compute-heavy off-axis `:exact` deposit kernel on the same data;
+- **threading pays where there is something to divide**, and different paths divide different
+  things. An axis-aligned `projection` splits the work **by variable**: internally it takes
+  `min(max_threads, nthreads(), number_of_variables)` threads, so asking for one quantity uses
+  exactly one thread however many you offer it, while several quantities in one call run in
+  parallel. The rotated and off-axis deposit kernels split **by cell** instead, so a single
+  quantity already uses every thread. That is why the off-axis `:exact` example below scales on
+  one variable where an axis-aligned projection of the same quantity would stay flat;
 - BLAS keeps its own thread pool, keep `Julia threads × BLAS threads` within your core budget.
 
-Measured on this machine (8 Julia threads; **illustrative, not a benchmark**, your times will
-differ):
+Measured on whatever this session was started with, and the sweep stops there: asking for
+more than `Threads.nthreads()` is clamped internally, so the extra points would just repeat
+the last one. **Illustrative, not a benchmark**, your times will differ:
 
 ```julia
-println("Julia threads: ", Threads.nthreads())
+# Sweep only up to the threads this session actually has: max_threads is clamped to
+# Threads.nthreads() internally, so asking for more silently repeats the last point.
+nts = [n for n in (1, 2, 4, 8, 16, 24) if n <= Threads.nthreads()]
+println("Julia threads: ", Threads.nthreads(), "  ->  testing ", nts)
 # compute-heavy workload: off-axis projection with the analytic :exact deposit kernel
 heavy(nt) = projection(gas, :sd; inclination=60, azimuth=30, pxsize=[0.05, :kpc],
                        binning=:exact, max_threads=nt, verbose=false, show_progress=false)
 heavy(1)                                             # compile once
-nts = [1, 2, 4, 8]
 times = [minimum(@elapsed(heavy(nt)) for _ in 1:2) for nt in nts]
 for (nt, t) in zip(nts, times)
     println(rpad("max_threads=$nt", 15), round(t, digits=2), " s   speedup ×",
@@ -158,17 +200,29 @@ fig
 ```
 
 ```
-Julia threads: 4
-max_threads=1  103.48 s   speedup ×1.0
-max_threads=2  74.81 s   speedup ×1.38
-max_threads=4  51.85 s   speedup ×2.0
-max_threads=8  52.13 s   speedup ×1.98
+Julia threads: 8  ->  testing [1, 2, 4, 8]
+max_threads=1  105.12 s   speedup ×1.0
+max_threads=2  76.07 s   speedup ×1.38
+max_threads=4  52.85 s   speedup ×1.99
+max_threads=8  29.5 s   speedup ×3.56
 ```
 
-![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_4.png)
+![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_5.png)
 
-The dashed line is ideal scaling; the gap to it is the serial fraction. Throttle
-individual calls (`max_threads=4`) when you run several analyses at once or share the machine.
+The dashed line is ideal scaling; the gap to it is the serial fraction.
+
+**Which path you are on decides what to do.** For an axis-aligned projection, ask for the
+quantities you need in one call rather than looping: one call for four variables threads four
+ways, four calls of one variable each thread one way and walk the data four times.
+
+```julia
+proj = projection(gas, [:sd, :T, :vx, :vy])    # threads over the four variables
+```
+
+For off-axis or `:exact` work a single quantity already uses the threads: the sweep above
+reaches 3.56x at 8 threads on one variable, which the axis-aligned path cannot do at any
+thread count. Nothing extra is needed there. Throttle individual calls (`max_threads=4`) when you run several analyses at once or
+share the machine.
 The examples throughout these docs use at most 8 threads, treat that as a sensible laptop
 ceiling, not a recommendation to buy more cores.
 

@@ -40,13 +40,55 @@ control RAM at load time (level cap, spatial window), not through deferred evalu
 | unit handling | a `scale` factor table: multiply, or pass the unit symbol (`:g_cm3`, `:km_s`, `:Msol_pc2`) |
 | saving processed data | `savedata`/`loaddata`, LZ4-compressed JLD2, the fast Mera-native round-trip. Julia-side only: it stores the Mera object, so h5py cannot reconstruct the table, use `export_vtk`, write columns out yourself, or call Mera from Python via JuliaCall |
 
+### Why a table of columns, and how to get plain arrays back
+
+The table is not a wrapper you have to work through. Underneath it is a **struct of
+arrays**: each quantity is its own contiguous `Vector`, and the table is sorted on
+`(:level, :cx, :cy, :cz)`, the AMR level and integer cell coordinates.
+
+Three things follow, and they are the reason for the design:
+
+- **You only pay for the columns you touch.** Density lives in one contiguous block, so a
+  pass over `:rho` reads only density bytes; the velocities and pressure never enter cache.
+  On the hydro table above, one column is about a ninth of the row data. An array of structs
+  would drag every field of every cell through memory to do the same work.
+- **Cells that are near each other in the grid are near each other in memory**, because the
+  table is sorted by level and cell index. That locality is what makes spatial selection and
+  projection fast, rather than any indexing trick layered on top.
+- **The arrays are always there, and taking them costs nothing.** `getvar` hands you a plain
+  `Vector{Float64}`, and `select(gas.data, :rho)` returns the stored column itself, not a
+  copy or a view type.
+
+```julia
+rho = getvar(gas, :rho, :g_cm3)        # Vector{Float64}, units applied
+raw = select(gas.data, :rho)           # the stored column itself, no copy
+rho isa Vector{Float64}                # true
+```
+
+So nothing is locked away. Hand those vectors to `Statistics`, to a fitting routine, to
+BLAS, to your own loop, to any plotting package. Mera's own functions are ordinary
+functions over these columns, and you can write the same ones yourself when you need
+something it does not provide.
+
 Two conventions worth internalising on day one:
 
-!!! warning "Ranges and radii in `range_unit=:standard` are box fractions"
-    The default `:standard` unit means *fractions of the box* (0…1), not physical lengths.
-    `xrange=[0.4, 0.6]` is the central 20% of the box; a sphere `radius=0.2` spans 20% of
-    `boxlen`. Pass `range_unit=:kpc` (or `:pc`, `:Mpc`, …) with `center=[…]` to work in
-    physical units, the examples below do.
+!!! tip "Work in whatever length unit suits the problem"
+    Every function that takes a range or a radius also takes `range_unit`, and any length
+    Mera knows is accepted: `:Mpc`, `:kpc`, `:pc`, `:mpc`, `:ly`, `:Au`, `:km`, `:m`, `:cm`,
+    `:mm`, `:μm`. Pair it with `center=` and you can describe a region the way you think
+    about it:
+
+    ```julia
+    gethydro(info; xrange=[-10, 10], yrange=[-10, 10], zrange=[-2, 2],
+             center=[:bc], range_unit=:kpc)          # a 20 x 20 x 4 kpc slab, box-centred
+    subregion(gas, :sphere; radius=500, center=[:bc], range_unit=:pc)
+    ```
+
+    The one thing to know is the **default**: `range_unit=:standard` means *fractions of the
+    box* (0…1), not physical lengths. So `xrange=[0.4, 0.6]` is the central 20% of the box,
+    and a sphere of `radius=0.2` spans 20% of `boxlen`. Both forms describe the same region,
+    and `center=[:bc]` centres on the box in either. Pick whichever reads better; the
+    examples below use physical units.
 
 - **Loading is eager, selection is cheap.** Load once (possibly windowed), then slice, filter,
   and project the in-memory table as often as you like, each step returns a normal Mera object.
@@ -66,27 +108,15 @@ info = infodata(390, AVALON, verbose=false);                   # metadata only �
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126](cache misses: include_dependency fsize change (2), dep missing source (1), mismatched flags (6))
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (2), mismatched flags (12))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e](cache misses: wrong dep version loaded (3), incompatible header (6))
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), incompatible header (12))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 [ Info: Mera v1.8.0
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 ```
 
 `info` already knows everything about the snapshot (levels, box size, which files exist,
@@ -110,6 +140,9 @@ Memory used: 12.146 GB
 ```
 (12.145861252211034, "GB")
 ```
+
+That call reads one component. When you want several, `loadall` reads them all with
+the same selection, see [Pipelines](pipelines.md).
 
 Derived quantities are computed on demand from the loaded columns, with units as
 symbols (every available scale is listed by `viewfields(info.scale)`):
@@ -188,10 +221,14 @@ round-trip ok: true  (4060.3 MB on disk)
 
 ## Differences to expect, honestly
 
-- **First call is slower, loops are fast.** Julia compiles on first use (see
-  [Julia for Simulation Analysis](julia_for_simulation_analysis.md)); after that, custom
-  per-cell analysis loops run at compiled speed, no need to push work into vectorised
-  library calls for performance.
+- **Loops are fast, and you can write them.** Custom per-cell analysis runs at compiled
+  speed, so there is no need to push work into vectorised library calls to make it quick.
+  Julia compiles on first use, but Mera precompiles its analysis paths at install time, so
+  in practice you do not wait for them. Measured in a fresh session on a small snapshot:
+  the first `projection` takes 0.05 s and the first `getvar` 0.04 s, the same as every
+  later call. Only the readers still carry a one-off cost, about 4 s on the first
+  `gethydro`, and none on any call after it. Against a read of minutes that is noise. See
+  [Julia for Simulation Analysis](julia_for_simulation_analysis.md).
 - **Units are explicit, not attached.** Quantities are plain arrays; units enter as scale
   factors or unit symbols. This keeps everything zero-overhead but means *you* choose the unit
   at each call.

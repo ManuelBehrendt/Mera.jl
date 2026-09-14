@@ -18,6 +18,7 @@
 # Those are excluded on purpose, and the last testset pins that they really do differ — otherwise
 # an accidental "fix" making them agree would silently break the frame semantics.
 
+using IndexedTables   # used below; do not rely on another test file importing it
 using Random
 
 @testset verbose=true "mask equivalence: getvar(mask=m) == getvar()[m]" begin

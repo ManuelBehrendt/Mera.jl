@@ -33,6 +33,9 @@ data has no such file and never should. Name the code explicitly to find out:
 info = getinfo(path, code=:pluto)     # :pluto, :chombo, :athena, :flash, :gadget, :ramses
 ```
 
+Those six are the whole list. `code=` names the reader, so an AREPO snapshot takes `code=:gadget`,
+there is no `:arepo`. Mera still reports the real producer: `info.simcode` reads `"AREPO"`.
+
 If that works, detection failed rather than the file being missing, please
 [report it](https://github.com/ManuelBehrendt/Mera.jl/issues) with your directory listing,
 since detection is meant to handle it. See [Multi-code support](multicode.md) for what each
@@ -159,7 +162,7 @@ export JULIA_NUM_THREADS=8
 See [Multi-Threading](multi-threading/multi-threading_intro.md). Note that more threads is
 not automatically faster, a single light projection is serial-fraction dominated and stays
 flat; the measured numbers are in
-[Projection benchmarks](benchmarks/Projection/multi_projections.md).
+[Performance](benchmarks/performance.md).
 
 ## Out of memory on a large output
 

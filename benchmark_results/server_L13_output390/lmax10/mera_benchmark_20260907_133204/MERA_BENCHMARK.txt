@@ -1,0 +1,61 @@
+
+==============================================================================
+MERA BENCHMARK REPORT
+==============================================================================
+Date         : 2026-09-07
+Host         : op4pgn
+CPU          : INTEL(R) XEON(R) GOLD 6534 (32 threads)
+RAM          : 1511.41 GB
+Filesystem   : btrfs   mount /data1
+Julia        : 1.12.7, 24 compute + 24 GC threads
+Mera         : 1.8.0
+
+Dataset      : L13_SN5_CD_only output 390
+  ncpu       : 5120
+  levelmax   : 13   (read capped at lmax=10)
+  files      : 20489
+  on disk    : 53.18 GB
+
+Reading the RAMSES output (16 threads):
+  hydro      :    99.36 s +- 4.20 s
+  particles  :     3.48 s +- 1.03 s
+  gravity    :    41.27 s +- 2.46 s
+  TOTAL      :   144.11 s
+
+Conversion (hydro, gravity, particles, 16 threads):
+  read from RAMSES   :   141.04 s
+  savedata write     :     6.10 s
+  one-off conversion :   147.14 s
+  MERA re-read warm  :   4.04 s   (34.9x faster)
+  size on disk       : 53.18 GB -> 2.19 GB   (levels up to 10 only, not comparable)
+  break-even         : 1.1 re-reads
+  memory to load the same data:
+    allocated RAMSES :  186.06 GB
+    allocated MERA   :    8.19 GB   (22.7x less churn)
+    GC RAMSES / MERA : 26.39 s / 463.4 ms
+    peak RSS RAMSES  :   22.63 GB
+    peak RSS MERA    :   14.59 GB   (1.6x lower)
+
+Storage by component:
+  hydro        24.94 GB   46.9%
+  gravity      17.52 GB   32.9%
+  amr          10.66 GB   20.1%
+  particle      65.0 MB    0.1%
+
+Reading thread sweep (:hydro):
+    1 threads :   297.29 s  1.00x
+    2 threads :    186.8 s  1.59x
+    4 threads :    133.4 s  2.23x
+    8 threads :   109.21 s  2.72x
+   16 threads :    92.35 s  3.22x
+   24 threads :   105.05 s  2.83x
+  fastest 16 threads, sweet spot 16 threads
+
+Storage, IOPS by thread count:
+    1 threads :     103047 IOPS
+    2 threads :     181074 IOPS
+    4 threads :     212287 IOPS
+    8 threads :     259564 IOPS
+   16 threads :     272280 IOPS
+   24 threads :     317116 IOPS
+==============================================================================

@@ -21,8 +21,20 @@ function getvar()
     println(":entropy_per_particle (entropy per particle)")
     println(":entropy_total (total entropy per cell/particle)")
     println()
+    println("                    -magnetic field-")
+    println(":bx, :by, :bz (cell-centred components), :b or :bmag (magnitude)")
+    println(":pmag (magnetic pressure), :e_magnetic, :beta (plasma beta)")
+    println(":v_alfven")
+    println(":br_cylinder, :br_sphere (radial components about a center)")
+    println(":b_magnitude_cylinder")
+    println()
     println("          -magnetohydrodynamic Mach numbers-")
     println(":mach_alfven, :mach_fast, :mach_slow")
+    println()
+    println("            -other derived hydro quantities-")
+    println(":pressure, :sound_speed, :mu (mean molecular weight)")
+    println(":sigma_thermal (thermal velocity dispersion)")
+    println(":t_cool, :l_cool (cooling time and length)")
     println()
     println("==========================[particles]:==========================")
     println("       -all the non derived particle vars-")
@@ -42,8 +54,18 @@ function getvar()
     println(":cellsize, :volume")
     println()
     println("     -gravitational field properties-")
-    println(":a_magnitude")
+    println(":a_magnitude, :a_magnitude_cylinder")
     println(":specific_gravitational_energy")
+    println(":Fg (force magnitude), :Fx, :Fy, :Fz (components)")
+    println(":gravitational_energy, :total_binding_energy")
+    println()
+    println("======================[radiative transfer]:=====================")
+    println(":xHI, :xHII, :xH2, :xHeII, :xHeIII (ionisation fractions)")
+    println(":n_HI, :n_HII, :n_H2, :n_e (number densities)")
+    println(":Np_total, :rad_energy_density")
+    println(":Gamma_HI, :photoionizations, :photoheating_HI")
+    println(":recomb_rate, :em_recomb, :ionization_balance")
+    println(":T_rt")
     println()
     println("===========================[clumps]:===========================")
     println(":peak_x or :x, :peak_y or :y, :peak_z or :z")
@@ -56,7 +78,12 @@ function getvar()
     println("related to a given center:")
     println("---------------------------")
     println(":r_cylinder, :r_sphere (radial distances)")
+    println(":r_cylinder_periodic, :r_sphere_periodic (minimum-image, for a periodic box)")
     println(":ϕ (azimuthal angle)")
+    println()
+    println("     -squared velocity components (for dispersions)-")
+    println(":v2, :vx2, :vy2, :vz2")
+    println(":vr_cylinder2, :vr_sphere2")
     println()
     println("     -cylindrical velocity components-")
     println(":vr_cylinder, :vϕ_cylinder")
@@ -131,6 +158,18 @@ const _CENTER_RELATIVE_VARS = Set{Symbol}([
     :r_sphere_periodic, :r_cylinder_periodic,
 ])
 
+"""
+    _map_col(f, table) -> Vector{Float64}
+
+`map` over a data table, returning a typed empty vector when the table has no rows.
+
+A region can legitimately select nothing: a sphere smaller than one cell, or a cut that misses
+the data. Mapping over the empty table then leaves the element type unknown, and the table
+machinery cannot build a result from it, which surfaces as an error naming internal fields
+instead of the empty selection that caused it. Every column here is a Float64, so say so.
+"""
+@inline _map_col(f, table) = isempty(table) ? Float64[] : map(f, table)
+
 function _center_hint(vars, center)
     # Cheap guard first: in the common (correct) case an origin was given, and this returns
     # before `hint_once` is ever reached. Bookkeeping is shared — see checks.jl.
@@ -187,6 +226,24 @@ end
     `xrange/yrange/zrange`, the classic symbol `subregion`/`shellregion`, `covering_grid` — and
     particles/clumps are points, with no fraction by construction. See [`subregion`](@ref) and
     [`msum`](@ref).
+
+!!! note "Gravity energies and forces need the hydro object"
+    A potential is energy **per unit mass** and an acceleration is force **per unit mass**, so
+    `:gravitational_energy`, `:total_binding_energy`, `:Fg` and the `:F…` components need the cell
+    mass. Gravity carries no density, so that mass comes from the hydro object and both are passed:
+
+    ```julia
+    getvar(gravity, hydro, :total_binding_energy, :erg)   # either object order works
+    ```
+
+    The two must describe the **same cells**: load them with the same `lmax` and ranges, and on a
+    sub-region cut both with the same region value, because the boundary `:fraction` that weights
+    the mass is the hydro object's. Mera compares the cell indices of the two, so a mismatched pair
+    is refused rather than pairing a mass with another cell's potential.
+
+    `:epot` is the run's **total** potential: gas, particles, sinks and any external analytic
+    potential, so `m * phi` is that cell's gas measured in the total field. The Gravity section of
+    the Computation Reference says what follows from that, and what a snapshot cannot tell you.
 
 
 ```julia

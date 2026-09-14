@@ -96,6 +96,11 @@ if isempty(_focus)
         tinclude("54_clumpfind_synthetic_tests.jl")  # data-free: all 7 finders + features scored vs synthetic ground truth
         tinclude("55_region_algebra_tests.jl")  # data-free: composable regions + exact cell splitting vs analytic volumes
         tinclude("56_filterdata_tests.jl")  # data-free: value-space filtering on derived quantities (filterdata/getmask)
+        tinclude("78_download_testdata_tests.jl")  # data-free: fixture catalogue, layout, already-present short-circuit
+        tinclude("79_boundaries_tests.jl")  # data-free: boundary-condition inference from the namelist
+        tinclude("80_getvar_overview_tests.jl")  # data-free: the getvar() list must match the code
+        tinclude("81_type_hierarchy_tests.jl")  # data-free: the type diagram must match subtypes()
+        tinclude("82_loadall_tests.jl")         # loadall must agree with getinfo + the getters
         tinclude("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
         tinclude("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
         tinclude("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities
@@ -159,6 +164,7 @@ if isempty(_focus)
         tinclude("47_galaxyframe_tests.jl")           # auto-frame (center_of/face_on/edge_on): vector helpers data-free + spiral_clumps angular-momentum orientation
         tinclude("49_statistics_tests.jl")            # pdf (probability distribution functions): data-free weighted-histogram kernel + spiral_clumps density PDF (mass vs volume)
         tinclude("50_provenance_tests.jl")            # provenance / provenance_string: data-free struct+string + spiral_clumps snapshot/projection extraction
+        tinclude("52_thumbnail_tests.jl")            # makethumb: data-free fit/crop/pad/animation-frame
         tinclude("51_movie_tests.jl")                 # getmovie / savemovie: data-free colormaps/struct + 3D Sedov frames → single-GIF round-trip
         tinclude("53_overlay_absorption_tests.jl")    # gridoverlay (AMR cell boundaries)
         tinclude("07_regions.jl")

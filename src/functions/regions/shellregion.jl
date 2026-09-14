@@ -17,6 +17,7 @@ shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             range_unit::Symbol=:standard,  # all
             cell::Bool=true,                        # hydro and gravity
             inverse::Bool=false,                    # all
+    periodic=false,                         # all
             verbose::Bool=true,             # all
             myargs::ArgumentsType=ArgumentsType() ) # all
 ```
@@ -59,6 +60,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             range_unit::Symbol=:standard,  # all
             cell::Bool=true,                        # hydro and gravity
             inverse::Bool=false,                    # all
+    periodic=false,                         # all
             verbose::Bool=true,             # all
             myargs::ArgumentsType=ArgumentsType() ) # all
 
@@ -90,6 +92,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         direction=direction,
                                         cell=cell,
                                         inverse=inverse,
+                        periodic=periodic,
                                         verbose=verbose)
         else
             return shellregioncylinder(dataobject,
@@ -99,6 +102,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         range_unit=range_unit,
                                         direction=direction,
                                         inverse=inverse,
+                        periodic=periodic,
                                         verbose=verbose)
         end
 
@@ -111,6 +115,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         range_unit=range_unit,
                                         cell=cell,
                                         inverse=inverse,
+                        periodic=periodic,
                                         verbose=verbose)
         else
             return shellregionsphere(  dataobject,
@@ -118,6 +123,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         center=center,
                                         range_unit=range_unit,
                                         inverse=inverse,
+                        periodic=periodic,
                                         verbose=verbose)
 
         end

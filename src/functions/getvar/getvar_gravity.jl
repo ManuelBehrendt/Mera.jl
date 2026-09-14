@@ -11,9 +11,37 @@ const _GRAV_FORCE_FROM_ACCEL = Dict(
 )
 
 # Cell mass from the hydro companion, for the gravity quantities that are extensive (energy,
-# force). The two tables must describe the same cells in the same order; anything else would pair
-# a mass with another cell's potential and return a plausible wrong number, so check rather than
-# trust. `mask` is applied after, exactly as the hydro fallback below does it.
+# force). Gravity carries no density, so the mass has to come from the hydro object, and the two
+# tables must describe the same cells in the same order: anything else pairs a mass with another
+# cell's potential and returns a plausible wrong number.
+#
+# `_grav_check_cells` compares the cell indices themselves rather than just how many there are,
+# because two different cuts can hold the same number of cells. It is one pass over four integer
+# columns, run once per `getvar` call rather than once per quantity, so it costs a fraction of the
+# mass computation it guards.
+function _grav_check_cells(gravity, hydro)
+    ng, nh = length(gravity.data), length(hydro.data)
+    ng == nh || error(
+        "gravity/hydro mismatch: gravity has $ng cells, hydro has $nh. The mass for an energy or " *
+        "a force comes from the hydro object, so both must cover the same cells: load them with " *
+        "the same lmax and ranges, and if you took a subregion, cut both with the same region.")
+    # A uniform grid carries no `:level`, so compare the columns the data actually has.
+    gcols = propertynames(IndexedTables.columns(gravity.data))
+    hcols = propertynames(IndexedTables.columns(hydro.data))
+    for col in (:level, :cx, :cy, :cz)
+        (col in gcols && col in hcols) || continue
+        gc = IndexedTables.select(gravity.data, col)
+        hc = IndexedTables.select(hydro.data, col)
+        gc == hc || error(
+            "gravity/hydro mismatch: both objects have $ng cells but they are not the same cells " *
+            "(`:$col` differs). This happens when the two were cut differently, for example a " *
+            "subregion taken from one object and not the other. Build both from the same region.")
+    end
+    return nothing
+end
+
+# The mass itself, computed once per call by the caller and reused for every quantity that needs
+# it. `mask` is applied after, exactly as the hydro fallback below does it.
 function _grav_hydro_mass(hydro_data, mask)
     m = getvar(hydro_data, :mass)
     if length(mask) > 1
@@ -41,6 +69,18 @@ function get_data(dataobject::GravDataType,
 
     # Check if hydro data is available for combined calculations
     has_hydro = !isnothing(hydro_data)
+
+    # Validate the pairing once per call, not once per quantity: the cells have to match before any
+    # mass is taken from them. The mass is then computed at most once and shared by every quantity
+    # that needs it, instead of being recomputed in each branch.
+    has_hydro && _grav_check_cells(dataobject, hydro_data)
+    _cell_mass_cache = Ref{Union{Nothing,Vector{Float64}}}(nothing)
+    cell_mass() = begin
+        if _cell_mass_cache[] === nothing
+            _cell_mass_cache[] = _grav_hydro_mass(hydro_data, mask)
+        end
+        return _cell_mass_cache[]
+    end
 
     # Early mask application for performance optimization
     if length(mask) > 1
@@ -136,9 +176,9 @@ function get_data(dataobject::GravDataType,
         elseif i == :cellsize
             selected_unit = getunit(dataobject, :cellsize, vars, units)
             if isamr
-                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^row.level * selected_unit , masked_data)
+                vars_dict[:cellsize] =  _map_col(row-> dataobject.boxlen / 2^row.level * selected_unit , masked_data)
             else # if uniform grid
-                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^lmax * selected_unit , masked_data)
+                vars_dict[:cellsize] =  _map_col(row-> dataobject.boxlen / 2^lmax * selected_unit , masked_data)
             end
         elseif i == :volume
             selected_unit = getunit(dataobject, :volume, vars, units)
@@ -325,7 +365,7 @@ function get_data(dataobject::GravDataType,
             has_hydro || error("`:gravitational_energy` is mass times potential, so it needs the " *
                                "cell mass. Call getvar(gravity, hydro, :gravitational_energy), or " *
                                "projection(hydro, gravity, :gravitational_energy).")
-            m = _grav_hydro_mass(hydro_data, mask)
+            m = cell_mass()
             epot = select(masked_data, :epot)
             vars_dict[:gravitational_energy] = @. m * epot * selected_unit
 
@@ -336,7 +376,7 @@ function get_data(dataobject::GravDataType,
             has_hydro || error("`:total_binding_energy` is mass times potential, so it needs the " *
                                "cell mass. Call getvar(gravity, hydro, :total_binding_energy), or " *
                                "projection(hydro, gravity, :total_binding_energy).")
-            m = _grav_hydro_mass(hydro_data, mask)
+            m = cell_mass()
             epot = select(masked_data, :epot)
             vars_dict[:total_binding_energy] = @. -m * epot * selected_unit
 
@@ -348,7 +388,7 @@ function get_data(dataobject::GravDataType,
             has_hydro || error("`:$i` is mass times acceleration, so it needs the cell mass. " *
                                "Call getvar(gravity, hydro, :$i), or projection(gravity, hydro, :$i). " *
                                "Either object order works in both.")
-            m = _grav_hydro_mass(hydro_data, mask)
+            m = cell_mass()
             a = getvar(dataobject, _GRAV_FORCE_FROM_ACCEL[i], center=center, mask=mask)
             vars_dict[i] = @. m * a * selected_unit
 
@@ -358,7 +398,7 @@ function get_data(dataobject::GravDataType,
             has_hydro || error("`:$i` is mass times acceleration, so it needs the cell mass. " *
                                "Call getvar(gravity, hydro, :$i), or projection(gravity, hydro, :$i). " *
                                "Either object order works in both.")
-            m = _grav_hydro_mass(hydro_data, mask)
+            m = cell_mass()
             if i === :Fg
                 ax = select(masked_data, :ax); ay = select(masked_data, :ay); az = select(masked_data, :az)
                 vars_dict[:Fg] = @. m * sqrt(ax^2 + ay^2 + az^2) * selected_unit
@@ -394,7 +434,17 @@ function get_data(dataobject::GravDataType,
                     error("Variable :$i not found in gravity data and could not be retrieved from hydro data. Error: $e")
                 end
             else
-                error("Variable :$i not found in gravity data. Consider providing hydro_data keyword argument to access hydro variables")
+                # `:mass` is the common case, because it is the default weight of profile, pdf
+                # and phase, and gravity carries no density. Those three do not accept `hydro_data`,
+                # so naming it here would cause a MethodError. `weight=:volume` is the fix that
+                # works for them; `hydro_data` is a getvar keyword and is offered as such.
+                extra = i === :mass ?
+                    " Gravity has no density, so there is no cell mass on this object. `profile`, " *
+                    "`pdf` and `phase` weight by `:mass` unless told otherwise: pass " *
+                    "`weight=:volume` to use the cells instead." : ""
+                error("Variable :$i is not in the gravity data.$extra For `getvar` you can borrow " *
+                      "a hydro column by passing `hydro_data=gethydro(info)` loaded over the same " *
+                      "cells.")
             end
         end
 

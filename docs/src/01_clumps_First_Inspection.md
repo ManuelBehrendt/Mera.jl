@@ -557,3 +557,7 @@ Now that you understand clump data fundamentals, you can explore:
 - **Multi-physics analysis**: Combining clump data with hydro, particle, and gravity data
 - **Statistical analysis**: Advanced statistical methods for clump population studies
 - **Performance optimization**: Advanced techniques for large-scale clump data processing
+
+---
+
+**The same steps on the other data types:** [Hydro](01_hydro_First_Inspection.md) · [Gravity](01_gravity_First_Inspection.md) · [Particles](01_particles_First_Inspection.md) · [Sinks](01_sinks_First_Inspection.md) · [RT](01_rt_First_Inspection.md)

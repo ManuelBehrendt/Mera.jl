@@ -30,13 +30,16 @@ function subregioncuboid(dataobject::SinkDataType;
         center::CenterType=[0., 0., 0.],
         range_unit::Symbol=:standard,
         inverse::Bool=false,
+        periodic=false,
         verbose::Bool=verbose_mode)
 
     printtime("", verbose)
+    bflags = _periodic_flags(periodic)
 
     boxlen = dataobject.boxlen
-    ranges = prepranges(dataobject.info, range_unit, verbose, xrange, yrange, zrange, center)
-    xmin, xmax, ymin, ymax, zmin, zmax = ranges
+    ranges, ranges_raw = prepranges(dataobject.info, range_unit, verbose,
+                                    xrange, yrange, zrange, center; unclamped=true)
+    xmin, xmax, ymin, ymax, zmin, zmax = any(bflags) ? ranges_raw : ranges
 
     # all-missing means "the whole box": nothing to select, hand back the object untouched
     if xrange[1] === missing && xrange[2] === missing &&
@@ -47,20 +50,14 @@ function subregioncuboid(dataobject::SinkDataType;
 
     if inverse == false
         sub_data = _subset_table(dataobject.data,
-                       _mask_rows(dataobject.data, (c, i) -> c.x[i] >= xmin * boxlen &&
-                                                             c.x[i] <= xmax * boxlen &&
-                                                             c.y[i] >= ymin * boxlen &&
-                                                             c.y[i] <= ymax * boxlen &&
-                                                             c.z[i] >= zmin * boxlen &&
-                                                             c.z[i] <= zmax * boxlen))
+                       _mask_rows(dataobject.data, (c, i) -> _axis_in_range(c.x[i], xmin, xmax, boxlen, bflags[1]) &&
+                                                             _axis_in_range(c.y[i], ymin, ymax, boxlen, bflags[2]) &&
+                                                             _axis_in_range(c.z[i], zmin, zmax, boxlen, bflags[3])))
     else
         sub_data = _subset_table(dataobject.data,
-                       _mask_rows(dataobject.data, (c, i) -> (c.x[i] < xmin * boxlen  ||
-                                                              c.x[i] > xmax * boxlen) ||
-                                                             (c.y[i] < ymin * boxlen  ||
-                                                              c.y[i] > ymax * boxlen) ||
-                                                             (c.z[i] < zmin * boxlen  ||
-                                                              c.z[i] > zmax * boxlen)))
+                       _mask_rows(dataobject.data, (c, i) -> !_axis_in_range(c.x[i], xmin, xmax, boxlen, bflags[1]) ||
+                                                             !_axis_in_range(c.y[i], ymin, ymax, boxlen, bflags[2]) ||
+                                                             !_axis_in_range(c.z[i], zmin, zmax, boxlen, bflags[3])))
         ranges = dataobject.ranges
     end
 
@@ -78,7 +75,9 @@ function subregioncylinder(dataobject::SinkDataType;
         range_unit::Symbol=:standard,
         direction::Symbol=:z,
         inverse::Bool=false,
-        verbose::Bool=verbose_mode)
+        periodic=false,
+                            verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -93,8 +92,8 @@ function subregioncylinder(dataobject::SinkDataType;
     ranges, cx_shift, cy_shift, cz_shift, radius_shift, height_shift =
         prepranges(dataobject.info, center, radius, height, range_unit, verbose)
 
-    inside(c, i) = sqrt((c.x[i] - cx_shift*boxlen)^2 +
-                        (c.y[i] - cy_shift*boxlen)^2) <= radius_shift*boxlen &&
+    inside(c, i) = sqrt(_pdiff(c.x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                        _pdiff(c.y[i] - cy_shift*boxlen, boxlen, pflags[2])^2) <= radius_shift*boxlen &&
                    abs(c.z[i] - cz_shift*boxlen) <= height_shift*boxlen
 
     if inverse == false
@@ -116,7 +115,9 @@ function subregionsphere(dataobject::SinkDataType;
         center::CenterType=[0., 0., 0.],
         range_unit::Symbol=:standard,
         inverse::Bool=false,
-        verbose::Bool=verbose_mode)
+        periodic=false,
+                            verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -131,9 +132,9 @@ function subregionsphere(dataobject::SinkDataType;
     ranges, cx_shift, cy_shift, cz_shift, radius_shift =
         prepranges(dataobject.info, center, radius, height, range_unit, verbose)
 
-    inside(c, i) = sqrt((c.x[i] - cx_shift*boxlen)^2 +
-                        (c.y[i] - cy_shift*boxlen)^2 +
-                        (c.z[i] - cz_shift*boxlen)^2) <= radius_shift*boxlen
+    inside(c, i) = sqrt(_pdiff(c.x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                        _pdiff(c.y[i] - cy_shift*boxlen, boxlen, pflags[2])^2 +
+                        _pdiff(c.z[i] - cz_shift*boxlen, boxlen, pflags[3])^2) <= radius_shift*boxlen
 
     if inverse == false
         sub_data = _subset_table(dataobject.data, _mask_rows(dataobject.data, inside))

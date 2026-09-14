@@ -162,6 +162,11 @@ For radial density profiles and any other composable cards, use [`report`](@ref)
 of this first look: `report(output)` runs a default card trio (map, phase, **radial profile**), and you
 can add/replace cards (projections, phases, profiles, SFR, scalars, …) and render to ascii / plot /
 JLD2 / file.
+
+Not a replacement for [`getinfo`](@ref). With `read=false` the two report much the same header facts,
+but `getinfo` returns the `InfoType` that `gethydro`, `getparticles` and the other readers require, so
+it is what a script calls. `quicklook` returns a `QuickLookResult` and is what you call on a directory
+you have not seen before.
 """
 function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                    read::Bool=true, res::Int=256, lmax=nothing, particle_subsample::Real=1.0,

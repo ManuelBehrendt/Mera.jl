@@ -479,4 +479,235 @@ end
 Mera._plot_overview(d::Mera.DataSetType; kwargs...) =
     error("overviewplot: no visual overview defined for $(typeof(d)) — supported: HydroDataType, GravDataType, PartDataType.")
 
+# ── benchmark_report figure (Mera.benchmarkplot) ─────────────────────────────────────────────
+# One picture for a whole benchmark run. Panels are added only for the stages that ran, so a
+# storage-only run gives one panel rather than three empty ones.
+
+# Speedup against threads, with perfect scaling drawn as the diagonal. The gap between
+# the diagonal and the measurement is the whole point: it shows at a glance how much of
+# each added thread is actually being converted into speed.
+function _bench_speedup!(ax, sw)
+    t = Float64.(sw.threads)
+
+    # perfect scaling, and the region lost to it
+    Makie.lines!(ax, t, t, color=(:grey40, 0.9), linestyle=:dash, label="ideal (100%)")
+    Makie.band!(ax, t, Float64.(sw.speedup), t, color=(:grey70, 0.18))
+
+    # what Amdahl says this code can ever reach, given the serial fraction measured
+    if isfinite(sw.max_speedup)
+        p = sw.parallel_fraction
+        fine = range(minimum(t), maximum(t), length=100)
+        Makie.lines!(ax, fine, [1 / ((1 - p) + p / n) for n in fine],
+                     color=:indianred, linestyle=:dot,
+                     label="Amdahl fit (p=$(round(p, digits=2)))")
+        Makie.hlines!(ax, [sw.max_speedup], color=(:indianred, 0.5), linestyle=:dashdot,
+                      label="ceiling $(round(sw.max_speedup, digits=2))x")
+    end
+
+    Makie.lines!(ax, t, Float64.(sw.speedup), color=:steelblue)
+    Makie.scatter!(ax, t, Float64.(sw.speedup), color=:steelblue, markersize=10,
+                   label="measured")
+
+    ib = findfirst(==(sw.best), sw.threads)
+    is = findfirst(==(sw.sweet_spot), sw.threads)
+    ib !== nothing && Makie.scatter!(ax, [t[ib]], [sw.speedup[ib]], color=:seagreen,
+                                     markersize=18, marker=:star5, label="fastest ($(sw.best))")
+    is !== nothing && sw.sweet_spot != sw.best &&
+        Makie.scatter!(ax, [t[is]], [sw.speedup[is]], color=:darkorange,
+                       markersize=15, marker=:diamond, label="sweet spot ($(sw.sweet_spot))")
+    Makie.axislegend(ax, position=:lt, framevisible=true, labelsize=8,
+                     backgroundcolor=(:white, 0.75), padding=(4, 4, 2, 2),
+                     rowgap=0, patchsize=(14, 8))
+end
+
+# Efficiency is the same information stated as "what fraction of each thread is doing
+# useful work", which is the number that tells you when to stop adding them.
+function _bench_efficiency!(ax, sw)
+    t = Float64.(sw.threads)
+    eff = 100 .* Float64.(sw.efficiency)
+    Makie.hlines!(ax, [100.0], color=(:grey40, 0.9), linestyle=:dash)
+    Makie.text!(ax, last(t), 100, text="perfect ", align=(:right, :bottom),
+                fontsize=9, color=:grey40, offset=(0, 2))
+    Makie.barplot!(ax, t, eff, color=[e >= 50 ? :seagreen : e >= 25 ? :goldenrod : :indianred
+                                      for e in eff], width=t .* 0.5)
+    for (x, e) in zip(t, eff)
+        Makie.text!(ax, x, e, text=string(round(Int, e), "%"), align=(:center, :bottom),
+                    fontsize=9, offset=(0, 3))
+    end
+    Makie.ylims!(ax, 0, 118)
+end
+
+# Read time with the spread across repeats, so a noisy node is visible rather than hidden.
+# The marker is the MINIMUM, which is the estimate reported everywhere else, so the bar can
+# only ever extend upward from it. That is not an asymmetric error bar: it is the fastest
+# run, with a whisker reaching the slowest. The title says so, because a one-sided bar
+# otherwise reads as a plotting bug.
+function _bench_sweep!(ax, sw)
+    t = Float64.(sw.threads)
+    if hasproperty(sw, :all_runs) && sw.runs > 1
+        lo = [minimum(r) for r in sw.all_runs]
+        hi = [maximum(r) for r in sw.all_runs]
+        Makie.rangebars!(ax, t, lo, hi, color=:steelblue, whiskerwidth=8)
+    end
+    Makie.lines!(ax, t, sw.times, color=:steelblue)
+    Makie.scatter!(ax, t, sw.times, color=:steelblue, markersize=10)
+    ib = findfirst(==(sw.best), sw.threads)
+    ib !== nothing && Makie.scatter!(ax, [t[ib]], [sw.times[ib]], color=:seagreen,
+                                     markersize=18, marker=:star5)
+end
+
+# Pick one unit for the pair from the larger value, so a small fixture does not print
+# "0.0 GB" and a large one does not print six digits of MB.
+function _byte_unit(maxv)
+    maxv >= 1024^3 && return (1024^3, "GB", 2)
+    maxv >= 1024^2 && return (1024^2, "MB", 1)
+    return (1024.0, "KB", 1)
+end
+_time_unit(maxv) = maxv >= 1 ? (1.0, "s", 2) : (1e-3, "ms", 1)
+
+# Bars with the value written above each one. Makie autoscales to the data, so a label
+# drawn at the bar top lands outside the axis; the explicit headroom keeps it visible.
+function _bench_bars!(ax, vals, labels, div, unit, digits, title)
+    scaled = vals ./ div
+    Makie.barplot!(ax, 1:length(scaled), scaled, color=[:indianred, :seagreen], width=0.6)
+    for (i, v) in enumerate(scaled)
+        Makie.text!(ax, i, v, text=string(round(v, digits=digits), " ", unit),
+                    align=(:center, :bottom), fontsize=11, offset=(0, 4))
+    end
+    ax.xticks = (1:length(scaled), labels)
+    Makie.ylims!(ax, 0, maximum(scaled) * 1.18)
+    ax.ylabel = unit
+    isempty(title) || (ax.title = title)
+end
+
+const _BENCH_LBL = ["RAMSES", "MERA file"]
+
+function _bench_readtime!(ax, c)
+    v = [c.read_time, c.warm_read]
+    d, u, n = _time_unit(maximum(v))
+    _bench_bars!(ax, v, _BENCH_LBL, d, u, n,
+                 c.warm_read > 0 ? "Read time: $(round(c.read_time/c.warm_read, digits=1))x faster" : "")
+end
+
+function _bench_memory!(ax, c)
+    v = [c.ramses_allocated, c.mera_allocated]
+    d, u, n = _byte_unit(maximum(v))
+    _bench_bars!(ax, v, _BENCH_LBL, d, u, n,
+                 c.mera_allocated > 0 ? "Memory churned: $(round(c.ramses_allocated/c.mera_allocated, digits=1))x less" : "")
+end
+
+function _bench_disk!(ax, c)
+    v = [c.size_ramses, c.size_mera]
+    d, u, n = _byte_unit(maximum(v))
+    _bench_bars!(ax, v, _BENCH_LBL, d, u, n,
+                 c.size_ramses > 0 ? "On disk: $(round(Int, 100*(1 - c.size_mera/c.size_ramses)))% smaller" : "")
+end
+
+function _bench_iops!(ax, st)
+    ks = sort(collect(keys(st.iops.stats)))
+    ys = [st.iops.stats[k][1] for k in ks]
+    Makie.lines!(ax, ks, ys, color=:purple)
+    Makie.scatter!(ax, ks, ys, color=:purple, markersize=10)
+end
+
+function Mera._plot_benchmark_report(r::Mera.BenchmarkReport; size=(1000, 760))
+    panels = Any[]
+    r.sweep      !== nothing && append!(panels, [:speedup, :efficiency, :sweep])
+    r.conversion !== nothing && append!(panels, [:readtime, :memory, :disk])
+    r.storage    !== nothing && push!(panels, :iops)
+    isempty(panels) && error("nothing to plot: the report has no completed stages.")
+
+    ncols = length(panels) <= 2 ? length(panels) : 2
+    nrows = cld(length(panels), ncols)
+    fig = Makie.Figure(size=size)
+
+    for (i, p) in enumerate(panels)
+        row, col = fldmod1(i, ncols)
+        if p === :speedup
+            ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="speedup",
+                            title="Does threading pay? (:$(r.sweep.component))",
+                            xscale=Makie.log2)
+            ax.xticks = (Float64.(r.sweep.threads), string.(r.sweep.threads))
+            _bench_speedup!(ax, r.sweep)
+        elseif p === :efficiency
+            ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="efficiency [%]",
+                            title="Work per thread", xscale=Makie.log2)
+            ax.xticks = (Float64.(r.sweep.threads), string.(r.sweep.threads))
+            _bench_efficiency!(ax, r.sweep)
+        elseif p === :sweep
+            ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="read time [s]",
+                            title="Read time" * (r.sweep.runs > 1 ?
+                                    " (fastest of $(r.sweep.runs), bar to slowest)" : ""),
+                            xscale=Makie.log2)
+            ax.xticks = (Float64.(r.sweep.threads), string.(r.sweep.threads))
+            _bench_sweep!(ax, r.sweep)
+        elseif p === :readtime
+            ax = Makie.Axis(fig[row, col], ylabel="time [s]")
+            _bench_readtime!(ax, r.conversion)
+        elseif p === :memory
+            ax = Makie.Axis(fig[row, col], ylabel="allocated [MB]")
+            _bench_memory!(ax, r.conversion)
+        elseif p === :disk
+            ax = Makie.Axis(fig[row, col], ylabel="size [GB]")
+            _bench_disk!(ax, r.conversion)
+        elseif p === :iops
+            ax = Makie.Axis(fig[row, col], xlabel="threads", ylabel="IOPS",
+                            title="Storage scaling", xscale=Makie.log2)
+            ks = sort(collect(keys(r.storage.iops.stats)))
+            ax.xticks = (Float64.(ks), string.(ks))
+            _bench_iops!(ax, r.storage)
+        end
+    end
+
+    Makie.Label(fig[0, :],
+        "Mera benchmark: $(r.info.ncpu) CPU files, $(r.nfiles_total) files, " *
+        "$(Mera._fmt_bytes(r.bytes)) on $(isempty(r.filesystem.type) ? "unknown fs" : r.filesystem.type)",
+        fontsize=14, font=:bold)
+    return fig
+end
+
+# ── level series (Mera.levelsplot) ───────────────────────────────────────────────────────────
+function Mera._plot_levels(reports::AbstractVector; size=(1000, 700))
+    lv  = [r.lmax for r in reports]
+    fig = Makie.Figure(size=size)
+
+    ax1 = Makie.Axis(fig[1, 1], xlabel="lmax", ylabel="read time [s]", yscale=log10,
+                     title="Read time")
+    Makie.lines!(ax1, lv, [r.ramses for r in reports], color=:indianred)
+    Makie.scatter!(ax1, lv, [r.ramses for r in reports], color=:indianred, label="RAMSES")
+    Makie.lines!(ax1, lv, [r.mera for r in reports], color=:seagreen)
+    Makie.scatter!(ax1, lv, [r.mera for r in reports], color=:seagreen, label="MERA file")
+    Makie.axislegend(ax1, position=:lt, framevisible=false, labelsize=9)
+
+    ax2 = Makie.Axis(fig[1, 2], xlabel="lmax", ylabel="times faster", yscale=log10,
+                     title="Re-read speedup")
+    sp = [r.ramses / r.mera for r in reports]
+    Makie.lines!(ax2, lv, sp, color=:steelblue)
+    Makie.scatter!(ax2, lv, sp, color=:steelblue, markersize=10)
+    for (x, y) in zip(lv, sp)
+        Makie.text!(ax2, x, y, text=string(round(Int, y), "x"), fontsize=9,
+                    align=(:center, :bottom), offset=(0, 5))
+    end
+    # headroom for the label above the highest point, which the autoscale clips
+    Makie.ylims!(ax2, minimum(sp) * 0.8, maximum(sp) * 1.6)
+
+    ax3 = Makie.Axis(fig[2, 1], xlabel="lmax", ylabel="allocated [GB]", yscale=log10,
+                     title="Memory churned to load the same data")
+    Makie.lines!(ax3, lv, [r.alloc_r/1024^3 for r in reports], color=:indianred)
+    Makie.scatter!(ax3, lv, [r.alloc_r/1024^3 for r in reports], color=:indianred, label="RAMSES")
+    Makie.lines!(ax3, lv, [r.alloc_m/1024^3 for r in reports], color=:seagreen)
+    Makie.scatter!(ax3, lv, [r.alloc_m/1024^3 for r in reports], color=:seagreen, label="MERA file")
+    Makie.axislegend(ax3, position=:lt, framevisible=false, labelsize=9)
+
+    ax4 = Makie.Axis(fig[2, 2], xlabel="lmax", ylabel="MERA file [GB]",
+                     title="What the converted file costs on disk")
+    Makie.barplot!(ax4, lv, [r.size_mera/1024^3 for r in reports], color=:seagreen, width=0.6)
+
+    for ax in (ax1, ax2, ax3, ax4)
+        ax.xticks = (Float64.(lv), string.(Int.(lv)))
+    end
+    Makie.Label(fig[0, :], "Cost against refinement level", fontsize=15, font=:bold)
+    return fig
+end
+
 end # module

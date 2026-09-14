@@ -71,8 +71,8 @@ info = getinfo(80, "$MERA_EXAMPLES/RAMSES/yt_cosmo");
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-08-31T13:57:13.132
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[Mera]: 2026-09-10T10:08:43.319
 Code: RAMSES
 output [80] summary:
 mtime: 2012-08-13T16:51:06
@@ -104,6 +104,7 @@ particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 rt:            false
 clumps:           false
 namelist-file:    false
+boundaries:       unknown (no namelist; not recorded in info_*.txt)
 timer-file:       false
 compilation-file: false
 makefile:         false
@@ -189,17 +190,17 @@ ages  = getvar(particles, :age, :Gyr)
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-31T13:57:18.931
-Using threaded processing with 4 threads
+[Mera]: Get particle data: 2026-09-10T10:08:47.944
+Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
-Processing 16 CPU files using 4 threads
+Processing 16 CPU files using 8 threads
 Mode: Threaded processing
-Combining results from 4 thread(s)...
+Combining results from 8 thread(s)...
 Found 1.090895e+06 particles
 Memory used for data table :74.9068775177002 MB
 -------------------------------------------------------
@@ -263,7 +264,7 @@ delta = getvar(gas, :overdensity)
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-31T13:57:32.256
+[Mera]: Get hydro data: 2026-09-10T10:08:59.467
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
 domain:
@@ -273,19 +274,19 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 📊 Processing Configuration:
    Total CPU files available: 16
    Files to be processed: 16
-   Compute threads: 4
-   GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 (67.21 ms/it)
+   Compute threads: 8
+   GC threads: 8
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 (70.20 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1749455 cells, 6 variables
-Creating Table from 1749455 cells with max 4 threads...
-  Threading: 4 threads for 10 columns
-  Max threads requested: 4
-  Available threads: 4
-  Using parallel processing with 4 threads
+Creating Table from 1749455 cells with max 8 threads...
+  Threading: 8 threads for 10 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
   Creating IndexedTable with 10 columns...
-✓ Table created in 0.737 seconds
+✓ Table created in 0.661 seconds
 Memory used for data table :133.47387886047363 MB
 -------------------------------------------------------
 ```
@@ -348,3 +349,67 @@ and the `omega_*` parameters, which every `InfoType`, and therefore every
 | `getvar(hydro, :overdensity)` | gas overdensity `ρ/ρ̄_b − 1` |
 | `mean_matter_density`, `mean_baryon_density` | mean proper densities at z |
 | `comoving_to_proper_*`, `proper_to_comoving_*` | frame conversion |
+
+## Times, ages and background densities
+
+The Friedmann table behind `getinfo` answers the ordinary cosmological questions directly, so you
+do not have to reimplement them.
+
+!!! warning "These take the scale factor, not the redshift"
+    `cosmic_time(info, a)` and `lookback_time(info, a)` expect **`a`**, not `z`. Passing a redshift
+    silently returns a number rather than an error, because `a > 1` is simply the future. Convert
+    with `a = 1/(1+z)`.
+
+```julia
+a(z) = 1 / (1 + z)                       # redshift to scale factor
+
+println("age of the universe now : ", round(age_of_universe(info), digits=3), " Gyr")
+for z in (0.0, 1.0, 2.0, 6.0)
+    t  = cosmic_time(info, a(z))
+    lb = lookback_time(info, a(z))
+    println("  z = ", rpad(z, 4),
+            "  cosmic time ", rpad(round(t, digits=3), 6), " Gyr",
+            "  lookback ", round(lb, digits=3), " Gyr")
+end
+
+println()
+println("critical density    : ", round(critical_density(info), sigdigits=4), " g/cm^3")
+println("mean matter density : ", round(mean_matter_density(info), sigdigits=4), " g/cm^3")
+```
+
+```
+age of the universe now : 13.724 Gyr
+  z = 0.0   cosmic time 13.724 Gyr  lookback 0.0 Gyr
+  z = 1.0   cosmic time 5.941  Gyr  lookback 7.782 Gyr
+  z = 2.0   cosmic time 3.344  Gyr  lookback 10.38 Gyr
+  z = 6.0   cosmic time 0.952  Gyr  lookback 12.772 Gyr
+critical density    : 1.0539999999999999e-29 g/cm^3
+mean matter density : 3.821e-30 g/cm^3
+```
+
+### When each star formed
+
+`stellar_age` and `formation_redshift` take `info` and the raw `:birth` column, the super-conformal
+time RAMSES writes, and convert it through the same table. `getvar(part, :age)` uses `stellar_age`
+internally, so the two agree by construction.
+
+```julia
+part  = getparticles(info, verbose=false, show_progress=false)
+birth = getvar(part, :birth)
+star  = birth .!= 0.0                     # the RAMSES sentinel: non-stars have birth == 0
+
+ages = stellar_age(info, birth, unit=:Myr)
+zf   = formation_redshift(info, birth)
+
+println("stars: ", count(star))
+println("  age at formation [Myr] : ", round.(ages[star][1:3], digits=1))
+println("  formation redshift     : ", round.(zf[star][1:3], digits=3))
+println("  oldest star            : ", round(maximum(ages[star]) / 1000, digits=2), " Gyr")
+```
+
+```
+stars: 31990
+  age at formation [Myr] : [10567.0, 9711.9, 10457.0]
+  formation redshift     : [4.518, 2.973, 4.237]
+  oldest star            : 11.23 Gyr
+```

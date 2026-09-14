@@ -41,36 +41,55 @@ JULIA_NUM_THREADS=4 julia --project -e 'using Pkg; Pkg.test("Mera"; coverage=tru
 
 ### Test Structure
 
-The test suite is organized into named groups (see `test/runtests.jl`):
+The suite is tiered, and the tier decides whether you need simulation data:
 
-| Group | Focus | Files |
-|-------|-------|-------|
-| Quality & Fundamentals | Aqua / units / type system (data-independent) | `01_aqua_quality.jl`, `02_unit_system.jl`, `22_types_tests.jl` |
-| Core Functionality | Data readers, basic calculations, derived variables | `03_data_readers.jl`, `04_basic_calculations.jl`, `05_derived_variables.jl` |
-| Analysis Functions | Projections and region selection | `06_projections.jl`, `07_regions.jl` |
-| Scientific Validation | Physics formulas, contracts, determinism | `08_physics_and_contracts.jl`, `09_determinism.jl` |
-| I/O and Integration | Save/load, error paths, cross-step workflows | `10_io_export.jl`, `11_error_handling.jl`, `12_integration_workflows.jl` |
-| Utilities & Notifications | Overview helpers + Zulip/email stack | `13_additional_coverage.jl`, `14_io_notifications.jl` |
-| Clumps | Clump readers and operations | `20_clump_tests.jl` |
-| Untested API Surfaces | Gravity/particle `getvar` variants, region edge cases | `21_untested_surfaces_tests.jl` |
-| VTK Export | VTK file export | `19_vtk_export_tests.jl` |
-| Filter Macros | `@filter` macro on hydro/particles | `25_filter_macro_tests.jl` |
-| I/O Configuration | Server-side tuning recommendations | `26_io_config_tests.jl` |
-| Data Conversion | `convertdata`, `batch_convert_mera` | `27_data_conversion_tests.jl` |
-| Extended Coverage | Additional helper / overview coverage | `28_coverage_boost_tests.jl` |
-| Parallel Execution | Parallel vs. serial equivalence (`julia -t 4`) | `29_parallel_execution_tests.jl` |
+| tier | what it is | data needed | runtime |
+|---|---|---|---|
+| **1, data-free** | analytic oracles, kernels, package hygiene (Aqua), unit scales, type system, reader contracts, IO layer | none | ~2.5 min |
+| **2, data-backed** | integration against real RAMSES output: readers, projections, regions, conservation, round-trips | `MERA_TEST_DATA` | ~18 min |
+
+Tier 1 is the one that matters for a pull request: it runs anywhere, and it holds every analytic
+correctness check. CI runs only tier 1, on Julia 1.10 / 1.11 / 1.12 across Linux, macOS and Windows.
+
+**[`test/README.md`](test/README.md) is the authoritative map**: which file proves what, which
+simulation backs which test, and every `MERA_*` environment variable. It is kept in step with the
+suite, so this page deliberately does not repeat the file list.
+
+To run one file in isolation while you work:
+
+```bash
+MERA_FOCUS=06_projections.jl julia --project -e 'using Pkg; Pkg.test("Mera")'
+```
 
 ### Test Data Requirements
 
-Full test coverage requires RAMSES simulation data. The test suite gracefully handles missing data:
+You do not need simulation data to contribute. With none present, the data-backed tier is detected,
+announced and skipped, and the run still passes; it is never an error and never a hang.
 
-- **With simulation data**: All tests run with full validation
-- **Without simulation data**: Tests skip data-dependent sections with informative messages
+If you do want to run tier 2, Mera publishes a set of small public RAMSES fixtures, a few megabytes
+each, as a GitHub release. One command fetches them:
 
-For local comprehensive testing, simulation data should be available at:
+```bash
+testdata/fetch_fixtures.sh            # all of them
+testdata/fetch_fixtures.sh --small    # skip the largest, 117 MB total
 ```
-/Volumes/FASTStorage/Simulations/Mera-Tests
+
+It only downloads what is missing, and prints the resolved directory as its last line, so you can
+hand it straight to the suite:
+
+```bash
+export MERA_TEST_DATA="$(testdata/fetch_fixtures.sh --quiet)"
+julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
+
+Every fixture carries a known answer, either an analytic oracle that follows from its own setup
+(the Sedov blast radius grows as `t^(2/5)`, a divergence-free field keeps `Bx` constant, four blobs
+give four clumps) or reference values published by the RAMSES developers. So a failure points at
+Mera, not at an unverifiable dataset. [`testdata/README.md`](testdata/README.md) documents how each
+one is generated, from namelists committed to this repository.
+
+The tutorial pages in the documentation are a separate matter: they analyse research-scale
+simulations that are not distributed, and are meant to be read and adapted rather than run.
 
 ## Code Style
 

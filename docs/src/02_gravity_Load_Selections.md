@@ -973,3 +973,7 @@ This notebook demonstrated comprehensive gravitational field data selection tech
 - **Coordinate Shortcuts:** Using box center notation for simplified gravitational field positioning
 - **Quality Assurance:** Verifying loaded field data ranges and component consistency
 - **Multi-Physics Integration:** Preparing gravity data for combined hydro-gravity analysis
+
+---
+
+**The same steps on the other data types:** [Hydro](02_hydro_Load_Selections.md) · [Particles](02_particles_Load_Selections.md) · [Clumps](02_clumps_Load_Selections.md) · [Sinks](02_sinks_Load_Selections.md)

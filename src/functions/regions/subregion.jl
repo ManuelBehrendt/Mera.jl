@@ -21,6 +21,7 @@ subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
             range_unit::Symbol=:standard,           # all
             cell::Bool=true,                        # hydro, gravity and RT (AMR cell data)
             inverse::Bool=false,                    # all
+    periodic=false,                         # all
             verbose::Bool=true,             # all
             myargs::ArgumentsType=ArgumentsType() ) # all
 ```
@@ -73,8 +74,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
     range_unit::Symbol=:standard,           # all
     cell::Bool=true,                        # hydro, gravity and RT (AMR cell data)
     inverse::Bool=false,                    # all
-    smooth_boundary::Bool=false,            # hydro cylinder only
-    boundary_width::Real=0.1,               # hydro cylinder only
+    periodic=false,                         # all
     verbose::Bool=true,             # all
     myargs::ArgumentsType=ArgumentsType() ) # all
 
@@ -109,6 +109,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                         range_unit=range_unit,
                         cell=cell,
                         inverse=inverse,
+                        periodic=periodic,
                         verbose=verbose)
         else
             return subregioncuboid(dataobject,
@@ -116,6 +117,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                         center=center,
                         range_unit=range_unit,
                         inverse=inverse,
+                        periodic=periodic,
                         verbose=verbose)
         end
 
@@ -123,8 +125,9 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
         # `direction` is not yet implemented in the cylinder filter (the radial test is always on x,y
         # and the height on z). Reject :x/:y rather than silently returning a z-oriented cylinder.
         direction === :z || error("subregion :cylinder currently supports only direction=:z; direction=:$(direction) is not implemented (it would silently return a z-oriented cylinder).")
-        if typeof(dataobject) == HydroDataType
-            # only the hydro cylinder filter implements the smooth-boundary kwargs
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType ||
+           typeof(dataobject) == RtDataType
+            # AMR cell data: forward `cell`. Particles/clumps/sinks are points and take no `cell`.
             return subregioncylinder(dataobject,
                             radius=radius,
                             height=height,
@@ -133,20 +136,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             direction=direction,
                             cell=cell,
                             inverse=inverse,
-                            smooth_boundary=smooth_boundary,
-                            boundary_width=boundary_width,
-                            verbose=verbose)
-        elseif typeof(dataobject) == GravDataType || typeof(dataobject) == RtDataType
-            # gravity/RT are AMR cells (accept `cell`) but do NOT take smooth_boundary — passing it
-            # here previously raised a MethodError, so cylinder subregions never worked for them.
-            return subregioncylinder(dataobject,
-                            radius=radius,
-                            height=height,
-                            center=center,
-                            range_unit=range_unit,
-                            direction=direction,
-                            cell=cell,
-                            inverse=inverse,
+                        periodic=periodic,
                             verbose=verbose)
         else
             return subregioncylinder(dataobject,
@@ -156,6 +146,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             range_unit=range_unit,
                             direction=direction,
                             inverse=inverse,
+                        periodic=periodic,
                             verbose=verbose)
         end
 
@@ -168,6 +159,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             range_unit=range_unit,
                             cell=cell,
                             inverse=inverse,
+                        periodic=periodic,
                             verbose=verbose)
         else
             return subregionsphere(dataobject,
@@ -175,6 +167,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             center=center,
                             range_unit=range_unit,
                             inverse=inverse,
+                        periodic=periodic,
                             verbose=verbose)
         end
     end

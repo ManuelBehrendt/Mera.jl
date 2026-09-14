@@ -6,6 +6,7 @@
 # analytic volumes on a full uniform grid built by synthetic_clumps (no simulation data).
 # ==============================================================================
 
+using IndexedTables   # used below; do not rely on another test file importing it
 @testset verbose=true "region algebra — exact cell splitting (data-free)" begin
     # full uniform 32³ grid in a 1 kpc box (background=:galaxy populates every cell; the
     # density field is irrelevant for the geometric volume tests).

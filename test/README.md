@@ -2,12 +2,12 @@
 
 This page explains how the suite is organised, what each tier proves, and which simulation data
 backs which test — so that a reader (or a reviewer) can tell what has actually been verified
-without reading 60 test files.
+without reading 66 test files.
 
 ## Quick start
 
 ```bash
-# 1. What everyone can run: no simulation data needed, ~2.5 minutes
+# 1. What everyone can run: no simulation data needed, under 2 minutes
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 
 # 2. Same thing, forced (what CI runs on every push)
@@ -21,13 +21,25 @@ Form 1 is the important one: **the suite runs and passes with no simulation data
 data is detected (`DATA_AVAILABLE = isdir(SIMULATION_PATH)`), announced with a banner, and the
 data-backed tier is skipped — it is never an error and never a hang.
 
+Form 3 is run on one configuration: **Julia 1.12 on macOS (Apple Silicon)**, with the fixtures on
+an external drive. CI never runs it (`MERA_SMOKE_ONLY=1`), so a regression that appears only on
+Linux or Windows *with real data* would not be caught by either.
+
+Measured on 2026-08-31, Julia 1.12 on macOS:
+
 | run | assertions | wall time |
 |---|---|---|
-| no simulation data (form 1 or 2) | **1637 pass, 0 fail** | ~2m30s |
-| full local run, RAMSES data present | **5685 pass, 0 fail** | ~22 min |
+| no simulation data (form 1 or 2) | **1800 pass, 0 fail, 3 broken** | ~1m40s |
+| form 2 with the data present anyway | **2796 pass, 0 fail** | ~11 min |
+| full local run, RAMSES data present | **6394 pass, 0 fail, 3 broken** | ~18 min |
 
-So roughly 29 % of the suite is reproducible by anyone who clones the repository, and that 29 %
-deliberately includes every *analytic* correctness oracle — see Tier 1 below.
+The middle row is the one that surprises people: `MERA_SMOKE_ONLY=1` skips the data-backed tier,
+but several always-run files read whatever data they find, so the same tier costs far more on a
+machine where the simulations are mounted.
+
+So roughly 28 % of the suite is reproducible by anyone who clones the repository, and that 28 %
+deliberately includes every *analytic* correctness oracle, see Tier 1 below. The 3 broken are
+`@test_broken` markers for known gaps, not failures.
 
 ## The three tiers
 
@@ -56,7 +68,7 @@ Key files:
 
 | file | what it proves |
 |---|---|
-| `01_aqua_quality.jl` | package hygiene (Aqua): no method ambiguities, stale deps, undefined exports |
+| `01_aqua_quality.jl` | package hygiene, seven static Aqua checks ([what they are](#what-the-aqua-check-covers)) |
 | `02_unit_system.jl` | unit scales against external anchors, deliberately with `scale.kpc ≠ 1` |
 | `70_scales_complete_tests.jl` | every scale field is assigned; impossible unit/quantity pairs are rejected |
 | `42_kernel_oracle_tests.jl` | deposit / profile / phase kernels vs closed-form weighted statistics |
@@ -65,10 +77,41 @@ Key files:
 | `55_region_algebra_tests.jl` | composable regions + exact cell splitting vs analytic volumes |
 | `54_clumpfind_synthetic_tests.jl` | all finders scored against synthetic ground truth |
 | `75_mask_equivalence_tests.jl` | masking commutes with per-cell evaluation, on every data type |
+| `82_loadall_tests.jl` | `loadall` and `@loadall` must return exactly what `getinfo` plus the getters do |
+| `45_sfr_tests.jl` | star-formation history: binning conserves mass at any bin width, SN mass-loss correction |
+| `78_download_testdata_tests.jl` | the fixture fetcher: catalogue, on-disk layout, already-present short-circuit |
 | `22_types_tests.jl`, `69_config_tests.jl`, `65_io_coverage_tests.jl` | type system, config resolution, IO layer |
 
 `41` and `43` gate only their AMR-backed blocks, so they contribute their analytic assertions even
 with no data present.
+
+#### What the Aqua check covers
+
+`01_aqua_quality.jl` runs [Aqua.jl](https://github.com/JuliaTesting/Aqua.jl), which inspects the
+package *structurally*. It executes no Mera code paths, so it catches a different class of problem
+from every other file here: things that are wrong about the package rather than about the physics.
+
+| check | what a failure would mean |
+|---|---|
+| `test_undefined_exports` | a name in `export` that does not exist, so `using Mera` warns |
+| `test_unbound_args` | a method with a type parameter that cannot be inferred from its arguments |
+| `test_ambiguities` | two methods where Julia cannot decide which to call |
+| `test_project_extras` | `[extras]` and `[targets]` in `Project.toml` disagree |
+| `test_stale_deps` | a dependency declared but never loaded |
+| `test_deps_compat` | a dependency with no `[compat]` bound, so a breaking release can hit users |
+| `test_piracies` | a method defined on types Mera does not own, which can break unrelated packages |
+
+Three exemptions are deliberate, and they narrow what the badge in the top-level README asserts:
+
+```julia
+Aqua.test_ambiguities(Mera, recursive=false)          # Mera's own methods only, not its deps
+Aqua.test_stale_deps(Mera, ignore=[:PyPlot, :Aqua])   # PyPlot loads through an extension
+Aqua.test_deps_compat(Mera, ignore=[:Dates, :LinearAlgebra, :Pkg, :Printf, :Random,
+                                    :SparseArrays, :Statistics])   # stdlibs ship with Julia
+```
+
+`recursive=false` is the one to know about: ambiguities *introduced by a dependency* are not
+reported, only ambiguities among Mera's own methods.
 
 ### Tier 2 — data-backed: integration against real RAMSES output
 
@@ -102,19 +145,21 @@ oracle it is asserted against, and any trap worth knowing. They fall into four c
 **provenance** — which matters, because it determines what a failure means.
 
 **Getting them.** Nothing needs configuring by hand: the fixtures are published as assets on the
-`testdata-v1` release, and one script finds or fetches them.
+`testdata-v1` release. From Julia, `download_testdata()` fetches them and returns a directory that
+works as `MERA_TEST_DATA`. From a shell, one script finds or fetches them.
 
 ```bash
-./testdata/fetch_fixtures.sh --small     # ~130 MB: everything except the Bondi run
-./testdata/fetch_fixtures.sh             # everything, ~296 MB
+./testdata/fetch_fixtures.sh --small     # 117 MB: everything except the Bondi run
+./testdata/fetch_fixtures.sh             # everything, 282 MB
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
 It resolves in this order and downloads only as a last resort — `$MERA_TEST_DATA`, then the
 maintainer's external drive (override with `FIXTURE_EXTERNAL_ROOT`), then `testdata/fixtures/`
-inside this checkout, which is also where downloads land. Every archive is verified against the
-committed `testdata/SHA256SUMS` before it is unpacked. `test_config.jl` resolves the same three
-locations, so the suite finds whatever the script left.
+inside this checkout, which is also where downloads land. A damaged download already stops on its
+own: `curl -f` fails on a bad response and gzip carries its own CRC, so there is no checksum file to
+keep in step. `test_config.jl` resolves the same three locations, so the suite finds whatever the
+script left.
 
 The fixtures are release **assets**, not repository files: Mera is a registered package, so
 anything committed to the tree would be downloaded by every `Pkg.add("Mera")` and would remain in
@@ -148,9 +193,9 @@ earlier.
 
 ### 2. RAMSES's own test configurations, run unchanged
 
-Not ours. These are configurations from RAMSES's own test suite, run **without modification** so
-the `*-ref.dat` files the RAMSES developers validate their solver against apply directly. This is
-the strongest tier in the suite: the numbers being matched were published by someone else.
+These are configurations from RAMSES's own test suite, run **without modification** so the
+`*-ref.dat` files the RAMSES developers validate their solver against apply directly. This is the
+strongest tier in the suite, because the numbers being matched were published independently.
 
 | fixture | RAMSES test | reference quantities |
 |---|---|---|

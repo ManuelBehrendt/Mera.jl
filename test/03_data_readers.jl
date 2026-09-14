@@ -832,5 +832,60 @@ if @isdefined(DATASETS) && haskey(DATASETS, :ramses_mhd) && isdir(DATASETS[:rams
         @test getvar(gas,:pmag,:Ba)  ≈ getvar(gas,:p,:Ba) ./ beta   # P_mag in barye, cross-checked vs β
         @test all(isfinite, getvar(gas,:v_alfven,:km_s)) && all(isfinite, getvar(gas,:e_magnetic,:erg))
         @test info.scale.nG ≈ info.scale.Gauss * 1e9            # nanogauss unit (ScalesType003)
+
+        # magnetosonic speeds, which until now were only checked for being finite. The fast speed
+        # is √(cs²+v_A²) and the slow one the isotropic approximation cs·v_A/√(cs²+v_A²), so the
+        # three Mach numbers are ordered slow >= alfven >= fast at fixed v: a faster wave needs a
+        # faster flow to reach the same Mach number.
+        cs = getvar(gas, :cs); v = getvar(gas, :v)
+        @test getvar(gas, :mach_fast) ≈ v ./ sqrt.(cs.^2 .+ va.^2)
+        @test getvar(gas, :mach_slow) ≈ v ./ ((cs .* va) ./ sqrt.(cs.^2 .+ va.^2))
+        @test all(getvar(gas, :mach_fast) .<= getvar(gas, :mach_alfven) .+ 1e-12)
+        @test all(getvar(gas, :mach_alfven) .<= getvar(gas, :mach_slow) .+ 1e-12)
+
+        # :e_magnetic is extensive: it is built from :volume, so on a split sub-region it carries
+        # the boundary fraction like :mass does. Nothing pinned that, and a change to how the
+        # energy is assembled could drop it without any other test noticing.
+        R  = Sphere(0.3, center=[:bc], range_unit=:standard)
+        es = sum(getvar(subregion(gas, R, verbose=false),                :e_magnetic))
+        en = sum(getvar(subregion(gas, R, split=false, verbose=false),   :e_magnetic))
+        @test es != en                                   # the fraction reached the energy
+        @test isapprox(es, en; rtol=0.05)                # and it is a correction, not a rewrite
+        @test getvar(subregion(gas, R, verbose=false), :bmag) ==
+              getvar(subregion(gas, R, verbose=false), :bmag)   # |B| is intensive: never scaled
+    end
+end
+
+# -----------------------------------------------------------------------------
+# Binning an AMR grid: the bin count follows the COARSEST cell
+# -----------------------------------------------------------------------------
+# Asking for more bins than the coarse region can fill leaves bins with no cell
+# centre in them, and the profile returns NaN there. It is not a loading fault,
+# it is sampling a grid more finely than it exists. The magnetic-fields page
+# teaches this with these exact numbers, so pin them: if the binning changes,
+# the documented figures must be revisited rather than silently drift.
+if @isdefined(DATASETS) && haskey(DATASETS, :ramses_mhd_amr) && isdir(DATASETS[:ramses_mhd_amr].path)
+    @testset "AMR profile: empty bins when finer than the coarse grid" begin
+        ds   = DATASETS[:ramses_mhd_amr]
+        info = getinfo(ds.output, ds.path, verbose=false)
+        amr  = gethydro(info, verbose=false, show_progress=false)
+
+        empties(n) = count(isnan, profile(amr, :x, [:rho];
+                                          center=[:bc], nbins=n, weight=:volume).fields[:rho].mean)
+
+        @test empties(128) == 69      # coarse cells are 4 bins wide: 3 of every 4 bins are empty
+        @test empties(64)  == 20
+        @test empties(32)  == 0       # matches boxlen/2^levelmin, so every bin holds a cell
+
+        # the rule the page states: bins <= boxlen / coarsest cell size
+        nb_max = round(Int, info.boxlen / (info.boxlen / 2^info.levelmin))
+        @test nb_max == 32
+        @test empties(nb_max) == 0
+
+        # and the physics survives the binning: this is the same tube as the uniform run
+        m = profile(amr, :x, [:rho]; center=[:bc], nbins=nb_max, weight=:volume).fields[:rho].mean
+        @test all(isfinite, m)
+        @test maximum(m) ≈ 1.0 rtol=0.02        # the high-density side of the tube
+        @test minimum(m) < 0.25                 # and the low-density side
     end
 end

@@ -462,3 +462,110 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
         @test 0 < length(shp.data) < length(rt.data)
     end
 end
+
+# -----------------------------------------------------------------------------
+# An empty selection is legal, not an error
+# -----------------------------------------------------------------------------
+# A region can genuinely contain nothing: a sphere smaller than one cell, or a cut
+# that misses the data. Derived quantities are built by mapping over the rows, and
+# with no rows the element type is unknown, so this used to fail inside the table
+# machinery with a message about internal fields. Every cell type is checked,
+# because each has its own getvar file.
+if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
+    @testset "Empty region: derived quantities stay empty" begin
+        info = load_test_info(:spiral_clumps)
+        tiny = Sphere(1e-6, center=[:bc], range_unit=:standard)
+
+        for loader in (gethydro, getgravity)
+            d = loader(info, verbose=false, show_progress=false)
+            e = subregion(d, tiny, verbose=false)
+            @test length(e.data) == 0
+            @test isempty(getvar(e, :cellsize))
+            @test sum(getvar(e, :volume)) == 0.0
+        end
+
+        gas = gethydro(info, verbose=false, show_progress=false)
+        e   = subregion(gas, tiny, verbose=false)
+        @test msum(e, :Msol) == 0.0
+        @test isempty(getvar(e, :mass))
+    end
+end
+
+if haskey(DATASETS, :rt_stromgren) && isdir(DATASETS[:rt_stromgren].path)
+    @testset "Empty region: RT derived quantities stay empty" begin
+        ds   = DATASETS[:rt_stromgren]
+        info = getinfo(ds.output, ds.path, verbose=false)
+        rt   = getrt(info, verbose=false, show_progress=false)
+        e    = subregion(rt, Sphere(1e-6, center=[:bc], range_unit=:standard), verbose=false)
+        @test length(e.data) == 0
+        @test isempty(getvar(e, :cellsize))
+        @test sum(getvar(e, :volume)) == 0.0
+    end
+end
+
+# -----------------------------------------------------------------------------
+# Gravity energies take their mass from hydro: the two must be the same cells
+# -----------------------------------------------------------------------------
+# A potential is per unit mass, so an energy or a force needs the cell mass, which
+# lives on the hydro object. Pairing a mass with another cell's potential returns a
+# plausible wrong number, so the pairing is checked on the cell indices themselves
+# and not only on how many there are: two different cuts can hold the same count.
+if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
+    @testset "Gravity/hydro pairing is validated" begin
+        info = load_test_info(:spiral_clumps)
+        gas  = gethydro(info,   verbose=false, show_progress=false)
+        grav = getgravity(info, verbose=false, show_progress=false)
+        R    = Sphere(0.2, center=[:bc], range_unit=:standard)
+
+        # matching pair: works, and the boundary fraction is carried through
+        gs, hs = subregion(grav, R, verbose=false), subregion(gas, R, verbose=false)
+        be = sum(getvar(gs, hs, :total_binding_energy))
+        @test isfinite(be)
+        gn, hn = subregion(grav, R, split=false, verbose=false),
+                 subregion(gas,  R, split=false, verbose=false)
+        @test be != sum(getvar(gn, hn, :total_binding_energy))   # fraction reached the mass
+
+        # different sizes: refused by count
+        @test_throws ErrorException getvar(gs, gas, :total_binding_energy)
+
+        # same count, different cells: refused on the indices. A uniform grid gives
+        # equal-sized boxes the same cell count wherever they sit.
+        gasu  = gethydro(info,   lmax=info.levelmin, verbose=false, show_progress=false)
+        gravu = getgravity(info, lmax=info.levelmin, verbose=false, show_progress=false)
+        box(x) = Cuboid(xrange=[x, x+0.2], yrange=[-0.1, 0.1], zrange=[-0.1, 0.1],
+                        range_unit=:standard)
+        ga = subregion(gravu, box(-0.3), verbose=false)
+        hb = subregion(gasu,  box( 0.1), verbose=false)
+        @test length(ga.data) == length(hb.data) > 0      # the case a count cannot catch
+        @test_throws ErrorException getvar(ga, hb, :total_binding_energy)
+    end
+end
+
+# -----------------------------------------------------------------------------
+# profile / pdf / phase on a gravity object
+# -----------------------------------------------------------------------------
+# All three weight by :mass unless told otherwise, and gravity carries no density,
+# so the default fails. The failure used to point at `hydro_data`, which none of
+# these three accept, sending the reader from a clear error into a MethodError.
+# The message now names `weight=:volume`, so check that it is the truth.
+if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
+    @testset "Gravity: profile/pdf/phase need an explicit weight" begin
+        info = load_test_info(:spiral_clumps)
+        grav = getgravity(info, verbose=false, show_progress=false)
+
+        # the default weight is refused, and the message says what to do instead
+        err = try
+            profile(grav, :r_cylinder, :epot, center=[:bc]); nothing
+        catch e
+            sprint(showerror, e)
+        end
+        @test err !== nothing
+        @test occursin("weight=:volume", err)      # the fix that works
+        @test !occursin("Consider providing hydro_data", err)   # the fix that does not
+
+        # and the advice is true for all three
+        @test profile(grav, :r_cylinder, :epot, center=[:bc], weight=:volume) !== nothing
+        @test phase(grav, :epot, :a_magnitude, weight=:volume) !== nothing
+        @test pdf(grav, :epot, weight=:volume, logbins=false) !== nothing
+    end
+end
