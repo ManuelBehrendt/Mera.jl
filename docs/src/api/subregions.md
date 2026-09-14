@@ -194,8 +194,12 @@ The default `[0,0,1]` is the classic z-aligned cylinder; the volume is invariant
 orientation. A thin cylinder is a disk:
 
 ```julia
-subregion(gas, Cylinder(15.0, 1.0; axis=[1,0,2], range_unit=:kpc))      # a thin disk tilted in the x–z plane
-subregion(gas, Cylinder(15.0, 5.0; axis=spin, range_unit=:kpc))         # cylinder along an arbitrary spin vector
+subregion(gas, Cylinder(15.0, 1.0; axis=[1,0,2], range_unit=:kpc))   # a thin disk, tilted in the x-z plane
+
+# A disk aligned with the galaxy's own spin. `face_on` measures the angular momentum
+# for you, and `.angmom` is the vector to hand to `axis`.
+spin = face_on(gas).angmom
+subregion(gas, Cylinder(15.0, 1.0; axis=spin, center=[:bc], range_unit=:kpc))
 ```
 
 ![Tilted disks](../assets/regions/tilted_disk.png)

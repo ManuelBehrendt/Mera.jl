@@ -373,7 +373,7 @@ If you read the same data more than once, convert it.
 ## Honest limits
 
 - One machine, one simulation, one Julia version.
-- The read comparison uses a 640-CPU snapshot. On a small output, the per-file parse
+- The read comparison uses the `ncpu = 5120` snapshot described above. On a small output, the per-file parse
   cost that the MERA format avoids is a much smaller share of the total, so the
   advantage is smaller. It is a property of the file count, not a constant.
 - The public test simulations cannot reproduce the read comparison. Every one of them is

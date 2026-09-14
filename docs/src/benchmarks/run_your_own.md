@@ -1,7 +1,7 @@
 # Run Your Own Benchmarks
 
-The numbers on the [Performance](performance.md) page come from one laptop. Yours will
-differ, and the point of this page is to help you find **your** sweet spots: how many
+The numbers on the [Performance](performance.md) page come from one machine, a 32-thread Xeon
+server with 1511 GB of RAM. Yours will differ, and the point of this page is to help you find **your** sweet spots: how many
 threads your storage rewards, whether converting to MERA files pays for your workflow,
 and how many threads a projection of your data can actually use.
 
@@ -328,7 +328,7 @@ Read them together. IOPS climbing while open/close latency stays flat means the 
 absorbing the concurrency. Latency rising while IOPS flattens means you have found its
 limit.
 
-## Reference: IO on the laptop
+## Reference: IO on that server
 
 Same machine and data as the [Performance](performance.md) page: AVALON output 390,
 20489 files on local btrfs, via `run_benchmark(dir; runs=2)`.
