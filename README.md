@@ -341,9 +341,12 @@ a hosted runner can hold. The readers, projections, region selection and mera-fi
 therefore exercised only in the second number.
 
 The gap is closing. The public test simulations are published as release assets, and
-`.github/workflows/fixtures.yml` downloads them so the physics oracles and the RAMSES reference
-checks run on GitHub as well. What stays local is only what depends on simulations that are not
-published.
+`.github/workflows/fixtures.yml` downloads them and runs the physics oracles and the RAMSES
+reference checks. That job is manual for now: the suite decides from one flag whether simulation
+data is present, so once it is told yes it also reaches for the runs that are not published, and a
+hosted runner fails on missing data instead of on a defect. Wiring it to every push needs those
+tests to check for the one fixture they use. Until then the oracles run before each release, on
+the machine where every simulation is mounted.
 
 ## Ambient Study Music
 

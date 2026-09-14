@@ -11,15 +11,23 @@ name: Fixtures
 # in history forever.
 
 on:
-  # The testdata-v1 release now exists (12 assets), so these are live again. This job's first step
-  # downloads the fixture archives from it and runs the physics oracles and the RAMSES reference
-  # checks, which the ordinary CI job cannot reach because it has no simulation data.
-  push:
-    branches: [master, main, multicode]
-  pull_request:
-    branches: [master, main, multicode]
-  schedule:
-    - cron: '0 3 * * *'
+  # No push or pull_request trigger, and this is not the old "the release does not exist yet"
+  # reason: testdata-v1 is published with 12 assets and the download works.
+  #
+  # The blocker is the test suite's data model. Setting MERA_TEST_DATA flips one global
+  # DATA_AVAILABLE flag (test/test_config.jl), after which the data-backed tier assumes EVERY
+  # simulation is present. The public release is a subset: it has no spiral_clumps, mw_L10 or
+  # manu_sim_sf_L14, so a dozen test files reach for a fixture that a runner cannot have and the
+  # job fails on missing data rather than on a defect. Measured on 2026-09-14: the `small` set
+  # failed in 16 minutes with "File or folder does not exist: .../RAMSES/spiral_clumps".
+  #
+  # The nightly schedule is off for the same reason: it would go red every morning on missing
+  # data, which is noise rather than signal.
+  #
+  # Restore push, pull_request and the schedule together once those files guard per fixture, the
+  # way test/63_region_coverage_tests.jl already does:
+  #     if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
+  # Until then this is manual, so a red run is always something a person chose to look at.
   workflow_dispatch:
 
 env:
