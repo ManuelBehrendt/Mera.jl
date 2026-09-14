@@ -99,3 +99,18 @@ html.theme--documenter-dark .mera-tab-btn-active:hover {
     opacity: 0.75;
     padding: 0 0.85rem 0.85rem;
 }
+
+/* Paragraph lead-ins -------------------------------------------------------
+   Several pages introduce a topic with a bold phrase at the start of a
+   paragraph, e.g. "**AMR handled correctly.** ...". In the default theme these
+   are only bold, so they do not stand out from the sentence that follows and a
+   reader scanning the page cannot find them. Give them a small size increase
+   and a little air above, so they read as sub-points without competing with a
+   real heading (h3 is 1.5em). */
+.content p > strong:first-child {
+    font-size: 1.12em;
+    line-height: 1.35;
+}
+.content p:has(> strong:first-child) {
+    margin-top: 1.4em;
+}
