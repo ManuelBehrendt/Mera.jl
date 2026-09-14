@@ -128,8 +128,13 @@ values published by the RAMSES developers:
 
 ```julia
 ENV["MERA_TEST_DATA"] = download_testdata()
+ENV["MERA_SMOKE_ONLY"] = "1"      # the tier the public simulations can back
 using Pkg; Pkg.test("Mera")
 ```
+
+`MERA_SMOKE_ONLY` matters here. Setting `MERA_TEST_DATA` alone tells the suite that simulation data
+is present, and it then also reaches for runs that are not published, so it would fail on something
+you never had. With the flag you get every test the public simulations can actually support.
 
 What each tier of that suite proves, and which simulation backs which test, is set out in
 the [Testing Framework](advanced_features/testing_guide.md).

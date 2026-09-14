@@ -52,8 +52,8 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   two-language barrier for custom, performance-sensitive analyses.
 - **RAMSES-native**: direct binary reading of AMR outputs with automatic unit conversion and full
   multi-level support; load only what you need with spatial and refinement-level filtering. Covers
-  stable-17.09 through stable-19.10 and the 2025.05 and 2026.05 releases, checked on every release
-  against RAMSES's own reference solutions.
+  stable-17.09 through stable-19.10 and the 2025.05 and 2026.05 releases, checked against RAMSES's
+  own reference solutions before each release, on the machine where the fixtures are mounted.
 - **Cells are split, not counted**: a sphere is round, but cells are boxes, so some lie half in and
   half out. `subregion(gas, Sphere(10.))` keeps the part really inside, so `msum` and `getvar` count
   it by its fraction and the parts add up to the whole. Taking whole cells by their centre can be
@@ -291,10 +291,10 @@ RAMSES variant to support, or a gap to report? Please
 ## Testing
 
 MERA ships a tiered suite: data-free **smoke/oracle** tests that run on the full CI Julia matrix
-(1.10 / 1.11 / 1.12), and **data-backed** integration tests run locally against real RAMSES output.
+(1.10 / 1.11 / 1.12 / 1.13), and **data-backed** integration tests run locally against real RAMSES output.
 
 The data-free tier needs **no simulation data at all**, and includes every analytic correctness
-oracle: conservation, the surface-integral budget, weighted statistics and structure-finder
+oracle: conservation on-axis and off-axis, weighted statistics and structure-finder
 profiles. [`test/README.md`](test/README.md) documents the tiers, what "synthetic"
 means in each, and which simulation backs which test.
 
@@ -356,6 +356,21 @@ inspired by astrophysics.
   &nbsp;·&nbsp;
   <a href="https://youtube.com/playlist?list=OLAK5uy_mlavbfbMJji-L-Z49pyTUVQtP7aWr_MqM">YouTube</a>
 </p>
+
+## Staying up to date
+
+Mera changes between releases, so if your analysis has to stay reproducible it is worth knowing
+when a new version ships and what moved in it.
+
+- **Be told about releases only.** On the GitHub page press **Watch**, choose **Custom**, and tick
+  **Releases**. You then hear about versions and not about every issue and commit.
+- **Or subscribe without a GitHub account.** The release feed is
+  <https://github.com/ManuelBehrendt/Mera.jl/releases.atom>, which any feed reader accepts.
+- **Check before you upgrade.** `pkg> status --outdated` shows what a new version would change, and
+  the release notes say what changed in it. Read them before `pkg> up`, not after.
+- **Pin what a paper depends on.** A `Project.toml` and `Manifest.toml` in your analysis folder keep
+  today's versions available whatever ships later. See
+  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
 
 ## Get involved
 

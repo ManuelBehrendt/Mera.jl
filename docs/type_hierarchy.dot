@@ -1,4 +1,4 @@
-// Mera.jl type families — source for docs/src/assets/TypeHierarchy.png
+// Mera.jl type families : source for docs/src/assets/TypeHierarchy.png
 // Render: dot -Tpng -Gdpi=170 docs/type_hierarchy.dot -o docs/src/assets/TypeHierarchy.png
 //
 // Top card  : simulation codes (code-blind frontends) → which structs they populate.
@@ -25,7 +25,7 @@ digraph TypeHierarchy {
         penwidth=2.2;
         margin=18;
         labelloc="t";
-        label=<<FONT POINT-SIZE="13" COLOR="#9a3412"><B>Simulation codes — one code-blind reader per format, same structs for every code</B></FONT>>;
+        label=<<FONT POINT-SIZE="13" COLOR="#9a3412"><B>Simulation codes: one code-blind reader per format, same structs for every code</B><BR/><FONT POINT-SIZE="10">RAMSES ships in the released 1.x line; the others are in development on the multicode branch</FONT></FONT>>;
 
         node [style="rounded,filled", fillcolor="#ffedd5", color="#ea580c", fontcolor="#7c2d12", fontsize=13.5];
         RamsesCode [label=<<B>RAMSES</B> &#8729; native<BR/><FONT POINT-SIZE="10.5" COLOR="#9a3412">gethydro · getgravity · getparticles · getclumps · getrt</FONT>>];
@@ -90,7 +90,7 @@ digraph TypeHierarchy {
         penwidth=2.2;
         margin=18;
         labelloc="t";
-        label=<<FONT POINT-SIZE="13" COLOR="#4c1d95"><B>Projection results — from projection()</B></FONT>>;
+        label=<<FONT POINT-SIZE="13" COLOR="#4c1d95"><B>Projection results : from projection()</B></FONT>>;
 
         node [fillcolor="#f5f3ff", color="#a78bfa", style="rounded,filled,dashed", fontcolor="#2e1065", fontsize=14];
         MapsAbs [label=<<I>DataMapsType</I>>];

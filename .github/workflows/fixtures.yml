@@ -11,20 +11,15 @@ name: Fixtures
 # in history forever.
 
 on:
-  # NOTE: the push/pull_request triggers are deliberately absent until the `testdata-v1` release
-  # exists. This job's first step downloads the fixture archives from it, so wiring it to every
-  # push before the assets are uploaded would guarantee a red run that says nothing about the code.
-  # Restore them once the release is published:
-  #   push:
-  #     branches: [master, main, multicode]
-  #   pull_request:
-  #     branches: [master, main, multicode]
-  # The nightly schedule is disabled for the same reason as the push trigger: this job's first
-  # step downloads the fixture archives from the testdata-v1 release, which does not exist yet, so
-  # it failed every morning and said nothing about the code. Restore it with the push triggers
-  # once the assets are uploaded:
-  #   schedule:
-  #     - cron: '0 3 * * *'
+  # The testdata-v1 release now exists (12 assets), so these are live again. This job's first step
+  # downloads the fixture archives from it and runs the physics oracles and the RAMSES reference
+  # checks, which the ordinary CI job cannot reach because it has no simulation data.
+  push:
+    branches: [master, main, multicode]
+  pull_request:
+    branches: [master, main, multicode]
+  schedule:
+    - cron: '0 3 * * *'
   workflow_dispatch:
 
 env:

@@ -93,7 +93,7 @@ data is present and `MERA_SMOKE_ONLY` is not set.
 
 | tier | what it proves | data needed |
 |---|---|---|
-| **1, data-free** | package hygiene (Aqua), unit scales and CODATA anchors, the type system, analytic oracles for conservation and the surface-integral budget, weighted-statistics and structure-finder kernels, synthetic-HDF5 reader contracts, the reader registry, the IO layer, mera-file round-trips, and that every `julia` block in `docs/src` parses | none |
+| **1, data-free** | package hygiene (Aqua), unit scales and CODATA anchors, the type system, analytic oracles for conservation on-axis and off-axis, weighted-statistics and structure-finder kernels, synthetic-HDF5 reader contracts, the reader registry, the IO layer, mera-file round-trips, and that every `julia` block in `docs/src` parses | none |
 | **2, data-backed** | the same code paths against real RAMSES output: readers, derived quantities, projections, regions, conservation relations, clump analysis, VTK export, save/load round-trips | `MERA_TEST_DATA` |
 
 A per-file map, which file proves what and which simulation backs it, is kept in
