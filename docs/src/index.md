@@ -154,9 +154,26 @@ projected.
 format, with Hilbert space-filling curve support, correct level weighting, and projections that
 conserve mass across refinement boundaries.
 
-**Built for large outputs on ordinary machines.** Selective loading and an IndexedTables.jl
-backend keep memory in hand, and the numbers are measured rather than assumed. Convert a
-snapshot once with `savedata` and reading it back is the same data, far cheaper:
+**One table, one row per cell.** Mera holds a snapshot as a table: one contiguous column per
+quantity, sorted on the cell's grid address `(level, cx, cy, cz)`. Three things follow, and they
+are why the rest of this page is possible.
+
+The **refinement level travels with every cell**, so nothing has to be resampled onto a uniform
+grid first. A projection deposits each cell at its own size in a single pass over all levels, and
+`:level` can be selected on like any physical quantity.
+
+**Selecting is cheap.** A mask picks rows as views rather than copying columns, so a cut costs the
+columns you actually read and not the whole table. You can select in value space on anything
+`getvar` computes, in any unit, and combine those conditions:
+`filterdata(gas, Above(:T, 1e4, :K) & Below(:rho, 1e3, :nH))`.
+
+**Results stay the same kind of thing.** A region or a filter hands back an object of the original
+type, so `subregion` into `filterdata` into `projection` into `getvar` chains without adapters or
+conversions.
+
+**Built for large outputs on ordinary machines.** Selective loading keeps memory in hand, and the
+numbers are measured rather than assumed. Convert a snapshot once with `savedata` and reading it
+back is the same data, far cheaper:
 
 | reading one snapshot, all components | from the RAMSES output | from the MERA file |
 |---|---:|---:|

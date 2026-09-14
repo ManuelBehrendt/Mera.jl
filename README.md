@@ -17,9 +17,10 @@
 
 **MERA** reads and analyzes astrophysical simulation output natively in Julia. It is built for
 [RAMSES](https://github.com/ramses-organisation/ramses): multi-resolution AMR grids carrying hydro
-and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fields, loaded into
-memory-efficient tables. Cosmological runs are handled throughout, with scale factor, redshift and
-the derived quantities that depend on them. It derives quantities on demand, thermodynamics
+and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fields, loaded into a table
+with one column per quantity and one row per cell, keyed on the cell's grid address. Cosmological
+runs are handled throughout, with scale factor, redshift and the derived quantities that depend on
+them. It derives quantities on demand, thermodynamics
 and kinematics, magnetic and gravitational fields, ionisation states, Jeans and virial diagnostics,
 each in any unit, and provides conservation-correct projections, profiles and structure finding,
 all through one unified, multiple-dispatch API.
@@ -50,6 +51,10 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
 
 - **Julia-native**: compiled-language performance in a single, introspectable code path; no Python/C
   two-language barrier for custom, performance-sensitive analyses.
+- **One table, one row per cell**: columns keyed on the cell's grid address, so the refinement
+  level travels with every cell and nothing is resampled onto a uniform grid first. Masks select
+  rows as views instead of copying columns, filtering works in value space on anything `getvar`
+  computes, and a region or filter returns the same kind of object, so calls chain.
 - **RAMSES-native**: direct binary reading of AMR outputs with automatic unit conversion and full
   multi-level support; load only what you need with spatial and refinement-level filtering. Covers
   stable-17.09 through stable-19.10 and the 2025.05 and 2026.05 releases, checked against RAMSES's
