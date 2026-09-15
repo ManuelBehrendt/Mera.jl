@@ -2,15 +2,16 @@ cff-version: 1.2.0
 message: "If you use Mera.jl in your research, please cite it as below."
 title: "Mera.jl: Fast, conservation-correct, code-agnostic analysis of astrophysical simulations in Julia"
 abstract: >-
-  Mera.jl is a Julia package for reading and analysing astrophysical simulation output. RAMSES
-  adaptive-mesh-refinement data (hydro, gravity, particles, clumps, radiative transfer) is the
-  native format; self-registering readers also load PLUTO, Chombo, Athena++, FLASH and the
-  GADGET/GIZMO/AREPO/SWIFT HDF5 particle family (including gas-cell physics, cosmological unit
-  conversion and multi-file snapshots), and the code-agnostic analysis layer runs on all of them
-  unchanged. It provides spatial selection, a derived-quantity registry with physical units,
-  weighted profiles and phase diagrams, mass-conserving projections (axis-aligned and off-axis)
-  and covering grids, a pluggable structure (clump/halo) finder, and a conservation-correct
-  inflow/outflow flux-budget tool, all checked by a data-free correctness oracle.
+  Mera.jl is a Julia package for reading and analysing astrophysical simulation output. It reads
+  RAMSES adaptive-mesh-refinement data (hydro, gravity, particles, clumps, radiative transfer)
+  natively and in full. Formats are read through a reader registry, so the analysis layer works on
+  the data rather than on the simulation code that wrote it, and a reader for another code can be
+  registered from outside the package. It provides spatial selection, a derived-quantity registry
+  with physical units, weighted profiles and phase diagrams, mass-conserving projections
+  (axis-aligned and off-axis) and covering grids, a pluggable structure (clump/halo) finder, and a
+  conservation-correct inflow/outflow flux-budget tool, all checked by a data-free correctness
+  oracle. Readers for PLUTO, Chombo, Athena++, FLASH, GADGET and AREPO are in development on the
+  multicode branch and are not part of a 1.x release.
 type: software
 authors:
   - family-names: Behrendt
@@ -18,13 +19,15 @@ authors:
     # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO: insert ORCID before submission
     email: mera@manuelbehrendt.com
 version: 1.8.0
-date-released: "2026-06-16"   # TODO: set to the actual release date at submission
+date-released: "2026-06-16"   # TODO: set to the day v1.8.0 is actually tagged
 license: MIT
 repository-code: "https://github.com/ManuelBehrendt/Mera.jl"
 url: "https://manuelbehrendt.github.io/Mera.jl/stable/"
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.XXXXXXX   # TODO: insert the real Zenodo concept DOI (previous value was a GitHub repo id, not a DOI)
+    value: 10.5281/zenodo.XXXXXXX   # TODO: the Zenodo CONCEPT DOI ("Cite all versions"), not the
+                                  # per-version DOI the latestdoi badge resolves to. Read it off the
+                                  # Zenodo record after the release is archived.
     description: Zenodo archive of Mera.jl
 keywords:
   - Julia
