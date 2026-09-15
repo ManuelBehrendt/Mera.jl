@@ -1,153 +1,200 @@
 # Adding a Reader for Another Simulation Code
 
 Mera does not read one file format. It reads simulation output through a **reader registry**, and
-the analysis layer never learns which code produced the data. RAMSES is the built-in reader. This
-page is the contract a new one has to satisfy.
+the analysis never learns which code produced the data. RAMSES is the built-in reader. This page is
+what a new one has to do.
 
-The point of the design: **supporting another code is reader work, not core work.** A reader turns
-one file format into the standard Mera objects. Everything downstream, every projection, profile,
-phase diagram, region, movie and unit conversion, comes free the moment it does. In practice that is
-`getinfo_X` plus `gethydro_X`, a few hundred lines.
+## The idea in one paragraph
+
+A simulation code writes its own file format. Mera's analysis works on two standard objects, one for
+cells on a grid and one for particles. A **reader** is the piece in between: it opens your format
+and fills one of those objects. Once it does, everything else in Mera already works on your data.
+Projections, profiles, phase diagrams, regions, movies and unit conversions were written against the
+standard objects, not against RAMSES, so none of them has to change.
+
+That is why this is worth doing. You are not adding a code path to every function. You write
+roughly two functions, a few hundred lines, and the rest of the package comes free.
 
 !!! note "Where the readers live"
-    The 1.x release line ships the RAMSES reader only. Readers for PLUTO, Chombo, Athena++, FLASH,
+    The 1.x release ships the RAMSES reader only. Readers for PLUTO, Chombo, Athena++, FLASH,
     GADGET, AREPO and AMReX/Quokka are developed on the `multicode` branch for version 2.0. The
     registry itself, and everything on this page, is part of the released package.
 
-## What a reader must produce
+## Three kinds of simulation, two kinds of object
 
-A reader for code `X` provides `getinfo_X` and `gethydro_X` (and optionally `getparticles_X` and
-others) that fill the **existing** Mera structs. Two things matter: the `InfoType` fields the
-analysis actually reads, and the cell table.
+Mera handles three ways of representing a fluid. They map onto two objects:
 
-### The InfoType fields that carry weight
+| Your code represents gas as | Mera object | You fill |
+|---|---|---|
+| **cells on a grid**, uniform or AMR (RAMSES, PLUTO, Athena++, FLASH, Chombo, AMReX) | `HydroDataType` | a grid address per cell |
+| **particles** (GADGET and other SPH codes; also stars and dark matter in any code) | `PartDataType` | a position per particle |
+| **a moving mesh** (AREPO) | `PartDataType`, with density read | a position per cell, and its density |
 
-Most of `InfoType` is RAMSES bookkeeping that analysis never touches (descriptor, grid_info,
-namelist, makefile). A new reader can leave those at their defaults. These are the ones that matter:
+The third row is the one people are surprised by. AREPO's Voronoi cells have no fixed grid to sit
+on, so Mera treats each one as a point that knows how much space it occupies. Projection can then
+spread each cell over its real size, using `weighting=:voronoi` or `:sph`. So a moving-mesh reader
+is a particle reader that also reads density.
 
-| field | meaning |
+Pick your row before you start. It decides which contract below you have to meet.
+
+## What every reader fills in first: the metadata
+
+Whatever kind of code you have, `getinfo_X(output, path)` returns an `InfoType` describing the
+snapshot. Most of its fields are RAMSES bookkeeping that analysis never reads, and you can leave
+those alone. These are the ones that matter:
+
+| field | what it is |
 |---|---|
-| `simcode` | the code name, e.g. `"PLUTO"`, `"FLASH"` |
-| `ndim` | 3, Mera is three-dimensional |
-| `levelmin`, `levelmax` | AMR level range; equal means a uniform grid |
-| `boxlen` | domain size in code length units |
-| `time`, `aexp`, `H0`, `omega_*` | snapshot time and cosmology, sentinels if non-cosmological |
-| `unit_l`, `unit_d`, `unit_t` | CGS scale factors; the whole unit system derives from these three |
-| `gamma` | adiabatic index |
-| `hydro`, `nvarh`, `variable_list` | which hydro variables exist, and their `Symbol` names |
+| `simcode` | the name of your code, e.g. `"PLUTO"` |
+| `ndim` | 3, Mera works in three dimensions |
+| `levelmin`, `levelmax` | the range of grid refinement levels; set both equal for a uniform grid, and both to 0 for pure particle data |
+| `boxlen` | the size of the simulation box, in your code's own length unit |
+| `time`, `aexp`, `H0`, `omega_*` | when the snapshot is from, and cosmology if it has any |
+| `unit_l`, `unit_d`, `unit_t` | how long, how dense and how long-in-time one code unit is, **in CGS** |
+| `gamma` | the adiabatic index |
+| `hydro`, `nvarh`, `variable_list` | which variables the file has, and their names as Mera symbols |
 | `constants` | call `createconstants!(info)` |
-| `scale` | call `createscales!(info)` afterwards, do not build it by hand |
+| `scale` | call `createscales!(info)` **after** `createconstants!`; do not build it yourself |
 
-**Units come for free.** `createscales!` needs only `unit_l`, `unit_d` and `unit_t`, the CGS length,
-density and time factors, which essentially every code defines. Set those three, call
-`createscales!`, and every `:Msol`, `:kpc` and `:km_s` conversion works. There are no RAMSES
-assumptions in it.
+**You get every unit for free.** `createscales!` needs only those three CGS numbers: how many
+centimetres one code length is, how many grams per cubic centimetre one code density is, and how
+many seconds one code time is. Give it those, and asking for a mass in `:Msol` or a distance in
+`:kpc` or a speed in `:km_s` works everywhere, with nothing else to write.
 
-If your format does not record its units, say so and take them as keywords, the way the PLUTO and
-AMReX readers do. Treating an unmarked run as dimensionless is better than guessing.
+If your format does not record its units, do not guess. Take them as keyword arguments, the way the
+PLUTO and AMReX readers do, and treat the run as dimensionless until someone supplies them. A number
+with the wrong unit is worse than a number with no unit.
 
-### The cell table, and the one convention that matters
+## If your code is grid based
 
-`gethydro_X` returns a `HydroDataType` whose `.data` is a table with columns
-`:level, :cx, :cy, :cz` followed by the variables. The cells must follow the convention that
-`getvar` and `projection` assume:
+`gethydro_X(info)` returns a `HydroDataType` whose `.data` is a table with the columns
+`:level, :cx, :cy, :cz` followed by your variables.
+
+Mera does not store a cell's position as a coordinate. It stores **which box on which grid** the
+cell is, as whole numbers, and works the position out from that:
 
 ```
-cell centre (code length) = (c - 0.5) * boxlen / 2^level     # c is cx, cy or cz, 1-based
-cell size                 = boxlen / 2^level
+cell centre = (c - 0.5) * boxlen / 2^level      # c is cx, cy or cz, counting from 1
+cell size   =             boxlen / 2^level
 ```
 
-**This is the whole game.** Fill `cx, cy, cz` as 1-based integer indices on the level lattice
-covering `[0, boxlen]` and off-axis projections, profiles, subregions and movies are all correct.
-Get it subtly wrong, off-by-one, 0-based instead of 1-based, node-centred instead of cell-centred,
-and every result is **silently shifted**. Nothing errors. This is the single most common way a new
-reader goes wrong, so test it first and test it directly.
+So on level 3 the box is cut into 8 pieces per side, and `cx = 1` means the first of them. The
+`- 0.5` puts you at the middle of that piece rather than its edge.
 
-Keep only **leaf cells**: each point in the box covered by exactly one cell, at its finest level. A
-block-structured or octree format needs its covered coarse cells dropped.
+!!! warning "This is the one that bites"
+    Count from 1, not 0. Give the centre of the cell, not its corner. If you get this subtly wrong,
+    **nothing fails**. No error, no warning. Every projection, profile and region is quietly shifted
+    by half a cell or one cell, and the results still look completely reasonable. Test this first,
+    directly, before anything else.
 
-**Variable names** map to Mera's canonical symbols, `density` to `:rho`, `velx` to `:vx`, `pressure`
-to `:p`, and so on. Keep an explicit dictionary per code rather than guessing from the name.
+Keep **leaf cells only**: every point in the box covered by exactly one cell, at the finest level
+that reaches it. If your format stores coarse cells that were later refined, drop them.
 
-## The contract test is the specification
+## If your code is particle based, or a moving mesh
 
-The clearest statement of what a reader must do is not prose, it is
-[`test/59_multicode_contract_tests.jl`](https://github.com/ManuelBehrendt/Mera.jl/blob/multicode/test/59_multicode_contract_tests.jl)
-on the `multicode` branch.
+`getparticles_X(info)` returns a `PartDataType` whose `.data` table holds
+`:x, :y, :z, :vx, :vy, :vz, :mass`, plus `:id` and `:family` if your format has them.
 
-It synthesises a tiny snapshot for each code, loads it through the **generic** `getinfo` and
-`gethydro` with auto-detection, and asserts the same invariants for all of them: the cell
-convention, exact tiling of the box, and load-time spatial selection. A reader that passes it is
-code-blind by construction, and one that drifts from its siblings fails there rather than in
-someone's analysis months later.
+Here positions are what you would expect: **ordinary numbers in code units, from 0 to `boxlen`**.
+There is no level, no integer index, no half-cell rule. If you have been reading the grid section
+above and bracing yourself, you can relax.
 
-Read that file before writing code, and add your code to it as part of your contribution.
+`:family` is the particle type, so one file can hold gas, dark matter and stars together and the
+user can ask for one of them.
+
+**For a moving mesh, read the density.** You do not add a volume column. Mera works volume out when
+something asks for it, as `mass / density`, because `:mass` is always loaded and you supplied the
+rest. This is how every derived quantity here works: `getvar` keeps a table of what depends on what,
+computes on demand, and stores nothing.
+
+Being able to derive `:volume` is what makes your cells behave as cells rather than points, so
+`projection` can use `weighting=:voronoi` and `covering_grid` can resample them. The only thing you
+must do is make sure density is actually read when it is needed. The GADGET reader does it in one
+line:
+
+```julia
+:volume in req && push!(req, :rho)   # :volume is derived as mass/ρ, so :rho must be read
+```
+
+Then list `:volume` in `info.particles_variable_list` so Mera advertises it. That announces a
+capability; it does not create data.
 
 ## Registering it
 
-Readers announce themselves through `register_reader!`, which also declares what the code supports:
+A reader announces itself and declares what it can do:
 
 ```julia
 register_reader!(:mycode;
-    simcodes = ["MYCODE"],              # the InfoType.simcode values this reader serves
+    simcodes = ["MYCODE"],              # the info.simcode values this reader serves
     name     = "My Code (format)",      # shown in the capability table
-    detect   = _is_mycode_tree,         # optional: auto-detection from the file tree
+    detect   = _is_mycode_tree,         # optional: recognise the format from the files present
     info     = getinfo_mycode,
-    hydro    = gethydro_mycode)
+    hydro    = gethydro_mycode,         # if your code is grid based
+    particles = getparticles_mycode)    # if it has particles, or is a moving mesh
 ```
 
-A capability you leave out is reported honestly: `supports` returns `false`, the public entry point
-raises an error naming what the code *does* have, and the documentation's capability table shows a
-gap. Declaring something you cannot deliver is the one thing to avoid.
+Leave out what your code does not have. Mera then says so honestly: `supports` returns `false`, the
+call fails with a message naming what your code *does* offer, and the capability table in the
+documentation shows a gap. Claiming something you cannot deliver is the one thing to avoid.
 
-See the `register_reader!` docstring for the full keyword set, including `select_vars` for formats
-that can genuinely read a subset of columns.
+## The contract test is the real specification
 
-## Testing your reader
+The clearest statement of what a reader must do is not this page. It is
+[`test/59_multicode_contract_tests.jl`](https://github.com/ManuelBehrendt/Mera.jl/blob/multicode/test/59_multicode_contract_tests.jl)
+on the `multicode` branch.
 
-Three levels, in the order they are worth doing:
+It builds a tiny fake snapshot for each code, loads it through the ordinary `getinfo` and
+`gethydro`, and checks that every reader gives the same answers to the same questions: the cell
+convention, that the cells tile the box exactly, and that asking for a sub-region at load time works.
+A reader that passes it behaves like all the others by construction, and a reader that drifts away
+from its siblings fails there instead of in someone's analysis six months later.
 
-1. **Synthetic fixtures, no data required.** Write a tiny snapshot in the format specification from
-   inside the test, then read it back. This pins the format and the cell convention, runs in CI, and
-   needs nothing downloaded. Every current reader has these.
-2. **The code's own test problems.** Small runs you can regenerate catch what a specification does
-   not say.
-3. **A real production snapshot.** The only thing that catches what real projects actually produce:
-   unusual refinement, extra fields, an older writer.
+Read it before you write code, and add your code to it as part of your contribution.
 
-Most contributors can do the first two, and the first alone is enough to open a pull request.
+## Testing, without needing a simulation
 
-!!! warning "Give your fixtures units that are not 1"
-    A fixture where `unit_l`, `unit_d` and `unit_t` are all 1 cannot fail a unit-conversion test,
-    because every wrong factor is also 1. The same applies to a box of size 1. Pick awkward numbers.
+Three levels, in the order worth doing them:
 
-### Comparing against the reference reader
+1. **Write a fake file, read it back.** Inside the test, write a tiny file in your format by hand,
+   then load it. This pins down the format and the position convention, runs anywhere, and needs
+   nothing downloaded. Every reader here has these, and this alone is enough to open a pull request.
+2. **Your code's own test problems.** Small runs anyone can regenerate. These catch what the format
+   description does not mention.
+3. **A real production snapshot.** The only thing that catches what real projects actually do:
+   unusual refinement, extra fields, an older version of the writer.
 
-Where a code has its own reader, `pyPLUTO`, Athena++'s `athena_read.py`, or yt's frontend, the
-strongest check is a direct comparison: resample both onto the **same uniform grid** and compare
-cell by cell. A projected total agreeing to a few significant figures is reassuring; every cell
-agreeing is proof.
+!!! warning "Do not let every number be 1"
+    If your fake file uses a box of size 1, and `unit_l`, `unit_d` and `unit_t` all equal 1, then a
+    wrong unit conversion is also 1 and your test passes anyway. Pick awkward numbers so a mistake
+    has somewhere to show up.
 
-State plainly in your reader's page what you compared and what you did not. "Checked against the
-format specification with synthetic files" is an honest and useful claim. "Validated against yt" is
-a much stronger one and should only be written if it happened.
+### Checking against the tool people already use
+
+Most codes have a reader already, whether that is `pyPLUTO`, Athena++'s `athena_read.py`, or yt. The
+strongest check is to put both on equal footing: resample **both onto the same regular grid**, then
+compare cell by cell. A total that agrees to a few digits is reassuring. Every cell agreeing is
+proof.
+
+Write down in your reader's page what you actually compared. "Checked against the format description
+using files I wrote myself" is honest and useful. "Validated against yt" is a much stronger claim
+and belongs there only if it happened.
 
 ## Where to start
 
-The easiest first reader is a **uniform-grid** format, where `levelmin == levelmax`, `level` is
-constant and `cx, cy, cz` simply run from 1 to N. There is no AMR flattening to get right, and it
-proves the whole idea: fill the structs, and projections, `getvar`, profiles and movies work
-untouched. Even a synthetic grid written inside a test removes most of the risk before you meet a
-real file.
+Start with a **uniform grid** if you have the choice: one refinement level, so `level` never changes
+and `cx, cy, cz` simply count 1, 2, 3 … up to N. There is no refinement to flatten, and it proves
+the whole idea in an afternoon. Even a fake grid written inside a test removes most of the risk
+before you deal with a real file.
 
-For block-structured AMR, read `reader_athena.jl` and `reader_flash.jl` on the `multicode` branch
-first. They solve the same problem twice, which makes the shared shape easy to see.
+For particle formats, `reader_gadget.jl` is the model. For grids with refinement, read
+`reader_athena.jl` and `reader_flash.jl` together: they solve the same problem twice, which makes the
+shared shape easy to see.
 
 ## Getting help
 
 Open a [discussion or issue](https://github.com/ManuelBehrendt/Mera.jl/issues), including the
-question "is this supposed to work?". A format variant nobody has met is a normal outcome, not an
-embarrassment, and it is usually the fastest way to find a gap in these pages.
+question "is this supposed to work?". A format variant nobody has met before is a normal outcome,
+not an embarrassment, and it is usually the fastest way to find a gap in these pages.
 
 Readers are credited to the people who write them, and you decide how far you want to maintain
 yours. A reader that works and is then left alone is still worth far more than no reader.
