@@ -183,7 +183,8 @@ end
 # reader because the GROUP CATALOGUE files carry the same Header fields — which is exactly what
 # lets `getgroups(path, snap)` work on a snapshot-free output. Returns the scale factor `a`.
 function _gadget_header_cosmology!(info::InfoType, h; unit_length::Real=1.0,
-                                   unit_density::Real=1.0, unit_velocity::Real=1.0)
+                                   unit_density::Real=1.0, unit_velocity::Real=1.0,
+                                   verbose::Bool=true)
     boxlen = Float64(_gadget_attr(h, "BoxSize", 1.0))
     time   = Float64(_gadget_attr(h, "Time", 0.0))
     hub    = Float64(_gadget_attr(h, "HubbleParam", 1.0))
@@ -216,9 +217,26 @@ function _gadget_header_cosmology!(info::InfoType, h; unit_length::Real=1.0,
     huv = Float64(_gadget_attr(h, "UnitVelocity_in_cm_per_s", 0.0))
     hum = Float64(_gadget_attr(h, "UnitMass_in_g", 0.0))
     hfac = hub > 0 ? hub : 1.0
-    ul0 = (unit_length   == 1.0 && hul > 0)            ? hul         : Float64(unit_length)
-    uv0 = (unit_velocity == 1.0 && huv > 0)            ? huv         : Float64(unit_velocity)
-    ud0 = (unit_density  == 1.0 && hum > 0 && hul > 0) ? hum / hul^3 : Float64(unit_density)
+    # Many snapshots omit the unit attributes entirely. Falling back to the kwarg default of 1.0
+    # made one code unit one centimetre, so a disk galaxy weighed 1e-27 solar masses and nothing
+    # said why. GADGET's own documented defaults are used instead: 1 kpc/h, 1e10 Msol/h, 1 km/s,
+    # which is what the code assumes when the parameter file does not override them.
+    GADGET_UL, GADGET_UM, GADGET_UV = 3.085678e21, 1.989e43, 1.0e5
+    defaulted = false
+    ul0 = if unit_length != 1.0;      Float64(unit_length)
+          elseif hul > 0;             hul
+          else; defaulted = true;     GADGET_UL end
+    uv0 = if unit_velocity != 1.0;    Float64(unit_velocity)
+          elseif huv > 0;             huv
+          else;                       GADGET_UV end
+    ud0 = if unit_density != 1.0;     Float64(unit_density)
+          elseif hum > 0 && hul > 0;  hum / hul^3
+          else;                       GADGET_UM / GADGET_UL^3 end
+    if defaulted && verbose
+        println("[Mera]: this snapshot records no unit attributes; using GADGET's defaults " *
+                "(1 kpc/h, 1e10 Msol/h, 1 km/s). Override with unit_length=, unit_density= " *
+                "or unit_velocity= if your run used others.")
+    end
     info.unit_l = ul0 * a / hfac
     info.unit_v = uv0
     info.unit_d = ud0 * hfac^2 / a^3
@@ -271,7 +289,7 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
             "chunks but $(length(fns)) file(s) were found — reading what is present."
         info.output = output; info.path = abspath(path); info.simcode = _gadget_subcode(f)
         info.Narraysize = 0
-        a = _gadget_header_cosmology!(info, h; unit_length=unit_length,
+        a = _gadget_header_cosmology!(info, h; verbose=verbose, unit_length=unit_length,
                                       unit_density=unit_density, unit_velocity=unit_velocity)
         time = info.time
         info.hydro = false; info.gravity = false; info.particles = true
