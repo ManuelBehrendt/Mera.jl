@@ -208,6 +208,7 @@ makedocs(modules = [Mera],
                       # Its notebook is parked in the notebooks repo under _superseded/.
                       "Project & Misc" => Any[
                           "Gallery & Workflows" => "gallery.md",
+                          "Adding a Reader"     => "adding_a_reader.md",
                           "Testing Framework"   => "advanced_features/testing_guide.md",
                           "Logo"                => "logo.md"],
 
