@@ -15,8 +15,12 @@ all through one unified, multiple-dispatch API.
 
 !!! warning "Released and upcoming 1.x versions are RAMSES-only"
     Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development
-    for **version 2.0**, on the `multicode` branch. It is not part of any 1.x release, and nothing
-    on these pages depends on it.
+    for **version 2.0**, on the `multicode` branch. A frontend for **AMReX/BoxLib** plotfiles with a
+    **Quokka** layer is in review, contributed by
+    [ChongChong He](https://github.com/chongchonghe)
+    ([#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273)); AMReX is also the container used by
+    Castro, Nyx and WarpX. None of this is part of any 1.x release, and nothing on these pages
+    depends on it.
 
     For collaborators who want to try it:
 
