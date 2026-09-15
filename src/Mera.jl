@@ -312,6 +312,7 @@ export
     createscales,
     createconstants,
     createconstants!,
+    createscales!,
     humanize,
     bell,
     notifyme,

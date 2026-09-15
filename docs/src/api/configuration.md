@@ -35,6 +35,7 @@ simulation files on disk.
 ```@docs
 createconstants
 createscales
+createscales!
 ```
 
 Unit resolution itself goes through [`getunit`](@ref), documented with the

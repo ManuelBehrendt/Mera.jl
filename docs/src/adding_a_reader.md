@@ -1,55 +1,42 @@
 # Adding a Reader for Another Simulation Code
 
-Mera does not read one file format. It reads simulation output through a **reader registry**, and
-the analysis never learns which code produced the data. RAMSES is the built-in reader. This page is
-what a new one has to do.
+Mera does not read one file format. A **reader** opens your simulation output and fills one of two
+standard objects: one for gas on a grid, one for particles. Everything else in Mera is written
+against those two objects, not against RAMSES, so the moment your reader works, the rest of the
+package works on your data.
 
-## The idea in one paragraph
+That is the whole design, and it is why this is a small job. **The readers differ. What they produce
+does not.** There is no `if simcode == "AREPO"` anywhere in the analysis, and adding your code puts
+none there. You write two functions. For scale, the readers already here are 262 lines (FLASH), 266
+(Athena++), 455 (PLUTO) and 696 (GADGET, which also handles particles, halo catalogues and
+cosmological units).
 
-A simulation code writes its own file format. Mera's analysis works on two standard objects, one for
-cells on a grid and one for particles. A **reader** is the piece in between: it opens your format
-and fills one of those objects. Once it does, everything else in Mera already works on your data.
-Projections, profiles, phase diagrams, regions, movies and unit conversions were written against the
-standard objects, not against RAMSES, so none of them has to change.
+## What you get for those two functions
 
-That is why this is worth doing. You are not adding a code path to every function. You write
-roughly two functions, and the rest of the package comes free. For scale, the readers already here
-are 262 lines (FLASH), 266 (Athena++), 455 (PLUTO) and 696 (GADGET, which also handles particles,
-halo catalogues and cosmological units).
+The moment your reader returns a valid object:
 
-## Why one reader is enough: Mera is code-blind
-
-The reason a reader is small is worth stating plainly, because it is the whole design.
-
-**The readers differ. What they produce does not.** Every reader, for every code, returns the same
-two object types. Once your data is inside one of them, nothing downstream can tell which code wrote
-the file, and nothing downstream has to ask. There is no `if simcode == "AREPO"` anywhere in the
-analysis, and adding your code puts none there.
-
-What that buys you, concretely, the moment your reader returns a valid object:
-
-- **`getvar` computes 73 quantities for grid data and 48 for particle data** on demand, from the
-  columns you supplied. Temperature, sound speed, Mach numbers, angular momentum, Jeans length,
+- **`getvar` computes 73 quantities for gas on a grid and 48 for particles**, on demand, from the
+  columns you supplied: temperature, sound speed, Mach numbers, angular momentum, Jeans length,
   virial and magnetic diagnostics. You write none of them.
-- **Every unit works.** Ask for any quantity in `:Msol`, `:kpc`, `:km_s`, `:K`, `:g_cm3` and so on,
-  because you gave three CGS numbers and `createscales!` did the rest.
-- **Projections**, on-axis and off-axis, at any inclination, with mass, volume, SPH or Voronoi
+- **Every unit works.** Ask for anything in `:Msol`, `:kpc`, `:km_s`, `:K`, `:g_cm3`, because you
+  gave three numbers in CGS and Mera derived the rest.
+- **Projections**, along an axis or from any viewing angle, with mass, volume, SPH or Voronoi
   weighting.
-- **Regions**: spheres, cuboids, cylinders, shells, combined and inverted, with exact cell splitting
+- **Regions**: spheres, boxes, cylinders and shells, combined or inverted, with cells split exactly
   at the boundary.
 - **Profiles, phase diagrams, structure finding, time series and movies.**
-- **`filterdata`** in value space on anything `getvar` can compute.
+- **`filterdata`**, selecting on the value of anything `getvar` can compute.
 
-This is also why the contract below matters so much. Your reader is not judged on whether it reads
-your format, which only you can check. It is judged on whether the object it produces behaves like
-every other one, because everything else assumes it does.
+Your reader is therefore not judged on whether it reads your format, which only you can check. It is
+judged on whether the object it returns behaves like every other one, because everything downstream
+assumes it does.
 
-### What code-blind does not mean
+## Where this stops: same call, different arithmetic
 
-It does not mean one algorithm runs for everything, and it could not, because the data genuinely
-differs. Mera dispatches on **what kind of data you have**, not on which code wrote it. There is no
-branch on `simcode` anywhere in the analysis; `simcode` is used only for provenance, display and
-finding output files.
+It does not mean the same arithmetic runs for everything, and it could not, because the data
+genuinely differs. Mera chooses its method from **what kind of data you have**, never from which
+code wrote it. The code name is used only to label results, to print an overview, and to find the
+output files.
 
 Projection is the clearest case. An AMR cell has a known extent on a lattice, so a grid projection
 integrates over real cell geometry and splits cells exactly at a region boundary. A Voronoi cell has
@@ -67,9 +54,9 @@ of object, in the same units, and every downstream step treats it identically. T
 is not computed the same way, and for a moving mesh you have a choice to make that a grid user never
 faces.
 
-That is the honest boundary. Code-blind means **one API, one data model, one set of quantity names
-and units, and no code-specific branches in the analysis**. It does not mean the physics of a
-Voronoi tessellation and an octree are the same thing.
+So the promise is precise: **one set of function calls, one data model, one set of quantity names
+and units, and no code-specific branches in the analysis**. It is not a promise that a Voronoi
+tessellation and a refined grid are the same thing, because they are not.
 
 !!! note "Where the readers live"
     The 1.x release ships the RAMSES reader only. Readers for PLUTO, Chombo, Athena++, FLASH,
@@ -86,12 +73,7 @@ Mera handles three ways of representing a fluid. They map onto two objects:
 | **particles** (GADGET and other SPH codes; also stars and dark matter in any code) | `PartDataType` | a position per particle |
 | **a moving mesh** (AREPO) | `PartDataType`, with density read | a position per cell, and its density |
 
-The third row is the one people are surprised by. AREPO's Voronoi cells have no fixed grid to sit
-on, so Mera treats each one as a point that knows how much space it occupies. Projection can then
-spread each cell over its real size, using `weighting=:voronoi` or `:sph`. So a moving-mesh reader
-is a particle reader that also reads density.
-
-Pick your row before you start. It decides which contract below you have to meet.
+Pick your row before you start. It decides which of the two sections below you have to follow.
 
 ## What every reader fills in first: the metadata
 
@@ -205,24 +187,24 @@ A complete working example, with the file reading replaced by a fake 8³ grid:
 using Mera, IndexedTables
 
 function getinfo_toy(output::Int, path::String; verbose=true, kwargs...)
-    info = Mera.InfoType()
+    info = InfoType()
     info.simcode = "TOY"; info.output = output; info.path = path; info.ndim = 3
     info.levelmin = 3; info.levelmax = 3; info.boxlen = 10.0
     info.time = 0.0; info.aexp = 1.0; info.H0 = 0.0; info.omega_m = 0.0; info.omega_l = 0.0
     info.unit_l = 3.086e21; info.unit_d = 1.67e-24; info.unit_t = 3.156e13   # CGS: kpc, m_p, Myr
     info.gamma = 5/3; info.hydro = true; info.nvarh = 1; info.variable_list = [:rho]
-    info.descriptor = Mera.DescriptorType()
-    Mera.createconstants!(info); Mera.createscales!(info)
+    info.descriptor = DescriptorType()
+    createconstants!(info); createscales!(info)
     return info
 end
 
-function gethydro_toy(info::Mera.InfoType; kwargs...)
+function gethydro_toy(info::InfoType; kwargs...)
     n = 2^info.levelmin
     lv, cx, cy, cz, rho = Int[], Int[], Int[], Int[], Float64[]
     for i in 1:n, j in 1:n, k in 1:n
         push!(lv, info.levelmin); push!(cx, i); push!(cy, j); push!(cz, k); push!(rho, 1.0)
     end
-    d = Mera.HydroDataType()
+    d = HydroDataType()
     d.data = table((level=lv, cx=cx, cy=cy, cz=cz, rho=rho); pkey=[:level, :cx, :cy, :cz])
     d.info = info; d.lmin = info.levelmin; d.lmax = info.levelmax; d.boxlen = info.boxlen
     d.ranges = [0.,1.,0.,1.,0.,1.]
@@ -232,7 +214,7 @@ function gethydro_toy(info::Mera.InfoType; kwargs...)
 end
 
 register_reader!(:toy; simcodes = ["TOY"], name = "Toy (external package)",
-                      info = getinfo_toy, hydro = gethydro_toy)
+                 info = getinfo_toy, hydro = gethydro_toy)
 ```
 
 That is all it takes. From here Mera treats your data like any other:
@@ -255,7 +237,9 @@ masses. If your reader gives a number that is out by 10³ or by some power of a 
 
 When this works on your real files, open the pull request.
 
-## The contract test is the real specification
+## Testing your reader
+
+### The contract test is the real specification
 
 The clearest statement of what a reader must do is not this page. It is
 [`test/59_multicode_contract_tests.jl`](https://github.com/ManuelBehrendt/Mera.jl/blob/multicode/test/59_multicode_contract_tests.jl)
@@ -269,9 +253,9 @@ from its siblings fails there instead of in someone's analysis six months later.
 
 Read it before you write code, and add your code to it as part of your contribution.
 
-## Testing, without needing a simulation
+### Three levels of test
 
-Three levels, in the order worth doing them:
+In the order worth doing them:
 
 1. **Write a fake file, read it back.** Inside the test, write a tiny file in your format by hand,
    then load it. This pins down the format and the position convention, runs anywhere, and needs
@@ -286,7 +270,7 @@ Three levels, in the order worth doing them:
     wrong unit conversion is also 1 and your test passes anyway. Pick awkward numbers so a mistake
     has somewhere to show up.
 
-### Checking against the tool people already use
+### Checking against the reader people already use
 
 Most codes have a reader already, whether that is `pyPLUTO`, Athena++'s `athena_read.py`, or yt. The
 strongest check is to put both on equal footing: resample **both onto the same regular grid**, then
