@@ -10,16 +10,16 @@ abstract: >-
   with physical units, weighted profiles and phase diagrams, mass-conserving projections
   (axis-aligned and off-axis) and covering grids, a pluggable structure (clump/halo) finder, and a
   conservation-correct inflow/outflow flux-budget tool, all checked by a data-free correctness
-  oracle. Readers for PLUTO, Chombo, Athena++, FLASH, GADGET and AREPO are in development on the
-  multicode branch and are not part of a 1.x release.
+  oracle. This development line additionally reads PLUTO, Chombo, Athena++, FLASH, GADGET and
+  AREPO through the same registry and the same analysis layer, unchanged.
 type: software
 authors:
   - family-names: Behrendt
     given-names: Manuel
     # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO: insert ORCID before submission
     email: mera@manuelbehrendt.com
-version: 1.8.0
-date-released: "2026-06-16"   # TODO: set to the day v1.8.0 is actually tagged
+version: 2.0.0-DEV
+date-released: "2026-06-16"   # TODO: unreleased development line; set on a 2.0 release
 license: MIT
 repository-code: "https://github.com/ManuelBehrendt/Mera.jl"
 url: "https://manuelbehrendt.github.io/Mera.jl/stable/"
