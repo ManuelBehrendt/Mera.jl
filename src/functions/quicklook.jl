@@ -231,7 +231,11 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
         is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
         qlreq  = is_mhd ? [:sd, :T, :rho, :bmag] : [:sd, :T, :rho]
         qlvars = getvar_requirements(:hydro, qlreq)                # read only the needed vars (else full)
-        gas = (!isempty(qlvars) && all(in(info.variable_list), qlvars)) ?
+        # Narrowing the read is an optimisation, not a requirement, so it must be conditional on
+        # the reader being able to narrow. A frontend that cannot select columns REFUSES a `vars=`
+        # rather than silently returning everything, which turned quicklook into an error for
+        # every external code instead of a slightly larger read.
+        gas = (!isempty(qlvars) && all(in(info.variable_list), qlvars) && _can_select_columns(info)) ?
               gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=verbose) :
               gethydro(info, lmax=luse, verbose=false, show_progress=verbose)
         n = length(gas.data)

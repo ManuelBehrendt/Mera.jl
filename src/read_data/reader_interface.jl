@@ -35,6 +35,21 @@ const _READERS = Dict{Symbol,SimReader}()
 const _SIMCODE_TO_READER = Dict{String,Symbol}()
 
 """
+    _can_select_columns(info) -> Bool
+
+Whether `gethydro(info; vars=…)` will actually be honoured for this snapshot's code.
+
+True for native RAMSES, which reads a column subset itself, and for a frontend that declared
+`select_vars=true`. False otherwise, where asking for a subset raises rather than quietly
+returning everything. Callers that request a subset as an OPTIMISATION (quicklook) must check
+this first and fall back to a full read, or they break on every reader that cannot narrow.
+"""
+function _can_select_columns(info::InfoType)
+    rdr = _reader_by_simcode(info.simcode)
+    return rdr === nothing || rdr.code === :ramses || rdr.select_vars
+end
+
+"""
     register_reader!(code::Symbol; simcodes, name="", detect=nothing, priority=100,
                      note="", info=nothing, hydro=nothing, particles=nothing, groups=nothing,
                      gravity=nothing, rt=nothing, clumps=nothing)
