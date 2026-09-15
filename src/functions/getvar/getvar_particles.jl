@@ -152,7 +152,14 @@ function get_data(dataobject::PartDataType,
                 ne = select(masked_data, :ne)
                 vars_dict[i] = @. T_over_mu * 4 / (1 + 3XH + 4XH * ne) * selected_unit
             else
-                vars_dict[i] = T_over_mu .* (4 / (1 + 3XH)) .* selected_unit
+                # No electron abundance in the file, so the ionisation state is unknown. Use the
+                # composition the object carries, which is the RAMSES default unless the reader
+                # determined one or the user called setcomposition!. Previously this substituted a
+                # hardcoded neutral-primordial mu = 1.22 and cancelled the configured one, so
+                # setcomposition! silently had no effect on particle temperatures while it worked
+                # on grid data.
+                mu_cfg = dataobject.info.scale.K / dataobject.info.scale.T_mu
+                vars_dict[i] = T_over_mu .* mu_cfg .* selected_unit
             end
 
         elseif i == :cellsize
