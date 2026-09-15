@@ -313,6 +313,7 @@ export
     createconstants,
     createconstants!,
     createscales!,
+    setcomposition!,
     humanize,
     bell,
     notifyme,
