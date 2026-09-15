@@ -106,6 +106,16 @@ function getinfo_chombo(output::Int, path::String; verbose::Bool=true)
         2^base == n0 || error("Chombo reader: level-0 size $n0 must be a power of two.")
         dx0 = Float64(read(attributes(f["level_0"])["dx"]))
 
+        # Refuse a 2-D file HERE, not later. getinfo used to assert ndim = 3 without looking,
+        # so a 2-D snapshot passed inspection, printed a confident 3-D summary, and only failed
+        # when gethydro reached for a k bound that was never there.
+        let pd = read(attributes(f["level_0"])["prob_domain"])
+            hasproperty(pd, :lo_k) || error(
+                "[Mera]: $(basename(fn)) is a 2-D Chombo file (its boxes carry only i and j " *
+                "bounds). Mera analyses three-dimensional data, so it cannot read it. " *
+                "The yt KelvinHelmholtz sample is 2-D; IsothermalSphere is 3-D.")
+        end
+
         info = InfoType(); info.descriptor = _external_descriptor()
         info.output = output; info.path = abspath(path); info.simcode = "CHOMBO"
         info.Narraysize = 0; info.ndim = 3
