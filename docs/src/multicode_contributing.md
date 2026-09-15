@@ -29,7 +29,13 @@ to maintain it. A reader that works and is then left alone is still worth far mo
 
 ### A badge for your own repository
 
-If Mera reads your code's output, you are welcome to say so on your own README. Paste one of these:
+If Mera reads your code's output, you are welcome to say so on your own README. This is how it looks,
+in teal and in orange, both taken from the Mera logo:
+
+![works with Mera.jl](https://img.shields.io/badge/works%20with-Mera.jl-22D3C8?logo=julia&logoColor=white)
+![works with Mera.jl](https://img.shields.io/badge/works%20with-Mera.jl-F5822C?logo=julia&logoColor=white)
+
+Paste whichever you prefer:
 
 ```markdown
 [![works with Mera.jl](https://img.shields.io/badge/works%20with-Mera.jl-22D3C8?logo=julia&logoColor=white)](https://github.com/ManuelBehrendt/Mera.jl)
