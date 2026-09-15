@@ -14,12 +14,10 @@ each in any unit, and provides conservation-correct projections, profiles and st
 all through one unified, multiple-dispatch API.
 
 !!! warning "Released and upcoming 1.x versions are RAMSES-only"
-    Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development
-    for **version 2.0**, on the `multicode` branch. A frontend for **AMReX/BoxLib** plotfiles with a
-    **Quokka** layer is in review
-    ([#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273)); AMReX is also the container used by
-    Castro, Nyx and WarpX. None of this is part of any 1.x release, and nothing on these pages
-    depends on it.
+    Support for **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** is in
+    active development for **version 2.0**, on the `multicode` branch. AMReX/BoxLib is also the
+    container used by Castro, Nyx and WarpX. It is not part of any 1.x release, and nothing on these
+    pages depends on it.
 
     For collaborators who want to try it:
 

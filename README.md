@@ -27,10 +27,9 @@ all through one unified, multiple-dispatch API.
 
 > ### Released and upcoming 1.x versions are **RAMSES-only**
 >
-> Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development for
-> **version 2.0**, on the `multicode` branch. A frontend for **AMReX/BoxLib plotfiles** with a
-> **Quokka** layer is in review ([#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273)); AMReX is
-> also the container used by Castro, Nyx and WarpX. None of this is part of any 1.x release.
+> Support for **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** is in
+> active development for **version 2.0**, on the `multicode` branch. AMReX/BoxLib is also the
+> container used by Castro, Nyx and WarpX. It is not part of any 1.x release.
 > For collaborators to try it:
 >
 > In the Julia REPL, press `]` for the package manager:
@@ -293,9 +292,8 @@ including what the attribution block should contain and what makes a recipe usab
 
 **1.x, RAMSES.** Continued depth on the RAMSES path: analysis, performance and documentation.
 
-**2.0, multiple simulation codes.** AREPO, GADGET, PLUTO, Athena++, FLASH and Chombo behind the
-same API, developed on the `multicode` branch, with AMReX/Quokka in review. What each reader does
-today is listed in
+**2.0, multiple simulation codes.** AREPO, GADGET, PLUTO, Athena++, FLASH, Chombo and AMReX/Quokka
+behind the same API, developed on the `multicode` branch. What each reader does today is listed in
 [Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/multicode/multicode/), and readers
 are credited to the people who wrote them.
 
