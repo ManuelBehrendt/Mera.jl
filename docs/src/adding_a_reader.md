@@ -15,9 +15,10 @@ cosmological units).
 
 The moment your reader returns a valid object:
 
-- **`getvar` computes 73 quantities for gas on a grid and 48 for particles**, on demand, from the
-  columns you supplied: temperature, sound speed, Mach numbers, angular momentum, Jeans length,
-  virial and magnetic diagnostics. You write none of them.
+- **`getvar` computes a long list of derived quantities** on demand, from the columns you
+  supplied: temperature, sound speed, Mach numbers, angular momentum, Jeans length, virial and
+  magnetic diagnostics, and many more. You write none of them. `list_fields` shows what your data
+  type offers.
 - **Every unit works.** Ask for anything in `:Msol`, `:kpc`, `:km_s`, `:K`, `:g_cm3`, because you
   gave three numbers in CGS and Mera derived the rest.
 - **Projections**, along an axis or from any viewing angle, with mass, volume, SPH or Voronoi
