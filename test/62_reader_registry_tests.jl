@@ -79,6 +79,36 @@ end
         @test Mera.detect_simcode(mktempdir()) === :ramses
     end
 
+    # `vars=` is a NAMED parameter of gethydro, so it never lands in `kwargs...`. A frontend
+    # only receives it when it declares `select_vars=true`; otherwise gethydro refuses instead
+    # of silently handing back every column.
+    @testset "select_vars: column selection is forwarded only when declared" begin
+        try
+            Mera.register_reader!(:novars; simcodes = ["NOVARS"], name = "No column select",
+                hydro = (info; kwargs...) -> :all_columns)
+            nov = _registry_stub_info("NOVARS")
+            @test Mera._READERS[:novars].select_vars == false     # the default
+            @test gethydro(nov) === :all_columns                  # vars=[:all] still routes
+            err = try; gethydro(nov; vars=[:rho]); nothing; catch e; e; end
+            @test err isa ArgumentError
+            @test occursin("column selection", err.msg) && occursin("rho", err.msg)
+        finally
+            Mera.unregister_reader!(:novars)
+        end
+
+        try
+            Mera.register_reader!(:yesvars; simcodes = ["YESVARS"], name = "Column select",
+                select_vars = true,
+                hydro = (info; vars=:all, kwargs...) -> vars)
+            yes = _registry_stub_info("YESVARS")
+            @test Mera._READERS[:yesvars].select_vars == true
+            @test gethydro(yes; vars=[:rho, :vx]) == [:rho, :vx]  # reaches the frontend intact
+            @test gethydro(yes) === :all                          # [:all] is normalised to :all
+        finally
+            Mera.unregister_reader!(:yesvars)
+        end
+    end
+
     @testset "kwargs passthrough: native RAMSES path rejects leftovers" begin
         ram = _registry_stub_info("RAMSES")
         for f in (gethydro, getparticles)

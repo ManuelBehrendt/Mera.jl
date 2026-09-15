@@ -356,9 +356,16 @@ function gethydro(dataobject::InfoType;
         lmax < dataobject.levelmax && @warn "gethydro: `lmax` is not applied to the " *
             "$(dataobject.simcode) reader — external readers load all leaf cells; choose the " *
             "resolution at analysis time instead (e.g. `projection(…, lmax=, res=)`)." maxlog=1
-        # `vars` is a NAMED parameter, so it never reaches `kwargs...` and used to be dropped in
-        # silence — a column selection returned every variable instead. None of the external
-        # hydro frontends implements column selection, so refuse rather than pretend.
+        # `vars` is a NAMED parameter, so it never reaches `kwargs...` and used to be dropped
+        # in silence, meaning a column selection returned every variable instead. A frontend
+        # that really implements column selection declares `select_vars=true` at registration;
+        # the rest refuse rather than pretend.
+        if rdr.select_vars
+            return rdr.funcs[:hydro](dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
+                                     center=center, range_unit=range_unit, verbose=verbose,
+                                     show_progress=show_progress,
+                                     vars=(vars == [:all] ? :all : vars), kwargs...)
+        end
         vars == [:all] || throw(ArgumentError(
             "gethydro: column selection (vars=$vars) is not implemented for the " *
             "$(dataobject.simcode) reader — every variable in the file is returned. " *
