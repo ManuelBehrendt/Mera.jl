@@ -34,7 +34,9 @@ means you can follow any tutorial and change one line.
 
 ```julia
 info = getinfo("/path/to/your/output")   # the reader is picked from the files it finds
-gas  = gethydro(info)                    # from here on, every example applies unchanged
+
+gas = gethydro(info)                     # grid codes: RAMSES, PLUTO, Chombo, Athena++, FLASH
+gas = getparticles(info; families=[0])   # GADGET and AREPO: the gas lives in the particle file
 ```
 
 **This branch wants testers more than anything else.** The non-RAMSES readers are checked against
@@ -45,7 +47,7 @@ The last one is the rarest report and is evidence we cannot get any other way. A
 snapshot is even better, since it turns a format check into a lasting behaviour check.
 
 You do not need to know Mera to help. See
-[Other Simulation Codes](docs/src/multicode.md) for what each reader implements today, how to check
+[Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/multicode/multicode/) for what each reader implements today, how to check
 a first result, and where it is likely to be thin.
 
 *Coverage is measured by the maintainer on a local run (the RAMSES test datasets are too large for

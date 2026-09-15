@@ -232,4 +232,13 @@ makedocs(modules = [Mera],
                     ]
 )
 
-deploydocs(repo = "github.com/ManuelBehrendt/Mera.jl.git")
+# The release line is published from `master`, the multi-code line from `multicode`, each
+# into its own folder on the docs site. Without this, the frontend pages exist only as raw
+# markdown on a branch, which is not something you can send a collaborator.
+# Branch-aware rather than branch-specific on purpose: the file stays identical on both
+# branches, so a merge never has to resolve it.
+const _REF = get(ENV, "GITHUB_REF_NAME", "")
+deploydocs(repo      = "github.com/ManuelBehrendt/Mera.jl.git",
+           devbranch = _REF == "multicode" ? "multicode" : "master",
+           devurl    = _REF == "multicode" ? "multicode" : "dev",
+           versions  = ["stable" => "v^", "v#.#", "dev" => "dev", "multicode" => "multicode"])
