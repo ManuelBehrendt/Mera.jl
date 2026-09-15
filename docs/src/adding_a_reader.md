@@ -13,7 +13,36 @@ Projections, profiles, phase diagrams, regions, movies and unit conversions were
 standard objects, not against RAMSES, so none of them has to change.
 
 That is why this is worth doing. You are not adding a code path to every function. You write
-roughly two functions, a few hundred lines, and the rest of the package comes free.
+roughly two functions, and the rest of the package comes free. For scale, the readers already here
+are 262 lines (FLASH), 266 (Athena++), 455 (PLUTO) and 696 (GADGET, which also handles particles,
+halo catalogues and cosmological units).
+
+## Why one reader is enough: Mera is code-blind
+
+The reason a reader is small is worth stating plainly, because it is the whole design.
+
+**The readers differ. What they produce does not.** Every reader, for every code, returns the same
+two object types. Once your data is inside one of them, nothing downstream can tell which code wrote
+the file, and nothing downstream has to ask. There is no `if simcode == "AREPO"` anywhere in the
+analysis, and adding your code puts none there.
+
+What that buys you, concretely, the moment your reader returns a valid object:
+
+- **`getvar` computes 73 quantities for grid data and 48 for particle data** on demand, from the
+  columns you supplied. Temperature, sound speed, Mach numbers, angular momentum, Jeans length,
+  virial and magnetic diagnostics. You write none of them.
+- **Every unit works.** Ask for any quantity in `:Msol`, `:kpc`, `:km_s`, `:K`, `:g_cm3` and so on,
+  because you gave three CGS numbers and `createscales!` did the rest.
+- **Projections**, on-axis and off-axis, at any inclination, with mass, volume, SPH or Voronoi
+  weighting.
+- **Regions**: spheres, cuboids, cylinders, shells, combined and inverted, with exact cell splitting
+  at the boundary.
+- **Profiles, phase diagrams, structure finding, time series and movies.**
+- **`filterdata`** in value space on anything `getvar` can compute.
+
+This is also why the contract below matters so much. Your reader is not judged on whether it reads
+your format, which only you can check. It is judged on whether the object it produces behaves like
+every other one, because everything else assumes it does.
 
 !!! note "Where the readers live"
     The 1.x release ships the RAMSES reader only. Readers for PLUTO, Chombo, Athena++, FLASH,
@@ -47,7 +76,7 @@ those alone. These are the ones that matter:
 |---|---|
 | `simcode` | the name of your code, e.g. `"PLUTO"` |
 | `ndim` | 3, Mera works in three dimensions |
-| `levelmin`, `levelmax` | the range of grid refinement levels; set both equal for a uniform grid, and both to 0 for pure particle data |
+| `levelmin`, `levelmax` | the range of grid refinement levels; set both equal for a uniform grid, and both to `1` for a particle code with no grid, as the GADGET reader does |
 | `boxlen` | the size of the simulation box, in your code's own length unit |
 | `time`, `aexp`, `H0`, `omega_*` | when the snapshot is from, and cosmology if it has any |
 | `unit_l`, `unit_d`, `unit_t` | how long, how dense and how long-in-time one code unit is, **in CGS** |
