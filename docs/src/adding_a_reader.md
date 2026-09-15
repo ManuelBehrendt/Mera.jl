@@ -184,7 +184,8 @@ routes its ordinary functions to your reader, and you can check the numbers your
 A complete working example, with the file reading replaced by a fake 8³ grid:
 
 ```julia
-using Mera, IndexedTables
+using Mera
+using Mera.IndexedTables       # reached through Mera, so nothing extra to install
 
 function getinfo_toy(output::Int, path::String; verbose=true, kwargs...)
     info = InfoType()
