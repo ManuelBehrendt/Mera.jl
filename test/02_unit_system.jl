@@ -161,6 +161,10 @@
         @test isapprox(scale.kpc, unit_l / pc / 1e3, rtol=1e-15)
         @test isapprox(scale.Mpc, unit_l / pc / 1e6, rtol=1e-15)
         @test isapprox(scale.Au, unit_l / constants.Au, rtol=1e-15)
+        # The line above pins the RELATIONSHIP and holds for any value of constants.Au, which is
+        # how an Au that was wrong by 1e15 survived. These pin the VALUE.
+        @test isapprox(constants.Au, 1.495978707e13, rtol=1e-12)   # IAU 2012, in cm
+        @test isapprox(constants.pc / constants.Au, 206264.806, rtol=1e-6)
         @test isapprox(scale.ly, unit_l / constants.ly, rtol=1e-15)
         @test isapprox(scale.mm, unit_l * 10.0, rtol=1e-15)
     end
