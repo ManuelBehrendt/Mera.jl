@@ -250,25 +250,58 @@ Note a scale of exactly `1.0` cannot detect an inverted conversion (`x*1 == x/1`
 
 See also [`createscales!`](@ref), [`createconstants`](@ref), [`getunit`](@ref).
 """
-function createscales(dataobject::InfoType)
+function createscales(dataobject::InfoType; X_frac::Real=0.76, mu::Real=1/X_frac)
     unit_l = dataobject.unit_l
     unit_d = dataobject.unit_d
     unit_t = dataobject.unit_t
     unit_m = dataobject.unit_m
     constants = dataobject.constants
-    return createscales(unit_l, unit_d, unit_t, unit_m, constants)
+    return createscales(unit_l, unit_d, unit_t, unit_m, constants; X_frac=X_frac, mu=mu)
+end
+
+"""
+    setcomposition!(info; X_frac=0.76, mu=1/X_frac) -> InfoType
+
+State the gas composition of a run, and rebuild the unit table from it.
+
+Two quantities depend on composition and no simulation format records them:
+
+- `X_frac`, the hydrogen **mass fraction**, converts a mass density to `:nH`
+- `mu`, the mean molecular weight, converts pressure over density to a temperature in `:K`
+
+The defaults are the RAMSES convention, X = 0.76 with `mu = 1/X`, and they are what every
+reader starts from. Another code will assume something else. PLUTO without a chemistry module
+treats the gas as fully ionised, X = 0.711 and mu = 0.614, which makes its temperatures about
+a factor of two lower than the default would give.
+
+Nothing changes unless you call this, so existing results are unaffected.
+
+```julia
+info = getinfo(5, path)
+setcomposition!(info; X_frac=0.711, mu=0.614)   # PLUTO defaults, fully ionised
+getvar(gas, :T, :K)
+```
+
+`getvar(gas, :T, :K_mu)` needs no composition at all: it is Kelvin per unit mu, so you can
+multiply by whatever value your run implies.
+"""
+function setcomposition!(dataobject::InfoType; X_frac::Real=0.76, mu::Real=1/X_frac)
+    dataobject.scale = createscales(dataobject; X_frac=X_frac, mu=mu)
+    return dataobject
 end
 
 # Old serialized constants (PhysicalUnitsType001, from pre-002 mera-files): convert and
 # delegate. The former dedicated implementation here read fields the type never had
 # (eV, Lsol, k_B, ...), so ANY call threw - ~200 dead lines replaced by the existing
 # convert path (types.jl Base.convert PhysicalUnitsType001 -> 002).
-function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType001)
-    return createscales(unit_l, unit_d, unit_t, unit_m, convert(PhysicalUnitsType002, constants))
+function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType001;
+                      X_frac::Real=0.76, mu::Real=1/X_frac)
+    return createscales(unit_l, unit_d, unit_t, unit_m, convert(PhysicalUnitsType002, constants); X_frac=X_frac, mu=mu)
 end
 
 # Overload for PhysicalUnitsType002 (same implementation, just different type signature)
-function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType002)
+function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType002;
+                      X_frac::Real=0.76, mu::Real=1/X_frac)
     #Initialize scale-object
     scale = ScalesType003() #zeros(Float64, 32)...)
 
@@ -287,8 +320,12 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     #Gyr     =   constants.yr /1e9   # [s]  GigaYear -> from IAU
     #Myr     =   constants.yr /1e6   # [s]  MegaYear -> from IAU
     yr      =   constants.yr        # [s]  Year -> from IAU
-    X_frac  =   0.76                # Hydrogen fraction by mass -> cooling_module.f90 RAMSES
-    μ       =   1/X_frac            # mean molecular weight
+    # Composition. The defaults are the RAMSES convention (cooling_module.f90): X = 0.76 by mass,
+    # and mu = 1/X, which is really the mass per hydrogen nucleus rather than a mean molecular
+    # weight. They are independent arguments because they answer different questions: X converts a
+    # mass density to a hydrogen number density, mu converts p/rho to a temperature. Another code
+    # will have its own values, and no format records them, so `setcomposition!` lets you say.
+    μ       =   float(mu)
 
     scale.Mpc       = unit_l / pc / 1e6
     scale.kpc       = unit_l / pc / 1e3
