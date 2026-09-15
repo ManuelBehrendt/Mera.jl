@@ -7,9 +7,9 @@ package works on your data.
 
 That is the whole design, and it is why this is a small job. **The readers differ. What they produce
 does not.** There is no `if simcode == "AREPO"` anywhere in the analysis, and adding your code puts
-none there. You write two functions. For scale, the readers already here are 262 lines (FLASH), 266
-(Athena++), 455 (PLUTO) and 696 (GADGET, which also handles particles, halo catalogues and
-cosmological units).
+none there. You write two functions, and the existing readers are each a few hundred lines. The
+larger ones are larger because they do more than read gas: GADGET also handles particles, halo
+catalogues and cosmological units.
 
 ## What you get for those two functions
 
