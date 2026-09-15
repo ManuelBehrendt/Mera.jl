@@ -107,11 +107,18 @@ function _quicklook_budget(gas_mass_Msol, p; pscale::Real=1.0)
             n_stars=0, n_dm=0, sfr10=nothing, sfr100=nothing, sfr_mean=nothing, has_particles=false)
     p === nothing && return base
     m = getvar(p, :mass, :Msol); star, dm = _star_dm_masks(p)
-    sm = sfr_snapshot(p; windows=[10.0, 100.0])
+    # sfr_snapshot rebuilds birth masses from RAMSES's :birth column and an eta_sn from the run's
+    # namelist. Neither exists outside RAMSES, and asking for them turned quicklook into an error
+    # on every particle-based code. Masses and counts work everywhere, so report those and leave
+    # the star-formation rate empty when it cannot be computed.
+    cols = propertynames(getfield(p, :data).columns)
+    sm = (:birth in cols) ? sfr_snapshot(p; windows=[10.0, 100.0]) : nothing
     return (gas_mass_Msol=gas_mass_Msol,
             stellar_mass_Msol=sum(m[star])*pscale, dm_mass_Msol=sum(m[dm])*pscale,
             n_stars=round(Int, count(star)*pscale), n_dm=round(Int, count(dm)*pscale),
-            sfr10=sm.sfr[1]*pscale, sfr100=sm.sfr[2]*pscale, sfr_mean=sm.sfr_mean*pscale,
+            sfr10    = sm === nothing ? nothing : sm.sfr[1]*pscale,
+            sfr100   = sm === nothing ? nothing : sm.sfr[2]*pscale,
+            sfr_mean = sm === nothing ? nothing : sm.sfr_mean*pscale,
             has_particles=true)
 end
 
