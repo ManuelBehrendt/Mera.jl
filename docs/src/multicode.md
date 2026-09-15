@@ -53,6 +53,14 @@ using Mera, Markdown
 Markdown.parse(Mera.capability_matrix())
 ```
 
+That table is generated from the reader registry when this page is built, so it always states what
+the branch actually does, never what it intends to do.
+
+**In review:** a frontend for **AMReX/BoxLib plotfiles** with a **Quokka** layer on top, in
+[#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273). AMReX is the container used by Quokka,
+and by Castro, Nyx and WarpX, so one reader opens several codes at once. It will appear in the table
+above as soon as it merges.
+
 Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, and
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
 available, e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
@@ -239,6 +247,19 @@ free the moment it does.
 
 That makes this unusually good ground for a contribution: the surface you have to understand is
 small, and the payoff is the whole analysis layer.
+
+### Who built which reader
+
+Readers are credited to the people who wrote them, so you can ask the person who knows the format
+rather than guessing from the code.
+
+| Reader | Written and maintained by |
+|---|---|
+| PLUTO, Chombo, Athena++, FLASH, GADGET, AREPO | Manuel Behrendt ([@ManuelBehrendt](https://github.com/ManuelBehrendt)) |
+| AMReX/BoxLib and Quokka *(in review, [#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273))* | ChongChong He ([@chongchonghe](https://github.com/chongchonghe)) |
+
+If you write a reader for your own code, you are named here for it, and you decide how far you want
+to maintain it. A reader that works and is then left alone is still worth far more than no reader.
 
 **The most useful thing is a real snapshot.** The readers are checked against files built to match
 each format specification. Those pin the format down, but they cannot cover what real projects

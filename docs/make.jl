@@ -53,6 +53,14 @@ let
            ($(length(UNDOCUMENTED_OK)) deliberately exempt)"
 end
 
+# The multicode site is the frontends and what they need, nothing else. It publishes to its
+# own folder, and the 2.0 documentation will be written from scratch rather than grown out of
+# the RAMSES pages, so listing every tutorial here would only be material to throw away later.
+# The API section stays: the reader pages carry 111 `@ref` links into it, and dropping it
+# would break every one of them.
+const _MULTICODE_SITE = get(ENV, "GITHUB_REF_NAME", "") == "multicode" ||
+                        get(ENV, "MERA_MULTICODE_SITE", "0") == "1"
+
 makedocs(modules = [Mera],
          sitename = "Mera.jl",
          doctest = false,
@@ -84,7 +92,38 @@ makedocs(modules = [Mera],
 		repolink = "https://github.com/ManuelBehrendt/Mera.jl"),  # Add repository link
          
 		authors = "Manuel Behrendt",
-		pages = Any[ "Home"                  => "index.md",
+		pages = _MULTICODE_SITE ? Any[
+                         "Home" => "index.md",
+                         "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
+                                                          "Worked Examples" => "multicode_examples.md",
+                                                          "PLUTO"    => "pluto_reader.md",
+                                                          "Athena++" => "athena_reader.md",
+                                                          "FLASH"    => "flash_reader.md",
+                                                          "GADGET"   => "gadget_reader.md",
+                                                          "AREPO"    => "arepo_reader.md",
+                                                          "AREPO/GADGET run-time logs" => "gadget_logs.md",
+                                                          "Cosmological Units" => "cosmological_units.md",
+                                                          "Zoom Simulations"   => "zoom_simulations.md"],
+                         "Derived Fields" => "derived_fields.md",
+                         "API Reference" => Any[
+                             "Data Inspection"     => "api/data_inspection.md",
+                             "Data Loading"        => "api/data_loading.md",
+                             "Subregions"          => "api/subregions.md",
+                             "Calculations"        => "api/calculations.md",
+                             "Masking & Filtering" => "api/masking_filtering.md",
+                             "Structure Finding"   => "api/structure_finding.md",
+                             "Profiles & Phase"    => "profiles_phase.md",
+                             "Projections"         => "api/projections.md",
+                             "Off-axis Projection" => "api/offaxis.md",
+                             "Mera-Files"          => "api/mera_files.md",
+                             "Volume Rendering"    => "api/volume_rendering.md",
+                             "Multi-Threading"     => "api/multithreading.md",
+                             "Cosmology"           => "api/cosmology.md",
+                             "Movies"              => "api/movies.md",
+                             "Configuration"       => "api/configuration.md",
+                             "Notifications"       => "api/notifications.md",
+                             "Complete API"        => "api.md"],
+                       ] : Any[ "Home"                  => "index.md",
 		              "First Look"             => "first_look.md",
 		              "Composable Reports"     => "report.md",
 		              "Getting Started"        => Any[
