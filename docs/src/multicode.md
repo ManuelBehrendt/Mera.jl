@@ -23,7 +23,7 @@ It is development work, not part of any 1.x release. Install it with:
 |---|---|---|---|---|---|
 | **RAMSES** | native binary | AMR | gas, gravity, particles, RT, clumps | real simulations, in depth | native |
 | **PLUTO** | `grid.out` + `.dbl` | uniform | gas, particles | format fixtures | [PLUTO](pluto_reader.md) |
-| **Chombo** (PLUTO-AMR) | Chombo HDF5 | AMR | gas | format fixtures | [PLUTO](pluto_reader.md#PLUTO-AMR-(Chombo)) |
+| **Chombo** (PLUTO-AMR) | Chombo HDF5 | AMR | gas | format fixtures | [Chombo](chombo_reader.md) |
 | **Athena++** | `.athdf` HDF5 | AMR | gas, MHD | format fixtures | [Athena++](athena_reader.md) |
 | **FLASH** | HDF5 PARAMESH | AMR | gas, MHD | format fixtures | [FLASH](flash_reader.md) |
 | **GADGET** | HDF5 `PartType*` | SPH particles | particles, SUBFIND groups | format fixtures | [GADGET](gadget_reader.md) |
@@ -137,87 +137,6 @@ and density, `:mach_alfven` needs a magnetic field. If the snapshot does not car
 says so rather than guessing. And these readers have met far fewer real runs than the RAMSES one,
 so your simulation may be the first of its kind one has seen.
 
-## Worked examples: self-built runs
-
-These three small Athena++ runs (built from source, regenerable, a few MB each) exercise the
-multi-code workflow end to end, multi-output time series, self-gravity, and chemistry, each loaded
-and analysed with the *same calls* used for RAMSES.
-
-### MHD blast (time series)
-
-A 3-D **MHD blast** (32³ root + 2 adaptive-AMR levels, 11 HDF5 outputs). `getinfo` reads one snapshot:
-
-```julia
-julia> info = getinfo(5, "/data/athena_blast");
-
-Code: Athena++
-output: 5  time: 0.50111 [code units]
-root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
-MeshBlocks: 148   variables: (rho, p, vx, vy, vz, bx, by, bz)
--------------------------------------------------------
-```
-
-and `timeseries` reduces all 11 outputs with the *same call* used for RAMSES, here the peak
-density and field strength over time:
-
-```julia
-ts = timeseries("/data/athena_blast",
-                d -> (rmax = maximum(getvar(d, :rho)), bmax = maximum(getvar(d, :bmag)));
-                time_unit = :standard)
-#  output | time | rmax  | bmax       (ρ_max rises 1.0 → 2.1 as the blast forms;
-#  ───────┼──────┼───────┼─────       the blast elongates along B — top row below)
-```
-
-![Self-built Athena++ MHD blast: log column density at t = 0, 0.3, 0.6, 1.0 (top), the blast expands and is channelled along the magnetic field, and the timeseries reduction of ρ_max and |B|_max over all 11 outputs (bottom). Loaded, projected and reduced with the same calls used for RAMSES.](assets/athena/blast_reference_run.png)
-
-Every snapshot can also be written to Mera's portable JLD2 format
-([`savedata`](@ref)/[`loaddata`](@ref)), converting *any* supported code into mera-files that the
-whole toolchain (including `timeseries(…; mera_files=true)`) then reads back identically.
-
-### Self-gravity
-
-A **Jeans** run with self-gravity (multigrid) writes the gravitational potential, which the reader
-exposes as the canonical `:gpot` field, `getvar`/`projection`/`timeseries` then treat it like any
-other quantity:
-
-```julia
-gas = gethydro(getinfo(2, "/data/athena_selfgravity"))
-projection(gas, :gpot)                       # the potential well tracking the density (right panel)
-projection(gas, :rho)                        # the Jeans-mode density perturbation (left panel)
-```
-
-![Athena++ self-gravity (Jeans mode): the density perturbation ρ (left) and the gravitational potential `:gpot` (right), the potential well tracks the over-densities. Same getvar(:gpot)/projection call as FLASH and Chombo.](assets/athena/selfgravity.png)
-
-### Chemistry
-
-A run with the **H₂ chemistry network** writes the species abundances, mapped to canonical
-fractions `:xHI`/`:xH2`. A `timeseries` of a species is the same call as any other reduction, here
-the H→H₂ formation over 50 Myr:
-
-```julia
-ts = timeseries("/data/athena_chemistry",
-                d -> (xHI = getvar(d, :xHI)[1], xH2 = getvar(d, :xH2)[1]);
-                time_unit = :standard)
-#  output | time | xHI  | xH2     (xH2 rises 0 → 0.45 as molecular hydrogen forms)
-```
-
-![Athena++ H–H₂ chemistry: the atomic (`:xHI`) and molecular (`:xH2`) hydrogen fractions over 50 Myr, H₂ forms until the network saturates. Species load as canonical fractions across codes; the time-series uses the same call as any other reduction.](assets/athena/chemistry.png)
-
-### Radiative transfer (PDR)
-
-A **photo-dissociation region**: gow17 (C/O) chemistry + **six-ray radiative transfer** (CVODE
-solver). The eight radiation frequency bins load as photon groups `:Np1…:Np8`, the species as
-canonical fractions, so the whole PDR stratification is just `getvar`/`projection`:
-
-```julia
-gas = gethydro(getinfo(5, "/data/athena_sixray"))
-projection(gas, :Np1)                        # the UV radiation field, attenuated into the cloud
-projection(gas, :xH2)                        # molecular H₂, forming in the shielded interior
-projection(gas, :xCII)                       # ionized carbon, at the UV-exposed surface
-```
-
-![Athena++ six-ray PDR: the UV radiation field `:Np1` shielded toward the centre (left), molecular `:xH2` forming in the shielded interior (middle), and ionized carbon `:xCII` at the irradiated surface (right), the textbook PDR stratification, read code-blind via canonical names.](assets/athena/pdr_sixray.png)
-
 ## The shared contract
 
 Whatever the source code, a loaded object obeys the same rules. This is what makes the analysis
@@ -238,95 +157,9 @@ code-blind, and what the cross-reader test (`test/59_multicode_contract_tests.jl
 None of this is a reason to avoid the non-RAMSES readers. It is a reason to check your first
 result against something you already trust, and to tell us when it disagrees.
 
-## Help us widen this
+## Where to go next
 
-The analysis layer does not know which code produced the data, so **supporting another code is
-reader work, not core work**. A reader is a few hundred lines that turns one file format into the
-standard objects. Everything downstream, every projection, profile, phase diagram and region, comes
-free the moment it does.
-
-That makes this unusually good ground for a contribution: the surface you have to understand is
-small, and the payoff is the whole analysis layer.
-
-### Who built which reader
-
-Readers are credited to the people who wrote them, so you can ask the person who knows the format
-rather than guessing from the code.
-
-| Reader | Written and maintained by |
-|---|---|
-| PLUTO, Chombo, Athena++, FLASH, GADGET, AREPO | Manuel Behrendt ([@ManuelBehrendt](https://github.com/ManuelBehrendt)) |
-| AMReX/BoxLib and Quokka | ChongChong He ([@chongchonghe](https://github.com/chongchonghe)) |
-
-If you write a reader for your own code, you are named here for it, and you decide how far you want
-to maintain it. A reader that works and is then left alone is still worth far more than no reader.
-
-### A badge for your own repository
-
-If Mera reads your code's output, you are welcome to say so on your own README. Paste one of these:
-
-```markdown
-[![works with Mera.jl](https://img.shields.io/badge/works%20with-Mera.jl-22D3C8?logo=julia&logoColor=white)](https://github.com/ManuelBehrendt/Mera.jl)
-```
-
-```markdown
-[![works with Mera.jl](https://img.shields.io/badge/works%20with-Mera.jl-F5822C?logo=julia&logoColor=white)](https://github.com/ManuelBehrendt/Mera.jl)
-```
-
-The badge is generated by shields.io, so there is nothing to host and nothing to keep in step with a
-release. Point it at the Mera repository, as above, or at your own reader's page on this site if you
-would rather send people straight to the instructions for your format.
-
-This is a statement about compatibility, not an endorsement of a result, and it says nothing about
-how far your reader has been tested. If you want readers of your repository to know that, the
-[reader pages](multicode.md) record what each one was checked against.
-
-**The most useful thing is a real snapshot.** The readers are checked against files built to match
-each format specification. Those pin the format down, but they cannot cover what real projects
-actually produce: unusual refinement, extra fields, a version of the writer nobody anticipated. One
-compact, shareable output from a real run turns a format check into a behaviour check, and it keeps
-working for everyone who comes after you.
-
-It does not need to be big. A single small output, ideally a few hundred MB or less, with whatever
-makes your setup unusual, is worth more than a large ordinary one. If it can be published we will
-add it to the public test set and credit you; if it cannot, tell us anyway and we can work out what
-is possible.
-
-**If you are testing a reader, these are the things worth telling us**, roughly in order of value:
-
-- **It disagrees with something you trust.** A reader giving a different answer from your code's own
-  tools on the same snapshot is the single most valuable report. Send the code, the configuration,
-  and what differed.
-- **It failed to read your file.** A format variant nobody has met is a normal outcome here, not an
-  embarrassment. The error and a description of how the run was configured is usually enough.
-- **It worked.** Genuinely useful, and almost nobody reports it. Knowing that a reader handled a real
-  production run of a kind we have never seen is evidence we cannot get any other way.
-- **Something is missing.** Particles on a grid code, gravity where the snapshot carries it. Adding
-  one is self-contained; see [Adding a reader](#Adding-a-reader).
-
-You do not need to know Mera to be useful here. Loading your own snapshot and looking at whether the
-numbers are right is the test that matters, and it is the one only you can run.
-
-Questions and work in progress are welcome in
-[issues and discussions](https://github.com/ManuelBehrendt/Mera.jl/issues), including "is this
-supposed to work?", which is often the fastest way to find a gap in these pages.
-
-## Reference readers
-
-Each frontend is built to agree with the upstream tools that define its format, yt's per-code
-frontends and region selectors, and each code's own reader (`pyPLUTO`, Athena++'s `athena_read.py`,
-the FLASH user guide). The reader pages cite these as the *origin* the implementation is validated
-against; the yt sample-data collection supplies the real test snapshots.
-
-## Adding a reader
-
-[Adding a Reader](adding_a_reader.md) is the contract: the `InfoType` fields a reader fills, the
-cell convention that fails silently when it is wrong, how to test without any simulation data, and
-how to check your result against the code's own reader.
-
-In short: write `getinfo_X(output, path; …)` returning an `InfoType` (set `simcode`,
-`levelmin/max`, `boxlen`, `unit_*`, `variable_list`, then `createconstants!` and `createscales!`)
-and `gethydro_X(info; xrange, …)` returning a `HydroDataType`, reusing the shared
-`_external_ranges` and `_external_keep` helpers for load-time selection. Then register it with
-`register_reader!`. Mirror the existing HDF5 readers (`reader_athena.jl`, `reader_flash.jl`) for
-block-structured AMR.
+- **[Worked examples](multicode_examples.md)**, the same analysis run on several codes.
+- The reader pages in the sidebar, for what each format gives you and what it does not.
+- **[Contributing a reader](multicode_contributing.md)**, if your code is not here yet, or if
+  you can test one against a real simulation.

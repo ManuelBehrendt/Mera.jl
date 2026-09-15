@@ -64,13 +64,11 @@ end
 const _READER_PAGES = Any[ "Overview" => "multicode.md",
                            "Worked Examples" => "multicode_examples.md",
                            "PLUTO"    => "pluto_reader.md",
+                           "Chombo"   => "chombo_reader.md",
                            "Athena++" => "athena_reader.md",
                            "FLASH"    => "flash_reader.md",
                            "GADGET"   => "gadget_reader.md",
-                           "AREPO"    => "arepo_reader.md",
-                           "AREPO/GADGET run-time logs" => "gadget_logs.md",
-                           "Cosmological Units" => "cosmological_units.md",
-                           "Zoom Simulations"   => "zoom_simulations.md"]
+                           "AREPO"    => "arepo_reader.md"]
 for (label, file) in ["AMReX / Quokka" => "amrex_reader.md"]        # OPTIONAL, see above
     isfile(joinpath(@__DIR__, "src", file)) && push!(_READER_PAGES, label => file)
 end
@@ -112,8 +110,21 @@ makedocs(modules = [Mera],
 		pages = _MULTICODE_SITE ? Any[
                          "Home" => "index.md",
                          "Other Simulation Codes" => _READER_PAGES,
-                         "Derived Fields" => "derived_fields.md",
-                         "Adding a Reader" => "adding_a_reader.md",
+
+                         # Contributing sits on its own: adding a reader is a different job from
+                         # using one, and the people doing it arrive from the README, not from a
+                         # reader page.
+                         "Contributing a Reader" => Any[
+                             "How to Add a Reader" => "adding_a_reader.md",
+                             "Helping, Credits and the Badge" => "multicode_contributing.md"],
+
+                         # Topics, not codes. These used to sit under "Other Simulation Codes",
+                         # where a reader looking for a format found a cosmology page instead.
+                         "Topics" => Any[
+                             "AREPO/GADGET Run-time Logs" => "gadget_logs.md",
+                             "Cosmological Units"         => "cosmological_units.md",
+                             "Zoom Simulations"           => "zoom_simulations.md",
+                             "Derived Fields"             => "derived_fields.md"],
                          "API Reference" => Any[
                              "Data Inspection"     => "api/data_inspection.md",
                              "Data Loading"        => "api/data_loading.md",

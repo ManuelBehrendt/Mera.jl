@@ -797,3 +797,84 @@ Every call above is identical to what you'd run on a RAMSES snapshot. That is th
 the code-blind analysis layer. For per-code details (units, variable mapping, coordinate
 conventions, reference readers) see the
 [Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/stable/multicode/) docs.
+
+## Worked examples: self-built runs
+
+These three small Athena++ runs (built from source, regenerable, a few MB each) exercise the
+multi-code workflow end to end, multi-output time series, self-gravity, and chemistry, each loaded
+and analysed with the *same calls* used for RAMSES.
+
+### MHD blast (time series)
+
+A 3-D **MHD blast** (32³ root + 2 adaptive-AMR levels, 11 HDF5 outputs). `getinfo` reads one snapshot:
+
+```julia
+julia> info = getinfo(5, "/data/athena_blast");
+
+Code: Athena++
+output: 5  time: 0.50111 [code units]
+root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
+MeshBlocks: 148   variables: (rho, p, vx, vy, vz, bx, by, bz)
+-------------------------------------------------------
+```
+
+and `timeseries` reduces all 11 outputs with the *same call* used for RAMSES, here the peak
+density and field strength over time:
+
+```julia
+ts = timeseries("/data/athena_blast",
+                d -> (rmax = maximum(getvar(d, :rho)), bmax = maximum(getvar(d, :bmag)));
+                time_unit = :standard)
+#  output | time | rmax  | bmax       (ρ_max rises 1.0 → 2.1 as the blast forms;
+#  ───────┼──────┼───────┼─────       the blast elongates along B — top row below)
+```
+
+![Self-built Athena++ MHD blast: log column density at t = 0, 0.3, 0.6, 1.0 (top), the blast expands and is channelled along the magnetic field, and the timeseries reduction of ρ_max and |B|_max over all 11 outputs (bottom). Loaded, projected and reduced with the same calls used for RAMSES.](assets/athena/blast_reference_run.png)
+
+Every snapshot can also be written to Mera's portable JLD2 format
+([`savedata`](@ref)/[`loaddata`](@ref)), converting *any* supported code into mera-files that the
+whole toolchain (including `timeseries(…; mera_files=true)`) then reads back identically.
+
+### Self-gravity
+
+A **Jeans** run with self-gravity (multigrid) writes the gravitational potential, which the reader
+exposes as the canonical `:gpot` field, `getvar`/`projection`/`timeseries` then treat it like any
+other quantity:
+
+```julia
+gas = gethydro(getinfo(2, "/data/athena_selfgravity"))
+projection(gas, :gpot)                       # the potential well tracking the density (right panel)
+projection(gas, :rho)                        # the Jeans-mode density perturbation (left panel)
+```
+
+![Athena++ self-gravity (Jeans mode): the density perturbation ρ (left) and the gravitational potential `:gpot` (right), the potential well tracks the over-densities. Same getvar(:gpot)/projection call as FLASH and Chombo.](assets/athena/selfgravity.png)
+
+### Chemistry
+
+A run with the **H₂ chemistry network** writes the species abundances, mapped to canonical
+fractions `:xHI`/`:xH2`. A `timeseries` of a species is the same call as any other reduction, here
+the H→H₂ formation over 50 Myr:
+
+```julia
+ts = timeseries("/data/athena_chemistry",
+                d -> (xHI = getvar(d, :xHI)[1], xH2 = getvar(d, :xH2)[1]);
+                time_unit = :standard)
+#  output | time | xHI  | xH2     (xH2 rises 0 → 0.45 as molecular hydrogen forms)
+```
+
+![Athena++ H–H₂ chemistry: the atomic (`:xHI`) and molecular (`:xH2`) hydrogen fractions over 50 Myr, H₂ forms until the network saturates. Species load as canonical fractions across codes; the time-series uses the same call as any other reduction.](assets/athena/chemistry.png)
+
+### Radiative transfer (PDR)
+
+A **photo-dissociation region**: gow17 (C/O) chemistry + **six-ray radiative transfer** (CVODE
+solver). The eight radiation frequency bins load as photon groups `:Np1…:Np8`, the species as
+canonical fractions, so the whole PDR stratification is just `getvar`/`projection`:
+
+```julia
+gas = gethydro(getinfo(5, "/data/athena_sixray"))
+projection(gas, :Np1)                        # the UV radiation field, attenuated into the cloud
+projection(gas, :xH2)                        # molecular H₂, forming in the shielded interior
+projection(gas, :xCII)                       # ionized carbon, at the UV-exposed surface
+```
+
+![Athena++ six-ray PDR: the UV radiation field `:Np1` shielded toward the centre (left), molecular `:xH2` forming in the shielded interior (middle), and ionized carbon `:xCII` at the irradiated surface (right), the textbook PDR stratification, read code-blind via canonical names.](assets/athena/pdr_sixray.png)
