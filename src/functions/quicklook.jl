@@ -171,9 +171,12 @@ you have not seen before.
 function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                    read::Bool=true, res::Int=256, lmax=nothing, particle_subsample::Real=1.0,
                    datatypes::Vector{Symbol}=[:hydro, :stars, :dm],
-                   directions::Vector{Symbol}=[:z, :x, :y], verbose::Bool=true)
+                   directions::Vector{Symbol}=[:z, :x, :y], verbose::Bool=true, kwargs...)
     t0 = time()
-    info = getinfo(output, path, verbose=false)
+    # Extra keywords reach getinfo. A format that does not record its unit constants (PLUTO,
+    # AMReX) takes them as keywords, and without this quicklook could only ever report that
+    # run in code units read as CGS, i.e. physically meaningless numbers.
+    info = getinfo(output, path; verbose=false, kwargs...)
     sc = info.scale
     cosmo = iscosmological(info)
     z = cosmo ? (1.0/info.aexp - 1.0) : nothing
