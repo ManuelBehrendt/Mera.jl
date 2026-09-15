@@ -10,8 +10,14 @@ hydro and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fie
 memory-efficient tables. Cosmological runs are handled throughout, with scale factor, redshift and
 the derived quantities that depend on them. It derives quantities on demand, thermodynamics
 and kinematics, magnetic and gravitational fields, ionisation states, Jeans and virial diagnostics,
-each in any unit, and provides conservation-correct projections, profiles and structure finding,
-all through one unified, multiple-dispatch API.
+each in any unit. On top of that it provides conservation-correct projections, on axis or from any
+viewing angle, radial and vertical profiles, phase diagrams, structure finding, star-formation rates,
+time series across outputs, animations and VTK export for ParaView, all through one unified,
+multiple-dispatch API.
+
+Formats are read through a registry rather than hard-wired, so the analysis works on the data and
+never learns which code produced it. `quicklook` is the quickest way in: point it at a snapshot you
+have never seen and it reports what is there and draws it.
 
 !!! warning "Released and upcoming 1.x versions are RAMSES-only"
     Support for **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** is in
