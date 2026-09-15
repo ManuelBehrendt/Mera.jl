@@ -171,12 +171,20 @@ you have not seen before.
 function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                    read::Bool=true, res::Int=256, lmax=nothing, particle_subsample::Real=1.0,
                    datatypes::Vector{Symbol}=[:hydro, :stars, :dm],
-                   directions::Vector{Symbol}=[:z, :x, :y], verbose::Bool=true, kwargs...)
+                   directions::Vector{Symbol}=[:z, :x, :y], verbose::Bool=true,
+                   X_frac::Union{Real,Nothing}=nothing, mu::Union{Real,Nothing}=nothing, kwargs...)
     t0 = time()
     # Extra keywords reach getinfo. A format that does not record its unit constants (PLUTO,
     # AMReX) takes them as keywords, and without this quicklook could only ever report that
     # run in code units read as CGS, i.e. physically meaningless numbers.
     info = getinfo(output, path; verbose=false, kwargs...)
+    # quicklook builds its own info, so a setcomposition! applied to YOUR info never reached it and
+    # the dashboard reported nH and T from the defaults while the rest of the session used something
+    # else. Take the composition here too.
+    if X_frac !== nothing || mu !== nothing
+        xf = X_frac === nothing ? 0.76 : X_frac
+        setcomposition!(info; X_frac=xf, mu = mu === nothing ? 1/xf : mu)
+    end
     sc = info.scale
     cosmo = iscosmological(info)
     z = cosmo ? (1.0/info.aexp - 1.0) : nothing
