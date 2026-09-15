@@ -185,7 +185,7 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
         r, c = gpos(i)
         mapkey = key === :bmag ? :bmag : :sd        # the |B| panel projects :bmag, the others :sd
         mp = proj.maps[mapkey]; ex = proj.extent .* skpc .* lenfac
-        ax = Makie.Axis(fig[r, c]; title=title, xlabel=relabel(xl), ylabel=relabel(yl),
+        ax = Makie.Axis(fig[r, c][1, 1]; title=title, xlabel=relabel(xl), ylabel=relabel(yl),
                         aspect=Makie.DataAspect(), AX...)
         xs = range(ex[1], ex[2], length=Base.size(mp, 1)); ys = range(ex[3], ex[4], length=Base.size(mp, 2))
         hm = _loghm!(ax, xs, ys, mp; colormap=cmapof(key))
@@ -193,7 +193,7 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
     end
     if havephase
         r, c = gpos(length(specs) + 1); ph = q.phase
-        ax2 = Makie.Axis(fig[r, c]; title="ρ–T phase", xlabel="n_H [cm⁻³]", ylabel="T [K]",
+        ax2 = Makie.Axis(fig[r, c][1, 1]; title="ρ–T phase", xlabel="n_H [cm⁻³]", ylabel="T [K]",
                          xscale=log10, yscale=log10, titlesize=13, titlegap=4,
                          xlabelsize=11, ylabelsize=11, xticklabelsize=9, yticklabelsize=9,
                          xgridvisible=true, ygridvisible=true,
