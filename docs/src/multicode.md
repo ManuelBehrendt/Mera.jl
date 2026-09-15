@@ -159,7 +159,6 @@ result against something you already trust, and to tell us when it disagrees.
 
 ## Where to go next
 
-- **[Worked examples](multicode_examples.md)**, the same analysis run on several codes.
 - The reader pages in the sidebar, for what each format gives you and what it does not.
 - **[Contributing a reader](multicode_contributing.md)**, if your code is not here yet, or if
   you can test one against a real simulation.

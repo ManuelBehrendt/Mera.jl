@@ -64,7 +64,6 @@ end
 # Each code gets a first-look notebook (what the data is) and a reader page (what the format
 # stores and what it does not). The notebook is the way in; the reader page is the reference.
 const _READER_PAGES = Any[ "Overview" => "multicode.md",
-                           "Worked Examples" => "multicode_examples.md",
                            "PLUTO"    => Any["First Inspection" => "40_pluto_First_Inspection.md",
                                              "Reader"           => "pluto_reader.md"],
                            "Chombo"   => Any["First Inspection" => "41_chombo_First_Inspection.md",
@@ -239,7 +238,6 @@ makedocs(modules = [Mera],
 
                       # --- code-agnostic readers: their own top-level section, not buried under Data ---
                       "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
-                                                       "Worked Examples" => "multicode_examples.md",
                                                        "PLUTO"    => "pluto_reader.md",
                                                        "Athena++" => "athena_reader.md",
                                                        "FLASH"    => "flash_reader.md",

@@ -4,7 +4,6 @@
     The AREPO/IllustrisTNG gas workflow below, physical `getvar(:rho/:T/:metallicity)`, PDFs/profiles,
     and point / SPH-kernel / Voronoi maps on real snapshots, runs end-to-end in
     [`16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/16_multi_OtherCodes.ipynb),
-    rendered as [Other Simulation Codes, Worked Examples](multicode_examples.md).
 
 [AREPO](https://arepo-code.org) is a **moving-mesh** code: gas lives in the cells of a Voronoi
 tessellation that moves with the flow. It writes the **GADGET HDF5** snapshot layout (shared with
@@ -293,4 +292,3 @@ This frontend agrees with the *origin* tools for AREPO/TNG data:
 
 - [Multi-code support](multicode.md), the code-blind architecture and the sibling readers.
 - [Reading GADGET data](gadget_reader.md), the shared HDF5 frontend (GADGET/GIZMO/SWIFT).
-- [Other Simulation Codes, Worked Examples](multicode_examples.md), the executed notebook.
