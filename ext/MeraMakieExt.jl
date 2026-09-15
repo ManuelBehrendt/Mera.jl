@@ -128,7 +128,7 @@ const _QL_CMAP = Dict(:z => :viridis, :x => :viridis, :y => :viridis,
 # rainbow alternative — giving the ρ–T phase histogram more colour range than the single-hue viridis.
 
 # ---- quicklookplot: the first-look dashboard --------------------------------------------
-# Gas Σ along z, x, y (face-on + two edge-on) + face-on stellar / dark-matter Σ when particles are
+# Gas Σ along z, x, y + stellar / dark-matter Σ when particles are
 # present · ρ–T phase diagram · a text census (cells, particles, masses, SFR, ranges). Panels fill a
 # 3-column grid in order, so the dashboard grows with the components actually in the output. Each panel
 # uses a meaningful perceptually-uniform colormap (see `_QL_CMAP`); pass `colormap=` to override.
@@ -140,16 +140,19 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
     s = q.summary
     nf(x) = x === nothing ? "—" : string(round(x, sigdigits=4))
     m = q.maps
-    lbl = Dict(:z     => ("Gas Σ (face-on)",        "x [kpc]", "y [kpc]"),
-               :x     => ("Gas Σ (edge-on, x)",     "y [kpc]", "z [kpc]"),
-               :y     => ("Gas Σ (edge-on, y)",     "x [kpc]", "z [kpc]"),
-               :stars   => ("Stars Σ (face-on)",          "x [kpc]", "y [kpc]"),
-               :stars_x => ("Stars Σ (edge-on, x)",       "y [kpc]", "z [kpc]"),
-               :stars_y => ("Stars Σ (edge-on, y)",       "x [kpc]", "z [kpc]"),
-               :dm      => ("Dark matter Σ (face-on)",    "x [kpc]", "y [kpc]"),
-               :dm_x    => ("Dark matter Σ (edge-on, x)", "y [kpc]", "z [kpc]"),
-               :dm_y    => ("Dark matter Σ (edge-on, y)", "x [kpc]", "z [kpc]"),
-               :bmag  => ("|B| (face-on)",          "x [kpc]", "y [kpc]"))
+    # Panels are named by the line of sight, not by "face-on" / "edge-on". Those describe a disc
+    # seen from a particular angle and mean nothing for a blast wave, a cluster or a turbulent box,
+    # which is most of what a first look is pointed at.
+    lbl = Dict(:z     => ("Gas Σ (along z)",          "x [kpc]", "y [kpc]"),
+               :x     => ("Gas Σ (along x)",          "y [kpc]", "z [kpc]"),
+               :y     => ("Gas Σ (along y)",          "x [kpc]", "z [kpc]"),
+               :stars   => ("Stars Σ (along z)",        "x [kpc]", "y [kpc]"),
+               :stars_x => ("Stars Σ (along x)",        "y [kpc]", "z [kpc]"),
+               :stars_y => ("Stars Σ (along y)",        "x [kpc]", "z [kpc]"),
+               :dm      => ("Dark matter Σ (along z)",  "x [kpc]", "y [kpc]"),
+               :dm_x    => ("Dark matter Σ (along x)",  "y [kpc]", "z [kpc]"),
+               :dm_y    => ("Dark matter Σ (along y)",  "x [kpc]", "z [kpc]"),
+               :bmag  => ("|B| (along z)",            "x [kpc]", "y [kpc]"))
     specs = Any[]
     for k in (:z, :x, :y, :stars, :stars_x, :stars_y, :dm, :dm_x, :dm_y, :bmag)
         haskey(m, k) && push!(specs, (m[k], lbl[k]..., k))
