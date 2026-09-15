@@ -12,8 +12,7 @@ Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`,
     This is the `multicode` branch, version 2.0.0-DEV. It is `master` plus the frontends for
     **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo**, and it is never registered, so it is
     installed by URL. A frontend for **AMReX/BoxLib** plotfiles with a **Quokka** layer is in review
-    in [#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273), contributed by
-    [ChongChong He](https://github.com/chongchonghe):
+    in [#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273):
 
     ```julia
     ] add https://github.com/ManuelBehrendt/Mera.jl#multicode
