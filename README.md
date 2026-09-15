@@ -45,7 +45,7 @@ all through one unified, multiple-dispatch API.
 > ```
 >
 > **What works, and how to test your own simulation:**
-> [Other Simulation Codes](https://github.com/ManuelBehrendt/Mera.jl/blob/multicode/docs/src/multicode.md).
+> [Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/multicode/multicode/).
 > It says what each reader reads today, gives the two lines that load your own output, and lists the
 > checks worth running first. Testing a reader against a real simulation is the most useful thing a
 > collaborator can do, and it needs no prior knowledge of Mera.

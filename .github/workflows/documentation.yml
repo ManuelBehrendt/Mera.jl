@@ -3,7 +3,8 @@ name: Documentation
 on:
   push:
     branches:
-      - master # update to match your development branch (master, main, dev, trunk, ...)
+      - master     # the 1.x release line, published as `dev` and `stable`
+      - multicode  # the multi-code line, published into its own `multicode` folder
     tags: '*'
   pull_request:
 
