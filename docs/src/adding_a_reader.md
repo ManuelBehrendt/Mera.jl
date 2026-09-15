@@ -16,9 +16,11 @@ catalogues and cosmological units.
 The moment your reader returns a valid object:
 
 - **`getvar` computes a long list of derived quantities** on demand, from the columns you
-  supplied: temperature, sound speed, Mach numbers, angular momentum, Jeans length, virial and
-  magnetic diagnostics, and many more. You write none of them. `list_fields` shows what your data
-  type offers.
+  supplied: temperature, sound speed, velocities, kinetic energy, angular momentum, virial and
+  magnetic diagnostics, and many more. You write none of them. The two data models do not offer
+  exactly the same list, because some quantities need a grid: the Jeans length, for instance, is
+  defined for gas on a grid and not for particles. `list_fields` shows what your own data type
+  offers.
 - **Every unit works.** Ask for anything in `:Msol`, `:kpc`, `:km_s`, `:K`, `:g_cm3`, because you
   gave three numbers in CGS and Mera derived the rest.
 - **Projections**, along an axis or from any viewing angle, with mass, volume, SPH or Voronoi
