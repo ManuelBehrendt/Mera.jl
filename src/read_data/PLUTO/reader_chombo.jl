@@ -36,6 +36,13 @@ end
 # per-cell filter. A full-box read (`window === nothing`) keeps the fast single bulk read.
 function _read_level(g, ncomp::Int; window=nothing)
     pd = read(attributes(g)["prob_domain"])          # a Chombo "box" compound → NamedTuple
+    # A 2-D Chombo file has no k box bounds at all. Without this the reader reached for `lo_k`
+    # and died with a FieldError naming an internal field, which tells a user nothing. Mera is
+    # three-dimensional throughout, so the honest answer is to say so and stop.
+    hasproperty(pd, :lo_k) || error(
+        "[Mera]: this is a 2-D Chombo file (its boxes carry only i and j bounds). " *
+        "Mera analyses three-dimensional data, so it cannot read it. " *
+        "The yt KelvinHelmholtz sample is 2-D; IsothermalSphere is 3-D.")
     lo = (Int(pd.lo_i), Int(pd.lo_j), Int(pd.lo_k))
     n = (Int(pd.hi_i)-lo[1]+1, Int(pd.hi_j)-lo[2]+1, Int(pd.hi_k)-lo[3]+1)
     dx = Float64(read(attributes(g)["dx"]))
