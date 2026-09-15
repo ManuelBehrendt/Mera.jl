@@ -364,7 +364,9 @@ function amroverview(dataobject::HydroDataType; verbose::Bool=true)
         cellsize[Int(ilevel-dataobject.lmin+1)] = dataobject.boxlen / 2^ilevel
     end
 
-    cells_per_level = fit!(CountMap(Int), select(dataobject.data, (:level)) )
+    cells_per_level = # CountMap is strict about the integer type, and readers differ: RAMSES levels are Int,
+    # Chombo writes Int32. Take the type from the column instead of assuming one.
+    let lv = select(dataobject.data, (:level)); fit!(CountMap(eltype(lv)), lv) end
     #Nlevels = length(cells_per_level.value.keys)
     #for ilevel=1:(dataobject.lmax-dataobject.lmin)
 
@@ -425,7 +427,9 @@ function amroverview(dataobject::GravDataType; verbose::Bool=true)
         cellsize[Int(ilevel-dataobject.lmin+1)] = dataobject.boxlen / 2^ilevel
     end
 
-    cells_per_level = fit!(CountMap(Int), select(dataobject.data, (:level)) )
+    cells_per_level = # CountMap is strict about the integer type, and readers differ: RAMSES levels are Int,
+    # Chombo writes Int32. Take the type from the column instead of assuming one.
+    let lv = select(dataobject.data, (:level)); fit!(CountMap(eltype(lv)), lv) end
     #Nlevels = length(cells_per_level.value.keys)
     #for ilevel=1:(dataobject.lmax-dataobject.lmin)
 
@@ -495,7 +499,9 @@ function amroverview(dataobject::PartDataType; verbose::Bool=true)
 
     end
 
-    part_per_level = fit!(CountMap(Int32), select(dataobject.data, (:level)) )
+    part_per_level = # CountMap is strict about the integer type, and readers differ: RAMSES levels are Int,
+    # Chombo writes Int32. Take the type from the column instead of assuming one.
+    let lv = select(dataobject.data, (:level)); fit!(CountMap(eltype(lv)), lv) end
     Nlevels = length(part_per_level.value.keys)
     for ilevel=1:Nlevels
         if ilevel <= Nlevels
