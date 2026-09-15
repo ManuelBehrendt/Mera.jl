@@ -127,6 +127,7 @@ export
     getsinks,
     supports,
     capabilities,
+    register_reader!,      # public extension point: add a reader for another simulation code
 
 # mera files
     savedata,
@@ -332,6 +333,7 @@ export
     createscales,
     createconstants,
     createconstants!,
+    createscales!,
     humanize,
     bell,
     notifyme,

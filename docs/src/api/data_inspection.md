@@ -68,6 +68,7 @@ getpositions
 getvelocities
 capabilities
 supports
+register_reader!
 provenance
 provenance_string
 mera_build
