@@ -300,10 +300,13 @@ against; the yt sample-data collection supplies the real test snapshots.
 
 ## Adding a reader
 
-The design doc [`docs/dev/MULTICODE_READERS.md`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/dev/MULTICODE_READERS.md)
-walks through it. In short: write `getinfo_X(output, path; …)` → `InfoType` (set `simcode`,
-`levelmin/max`, `boxlen`, `unit_*`, `variable_list`, then `createconstants!`/`createscales!`) and
-`gethydro_X(info; xrange, …)` → `HydroDataType`, reusing the shared `_external_ranges`/`_external_keep`
-helpers for load-time selection. Then add a `detect_simcode` branch and the `getinfo`/`gethydro`
-router branches, and export the two functions. Mirror the existing HDF5 readers (`reader_athena.jl`,
-`reader_flash.jl`) for block-structured AMR.
+[Adding a Reader](adding_a_reader.md) is the contract: the `InfoType` fields a reader fills, the
+cell convention that fails silently when it is wrong, how to test without any simulation data, and
+how to check your result against the code's own reader.
+
+In short: write `getinfo_X(output, path; …)` returning an `InfoType` (set `simcode`,
+`levelmin/max`, `boxlen`, `unit_*`, `variable_list`, then `createconstants!` and `createscales!`)
+and `gethydro_X(info; xrange, …)` returning a `HydroDataType`, reusing the shared
+`_external_ranges` and `_external_keep` helpers for load-time selection. Then register it with
+`register_reader!`. Mirror the existing HDF5 readers (`reader_athena.jl`, `reader_flash.jl`) for
+block-structured AMR.
