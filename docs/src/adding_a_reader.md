@@ -137,6 +137,68 @@ Leave out what your code does not have. Mera then says so honestly: `supports` r
 call fails with a message naming what your code *does* offer, and the capability table in the
 documentation shows a gap. Claiming something you cannot deliver is the one thing to avoid.
 
+## You can do all of this without touching Mera
+
+You do not have to fork Mera, and you should not open a pull request until your reader already
+works. `register_reader!` can be called from your own package or from a plain script. Mera then
+routes its ordinary functions to your reader, and you can check the numbers yourself first.
+
+A complete working example, with the file reading replaced by a fake 8³ grid:
+
+```julia
+using Mera, IndexedTables
+
+function getinfo_toy(output::Int, path::String; verbose=true, kwargs...)
+    info = Mera.InfoType()
+    info.simcode = "TOY"; info.output = output; info.path = path; info.ndim = 3
+    info.levelmin = 3; info.levelmax = 3; info.boxlen = 10.0
+    info.time = 0.0; info.aexp = 1.0; info.H0 = 0.0; info.omega_m = 0.0; info.omega_l = 0.0
+    info.unit_l = 3.086e21; info.unit_d = 1.67e-24; info.unit_t = 3.156e13   # CGS: kpc, m_p, Myr
+    info.gamma = 5/3; info.hydro = true; info.nvarh = 1; info.variable_list = [:rho]
+    info.descriptor = Mera.DescriptorType()
+    Mera.createconstants!(info); Mera.createscales!(info)
+    return info
+end
+
+function gethydro_toy(info::Mera.InfoType; kwargs...)
+    n = 2^info.levelmin
+    lv, cx, cy, cz, rho = Int[], Int[], Int[], Int[], Float64[]
+    for i in 1:n, j in 1:n, k in 1:n
+        push!(lv, info.levelmin); push!(cx, i); push!(cy, j); push!(cz, k); push!(rho, 1.0)
+    end
+    d = Mera.HydroDataType()
+    d.data = table((level=lv, cx=cx, cy=cy, cz=cz, rho=rho); pkey=[:level, :cx, :cy, :cz])
+    d.info = info; d.lmin = info.levelmin; d.lmax = info.levelmax; d.boxlen = info.boxlen
+    d.ranges = [0.,1.,0.,1.,0.,1.]
+    d.selected_hydrovars = [1]            # variable INDICES, not symbols
+    d.used_descriptors = Dict(); d.smallr = 0.0; d.smallc = 0.0; d.scale = info.scale
+    return d
+end
+
+Mera.register_reader!(:toy; simcodes = ["TOY"], name = "Toy (external package)",
+                      info = getinfo_toy, hydro = gethydro_toy)
+```
+
+That is all it takes. From here Mera treats your data like any other:
+
+```julia
+info = getinfo_toy(1, "/nowhere"; verbose=false)
+gas  = gethydro(info)                    # the generic call, routed to your reader
+
+length(gas.data)                         # 512
+msum(gas, :Msol)                         # 2.46745e10, a 10 kpc box at one proton per cm³
+capabilities(info)                       # [:info, :hydro]
+supports(info, :gravity)                 # false, and Mera says so instead of guessing
+projection(gas, :sd, :Msol_pc2)          # a real map
+```
+
+**Check the mass by hand.** That is the test that catches a broken unit chain, and it is worth doing
+before anything else: a 10 kpc box filled at one proton per cubic centimetre really is 2.47e10 solar
+masses. If your reader gives a number that is out by 10³ or by some power of a length unit, your
+`unit_l`, `unit_d` or `unit_t` is wrong, and every quantity in Mera will be wrong in the same way.
+
+When this works on your real files, open the pull request.
+
 ## The contract test is the real specification
 
 The clearest statement of what a reader must do is not this page. It is
