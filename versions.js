@@ -9,6 +9,7 @@ var DOC_VERSIONS = [
   "v1.1",
   "v1.0",
   "dev",
+  "multicode",
 ];
 var DOCUMENTER_NEWEST = "v1.7.0";
 var DOCUMENTER_STABLE = "stable";
