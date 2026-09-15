@@ -6,7 +6,6 @@ HDF5 output that several simulation codes are built on. Mera reads that HDF5 lay
 writing Chombo output is readable whether or not Mera knows the code itself. PLUTO's AMR mode is the
 case exercised here.
 
-
 !!! info "What is Chombo?"
     **Chombo** is not a simulation code but a **block-structured adaptive-mesh-refinement (AMR)
     framework**, a library from Lawrence Berkeley National Laboratory (the Applied Numerical Algorithms
@@ -36,11 +35,9 @@ covered by a finer level is checked to be dropped exactly once.
 
 A windowed load **prunes box I/O** here too: with `xrange`/`yrange`/`zrange` set, only the Chombo
 boxes whose extent intersects the window are read from the HDF5 file, so a sub-region costs a
-fraction of the snapshot. And because the `:level` column survives, the **AMR structure is itself
-plottable**, a volume-weighted mean level along the line of sight shows where the grid refines (here
-a self-gravitating isothermal sphere, Mera levels 6 → 7):
-
-![PLUTO-AMR (Chombo) AMR refinement level, the refined central block around the isothermal sphere, the analysis layer reading the level hierarchy unchanged.](assets/pluto/pluto_amr_levels.png)
+fraction of the snapshot. The `:level` column survives the read, so the AMR structure is available
+to the analysis like any other quantity: `amroverview` lists the cells and cell size per level, and
+`getvar(gas, :level)` gives it per cell.
 
 (HDF5 reading uses `HDF5.jl`, a dependency of Mera. Requires a power-of-two base grid and
 `ref_ratio = 2`, the common PLUTO/Chombo case.)

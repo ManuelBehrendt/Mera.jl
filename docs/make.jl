@@ -61,14 +61,22 @@ end
 # Frontend pages for the multicode site. A page listed as OPTIONAL appears only once its
 # file exists, so someone contributing a reader adds one markdown file and nothing here, and
 # does not collide with this nav in a merge. Remove the guard once the page is permanent.
+# Each code gets a first-look notebook (what the data is) and a reader page (what the format
+# stores and what it does not). The notebook is the way in; the reader page is the reference.
 const _READER_PAGES = Any[ "Overview" => "multicode.md",
                            "Worked Examples" => "multicode_examples.md",
-                           "PLUTO"    => "pluto_reader.md",
-                           "Chombo"   => "chombo_reader.md",
-                           "Athena++" => "athena_reader.md",
-                           "FLASH"    => "flash_reader.md",
-                           "GADGET"   => "gadget_reader.md",
-                           "AREPO"    => "arepo_reader.md"]
+                           "PLUTO"    => Any["First Inspection" => "40_pluto_First_Inspection.md",
+                                             "Reader"           => "pluto_reader.md"],
+                           "Chombo"   => Any["First Inspection" => "41_chombo_First_Inspection.md",
+                                             "Reader"           => "chombo_reader.md"],
+                           "Athena++" => Any["First Inspection" => "42_athena_First_Inspection.md",
+                                             "Reader"           => "athena_reader.md"],
+                           "FLASH"    => Any["First Inspection" => "43_flash_First_Inspection.md",
+                                             "Reader"           => "flash_reader.md"],
+                           "GADGET"   => Any["First Inspection" => "44_gadget_First_Inspection.md",
+                                             "Reader"           => "gadget_reader.md"],
+                           "AREPO"    => Any["First Inspection" => "45_arepo_First_Inspection.md",
+                                             "Reader"           => "arepo_reader.md"]]
 for (label, file) in ["AMReX / Quokka" => "amrex_reader.md"]        # OPTIONAL, see above
     isfile(joinpath(@__DIR__, "src", file)) && push!(_READER_PAGES, label => file)
 end
