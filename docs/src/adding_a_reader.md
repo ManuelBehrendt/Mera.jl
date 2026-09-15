@@ -44,6 +44,33 @@ This is also why the contract below matters so much. Your reader is not judged o
 your format, which only you can check. It is judged on whether the object it produces behaves like
 every other one, because everything else assumes it does.
 
+### What code-blind does not mean
+
+It does not mean one algorithm runs for everything, and it could not, because the data genuinely
+differs. Mera dispatches on **what kind of data you have**, not on which code wrote it. There is no
+branch on `simcode` anywhere in the analysis; `simcode` is used only for provenance, display and
+finding output files.
+
+Projection is the clearest case. An AMR cell has a known extent on a lattice, so a grid projection
+integrates over real cell geometry and splits cells exactly at a region boundary. A Voronoi cell has
+no such lattice, so a moving-mesh projection has to *deposit* each cell instead, and you choose how:
+
+- `weighting=:mass`, deposit at the cell's point. Fast and mass-conserving, but speckly.
+- `weighting=:sph`, smear over an M4 kernel sized from the cell volume, `h = (3V/4π)^⅓`. Smooth and
+  mass-conserving, and the usual way moving-mesh data is rendered.
+- `weighting=:voronoi`, sample each line of sight through the nearest cell. Sharp and genuinely
+  cell-respecting. Intensive maps such as temperature are exact, but surface density is only
+  approximate, so use `:sph` or `:mass` when column mass has to be conserved.
+
+So `projection(gas, :sd, :Msol_pc2)` is the same call for AREPO and for RAMSES, returns the same kind
+of object, in the same units, and every downstream step treats it identically. The number in a pixel
+is not computed the same way, and for a moving mesh you have a choice to make that a grid user never
+faces.
+
+That is the honest boundary. Code-blind means **one API, one data model, one set of quantity names
+and units, and no code-specific branches in the analysis**. It does not mean the physics of a
+Voronoi tessellation and an octree are the same thing.
+
 !!! note "Where the readers live"
     The 1.x release ships the RAMSES reader only. Readers for PLUTO, Chombo, Athena++, FLASH,
     GADGET, AREPO and AMReX/Quokka are developed on the `multicode` branch for version 2.0. The
@@ -204,7 +231,7 @@ function gethydro_toy(info::Mera.InfoType; kwargs...)
     return d
 end
 
-Mera.register_reader!(:toy; simcodes = ["TOY"], name = "Toy (external package)",
+register_reader!(:toy; simcodes = ["TOY"], name = "Toy (external package)",
                       info = getinfo_toy, hydro = gethydro_toy)
 ```
 

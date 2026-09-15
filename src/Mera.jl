@@ -108,6 +108,7 @@ export
     getsinks,
     supports,
     capabilities,
+    register_reader!,      # public extension point: add a reader for another simulation code
 
 # mera files
     savedata,
