@@ -290,6 +290,16 @@ function setcomposition!(dataobject::InfoType; X_frac::Real=0.76, mu::Real=1/X_f
     return dataobject
 end
 
+# A loaded object carries its OWN copy of the scale table, taken when it was read. Setting the
+# composition on the info afterwards therefore left the data untouched, and getvar kept returning
+# the old numbers with nothing to indicate why. This method updates both, so it works whether you
+# call it before or after loading.
+function setcomposition!(dataobject::DataSetType; X_frac::Real=0.76, mu::Real=1/X_frac)
+    setcomposition!(dataobject.info; X_frac=X_frac, mu=mu)
+    dataobject.scale = dataobject.info.scale
+    return dataobject
+end
+
 # Old serialized constants (PhysicalUnitsType001, from pre-002 mera-files): convert and
 # delegate. The former dedicated implementation here read fields the type never had
 # (eV, Lsol, k_B, ...), so ANY call threw - ~200 dead lines replaced by the existing
