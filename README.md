@@ -29,9 +29,8 @@ all through one unified, multiple-dispatch API.
 >
 > Support for **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** is in active development for
 > **version 2.0**, on the `multicode` branch. A frontend for **AMReX/BoxLib plotfiles** with a
-> **Quokka** layer is in review, contributed by
-> [ChongChong He](https://github.com/chongchonghe) ([#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273));
-> AMReX is also the container used by Castro, Nyx and WarpX. None of this is part of any 1.x release.
+> **Quokka** layer is in review ([#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273)); AMReX is
+> also the container used by Castro, Nyx and WarpX. None of this is part of any 1.x release.
 > For collaborators to try it:
 >
 > In the Julia REPL, press `]` for the package manager:
