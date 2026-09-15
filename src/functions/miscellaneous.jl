@@ -165,7 +165,7 @@ function createconstants()
     # IAU
     # RAMSES
     constants = PhysicalUnitsType002() #zeros(Float64, 17)...)
-    constants.Au = 149597870700e-13    # [cm] Astronomical unit -> from IAU
+    constants.Au = 149597870700e2      # [cm] Astronomical unit -> IAU 2012: 149_597_870_700 m
     constants.pc = 3.08567758128e18    # [cm] Parsec -> from IAU
     constants.kpc = constants.pc * 1e3
     constants.Mpc = constants.pc * 1e6
