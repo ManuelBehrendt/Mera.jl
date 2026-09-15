@@ -49,7 +49,13 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", code::S
     if resolved !== :ramses
         rdr = _reader(resolved)
         haskey(rdr.funcs, :info) || _capability_error(rdr, :info, "getinfo")
-        return rdr.funcs[:info](round(Int, output), path == "" ? pwd() : path; verbose=verbose, kwargs...)
+        info = rdr.funcs[:info](round(Int, output), path == "" ? pwd() : path; verbose=verbose, kwargs...)
+        # Composition is not part of any snapshot format. Whatever the reader could not determine is
+        # still at the RAMSES convention, X = 0.76 with mu = 1/X, and quantities built on it (:nH,
+        # and :T in Kelvin) inherit that. Saying so once turns a silent assumption into a stated one;
+        # a reader that DID find a value (FLASH reads eos_singlespeciesa) shows a different mu here.
+        _composition_notice(info, verbose)
+        return info
     end
     isempty(kwargs) || error("[Mera]: getinfo: unsupported keyword argument(s) for RAMSES data: " *
                              join(keys(kwargs), ", ") * ".")

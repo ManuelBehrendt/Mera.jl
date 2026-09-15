@@ -34,6 +34,26 @@ end
 const _READERS = Dict{Symbol,SimReader}()
 const _SIMCODE_TO_READER = Dict{String,Symbol}()
 
+# Report the composition a foreign snapshot ended up with. X and mu decide :nH and :T, no format
+# records them, and the fallback is the RAMSES convention. Printed once per getinfo so the number is
+# visible rather than assumed; readers that determine their own value show it here instead.
+function _composition_notice(info, verbose::Bool)
+    verbose || return nothing
+    try
+        mu = info.scale.K / info.scale.T_mu
+        X  = info.scale.nH / (info.unit_d / info.constants.mH)
+        dX  = isapprox(X, 0.76;    rtol=1e-6)
+        dmu = isapprox(mu, 1/0.76; rtol=1e-6)
+        dX && dmu && return println("[Mera]: composition not recorded by this format; using X = 0.76, " *
+                                    "mu = 1.32 (RAMSES convention) for :nH and :T. " *
+                                    "Change with setcomposition!(info; X_frac=…, mu=…).")
+        println("[Mera]: composition in use: X = $(round(X, digits=4)), mu = $(round(mu, digits=4))" *
+                (dX ? " (X is the default; the format does not record one)" : ""))
+    catch
+    end
+    return nothing
+end
+
 """
     _can_select_columns(info) -> Bool
 
