@@ -29,9 +29,8 @@ support. The others provide gas; AREPO and GADGET additionally provide particles
 catalogues.
 
 A frontend for **AMReX/BoxLib** plotfiles with a **Quokka** layer is in review in
-[#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273), contributed by
-[ChongChong He](https://github.com/chongchonghe). AMReX is also the container used by Castro, Nyx
-and WarpX, so one reader opens several codes at once.
+[#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273). AMReX is also the container used by
+Castro, Nyx and WarpX, so one reader opens several codes at once.
 
 **Trying it on your own simulation.** The readers differ, but what they produce does not: every one
 returns the same objects, so the analysis never learns which code wrote the file. In practice that
