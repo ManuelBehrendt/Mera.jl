@@ -1,11 +1,12 @@
-# Other Simulation Codes — Worked Examples
+# Other Simulation Codes, Worked Examples
 
-!!! note "Executed notebook"
-    This page loads PLUTO / Chombo / Athena++ / FLASH / GADGET and the AREPO/IllustrisTNG
-    gas workflow end-to-end — real snapshots, real outputs. See
-    [Multi-code support](multicode.md) for the overview and the per-code reader pages.
+> **Note: Executed notebook**
+>
+> This page loads PLUTO / Chombo / Athena++ / FLASH / GADGET and the AREPO/IllustrisTNG
+> gas workflow end-to-end, real snapshots, real outputs. See
+> [Multi-code support](multicode.md) for the overview and the per-code reader pages.
 
-Mera began as a RAMSES tool, but its analysis layer is **code-blind** — it works on a generic
+Mera began as a RAMSES tool, but its analysis layer is **code-blind**, it works on a generic
 uniform/AMR cell list (or particle list), not on RAMSES file formats. So the *same* calls
 (`getvar`, `projection`, `subregion`, `timeseries`, `savedata`, …) run on data from several codes:
 
@@ -204,7 +205,7 @@ particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/
 (450921, true)
 ```
 
-### AREPO / IllustrisTNG — gas-cell physics
+### AREPO / IllustrisTNG, gas-cell physics
 
 For **gas** (`PartType0`) the Voronoi-cell fields are read too, so the full thermodynamic analysis
 runs in **physical units** (comoving→physical *a*/*h* is applied automatically for cosmological
@@ -255,8 +256,8 @@ gas mass [Msol]: 4.6930995577059625e13
 
 IllustrisTNG is a **magneto**-hydrodynamic run, so its gas carries a `MagneticField`. Mera reads it
 into `:bx`/`:by`/`:bz` (physical Gauss; comoving→physical *a⁻²* applied), and `getvar` derives the
-usual magnetic quantities — `:bmag` (|B|), `:pmag` (B²/2), plasma `:beta`, Alfvén speed `:v_alfven`,
-and the magnetosonic Mach numbers — exactly as for a native RAMSES-MHD run (and they project into
+usual magnetic quantities, `:bmag` (|B|), `:pmag` (B²/2), plasma `:beta`, Alfvén speed `:v_alfven`,
+and the magnetosonic Mach numbers, exactly as for a native RAMSES-MHD run (and they project into
 maps like any other field). Below: the **B–ρ relation** (flux freezing, |B| rising with density) and
 how the field strength varies across thermal phases, on the real TNG halo gas.
 
@@ -291,10 +292,10 @@ figB
 
 ![](multicode_examples_files/multicode_examples_18_1.png)
 
-### Box-filling maps — a full AREPO volume
+### Box-filling maps, a full AREPO volume
 
 The TNGHalo above is a halo *cutout*, so its gas is centrally concentrated. For maps that **fill the
-frame**, here is `ArepoBullet` — a full AREPO **cluster-merger box** (non-cosmological) whose gas fills
+frame**, here is `ArepoBullet`, a full AREPO **cluster-merger box** (non-cosmological) whose gas fills
 the whole volume. Surface density and mass-weighted temperature (SPH kernel).
 
 ```julia
@@ -342,8 +343,8 @@ Simulation min.: 19.999 [Mpc]
 
 ![](multicode_examples_files/multicode_examples_20_7.png)
 
-**SPH vs Voronoi** on the same box-filling run: `weighting=:sph` (smooth, isotropic kernel — the
-conserving default) vs `weighting=:voronoi` (nearest-generator — sharp, showing the moving-mesh cells).
+**SPH vs Voronoi** on the same box-filling run: `weighting=:sph` (smooth, isotropic kernel, the
+conserving default) vs `weighting=:voronoi` (nearest-generator, sharp, showing the moving-mesh cells).
 
 ```julia
 Ts = projection(bgas, :T; res=256, center=[:bc], weighting=:sph,     verbose=false, show_progress=false)
@@ -362,15 +363,15 @@ fig2
 ### Multi-file snapshots, column selection, and the Voronoi tessellation
 
 Production AREPO runs split one snapshot across many files (`snapdir_NNN/snap_NNN.0.hdf5 …`). Mera
-resolves the set and streams it chunk by chunk — nothing extra to pass. Two properties of real
+resolves the set and streams it chunk by chunk, nothing extra to pass. Two properties of real
 chunked data matter, and neither can be reproduced by a single-file sample:
 
 - a particle type may be **absent from chunk 0**, so field discovery scans forward for a chunk that
   carries it (the same thing `illustris_python` does);
 - particle counts above 2³² are split across `NumPart_Total` and `NumPart_Total_HighWord`.
 
-Below, a 16-chunk CAMELS zoom at *z* = 4. It also shows `vars=` — which limits *which* gas columns
-are read, usually the dominant memory cost — and the invariant that makes a moving mesh different
+Below, a 16-chunk CAMELS zoom at *z* = 4. It also shows `vars=`, which limits *which* gas columns
+are read, usually the dominant memory cost, and the invariant that makes a moving mesh different
 from an AMR grid: **the Voronoi cells tile space exactly**, so their volumes sum to the box volume.
 
 ```julia
@@ -431,10 +432,10 @@ gas cells    :
 clumps above the 99.5th density percentile: 1416
 ```
 
-### Stellar ages — step by step
+### Stellar ages, step by step
 
 TNG records when a star formed as `GFM_StellarFormationTime`, which is the **scale factor** *a* at
-formation, not a time. Mera exposes it as `:aform` — deliberately *not* as the RAMSES `:birth`,
+formation, not a time. Mera exposes it as `:aform`, deliberately *not* as the RAMSES `:birth`,
 which is super-conformal time. They play the same role but are different quantities, so
 `getvar(:birth)` on AREPO data raises rather than silently reinterpreting the number.
 
@@ -448,7 +449,7 @@ From `:aform` two things follow directly:
 
 **One caveat worth knowing before you plot anything.** TNG flags wind particles with `a_form < 0`.
 `getvar` finishes with a global NaN→0 pass (it exists for `r = 0` singularities), so those show up
-as `age = 0` — which looks like "formed just now" and would distort a star-formation history.
+as `age = 0`, which looks like "formed just now" and would distort a star-formation history.
 Always select real stars on the raw column first: `getvar(stars, :aform) .> 0`.
 
 ```julia
@@ -496,13 +497,13 @@ stellar mass formed in the last 1 Gyr: 2.431e10
  Msol
 ```
 
-### Halo membership — the group catalogue
+### Halo membership, the group catalogue
 
 Everything above selects gas by **geometry**. The IllustrisTNG workflow does it by **membership**:
 a cell belongs to a halo because SUBFIND says so, not because its centre falls inside a sphere.
 `getgroups` reads the FoF catalogue and `halo=` loads exactly one group's particles.
 
-The check below is the strongest in this page — it recomputes the catalogue's *published*
+The check below is the strongest in this page, it recomputes the catalogue's *published*
 `GroupMassType` from the particles themselves, so it compares against numbers Mera had no part in
 producing. Two conventions have to be right for it to work: the per-group offsets (the running sum
 of `GroupLenType`, since the snapshot is ordered by group), and the fact that **wind particles sit
@@ -551,8 +552,8 @@ halo
 ### The rest of Mera on AREPO gas
 
 Nothing above is special to the reader: once the gas is loaded, the general analysis functions work
-on it as they do on a RAMSES grid. What differs is the *data model* — Voronoi cells carry a stored
-`:volume` instead of a refinement level — and that shows up in two places worth knowing.
+on it as they do on a RAMSES grid. What differs is the *data model*, Voronoi cells carry a stored
+`:volume` instead of a refinement level, and that shows up in two places worth knowing.
 
 **Regions can split cells.** A Voronoi cell is a polyhedron the snapshot never gives us, so
 `split=true` approximates it by the sphere of equal volume and returns a per-cell `:fraction`. That
@@ -560,7 +561,7 @@ matters here far more than on an AMR grid: cell sizes span a huge range, so a mo
 cut by cells comparable to itself, and a plain in/out test on the cell centre becomes arbitrary.
 
 **Weighting is a real choice.** With a volume in hand, `⟨T⟩` mass-weighted and volume-weighted are
-different physical questions — the first follows the dense gas, the second the diffuse.
+different physical questions, the first follows the dense gas, the second the diffuse.
 
 ```julia
 capath = joinpath(MERA_EXAMPLES, "AREPO/camels_GZ28_499/snapdir_024")
@@ -629,7 +630,7 @@ save/load round-trip: 984133
 
 Three more general functions, and the one place each of them can mislead you on this data.
 
-**`getmask` selects without copying.** `filterdata` returns a new Mera object — convenient, and a
+**`getmask` selects without copying.** `filterdata` returns a new Mera object, convenient, and a
 second copy of every column. `getmask` takes the same selector language and returns a plain
 `BitVector`, which `getvar`, `projection`, `wstat` and `profile` all accept as `mask=`. At a
 million cells that distinction is worth having; the check below confirms both routes select
@@ -637,11 +638,11 @@ exactly the same cells.
 
 **`wstat` gives the whole distribution, not just a mean.** Mean, median, standard deviation,
 skewness and kurtosis come out of a single weighted pass. Note it reproduces the hand-rolled
-`sum(m.*T)/sum(m)` from the cell above — and that mass- and volume-weighting still answer
+`sum(m.*T)/sum(m)` from the cell above, and that mass- and volume-weighting still answer
 different questions.
 
 **`profile` is only as good as its centre.** It bins any `getvar` quantity against any other, but
-on a zoom simulation the centre of mass of the loaded box is *not* the halo — here it sits 2.4 Mpc
+on a zoom simulation the centre of mass of the loaded box is *not* the halo, here it sits 2.4 Mpc
 away, in the intergalactic medium. Profiled about the density peak the gas falls off over three
 decades; profiled about the centre of mass the inner bins are **empty** and the curve rises
 outward, which is a plot of the halo's surroundings rather than the halo. Both curves below come
@@ -719,14 +720,14 @@ coarse cells and averaging fine ones, each output cell centre takes the value of
 generator, found with a KD-tree. See [AREPO](arepo_reader.md#Resampling-onto-a-uniform-grid).
 
 `timeseries` needs to enumerate a run's outputs, and it recognises RAMSES, PLUTO, Athena++, FLASH
-and Chombo numbering — not AREPO `snapdir_NNN`. That is a discovery gap, not a data-model one, so
+and Chombo numbering, not AREPO `snapdir_NNN`. That is a discovery gap, not a data-model one, so
 the way around it is a one-time conversion: `savedata` each snapshot to a mera file and the whole
 series machinery (`timeseries`, `getmovie`, `profiletimeseries`) applies unchanged. A cosmological
 run also picks up `redshift` and `aexp` columns automatically.
 
 > **Makie name clashes.** `Sphere` above and `timeseries` here are both exported by Makie as well
 > as Mera, so once `CairoMakie` is loaded the bare names are ambiguous. Qualify them
-> (`Mera.Sphere`, `Mera.timeseries`) — the error names the conflict, but it is easier to avoid.
+> (`Mera.Sphere`, `Mera.timeseries`), the error names the conflict, but it is easier to avoid.
 
 
 ```julia
@@ -759,7 +760,7 @@ output  time     redshift  aexp      mass
 
 ## Self-gravity, chemistry & radiative transfer
 
-Where a code writes these fields, the reader maps them to **canonical names** — so the same
+Where a code writes these fields, the reader maps them to **canonical names**, so the same
 `getvar` call works across codes: `:gpot` (potential), `:xHI`/`:xH2`/`:xCO` (chemistry species),
 `:Np1…:Np8` (radiation photon groups).
 
@@ -778,7 +779,7 @@ rt = gethydro(getinfo(5, joinpath(MERA_EXAMPLES, "ATHENA/athena_sixray"),     ve
 
 ## Convert any code to a Mera file
 
-`savedata`/`loaddata` round-trips **any** loaded object to Mera's portable JLD2 format — so a saved
+`savedata`/`loaddata` round-trips **any** loaded object to Mera's portable JLD2 format, so a saved
 series even feeds `timeseries(…; mera_files=true)`.
 
 ```julia
@@ -793,7 +794,7 @@ true
 ```
 
 ---
-Every call above is identical to what you'd run on a RAMSES snapshot — that is the whole point of
+Every call above is identical to what you'd run on a RAMSES snapshot. That is the whole point of
 the code-blind analysis layer. For per-code details (units, variable mapping, coordinate
 conventions, reference readers) see the
 [Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/stable/multicode/) docs.

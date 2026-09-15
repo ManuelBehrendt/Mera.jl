@@ -1,10 +1,11 @@
 # Multi-code support
 
-!!! note "There is no public demo dataset for these codes yet"
-    The readers are exercised end to end in Mera's own test suite, but the fixtures that suite uses
-    are not published: every simulation in the public test set is RAMSES. So the way to try a reader
-    is to point it at **your own** output, which is also the contribution this branch most needs.
-    See [Testing it on your own simulation](#Testing-it-on-your-own-simulation) below.
+> **Note: There is no public demo dataset for these codes yet**
+>
+> The readers are exercised end to end in Mera's own test suite, but the fixtures that suite uses
+> are not published: every simulation in the public test set is RAMSES. So the way to try a reader
+> is to point it at **your own** output, which is also the contribution this branch most needs.
+> See [Testing it on your own simulation](#Testing-it-on-your-own-simulation) below.
 
 **This branch reads RAMSES, PLUTO, Chombo, Athena++, FLASH, GADGET and AREPO through one API.**
 It is development work, not part of any 1.x release. Install it with:
@@ -44,7 +45,7 @@ produce, and closing that gap is what a snapshot from you would do.
 ### Which entry point works on which code
 
 Every reader registers itself with the entry points it implements, so the table below is
-**generated from the reader registry at build time** — it cannot drift from the code. Query the
+**generated from the reader registry at build time**: it cannot drift from the code. Query the
 same information programmatically with `supports(info, :gravity)` / `capabilities(info)`; an
 unsupported call fails fast with a message naming what IS available for that code.
 
@@ -55,42 +56,43 @@ Markdown.parse(Mera.capability_matrix())
 
 Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, and
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
-available — e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
+available, e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
 
-!!! note "“Chombo” is a format, not a code"
-    The **Chombo** row above is a *file format*, not a physics code: Chombo is a block-structured AMR
-    **framework** (Lawrence Berkeley National Laboratory) whose HDF5 output is shared by PLUTO (AMR
-    mode), Orion, Charm, BISICLES and others. Mera reads any Chombo-format `.hdf5` the same way — see
-    [PLUTO-AMR (Chombo)](pluto_reader.md#PLUTO-AMR-(Chombo)).
+> **Note: “Chombo” is a format, not a code**
+>
+> The **Chombo** row above is a *file format*, not a physics code: Chombo is a block-structured AMR
+> **framework** (Lawrence Berkeley National Laboratory) whose HDF5 output is shared by PLUTO (AMR
+> mode), Orion, Charm, BISICLES and others. Mera reads any Chombo-format `.hdf5` the same way, see
+> [PLUTO-AMR (Chombo)](pluto_reader.md#PLUTO-AMR-(Chombo)).
 
 **Self-gravity** rides along the same way: where a code writes a gravitational potential into its
 snapshot (Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`) the reader exposes it as
-a single canonical field, so `getvar(gas, :gpot)` — and `projection`, `timeseries`, … on it — runs
+a single canonical field, so `getvar(gas, :gpot)`, and `projection`, `timeseries`, … on it, runs
 identically on every code.
 
 **Chemistry & radiative transfer** follow suit. A code's species abundances (Athena++ writes its
-chemistry networks as `rH`/`rH2`/`rCO`/`rH+`/…) are mapped to **canonical fractions** — `:xHI`,
-`:xH2`, `:xCO`, `:xHII`, … — and radiation-transport fields to canonical names too: `nr_radiation`
+chemistry networks as `rH`/`rH2`/`rCO`/`rH+`/…) are mapped to **canonical fractions**, `:xHI`,
+`:xH2`, `:xCO`, `:xHII`, …, and radiation-transport fields to canonical names too: `nr_radiation`
 energy/flux → `:Erad`/`:Frad_*`, and a six-ray chemistry run's per-frequency mean intensities
 (`ir_avg0…7`) → **photon groups** `:Np1…:Np8` (the RAMSES-RT convention). Because these land as
 direct columns, `getvar(gas, :xH2)` or `getvar(gas, :Np1)`, a `projection` of either, or a
 `timeseries` of an abundance runs the same on every code that writes them. RAMSES RT runs keep their
 own descriptor-based `getvar` species; the canonical names are the shared vocabulary.
 
-A full **PDR** run (gow17 C/O chemistry + six-ray transfer) needs an implicit ODE solver — the
+A full **PDR** run (gow17 C/O chemistry + six-ray transfer) needs an implicit ODE solver, the
 stiff network overruns the forward-Euler solver, so the run is built against **CVODE** (SUNDIALS);
 the [Radiative transfer (PDR)](#Radiative-transfer-(PDR)) example below is one such run. Mera's
 reading of all 12 species and the 8 photon-group fields is independent of the solver.
 
 **Particles** load through [`getparticles`](@ref) into a `PartDataType`, code-blind too: PLUTO
 Lagrangian particles, and the **GADGET HDF5** snapshot layout, written by GADGET, AREPO and GIZMO, with its
-gas/DM/star particle types — so `msum`, `center_of_mass`, `getvar` and projections run the same on a
+gas/DM/star particle types, so `msum`, `center_of_mass`, `getvar` and projections run the same on a
 RAMSES halo or a GADGET galaxy. (Athena++/FLASH particle reading is not yet wired.)
 
 **Multi-output workflows** are code-blind too: [`timeseries`](@ref) and
 [`getmovie`](@ref)/[`savemovie`](@ref) discover the output numbers in a directory per format
 (`*.NNNNN.athdf`, `*_hdf5_plt_cnt_NNNN`, PLUTO's `dbl.out`, …) and iterate them through the generic
-loader — so a time-series or movie reduction runs the same call on every supported code.
+loader, so a time-series or movie reduction runs the same call on every supported code.
 
 ## Testing it on your own simulation
 
@@ -132,7 +134,7 @@ so your simulation may be the first of its kind one has seen.
 ## Worked examples: self-built runs
 
 These three small Athena++ runs (built from source, regenerable, a few MB each) exercise the
-multi-code workflow end to end — multi-output time series, self-gravity, and chemistry — each loaded
+multi-code workflow end to end, multi-output time series, self-gravity, and chemistry, each loaded
 and analysed with the *same calls* used for RAMSES.
 
 ### MHD blast (time series)
@@ -149,7 +151,7 @@ MeshBlocks: 148   variables: (rho, p, vx, vy, vz, bx, by, bz)
 -------------------------------------------------------
 ```
 
-and `timeseries` reduces all 11 outputs with the *same call* used for RAMSES — here the peak
+and `timeseries` reduces all 11 outputs with the *same call* used for RAMSES, here the peak
 density and field strength over time:
 
 ```julia
@@ -160,16 +162,16 @@ ts = timeseries("/data/athena_blast",
 #  ───────┼──────┼───────┼─────       the blast elongates along B — top row below)
 ```
 
-![Self-built Athena++ MHD blast: log column density at t = 0, 0.3, 0.6, 1.0 (top) — the blast expands and is channelled along the magnetic field — and the timeseries reduction of ρ_max and |B|_max over all 11 outputs (bottom). Loaded, projected and reduced with the same calls used for RAMSES.](assets/athena/blast_reference_run.png)
+![Self-built Athena++ MHD blast: log column density at t = 0, 0.3, 0.6, 1.0 (top), the blast expands and is channelled along the magnetic field, and the timeseries reduction of ρ_max and |B|_max over all 11 outputs (bottom). Loaded, projected and reduced with the same calls used for RAMSES.](assets/athena/blast_reference_run.png)
 
 Every snapshot can also be written to Mera's portable JLD2 format
-([`savedata`](@ref)/[`loaddata`](@ref)) — converting *any* supported code into mera-files that the
+([`savedata`](@ref)/[`loaddata`](@ref)), converting *any* supported code into mera-files that the
 whole toolchain (including `timeseries(…; mera_files=true)`) then reads back identically.
 
 ### Self-gravity
 
 A **Jeans** run with self-gravity (multigrid) writes the gravitational potential, which the reader
-exposes as the canonical `:gpot` field — `getvar`/`projection`/`timeseries` then treat it like any
+exposes as the canonical `:gpot` field, `getvar`/`projection`/`timeseries` then treat it like any
 other quantity:
 
 ```julia
@@ -178,12 +180,12 @@ projection(gas, :gpot)                       # the potential well tracking the d
 projection(gas, :rho)                        # the Jeans-mode density perturbation (left panel)
 ```
 
-![Athena++ self-gravity (Jeans mode): the density perturbation ρ (left) and the gravitational potential `:gpot` (right) — the potential well tracks the over-densities. Same getvar(:gpot)/projection call as FLASH and Chombo.](assets/athena/selfgravity.png)
+![Athena++ self-gravity (Jeans mode): the density perturbation ρ (left) and the gravitational potential `:gpot` (right), the potential well tracks the over-densities. Same getvar(:gpot)/projection call as FLASH and Chombo.](assets/athena/selfgravity.png)
 
 ### Chemistry
 
 A run with the **H₂ chemistry network** writes the species abundances, mapped to canonical
-fractions `:xHI`/`:xH2`. A `timeseries` of a species is the same call as any other reduction — here
+fractions `:xHI`/`:xH2`. A `timeseries` of a species is the same call as any other reduction, here
 the H→H₂ formation over 50 Myr:
 
 ```julia
@@ -193,13 +195,13 @@ ts = timeseries("/data/athena_chemistry",
 #  output | time | xHI  | xH2     (xH2 rises 0 → 0.45 as molecular hydrogen forms)
 ```
 
-![Athena++ H–H₂ chemistry: the atomic (`:xHI`) and molecular (`:xH2`) hydrogen fractions over 50 Myr — H₂ forms until the network saturates. Species load as canonical fractions across codes; the time-series uses the same call as any other reduction.](assets/athena/chemistry.png)
+![Athena++ H–H₂ chemistry: the atomic (`:xHI`) and molecular (`:xH2`) hydrogen fractions over 50 Myr, H₂ forms until the network saturates. Species load as canonical fractions across codes; the time-series uses the same call as any other reduction.](assets/athena/chemistry.png)
 
 ### Radiative transfer (PDR)
 
 A **photo-dissociation region**: gow17 (C/O) chemistry + **six-ray radiative transfer** (CVODE
 solver). The eight radiation frequency bins load as photon groups `:Np1…:Np8`, the species as
-canonical fractions — so the whole PDR stratification is just `getvar`/`projection`:
+canonical fractions, so the whole PDR stratification is just `getvar`/`projection`:
 
 ```julia
 gas = gethydro(getinfo(5, "/data/athena_sixray"))
@@ -208,23 +210,23 @@ projection(gas, :xH2)                        # molecular H₂, forming in the sh
 projection(gas, :xCII)                       # ionized carbon, at the UV-exposed surface
 ```
 
-![Athena++ six-ray PDR: the UV radiation field `:Np1` shielded toward the centre (left), molecular `:xH2` forming in the shielded interior (middle), and ionized carbon `:xCII` at the irradiated surface (right) — the textbook PDR stratification, read code-blind via canonical names.](assets/athena/pdr_sixray.png)
+![Athena++ six-ray PDR: the UV radiation field `:Np1` shielded toward the centre (left), molecular `:xH2` forming in the shielded interior (middle), and ionized carbon `:xCII` at the irradiated surface (right), the textbook PDR stratification, read code-blind via canonical names.](assets/athena/pdr_sixray.png)
 
 ## The shared contract
 
-Whatever the source code, a loaded object obeys the same rules — this is what makes the analysis
+Whatever the source code, a loaded object obeys the same rules. This is what makes the analysis
 code-blind, and what the cross-reader test (`test/59_multicode_contract_tests.jl`) checks:
 
 - **Cell convention.** A cell at `level` with 1-based integer index `cx` spans
   `[(cx−1), cx]·boxlen/2^level`, so its **centre** is `getvar(:x) = (cx−0.5)·boxlen/2^level`
   (likewise `cy`, `cz`); its size is `boxlen/2^level`. AMR readers carry a `:level` column; uniform
   readers have a single level.
-- **Exact tiling.** The leaf cells cover the box with no gaps or overlaps — `Σ getvar(:volume) = boxlen³`.
+- **Exact tiling.** The leaf cells cover the box with no gaps or overlaps, `Σ getvar(:volume) = boxlen³`.
   This is the decisive correctness check every reader is validated against on real data.
 - **Spatial selection.** `gethydro(info; xrange, yrange, zrange, center, range_unit)` selects a window
   at load time (HDF5 AMR readers read only the intersecting blocks); the result equals a full load
   filtered by `getvar(:x)`, and the window is recorded in `obj.ranges`. Level/resolution is **not** a
-  load argument — on a leaf-cell list a level cap would leave holes — it is chosen at analysis time
+  load argument, on a leaf-cell list a level cap would leave holes. It is chosen at analysis time
   (`projection(…, res=)`).
 
 None of this is a reason to avoid the non-RAMSES readers. It is a reason to check your first
@@ -272,7 +274,7 @@ supposed to work?", which is often the fastest way to find a gap in these pages.
 
 ## Reference readers
 
-Each frontend is built to agree with the upstream tools that define its format — yt's per-code
+Each frontend is built to agree with the upstream tools that define its format, yt's per-code
 frontends and region selectors, and each code's own reader (`pyPLUTO`, Athena++'s `athena_read.py`,
 the FLASH user guide). The reader pages cite these as the *origin* the implementation is validated
 against; the yt sample-data collection supplies the real test snapshots.

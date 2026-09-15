@@ -11,7 +11,7 @@ A cosmological run carries **three** different meanings for "a length":
 
 | convention | what it means | example |
 |---|---|---|
-| **code** | what is literally stored in the file — comoving, and usually carrying `h` | `ckpc/h` |
+| **code** | what is literally stored in the file, comoving, and usually carrying `h` | `ckpc/h` |
 | **comoving** | expands with the universe; `h` divided out | `ckpc` |
 | **physical** | what you would measure at that redshift | `pkpc` |
 
@@ -24,10 +24,11 @@ physical = code × a / h
 
 with `a = 1/(1+z)` the scale factor and `h = H₀ / (100 km s⁻¹ Mpc⁻¹)`.
 
-!!! warning "The factor is larger than it looks"
-    At `z = 3.39` (`a = 0.227623`) with `h = 0.6774`, one `ckpc/h` is **0.336 pkpc**. Lengths
-    are off by a factor 3, but **densities go as the cube**: `(h/a)³ = 26.0`. A factor of 26
-    does not look like a bug — it looks like a result.
+> **Warning: The factor is larger than it looks**
+>
+> At `z = 3.39` (`a = 0.227623`) with `h = 0.6774`, one `ckpc/h` is **0.336 pkpc**. Lengths
+> are off by a factor 3, but **densities go as the cube**: `(h/a)³ = 26.0`. A factor of 26
+> does not look like a bug, it looks like a result.
 
 ## What Mera does
 
@@ -52,12 +53,13 @@ the numbers*. `info.scale.Msol` is derived from the header's own `UnitMass_in_g`
 
 ## The exception you must remember: group catalogues
 
-[`getgroups`](@ref) returns catalogue values **exactly as stored** — deliberately, so they can
+[`getgroups`](@ref) returns catalogue values **exactly as stored**, deliberately, so they can
 be checked against `h5dump` or `illustris_python`. That means:
 
-!!! danger "`GroupPos` and `Group_R_Crit200` are COMOVING and carry `h`"
-    They are not converted for you. Neither are `GroupMassType`, `Group_M_Crit200`, or any
-    other catalogue field.
+> **Danger: `GroupPos` and `Group_R_Crit200` are COMOVING and carry `h`**
+>
+> They are not converted for you. Neither are `GroupMassType`, `Group_M_Crit200`, or any
+> other catalogue field.
 
 Convert them with the same scale factors as everything else:
 
@@ -71,7 +73,7 @@ gc.GroupPos                         .* info.scale.kpc   # physical kpc
 ### Why `.* 1e10` is only half the conversion
 
 The catalogue's mass unit is `10¹⁰ M⊙/h`. Writing `.* 1e10` converts the `10¹⁰` and leaves the
-`h` behind — a **1.48× error** at `h = 0.6774`, in the direction that makes haloes look heavier.
+`h` behind, a **1.48× error** at `h = 0.6774`, in the direction that makes haloes look heavier.
 
 `info.scale.Msol` is exactly `1e10/h` for a TNG-style run, but it is *derived* rather than
 assumed, so it is also correct for a run that chose different base units.
@@ -98,14 +100,14 @@ comoving/physical mix-up rather than a physics result.
 
 ## Checklist
 
-- Reading a **snapshot** through `getvar` with a unit? Already physical — nothing to do.
+- Reading a **snapshot** through `getvar` with a unit? Already physical, nothing to do.
 - Reading a **group catalogue**? Multiply by `info.scale.*` yourself.
 - Seeing a factor near `h` (1.48), `a` (0.23), or `(h/a)³` (26)? That is this page, not physics.
-- Writing a literal `1e10`, `0.6774` or `1/(1+z)` in analysis code? Use `info.scale.*` instead —
+- Writing a literal `1e10`, `0.6774` or `1/(1+z)` in analysis code? Use `info.scale.*` instead, 
   it is derived from the run's own header and survives being pointed at a different simulation.
 
 ## See also
 
-- [Derived Fields](derived_fields.md) — `:cellsize` and the other unit-aware quantities
-- [Zoom Simulations](zoom_simulations.md) — where these factors bite hardest
+- [Derived Fields](derived_fields.md), `:cellsize` and the other unit-aware quantities
+- [Zoom Simulations](zoom_simulations.md), where these factors bite hardest
 - [AREPO](arepo_reader.md) and [AREPO/GADGET run-time logs](gadget_logs.md)
