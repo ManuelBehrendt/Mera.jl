@@ -1,11 +1,10 @@
 # Reading AREPO data (experimental)
 
-> **Tip: Run it yourself**
->
-> The AREPO/IllustrisTNG gas workflow below, physical `getvar(:rho/:T/:metallicity)`, PDFs/profiles,
-> and point / SPH-kernel / Voronoi maps on real snapshots, runs end-to-end in
-> [`16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/16_multi_OtherCodes.ipynb),
-> rendered as [Other Simulation Codes, Worked Examples](multicode_examples.md).
+!!! tip "Run it yourself"
+    The AREPO/IllustrisTNG gas workflow below, physical `getvar(:rho/:T/:metallicity)`, PDFs/profiles,
+    and point / SPH-kernel / Voronoi maps on real snapshots, runs end-to-end in
+    [`16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/16_multi_OtherCodes.ipynb),
+    rendered as [Other Simulation Codes, Worked Examples](multicode_examples.md).
 
 [AREPO](https://arepo-code.org) is a **moving-mesh** code: gas lives in the cells of a Voronoi
 tessellation that moves with the flow. It writes the **GADGET HDF5** snapshot layout (shared with
@@ -14,11 +13,10 @@ IllustrisTNG, which is AREPO), so Mera reads it through the same frontend as [GA
 `Code: AREPO`, and its **gas-cell physics** is read in physical units. Everything downstream
 ([`getvar`](@ref), [`projection`](@ref), [`pdf`](@ref), [`profile`](@ref), …) then runs unchanged.
 
-> **Note: Scope**
->
-> Gas (`PartType0`) loads into a Mera [`PartDataType`](@ref), a *point-with-volume* per Voronoi
-> cell (the snapshot stores the mesh-generating points and per-cell scalars, not the cell faces).
-> DM/stars/BH load as particles. Cosmological `a`/`h` is applied automatically. 3-D Cartesian.
+!!! note "Scope"
+    Gas (`PartType0`) loads into a Mera [`PartDataType`](@ref), a *point-with-volume* per Voronoi
+    cell (the snapshot stores the mesh-generating points and per-cell scalars, not the cell faces).
+    DM/stars/BH load as particles. Cosmological `a`/`h` is applied automatically. 3-D Cartesian.
 
 ## Usage
 
@@ -68,87 +66,84 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 | `SubfindHsml` | `:subfind_hsml` | smoothing length for those estimates; comoving length as `:x` |
 | *(derived)* | `:T`, `:p`, `:cs` | `T = (γ-1)·u·μ·m_H/k_B`; μ from `:ne` (neutral-primordial fallback if absent) |
 
-> **Warning: `:mach` is not the same quantity on AREPO as on RAMSES**
->
-> The symbol is shared, the physics is not:
->
-> | data | `:mach` is | how it is obtained |
-> |---|---|---|
-> | RAMSES hydro | \|v\|/c_s, the **bulk-flow** Mach number in the box frame | derived from `:v` and `:cs` |
-> | AREPO gas | the **shock** Mach number of AREPO's on-the-fly shock finder | read from the stored `Machnumber` dataset |
->
-> These can differ by an order of magnitude on the same physical gas: quiescent flow moving
-> fast through the box has a large \|v\|/c_s and no shock at all. Mera reports each code's
-> own quantity rather than silently redefining one, so **do not compare `:mach` across
-> codes** without deciding which you mean. For a bulk-flow Mach number on AREPO gas, build
-> it explicitly, both ingredients are available:
->
-> ```julia
-> mach_flow = getvar(gas, :v) ./ getvar(gas, :cs)     # |v|/c_s, the RAMSES convention
-> getvar(gas, :mach)                                   # AREPO's shock finder, when present
-> ```
->
-> `:mach` exists on AREPO gas only when the run wrote `Machnumber` (a compile-time option);
-> without it the column is simply absent. `configflags(info)` tells you what the run was
-> built with.
+!!! warning "`:mach` is not the same quantity on AREPO as on RAMSES"
+    The symbol is shared, the physics is not:
 
-> **Warning: `:subfind_veldisp` is the DARK-MATTER dispersion, not the gas dispersion**
->
-> This is the one most likely to be misread. On a **gas** cell, `:subfind_veldisp` is the
-> velocity dispersion of the surrounding **collisionless** matter in the local SUBFIND
-> neighbourhood, not the dispersion of the gas. Measured on a full AREPO chunk (45.9 M gas
-> cells) it tracks `GFM_WindDMVelDisp`, which is by construction the local DM dispersion used
-> to set wind launch velocities, to **0.7 % in the median**.
->
-> The magnitudes make the same point: a ~300 km/s dispersion over a `:subfind_hsml` of
-> ~1.2 pkpc would be wildly supersonic for gas and would shock away in a crossing time. It is
-> only sensible as virial motion of collisionless particles.
->
-> So it does **not** belong in a σ-vs-ρ or σ-vs-T turbulence plot. For gas turbulence use
-> [`localdispersion`](@ref) or [`velocitydispersion`](@ref), which decompose into turbulent
-> and thermal parts and make the scale dependence explicit. On the same haloes those give
-> σ_turb ≈ 159 → 181 km/s as the patch grows from 30 to 200 kpc, a rising cascade, while
-> `:subfind_veldisp` sits at ~297 km/s *despite* the smallest kernel, because it is measuring
-> a different population.
+    | data | `:mach` is | how it is obtained |
+    |---|---|---|
+    | RAMSES hydro | \|v\|/c_s, the **bulk-flow** Mach number in the box frame | derived from `:v` and `:cs` |
+    | AREPO gas | the **shock** Mach number of AREPO's on-the-fly shock finder | read from the stored `Machnumber` dataset |
 
-> **Note: Units of the SUBFIND family, and the wind-particle zero**
->
-> Mera applies no per-column comoving factor to these four, and that is correct rather than
-> provisional, verified against the datasets' own attributes on a real snapshot:
->
-> | dataset | `a_scaling` | `h_scaling` | matches |
-> |---|---:|---:|---|
-> | `SubfindVelDisp` | 0.0 | 0.0 | already a **physical** velocity (km/s) |
-> | `SubfindDensity`, `SubfindDMDensity` | −3.0 | 2.0 | byte-identical to `Density` |
-> | `SubfindHsml` | 1.0 | −1.0 | byte-identical to `Coordinates` |
->
-> Mera folds `a`/`h` into the **unit system** (`unit_l = ul0·a/h`, `unit_d = ud0·h²/a³`)
-> rather than into the columns, so anything matching `Density` or `Coordinates` converts
-> correctly with no extra step, `getvar(gas, :subfind_density, :g_cm3)` and
-> `getvar(gas, :subfind_hsml, :kpc)` are right as they stand.
->
-> `:subfind_density` is a **neighbour-smoothed** estimate, so it does not equal the cell's own
-> `:rho` and should not be used as a drop-in for it. In clumpy star-forming gas the kernel
-> biases toward the dense neighbours: measured on an AREPO zoom, the median **per-cell ratio**
-> `subfind_density / rho` is about **7**. (The ratio of the two medians is 5.3, a different
-> and weaker statistic, since the distribution is strongly skewed. Quote the per-cell one.)
->
-> The exception worth knowing: `Velocities` carry `a_scaling = 0.5` and Mera applies that
-> `√a`, but `SubfindVelDisp` carries `a_scaling = 0` and must **not** get it. Applying it at
-> z ≈ 3.4 would divide by 2.1 and turn a 388 km/s dispersion into 185.
->
-> **Star particles need masking.** Wind particles (`:aform ≤ 0`) get **zero** in all four
-> columns, because SUBFIND assigns them no properties. Averaging without masking drags every
-> statistic down:
->
-> ```julia
-> s  = getparticles(info; families=[4])
-> ok = getvar(s, :aform) .> 0          # real stars; excludes wind
-> mean(getvar(s, :subfind_veldisp)[ok])
-> ```
->
-> The family appears on every particle type SUBFIND processed, not only gas, and is absent
-> altogether when SUBFIND did not run or did not write it back.
+    These can differ by an order of magnitude on the same physical gas: quiescent flow moving
+    fast through the box has a large \|v\|/c_s and no shock at all. Mera reports each code's
+    own quantity rather than silently redefining one, so **do not compare `:mach` across
+    codes** without deciding which you mean. For a bulk-flow Mach number on AREPO gas, build
+    it explicitly, both ingredients are available:
+
+    ```julia
+    mach_flow = getvar(gas, :v) ./ getvar(gas, :cs)     # |v|/c_s, the RAMSES convention
+    getvar(gas, :mach)                                   # AREPO's shock finder, when present
+    ```
+
+    `:mach` exists on AREPO gas only when the run wrote `Machnumber` (a compile-time option);
+    without it the column is simply absent. `configflags(info)` tells you what the run was
+    built with.
+
+!!! warning "`:subfind_veldisp` is the DARK-MATTER dispersion, not the gas dispersion"
+    This is the one most likely to be misread. On a **gas** cell, `:subfind_veldisp` is the
+    velocity dispersion of the surrounding **collisionless** matter in the local SUBFIND
+    neighbourhood, not the dispersion of the gas. Measured on a full AREPO chunk (45.9 M gas
+    cells) it tracks `GFM_WindDMVelDisp`, which is by construction the local DM dispersion used
+    to set wind launch velocities, to **0.7 % in the median**.
+
+    The magnitudes make the same point: a ~300 km/s dispersion over a `:subfind_hsml` of
+    ~1.2 pkpc would be wildly supersonic for gas and would shock away in a crossing time. It is
+    only sensible as virial motion of collisionless particles.
+
+    So it does **not** belong in a σ-vs-ρ or σ-vs-T turbulence plot. For gas turbulence use
+    [`localdispersion`](@ref) or [`velocitydispersion`](@ref), which decompose into turbulent
+    and thermal parts and make the scale dependence explicit. On the same haloes those give
+    σ_turb ≈ 159 → 181 km/s as the patch grows from 30 to 200 kpc, a rising cascade, while
+    `:subfind_veldisp` sits at ~297 km/s *despite* the smallest kernel, because it is measuring
+    a different population.
+
+!!! note "Units of the SUBFIND family, and the wind-particle zero"
+    Mera applies no per-column comoving factor to these four, and that is correct rather than
+    provisional, verified against the datasets' own attributes on a real snapshot:
+
+    | dataset | `a_scaling` | `h_scaling` | matches |
+    |---|---:|---:|---|
+    | `SubfindVelDisp` | 0.0 | 0.0 | already a **physical** velocity (km/s) |
+    | `SubfindDensity`, `SubfindDMDensity` | −3.0 | 2.0 | byte-identical to `Density` |
+    | `SubfindHsml` | 1.0 | −1.0 | byte-identical to `Coordinates` |
+
+    Mera folds `a`/`h` into the **unit system** (`unit_l = ul0·a/h`, `unit_d = ud0·h²/a³`)
+    rather than into the columns, so anything matching `Density` or `Coordinates` converts
+    correctly with no extra step, `getvar(gas, :subfind_density, :g_cm3)` and
+    `getvar(gas, :subfind_hsml, :kpc)` are right as they stand.
+
+    `:subfind_density` is a **neighbour-smoothed** estimate, so it does not equal the cell's own
+    `:rho` and should not be used as a drop-in for it. In clumpy star-forming gas the kernel
+    biases toward the dense neighbours: measured on an AREPO zoom, the median **per-cell ratio**
+    `subfind_density / rho` is about **7**. (The ratio of the two medians is 5.3, a different
+    and weaker statistic, since the distribution is strongly skewed. Quote the per-cell one.)
+
+    The exception worth knowing: `Velocities` carry `a_scaling = 0.5` and Mera applies that
+    `√a`, but `SubfindVelDisp` carries `a_scaling = 0` and must **not** get it. Applying it at
+    z ≈ 3.4 would divide by 2.1 and turn a 388 km/s dispersion into 185.
+
+    **Star particles need masking.** Wind particles (`:aform ≤ 0`) get **zero** in all four
+    columns, because SUBFIND assigns them no properties. Averaging without masking drags every
+    statistic down:
+
+    ```julia
+    s  = getparticles(info; families=[4])
+    ok = getvar(s, :aform) .> 0          # real stars; excludes wind
+    mean(getvar(s, :subfind_veldisp)[ok])
+    ```
+
+    The family appears on every particle type SUBFIND processed, not only gas, and is absent
+    altogether when SUBFIND did not run or did not write it back.
 
 ### Star particles
 
@@ -168,13 +163,12 @@ the column was not read, so AREPO always fell back and every history bin older t
 came out biased low. It now engages automatically, `sfr_snapshot(stars).mass_field` reports
 `:minit` rather than `:mass`.
 
-> **Tip: Stellar ages**
->
-> Star particles carry `GFM_StellarFormationTime` as a scale factor, not an age.
-> [`age_from_aform`](@ref) converts it: `age_from_aform(info, aform; unit=:Gyr)`. It returns
-> `NaN` for the negative `aform` values that mark **wind particles** in IllustrisTNG, so
-> they drop out of statistics instead of becoming spurious ages. (The RAMSES equivalent,
-> starting from a `:birth` time, is [`stellar_age`](@ref).)
+!!! tip "Stellar ages"
+    Star particles carry `GFM_StellarFormationTime` as a scale factor, not an age.
+    [`age_from_aform`](@ref) converts it: `age_from_aform(info, aform; unit=:Gyr)`. It returns
+    `NaN` for the negative `aform` values that mark **wind particles** in IllustrisTNG, so
+    they drop out of statistics instead of becoming spurious ages. (The RAMSES equivalent,
+    starting from a `:birth` time, is [`stellar_age`](@ref).)
 
 ```julia
 getvar(gas, :rho, :g_cm3)        # physical density
@@ -194,28 +188,27 @@ returning `xedges`, `yedges` and the `H` grid, a ρ–T diagram is one call, not
 The temperature reproduces IllustrisTNG's documented conversion (density to machine precision,
 temperature to sub-percent), so the values match what TNG itself reports.
 
-> **Warning: `:Zsun` is a convention, not a measurement**
->
-> `GFM_Metallicity` is a **metal mass fraction**, and Mera passes it through unscaled. The
-> `:Zsun` unit divides it by a solar reference, but that reference is **in no snapshot and in
-> no parameter file**. It cannot be read; it has to be declared. Mera declares AREPO/GFM's
-> compiled-in value and says so rather than baking it in silently, because the common choices
-> differ by ~50 % and the choice moves published numbers:
->
-> | source | Z⊙ |
-> |---|---|
-> | AREPO / GFM (Mera's default) | 0.0127 |
-> | Asplund et al. (2009) | 0.0134 |
-> | Grevesse & Sauval (1998) | 0.0201 |
->
-> Re-register the unit to use a different convention, and state which you used:
->
-> ```julia
-> add_unit(:Zsun, 1 / 0.0134)      # Asplund et al. (2009)
-> ```
->
-> Measured on FilB snapshot 032 with the default: mean Z = 1.625e-3 = 0.128 Z⊙,
-> max Z = 0.196 = 15.5 Z⊙.
+!!! warning "`:Zsun` is a convention, not a measurement"
+    `GFM_Metallicity` is a **metal mass fraction**, and Mera passes it through unscaled. The
+    `:Zsun` unit divides it by a solar reference, but that reference is **in no snapshot and in
+    no parameter file**. It cannot be read; it has to be declared. Mera declares AREPO/GFM's
+    compiled-in value and says so rather than baking it in silently, because the common choices
+    differ by ~50 % and the choice moves published numbers:
+
+    | source | Z⊙ |
+    |---|---|
+    | AREPO / GFM (Mera's default) | 0.0127 |
+    | Asplund et al. (2009) | 0.0134 |
+    | Grevesse & Sauval (1998) | 0.0201 |
+
+    Re-register the unit to use a different convention, and state which you used:
+
+    ```julia
+    add_unit(:Zsun, 1 / 0.0134)      # Asplund et al. (2009)
+    ```
+
+    Measured on FilB snapshot 032 with the default: mean Z = 1.625e-3 = 0.128 Z⊙,
+    max Z = 0.196 = 15.5 Z⊙.
 
 ## Cosmological runs
 
@@ -270,11 +263,10 @@ Voronoi projection of the same snapshot agree about which cell owns a point. Cel
 generator reaches come back `NaN` rather than being filled in. Star and dark-matter particles
 have no `:volume` and therefore no extent to resample; use [`projection`](@ref) for those.
 
-> **Note: Cutout vs full box**
->
-> An IllustrisTNG **halo cutout** (±400 ckpc around one galaxy) is centrally concentrated, so its
-> maps do not fill the frame. That is physical, not a bug. A **full simulation volume** (e.g. an
-> AREPO cluster-merger box, or a cosmological box) fills the frame.
+!!! note "Cutout vs full box"
+    An IllustrisTNG **halo cutout** (±400 ckpc around one galaxy) is centrally concentrated, so its
+    maps do not fill the frame. That is physical, not a bug. A **full simulation volume** (e.g. an
+    AREPO cluster-merger box, or a cosmological box) fills the frame.
 
 ## How it maps onto Mera's structs
 

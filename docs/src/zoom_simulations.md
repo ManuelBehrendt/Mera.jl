@@ -21,12 +21,11 @@ c.n_lowres         # how many are actually inside
 c.families         # which PartTypes were classified high-res vs boundary
 ```
 
-> **Danger: Read `conclusive` with `clean`**
->
-> If the loaded data contains no low-resolution particle **at all**, `clean` is `true` because
-> nothing was found, which is not the same as nothing being there. A selection that is too
-> small, or a `search_radius` that does not reach the boundary, produces exactly this. When
-> `conclusive` is `false`, widen the selection before believing the answer.
+!!! danger "Read `conclusive` with `clean`"
+    If the loaded data contains no low-resolution particle **at all**, `clean` is `true` because
+    nothing was found, which is not the same as nothing being there. A selection that is too
+    small, or a `search_radius` that does not reach the boundary, produces exactly this. When
+    `conclusive` is `false`, widen the selection before believing the answer.
 
 [`contamination`](@ref) **derives** which families are boundary rather than assuming
 `PartType2` and `PartType3`. Among the collisionless candidates (`1,2,3` by default, gas,
@@ -46,12 +45,11 @@ Two numbers make the check:
 - `distinct_masses`, the number of distinct high-resolution masses inside the radius. It must
   be 1. Anything else means a second family has entered.
 
-> **Tip: The haloes can be clean while the volume between them is not**
->
-> On a two-protocluster zoom the nearest boundary particle sat at 2.85 and 2.35 R200c of the
-> two haloes, both clean, while the inter-halo medium was contaminated. Statistics computed
-> over the box *between* the objects were biased until this was checked separately. Run the
-> check on **every region you quote**, not once per snapshot.
+!!! tip "The haloes can be clean while the volume between them is not"
+    On a two-protocluster zoom the nearest boundary particle sat at 2.85 and 2.35 R200c of the
+    two haloes, both clean, while the inter-halo medium was contaminated. Statistics computed
+    over the box *between* the objects were biased until this was checked separately. Run the
+    check on **every region you quote**, not once per snapshot.
 
 ### Gas has its own answer
 
@@ -92,13 +90,12 @@ This applies to every velocity-derived field: `:vr_sphere`, `:vϕ_cylinder`, `:v
 `:ekin`, `:lx`/`:ly`/`:lz`, the specific angular momenta, and the coordinate-dependent Mach
 numbers. Mera mentions it once per session when you compute one without a frame.
 
-> **Note: `:auto` is the frame of *your selection***
->
-> `vcenter=:auto` computes the mass-weighted mean velocity of exactly the particles you
-> selected. For a closed, roughly symmetric halo that is what you want. For a deliberately
-> lopsided selection its rest frame legitimately includes that selection's net streaming, 
-> which is correct, but not the same as removing only the halo's bulk motion. Pass an
-> explicit vector when you mean a specific frame.
+!!! note "`:auto` is the frame of *your selection*"
+    `vcenter=:auto` computes the mass-weighted mean velocity of exactly the particles you
+    selected. For a closed, roughly symmetric halo that is what you want. For a deliberately
+    lopsided selection its rest frame legitimately includes that selection's net streaming, 
+    which is correct, but not the same as removing only the halo's bulk motion. Pass an
+    explicit vector when you mean a specific frame.
 
 The maps are worse than the numbers. A uniform ~200 km/s pedestal on a colour scale symmetric
 about zero renders a rotation dipole as one flat colour, the structure is not faint, it is
@@ -119,29 +116,28 @@ monotonic, so it commutes with order statistics, but an even-sized median *avera
 middle values, and averaging does not commute with a nonlinear map. For `V = k³, k = 1…8`:
 `median(V)^(1/3) = 4.5549` against `median(V^(1/3)) = 4.5`.
 
-> **Warning: `:cellsize` is the cube-equivalent side, papers often quote the sphere radius**
->
-> A Voronoi cell is an irregular polyhedron with **no single size**. The only well-defined
-> quantity is its volume `V = m/ρ`; every "size" is a nominal length derived from it, and the
-> conventions differ by up to 1.6×:
->
-> | quantity | formula | × `V^(1/3)` |
-> |---|---|---|
-> | **`:cellsize`** | `V^(1/3)`, side of the equal-volume **cube** | 1.000 |
-> | SPH smoothing `h` (`weighting=:sph`) | `1.5·(3V/4π)^(1/3)` | 0.931 |
-> | `:voronoi` reach cap | `(√3/2)·V^(1/3)`, cube centre-to-corner | 0.866 |
-> | sphere-equivalent **radius** | `(3V/4π)^(1/3)` | 0.620 |
->
-> `:cellsize` is the cube side deliberately: it is what compares to a Cartesian grid spacing
-> `Δx`, which is what makes `cellsize < l_cool` a meaningful test. AREPO papers frequently
-> quote the **sphere-equivalent radius** instead, which is `0.62 ×` this, a 383 pc
-> `:cellsize` is a 238 pc "cell radius". Check which one a published number means.
->
-> Two AREPO-specific caveats: it is an *equivalent* size, saying nothing about shape (cells
-> elongate in shear and squash in compression); and because AREPO refines to constant target
-> **mass**, `cellsize ∝ ρ^(-1/3)`, so the distribution stays narrow, 400–560 pc across every
-> phase in the table above, even where density spans six decades. Cell size is therefore a
-> poor proxy for anything density-dependent.
+!!! warning "`:cellsize` is the cube-equivalent side, papers often quote the sphere radius"
+    A Voronoi cell is an irregular polyhedron with **no single size**. The only well-defined
+    quantity is its volume `V = m/ρ`; every "size" is a nominal length derived from it, and the
+    conventions differ by up to 1.6×:
+
+    | quantity | formula | × `V^(1/3)` |
+    |---|---|---|
+    | **`:cellsize`** | `V^(1/3)`, side of the equal-volume **cube** | 1.000 |
+    | SPH smoothing `h` (`weighting=:sph`) | `1.5·(3V/4π)^(1/3)` | 0.931 |
+    | `:voronoi` reach cap | `(√3/2)·V^(1/3)`, cube centre-to-corner | 0.866 |
+    | sphere-equivalent **radius** | `(3V/4π)^(1/3)` | 0.620 |
+
+    `:cellsize` is the cube side deliberately: it is what compares to a Cartesian grid spacing
+    `Δx`, which is what makes `cellsize < l_cool` a meaningful test. AREPO papers frequently
+    quote the **sphere-equivalent radius** instead, which is `0.62 ×` this, a 383 pc
+    `:cellsize` is a 238 pc "cell radius". Check which one a published number means.
+
+    Two AREPO-specific caveats: it is an *equivalent* size, saying nothing about shape (cells
+    elongate in shear and squash in compression); and because AREPO refines to constant target
+    **mass**, `cellsize ∝ ρ^(-1/3)`, so the distribution stays narrow, 400–560 pc across every
+    phase in the table above, even where density spans six decades. Cell size is therefore a
+    poor proxy for anything density-dependent.
 
 See [Cosmological Units](cosmological_units.md) for why the comoving→physical conversion on this quantity is a
 factor of 26 in density, and why it is worth letting Mera do it.
@@ -160,68 +156,65 @@ resolved = getvar(gas, :cellsize, :pc) .< getvar(gas, :l_cool, :pc)
 `l_cool` is the scale on which thermal instability fragments gas, so `cellsize < l_cool` is the
 condition for resolving it, a measurement rather than an appeal to a published number.
 
-> **Danger: A global `mean(cellsize < l_cool)` is not the convergence criterion**
->
-> It is dominated by hot diffuse gas, where `l_cool` is hundreds of kpc and any cell
-> satisfies it trivially. Measured over one IPM box (121.8 M cells):
->
-> | phase | cells | median `l_cool` | median cell | resolved |
-> |---|---|---|---|---|
-> | all | 121.8 M | 31.1 kpc | 427 pc | **88.8 %** |
-> | cold, `T < 3×10⁴ K` | 42.3 M | 3.7 kpc | 556 pc | 73.2 % |
-> | `T ~ 10⁴ K` | 28.4 M | 1.3 kpc | 416 pc | **65.1 %** |
-> | `T ~ 10⁵ K` | 16.6 M | 10.1 kpc | 432 pc | 92.5 % |
-> | WHIM, `10⁵–10⁷ K` | 63.9 M | 112.2 kpc | 415 pc | 99.5 % |
-> | hot, `T > 10⁶ K` | 19.4 M | 321.7 kpc | 400 pc | 100 % |
->
-> The 1st percentile of `l_cool` over that box is **0.17 pc**, resolved by 0.000 % of cells.
->
-> The shattering scale is the **minimum** of `l_cool`, not its local value, and that minimum
-> sits in the cold phase near `10⁴ K`. So the same run "passes" a published *resolve `l_cool`
-> at `T ~ 10⁵ K`* criterion at 92.5 % and fails a *resolve the shattering scale* criterion
-> outright, different claims, which a single 88.8 % conflates. **Restrict by phase, and
-> report the low percentiles of `l_cool` alongside.**
+!!! danger "A global `mean(cellsize < l_cool)` is not the convergence criterion"
+    It is dominated by hot diffuse gas, where `l_cool` is hundreds of kpc and any cell
+    satisfies it trivially. Measured over one IPM box (121.8 M cells):
 
-> **Danger: Filter on `:coolrate .< 0`, the `Inf` sentinel does not do it for you**
->
-> Cells with `Λ ≥ 0` are being net **heated**: they have no cooling time, and `:t_cool`
-> returns `Inf` rather than a magnitude (a magnitude there is a heating time wearing a
-> cooling time's label). But `Inf` makes `cellsize < l_cool` **trivially true**, so a
-> convergence statistic that does not exclude them counts every heated cell as resolved.
-> The sentinel is honest about the value and actively unhelpful as a filter.
->
-> This is not a rare population. In the diffuse inter-halo medium, the medium the whole
-> question is about. It is **20.4 % of cells and 46.4 % of the mass** (measured over
-> 121.8 M IPM cells; heated gas sits at `T ≈ 1.6×10⁴ K`, `n_H ≈ 7.6×10⁻⁵ cm⁻³`, held up by
-> the UV background). Including it roughly **doubles** the apparent resolved fraction where
-> it matters:
->
-> | phase | all cells | cooling cells only |
-> |---|---|---|
-> | IPM overall | 88.8 % | 86.4 % |
-> | cold, `T < 3×10⁴ K` | 73.2 % | **41.3 %** |
-> | `T ~ 10⁴ K` | 65.1 % | **31.4 %** |
->
-> So the honest figure for the phase where fragmentation happens is ~31 %, not 65 %:
->
-> ```julia
-> cooling  = getmask(gas, :coolrate, <(0))
-> resolved = getvar(gas, :cellsize, :pc) .< getvar(gas, :l_cool, :pc)
-> mean(resolved[cooling])          # …and restrict by phase as well
-> ```
->
-> Negative `:coolrate` is net cooling, measured, not assumed, with **no cells exactly
-> zero** on a real AREPO run.
+    | phase | cells | median `l_cool` | median cell | resolved |
+    |---|---|---|---|---|
+    | all | 121.8 M | 31.1 kpc | 427 pc | **88.8 %** |
+    | cold, `T < 3×10⁴ K` | 42.3 M | 3.7 kpc | 556 pc | 73.2 % |
+    | `T ~ 10⁴ K` | 28.4 M | 1.3 kpc | 416 pc | **65.1 %** |
+    | `T ~ 10⁵ K` | 16.6 M | 10.1 kpc | 432 pc | 92.5 % |
+    | WHIM, `10⁵–10⁷ K` | 63.9 M | 112.2 kpc | 415 pc | 99.5 % |
+    | hot, `T > 10⁶ K` | 19.4 M | 321.7 kpc | 400 pc | 100 % |
 
-> **Note: Quoting `l_cool` at a temperature carries a μ assumption**
->
-> `l_cool` itself needs no mean molecular weight: `u` already encodes it, so
-> `c_s = √(γ(γ−1)u)` and everything downstream is μ-free, `:t_cool` and `:l_cool` are
-> bit-identical whether or not `:ne` is loaded. But *labelling* a cell by temperature is not:
-> `T = (γ−1)uμm_H/k_B`, so the same `u` reads as different `T` under ionized `μ ≈ 0.6` versus
-> neutral-primordial `μ ≈ 1.22`. A statement of the form "`l_cool` = 800 pc at `T = 10⁴ K`"
-> is therefore μ-dependent through the label, by about 30 %. Load `:ne` when binning by
-> temperature.
+    The 1st percentile of `l_cool` over that box is **0.17 pc**, resolved by 0.000 % of cells.
+
+    The shattering scale is the **minimum** of `l_cool`, not its local value, and that minimum
+    sits in the cold phase near `10⁴ K`. So the same run "passes" a published *resolve `l_cool`
+    at `T ~ 10⁵ K`* criterion at 92.5 % and fails a *resolve the shattering scale* criterion
+    outright, different claims, which a single 88.8 % conflates. **Restrict by phase, and
+    report the low percentiles of `l_cool` alongside.**
+
+!!! danger "Filter on `:coolrate .< 0`, the `Inf` sentinel does not do it for you"
+    Cells with `Λ ≥ 0` are being net **heated**: they have no cooling time, and `:t_cool`
+    returns `Inf` rather than a magnitude (a magnitude there is a heating time wearing a
+    cooling time's label). But `Inf` makes `cellsize < l_cool` **trivially true**, so a
+    convergence statistic that does not exclude them counts every heated cell as resolved.
+    The sentinel is honest about the value and actively unhelpful as a filter.
+
+    This is not a rare population. In the diffuse inter-halo medium, the medium the whole
+    question is about. It is **20.4 % of cells and 46.4 % of the mass** (measured over
+    121.8 M IPM cells; heated gas sits at `T ≈ 1.6×10⁴ K`, `n_H ≈ 7.6×10⁻⁵ cm⁻³`, held up by
+    the UV background). Including it roughly **doubles** the apparent resolved fraction where
+    it matters:
+
+    | phase | all cells | cooling cells only |
+    |---|---|---|
+    | IPM overall | 88.8 % | 86.4 % |
+    | cold, `T < 3×10⁴ K` | 73.2 % | **41.3 %** |
+    | `T ~ 10⁴ K` | 65.1 % | **31.4 %** |
+
+    So the honest figure for the phase where fragmentation happens is ~31 %, not 65 %:
+
+    ```julia
+    cooling  = getmask(gas, :coolrate, <(0))
+    resolved = getvar(gas, :cellsize, :pc) .< getvar(gas, :l_cool, :pc)
+    mean(resolved[cooling])          # …and restrict by phase as well
+    ```
+
+    Negative `:coolrate` is net cooling, measured, not assumed, with **no cells exactly
+    zero** on a real AREPO run.
+
+!!! note "Quoting `l_cool` at a temperature carries a μ assumption"
+    `l_cool` itself needs no mean molecular weight: `u` already encodes it, so
+    `c_s = √(γ(γ−1)u)` and everything downstream is μ-free, `:t_cool` and `:l_cool` are
+    bit-identical whether or not `:ne` is loaded. But *labelling* a cell by temperature is not:
+    `T = (γ−1)uμm_H/k_B`, so the same `u` reads as different `T` under ionized `μ ≈ 0.6` versus
+    neutral-primordial `μ ≈ 1.22`. A statement of the form "`l_cool` = 800 pc at `T = 10⁴ K`"
+    is therefore μ-dependent through the label, by about 30 %. Load `:ne` when binning by
+    temperature.
 
 ### Clumping, and the number papers actually quote
 
@@ -235,12 +228,11 @@ clumping(gas; grid=13.7, grid_unit=:kpc)     # fixed grid — the published form
 clumping(gas; mask=getvar(gas,:cellsize,:pc) .< 500)   # resolution-restricted
 ```
 
-> **Danger: Cell-by-cell and fixed-grid C are different quantities**
->
-> A Voronoi mesh spanning six decades in density gives enormous weight to its smallest cells;
-> a fixed grid does not. Measured on one IPM box: **12 800** cell-by-cell against **2 276**
-> over well-resolved cells only, a factor 5.6 from the resolution cut alone. Published
-> values are almost always fixed-grid, so **quote the grid size with the number**.
+!!! danger "Cell-by-cell and fixed-grid C are different quantities"
+    A Voronoi mesh spanning six decades in density gives enormous weight to its smallest cells;
+    a fixed grid does not. Measured on one IPM box: **12 800** cell-by-cell against **2 276**
+    over well-resolved cells only, a factor 5.6 from the resolution cut alone. Published
+    values are almost always fixed-grid, so **quote the grid size with the number**.
 
 Weighting matters too, and not in the obvious direction. `:mass` weighting does *not* simply
 give a bigger `C`: for a two-phase medium whose mass sits overwhelmingly in the dense phase the

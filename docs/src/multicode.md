@@ -1,11 +1,10 @@
 # Multi-code support
 
-> **Note: There is no public demo dataset for these codes yet**
->
-> The readers are exercised end to end in Mera's own test suite, but the fixtures that suite uses
-> are not published: every simulation in the public test set is RAMSES. So the way to try a reader
-> is to point it at **your own** output, which is also the contribution this branch most needs.
-> See [Testing it on your own simulation](#Testing-it-on-your-own-simulation) below.
+!!! note "There is no public demo dataset for these codes yet"
+    The readers are exercised end to end in Mera's own test suite, but the fixtures that suite uses
+    are not published: every simulation in the public test set is RAMSES. So the way to try a reader
+    is to point it at **your own** output, which is also the contribution this branch most needs.
+    See [Testing it on your own simulation](#Testing-it-on-your-own-simulation) below.
 
 **This branch reads RAMSES, PLUTO, Chombo, Athena++, FLASH, GADGET and AREPO through one API.**
 It is development work, not part of any 1.x release. Install it with:
@@ -58,12 +57,11 @@ Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, a
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
 available, e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
 
-> **Note: “Chombo” is a format, not a code**
->
-> The **Chombo** row above is a *file format*, not a physics code: Chombo is a block-structured AMR
-> **framework** (Lawrence Berkeley National Laboratory) whose HDF5 output is shared by PLUTO (AMR
-> mode), Orion, Charm, BISICLES and others. Mera reads any Chombo-format `.hdf5` the same way, see
-> [PLUTO-AMR (Chombo)](pluto_reader.md#PLUTO-AMR-(Chombo)).
+!!! note "“Chombo” is a format, not a code"
+    The **Chombo** row above is a *file format*, not a physics code: Chombo is a block-structured AMR
+    **framework** (Lawrence Berkeley National Laboratory) whose HDF5 output is shared by PLUTO (AMR
+    mode), Orion, Charm, BISICLES and others. Mera reads any Chombo-format `.hdf5` the same way, see
+    [PLUTO-AMR (Chombo)](pluto_reader.md#PLUTO-AMR-(Chombo)).
 
 **Self-gravity** rides along the same way: where a code writes a gravitational potential into its
 snapshot (Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`) the reader exposes it as

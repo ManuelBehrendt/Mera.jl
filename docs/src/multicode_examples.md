@@ -1,10 +1,9 @@
 # Other Simulation Codes, Worked Examples
 
-> **Note: Executed notebook**
->
-> This page loads PLUTO / Chombo / Athena++ / FLASH / GADGET and the AREPO/IllustrisTNG
-> gas workflow end-to-end, real snapshots, real outputs. See
-> [Multi-code support](multicode.md) for the overview and the per-code reader pages.
+!!! note "Executed notebook"
+    This page loads PLUTO / Chombo / Athena++ / FLASH / GADGET and the AREPO/IllustrisTNG
+    gas workflow end-to-end, real snapshots, real outputs. See
+    [Multi-code support](multicode.md) for the overview and the per-code reader pages.
 
 Mera began as a RAMSES tool, but its analysis layer is **code-blind**, it works on a generic
 uniform/AMR cell list (or particle list), not on RAMSES file formats. So the *same* calls

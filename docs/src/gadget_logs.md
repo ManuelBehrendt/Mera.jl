@@ -58,23 +58,22 @@ snapshot's own `/Config` group:
 
 ## Columns are build-dependent, treat names as a guess
 
-> **Warning: `colnames` is best-effort unless you set it**
->
-> How many columns a log has, and what each one means, depends on the same compile-time
-> flags. Mera therefore always returns the **raw** columns plus `ncols`, and marks the
-> names:
->
-> - `colnames`, a best-effort guess for the common TNG-like layout;
-> - `colnames_verified`, `false` unless you passed `colnames` yourself.
->
-> Nothing is renamed or rescaled on a guess. The 6-column `sfr.txt` Mera knows about is an
-> example, not a guarantee, check against your own `/Config` before trusting a name, and
-> override when you know better:
->
-> ```julia
-> t = getlogs(info, :sfr; colnames=[:a, :m_expected, :sfr_total, :sfr_active, :m_stars, :cum])
-> t.colnames_verified      # true, you asserted these
-> ```
+!!! warning "`colnames` is best-effort unless you set it"
+    How many columns a log has, and what each one means, depends on the same compile-time
+    flags. Mera therefore always returns the **raw** columns plus `ncols`, and marks the
+    names:
+
+    - `colnames`, a best-effort guess for the common TNG-like layout;
+    - `colnames_verified`, `false` unless you passed `colnames` yourself.
+
+    Nothing is renamed or rescaled on a guess. The 6-column `sfr.txt` Mera knows about is an
+    example, not a guarantee, check against your own `/Config` before trusting a name, and
+    override when you know better:
+
+    ```julia
+    t = getlogs(info, :sfr; colnames=[:a, :m_expected, :sfr_total, :sfr_active, :m_stars, :cum])
+    t.colnames_verified      # true — you asserted these
+    ```
 
 ## Truncation and restarts
 

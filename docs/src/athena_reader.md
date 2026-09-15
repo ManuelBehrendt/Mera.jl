@@ -6,12 +6,11 @@ that reads an Athena++ HDF5 snapshot (`.athdf`) into the same Mera structs, so [
 [`projection`](@ref), [`subregion`](@ref), [`filterdata`](@ref), [`pdf`](@ref), [`clumpfind`](@ref)
 and the rest run on Athena++ data unchanged.
 
-> **Note: Scope**
->
-> 3-D Cartesian, hydro and cell-centred MHD fields. **AMR is supported**, each Athena++
-> MeshBlock carries a level and a logical location, which map onto Mera's `level`/`cx,cy,cz`
-> convention. The root grid must be a power of two per axis. Athena++ data are in **code
-> units**; supply the run's CGS units for physical conversions (see below).
+!!! note "Scope"
+    3-D Cartesian, hydro and cell-centred MHD fields. **AMR is supported**, each Athena++
+    MeshBlock carries a level and a logical location, which map onto Mera's `level`/`cx,cy,cz`
+    convention. The root grid must be a power of two per axis. Athena++ data are in **code
+    units**; supply the run's CGS units for physical conversions (see below).
 
 ## Usage
 
@@ -58,11 +57,10 @@ blocks it overlaps. Loading the central 10 % of the AM06 sample reads 1554 of it
 smaller window reads proportionally fewer, so a sub-region costs a fraction of the full snapshot in
 both time and memory. A full-box load keeps the fast single-read-per-dataset path.
 
-> **Note: What is available per data type**
->
-> Data is loaded per type, exactly as for RAMSES, but only what the code wrote exists: an
-> Athena++ snapshot is **hydro + cell-centred MHD only** (no gravity/particles), so you call
-> [`gethydro`](@ref) and there is nothing for `getgravity`/`getparticles` to read.
+!!! note "What is available per data type"
+    Data is loaded per type, exactly as for RAMSES, but only what the code wrote exists: an
+    Athena++ snapshot is **hydro + cell-centred MHD only** (no gravity/particles), so you call
+    [`gethydro`](@ref) and there is nothing for `getgravity`/`getparticles` to read.
 
 ## Worked example: the yt AM06 sample
 

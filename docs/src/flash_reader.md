@@ -6,13 +6,12 @@ that reads a FLASH HDF5 plot/checkpoint file into the same Mera structs, so [`ge
 [`projection`](@ref), [`subregion`](@ref), [`filterdata`](@ref), [`pdf`](@ref), [`clumpfind`](@ref)
 and the rest run on FLASH data unchanged.
 
-> **Note: Scope**
->
-> 3-D Cartesian, hydro and cell-centred MHD fields. FLASH uses **PARAMESH block-structured AMR**:
-> a fixed `nxb×nyb×nzb` cell block per tree node, with a per-block refinement level, a physical
-> bounding box, and a *node type*, only **leaf** blocks (`node type == 1`) carry real data and
-> are loaded. The root grid (`nblockx·nxb` cells per axis) must be a power of two. FLASH data are
-> usually **CGS**; the defaults treat code units as CGS (see [Units](#Units)).
+!!! note "Scope"
+    3-D Cartesian, hydro and cell-centred MHD fields. FLASH uses **PARAMESH block-structured AMR**:
+    a fixed `nxb×nyb×nzb` cell block per tree node, with a per-block refinement level, a physical
+    bounding box, and a *node type*, only **leaf** blocks (`node type == 1`) carry real data and
+    are loaded. The root grid (`nblockx·nxb` cells per axis) must be a power of two. FLASH data are
+    usually **CGS**; the defaults treat code units as CGS (see [Units](#Units)).
 
 ## Usage
 
@@ -46,10 +45,9 @@ gas = gethydro(info; xrange=[-0.1, 0.1], yrange=[-0.1, 0.1], zrange=[-0.1, 0.1],
 Because Mera keeps the leaf cells, the window is an exact, hole-free filter; the returned object
 records it in `gas.ranges`. Resolution/level is an analysis-time choice (`projection(…, pxsize=…)`).
 
-> **Note: What is available per data type**
->
-> Data is loaded per type, exactly as for RAMSES, a FLASH plot file is **hydro + cell-centred
-> MHD only** here, so you call [`gethydro`](@ref); gravity/particles are not read in v1.
+!!! note "What is available per data type"
+    Data is loaded per type, exactly as for RAMSES, a FLASH plot file is **hydro + cell-centred
+    MHD only** here, so you call [`gethydro`](@ref); gravity/particles are not read in v1.
 
 ## Worked example: the yt GasSloshing sample
 

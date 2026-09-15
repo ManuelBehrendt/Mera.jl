@@ -5,12 +5,11 @@ file formats. This page adds a **frontend for the [PLUTO code](http://plutocode.
 reads PLUTO's output into the same Mera structs, so [`getvar`](@ref), [`projection`](@ref),
 [`pdf`](@ref), [`timeseries`](@ref), [`getmovie`](@ref) and the rest run on PLUTO data unchanged.
 
-> **Note: Two formats, one analysis**
->
-> The frontend reads **both** of PLUTO's output formats into the same structs: the static
-> **uniform grid** (`grid.out` + `.dbl`) and the **AMR** Chombo `.hdf5` format (see
-> [PLUTO-AMR (Chombo)](#PLUTO-AMR-(Chombo))). Scope: 3-D Cartesian, power-of-two base grid. PLUTO
-> test problems are dimensionless, so data load in **code units**.
+!!! note "Two formats, one analysis"
+    The frontend reads **both** of PLUTO's output formats into the same structs: the static
+    **uniform grid** (`grid.out` + `.dbl`) and the **AMR** Chombo `.hdf5` format (see
+    [PLUTO-AMR (Chombo)](#PLUTO-AMR-(Chombo))). Scope: 3-D Cartesian, power-of-two base grid. PLUTO
+    test problems are dimensionless, so data load in **code units**.
 
 ## Usage
 
@@ -52,11 +51,10 @@ gas = gethydro(info; xrange=[0.0, 0.5], yrange=[0.25, 0.75], range_unit=:standar
 The selection acts on the cells, so it is an exact filter and the returned object records the window
 in `gas.ranges`; resolution is chosen later at analysis time (`projection(…, pxsize=…)`), not at load.
 
-> **Note: What is available per data type**
->
-> Data is loaded per type, exactly as for RAMSES: [`gethydro`](@ref) always, and
-> [`getparticles`](@ref) when a PLUTO particle file is present (`info.particles == true`). PLUTO
-> snapshots carry no separate gravity dataset.
+!!! note "What is available per data type"
+    Data is loaded per type, exactly as for RAMSES: [`gethydro`](@ref) always, and
+    [`getparticles`](@ref) when a PLUTO particle file is present (`info.particles == true`). PLUTO
+    snapshots carry no separate gravity dataset.
 
 ## Worked example: the 3-D Sedov blast
 
@@ -143,12 +141,11 @@ part = getparticles(info)                  # → PartDataType (:x,:y,:z, :id, :v
 getvar(part, :vx); length(part.data)       # velocities, and how many particles were read
 ```
 
-> **Warning: PLUTO particles carry no mass**
->
-> PLUTO particle files store no mass field, so Mera's PLUTO `PartDataType` has no `:mass`
-> column. Anything mass-weighted has no input here: [`msum`](@ref), [`center_of_mass`](@ref),
-> [`bulk_velocity`](@ref) and the default `projection(part, :sd)` weighting. Work with counts
-> instead, or attach a mass column yourself if your run uses a constant particle mass.
+!!! warning "PLUTO particles carry no mass"
+    PLUTO particle files store no mass field, so Mera's PLUTO `PartDataType` has no `:mass`
+    column. Anything mass-weighted has no input here: [`msum`](@ref), [`center_of_mass`](@ref),
+    [`bulk_velocity`](@ref) and the default `projection(part, :sd)` weighting. Work with counts
+    instead, or attach a mass column yourself if your run uses a constant particle mass.
 
 The format (an ASCII `#` header, `field_names`/`field_dim`/`nparticles`/`endianity`, followed by
 particle-major binary) is read directly; field names map to Mera symbols (`x1→:x`, `vx1→:vx`, …),
@@ -156,16 +153,15 @@ extra fields keep their names.
 
 ## PLUTO-AMR (Chombo)
 
-> **Info: What is Chombo?**
->
-> **Chombo** is not a simulation code but a **block-structured adaptive-mesh-refinement (AMR)
-> framework**, a library from Lawrence Berkeley National Laboratory (the Applied Numerical Algorithms
-> Group) that supplies the grid hierarchy, parallel data structures and HDF5 I/O that many simulation
-> codes are built on. Because they share Chombo's machinery they also share its **HDF5 output format**
-> (a hierarchy of refined rectangular *boxes*): **PLUTO** in AMR mode, **Orion**, **Charm** and
-> **BISICLES**, among others, all write the same layout. So Mera's `Code: CHOMBO` labels the **file
-> format**, not a single physics code, any Chombo-format `.hdf5` is read the same way, with the
-> per-code variable-name maps (PLUTO vs Orion conventions) layered on top.
+!!! info "What is Chombo?"
+    **Chombo** is not a simulation code but a **block-structured adaptive-mesh-refinement (AMR)
+    framework**, a library from Lawrence Berkeley National Laboratory (the Applied Numerical Algorithms
+    Group) that supplies the grid hierarchy, parallel data structures and HDF5 I/O that many simulation
+    codes are built on. Because they share Chombo's machinery they also share its **HDF5 output format**
+    (a hierarchy of refined rectangular *boxes*): **PLUTO** in AMR mode, **Orion**, **Charm** and
+    **BISICLES**, among others, all write the same layout. So Mera's `Code: CHOMBO` labels the **file
+    format**, not a single physics code, any Chombo-format `.hdf5` is read the same way, with the
+    per-code variable-name maps (PLUTO vs Orion conventions) layered on top.
 
 PLUTO's **AMR** output uses this Chombo format. The frontend reads it, `getinfo` auto-detects a
 `.hdf5` snapshot and loads the level hierarchy as a Mera **AMR** `HydroDataType`:

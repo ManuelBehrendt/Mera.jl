@@ -24,11 +24,10 @@ physical = code × a / h
 
 with `a = 1/(1+z)` the scale factor and `h = H₀ / (100 km s⁻¹ Mpc⁻¹)`.
 
-> **Warning: The factor is larger than it looks**
->
-> At `z = 3.39` (`a = 0.227623`) with `h = 0.6774`, one `ckpc/h` is **0.336 pkpc**. Lengths
-> are off by a factor 3, but **densities go as the cube**: `(h/a)³ = 26.0`. A factor of 26
-> does not look like a bug, it looks like a result.
+!!! warning "The factor is larger than it looks"
+    At `z = 3.39` (`a = 0.227623`) with `h = 0.6774`, one `ckpc/h` is **0.336 pkpc**. Lengths
+    are off by a factor 3, but **densities go as the cube**: `(h/a)³ = 26.0`. A factor of 26
+    does not look like a bug, it looks like a result.
 
 ## What Mera does
 
@@ -56,10 +55,9 @@ the numbers*. `info.scale.Msol` is derived from the header's own `UnitMass_in_g`
 [`getgroups`](@ref) returns catalogue values **exactly as stored**, deliberately, so they can
 be checked against `h5dump` or `illustris_python`. That means:
 
-> **Danger: `GroupPos` and `Group_R_Crit200` are COMOVING and carry `h`**
->
-> They are not converted for you. Neither are `GroupMassType`, `Group_M_Crit200`, or any
-> other catalogue field.
+!!! danger "`GroupPos` and `Group_R_Crit200` are COMOVING and carry `h`"
+    They are not converted for you. Neither are `GroupMassType`, `Group_M_Crit200`, or any
+    other catalogue field.
 
 Convert them with the same scale factors as everything else:
 

@@ -1,12 +1,11 @@
 # Reading GADGET data (experimental)
 
-> **Tip: Run it yourself**
->
-> The GADGET particle load **and** the AREPO/IllustrisTNG gas-cell analysis below (physical
-> `getvar(:rho/:T/:metallicity)`, PDFs/profiles, point and SPH-kernel maps on a real TNG halo) are
-> exercised end-to-end in the runnable
-> [`16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/16_multi_OtherCodes.ipynb)
-> notebook, which also drives Mera's coverage.
+!!! tip "Run it yourself"
+    The GADGET particle load **and** the AREPO/IllustrisTNG gas-cell analysis below (physical
+    `getvar(:rho/:T/:metallicity)`, PDFs/profiles, point and SPH-kernel maps on a real TNG halo) are
+    exercised end-to-end in the runnable
+    [`16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/16_multi_OtherCodes.ipynb)
+    notebook, which also drives Mera's coverage.
 
 Mera's analysis layer is **code-blind**, so a reader only has to fill the standard structs. This
 page adds a **frontend for the [GADGET](https://wwwmpa.mpa-garching.mpg.de/gadget4/) HDF5 snapshot
@@ -14,31 +13,29 @@ format**, also written by **GIZMO, AREPO, SWIFT, EAGLE and IllustrisTNG**, so [`
 [`projection`](@ref), [`msum`](@ref), [`center_of_mass`](@ref) and the rest run on its **particles**
 unchanged.
 
-> **Tip: AREPO / IllustrisTNG**
->
-> AREPO/TNG snapshots use this same format but are **auto-detected as AREPO** and get richer
-> handling (gas-cell physics in physical units, comoving→physical `a`/`h`, Voronoi maps), see the
-> dedicated [AREPO page](arepo_reader.md).
+!!! tip "AREPO / IllustrisTNG"
+    AREPO/TNG snapshots use this same format but are **auto-detected as AREPO** and get richer
+    handling (gas-cell physics in physical units, comoving→physical `a`/`h`, Voronoi maps), see the
+    dedicated [AREPO page](arepo_reader.md).
 
-> **Note: Scope**
->
-> GADGET is particle-based (no Eulerian grid), so this is a **particle** reader: it loads the
-> `PartType*` groups into a Mera [`PartDataType`](@ref) via [`getparticles`](@ref). For **gas**
-> (`PartType0`, e.g. AREPO/TNG) the cell fields present in the file are read as columns, 
-> `Density→:rho`, `InternalEnergy→:u`, `ElectronAbundance→:ne`, `GFM_Metallicity→:metallicity`,
-> `StarFormationRate→:sfr`, `NeutralHydrogenAbundance→:nh`, `Machnumber→:mach`,
-> the SUBFIND per-particle set `SubfindVelDisp/Density/DMDensity/Hsml→:subfind_*` (note
-> `:subfind_veldisp` is the local **dark-matter** dispersion, not the gas dispersion, see
-> the [AREPO page](arepo_reader.md)), the `MagneticField`
-> vector→`:bx,:by,:bz` (MHD, physical Gauss), and `:volume = mass/ρ` is derived;
-> [`getvar`](@ref) adds `:T`, `:p`, `:cs` (temperature from `:u`+`:ne`, with a neutral-primordial μ
-> fallback when `:ne` is absent).
-> `Potential→:gpot` is read for **every** family that carries it, not just gas, AREPO and
-> IllustrisTNG write it in each `PartTypeN`, so `getparticles(info; families=[4])` returns a
-> populated `:gpot` for the stars.
->
-> Base CGS units are read from the snapshot `Header`, and for cosmological runs the
-> comoving→physical `a`/`h` factors are applied automatically. 3-D.
+!!! note "Scope"
+    GADGET is particle-based (no Eulerian grid), so this is a **particle** reader: it loads the
+    `PartType*` groups into a Mera [`PartDataType`](@ref) via [`getparticles`](@ref). For **gas**
+    (`PartType0`, e.g. AREPO/TNG) the cell fields present in the file are read as columns, 
+    `Density→:rho`, `InternalEnergy→:u`, `ElectronAbundance→:ne`, `GFM_Metallicity→:metallicity`,
+    `StarFormationRate→:sfr`, `NeutralHydrogenAbundance→:nh`, `Machnumber→:mach`,
+    the SUBFIND per-particle set `SubfindVelDisp/Density/DMDensity/Hsml→:subfind_*` (note
+    `:subfind_veldisp` is the local **dark-matter** dispersion, not the gas dispersion, see
+    the [AREPO page](arepo_reader.md)), the `MagneticField`
+    vector→`:bx,:by,:bz` (MHD, physical Gauss), and `:volume = mass/ρ` is derived;
+    [`getvar`](@ref) adds `:T`, `:p`, `:cs` (temperature from `:u`+`:ne`, with a neutral-primordial μ
+    fallback when `:ne` is absent).
+    `Potential→:gpot` is read for **every** family that carries it, not just gas, AREPO and
+    IllustrisTNG write it in each `PartTypeN`, so `getparticles(info; families=[4])` returns a
+    populated `:gpot` for the stars.
+
+    Base CGS units are read from the snapshot `Header`, and for cosmological runs the
+    comoving→physical `a`/`h` factors are applied automatically. 3-D.
 
 ## Usage
 
@@ -110,21 +107,20 @@ Derived quantities need their inputs: `getvar(:T)`, `:p` and `:cs` are computed 
 missing rather than failing later. An unknown symbol in `vars` is rejected immediately, listing
 the valid ones.
 
-> **Warning: `:T` is code units unless you ask for Kelvin**
->
-> Like `:p`, `:cs` and RAMSES hydro `:T`, `getvar(gas, :T)` returns **code units** and the unit
-> argument scales it: `getvar(gas, :T, :K)` for Kelvin. This matters most in filters, where the
-> default is also code units:
->
-> ```julia
-> filterdata(gas, Above(:T, 1e5))              # 1e5 in CODE units, probably not what you meant
-> filterdata(gas, Above(:T, 1e5; unit=:K))     # 1e5 K
-> ```
->
-> Earlier versions returned Kelvin from a bare `getvar(gas, :T)` on GADGET/AREPO gas and ignored
-> the unit argument, which also made projected temperature maps a factor `scale.K` too hot. The
-> convention is now consistent across data types, but a filter written against the old behaviour
-> will silently select a different set of cells rather than fail.
+!!! warning "`:T` is code units unless you ask for Kelvin"
+    Like `:p`, `:cs` and RAMSES hydro `:T`, `getvar(gas, :T)` returns **code units** and the unit
+    argument scales it: `getvar(gas, :T, :K)` for Kelvin. This matters most in filters, where the
+    default is also code units:
+
+    ```julia
+    filterdata(gas, Above(:T, 1e5))              # 1e5 in CODE units — probably not what you meant
+    filterdata(gas, Above(:T, 1e5; unit=:K))     # 1e5 K
+    ```
+
+    Earlier versions returned Kelvin from a bare `getvar(gas, :T)` on GADGET/AREPO gas and ignored
+    the unit argument, which also made projected temperature maps a factor `scale.K` too hot. The
+    convention is now consistent across data types, but a filter written against the old behaviour
+    will silently select a different set of cells rather than fail.
 
 ### Halo membership: the group catalogue
 
@@ -148,34 +144,32 @@ Mera's [`getgroups`](@ref) reads the **FoF** level. Fields are plain arrays, one
 `Group_R_Crit200` (the mass and radius of a sphere enclosing 200× the critical density, the usual
 definition of "the halo").
 
-> **Warning: The most massive two groups are often not two different objects**
->
-> Ranking by mass and taking groups 0 and 1 is the obvious way to find a halo pair, and it
-> fails when one halo dominates: rank 1 is then frequently a *satellite* of rank 0 rather than
-> an independent halo. Check the separation, e.g. accept the next group only beyond some
-> distance from the first. For a merger or a filament pair, following the same object across
-> snapshots by proximity to its previous position is more reliable than re-ranking by mass at
-> every output, FoF ranks swap between objects as the system evolves.
+!!! warning "The most massive two groups are often not two different objects"
+    Ranking by mass and taking groups 0 and 1 is the obvious way to find a halo pair, and it
+    fails when one halo dominates: rank 1 is then frequently a *satellite* of rank 0 rather than
+    an independent halo. Check the separation, e.g. accept the next group only beyond some
+    distance from the first. For a merger or a filament pair, following the same object across
+    snapshots by proximity to its previous position is more reliable than re-ranking by mass at
+    every output, FoF ranks swap between objects as the system evolves.
 
-> **Note: Catalogue arrays are `(n_groups, k)`**
->
-> Row = group, column = component: `gc.GroupPos[i, :]` is group `i`'s position, **not**
-> `gc.GroupPos[:, i]`. Catalogue values come back **exactly as stored**, no conversion is
-> applied, unlike snapshot quantities read through `getvar`. That keeps them checkable against
-> `h5dump` or `illustris_python`, but converting is yours to do.
->
-> **Use `info.scale`, don't hardcode the factors.** The catalogue's units *are* the run's code
-> units, so the scale factors you already have convert them:
->
-> ```julia
-> vec(sum(gc.GroupMassType, dims=2)) .* info.scale.Msol   # M⊙
-> gc.Group_R_Crit200                  .* info.scale.kpc   # physical kpc
-> ```
->
-> Writing `.* 1e10` is the common mistake and is only **half** the conversion, the catalogue's
-> mass unit is `1e10 M⊙/`**h**, so it leaves a factor `h` behind (1.48× at h = 0.6774).
-> `info.scale.Msol` is exactly `1e10/h` here, derived from the header's own `UnitMass_in_g` and
-> `HubbleParam` rather than assumed.
+!!! note "Catalogue arrays are `(n_groups, k)`"
+    Row = group, column = component: `gc.GroupPos[i, :]` is group `i`'s position, **not**
+    `gc.GroupPos[:, i]`. Catalogue values come back **exactly as stored**, no conversion is
+    applied, unlike snapshot quantities read through `getvar`. That keeps them checkable against
+    `h5dump` or `illustris_python`, but converting is yours to do.
+
+    **Use `info.scale`, don't hardcode the factors.** The catalogue's units *are* the run's code
+    units, so the scale factors you already have convert them:
+
+    ```julia
+    vec(sum(gc.GroupMassType, dims=2)) .* info.scale.Msol   # M⊙
+    gc.Group_R_Crit200                  .* info.scale.kpc   # physical kpc
+    ```
+
+    Writing `.* 1e10` is the common mistake and is only **half** the conversion, the catalogue's
+    mass unit is `1e10 M⊙/`**h**, so it leaves a factor `h` behind (1.48× at h = 0.6774).
+    `info.scale.Msol` is exactly `1e10/h` here, derived from the header's own `UnitMass_in_g` and
+    `HubbleParam` rather than assumed.
 
 #### Loading one group's particles
 
@@ -216,16 +210,15 @@ gc.Group_R_Crit200 .* info.scale.kpc
 converts catalogue values identically. Fields that describe particle data are left at their
 defaults. There is no snapshot to describe.
 
-> **Note: Two conventions worth knowing**
->
-> **No offsets file is needed.** `illustris_python` reads a separate
-> `postprocessing/offsets/offsets_NNN.hdf5`, which the public API does not serve. It is
-> unnecessary for FoF groups: the snapshot stores particles *ordered by group*, so a group's
-> offset is the running sum of `GroupLenType`.
->
-> **Wind particles are gas.** TNG stores them in `PartType4`, but the catalogue counts their mass
-> as gas; they carry `GFM_StellarFormationTime < 0` (Mera's `:aform`). Counting them as stars
-> leaves gas short and stars over *by the same amount*.
+!!! note "Two conventions worth knowing"
+    **No offsets file is needed.** `illustris_python` reads a separate
+    `postprocessing/offsets/offsets_NNN.hdf5`, which the public API does not serve. It is
+    unnecessary for FoF groups: the snapshot stores particles *ordered by group*, so a group's
+    offset is the running sum of `GroupLenType`.
+
+    **Wind particles are gas.** TNG stores them in `PartType4`, but the catalogue counts their mass
+    as gas; they carry `GFM_StellarFormationTime < 0` (Mera's `:aform`). Counting them as stars
+    leaves gas short and stars over *by the same amount*.
 
 Both conventions are checked against the catalogue's own published masses. Recomputing
 `GroupMassType` from the particles of TNG50-4 snapshot 33:
@@ -342,24 +335,23 @@ projection(gas, :T, weighting=:volume)                   # volume-weighted ⟨T�
 projection(gas, :sd, :Msol_pc2, weighting=:sph)          # SPH-kernel: smear each cell over its footprint
 ```
 
-> **Note: Moving-mesh projection**
->
-> AREPO is a **Voronoi moving-mesh** code, gas lives in irregular polyhedral cells, not on a grid
-> and not as SPH particles. The default deposits each cell at its mesh-generating point (fast,
-> mass-conserving, but it ignores the cell's extent and can speckle in sparse regions).
-> `weighting=:sph` is the **moving-mesh conversion**: it smears every cell over an **M4
-> cubic-spline kernel** sized from the cell volume (`h = α·(3V/4π)^⅓`, floored at one pixel),
-> treating each Voronoi cell as an SPH-like blob ([Monaghan & Lattanzio
-> 1985](https://ui.adsabs.harvard.edu/abs/1985A%26A...149..135M)). It
-> resolves each cell's footprint while staying mass-conserving to machine precision
-> (`Σ pixel·area == msum` for cells inside the field; cells straddling the edge contribute only
-> their in-field share). For a **genuinely cell-respecting** map, `weighting=:voronoi` (nearest
-> generator: each line-of-sight sample is assigned to its nearest cell via a KD-tree, capped at the
-> cell's effective radius) gives sharp, piecewise-constant cells, **intensive** quantities (`T`,
-> metallicity) are *exact* (the column ratio cancels cell-volume errors); **surface density** is
-> approximate (use `:sph`/`:mass` for conserving column mass). A fully Voronoi-exact renderer
-> (analytic polyhedron–pixel clipping, as in AREPO's `ArepoVTK`) would be more faithful still but
-> is rarely needed. Comoving→physical `a`/`h` is applied automatically for cosmological snapshots.
+!!! note "Moving-mesh projection"
+    AREPO is a **Voronoi moving-mesh** code, gas lives in irregular polyhedral cells, not on a grid
+    and not as SPH particles. The default deposits each cell at its mesh-generating point (fast,
+    mass-conserving, but it ignores the cell's extent and can speckle in sparse regions).
+    `weighting=:sph` is the **moving-mesh conversion**: it smears every cell over an **M4
+    cubic-spline kernel** sized from the cell volume (`h = α·(3V/4π)^⅓`, floored at one pixel),
+    treating each Voronoi cell as an SPH-like blob ([Monaghan & Lattanzio
+    1985](https://ui.adsabs.harvard.edu/abs/1985A%26A...149..135M)). It
+    resolves each cell's footprint while staying mass-conserving to machine precision
+    (`Σ pixel·area == msum` for cells inside the field; cells straddling the edge contribute only
+    their in-field share). For a **genuinely cell-respecting** map, `weighting=:voronoi` (nearest
+    generator: each line-of-sight sample is assigned to its nearest cell via a KD-tree, capped at the
+    cell's effective radius) gives sharp, piecewise-constant cells, **intensive** quantities (`T`,
+    metallicity) are *exact* (the column ratio cancels cell-volume errors); **surface density** is
+    approximate (use `:sph`/`:mass` for conserving column mass). A fully Voronoi-exact renderer
+    (analytic polyhedron–pixel clipping, as in AREPO's `ArepoVTK`) would be more faithful still but
+    is rarely needed. Comoving→physical `a`/`h` is applied automatically for cosmological snapshots.
 
 ### What each scheme costs
 
@@ -382,33 +374,31 @@ These were measured single-threaded. Particle projection is now threaded *inside
 and scales well, while `:mass`/`:sph` split the particles and are memory-bandwidth bound, so
 they gain roughly 2–4×. `max_threads=` caps it. A sub-volume or a coarser `pxsize` still helps.
 
-> **Note: `:voronoi` on a cutout is not losing mass**
->
-> Compare `sum(map) * pixsize^2` against [`msum`](@ref) on a sub-volume and `:voronoi` comes up
-> a few percent short. That is a boundary effect, not a bug: `msum` counts the **whole** mass of
-> every cell whose generator lies inside the region, including the part poking out through the
-> boundary, while the map integrates only what is inside. So it scales with surface-over-volume
-> and shrinks as the region grows, 4.2 %, 3.4 %, 1.8 %, 1.0 % for half-widths of 200, 400, 800
-> and 1600 ckpc/h on an AREPO zoom. Sampling more finely (`nlos=`) converges to the same value
-> rather than to 1, which is how you can tell it apart from a sampling error. `:mass` hides it
-> because point deposition drops each cell's full mass at its generator. If you need an exact
-> integral over a sub-volume, select a larger region than the one you measure.
+!!! note "`:voronoi` on a cutout is not losing mass"
+    Compare `sum(map) * pixsize^2` against [`msum`](@ref) on a sub-volume and `:voronoi` comes up
+    a few percent short. That is a boundary effect, not a bug: `msum` counts the **whole** mass of
+    every cell whose generator lies inside the region, including the part poking out through the
+    boundary, while the map integrates only what is inside. So it scales with surface-over-volume
+    and shrinks as the region grows, 4.2 %, 3.4 %, 1.8 %, 1.0 % for half-widths of 200, 400, 800
+    and 1600 ckpc/h on an AREPO zoom. Sampling more finely (`nlos=`) converges to the same value
+    rather than to 1, which is how you can tell it apart from a sampling error. `:mass` hides it
+    because point deposition drops each cell's full mass at its generator. If you need an exact
+    integral over a sub-volume, select a larger region than the one you measure.
 
-> **Tip: Zooming on a halo: use `pxsize`, not `res`**
->
-> `res` counts pixels **across the whole box** (`pixsize = boxlen/res`), so a windowed
-> projection keeps only the pixels the window happens to cover. On a large box this bites
-> hard: `res=512` over a ±1100 ckpc/h window works out to `pixsize = 146.5` and returns a
-> **16×16** map, not the 512² the number suggests.
->
-> Set the pixel size directly instead. `pxsize` dominates over `res`/`lmax`, and it is the
-> only one of the three that means the same thing whatever the window:
->
-> ```julia
-> win = (center=[cx, cy, cz], range_unit=:kpc,
->        xrange=[-R, R], yrange=[-R, R], zrange=[-R, R])
-> projection(gas, :sd, :Msol_pc2; weighting=:sph, pxsize=[0.5, :kpc], win...)
-> ```
+!!! tip "Zooming on a halo: use `pxsize`, not `res`"
+    `res` counts pixels **across the whole box** (`pixsize = boxlen/res`), so a windowed
+    projection keeps only the pixels the window happens to cover. On a large box this bites
+    hard: `res=512` over a ±1100 ckpc/h window works out to `pixsize = 146.5` and returns a
+    **16×16** map, not the 512² the number suggests.
+
+    Set the pixel size directly instead. `pxsize` dominates over `res`/`lmax`, and it is the
+    only one of the three that means the same thing whatever the window:
+
+    ```julia
+    win = (center=[cx, cy, cz], range_unit=:kpc,
+           xrange=[-R, R], yrange=[-R, R], zrange=[-R, R])
+    projection(gas, :sd, :Msol_pc2; weighting=:sph, pxsize=[0.5, :kpc], win...)
+    ```
 
 ## Units
 
