@@ -381,8 +381,11 @@ when a new version ships and what moved in it.
 
 - **Be told about releases only.** On the GitHub page press **Watch**, choose **Custom**, and tick
   **Releases**. You then hear about versions and not about every issue and commit.
-- **Or subscribe without a GitHub account.** The release feed is
-  <https://github.com/ManuelBehrendt/Mera.jl/releases.atom>, which any feed reader accepts.
+- **Or get an email, with no GitHub account.** Add `ManuelBehrendt/Mera.jl` on
+  [newreleases.io](https://newreleases.io) and it emails you when a version ships, and nothing else.
+  It is free, takes a minute, and works for the other packages you depend on too. If you would rather
+  use a feed reader, the raw feed is
+  <https://github.com/ManuelBehrendt/Mera.jl/releases.atom>.
 - **Check before you upgrade.** `pkg> status --outdated` shows what a new version would change, and
   the release notes say what changed in it. Read them before `pkg> up`, not after.
 - **Pin what a paper depends on.** A `Project.toml` and `Manifest.toml` in your analysis folder keep
