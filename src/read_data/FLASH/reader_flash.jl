@@ -258,5 +258,30 @@ function gethydro_flash(info::InfoType;
     h.ranges = ranges; h.selected_hydrovars = collect(1:length(vsyms))
     h.used_descriptors = Dict{Any,Any}(); h.smallr = 0.; h.smallc = 0.; h.scale = info.scale
     verbose && println("[Mera]: FLASH hydro $(ncell) cells, vars ", join(string.(vsyms), ", "))
+
+    # FLASH writes the temperature it actually used, alongside the pressure and density it was
+    # computed from. That pins the run's mean molecular weight, which no format records and which
+    # Mera would otherwise take from RAMSES (mu = 1.32) and be wrong by a factor of about two.
+    # Measure it here so `getvar(gas, :T, :K)` is right without the user having to know any of this.
+    if :temp in vsyms && :p in vsyms && :rho in vsyms
+        Tst = select(data, :temp); pc = select(data, :p); rc = select(data, :rho)
+        ok  = findall(i -> isfinite(Tst[i]) && isfinite(pc[i]) && rc[i] > 0 && pc[i] > 0, eachindex(Tst))
+        if !isempty(ok)
+            Tmu = info.scale.T_mu
+            mus = [Tst[i] / (pc[i] / rc[i] * Tmu) for i in ok]
+            mu  = median(mus)
+            spread = maximum(mus) / minimum(mus)
+            if isfinite(mu) && mu > 0 && spread < 1.01      # one composition for the whole box
+                setcomposition!(info; mu=mu)
+                h.scale = info.scale
+                verbose && println("[Mera]: FLASH stores a temperature; mean molecular weight " *
+                                   "measured from it: mu = $(round(mu, digits=4)). " *
+                                   "getvar(:T) now matches the file.")
+            elseif verbose
+                println("[Mera]: FLASH temperature implies a varying mu (spread " *
+                        "$(round(spread, digits=3))x), so the default is kept. Use :temp directly.")
+            end
+        end
+    end
     return h
 end
