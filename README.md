@@ -20,17 +20,13 @@ read real RAMSES output on the maintainer's machine. See
 **MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for
 [RAMSES](https://github.com/ramses-organisation/ramses), multi-resolution AMR grids, particles,
 gravity, clumps and radiative-transfer fields loaded into memory-efficient tables, and now reading
-**AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 140+
+**AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** through the same API. It computes 140+
 physics-derived quantities on demand and provides conservation-correct projections, profiles, flux
 budgets and structure finding, all through one unified, multiple-dispatch API.
 
 Coverage is deepest for RAMSES, which is the only code with gravity, radiative-transfer and clump
 support. The others provide gas; AREPO and GADGET additionally provide particles and SUBFIND halo
 catalogues.
-
-A frontend for **AMReX/BoxLib** plotfiles with a **Quokka** layer is in review in
-[#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273). AMReX is also the container used by
-Castro, Nyx and WarpX, so one reader opens several codes at once.
 
 **Trying it on your own simulation.** The readers differ, but what they produce does not: every one
 returns the same objects, so the analysis never learns which code wrote the file. In practice that

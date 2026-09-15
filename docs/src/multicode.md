@@ -6,7 +6,8 @@
     is to point it at **your own** output, which is also the contribution this branch most needs.
     See [Testing it on your own simulation](#Testing-it-on-your-own-simulation) below.
 
-**This branch reads RAMSES, PLUTO, Chombo, Athena++, FLASH, GADGET and AREPO through one API.**
+**This branch reads RAMSES, PLUTO, Chombo, Athena++, FLASH, GADGET, AREPO and AMReX/Quokka through
+one API.**
 It is development work, not part of any 1.x release. Install it with:
 
 ```julia
@@ -27,6 +28,7 @@ It is development work, not part of any 1.x release. Install it with:
 | **FLASH** | HDF5 PARAMESH | AMR | gas, MHD | format fixtures | [FLASH](flash_reader.md) |
 | **GADGET** | HDF5 `PartType*` | SPH particles | particles, SUBFIND groups | format fixtures | [GADGET](gadget_reader.md) |
 | **AREPO** | HDF5 `PartType*` | moving mesh | gas cells (with `:volume`), particles, SUBFIND groups | format fixtures | [AREPO](arepo_reader.md) |
+| **Quokka** (AMReX/BoxLib) | AMReX plotfile | AMR | gas, particles | format fixtures | AMReX / Quokka |
 
 GADGET and AREPO are different codes, one smoothed-particle, one moving-mesh, but they write the
 same HDF5 snapshot layout, so one reader serves both and each has its own page for what differs.
@@ -56,10 +58,8 @@ Markdown.parse(Mera.capability_matrix())
 That table is generated from the reader registry when this page is built, so it always states what
 the branch actually does, never what it intends to do.
 
-**In review:** a frontend for **AMReX/BoxLib plotfiles** with a **Quokka** layer on top, in
-[#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273). AMReX is the container used by Quokka,
-and by Castro, Nyx and WarpX, so one reader opens several codes at once. It will appear in the table
-above as soon as it merges.
+AMReX/BoxLib is the container used by Quokka, and by Castro, Nyx and WarpX, so one reader opens
+several codes at once.
 
 Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, and
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
@@ -256,7 +256,7 @@ rather than guessing from the code.
 | Reader | Written and maintained by |
 |---|---|
 | PLUTO, Chombo, Athena++, FLASH, GADGET, AREPO | Manuel Behrendt ([@ManuelBehrendt](https://github.com/ManuelBehrendt)) |
-| AMReX/BoxLib and Quokka *(in review, [#273](https://github.com/ManuelBehrendt/Mera.jl/pull/273))* | ChongChong He ([@chongchonghe](https://github.com/chongchonghe)) |
+| AMReX/BoxLib and Quokka | ChongChong He ([@chongchonghe](https://github.com/chongchonghe)) |
 
 If you write a reader for your own code, you are named here for it, and you decide how far you want
 to maintain it. A reader that works and is then left alone is still worth far more than no reader.
