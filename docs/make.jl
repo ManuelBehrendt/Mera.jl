@@ -58,6 +58,23 @@ end
 # the RAMSES pages, so listing every tutorial here would only be material to throw away later.
 # The API section stays: the reader pages carry 111 `@ref` links into it, and dropping it
 # would break every one of them.
+# Frontend pages for the multicode site. A page listed as OPTIONAL appears only once its
+# file exists, so someone contributing a reader adds one markdown file and nothing here, and
+# does not collide with this nav in a merge. Remove the guard once the page is permanent.
+const _READER_PAGES = Any[ "Overview" => "multicode.md",
+                           "Worked Examples" => "multicode_examples.md",
+                           "PLUTO"    => "pluto_reader.md",
+                           "Athena++" => "athena_reader.md",
+                           "FLASH"    => "flash_reader.md",
+                           "GADGET"   => "gadget_reader.md",
+                           "AREPO"    => "arepo_reader.md",
+                           "AREPO/GADGET run-time logs" => "gadget_logs.md",
+                           "Cosmological Units" => "cosmological_units.md",
+                           "Zoom Simulations"   => "zoom_simulations.md"]
+for (label, file) in ["AMReX / Quokka" => "amrex_reader.md"]        # OPTIONAL, see above
+    isfile(joinpath(@__DIR__, "src", file)) && push!(_READER_PAGES, label => file)
+end
+
 const _MULTICODE_SITE = get(ENV, "GITHUB_REF_NAME", "") == "multicode" ||
                         get(ENV, "MERA_MULTICODE_SITE", "0") == "1"
 
@@ -94,16 +111,7 @@ makedocs(modules = [Mera],
 		authors = "Manuel Behrendt",
 		pages = _MULTICODE_SITE ? Any[
                          "Home" => "index.md",
-                         "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
-                                                          "Worked Examples" => "multicode_examples.md",
-                                                          "PLUTO"    => "pluto_reader.md",
-                                                          "Athena++" => "athena_reader.md",
-                                                          "FLASH"    => "flash_reader.md",
-                                                          "GADGET"   => "gadget_reader.md",
-                                                          "AREPO"    => "arepo_reader.md",
-                                                          "AREPO/GADGET run-time logs" => "gadget_logs.md",
-                                                          "Cosmological Units" => "cosmological_units.md",
-                                                          "Zoom Simulations"   => "zoom_simulations.md"],
+                         "Other Simulation Codes" => _READER_PAGES,
                          "Derived Fields" => "derived_fields.md",
                          "API Reference" => Any[
                              "Data Inspection"     => "api/data_inspection.md",
