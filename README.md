@@ -63,9 +63,11 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   rows as views instead of copying columns, filtering works in value space on anything `getvar`
   computes, and a region or filter returns the same kind of object, so calls chain.
 - **RAMSES-native**: direct binary reading of AMR outputs with automatic unit conversion and full
-  multi-level support; load only what you need with spatial and refinement-level filtering. Covers
-  stable-17.09 through stable-19.10 and the 2025.05 and 2026.05 releases, checked against RAMSES's
-  own reference solutions before each release, on the machine where the fixtures are mounted.
+  multi-level support; load only what you need with spatial and refinement-level filtering. Every
+  release from stable-17.09 to 2026.05 is read, and checked against RAMSES's own reference solutions.
+- **Any format, through one API**: readers are plugins. `getinfo` works out which code wrote a
+  snapshot and the analysis never learns, so the same script runs on another code's output.
+  `capabilities` says what a file offers instead of failing halfway.
 - **Cells are split, not counted**: a sphere is round, but cells are boxes, so some lie half in and
   half out. `subregion(gas, Sphere(10.))` keeps the part really inside, so `msum` and `getvar` count
   it by its fraction and the parts add up to the whole. Taking whole cells by their centre can be
@@ -80,16 +82,19 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   `Manifest.toml`), record what produced each number with `provenance()`, and check the install
   against test simulations that have known answers. See
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
-- **Less boilerplate**: write a selection once as an argument bundle and reuse it across loading and
-  projection, read every component of a snapshot in one `loadall()` call, and select in value space
-  with `filterdata()` on any quantity `getvar()` can compute. See
+- **Less boilerplate**: write a selection once and reuse it, read every component in one `loadall()`,
+  and select on any quantity `getvar` computes with `filterdata`. See
   [Pipelines](https://manuelbehrendt.github.io/Mera.jl/stable/pipelines/).
-- **Derived quantities on demand**: thermodynamics (temperature, sound speed, five entropy measures,
-  cooling time), kinematics and Mach numbers in Cartesian/cylindrical/spherical frames, magnetic
-  fields (magnitude, pressure, plasma beta, Alfvén speed, magnetosonic Mach numbers), gravity
-  (accelerations, forces, binding energies), stability (Jeans length/mass/number, virial parameter,
-  free-fall time), angular momentum, ionisation states, and cosmological ages and overdensities,
-  all via one `getvar()` interface, extensible with `add_field()`.
+- **A first look in one call**: `quicklook` reads a snapshot you have never seen, projects it along
+  each axis, builds a phase diagram and prints a census of masses, densities and temperatures.
+- **The analysis, not just the reading**: structure finding (`clumpfind`), star-formation rates
+  (`sfr_snapshot`), radial and vertical `profile`s, phase diagrams, `timeseries` across outputs,
+  `getmovie` for animations, off-axis projections at any viewing angle, and `export_vtk` for
+  ParaView. Re-read a processed snapshot in seconds with `savedata`/`loaddata`.
+- **Derived quantities on demand**: thermodynamics, kinematics and Mach numbers in Cartesian,
+  cylindrical or spherical frames, magnetic diagnostics, gravity, stability (Jeans, virial,
+  free-fall), angular momentum, ionisation and cosmological ages, all through `getvar` in any unit,
+  and extensible with `add_field`. `list_fields` shows what your data type offers.
 
 ## Try it without any data
 
