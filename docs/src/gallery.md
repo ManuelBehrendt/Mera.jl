@@ -33,6 +33,15 @@ run it.
   60°, repeated on the stars, and turned into a movie that flips and zooms</span>
 </a>
 
+<a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/003_probe_through_a_galaxy">
+  <img src="assets/gallery/probe_thumb.png"
+       alt="A small sphere of gas cut out of a galaxy, its internal structure resolved, seen at 60 degrees">
+  <span class="gallery-title">A probe sphere through a galaxy</span>
+  <span class="gallery-meta">RAMSES · a sphere the thickness of the disc is carried once around the
+  galaxy, showing only the gas inside it, while the movie cycles through surface density,
+  line-of-sight velocity, dispersion, temperature, pressure and the stars</span>
+</a>
+
 </div>
 ```
 
