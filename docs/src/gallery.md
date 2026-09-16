@@ -30,7 +30,7 @@ run it.
   <span class="gallery-title">Cutting a word out of a galaxy</span>
   <span class="gallery-meta">RAMSES · region algebra as a stencil: letters built from cuboids,
   unioned into one word, then subtracted from the disc and intersected with it, face-on, tilted to
-  60° and repeated on the stars</span>
+  60°, repeated on the stars, and turned into a movie that flips and zooms</span>
 </a>
 
 </div>
