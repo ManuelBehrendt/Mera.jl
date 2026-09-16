@@ -139,7 +139,7 @@ you write the analysis once:
 ```julia
 getvar(gas,       :mass)     # cell mass, density times volume
 getvar(particles, :mass)     # particle mass, discrete values
-getvar(clumps,    :mass)     # clump total mass, aggregated
+getvar(clumps,    :mass)     # clump mass, one row per clump
 getvar(sinks,     :mass)     # sink mass, the column RAMSES calls msink
 
 getvar(gravity,   :epot)     # gravity carries a potential, not a mass
