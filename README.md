@@ -302,7 +302,7 @@ The same verbs work across gas, particles, clumps and gravity, and Julia picks t
 ```julia
 getvar(gas,       :mass)   # cell mass (ρ × volume)
 getvar(particles, :mass)   # particle mass
-getvar(clumps,    :mass)   # clump total mass
+getvar(clumps,    :mass)   # mass of each clump
 
 projection(gas, :sd)              # gas surface density
 profile(gas, :r_cylinder, :T)     # radial temperature profile
