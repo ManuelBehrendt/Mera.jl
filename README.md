@@ -15,15 +15,28 @@
 <sub>What the badges mean: [the two coverage numbers](#the-two-coverage-numbers) and
 [what Aqua checks](#package-hygiene-the-aqua-badge).</sub>
 
-**MERA** reads and analyzes astrophysical simulation output natively in Julia. It is built for
-[RAMSES](https://github.com/ramses-organisation/ramses): multi-resolution AMR grids carrying hydro
-and MHD, plus particles, gravity, clumps, sinks and radiative-transfer fields, loaded into a table
-with one column per quantity and one row per cell, keyed on the cell's grid address. Cosmological
-runs are handled throughout, with scale factor, redshift and the derived quantities that depend on
-them. It derives quantities on demand, thermodynamics
-and kinematics, magnetic and gravitational fields, ionisation states, Jeans and virial diagnostics,
-each in any unit, and provides conservation-correct projections, profiles and structure finding,
-all through one unified, multiple-dispatch API.
+**MERA** is an analysis framework for astrophysical simulations, written in Julia. It covers the
+whole path from raw simulation output to a result you can publish: selecting regions, computing
+physics in any unit, projecting from any viewing angle, profiles, phase diagrams, clump finding,
+time series and movies. It reads [RAMSES](https://github.com/ramses-organisation/ramses) adaptive
+mesh refinement output natively, with hydro and MHD, particles, gravity, clumps, sinks and radiative
+transfer, and handles cosmological runs throughout.
+
+Underneath, a snapshot is one table: one row per AMR cell, one column per quantity, each row
+carrying its refinement level, so nothing is flattened onto a uniform grid first. You ask for
+physics rather than write formulas:
+
+```julia
+using Mera
+info = getinfo(400, "/path/to/my/simulation")
+gas  = gethydro(info)
+
+msum(gas, :Msol)                          # total gas mass
+getvar(gas, :T, :K)                       # temperature of every cell
+projection(gas, :sd, :Msol_pc2)           # a surface-density map
+```
+
+Every quantity comes in the unit you name. The same calls work on particles and clumps.
 
 > ### Released and upcoming 1.x versions are **RAMSES-only**
 >
@@ -56,59 +69,39 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
 
 ## Why MERA?
 
-- **Julia-native**: compiled-language performance in a single, introspectable code path; no Python/C
-  two-language barrier for custom, performance-sensitive analyses.
-- **One table, one row per cell**: columns keyed on the cell's grid address, so the refinement
-  level travels with every cell and nothing is resampled onto a uniform grid first. Masks select
-  rows as views instead of copying columns, filtering works in value space on anything `getvar`
-  computes, and a region or filter returns the same kind of object, so calls chain.
-- **RAMSES-native**: direct binary reading of AMR outputs with automatic unit conversion and full
-  multi-level support; load only what you need with spatial and refinement-level filtering. Every
-  release from stable-17.09 to 2026.05 is read, and checked against RAMSES's own reference solutions.
-- **Any format, through one API**: readers are plugins. `getinfo` works out which code wrote a
-  snapshot and the analysis never learns, so the same script runs on another code's output.
-  `capabilities` says what a file offers instead of failing halfway.
-- **Cells are split, not counted**: a sphere is round, but cells are boxes, so some lie half in and
-  half out. `subregion(gas, Sphere(10.))` keeps the part really inside, so `msum` and `getvar` count
-  it by its fraction and the parts add up to the whole. Taking whole cells by their centre can be
-  14 % off on a thin shell. See
-  [Subregions](https://manuelbehrendt.github.io/Mera.jl/stable/api/subregions/).
-- **Conservation-correct**: projections and covering grids conserve mass to machine precision with
-  proper per-level cell volumes, and this is checked on every release by a data-free oracle suite
-  rather than asserted.
-- **Multi-threaded by default**: `gethydro()` and `projection()` use all available cores
-  automatically; benchmarking guides included for system tuning.
-- **Reproducible by construction**: pin your stack with a Julia project (`Project.toml` +
-  `Manifest.toml`), record what produced each number with `provenance()`, and check the install
-  against test simulations that have known answers. See
-  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
-- **Less boilerplate**: write a selection once and reuse it, read every component in one `loadall()`,
-  and select on any quantity `getvar` computes with `filterdata`. See
-  [Pipelines](https://manuelbehrendt.github.io/Mera.jl/stable/pipelines/).
-- **A first look in one call**: `quicklook` reads a snapshot you have never seen, projects it along
-  each axis, builds a phase diagram and prints a census of masses, densities and temperatures.
-- **The analysis, not just the reading**: structure finding (`clumpfind`), star-formation rates
-  (`sfr_snapshot`), radial and vertical `profile`s, phase diagrams, `timeseries` across outputs,
-  `getmovie` for animations, off-axis projections at any viewing angle, and `export_vtk` for
-  ParaView. Re-read a processed snapshot in seconds with `savedata`/`loaddata`.
-- **Derived quantities on demand**: thermodynamics, kinematics and Mach numbers in Cartesian,
-  cylindrical or spherical frames, magnetic diagnostics, gravity, stability (Jeans, virial,
-  free-fall), angular momentum, ionisation and cosmological ages, all through `getvar` in any unit,
-  and extensible with `add_field`. `list_fields` shows what your data type offers.
+- **When you select a region, Mera cuts the cells as well.** Pick a sphere, and some cells lie
+  half inside it and half outside. Mera counts half of such a cell, not all of it and not none of
+  it.
+  [How it is measured](https://manuelbehrendt.github.io/Mera.jl/stable/computation_reference/)
+- **Look at your galaxy from any angle.** Mera projects the original cells, keeping the detail of
+  the smallest ones, and the mass you measure stays the same at any angle, pixel size or thread
+  count.
+  [Off-axis projection](https://manuelbehrendt.github.io/Mera.jl/stable/06_offaxis_Projection/)
+- **Read a snapshot once, then re-read it fast.** Save it in Mera's own format and it comes back
+  much faster, from a much smaller file.
+  [Benchmarks, and where they may not hold](https://manuelbehrendt.github.io/Mera.jl/stable/benchmarks/performance/)
+- **Use your cores without writing parallel code.** Reading and projection are threaded already.
+  Start Julia with more threads and Mera uses them. The guide also shows patterns for threading
+  your own loops around Mera, and how to divide the threads between the two.
+  [Multi-threading](https://manuelbehrendt.github.io/Mera.jl/stable/multi-threading/multi-threading_intro/)
+- **Choose cells by physics, not by position in a list.** Select on temperature, density or any
+  quantity Mera can compute, and join the conditions with and, or and not.
+  [Masking and filtering](https://manuelbehrendt.github.io/Mera.jl/stable/05_multi_Masking_Filtering/)
+- **Write a selection once and reuse it.** Keep the region, units and resolution in one bundle and
+  hand it to every call, and short macros fold the common steps into a single line.
+  [Pipelines](https://manuelbehrendt.github.io/Mera.jl/stable/pipelines/)
+- **Hear about a long job without watching it.** Mera can ring a bell, send an email or post to a
+  Zulip channel when a run finishes, carrying the figures, the timings and, if something broke, the
+  error.
+  [Notifications](https://manuelbehrendt.github.io/Mera.jl/stable/notifications/)
+- **The whole analysis is here**: regions, units, projections, profiles, phase diagrams, clump
+  finding, star formation, time series, movies and export.
+- **Every result remembers where it came from**: the version of Mera, the exact code it ran on and
+  the snapshot you used.
+- **One language.** Julia from beginning to end, so the code you read is the code that runs. No
+  plotting library is installed until you ask for a figure.
 
-## Try it without any data
-
-`synthetic_clumps()` builds real Mera objects in memory, so this runs on a fresh install:
-
-```julia
-using Mera
-F   = synthetic_clumps()          # 51,514 gas cells + 2,438 particles, 8 known clumps
-gas = F.gas
-projection(gas, :sd, :Msol_pc2)   # a 128x128 surface-density map
-```
-
-Every verb in this README works on `gas` exactly as it does on a real snapshot. First call
-takes ~10 s while Julia compiles; later calls are instant.
+Details in [Core capabilities](#core-capabilities) below.
 
 ## First look
 
