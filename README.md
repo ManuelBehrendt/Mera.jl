@@ -145,55 +145,115 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 
 ## Core capabilities
 
-### Loading & filtering
+### Loading and filtering
 - **`getinfo`**: simulation metadata (box size, time/redshift, grid structure, units)
-- **`gethydro` / `getparticles` / `getgravity` / `getrt` / `getclumps`**: load each data type, with
-  optional spatial subregioning and refinement-level capping
-- **`subregion` / `shellregion`**: extract cuboid / sphere / cylinder / shell selections that preserve AMR structure
+- **`gethydro` / `getparticles` / `getgravity` / `getrt` / `getclumps` / `getsinks`**: load each data
+  type, with optional spatial subregioning and refinement-level capping
+- **`subregion` / `shellregion`**: cuboid, sphere, cylinder and shell selections that preserve AMR
+  structure. Regions are values: combine them with `∩ ∪ \ !` (ASCII `& |`), tilt a cylinder's
+  axis, and boundary cells keep the fraction of themselves inside
+- **`filterdata` / `getmask`**: select by physical value on anything `getvar` computes, with
+  `Above`, `Below`, `InRange`, `AbovePercentile`, `Satisfies` and friends composed by `& | !`.
+  Returns the same kind of object, so calls chain
+- **Macros for the common shapes**: `@filter`, `@where`, `@apply`, `@region`, `@loadall`, `@project`
+- **`withargs` / `ArgumentsType`**: write a selection once, reuse it across loading, projecting and
+  profiling
 
-### Projections & grids
+### Looking at a simulation before you analyse it
+- **`amroverview` / `dataoverview` / `storageoverview`**: refinement levels, the range of every
+  variable, and what the files cost on disk
+- **`viewfields` / `viewallfields` / `viewdata`**: look inside any Mera object without knowing its
+  type first
+- **`checkoutputs` / `checksimulations` / `printtime`**: which outputs exist, which are complete,
+  and the time each one sits at
+
+### Projections and grids
 - **`projection`**: mass-conserving 2-D maps of any quantity, on- or off-axis (arbitrary line of
-  sight, face-on/edge-on, angular-momentum-aligned), with hole-free footprint deposition
-- **`covering_grid` / `slice`**: resample AMR onto a dense uniform grid for FFTs, power spectra,
-  volume rendering, or machine-learning inputs (with a memory estimator that refuses to over-allocate)
+  sight, face-on/edge-on, angular-momentum-aligned). The default kernel spreads each cell over the
+  area its shadow covers, so no pixel is left empty at any pixel size, and it tracks the analytic
+  footprint integral to a median 0.0005 dex per pixel at about a third of the cost
+- **`face_on` / `edge_on` / `rotation_frame` / `restframe`**: pick the frame before you project,
+  from the angular momentum of the gas or from a velocity you supply
+- **`covering_grid` / `slice` / `offaxis_slice`**: resample AMR onto a dense uniform grid for FFTs,
+  power spectra, volume rendering, or machine-learning inputs. `covering_grid_memory` costs the
+  grid in GB before you commit to allocating it
 
-### Profiles & phase diagrams
-- **`profile`**: weighted 1-D profiles of any quantity vs. any axis (radius, height, density…), with
-  per-bin mean/std/sem/quantiles/extrema/shape-moments, equal-count binning and bootstrap CIs; works
-  on 3-D data **or** on a projected 2-D map
+### Single numbers from the data
+- **`msum` / `center_of_mass` / `bulk_velocity` / `getextent`**: totals, centres and bounds, in any
+  unit, for gas, particles or clumps
+- **`velocitydispersion` / `localdispersion` / `rotationcurve`**: dispersion overall and per cell,
+  and rotation as a function of radius
+- **`wstat`**: mean, median, standard deviation, skewness, kurtosis and extrema of any array, with
+  optional weights and a mask
+
+### Profiles and phase diagrams
+- **`profile` / `profile3d` / `profiletimeseries`**: weighted 1-D profiles of any quantity vs. any
+  axis (radius, height, density…), with per-bin mean/std/sem/quantiles/extrema/shape-moments,
+  equal-count binning and bootstrap CIs; works on 3-D data **or** on a projected 2-D map, and can
+  be run across a whole run
 - **`phase`**: 2-D weighted histograms (the classic ρ–T diagram, position–velocity, …)
 
-### Structure finding (7 pluggable algorithms)
-`clumpfind` exposes one verb backed by interchangeable finders sharing one neighbour-search,
-boundedness, validation and catalogue pipeline:
-`DensityWatershed`, `Dendrogram`, `GraphSegFinder`, `HDBSCANFinder`, `PhaseSpaceFoF`,
-`PersistenceFinder` (plus the default friends-of-friends). Gravitational boundedness uses a
-Barnes–Hut self-potential, SUBFIND-style unbinding and tidal (Hill-radius) truncation.
+### Structure finding (7 algorithms behind one call)
+- **`clumpfind`**: one call backed by `ThresholdFoF` (the default), `DensityWatershed`,
+  `Dendrogram`, `GraphSegFinder`, `HDBSCANFinder`, `PhaseSpaceFoF` and `PersistenceFinder`, all
+  sharing the same neighbour search, boundedness test, validation and catalogue step
+- **Gravitational boundedness**: Barnes–Hut self-potential, SUBFIND-style unbinding and tidal
+  (Hill-radius) truncation
+- **`clumptable` / `clump_massfunction` / `clump_mass_fraction`**: the catalogue, its mass
+  function, and how much of the total mass the clumps hold
 
-### Derived fields & extensions
+### Derived fields and units
 - **`getvar`**: derived quantities by name (`:T`, `:cs`, `:mach`, `:jeanslength`,
   `:vr_cylinder`, `:ekin`, `:jeansmass`, …); `getvar()` prints the full list
-- **`add_field`**: register a custom derived field once; it then works inside `projection`, `profile`, `phase`
-- **`getvar_requirements`**: query the raw variables a derived field needs (drives selective I/O)
+- **`add_field`**: register a custom derived field once; it then works inside `projection`,
+  `profile` and `phase`. `list_fields`, `field_tree` and `getvar_requirements` show what exists and
+  what each field needs, which also drives selective I/O
+- **`setcomposition!`**: set the hydrogen mass fraction and the mean molecular weight, the two
+  numbers behind `:nH` and `:T`
+- **133 unit scale factors and 41 constants**, with `add_unit`, `list_units` and `getunit`
 
-### Star formation, reports, export
-- **`sfr` / `sfr_snapshot`**: star-formation history and current/time-averaged SFR from stellar ages
-- **`report`**: composable first-look dashboard (projection / profile / phase / SFR cards) with cost estimates
+### Cosmological runs
+- **`cosmic_time` / `lookback_time` / `age_of_universe` / `formation_redshift`**: ages and
+  redshifts, with `iscosmological` to test a snapshot first
+- **`comoving_to_proper_length` / `comoving_to_proper_density`**, and the reverse, for converting
+  either way
+- **`critical_density` / `mean_matter_density` / `baryon_fraction`**: the background the run sits in
+
+### Star formation
+- **`sfr` / `sfr_snapshot` / `depletion_time`**: star-formation history, instantaneous rate over
+  several look-back windows, gas depletion time and efficiency per free-fall time
+
+### Saving and exporting
+- **`savedata` / `loaddata`**: compressed MERA-file archive (LZ4/Zlib/Bzip2): smaller and faster to
+  read than raw RAMSES. `convertdata` and `batch_convert_mera` convert a whole run
+- **`savemap` / `loadmap`**: keep a finished projection, with its provenance, instead of recomputing
 - **`export_vtk`**: write AMR cells / particles to VTK for ParaView/VisIt
-- **`savedata` / `loaddata`**: compressed MERA-file archive (LZ4/Zlib/Bzip2): smaller and faster to read than raw RAMSES
 
-## A taste of the features
+### Quick looks and reports
+- **`quicklook`**: point it at a snapshot you have never seen. Budgeted read, maps along all three
+  axes, a phase diagram, and a census of masses, densities and temperatures
+- **`report`**: composable dashboards whose cost you can `preview` before running, `calibrate!` to
+  your machine, and `downsample` to a time budget
 
-| Feature | Use case |
-|---|---|
-| Clump catalogs | star-forming clouds, halo substructure, dense cores |
-| Covering grids | power spectra, FFTs, structure functions |
-| Phase diagrams | gas thermodynamics, phase structure |
-| Derived fields | temperature, Mach, Jeans, angular momentum |
-| Profiles | radial density, SFR, metallicity |
-| Radiative transfer | Strömgren sphere, ionization fronts |
+### Time evolution and movies
+- **`timeseries`**: run any reducer over every output with one snapshot in memory at a time; adds
+  redshift and scale factor automatically on cosmological runs
+- **`getmovie` / `savemovie` / `rotation_sequence`**: animations from a sweep of outputs or of
+  viewing angles, with a fixed field of view so frames do not jitter
 
-See the [documentation](https://manuelbehrendt.github.io/Mera.jl/stable/) for worked examples and figures.
+### Reproducibility
+- **`provenance` / `provenance_string`**: version, git branch and commit, a marker if the working
+  tree was dirty, the snapshot and its time. Travels inside saved maps and reports
+- **`download_testdata`**: eleven small public RAMSES simulations, each with a known answer, either
+  an analytic law that follows from its setup or a reference value published by the RAMSES developers
+
+### While you work
+- **Threads** on reads, off-axis projections and multi-quantity projections; `reading_sweep` finds
+  where your storage stops rewarding more of them
+- **`notifyme` / `bell` / `send_results`**: mail or Zulip when a long run finishes, with plots
+  attached, or just a sound
+- **Plotting is a weak dependency**: Mera installs without it, and the plotting functions appear
+  once you load Makie
 
 ## Installation
 
