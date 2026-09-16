@@ -681,6 +681,34 @@ println("@apply pipeline       : ", length(filtered_db), " rows")
 @apply pipeline       : 210 rows
 ```
 
+**The macro compares in code units.** This is the one thing to know before reaching for `>` and
+`<` on a Mera object, and it is easy to miss because the condition *looks* physical. `@filter gas
+:T > 1e4` does not mean ten thousand Kelvin: it means ten thousand in this run's code units, which
+here is about `6.8e9` K, hotter than anything in the box. The same threshold written with a unit
+selects every cell instead.
+
+Nothing is broken about the macro. It is compact and it understands derived quantities, which is
+exactly what it is for. But a number without a unit is a statement about one particular run, so
+whenever the threshold is physical, say the unit and let `Above` or `Below` do the conversion.
+
+```julia
+macro_hot = @filter gas :T > 1e4                             # 1e4 in CODE units, not Kelvin
+unit_hot  = filterdata(gas, Above(:T, 1e4, unit=:K), verbose=false)
+
+println("@filter gas :T > 1e4        : ", length(macro_hot.data), " cells")
+println("Above(:T, 1e4, unit=:K)     : ", length(unit_hot.data), " cells")
+println("1e4 code units is really    : ", round(1e4 * gas.info.scale.K, sigdigits=4), " K")
+println("this run's gas spans        : ", round(minimum(getvar(gas, :T, :K)), sigdigits=3),
+        " .. ", round(maximum(getvar(gas, :T, :K)), sigdigits=3), " K")
+```
+
+```
+@filter gas :T > 1e4        : 0 cells
+Above(:T, 1e4, unit=:K)     : 849332 cells
+1e4 code units is really    : 6.803e9 K
+this run's gas spans        : 13200.0 .. 2.67e7 K
+```
+
 ```julia
 # ---- hand-built masks, for comparison with getmask -------------------------------------
 thr = 4. / gas.scale.Msol_pc3
@@ -704,9 +732,10 @@ as a condition on one quantity.
 
 ## 10. Practical Guidance
 
-**Say the unit.** `Above(:rho, 1, unit=:nH)` is a statement about physics;
-`p.rho >= 3.0` on the raw table is a statement about this run's code units and
-will mean something different in the next simulation.
+**Say the unit.** `Above(:rho, 1, unit=:nH)` is a statement about physics.
+`p.rho >= 3.0` on the raw table, and `@filter gas :rho >= 3.0` on the object, are
+both statements about this run's code units and will mean something different in
+the next simulation.
 
 **Filter, then look.** A condition is cheap and a map is cheap. §6 takes seconds
 and catches a threshold that selects nothing, or everything, before it becomes
