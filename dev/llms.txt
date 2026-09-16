@@ -1,0 +1,160 @@
+# Mera.jl
+
+> Analysis of astrophysical simulation output in Julia. Reads RAMSES adaptive-mesh-refinement
+> data natively (hydro and MHD, particles, gravity, clumps, sinks, radiative transfer), holds a
+> snapshot as one table with one row per cell, and computes derived physics, regions, projections,
+> profiles, phase diagrams and structure catalogues from it. Documentation:
+> https://manuelbehrendt.github.io/Mera.jl/stable/
+
+This file is a compact grounding for an AI assistant. It is not a tutorial. It states the data
+model, the vocabulary, the mistakes that are easy to make, and how to check that an answer is
+right. Everything below was verified against a running Mera 1.8.
+
+## Data model
+
+A snapshot is a table: one row per AMR cell, one column per quantity, and every row carries its
+refinement `:level`. Nothing is resampled onto a uniform grid unless you ask with `covering_grid`.
+Particles, clumps and sinks are separate objects with the same shape of interface.
+
+Selections return **objects of the same type**, so calls chain: `subregion` into `filterdata` into
+`projection` into `getvar`.
+
+## Loading
+
+    info = getinfo(400, "/path/to/sim")        # a RAMSES output folder
+    gas  = gethydro(info; lmax=10)             # also getparticles/getgravity/getrt/getclumps/getsinks
+
+    (; hydro, particles, info) = loadall(path, 400; components=[:hydro, :particles])
+
+`loadall` dispatches on what it finds: a folder of RAMSES files goes through the RAMSES readers, a
+folder holding `output_NNNNN.jld2` through `loaddata`. Prefer it when the code should work on both.
+`getinfo` is RAMSES-only and **fails on a MERA-file folder**; `infodata` is its counterpart there.
+
+Limit the read rather than trimming afterwards. Every getter, and `loadall`, takes
+`xrange`/`yrange`/`zrange` with `center=[:bc]` and `range_unit=:kpc`, and applies them while reading.
+
+## Units: always say the unit
+
+Every quantity takes a unit symbol, and the unit is part of the question:
+
+    getvar(gas, :T, :K)
+    msum(gas, :Msol)
+    projection(gas, :sd, :Msol_pc2)
+    filterdata(gas, Above(:T, 1e4, unit=:K))
+
+`getvar(obj, :q)` without a unit returns **code units**, which mean something different in the next
+simulation. `getvar()` with no arguments prints every derived quantity; `list_units()` prints the
+units; `viewfields(obj)` shows what an object holds.
+
+## Regions are values
+
+    Mera.Sphere(r; center=[:bc], range_unit=:kpc)        # centre is ABSOLUTE, in range_unit
+    Mera.Cuboid(xrange=[a,b], yrange=[c,d], zrange=[e,f], center=[:bc], range_unit=:kpc)
+    Mera.Cylinder(radius, half_height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
+
+Combine them with `∩` `∪` `\` `!` (ASCII `&` `|`), then `subregion(obj, region)`. A ring is one
+cylinder minus another. `subregion` splits boundary cells by default (`split=true`): a half-inside
+cell keeps half of itself as `:fraction`, and that weighting carries through `getvar`, `msum` and
+`projection`. Pass `split=false` for the classic whole-cell test.
+
+## Selecting by value
+
+    hot   = filterdata(gas, Above(:T, 1e4, unit=:K))
+    mask  = getmask(gas, Above(:T, 1e4, unit=:K))              # Vector{Bool}, pass as mask=
+    band  = filterdata(gas, Above(:T, 1e4, unit=:K) & Below(:rho, 1e3, unit=:nH))
+
+Predicates: `Above`, `Below`, `InRange`, `AbovePercentile`, `BelowPercentile`, `Satisfies`, composed
+with `&` `|` `!`. They work on anything `getvar` computes, including derived physics.
+
+## Computing
+
+    projection(gas, :sd, :Msol_pc2; pxsize=[50.0, :pc], center=[:bc])
+    projection(gas, :vlos, :km_s; inclination=60.0, azimuth=30.0, fov=14.0, fov_unit=:kpc,
+               aperture=:circle)
+    profile(gas, :r_cylinder, :T)      # also profile3d, profiletimeseries
+    phase(gas, :rho, :T)
+    clumpfind(gas)                      # 7 finders behind one call
+    timeseries(...)                     # one snapshot in memory at a time
+
+Use `pxsize=[value, :unit]` rather than `res=`. `:sd`, `:vlos` and `:σlos` exist **only** in
+`projection`, not in `getvar`.
+
+Single numbers: `msum`, `center_of_mass`, `bulk_velocity`, `velocitydispersion`, `getextent`,
+`wstat` (mean, median, std, skewness, kurtosis, extrema, optionally weighted and masked).
+
+## Traps
+
+These are mistakes an assistant makes confidently. Each was reproduced.
+
+1. **`@filter` compares in code units.** `@filter gas :T > 1e4` is not ten thousand Kelvin. On one
+   test run `1e4` code units is `6.8e9` K, so it selected 0 cells while
+   `Above(:T, 1e4, unit=:K)` selected all 849332. The macro is fine for `:level` or for a
+   threshold you already have in code units; for physics, name the unit with `Above`/`Below`.
+   The macro also takes one comparison only; `&` `|` `!` need the predicate form.
+2. **`Sphere` collides with Makie.** With CairoMakie loaded, a bare `Sphere` is ambiguous and
+   raises `UndefVarError`. Write `Mera.Sphere`, and `Mera.Cylinder` for the same reason.
+3. **`projection` does honour cell fractions.** The word `fraction` does not appear in the
+   projection source, which invites the wrong conclusion. It reaches mass through `getvar`, so a
+   projected map totals exactly what `msum` reports.
+4. **`extent` is absolute, `cextent` is measured from `center`.** `cextent` is symmetric only when
+   the centre sits in the middle of the window. Plot with `cextent` when the axis is centred.
+5. **`aperture=:square` crops to the shorter side** of the map. For a subject much wider than it is
+   tall, that throws the width away. `:circle` lets `fov` frame as intended.
+6. **`@where` and `@apply` act on the raw table** (`gas.data`), not on the Mera object.
+
+## Write it so a person can read it
+
+Analysis code is read far more often than it is written, usually by someone deciding whether to
+trust the number. Code produced for a Mera user should look like the examples above:
+
+- **Short and flat.** Prefer a few named steps to one dense expression. `subregion` then
+  `filterdata` then `projection` reads as a sentence; the same thing nested does not.
+- **Name the physical constants.** `R_DISC = 14.0  # kpc, disc radius` rather than a bare `14.0`
+  four lines down. A reader should be able to change the science without hunting.
+- **Comment the decisions, not the syntax.** Nobody needs `# project the gas`. They do need to know
+  why the colour range is fixed, why the aperture is circular, why that temperature cut.
+- **Say the unit in the code**, not only in a comment, by using the unit arguments.
+- **Leave the check in.** The partition check below is three lines and belongs in the script, not
+  in a throwaway REPL session.
+
+## Checking the answer
+
+An assistant should not hand back a number without one of these. They are cheap.
+
+**Code.** A condition and its negation must reproduce the parent, for regions and for values alike:
+
+    a = msum(subregion(gas, reg), :Msol)
+    b = msum(subregion(gas, !reg), :Msol)
+    abs(a + b - msum(gas, :Msol)) / msum(gas, :Msol)     # measured 0.0
+
+Same for `filterdata(gas, cond)` against `filterdata(gas, !cond)`. This catches an inverted
+comparison, a wrong unit and a mis-specified region in one line. A projected map should also total
+its `msum`.
+
+**Physics.** Prefer a case with a known answer. `download_testdata()` fetches eleven small public
+RAMSES simulations chosen for exactly this: a Sedov blast whose radius grows as `t^(2/5)`, an MHD
+shock tube where a divergence-free field keeps `Bx` constant, four density blobs that a clump
+finder must return as four, a Strömgren sphere whose ionisation front follows the analytic law, and
+three of RAMSES's own tests checked against published reference values. Beyond that: check limiting
+cases, check a total against an independent route, and check that a result does not move when the
+pixel size, the viewing angle or the thread count changes.
+
+**Reproducibility.** Record what produced a number:
+
+    provenance_string(gas)    # version, git branch and commit, dirty flag, snapshot, time
+    mera_build()              # distinguishes a registry install from a checkout of a branch
+
+`pkgversion` reports the same string for a release and for a development checkout, so a result from
+a branch looks like a result from the release unless `mera_build` is used. Saved maps and reports
+carry provenance with them. For a shared analysis, pin the environment in a `Project.toml` next to
+the script and commit the `Manifest.toml` that `instantiate` produces.
+
+## Where to read more
+
+- Getting started and first look: https://manuelbehrendt.github.io/Mera.jl/stable/first_look/
+- How the numbers are computed: https://manuelbehrendt.github.io/Mera.jl/stable/computation_reference/
+- Masking and filtering: https://manuelbehrendt.github.io/Mera.jl/stable/05_multi_Masking_Filtering/
+- Off-axis projection: https://manuelbehrendt.github.io/Mera.jl/stable/06_offaxis_Projection/
+- Reproducibility: https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/
+- Complete worked recipes: https://manuelbehrendt.github.io/Mera.jl/stable/gallery/
+- Full API: https://manuelbehrendt.github.io/Mera.jl/stable/api/
