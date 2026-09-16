@@ -85,6 +85,7 @@ makedocs(modules = [Mera],
          
 		authors = "Manuel Behrendt",
 		pages = Any[ "Home"                  => "index.md",
+		              "Where to Start"         => "where_to_start.md",
 		              "First Look"             => "first_look.md",
 		              "Composable Reports"     => "report.md",
 		              "Getting Started"        => Any[

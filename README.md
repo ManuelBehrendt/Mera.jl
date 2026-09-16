@@ -340,6 +340,8 @@ including what the attribution block should contain and what makes a recipe usab
 ## Documentation
 
 - **[Stable documentation & API reference](https://manuelbehrendt.github.io/Mera.jl/stable/)**
+- **[Where to start](https://manuelbehrendt.github.io/Mera.jl/stable/where_to_start/)**: one page from
+  "I want to ..." to the function that does it, for the twenty things people do first
 - **New here?** Start with the Getting Started track: [First Steps](https://manuelbehrendt.github.io/Mera.jl/stable/00_multi_FirstSteps/),
   [Coming from Other Tools](https://manuelbehrendt.github.io/Mera.jl/stable/switching_to_mera/), and
   [Julia for Simulation Analysis](https://manuelbehrendt.github.io/Mera.jl/stable/julia_for_simulation_analysis/)
