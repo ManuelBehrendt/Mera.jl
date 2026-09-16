@@ -107,6 +107,9 @@ If you are working with an AI assistant, [Using an AI Assistant](assistant.md) h
 give it so that it writes Mera that runs, and the three checks worth keeping in any script it
 produces. It is an experiment rather than a policy.
 
+[Where to start](where_to_start.md) is the other way in: one table from "I want to …" to the
+function that does it, for the twenty things people reach for first.
+
 **Next: [First Look](first_look.md).** It shows what one command tells you about an unfamiliar
 output, and what it costs on a large one. From there the sidebar follows the order you will
 actually work in: inspect, load, select, compute, project.
