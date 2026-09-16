@@ -26,11 +26,11 @@ run it.
 
 <a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/002_word_in_a_galaxy">
   <img src="assets/gallery/word_in_a_galaxy_thumb.png"
-       alt="The word MERA cut out of a galactic gas disc, beside the same letters kept as the only gas">
+       alt="The word MERA cut out of a galactic gas disc seen at 60 degrees, beside the same letters kept as the only gas">
   <span class="gallery-title">Cutting a word out of a galaxy</span>
   <span class="gallery-meta">RAMSES · region algebra as a stencil: letters built from cuboids,
-  unioned into one word, then subtracted from the disc and intersected with it, face-on and
-  tilted to 60°</span>
+  unioned into one word, then subtracted from the disc and intersected with it, face-on, tilted to
+  60° and repeated on the stars</span>
 </a>
 
 </div>
