@@ -95,6 +95,10 @@ one selection in step across a whole script.
 Once you are past the tutorials, the [Gallery](gallery.md) holds complete workflows you can point
 at your own simulation, and is where to share the analysis behind a paper.
 
+If you are working with an AI assistant, [Using an AI Assistant](assistant.md) has a short file to
+give it so that it writes Mera that runs, and the three checks worth keeping in any script it
+produces. It is an experiment rather than a policy.
+
 **Next: [First Look](first_look.md).** It shows what one command tells you about an unfamiliar
 output, and what it costs on a large one. From there the sidebar follows the order you will
 actually work in: inspect, load, select, compute, project.

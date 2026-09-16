@@ -343,6 +343,8 @@ including what the attribution block should contain and what makes a recipe usab
 - **New here?** Start with the Getting Started track: [First Steps](https://manuelbehrendt.github.io/Mera.jl/stable/00_multi_FirstSteps/),
   [Coming from Other Tools](https://manuelbehrendt.github.io/Mera.jl/stable/switching_to_mera/), and
   [Julia for Simulation Analysis](https://manuelbehrendt.github.io/Mera.jl/stable/julia_for_simulation_analysis/)
+- **Working with an AI assistant?** [Using an AI Assistant](https://manuelbehrendt.github.io/Mera.jl/stable/assistant/)
+  has a short grounding file to give it, and the checks worth keeping in whatever it writes. Experimental
 - **[Tutorials](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs)**: step-by-step Jupyter notebooks
 - In the REPL, `?getvar` shows the docstring and `getvar()` (no args) prints the full derived-quantity catalogue
 
