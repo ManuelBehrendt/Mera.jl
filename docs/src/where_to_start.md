@@ -36,7 +36,7 @@ raises a question.
 | a centre, a bulk velocity, a dispersion | `center_of_mass`, `bulk_velocity`, `velocitydispersion` | [Basic Calculations](04_multi_Basic_Calculations.md) |
 | a derived quantity: temperature, sound speed, Mach | `getvar(obj, :T, :K)` | [Basic Calculations](04_multi_Basic_Calculations.md) |
 | to see every quantity available | `getvar()`, `list_fields(obj)`, `list_units()` | run it in the REPL |
-| mean, median, spread, weighted or masked | `wstat` | [Statistics](statistics.md) |
+| mean, median, spread, weighted or masked | `wstat` | [Basic Calculations](04_multi_Basic_Calculations.md) |
 | a quantity of my own, usable everywhere | `add_field` | [Basic Calculations](04_multi_Basic_Calculations.md) |
 
 **Say the unit.** `getvar(gas, :T)` gives code units, which mean something different in the next

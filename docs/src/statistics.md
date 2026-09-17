@@ -95,7 +95,8 @@ rho range             : (3.117453040888466e-9, 2.7960968598850635)
 
 ## What it returns
 
-`pdf` returns a `NamedTuple` `(centers, edges, pdf, logbins, quantity, unit, weight)`:
+`pdf` returns a `NamedTuple`. The data-object form gives
+`(centers, edges, pdf, logbins, norm, quantity, unit, weight, info)`:
 
 - `centers` / `edges`, bin centres / edges, in the quantity's units.
 - `pdf`, a probability **density** on the binning axis. With `logbins=true` (the default)
@@ -106,6 +107,12 @@ rho range             : (3.117453040888466e-9, 2.7960968598850635)
   sum(P.pdf .* diff(log10.(P.edges))) ≈ 1     # logbins
   sum(P.pdf .* diff(P.edges)) ≈ 1             # linear bins
   ```
+- `norm`, `logbins`, `quantity`, `unit`, `weight`, what was asked for, so a stored result still
+  says how it was made, and `info`, the snapshot's `InfoType`.
+
+The three forms do not return identical fields, because not all of them apply: a projection
+result has no `unit`, and a bare matrix carries only `(centers, edges, pdf, logbins, norm)`,
+having no snapshot behind it.
 
 ## Weighting
 
@@ -128,6 +135,10 @@ The weight decides *what* the PDF describes, and the two weightings tell differe
 | `valrange` | data range | `(min, max)` of the quantity |
 | `unit` | `:standard` | unit of `quantity` |
 | `mask` | `[false]` | restrict to selected cells/particles |
+
+These are the keywords of the **data-object** form. A projection result takes the same list
+without `unit` and `mask`; the bare-matrix form takes `weights` (plural, an array the same shape
+as the map) rather than `weight`, since there is no data object to look a weighting up from.
 
 The `norm` choices answer different questions: `:density` is the proper (bin-width-independent)
 PDF for comparing against theory or different binnings; `:probability` gives the mass/volume
