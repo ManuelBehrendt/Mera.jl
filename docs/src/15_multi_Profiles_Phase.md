@@ -96,31 +96,84 @@ binsize=(500,:pc) → bin width [kpc] = 0.5  (48 bins)
 
 ## 2. Per-bin statistics, a binned statistic is not a histogram
 
-Give a **second field** `yvar` and each bin carries the weight-weighted **`mean`**, **`std`**,
-**`sem`** (standard error on the mean, `std/√neff` with the Kish effective sample size `neff`),
-**`min`/`max`**, **`median`** and a **`quantiles`** matrix at the requested `qlevels`. A custom
-`statistic=f` (called `f(yview, wview)` if it accepts weights, else `f(yview)`) adds a `custom`
-column. One figure makes the whole spread visible.
+Give a **second field** `yvar` and the bin stops being a count. Every bin now carries, for that
+field, weighted by `weight`:
+
+| field | what it is |
+|:--|:--|
+| `mean` | the weighted mean |
+| `median`, `quantiles` | the 50th percentile, and whichever percentiles you ask for in `qlevels` |
+| `std` | the weighted standard deviation |
+| `sem` | the standard error **on the mean**, `std/√neff`, with Kish's effective sample size |
+| `min`, `max` | the extremes actually present |
+| `count`, `sum`, `sumw2` | how many cells, their summed weight, and its square |
+| `custom` | whatever your own `statistic=f` returned |
+
+**`std` and `sem` answer different questions**, and confusing them is the usual mistake. `std` is
+how much the gas in that bin *actually varies*; it does not shrink when you add cells. `sem` is how
+well the *mean* is pinned down; it shrinks as more cells enter the bin. Error bars on a mean want
+`sem`. A claim about the gas wants `std`, or better, quantiles.
+
+### The `statistic` keyword
+
+`statistic=f` computes anything the built-ins do not, once per bin, and puts the answer in
+`custom`. Mera calls `f(y, w)` with the bin's values and weights if your function takes two
+arguments, and falls back to `f(y)` if it takes one, so both of these work:
 
 ```julia
-pT = profile(gas, :r_cylinder, :T; weight=:mass, unit=:K, nbins=35, xrange=(0,20), center=ctr, range_unit=:kpc, xunit=:kpc,
-             quantiles=[0.16,0.5,0.84])
-pC = profile(gas, :r_cylinder, :T; weight=:mass, unit=:K, nbins=35, xrange=(0,20), center=ctr, range_unit=:kpc, xunit=:kpc,
-             statistic=(y,w)->sqrt(sum(w.*y.^2)/sum(w)))   # mass-weighted RMS -> pC.custom
-ok = (pT.count .> 0) .& (pT.min .> 0) .& (pT.mean .> 0)
-x=pT.x[ok]; mn=pT.min[ok]; mx=pT.max[ok]; q1=pT.quantiles[ok,1]; q3=pT.quantiles[ok,3]
-mu=pT.mean[ok]; sd=pT.std[ok]; md_=pT.median[ok]; sem=pT.sem[ok]; rms=pC.custom[ok]; flo=minimum(mn)
-fig = Figure(size=(760,500)); ax = Axis(fig[1,1], yscale=log10, xlabel="R [kpc]", ylabel="T [K]",
-                                        title="temperature: mean, std, 16–84%, extrema, sem, custom RMS")
-band!(ax, x, mn, mx, color=(:gray,0.15), label="min–max")
-band!(ax, x, q1, q3, color=(:orange,0.30), label="16–84%")
-band!(ax, x, max.(mu.-sd, flo), mu.+sd, color=(:dodgerblue,0.25), label="±std")
-lines!(ax, x, md_, color=:black, linewidth=1.5, linestyle=:dash, label="median")
-lines!(ax, x, mu, color=:dodgerblue, linewidth=2.5, label="mean")
-lines!(ax, x, rms, color=:crimson, linewidth=2, label="custom RMS")
-se = [i for i in 1:4:length(x) if mu[i]-sem[i] > 0]   # keep whiskers positive on the log axis
-errorbars!(ax, x[se], mu[se], sem[se], color=:dodgerblue, whiskerwidth=6)
-axislegend(ax, position=:rt, framevisible=false); fig
+statistic = (y, w) -> sqrt(sum(w .* y.^2) / sum(w))   # mass-weighted RMS
+statistic = y -> count(>(1e6), y)                      # how many cells above 10^6 K
+```
+
+Below it is the mass-weighted **RMS** temperature, which is deliberately a statistic Mera does not
+provide: it is the square root of the mean *square*, so a few very hot cells pull it up hard.
+
+### Reading the figure
+
+The left panel is the honest description of a bin: the median, the 16–84 % band holding the bulk
+of the gas, and the min–max envelope. The band is narrow while the envelope spans six decades,
+which is the multiphase ISM in one picture.
+
+The right panel is the same cells reduced three ways, and they do **not** agree. At R = 10 kpc the
+median is 6.0 × 10³ K, the mean 3.5 × 10⁴ K, and the RMS 6.6 × 10⁵ K: each about a decade above
+the last. That ordering, median < mean < RMS, is the signature of a strongly skewed distribution,
+where a small mass of very hot gas sets the mean and dominates the RMS while most of the gas is
+cool. Which one belongs in your paper depends on the question, and the gap between them is the
+reason to say which you used.
+
+`±std` is deliberately **not** drawn. It is symmetric, and here the spread is larger than the mean,
+so `mean − std` is negative: meaningless for a temperature and impossible to draw on a log axis.
+For a quantity spread over decades, quantiles are the honest spread.
+
+```julia
+common = (weight=:mass, unit=:K, nbins=35, xrange=(0.5,20), center=ctr, range_unit=:kpc, xunit=:kpc)
+pT = profile(gas, :r_cylinder, :T; common..., quantiles=[0.16,0.5,0.84])
+pC = profile(gas, :r_cylinder, :T; common...,
+             statistic=(y,w) -> sqrt(sum(w .* y.^2) / sum(w)))    # mass-weighted RMS -> pC.custom
+
+ok  = (pT.count .> 0) .& (pT.min .> 0)
+x   = pT.x[ok];  mn = pT.min[ok];  mx = pT.max[ok]
+q16 = pT.quantiles[ok,1]; q50 = pT.quantiles[ok,2]; q84 = pT.quantiles[ok,3]
+mu  = pT.mean[ok]; sem = pT.sem[ok]; rms = pC.custom[ok]
+
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
+NAVY=RGBf(0.16,0.25,0.45); BLUE=RGBf(0.20,0.47,0.74); ORANGE=RGBf(0.90,0.52,0.13); RED=RGBf(0.70,0.15,0.20)
+fig = Figure(size=(1180,450))
+ax1 = Axis(fig[1,1], yscale=log10, xlabel="R [kpc]", ylabel="T [K]", title="the spread in each bin")
+band!(ax1, x, mn, mx, color=(NAVY,0.10), label="min – max")
+band!(ax1, x, q16, q84, color=(BLUE,0.35), label="16 – 84 %")
+lines!(ax1, x, q50, color=NAVY, linewidth=2.5, label="median")
+axislegend(ax1, position=:rt, framevisible=false)
+
+ax2 = Axis(fig[1,2], yscale=log10, xlabel="R [kpc]", ylabel="T [K]",
+           title="three ways to average the same cells")
+lines!(ax2, x, q50, color=NAVY,   linewidth=2.5, label="median  (50th percentile)")
+lines!(ax2, x, mu,  color=ORANGE, linewidth=2.5, label="mean  (mass-weighted)")
+lines!(ax2, x, rms, color=RED,    linewidth=2.5, label="RMS  (statistic=…)")
+se = [i for i in 1:3:length(x) if mu[i]-sem[i] > 0]     # sem whiskers, kept positive for the log axis
+errorbars!(ax2, x[se], mu[se], sem[se], color=ORANGE, whiskerwidth=7)
+axislegend(ax2, position=:rt, framevisible=false)
+fig
 ```
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_7_1.png)
