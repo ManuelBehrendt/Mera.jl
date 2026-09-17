@@ -217,6 +217,13 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
                                                 Base.structdiff(kw, (iso_width=0,))..., iso_width=0)
         @test_throws ArgumentError volumerender(gas, :rho; iso=[2.0],
                                                 Base.structdiff(kw, (iso_alpha=0,))..., iso_alpha=2)
+        # one opacity per surface: a faint outer shell does not hide the inner one
+        graded = volumerender(gas, :rho; iso=[2.0, 3.0],
+                              Base.structdiff(kw, (iso_alpha=0,))..., iso_alpha=[0.2, 1.0])
+        @test graded.look.iso_alpha == [0.2, 1.0]
+        @test graded.value[_vmid(graded)...] > two.value[_vmid(two)...]   # the far shell shows through
+        @test_throws ArgumentError volumerender(gas, :rho; iso=[2.0, 3.0],
+                                                Base.structdiff(kw, (iso_alpha=0,))..., iso_alpha=[0.5])
         @test_throws ArgumentError volumerender(gas, :rho; iso=[-1.0], scale=:log, res=8, verbose=false)
     end
 

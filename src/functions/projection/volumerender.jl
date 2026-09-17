@@ -49,7 +49,7 @@ struct VolumeLook
     iso::Vector{Float64}           # the values the user asked for, in `unit`
     iso_t::Vector{Float64}         # the same, as positions in the colour range
     iso_width::Float64             # half width of a shell, in colour-range units (dex when log)
-    iso_alpha::Float64             # opacity added at the centre of a shell
+    iso_alpha::Vector{Float64}     # opacity added at the centre of each shell
     exposure::Float64              # brightness multiplier of the finished picture
     sigma::Float64                 # per cm, at opacity 1
     background::RGB{Float64}
@@ -125,7 +125,7 @@ end
     a = l.opacity[1] + (l.opacity[2] - l.opacity[1]) * (l.opacity_gamma == 1.0 ? t : t^l.opacity_gamma)
     @inbounds for i in eachindex(l.iso_t)          # a shell adds opacity around its own value
         u = (t - l.iso_t[i]) / l.iso_width
-        u > 4.0 || u < -4.0 || (a += l.iso_alpha * exp(-0.5 * u * u))
+        u > 4.0 || u < -4.0 || (a += l.iso_alpha[i] * exp(-0.5 * u * u))
     end
     return min(a, 1.0)
 end
@@ -148,7 +148,9 @@ Resolve how a quantity looks: the colour range, the colour map, and how opaque t
   gas whose value is close to one of them becomes more opaque, so the shell stands out while
   everything else stays see-through. `iso_width` is the half width of a shell measured in the
   units of the colour range (so in **dex** when `scale=:log`), and `iso_alpha` is the opacity
-  added at its centre. With `opacity=(0, 0)` you see the surfaces alone.
+  added at its centre, either one number for all shells or one per shell. A wide outer shell
+  hides the inner ones when they are equally opaque, so give the outer one a smaller value, for
+  example `iso_alpha=[0.15, 0.3, 0.6]`. With `opacity=(0, 0)` you see the surfaces alone.
 * `exposure` brightens the finished picture, like the exposure of a camera. A thin, see-through
   rendering is dark simply because little light is collected; `exposure=3` makes it three times
   brighter. Colours that run past white are clipped, so raise it until the brightest parts are
@@ -166,7 +168,7 @@ colour and opacity.
 function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:standard,
                     scale::Symbol=:log, colorrange=nothing, percentiles=(1, 99.9),
                     colormap::Symbol=:inferno, opacity=(0.0, 1.0), opacity_gamma::Real=1.0,
-                    iso=Float64[], iso_width::Real=0.05, iso_alpha::Real=0.8, exposure::Real=1.0,
+                    iso=Float64[], iso_width::Real=0.05, iso_alpha=0.8, exposure::Real=1.0,
                     tau_unit_length=nothing, tau_target::Real=1.5, background=:black,
                     mask=[false], verbose::Bool=false, kwargs...)
     scale in (:log, :linear) || throw(ArgumentError("volumelook: scale must be :log or :linear, got :$scale"))
@@ -176,7 +178,10 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
         throw(ArgumentError("volumelook: opacity=(lo, hi) must be between 0 and 1, got $opacity"))
     opacity_gamma > 0 || throw(ArgumentError("volumelook: opacity_gamma must be positive"))
     iso_width > 0 || throw(ArgumentError("volumelook: iso_width must be positive"))
-    (0 <= iso_alpha <= 1) || throw(ArgumentError("volumelook: iso_alpha must be between 0 and 1"))
+    isoa = iso_alpha isa Real ? fill(Float64(iso_alpha), length(iso)) : collect(Float64, iso_alpha)
+    length(isoa) == length(iso) || throw(ArgumentError(
+        "volumelook: iso_alpha must be one number or one per isosurface, got $(length(isoa)) for $(length(iso))"))
+    all(a -> 0 <= a <= 1, isoa) || throw(ArgumentError("volumelook: every iso_alpha must be between 0 and 1"))
     (isfinite(exposure) && exposure > 0) || throw(ArgumentError("volumelook: exposure must be positive"))
 
     v = Float64.(getvar(dataobject, quantity, unit))
@@ -205,7 +210,7 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
     iso_t = [((scale === :log ? log10(v) : v) - range01[1]) / span for v in isov]
     look = VolumeLook(quantity, unit, scale, range01, colormap, lut,
                       (Float64(opacity[1]), Float64(opacity[2])), Float64(opacity_gamma),
-                      isov, iso_t, Float64(iso_width) / span, Float64(iso_alpha),
+                      isov, iso_t, Float64(iso_width) / span, isoa,
                       Float64(exposure), 1.0, _background_color(background))
 
     # strength: either given, or chosen so the median optical depth of this view is tau_target
@@ -272,7 +277,7 @@ maps, such as a surface density or an optical depth, use [`projection`](@ref).
 function volumerender(dataobject::HydroDataType, quantity::Symbol; look::Union{Nothing,VolumeLook}=nothing,
                       unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
                       percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
-                      opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha::Real=0.8,
+                      opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha=0.8,
                       exposure::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
                       background=:black, supersample::Union{Symbol,Integer}=:auto,
                       mask=[false], verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
@@ -319,7 +324,7 @@ function volumeorbit(dataobject::HydroDataType, quantity::Symbol; angles=0:2:358
                      aperture::Symbol=:circle, center=[:bc], parallel_frames::Bool=false,
                      unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
                      percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
-                     opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha::Real=0.8,
+                     opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha=0.8,
                      exposure::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
                      background=:black, supersample::Union{Symbol,Integer}=:auto,
                      verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
@@ -399,7 +404,7 @@ function volumepath(dataobject::HydroDataType, quantity::Symbol; keyframes, fram
                     smooth::Bool=true, loop::Bool=false, parallel_frames::Bool=false,
                     unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
                     percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
-                    opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha::Real=0.8,
+                    opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha=0.8,
                     exposure::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
                     background=:black, supersample::Union{Symbol,Integer}=:auto,
                     verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
