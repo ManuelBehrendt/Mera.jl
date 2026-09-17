@@ -198,6 +198,11 @@ export
 
 #
     projection,
+    volumerender,
+    volumelook,
+    volumeorbit,
+    VolumeLook,
+    VolumeRenderType,
     project,
     offaxis_slice,
     profile,
@@ -500,6 +505,7 @@ include("functions/regions/shellregion.jl")
 include("functions/regions/shellregion_hydro.jl")
 include("functions/regions/region_algebra.jl")
 include("functions/filterdata.jl")
+include("functions/projection/volumerender.jl")   # volume rendering (needs the off-axis helpers)
 include("functions/regions/shellregion_gravity.jl")
 include("functions/regions/shellregion_rt.jl")
 include("functions/regions/shellregion_particles.jl")

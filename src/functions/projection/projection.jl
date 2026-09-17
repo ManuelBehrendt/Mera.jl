@@ -654,6 +654,33 @@ function _rotseq_crop_square!(m, fov_code)
     return m
 end
 
+# Rotation-invariant source and window for an orbit: a SPHERE around `center` projects to the same
+# disc at every angle, so every frame shares one camera FOV and the object does not appear to zoom.
+# `aperture=:square` selects the larger sphere that encloses the ±FOV square at any angle, so the
+# frame can be cropped to a full rectangle afterwards. Returns the subregion, the camera window in
+# `fov_unit` and the FOV radius in code units. Shared by `rotation_sequence` and `volumeorbit`.
+function _rotseq_source(dataobject, fov, fov_unit::Symbol, aperture::Symbol, center)
+    cuw = fov_unit === :standard ? 1.0/dataobject.boxlen : getunit(dataobject.info, fov_unit)
+    # auto FOV: the MASS-ENCLOSED 99% radius, so the frame fits the object itself and is not blown
+    # out by the few sparse outermost cells / a diffuse halo.
+    if fov === nothing
+        r  = getvar(dataobject, :r_sphere, center=center)
+        mw = try getvar(dataobject, :mass) catch; nothing end
+        fov_code = if mw === nothing || isempty(r)
+            isempty(r) ? 0.0 : maximum(r)
+        else
+            o = sortperm(r); cum = cumsum(mw[o]); r[o][searchsortedfirst(cum, 0.99*cum[end])]
+        end
+    else
+        fov_code = float(fov) / cuw
+    end
+    fov_code = min(fov_code, (aperture === :square ? 0.49/sqrt(2) : 0.49) * dataobject.boxlen)
+    rfov = fov_code * cuw
+    rsel = aperture === :square ? rfov * sqrt(2) : rfov
+    src  = subregion(dataobject, :sphere, radius=rsel, center=center, range_unit=fov_unit, verbose=false)
+    return src, [-rsel, rsel], fov_code
+end
+
 """
     rotation_sequence(dataobject, var, [unit]; sweep=:azimuth, angles,
                       axis=:angmom, inclination=0, fov=nothing, fov_unit=:standard,

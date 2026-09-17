@@ -136,6 +136,31 @@ Both data types support:
 - **Velocity projections**: Velocity fields and dispersion maps  
 - **Custom derived quantities**: Temperature, pressure, kinematic analysis
 
+## Volume rendering
+
+[`volumerender`](@ref) gives every cell a colour and an opacity from the value of one quantity and
+composites the line of sight front to back, so dense gas hides what is behind it. The opacity is
+set per unit length, so the picture does not change with the pixel size or the zoom.
+[`volumelook`](@ref) resolves the colours and the opacity once, and [`volumeorbit`](@ref) turns the
+view around the object with that look fixed, ready for a movie.
+
+```julia
+img = volumerender(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), colormap=:inferno,
+                   opacity_gamma=2, tau_unit_length=[300, :pc],
+                   inclination=70, axis=:angmom, center=[:bc], range_unit=:kpc, pxsize=[80, :pc])
+save("galaxy.png", rotl90(img.image))
+```
+
+This is an illustration tool. For maps with physical units use [`projection`](@ref).
+
+```@docs; canonical=false
+volumerender
+volumelook
+volumeorbit
+VolumeLook
+VolumeRenderType
+```
+
 ## Drawing the AMR grid on a map
 
 Overlay the cell boundaries of a refinement level on a finished projection, useful for

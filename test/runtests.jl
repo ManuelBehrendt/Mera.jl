@@ -94,6 +94,7 @@ if isempty(_focus)
         tinclude("46_data_awareness_tests.jl")  # data-free descriptor/MHD detection + optional capability/descriptor/quantity-awareness blocks
         tinclude("47_benchmark_tests.jl")  # data-free I/O benchmark (run_benchmark/plot_results) on a temp folder
         tinclude("54_clumpfind_synthetic_tests.jl")  # data-free: all 7 finders + features scored vs synthetic ground truth
+        tinclude("84_volumerender_tests.jl")  # data-free: volume rendering (opacity per length, order, look reuse, orbit)
         tinclude("55_region_algebra_tests.jl")  # data-free: composable regions + exact cell splitting vs analytic volumes
         tinclude("56_filterdata_tests.jl")  # data-free: value-space filtering on derived quantities (filterdata/getmask)
         tinclude("78_download_testdata_tests.jl")  # data-free: fixture catalogue, layout, already-present short-circuit
