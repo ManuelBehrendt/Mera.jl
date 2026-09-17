@@ -123,10 +123,10 @@ the banner; skim below it.**
 # ─────────────────────────────────────────────────────────────────────
 const SDLIM = (-3.0, 3.0)   # log10 Σ [Msol/pc²] — one colour scale for every map on this page
 
-function show_sd!(ax, p; flo=1e-3, decorate=false)
+function show_sd!(ax, p; flo=1e-3, decorate=false, lims=SDLIM)
     xs = range(p.cextent[1]*kpc, p.cextent[2]*kpc; length=size(p.maps[:sd], 1))
     ys = range(p.cextent[3]*kpc, p.cextent[4]*kpc; length=size(p.maps[:sd], 2))
-    heatmap!(ax, xs, ys, log10.(max.(p.maps[:sd], flo)); colormap=:inferno, colorrange=SDLIM)
+    heatmap!(ax, xs, ys, log10.(max.(p.maps[:sd], flo)); colormap=:inferno, colorrange=lims)
     ax.aspect = DataAspect()
     ax.backgroundcolor = :black
     decorate || hidedecorations!(ax)
@@ -446,6 +446,13 @@ p_up = proj(sph_whole;  zoomw...)
 p_sp = proj(sph;        zoomw...)
 p_lo = proj(sph_centre; zoomw...)
 
+# The rim spans about 1.8 dex, while the page-wide scale spans 6. Measured across this
+# window the three treatments differ from the split map by 15 % (whole) and 3 % (centres),
+# which is 0.06 and 0.01 dex: about 1 % of a six-decade colour bar, and invisible. The zoom
+# row therefore gets its own stretch, taken from the rim's own values.
+ZLIM = (-1.8, 0.4)
+
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig  = Figure(size=(1080, 700))
 L    = (-12, 12, -12, 12)
 Lz   = (-11, -7, -2, 2)                              # the coarse west rim
@@ -457,12 +464,13 @@ for (k, (p, ttl)) in enumerate(panels)
     show_sd!(ax, p, L)
     arc!(ax, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1, linestyle=:dash)
     lines!(ax, [-11, -7, -7, -11, -11], [-2, -2, 2, 2, -2]; color=:cyan, linewidth=1)
-    axz = Axis(fig[2, k], title=k == 2 ? "zoom: the coarse west rim" : "")
-    show_sd!(axz, p, Lz)
+    axz = Axis(fig[2, k], title=k == 2 ? "zoom: the coarse west rim (own colour range)" : "")
+    show_sd!(axz, p, Lz; lims=ZLIM)
     arc!(axz, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1.2, linestyle=:dash)
 end
 scalebar!(content(fig[1, 1]), -11, -11.2, 5)
-sd_bar!(fig[:, 4])
+sd_bar!(fig[1, 4])
+Colorbar(fig[2, 4]; colormap=:inferno, colorrange=ZLIM, label="log₁₀ Σ  (zoom)")
 fig
 ```
 
@@ -470,9 +478,17 @@ fig
 
 In the zoom the three verdicts of the cartoon reappear on real data: whole
 coarse blocks overshoot the dashed circle, the centre test bites visibly into
-it, and the split edge feathers *on* it, the residual softness is the
-projection depositing each straddling cell's (correctly weighted) mass over
-its full footprint, a point §7 returns to and measures.
+it, and the split edge sits *on* it with its boundary column dimmed to the
+fraction actually inside. The residual softness is the projection depositing
+each straddling cell's (correctly weighted) mass over its full footprint, a
+point §7 returns to and measures.
+
+The zoom row carries its **own colour range**, and that is not cosmetic. Across
+this window the three differ from the split map by 15 % (whole cells) and 3 %
+(centres), which on the page-wide six-decade scale is 0.06 and 0.01 dex, about
+one per cent of the colour bar. On that scale the three panels look identical
+and the reader is entitled to disbelieve the captions. Stretched to the rim's
+own 1.8 dex, the difference is plain.
 
 And here is what "splitting" means cell by cell. We take the split sphere's
 *boundary* cells (those with `0 < fraction < 1`) in a thin mid-plane slab and
