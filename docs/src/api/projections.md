@@ -141,8 +141,9 @@ Both data types support:
 [`volumerender`](@ref) gives every cell a colour and an opacity from the value of one quantity and
 composites the line of sight front to back, so dense gas hides what is behind it. The opacity is
 set per unit length, so the picture does not change with the pixel size or the zoom.
-[`volumelook`](@ref) resolves the colours and the opacity once, and [`volumeorbit`](@ref) turns the
-view around the object with that look fixed, ready for a movie.
+[`volumelook`](@ref) resolves the colours and the opacity once, [`volumeorbit`](@ref) turns the
+view around the object with that look fixed, and [`volumepath`](@ref) moves the camera between
+keyframes (angles, centre and zoom), both ready for a movie.
 
 ```julia
 img = volumerender(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), colormap=:inferno,
@@ -157,6 +158,7 @@ This is an illustration tool. For maps with physical units use [`projection`](@r
 volumerender
 volumelook
 volumeorbit
+volumepath
 VolumeLook
 VolumeRenderType
 ```

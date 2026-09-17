@@ -304,10 +304,146 @@ function volumeorbit(dataobject::HydroDataType, quantity::Symbol; angles=0:2:358
     return identity.(frames)
 end
 
-# square crop of a finished render, the counterpart of `_rotseq_crop_square!`
-function _volume_crop_square(m::VolumeRenderType, fov_code)
+"""
+    volumepath(gas, quantity; keyframes, frames=120, res=512, fov_unit=:kpc, axis=:angmom,
+               look=nothing, aperture=:square, smooth=true, loop=false,
+               parallel_frames=false, <volumerender keywords>)
+        -> Vector{VolumeRenderType}
+
+Render a camera path: the view moves between `keyframes` and every frame comes out the same size,
+ready for a movie.
+
+Each keyframe is a named tuple; anything you leave out keeps its previous value:
+
+| field | meaning |
+|:--|:--|
+| `inclination`, `azimuth`, `position_angle` | the view angles, in degrees, about `axis` |
+| `fov` | half the width of the picture, in `fov_unit`; smaller means closer |
+| `center` | where the camera looks, `[x, y, z]` in `fov_unit`, or `[:bc]` |
+
+Angles and centres are interpolated in a straight line, the field of view geometrically (so a zoom
+runs at a constant rate), and `smooth=true` eases each segment in and out. `loop=true` returns to
+the first keyframe at the end, for a movie that repeats without a jump.
+
+```julia
+frames = volumepath(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), tau_unit_length=[300, :pc],
+    keyframes = [(inclination=0,  azimuth=0,   fov=20),      # face on, wide
+                 (inclination=80, azimuth=180, fov=20),      # tilt and turn
+                 (inclination=80, azimuth=360, fov=4)],      # turn further and move in
+    frames=180, res=512, fov_unit=:kpc)
+
+mkpath("frames")
+for (k, f) in enumerate(frames)
+    save(joinpath("frames", "f" * lpad(k, 4, '0') * ".png"), rotl90(f.image))
+end
+moviefromframes("frames", "path.gif"; fps=30)
+```
+
+The camera is orthographic: it looks at the object from outside and cannot fly through it. For a
+camera inside the gas you need a perspective renderer.
+
+For a plain turn around an object use [`volumeorbit`](@ref), which needs no keyframes.
+"""
+function volumepath(dataobject::HydroDataType, quantity::Symbol; keyframes, frames::Int=120,
+                    res::Int=512, fov_unit::Symbol=:kpc, axis=:angmom,
+                    look::Union{Nothing,VolumeLook}=nothing, aperture::Symbol=:square,
+                    smooth::Bool=true, loop::Bool=false, parallel_frames::Bool=false,
+                    unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
+                    percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
+                    opacity_gamma::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
+                    background=:black, supersample::Union{Symbol,Integer}=:auto,
+                    verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
+    isempty(keyframes) && throw(ArgumentError("volumepath: give at least one keyframe"))
+    frames >= 1 || throw(ArgumentError("volumepath: frames must be at least 1"))
+    aperture in (:circle, :square) ||
+        throw(ArgumentError("volumepath: aperture must be :circle or :square, got :$aperture"))
+    keys_ = _volume_keyframes(dataobject, keyframes, fov_unit)
+    loop && length(keys_) > 1 && push!(keys_, keys_[1])
+    path = [_volume_keyframe_at(keys_, (frames == 1 ? 0.0 : (k - 1) / (frames - 1)), smooth)
+            for k in 1:frames]
+
+    lookkw = (; unit, scale, colorrange, percentiles, colormap, opacity, opacity_gamma,
+              tau_unit_length, tau_target, background)
+    first_src, first_kw = _volume_path_frame(dataobject, path[1], fov_unit, aperture, res, axis, kwargs)
+    l = look === nothing ? volumelook(first_src, quantity; lookkw..., verbose=false, first_kw...) : look
+    verbose && println("[Mera]: volume path, ", frames, " frames, ", l)
+
+    out = Vector{Any}(undef, frames)
+    mt = parallel_frames ? 1 : clamp(max_threads, 1, Threads.nthreads())
+    render!(k) = begin
+        src, kw = _volume_path_frame(dataobject, path[k], fov_unit, aperture, res, axis, kwargs)
+        f = _volume_render(src, l; supersample=supersample, verbose=false, max_threads=mt, kw...)
+        out[k] = aperture === :square ? _volume_crop_square(f, 0.0; npix=res) : f
+    end
+    if parallel_frames
+        Threads.@threads for k in 1:frames; render!(k); end
+    else
+        for k in 1:frames; render!(k); end
+    end
+    return identity.(out)
+end
+
+# fill in every field of every keyframe, carrying the previous value forward
+function _volume_keyframes(dataobject, keyframes, fov_unit::Symbol)
+    cu = fov_unit === :standard ? 1.0 / dataobject.boxlen : getunit(dataobject.info, fov_unit)
+    bc = _center_code(dataobject, [:bc], :standard) .* cu          # box centre in fov_unit
+    state = (inclination=0.0, azimuth=0.0, position_angle=0.0,
+             fov=0.45 * dataobject.boxlen * cu, center=bc)
+    out = typeof(state)[]
+    for (i, k) in enumerate(keyframes)
+        k isa NamedTuple || throw(ArgumentError("volumepath: keyframe $i must be a named tuple, got $(typeof(k))"))
+        for f in keys(k)
+            f in (:inclination, :azimuth, :position_angle, :fov, :center) ||
+                throw(ArgumentError("volumepath: keyframe $i has an unknown field :$f; " *
+                                    "use inclination, azimuth, position_angle, fov or center"))
+        end
+        c = haskey(k, :center) ? (k.center == [:bc] ? bc : collect(float.(k.center))) : state.center
+        fov = haskey(k, :fov) ? float(k.fov) : state.fov
+        fov > 0 || throw(ArgumentError("volumepath: fov must be positive, got $fov"))
+        state = (inclination = haskey(k, :inclination) ? float(k.inclination) : state.inclination,
+                 azimuth     = haskey(k, :azimuth)     ? float(k.azimuth)     : state.azimuth,
+                 position_angle = haskey(k, :position_angle) ? float(k.position_angle) : state.position_angle,
+                 fov = fov, center = c)
+        push!(out, state)
+    end
+    return out
+end
+
+@inline _ease(u) = u * u * (3 - 2u)      # smoothstep: starts and ends at rest
+
+# the camera at path position `u` between 0 and 1
+function _volume_keyframe_at(keys_, u::Float64, smooth::Bool)
+    length(keys_) == 1 && return keys_[1]
+    s = clamp(u, 0.0, 1.0) * (length(keys_) - 1)
+    i = clamp(floor(Int, s) + 1, 1, length(keys_) - 1)
+    f = s - (i - 1)
+    smooth && (f = _ease(f))
+    a, b = keys_[i], keys_[i+1]
+    mix(x, y) = x + (y - x) * f
+    return (inclination = mix(a.inclination, b.inclination),
+            azimuth     = mix(a.azimuth, b.azimuth),
+            position_angle = mix(a.position_angle, b.position_angle),
+            fov = exp(mix(log(a.fov), log(b.fov))),        # geometric: a zoom runs at a steady rate
+            center = a.center .+ (b.center .- a.center) .* f)
+end
+
+# the data and the view keywords for one camera position
+function _volume_path_frame(dataobject, cam, fov_unit::Symbol, aperture::Symbol, res::Int, axis, kwargs)
+    rsel = aperture === :square ? cam.fov * sqrt(2) : cam.fov
+    src = subregion(dataobject, :sphere, radius=rsel, center=cam.center, range_unit=fov_unit, verbose=false)
+    win = [-rsel, rsel]
+    kw = (center=cam.center, range_unit=fov_unit, xrange=win, yrange=win, zrange=win,
+          pxsize=[2 * cam.fov / res, fov_unit], inclination=cam.inclination, azimuth=cam.azimuth,
+          position_angle=cam.position_angle, axis=axis, kwargs...)
+    return src, kw
+end
+
+# Square crop of a finished render, the counterpart of `_rotseq_crop_square!`. `npix` forces the
+# result size: the pixel size snaps to the box, so 2·fov/pixsize can round differently from frame
+# to frame, and a movie needs every frame to be exactly the same size.
+function _volume_crop_square(m::VolumeRenderType, fov_code; npix::Union{Nothing,Int}=nothing)
     nx, ny = size(m.image)
-    nt = clamp(round(Int, 2 * fov_code / m.pixsize), 1, min(nx, ny))
+    nt = clamp(npix === nothing ? round(Int, 2 * fov_code / m.pixsize) : npix, 1, min(nx, ny))
     i0 = (nx - nt) ÷ 2 + 1; j0 = (ny - nt) ÷ 2 + 1
     rows = i0:i0+nt-1; cols = j0:j0+nt-1
     cx = (m.extent[1] + m.extent[2]) / 2; cy = (m.extent[3] + m.extent[4]) / 2; h = nt * m.pixsize / 2

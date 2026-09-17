@@ -201,6 +201,7 @@ export
     volumerender,
     volumelook,
     volumeorbit,
+    volumepath,
     VolumeLook,
     VolumeRenderType,
     project,

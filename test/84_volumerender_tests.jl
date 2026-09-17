@@ -155,6 +155,33 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
         @test size(sq[1].image, 1) == size(sq[1].image, 2)       # square aperture gives a square frame
     end
 
+    @testset "camera path" begin
+        gas = _vr_gas(4; rho=(x, y, z) -> 1 + 9exp(-((x-0.5)^2 + (y-0.5)^2 + 4(z-0.5)^2) / 0.02))
+        common = (fov_unit=:standard, axis=:z, res=24, tau_unit_length=[0.05, :standard],
+                  colorrange=(0.5, 10.0), verbose=false)
+        path = volumepath(gas, :rho; keyframes=[(inclination=0, azimuth=0, fov=0.4),
+                                                (inclination=80, azimuth=180, fov=0.1)],
+                          frames=5, common...)
+        @test length(path) == 5
+        @test all(f -> size(f.image) == (24, 24), path)          # every frame the same size
+        @test all(f -> f.look === path[1].look, path)            # one look for the whole path
+        @test path[1].pixsize > path[end].pixsize                # the zoom moves in
+        @test path[1].pixsize ≈ 2 * 0.4 / 24 rtol=1e-6           # first keyframe fov
+        @test path[end].pixsize ≈ 2 * 0.1 / 24 rtol=1e-6         # last keyframe fov
+        # a keyframe carries forward what it does not set, and a loop returns to the start
+        lp = volumepath(gas, :rho; keyframes=[(inclination=20, fov=0.3), (azimuth=90,)],
+                        frames=3, loop=true, common...)
+        @test length(lp) == 3
+        @test lp[1].pixsize ≈ lp[end].pixsize rtol=1e-10         # back to the first keyframe
+        # the eased path starts slowly: the first step is shorter than the middle one
+        line = volumepath(gas, :rho; keyframes=[(fov=0.4,), (fov=0.1,)], frames=5, smooth=false, common...)
+        eased = volumepath(gas, :rho; keyframes=[(fov=0.4,), (fov=0.1,)], frames=5, smooth=true, common...)
+        @test eased[2].pixsize > line[2].pixsize
+        @test_throws ArgumentError volumepath(gas, :rho; keyframes=[], frames=2, common...)
+        @test_throws ArgumentError volumepath(gas, :rho; keyframes=[(zoom=2,)], frames=2, common...)
+        @test_throws ArgumentError volumepath(gas, :rho; keyframes=[(fov=-1,)], frames=2, common...)
+    end
+
     @testset "errors and metadata" begin
         gas = _vr_gas(3)
         @test_throws ArgumentError volumerender(gas, :rho; colormap=:no_such_map, _VR_KW...)
