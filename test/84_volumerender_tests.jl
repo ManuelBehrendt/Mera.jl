@@ -55,6 +55,18 @@ function _vr_gas(level::Int; rho=(x, y, z) -> 1.0)
     return g
 end
 
+# what a call prints on stdout, so a test can check that a hint stays quiet
+function _vr_capture(f)
+    old = stdout
+    rd, wr = redirect_stdout()
+    try
+        f()
+    finally
+        redirect_stdout(old); close(wr)
+    end
+    return read(rd, String)
+end
+
 const _VR_KW = (verbose=false,)
 _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
 
@@ -153,6 +165,28 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
                          fov_unit=:standard, center=[:bc], res=16, tau_unit_length=[0.05, :standard],
                          colorrange=(0.5, 10.0), verbose=false)
         @test size(sq[1].image, 1) == size(sq[1].image, 2)       # square aperture gives a square frame
+    end
+
+    @testset "exposure and a quiet camera" begin
+        gas = _vr_gas(4)
+        kw = (scale=:linear, colorrange=(0.0, 2.0), colormap=:viridis, opacity=(0.3, 0.3),
+              tau_unit_length=[1.0, :standard], res=16, verbose=false)
+        a = volumerender(gas, :rho; kw...)
+        b = volumerender(gas, :rho; exposure=2.0, kw...)
+        p = _vmid(a)
+        @test b.image[p...].r ≈ min(2 * a.image[p...].r, 1.0) rtol=1e-10
+        @test b.image[p...].g > a.image[p...].g                   # brighter, not clipped here
+        @test b.alpha == a.alpha                                  # exposure is display only
+        @test b.look.exposure == 2.0
+        @test occursin("exposure", sprint(show, b.look))
+        @test_throws ArgumentError volumerender(gas, :rho; exposure=0, kw...)
+        # the spin-axis camera says "box frame", so no velocity-frame hint is printed
+        delete!(Mera._HINT_SHOWN, :vframe)
+        @test !occursin("vcenter", _vr_capture(() -> volumerender(gas, :rho; direction=:faceon,
+                                                                  res=8, verbose=false)))
+        # asking for the same quantity yourself still hints
+        delete!(Mera._HINT_SHOWN, :vframe)
+        @test occursin("vcenter", _vr_capture(() -> getvar(gas, :lx)))
     end
 
     @testset "isosurfaces" begin

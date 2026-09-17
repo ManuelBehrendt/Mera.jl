@@ -50,6 +50,7 @@ struct VolumeLook
     iso_t::Vector{Float64}         # the same, as positions in the colour range
     iso_width::Float64             # half width of a shell, in colour-range units (dex when log)
     iso_alpha::Float64             # opacity added at the centre of a shell
+    exposure::Float64              # brightness multiplier of the finished picture
     sigma::Float64                 # per cm, at opacity 1
     background::RGB{Float64}
 end
@@ -59,6 +60,7 @@ function Base.show(io::IO, l::VolumeLook)
           round.(l.colorrange, sigdigits=3), ", :", l.colormap,
           ", opacity ", l.opacity)
     isempty(l.iso) || print(io, ", ", length(l.iso), " isosurface(s) at ", round.(l.iso, sigdigits=3))
+    l.exposure == 1 || print(io, ", exposure ", round(l.exposure, sigdigits=3))
     print(io, ", τ=1 over ", round(1 / (l.sigma * 3.0857e18), sigdigits=3), " pc)")
 end
 
@@ -131,7 +133,7 @@ end
 """
     volumelook(gas, quantity; unit=:standard, scale=:log, colorrange=nothing,
                percentiles=(1, 99.9), colormap=:inferno, opacity=(0.0, 1.0), opacity_gamma=1.0,
-               iso=[], iso_width=0.05, iso_alpha=0.8,
+               iso=[], iso_width=0.05, iso_alpha=0.8, exposure=1.0,
                tau_unit_length=nothing, tau_target=1.5, background=:black, <view keywords>)
         -> VolumeLook
 
@@ -147,6 +149,10 @@ Resolve how a quantity looks: the colour range, the colour map, and how opaque t
   everything else stays see-through. `iso_width` is the half width of a shell measured in the
   units of the colour range (so in **dex** when `scale=:log`), and `iso_alpha` is the opacity
   added at its centre. With `opacity=(0, 0)` you see the surfaces alone.
+* `exposure` brightens the finished picture, like the exposure of a camera. A thin, see-through
+  rendering is dark simply because little light is collected; `exposure=3` makes it three times
+  brighter. Colours that run past white are clipped, so raise it until the brightest parts are
+  white and no further.
 * `tau_unit_length=[100, :pc]` sets what full opacity means: optical depth 1 over that length.
   Without it the strength is taken from the data, so that the median optical depth of the map is
   `tau_target`.
@@ -160,7 +166,7 @@ colour and opacity.
 function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:standard,
                     scale::Symbol=:log, colorrange=nothing, percentiles=(1, 99.9),
                     colormap::Symbol=:inferno, opacity=(0.0, 1.0), opacity_gamma::Real=1.0,
-                    iso=Float64[], iso_width::Real=0.05, iso_alpha::Real=0.8,
+                    iso=Float64[], iso_width::Real=0.05, iso_alpha::Real=0.8, exposure::Real=1.0,
                     tau_unit_length=nothing, tau_target::Real=1.5, background=:black,
                     mask=[false], verbose::Bool=false, kwargs...)
     scale in (:log, :linear) || throw(ArgumentError("volumelook: scale must be :log or :linear, got :$scale"))
@@ -171,6 +177,7 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
     opacity_gamma > 0 || throw(ArgumentError("volumelook: opacity_gamma must be positive"))
     iso_width > 0 || throw(ArgumentError("volumelook: iso_width must be positive"))
     (0 <= iso_alpha <= 1) || throw(ArgumentError("volumelook: iso_alpha must be between 0 and 1"))
+    (isfinite(exposure) && exposure > 0) || throw(ArgumentError("volumelook: exposure must be positive"))
 
     v = Float64.(getvar(dataobject, quantity, unit))
     lo, hi = if colorrange === nothing
@@ -199,7 +206,7 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
     look = VolumeLook(quantity, unit, scale, range01, colormap, lut,
                       (Float64(opacity[1]), Float64(opacity[2])), Float64(opacity_gamma),
                       isov, iso_t, Float64(iso_width) / span, Float64(iso_alpha),
-                      1.0, _background_color(background))
+                      Float64(exposure), 1.0, _background_color(background))
 
     # strength: either given, or chosen so the median optical depth of this view is tau_target
     sigma = if tau_unit_length !== nothing
@@ -216,7 +223,7 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
     end
     return VolumeLook(look.quantity, look.unit, look.scale, look.colorrange, look.colormap, look.lut,
                       look.opacity, look.opacity_gamma, look.iso, look.iso_t, look.iso_width,
-                      look.iso_alpha, sigma, look.background)
+                      look.iso_alpha, look.exposure, sigma, look.background)
 end
 
 # ------------------------------------------------------------------------------------
@@ -247,6 +254,12 @@ see, and `opacity_gamma > 1` so that only the top of the range becomes opaque.
 `iso=[1, 10, 100]` puts a **surface** at each of those values: only gas near them is opaque, so
 you see nested shells instead of a cloud. With `opacity=(0, 0)` nothing else is drawn at all.
 
+**If the picture comes out dark**, the gas is collecting little light along the ray. Any of these
+helps, in this order: raise `exposure`; shorten `tau_unit_length` so the gas is more opaque;
+narrow the `colorrange` onto the values you care about; lower `opacity_gamma` toward 1 so faint
+gas contributes; or raise the low end of `opacity`. Choose a colour map that is bright at its low
+end, such as `:viridis` or `:cividis`, rather than one that starts black.
+
 Pass `look=` from [`volumelook`](@ref) to keep colours and opacity fixed across the frames of a
 movie; [`volumeorbit`](@ref) does that for a turning view. View keywords are those of the off-axis
 [`projection`](@ref): `direction`, `los`, `up`, `inclination`, `azimuth`, `axis`, `position_angle`,
@@ -260,14 +273,14 @@ function volumerender(dataobject::HydroDataType, quantity::Symbol; look::Union{N
                       unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
                       percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
                       opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha::Real=0.8,
-                      tau_unit_length=nothing, tau_target::Real=1.5,
+                      exposure::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
                       background=:black, supersample::Union{Symbol,Integer}=:auto,
                       mask=[false], verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
     l = look === nothing ?
         volumelook(dataobject, quantity; unit=unit, scale=scale, colorrange=colorrange,
                    percentiles=percentiles, colormap=colormap, opacity=opacity,
                    opacity_gamma=opacity_gamma, iso=iso, iso_width=iso_width, iso_alpha=iso_alpha,
-                   tau_unit_length=tau_unit_length,
+                   exposure=exposure, tau_unit_length=tau_unit_length,
                    tau_target=tau_target, background=background, mask=mask, verbose=false, kwargs...) :
         look
     return _volume_render(dataobject, l; supersample=supersample, mask=mask, verbose=verbose,
@@ -307,7 +320,7 @@ function volumeorbit(dataobject::HydroDataType, quantity::Symbol; angles=0:2:358
                      unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
                      percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
                      opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha::Real=0.8,
-                     tau_unit_length=nothing, tau_target::Real=1.5,
+                     exposure::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
                      background=:black, supersample::Union{Symbol,Integer}=:auto,
                      verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
     sweep in (:azimuth, :inclination, :position_angle) ||
@@ -320,7 +333,7 @@ function volumeorbit(dataobject::HydroDataType, quantity::Symbol; angles=0:2:358
                                          (inclination=inclination, axis=axis, position_angle=a)
     common = (center=center, range_unit=fov_unit, xrange=win, yrange=win, zrange=win, kwargs...)
     lookkw = (; unit, scale, colorrange, percentiles, colormap, opacity, opacity_gamma,
-              iso, iso_width, iso_alpha, tau_unit_length, tau_target, background)
+              iso, iso_width, iso_alpha, exposure, tau_unit_length, tau_target, background)
     l = look === nothing ?
         volumelook(src, quantity; lookkw..., verbose=false, viewof(first(angles))..., common...) : look
     verbose && println("[Mera]: volume orbit, ", length(angles), " frames, ",
@@ -387,7 +400,7 @@ function volumepath(dataobject::HydroDataType, quantity::Symbol; keyframes, fram
                     unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
                     percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
                     opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha::Real=0.8,
-                    tau_unit_length=nothing, tau_target::Real=1.5,
+                    exposure::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
                     background=:black, supersample::Union{Symbol,Integer}=:auto,
                     verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
     isempty(keyframes) && throw(ArgumentError("volumepath: give at least one keyframe"))
@@ -400,7 +413,7 @@ function volumepath(dataobject::HydroDataType, quantity::Symbol; keyframes, fram
             for k in 1:frames]
 
     lookkw = (; unit, scale, colorrange, percentiles, colormap, opacity, opacity_gamma,
-              iso, iso_width, iso_alpha, tau_unit_length, tau_target, background)
+              iso, iso_width, iso_alpha, exposure, tau_unit_length, tau_target, background)
     first_src, first_kw = _volume_path_frame(dataobject, path[1], fov_unit, aperture, res, axis, kwargs)
     l = look === nothing ? volumelook(first_src, quantity; lookkw..., verbose=false, first_kw...) : look
     verbose && println("[Mera]: volume path, ", frames, " frames, ", l)
@@ -487,6 +500,18 @@ function _volume_crop_square(m::VolumeRenderType, fov_code; npix::Union{Nothing,
     return VolumeRenderType(m.image[rows, cols], m.alpha[rows, cols], m.value[rows, cols], m.look,
                             m.supersample, [cx - h, cx + h, cy - h, cy + h], m.pixsize, m.los, m.up,
                             m.cam_right, m.center, m.boxlen, m.scale, m.info)
+end
+
+# Run `f` with Mera's messages off, then restore the setting. Used for the internal camera
+# setup, which would otherwise emit hints meant for someone computing physics.
+function _quietly(f)
+    old = Mera.verbose_mode
+    try
+        verbose(false)
+        return f()
+    finally
+        verbose(old)
+    end
 end
 
 # ------------------------------------------------------------------------------------
@@ -620,7 +645,12 @@ function _volume_setup(dataobject::HydroDataType, l::VolumeLook; direction=:z, l
 
     Lvec = nothing
     if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
-        Lvec = [sum(getvar(dataobject, q, center=center, center_unit=range_unit)) for q in (:lx, :ly, :lz)]
+        # The spin axis is taken in the BOX frame, as `projection` does. Mera's hints about a
+        # missing velocity frame or centre are about physics, not about pointing a camera, so
+        # they are silenced for this one call instead of appearing in every picture.
+        Lvec = _quietly() do
+            [sum(getvar(dataobject, q, center=center, center_unit=range_unit)) for q in (:lx, :ly, :lz)]
+        end
     end
     los, up, direction = _volume_view(direction, los, up, inclination, azimuth, axis)
     losv, uph = resolve_los(los=los, theta=nothing, phi=nothing, direction=direction,
@@ -836,9 +866,9 @@ function _volume_render(dataobject::HydroDataType, l::VolumeLook; supersample::U
     R = _block_mean(R, k); G = _block_mean(G, k); B = _block_mean(B, k)
     V = _block_mean(V, k); A = _block_mean(A, k); T = _block_mean(T, k)
 
-    bg = l.background
-    image = [RGB{Float64}(clamp(R[p] + T[p]*bg.r, 0, 1), clamp(G[p] + T[p]*bg.g, 0, 1),
-                          clamp(B[p] + T[p]*bg.b, 0, 1)) for p in eachindex(R)]
+    bg = l.background; e = l.exposure
+    image = [RGB{Float64}(clamp(e*R[p] + T[p]*bg.r, 0, 1), clamp(e*G[p] + T[p]*bg.g, 0, 1),
+                          clamp(e*B[p] + T[p]*bg.b, 0, 1)) for p in eachindex(R)]
     image = reshape(image, size(R))
     value = [A[p] > 0 ? V[p] / A[p] : NaN for p in eachindex(A)]
     value = reshape(value, size(A))
