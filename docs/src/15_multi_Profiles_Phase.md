@@ -72,10 +72,11 @@ M(p) = p.sum .* gas.scale.Msol      # code mass -> Msol
 fig = Figure(size=(1080,420))
 ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="mass / bin [M⊙]", title="linear bins")
 scatterlines!(ax1, pl.x, M(pl), color=:seagreen)
-ax2 = Axis(fig[1,2], xscale=log10, yscale=log10, xlabel="R [kpc]", ylabel="mass / bin [M⊙]", title="log bins + custom edges")
-o = M(plg) .> 0
-lines!(ax2, plg.x[o], M(plg)[o], color=:dodgerblue, label="50 log bins")
-stairs!(ax2, pe.x, max.(M(pe),1), color=:crimson, step=:center, label="custom edges")
+ax2 = Axis(fig[1,2], xscale=log10, yscale=log10, xlabel="R [kpc]", ylabel="mass / bin [M⊙]", title="log bins + custom edges  (bins with ≥ 10 cells)")
+o = (M(plg) .> 0) .& (plg.count .>= 10)   # a bin holding a few cells is noise, not signal
+lines!(ax2, plg.x[o], M(plg)[o], color=:dodgerblue, linewidth=2, label="50 log bins")
+stairs!(ax2, pe.x, max.(M(pe),1), color=:crimson, step=:center, linewidth=2, label="custom edges")
+axislegend(ax2, position=:rb, framevisible=false)
 axislegend(ax2, position=:rt); fig
 ```
 
@@ -116,32 +117,38 @@ axislegend(ax, position=:rt, framevisible=false); fig
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_7_1.png)
 
-## 3. Density, enclosed mass & normalization (density PDF)
+## 3. Density, enclosed mass & normalization
 
 `geometry=:spherical` (shell `4/3·π·Δr³`) or `:cylindrical` (annulus `π·Δr²`) divides the binned
-weight by the shell volume to give a physical **`density`** (`weight`-unit per `xunit`³, + `shell_volume`).
-`cumulative=:forward` (or `:reverse`) adds `cumsum`/`cumcount`, the **enclosed mass** M(<r).
-`normalize=:sum` gives per-bin `fraction` (Σ=1); `normalize=:pdf` gives a true probability density
-`pdf` (∫=1). The canonical use is the **density PDF**, bin *by* density and normalize; the `weight`
-then picks the **mass-weighted** vs **volume-weighted** ρ-PDF (they differ, the near-log-normal ISM
-density distribution).
+weight by the shell volume to give a physical **`density`** (`weight`-unit per `xunit`³, +
+`shell_volume`). `cumulative=:forward` (or `:reverse`) adds `cumsum`/`cumcount`, the **enclosed
+mass** M(<r), which is where a half-mass radius comes from. `normalize=:sum` gives per-bin
+`fraction` (Σ=1); `normalize=:pdf` gives a true probability density (∫=1), so `profile` can bin
+*by* density and hand back a ρ-PDF.
+
+For PDFs specifically, [`pdf`](@ref) is the direct route and the
+[Statistics](statistics.md) page covers weighting, normalisation and the log-normal question in
+one place.
 
 ```julia
 pr = profile(gas, :r_sphere; weight=:mass, geometry=:spherical, cumulative=:forward, scale=:log,
              xrange=(0.3,24), nbins=40, center=ctr, range_unit=:kpc, xunit=:kpc)
 ρ = pr.density .* gas.scale.Msol; Menc = pr.cumsum .* gas.scale.Msol
-dm = profile(gas, :rho; weight=:mass,   normalize=:pdf, scale=:log, unit=:nH, nbins=60)   # mass-weighted ρ-PDF
-dv = profile(gas, :rho; weight=:volume, normalize=:pdf, scale=:log, unit=:nH, nbins=60)   # volume-weighted ρ-PDF
-fig = Figure(size=(1500,420))
-ax1 = Axis(fig[1,1], xscale=log10, yscale=log10, xlabel="r [kpc]", ylabel="ρ [M⊙/kpc³]", title="spherical density ρ(r)  (geometry)")
-od = ρ .> 0; scatterlines!(ax1, pr.x[od], ρ[od], color=:crimson)
-ax2 = Axis(fig[1,2], xscale=log10, xlabel="r [kpc]", ylabel="M(<r) [M⊙]", title="enclosed mass  (cumulative)")
-lines!(ax2, pr.x, Menc, color=:navy, linewidth=2.5)
-ax3 = Axis(fig[1,3], xscale=log10, yscale=log10, xlabel="n_H [cm⁻³]", ylabel="pdf [per linear n_H]", title="density PDF  (normalize=:pdf)")
-om = dm.pdf .> 0; ov = dv.pdf .> 0
-lines!(ax3, dm.x[om], dm.pdf[om], color=:crimson, linewidth=2.5, label="mass-weighted")
-lines!(ax3, dv.x[ov], dv.pdf[ov], color=:teal,    linewidth=2.5, label="volume-weighted")
-axislegend(ax3, position=:lt); fig
+frac  = Menc ./ Menc[end]
+rhalf = pr.x[findfirst(>=(0.5), frac)]          # where half the gas is enclosed
+
+fig = Figure(size=(1080,420))
+a1 = Axis(fig[1,1], xscale=log10, yscale=log10, xlabel="r [kpc]", ylabel="ρ [M⊙/kpc³]",
+          title="spherical density ρ(r)   (geometry=:spherical)")
+od = ρ .> 0; scatterlines!(a1, pr.x[od], ρ[od], color=:crimson)
+a2 = Axis(fig[1,2], xscale=log10, xlabel="r [kpc]", ylabel="M(<r) [M⊙]",
+          title="enclosed mass   (cumulative=:forward)")
+lines!(a2, pr.x, Menc, color=:navy, linewidth=2.5)
+hlines!(a2, [0.5*Menc[end]], color=:gray, linestyle=:dash)
+vlines!(a2, [rhalf], color=:gray, linestyle=:dash)
+text!(a2, rhalf*1.15, 0.52*Menc[end]; text="half the gas inside $(round(rhalf,digits=1)) kpc",
+      color=:gray, fontsize=12, align=(:left,:bottom))
+fig
 ```
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_9_1.png)
@@ -264,6 +271,11 @@ Three statistics upgrades, all opt-in and composable:
   (`mean_ci`/`median_ci`, `nbins×2`) plus `median_se`; `ci=:percentile` (default), `:basic` or
   `:bca` (bias-corrected & accelerated). It is deterministic (seeded), so reruns match.
 
+The three panels are separate on purpose. In this galaxy the skewness of `v_z` reaches **-44**
+while the excess kurtosis reaches **2600**: drawn on one axis the skewness is a flat line on zero,
+and the strongly one-sided vertical motion in the mid-disc, which is the interesting part, is
+invisible.
+
 ```julia
 pe = profile(gas, :r_cylinder, :vz; weight=:mass, unit=:km_s, scale=:equal, nbins=18,
              center=ctr, range_unit=:kpc, xunit=:kpc, bootstrap=800, ci=:bca, confidence_level=0.95)
@@ -271,16 +283,21 @@ println("equal-count points/bin (min..max): ", extrema(pe.count), "  → nearly 
 ok = pe.count .> 5
 x = pe.x[ok]; mu = pe.mean[ok]; lo = pe.mean_ci[ok,1]; hi = pe.mean_ci[ok,2]
 sk = pe.skewness[ok]; ku = pe.kurtosis[ok]
-fig = Figure(size=(900,420))
+
+# Skewness runs to -44 here and excess kurtosis to 2600: on one axis the skewness is a flat
+# line on zero and the panel says nothing. One axis each, and the kurtosis in log.
+fig = Figure(size=(1350,420))
 ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="⟨v_z⟩ [km/s]", title="equal-count bins + BCa bootstrap 95% CI")
 band!(ax1, x, lo, hi, color=(:dodgerblue,0.25), label="95% CI (bootstrap)")
 lines!(ax1, x, mu, color=:dodgerblue, linewidth=2.5, label="⟨v_z⟩")
 axislegend(ax1, position=:rt, framevisible=false)
-ax2 = Axis(fig[1,2], xlabel="R [kpc]", ylabel="shape moment", title="shape of the v_z distribution per bin")
+ax2 = Axis(fig[1,2], xlabel="R [kpc]", ylabel="skewness", title="asymmetry of v_z per bin")
 hlines!(ax2, [0.0], color=:gray, linestyle=:dash)
-lines!(ax2, x, sk, color=:crimson, linewidth=2, label="skewness")
-lines!(ax2, x, ku, color=:seagreen, linewidth=2, label="excess kurtosis")
-axislegend(ax2, position=:rt, framevisible=false); fig
+lines!(ax2, x, sk, color=:crimson, linewidth=2)
+ax3 = Axis(fig[1,3], xlabel="R [kpc]", ylabel="excess kurtosis", yscale=log10,
+           title="tail weight of v_z per bin")
+lines!(ax3, x, ku, color=:seagreen, linewidth=2)
+fig
 ```
 
 ```
