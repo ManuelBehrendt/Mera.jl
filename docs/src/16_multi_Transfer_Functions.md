@@ -332,6 +332,20 @@ The maps below are: the dispersion measure of free electrons, the emission measu
 surface brightness in Rayleigh (case B recombination), the thermal Sunyaev-Zel'dovich `y`, and a
 V-band extinction map in magnitudes.
 
+**Which mock suits which object.** The five maps are standard tools, but not all of them for the
+same kind of object. This page shows them on one disc galaxy so the code is easy to follow, which
+is honest for some of them and only a demonstration for others.
+
+| recipe | usual target | typical observed value | on this galaxy |
+|:--|:--|:--|:--|
+| dust extinction `A_V` | galaxies, molecular clouds | a few mag through a disc, tens in clouds | a real use |
+| emission measure, Hα | galaxies, HII regions, warm ionised gas | about 1 to 10 R in the warm ionised medium, 10³ R and up in HII regions | right target, but see the ionisation caveat below |
+| free-free radio | galaxies (star formation), clusters | mJy/beam at GHz | a real use |
+| dispersion measure | fast radio bursts, pulsars | 30 to 100 pc cm⁻³ through the Milky Way disc | the host part of a DM, normally integrated along a cosmological ray |
+| thermal SZ `y` | **galaxy clusters and groups**, the hot gas around massive galaxies, usually stacked | y ≈ 10⁻⁴ in a cluster | **a demonstration only**: a disc galaxy gives y ≈ 10⁻⁷, far below any measurement |
+
+X-ray maps belong with the SZ row: clusters, hot halos and superbubbles, not the cold disc.
+
 One caveat decides how much these mean. Without a radiative-transfer run, gas counts as ionised
 only when it is hot enough to ionise itself. Real Hα comes mostly from gas photoionised by stars
 at about 8000 K, which this test fails, so the Hα map below shows only collisionally ionised gas
@@ -422,6 +436,21 @@ fig
 * The camera is orthographic: all rays are parallel, which is what makes the front-to-back order
   exact.
 * The cost grows with the number of cells that glow or block, and with `supersample²`.
+!!! note "What this is not"
+    These maps integrate one line of sight with one emissivity and one extinction. They do not
+    replace a dedicated code when you need:
+
+    * **scattering**, full dust emission, or stellar populations: SKIRT (Camps & Baes 2020),
+      RADMC-3D (Dullemond et al. 2012), Powderday (Narayanan et al. 2021)
+    * **X-ray spectra and instruments**: pyXSIM and SOXS (ZuHone et al.)
+    * **spectral bands, filters or an instrument response**: nothing here convolves with a filter
+      or a beam
+    * **velocity channels (PPV cubes)** or line profiles
+    * **light from star particles**: only gas emits here
+
+    What this feature does exactly, and better than a ray marcher, is the geometry: one uniform
+    value per AMR cell, the exact per-cell solution, and an exact front-to-back order.
+
 * Views and framing work as for [off-axis projections](06_offaxis_Projection.md): `direction`,
   `inclination`/`azimuth`/`axis`, `position_angle`, `xrange`/`yrange`/`zrange`.
 
