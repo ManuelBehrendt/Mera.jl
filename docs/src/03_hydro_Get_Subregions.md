@@ -216,7 +216,9 @@ object of the **same type as `gas`** (a `HydroDataType`), so everything that
 works on the full box, `msum`, `getvar`, `projection`, even further
 `subregion` calls, works on the cut, unchanged. By default the boundary cells
 are split (`split=true`), which is why the projected edge below follows the
-dashed analytic circle instead of a staircase of cells.
+dashed analytic circle closely rather than stepping along the cells. §4 puts
+the three treatments side by side, zoomed onto the coarse rim, where the
+difference between them is plain.
 
 ```julia
 hello = subregion(gas, Sphere(10.), verbose=false)   # center=[:bc], range_unit=:kpc are the defaults
@@ -583,26 +585,45 @@ disc gas mass (r < 12 kpc, |z| < 2 kpc):
 The residual is tiny here, the disc mid-plane is highly refined, so the
 boundary crosses small cells almost everywhere. Where the choice does matter is
 *above* the plane: edge-on, the cylinder's flat faces at z = ±2 kpc (dashed)
-cut through the coarser cells of the thick-gas layer. The split face feathers
-smoothly past the dashed surface, each straddling cell's correctly-weighted
-mass rendered over its full footprint, a projection effect §7 measures, while
-the centre-tested face ends in a hard edge stepped by whole cells.
+cut through the coarser cells of the thick-gas layer.
+
+The first two panels below are the honest result: at 0.06 % in mass, on a
+six-decade colour scale, the two treatments look the same. That is worth seeing
+once, because it is the usual case, and it is why §3 makes the argument with
+numbers rather than pictures.
+
+The third panel subtracts them, and the difference is not spread over the disc:
+it is a thin signed band lying on the two faces, where the split face keeps each
+straddling cell's inside fraction and the centre test keeps or drops the whole
+cell. The mid-plane speckle is the same effect on much smaller cells.
 
 ```julia
 p3 = proj(disc;       direction=:x, yrange=[-14, 14], zrange=[-4, 4], pxsize=[0.1, :kpc])
 p4 = proj(disc_whole; direction=:x, yrange=[-14, 14], zrange=[-4, 4], pxsize=[0.1, :kpc])
 
+# The two maps differ by 0.06 % in mass: far too little to see against a six-decade
+# colour scale. Subtracting them puts the disagreement where it actually lives.
+dif  = p3.maps[:sd] .- p4.maps[:sd]
+vals = sort!(abs.(filter(isfinite, vec(dif))))
+dlim = vals[max(1, round(Int, 0.999 * length(vals)))]     # ignore a few extreme pixels
+
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(760, 500))
+fig = Figure(size=(760, 720))
 Le  = (-14, 14, -4, 4)
-ax1 = Axis(fig[1, 1], title="disc edge-on, split — the face feathers past z = ±2")
+ax1 = Axis(fig[1, 1], title="disc edge-on, split")
 show_sd!(ax1, p3, Le)
-ax2 = Axis(fig[2, 1], title="disc edge-on, split=false — a hard, stepped edge instead")
+ax2 = Axis(fig[2, 1], title="disc edge-on, split=false")
 show_sd!(ax2, p4, Le)
-for ax in (ax1, ax2), zpl in (-2., 2.)
+ax3 = Axis(fig[3, 1], title="split − split=false — the disagreement sits on the faces")
+xs = range(p3.cextent[1]*kpc, p3.cextent[2]*kpc; length=size(dif, 1))
+ys = range(p3.cextent[3]*kpc, p3.cextent[4]*kpc; length=size(dif, 2))
+hm = heatmap!(ax3, xs, ys, dif; colormap=:balance, colorrange=(-dlim, dlim))
+ax3.aspect = DataAspect(); hidedecorations!(ax3); limits!(ax3, Le...)
+for ax in (ax1, ax2, ax3), zpl in (-2., 2.)
     lines!(ax, [-14., 14.], [zpl, zpl]; color=:cyan, linewidth=1, linestyle=:dash)
 end
-sd_bar!(fig[:, 2])
+sd_bar!(fig[1:2, 2])
+Colorbar(fig[3, 2], hm; label="Δ Σ  [Msol pc⁻²]")
 fig
 ```
 
