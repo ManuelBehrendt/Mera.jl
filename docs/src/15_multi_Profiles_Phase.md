@@ -232,15 +232,22 @@ With a third field `cvar` each cell is coloured by the per-cell weighted **mean*
 that for `:std`/`:median`/`:min`/`:max`/`:full` or a function. `normalize=:pdf` makes a 2-D PDF,
 and `xedges`/`yedges` accept custom edges.
 
-Same ρ–T plane, four questions. The mass histogram is the shape of the gas; the radial velocity
-about the box centre separates **inflow from outflow**, and picks out the hot wind; its scatter
-per bin is a **velocity dispersion**; and the median **cell size** shows where the refinement
-actually went, which is a property of the run rather than of the gas.
+Same ρ–T plane, four questions. **Every title says which statistic is drawn**, because a colour
+means nothing until you know whether it is a sum, a mean, a median or a spread:
 
-Two things worth copying. Bins holding almost no mass carry wild means, and one of them will set
-the colour range for the whole panel, so they are masked first. And `v_r` here is one-sided, a
-wind rather than a symmetric field, so the diverging limits come from a percentile of `|v_r|`
-rather than its extremes.
+| panel | statistic | what it answers |
+|:--|:--|:--|
+| mass | **sum** of the weight per bin | where the gas is |
+| ⟨v_r⟩ | **mean** radial velocity about the box centre | inflow against outflow, and the hot wind |
+| σ(v_r) | **standard deviation** per bin | how ordered that motion is |
+| cell size | **median** | where the refinement went, a property of the run, not the gas |
+
+Three habits worth copying. Bins holding almost no mass carry wild means, and one of them will set
+the colour range for a whole panel, so they are masked first. `v_r` here is one-sided, a wind
+rather than a symmetric field, so the diverging limits come from a percentile of `|v_r|` rather
+than its extremes. And **σ spans 1.7 dex**, so it gets a log colour scale, without which the disc
+is a single flat colour; the cell size spans 0.3 dex and takes only three values, being the AMR
+level, so a log scale there would add nothing.
 
 ```julia
 kw = (weight=:mass, nbins=(140,140), xscale=:log, yscale=:log, xunit=:nH, yunit=:K,
@@ -260,21 +267,24 @@ function mask(M)
 end
 qq(M, p) = (v = filter(isfinite, vec(M)); isempty(v) ? 0.0 : quantile(v, p))
 vlim = qq(abs.(mask(pvr.mean)), 0.90)      # v_r is one-sided here: a wind, not a symmetric field
+sig  = mask(psd.std); sig[sig .<= 0] .= NaN   # a log colour scale needs positives
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 xc = log10.((ph.xedges[1:end-1].+ph.xedges[2:end])./2)
 yc = log10.((ph.yedges[1:end-1].+ph.yedges[2:end])./2)
 lg(M) = log10.(replace(M, 0.0=>NaN))
 fig = Figure(size=(1150,860))
-panels = (("mass  (H)",                          lg(ph.H),          :magma,   nothing),
-          ("⟨v_r⟩ [km/s]  (inflow / outflow)",   mask(pvr.mean),    :balance, (-vlim, vlim)),
-          ("σ(v_r) [km/s]",                      mask(psd.std),     :viridis, (0.0, qq(mask(psd.std), 0.98))),
-          ("median cell size [pc]",              mask(pcs.median),  :cividis, nothing))
-for (k,(lab,M,cm,rng)) in enumerate(panels)
+#          title (naming the statistic)          data              colourmap  range                          log?
+panels = (("sum of mass per bin  (H)",           lg(ph.H),         :magma,   nothing,                        identity),
+          ("mean ⟨v_r⟩ [km/s]   (inflow / outflow)", mask(pvr.mean), :balance, (-vlim, vlim),                identity),
+          ("std σ(v_r) [km/s]   (log colour)",   sig,              :viridis, (qq(sig,0.02), qq(sig,0.995)),  log10),
+          ("median cell size [pc]",              mask(pcs.median), :cividis, nothing,                        identity))
+for (k,(lab,M,cm,rng,csc)) in enumerate(panels)
     r=(k-1)÷2+1; c=2*((k-1)%2)+1
-    ax = Axis(fig[r,c], xlabel="log₁₀ n_H [cm⁻³]", ylabel="log₁₀ T [K]", title=lab)
-    hm = rng === nothing ? heatmap!(ax, xc, yc, M; colormap=cm) :
-                           heatmap!(ax, xc, yc, M; colormap=cm, colorrange=rng)
+    ax  = Axis(fig[r,c], xlabel="log₁₀ n_H [cm⁻³]", ylabel="log₁₀ T [K]", title=lab)
+    kwc = rng === nothing ? (; colormap=cm) : (; colormap=cm, colorrange=rng)
+    hm  = csc === log10 ? heatmap!(ax, xc, yc, M; colorscale=log10, kwc...) :
+                          heatmap!(ax, xc, yc, M; kwc...)
     ax.backgroundcolor = :black
     Colorbar(fig[r,c+1], hm)
 end
