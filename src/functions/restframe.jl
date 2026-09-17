@@ -48,7 +48,7 @@ function _vframe_hint(dataobject, vars, vcenter)
          "getvar($(join(":" .* string.(named), ", "))) has no `vcenter` — " *
          "velocities are in the BOX frame.",
          "Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,",
-         "`vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.")
+         "`vcenter=` the frame).")
     return nothing
 end
 

@@ -155,6 +155,37 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
         @test size(sq[1].image, 1) == size(sq[1].image, 2)       # square aperture gives a square frame
     end
 
+    @testset "isosurfaces" begin
+        # three slabs in z with values 1, 2 and 3
+        gas = _vr_gas(4; rho=(x, y, z) -> z < 1/3 ? 1.0 : (z < 2/3 ? 2.0 : 3.0))
+        kw = (scale=:linear, colorrange=(0.0, 4.0), opacity=(0.0, 0.0), iso_width=0.1,
+              iso_alpha=1.0, tau_unit_length=[0.02, :standard], direction=:z, res=16, verbose=false)
+        # without a surface nothing is drawn at all
+        none = volumerender(gas, :rho; kw...)
+        @test all(iszero, none.alpha)
+        # a surface at 2 shows only the middle slab
+        one = volumerender(gas, :rho; iso=[2.0], kw...)
+        @test one.value[_vmid(one)...] ≈ 2.0 rtol=1e-6
+        @test one.alpha[_vmid(one)...] > 0.5
+        @test one.look.iso == [2.0]
+        @test occursin("isosurface", sprint(show, one.look))
+        # two surfaces: the nearer one (higher z, seen from +z) dominates what you see
+        two = volumerender(gas, :rho; iso=[2.0, 3.0], kw...)
+        @test two.alpha[_vmid(two)...] > one.alpha[_vmid(one)...]
+        @test two.value[_vmid(two)...] > 2.0
+        # from the other side the order flips
+        flip = volumerender(gas, :rho; iso=[2.0, 3.0], Base.structdiff(kw, (direction=0,))..., los=[0, 0, -1])
+        @test flip.value[_vmid(flip)...] < two.value[_vmid(two)...]
+        # a shell adds opacity only near its value
+        wide = volumerender(gas, :rho; iso=[2.0], Base.structdiff(kw, (iso_width=0,))..., iso_width=2.0)
+        @test wide.alpha[_vmid(wide)...] > two.alpha[_vmid(two)...] * 0.5   # a wide shell catches everything
+        @test_throws ArgumentError volumerender(gas, :rho; iso=[2.0],
+                                                Base.structdiff(kw, (iso_width=0,))..., iso_width=0)
+        @test_throws ArgumentError volumerender(gas, :rho; iso=[2.0],
+                                                Base.structdiff(kw, (iso_alpha=0,))..., iso_alpha=2)
+        @test_throws ArgumentError volumerender(gas, :rho; iso=[-1.0], scale=:log, res=8, verbose=false)
+    end
+
     @testset "camera path" begin
         gas = _vr_gas(4; rho=(x, y, z) -> 1 + 9exp(-((x-0.5)^2 + (y-0.5)^2 + 4(z-0.5)^2) / 0.02))
         common = (fov_unit=:standard, axis=:z, res=24, tau_unit_length=[0.05, :standard],
