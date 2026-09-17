@@ -534,12 +534,53 @@ which is the signature of a halo whose rotation curve is flat.
 And the shortfall is not something the region selection dropped. The *entire*
 particle population of this output, every particle in the box, not just those
 inside the sphere, weighs $5.8 \times 10^9\,M_\odot$, more than an order of
-magnitude less than the gap at 16 kpc. Whatever the field is responding to is
-not represented in this output as cells or as particles at all.
+magnitude less than the gap at 16 kpc.
+
+**Name it: this run carries an external potential.** Every one of the 508 939
+particles in this output has a birth time greater than zero, so every one of
+them is a star formed during the run. There is no dark-matter particle
+population here at all. The halo that the field is responding to is *imposed*,
+an analytic term added to the Poisson solve rather than matter that Mera can
+read, and in many isolated-galaxy setups a stellar disc or bulge is imposed the
+same way. Nothing is missing from the output and nothing is wrong with the
+ledger: the two sides are simply counting different things, and only one of
+them can be summed.
+
+!!! warning "What `M_dyn` is, and is not, when the potential is imposed"
+    $M_\mathrm{dyn} = |a_r| r^2 / G$ assumes a spherical mass distribution. A
+    halo term usually is spherical and the estimate is fair. A disc or bar
+    term is not, and then $M_\mathrm{dyn}$ is a *spherical-equivalent* mass:
+    the mass a spherical distribution would need to produce the measured radial
+    pull at that radius. Read the table as a detection of unmodelled mass, which
+    is robust, rather than as a measurement of its amount, which is not.
+
+    Which components are analytic is a property of the run, not of the output.
+    RAMSES records it in the namelist (`gravity_type` and its parameters, or a
+    patch), so check the setup rather than inferring it from the numbers.
+
 That is a completely ordinary situation for an isolated-galaxy run, and it is
 exactly the kind of thing a mass budget should be able to *detect* rather than
 quietly absorb: the ledger of what you can see, the field of what is actually
 pulling, and a region language that lets you ask both the same question.
+
+```julia
+# Is there a dark-matter particle population at all? In this particle format a birth time
+# of zero marks a primordial (dark-matter) particle; anything later formed during the run.
+b = getvar(stars, :birth)
+m = getvar(stars, :mass, :Msol)
+
+println("particles in the whole box      : ", length(b))
+println("  with birth = 0 (dark matter)  : ", count(==(0.0), b), "   ",
+        round(sum(m[b .== 0.0]), sigdigits=4), " Msol")
+println("  with birth > 0 (formed stars) : ", count(>(0.0), b), "   ",
+        round(sum(m[b .> 0.0]), sigdigits=4), " Msol")
+```
+
+```
+particles in the whole box      : 508939
+  with birth = 0 (dark matter)  : 0   0.0 Msol
+  with birth > 0 (formed stars) : 508939   5.804e9 Msol
+```
 
 ## 7. A Second Opinion: the Gas Rotation
 
@@ -591,7 +632,7 @@ annulus at 7.5 kpc : v_φ(gas) = 190.3 km/s   vs   v_c(field) = 189.1 km/s
 outermost annulus  : 13942 cells — the gas disc has ended, the mean is meaningless
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_25_4.png)
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_26_4.png)
 
 Out to the edge of the gas disc the two curves track each other within about
 ten percent, and at 7.5 kpc they agree to better than one, good enough to
@@ -705,7 +746,7 @@ a_bar!(fig[1, 3])
 fig
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_31_1.png)
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_32_1.png)
 
 The hole is round, not staircased, and the outer rim ends where the cylinder
 does. For a figure at a chosen pixel size, `refine_to=[0.15, :kpc]` on the
