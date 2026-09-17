@@ -227,37 +227,67 @@ axislegend(ax3, position=:rb); fig
 
 ## 6. Phase diagrams, colour is a knob
 
-`phase` is a 2-D weighted histogram of two fields, the classic mass-weighted **ρ to T** diagram. With
-a third field `cvar` each cell is coloured by the per-cell weighted **mean**; `cstat` swaps that for
-`:std`/`:median`/`:min`/`:max`/`:full` or a function. `normalize=:pdf` makes a 2-D PDF, and
-`xedges`/`yedges` accept custom edges. Same ρ to T plane, four different colourings:
+`phase` is a 2-D weighted histogram of two fields, the classic mass-weighted **ρ to T** diagram.
+With a third field `cvar` each cell is coloured by the per-cell weighted **mean**; `cstat` swaps
+that for `:std`/`:median`/`:min`/`:max`/`:full` or a function. `normalize=:pdf` makes a 2-D PDF,
+and `xedges`/`yedges` accept custom edges.
+
+Same ρ–T plane, four questions. The mass histogram is the shape of the gas; the radial velocity
+about the box centre separates **inflow from outflow**, and picks out the hot wind; its scatter
+per bin is a **velocity dispersion**; and the median **cell size** shows where the refinement
+actually went, which is a property of the run rather than of the gas.
+
+Two things worth copying. Bins holding almost no mass carry wild means, and one of them will set
+the colour range for the whole panel, so they are masked first. And `v_r` here is one-sided, a
+wind rather than a symmetric field, so the diverging limits come from a percentile of `|v_r|`
+rather than its extremes.
 
 ```julia
-kw = (weight=:mass, nbins=(140,140), xscale=:log, yscale=:log, xunit=:nH, yunit=:K, center=ctr, range_unit=:kpc)
+kw = (weight=:mass, nbins=(140,140), xscale=:log, yscale=:log, xunit=:nH, yunit=:K,
+      center=ctr, range_unit=:kpc)
 ph  = phase(gas, :rho, :T; kw...)
-pcv = phase(gas, :rho, :T, :vϕ_cylinder; cstat=:mean, cunit=:km_s, kw...)
-psd = phase(gas, :rho, :T, :vϕ_cylinder; cstat=:std,  cunit=:km_s, kw...)   # also :median/:min/:max/:full/callable
-ppdf= phase(gas, :rho, :T; normalize=:pdf, kw...)
+pvr = phase(gas, :rho, :T, :vr_sphere; cstat=:mean,   cunit=:km_s, kw...)   # also :median/:min/:max/:full/callable
+psd = phase(gas, :rho, :T, :vr_sphere; cstat=:std,    cunit=:km_s, kw...)
+pcs = phase(gas, :rho, :T, :cellsize;  cstat=:median, cunit=:pc,   kw...)
+
+# A bin holding almost no mass carries a wild mean, and one such bin sets the colour range for
+# the whole panel. Mask them first, exactly as the radial profiles drop bins with few cells.
+keep = ph.H .>= 1e-6 * sum(ph.H)
+function mask(M)
+    out = similar(M, Float64)
+    @inbounds for i in eachindex(M); out[i] = keep[i] ? M[i] : NaN; end
+    return out
+end
+qq(M, p) = (v = filter(isfinite, vec(M)); isempty(v) ? 0.0 : quantile(v, p))
+vlim = qq(abs.(mask(pvr.mean)), 0.90)      # v_r is one-sided here: a wind, not a symmetric field
+
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 xc = log10.((ph.xedges[1:end-1].+ph.xedges[2:end])./2)
 yc = log10.((ph.yedges[1:end-1].+ph.yedges[2:end])./2)
-lg(M)=log10.(replace(M,0.0=>NaN)); fig=Figure(size=(1150,860))
-for (k,(lab,M,cm,fn)) in enumerate((("mass (H)",ph.H,:magma,lg),("⟨v_ϕ⟩ [km/s]",pcv.mean,:balance,identity),
-                                    ("σ(v_ϕ) [km/s]",psd.std,:viridis,identity),("PDF",ppdf.pdf,:magma,lg)))
+lg(M) = log10.(replace(M, 0.0=>NaN))
+fig = Figure(size=(1150,860))
+panels = (("mass  (H)",                          lg(ph.H),          :magma,   nothing),
+          ("⟨v_r⟩ [km/s]  (inflow / outflow)",   mask(pvr.mean),    :balance, (-vlim, vlim)),
+          ("σ(v_r) [km/s]",                      mask(psd.std),     :viridis, (0.0, qq(mask(psd.std), 0.98))),
+          ("median cell size [pc]",              mask(pcs.median),  :cividis, nothing))
+for (k,(lab,M,cm,rng)) in enumerate(panels)
     r=(k-1)÷2+1; c=2*((k-1)%2)+1
-    ax=Axis(fig[r,c], xlabel="log₁₀ n_H [cm⁻³]", ylabel="log₁₀ T [K]", title=lab)
-    A=fn(M); hm=heatmap!(ax, xc, yc, A, colormap=cm, nan_color=:black); Colorbar(fig[r,c+1], hm)
+    ax = Axis(fig[r,c], xlabel="log₁₀ n_H [cm⁻³]", ylabel="log₁₀ T [K]", title=lab)
+    hm = rng === nothing ? heatmap!(ax, xc, yc, M; colormap=cm) :
+                           heatmap!(ax, xc, yc, M; colormap=cm, colorrange=rng)
+    ax.backgroundcolor = :black
+    Colorbar(fig[r,c+1], hm)
 end
 fig
 ```
 
 ```
-[Mera] Hint: getvar(:vϕ_cylinder) has no `vcenter` — velocities are in the BOX frame.
              Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
              `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
              (shown once per session; verbose(false) silences Mera's messages)
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_3.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_2.png)
 
 ## 7. Distribution shape & uncertainties, moments, equal-count bins, bootstrap CIs
 
