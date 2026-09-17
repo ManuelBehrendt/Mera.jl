@@ -199,8 +199,7 @@ export
 #
     projection,
     Emission,
-    EmissionSum,
-    Absorption,
+    Extinction,
     TransferMapType,
     tonemap,
     project,
@@ -505,7 +504,7 @@ include("functions/regions/shellregion.jl")
 include("functions/regions/shellregion_hydro.jl")
 include("functions/regions/region_algebra.jl")
 include("functions/filterdata.jl")
-include("functions/projection/projection_transfer.jl")   # Emission/Absorption transfer functions (needs FilterCondition)
+include("functions/projection/projection_transfer.jl")   # Emission/Extinction transfer functions (needs FilterCondition)
 include("functions/regions/shellregion_gravity.jl")
 include("functions/regions/shellregion_rt.jl")
 include("functions/regions/shellregion_particles.jl")

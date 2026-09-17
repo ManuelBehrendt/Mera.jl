@@ -2910,16 +2910,8 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
     return nothing
 end
 
-# =====================================================================================
-#  Off-axis radiative-transfer accumulation (emission + absorption)
-# -------------------------------------------------------------------------------------
-#  Front-to-back formal solution of dI/dτ = S − I, per pixel:
-#       I += S·(1 − e^{−Δτ})·e^{−τ_sofar} ,  τ += Δτ ,  Δτ = κ·ℓ ,
-#  where ℓ = (∫∫_pixel L)/pixel_area is the exact box-spline chord (same footprint as :exact).
-#  `order` lists cell indices sorted NEAREST→farthest from the observer (front to back), so the
-#  per-pixel τ accumulator attenuates each cell by the dust/gas IN FRONT of it. Order-dependent
-#  ⇒ single-threaded by construction.  κ is in 1/(code length); S in the caller's source units.
-# =====================================================================================
+# Chord geometry shared by `deposit_rotated_cells_exact!` and the transfer-function projection
+# (projection_transfer.jl), which integrates emission and extinction front to back with it.
 
 # affine coefficients (q,r,pmin,pmax) of tmin_k(x,y)=q·x+r·y+pmin and tmax_k=q·x+r·y+pmax
 # for cube axis k with projected components a=right·êk, b=up·êk, c=ŵ·êk.  Inactive (wall)

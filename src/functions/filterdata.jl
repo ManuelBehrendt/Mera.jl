@@ -81,20 +81,26 @@ Base.:&(a::FilterCondition, b::FilterCondition) = _And(a, b)
 Base.:|(a::FilterCondition, b::FilterCondition) = _Or(a, b)
 Base.:!(a::FilterCondition)                     = _Not(a)
 
-# vectorised quantity fetch (getvar in the requested unit; :standard = code units)
-_qvals(obj, q::Symbol, unit::Symbol) = unit === :standard ? getvar(obj, q) : getvar(obj, q, unit)
+# vectorised quantity fetch (getvar in the requested unit; :standard = code units). `center` is
+# forwarded only when given, so plain filterdata/getmask calls behave exactly as before; the
+# transfer-function projection passes its own centre so :r_sphere & co. match the projection.
+function _qvals(obj, q::Symbol, unit::Symbol; center=nothing, center_unit::Symbol=:standard)
+    center === nothing && return unit === :standard ? getvar(obj, q) : getvar(obj, q, unit)
+    return unit === :standard ? getvar(obj, q, center=center, center_unit=center_unit) :
+                                getvar(obj, q, unit, center=center, center_unit=center_unit)
+end
 
-_mask(c::Above, obj)   = _qvals(obj, c.quantity, c.unit) .> c.value
-_mask(c::Below, obj)   = _qvals(obj, c.quantity, c.unit) .< c.value
-_mask(c::InRange, obj) = (v = _qvals(obj, c.quantity, c.unit); (v .>= c.lo) .& (v .<= c.hi))
-_mask(c::Equals, obj)  = (v = _qvals(obj, c.quantity, c.unit); c.atol == 0.0 ? (v .== c.value) : (abs.(v .- c.value) .<= c.atol))
-_mask(c::IsFinite, obj)        = isfinite.(_qvals(obj, c.quantity, c.unit))
-_mask(c::AbovePercentile, obj) = (v = _qvals(obj, c.quantity, c.unit); v .>  quantile(v, c.p/100))
-_mask(c::BelowPercentile, obj) = (v = _qvals(obj, c.quantity, c.unit); v .<  quantile(v, c.p/100))
-_mask(c::Satisfies, obj)       = c.f.(_qvals(obj, c.quantity, c.unit))
-_mask(c::_And, obj)    = _mask(c.a, obj) .& _mask(c.b, obj)
-_mask(c::_Or, obj)     = _mask(c.a, obj) .| _mask(c.b, obj)
-_mask(c::_Not, obj)    = .!_mask(c.a, obj)
+_mask(c::Above, obj; kw...)   = _qvals(obj, c.quantity, c.unit; kw...) .> c.value
+_mask(c::Below, obj; kw...)   = _qvals(obj, c.quantity, c.unit; kw...) .< c.value
+_mask(c::InRange, obj; kw...) = (v = _qvals(obj, c.quantity, c.unit; kw...); (v .>= c.lo) .& (v .<= c.hi))
+_mask(c::Equals, obj; kw...)  = (v = _qvals(obj, c.quantity, c.unit; kw...); c.atol == 0.0 ? (v .== c.value) : (abs.(v .- c.value) .<= c.atol))
+_mask(c::IsFinite, obj; kw...)        = isfinite.(_qvals(obj, c.quantity, c.unit; kw...))
+_mask(c::AbovePercentile, obj; kw...) = (v = _qvals(obj, c.quantity, c.unit; kw...); v .>  quantile(v, c.p/100))
+_mask(c::BelowPercentile, obj; kw...) = (v = _qvals(obj, c.quantity, c.unit; kw...); v .<  quantile(v, c.p/100))
+_mask(c::Satisfies, obj; kw...)       = c.f.(_qvals(obj, c.quantity, c.unit; kw...))
+_mask(c::_And, obj; kw...)    = _mask(c.a, obj; kw...) .& _mask(c.b, obj; kw...)
+_mask(c::_Or, obj; kw...)     = _mask(c.a, obj; kw...) .| _mask(c.b, obj; kw...)
+_mask(c::_Not, obj; kw...)    = .!_mask(c.a, obj; kw...)
 
 """
     getmask(obj, condition) -> BitVector
