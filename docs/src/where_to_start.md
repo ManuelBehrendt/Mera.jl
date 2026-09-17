@@ -51,6 +51,7 @@ simulation. `getvar(gas, :T, :K)` is a statement about physics.
 | everything above 10⁴ K, or between two densities | `filterdata` with `Above`, `Below`, `InRange` | [Masking & Filtering](05_multi_Masking_Filtering.md) |
 | to keep the whole object but mark rows | `getmask`, then pass `mask=` | [Masking & Filtering](05_multi_Masking_Filtering.md) |
 | to reuse one selection across a whole script | `withargs` / `myargs` | [Bundling Arguments](bundled_arguments.md) |
+| a region boundary that looks sharp in a figure | `subregion(..., refine_to=[px, :kpc])` | [How it is measured](computation_reference.md) |
 
 Boundary cells are split by default, so a region and its complement add up to the parent exactly.
 That is worth checking once in any new script:

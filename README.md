@@ -71,7 +71,9 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
 
 - **When you select a region, Mera cuts the cells as well.** Pick a sphere, and some cells lie
   half inside it and half outside. Mera counts half of such a cell, not all of it and not none of
-  it.
+  it, so the numbers are right at the edge without your having to think about it. When the *picture*
+  matters too, `refine_to` subdivides those edge cells down to your pixel size, so a rendered
+  boundary is as sharp as the map you are drawing.
   [How it is measured](https://manuelbehrendt.github.io/Mera.jl/stable/computation_reference/)
 - **Look at your galaxy from any angle.** Mera projects the original cells, keeping the detail of
   the smallest ones, and the mass you measure stays the same at any angle, pixel size or thread
@@ -151,7 +153,9 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
   type, with optional spatial subregioning and refinement-level capping
 - **`subregion` / `shellregion`**: cuboid, sphere, cylinder and shell selections that preserve AMR
   structure. Regions are values: combine them with `∩ ∪ \ !` (ASCII `& |`), tilt a cylinder's
-  axis, and boundary cells keep the fraction of themselves inside
+  axis, and boundary cells keep the fraction of themselves inside. `refine` / `refine_to`
+  subdivide those edge cells for rendering, which sharpens a drawn boundary without changing
+  any total, since the fraction already made the totals exact
 - **`filterdata` / `getmask`**: select by physical value on anything `getvar` computes, with
   `Above`, `Below`, `InRange`, `AbovePercentile`, `Satisfies` and friends composed by `& | !`.
   Returns the same kind of object, so calls chain

@@ -242,6 +242,12 @@ percent. They stop cancelling when the edge cuts something heavy: in the `mw_L10
 thin shell with its edge on the densest cell comes out **14 % too heavy**. Splitting removes the
 question, so you do not need to know which case you are in.
 
+That is the arithmetic. The **picture** is a separate question: a projection spreads each edge
+cell's fraction-weighted mass over its whole footprint, so a boundary drawn on a coarse patch looks
+soft. `subregion(..., refine_to=[0.05, :kpc])` subdivides the straddling cells until their children
+are no larger than that, and the rendered edge sharpens to the scale you set. It changes no total,
+because `:fraction` already made the totals exact; it is a rendering tool, not an accuracy one.
+
 Only the region values do this, `Sphere(10.)` and the other shapes. The `xrange`/`yrange`/`zrange`
 options when loading, the older style with symbols, and `covering_grid` all count whole cells.
 Stars, dark matter and clumps are points, so there is nothing to split. See
