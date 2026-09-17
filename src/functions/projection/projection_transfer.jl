@@ -649,7 +649,8 @@ decides how they look.
   `:log` or `:linear`
 * `limits`: percentiles of the non-empty pixels mapped to black and full brightness
 * `colormap`: a ColorSchemes name. Without a colour quantity it colours the brightness. With
-  one, it colours the quantity and the brightness scales the colour.
+  one, it gives the hue of the quantity (each colour at full value) and the emission sets how
+  bright it is.
 * `color_limits`, `color_scale` (`:log` or `:linear`): range of the colour quantity
 * `gamma`: brightness correction, `b^(1/gamma)`
 
@@ -667,11 +668,15 @@ function tonemap(m::TransferMapType; stretch::Symbol=:asinh, limits=(1, 99.8), c
     if isempty(m.color)
         return [b[p] > 0 ? RGB{Float64}(get(scheme, b[p])) : RGB{Float64}(0, 0, 0) for p in CartesianIndices(b)]
     end
+    # The colour carries only the hue: each colormap entry is scaled to full value, so a dark end
+    # of the map (black in :inferno) cannot hide bright gas. Brightness comes from the emission.
     cval = _normalise(m.color, color_scale, color_limits, m.I .> 0)
     img = Matrix{RGB{Float64}}(undef, size(b))
     @inbounds for p in CartesianIndices(b)
         col = RGB{Float64}(get(scheme, isfinite(cval[p]) ? cval[p] : 0.0))
-        img[p] = RGB{Float64}(b[p] * col.r, b[p] * col.g, b[p] * col.b)
+        peak = max(col.r, col.g, col.b)
+        s = peak > 0 ? b[p] / peak : 0.0
+        img[p] = RGB{Float64}(s * col.r, s * col.g, s * col.b)
     end
     return img
 end
