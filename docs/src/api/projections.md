@@ -136,6 +136,30 @@ Both data types support:
 - **Velocity projections**: Velocity fields and dispersion maps  
 - **Custom derived quantities**: Temperature, pressure, kinematic analysis
 
+## Transfer functions: emission and extinction
+
+A transfer-function projection says what glows ([`Emission`](@ref)) and what blocks light
+([`Extinction`](@ref)), and integrates both exactly along every line of sight. The result is a
+[`TransferMapType`](@ref) with the intensity and the optical depth; [`tonemap`](@ref) turns it
+into an image.
+
+```julia
+glow = Emission(:rho; unit=:nH, when=Above(:T, 1e4; unit=:K))                 # warm gas glows
+dust = Extinction(:rho; tau1_at=[5, :Msol_pc2], when=Below(:T, 1e4; unit=:K))  # cold gas blocks
+m = projection(gas, glow, dust; inclination=80, axis=:angmom, center=[:bc], range_unit=:kpc,
+               pxsize=[80, :pc])
+img = tonemap(m; colormap=:magma)
+```
+
+**Tutorial**: [Transfer Functions](../16_multi_Transfer_Functions.md)
+
+```@docs; canonical=false
+Emission
+Extinction
+TransferMapType
+tonemap
+```
+
 ## Drawing the AMR grid on a map
 
 Overlay the cell boundaries of a refinement level on a finished projection, useful for
