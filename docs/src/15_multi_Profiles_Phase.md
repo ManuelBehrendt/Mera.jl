@@ -383,45 +383,78 @@ is a single flat colour; the cell size spans 0.3 dex and takes only three values
 level, so a log scale there would add nothing.
 
 ```julia
+# --- four views of the SAME plane -------------------------------------------------------------
+# `phase` is a 2-D weighted histogram: it bins the cells by two fields and sums the weight that
+# lands in each bin. Here the plane is density against temperature, the standard way of asking
+# which physical states the gas is in.
+#
+# One shared bundle, so all four panels sit on exactly the same grid of bins and can be compared
+# pixel by pixel:
+#   nbins=(140,140)  140 bins along x, 140 along y
+#   xscale/yscale    :log, base 10, because density and temperature each span many decades
+#   xunit/yunit      the units the two AXES are measured in (n_H in cm⁻³, T in K)
+#   weight=:mass     the quantity summed into each bin
 kw = (weight=:mass, nbins=(140,140), xscale=:log, yscale=:log, xunit=:nH, yunit=:K,
       center=ctr, range_unit=:kpc)
-ph  = phase(gas, :rho, :T; kw...)
-pvr = phase(gas, :rho, :T, :vr_sphere; cstat=:mean,   cunit=:km_s, kw...)   # also :median/:min/:max/:full/callable
-psd = phase(gas, :rho, :T, :vr_sphere; cstat=:std,    cunit=:km_s, kw...)
-pcs = phase(gas, :rho, :T, :cellsize;  cstat=:median, cunit=:pc,   kw...)
 
-# A bin holding almost no mass carries a wild mean, and one such bin sets the colour range for
-# the whole panel. Mask them first, exactly as the radial profiles drop bins with few cells.
-keep = ph.H .>= 1e-6 * sum(ph.H)
+# Two fields: `H` is the summed weight per bin, so with weight=:mass this is a mass map.
+ph  = phase(gas, :rho, :T; kw...)
+
+# A THIRD field adds a per-bin reduction of that field, and `cstat` picks which one. The bins do
+# not change; only what the colour shows. Options: :mean (default), :median, :min, :max, :std,
+# :quantiles, :full (all of them at once), or a function of your own. `cunit` is that third field's unit,
+# which is independent of xunit/yunit.
+pvr = phase(gas, :rho, :T, :vr_sphere; cstat=:mean,   cunit=:km_s, kw...)  # the average motion
+psd = phase(gas, :rho, :T, :vr_sphere; cstat=:std,    cunit=:km_s, kw...)  # the spread of that motion
+pcs = phase(gas, :rho, :T, :cellsize;  cstat=:median, cunit=:pc,   kw...)  # the typical cell size
+
+# --- keep the colours honest -------------------------------------------------------------------
+# A bin holding almost no mass still reports a mean, but that mean comes from a handful of cells
+# and can be enormous. One such bin then sets the colour range and flattens the whole panel into
+# a single tone. Drop them first, exactly as the radial profiles drop bins with too few points.
+keep = ph.H .>= 1e-6 * sum(ph.H)        # keep a bin only if it holds a millionth of the total mass
+
+# NaN is the "nothing here" value for Makie: a NaN pixel is left unpainted rather than drawn as
+# zero, which on a diverging colour map would otherwise look like a real measurement of zero.
 function mask(M)
     out = similar(M, Float64)
     @inbounds for i in eachindex(M); out[i] = keep[i] ? M[i] : NaN; end
     return out
 end
+
 function qq(M, p)                       # a percentile of the finite entries of a map
     v = filter(isfinite, vec(M))
     return isempty(v) ? 0.0 : quantile(v, p)
 end
-vlim = qq(abs.(mask(pvr.mean)), 0.90)      # v_r is one-sided here: a wind, not a symmetric field
-sig  = mask(psd.std); sig[sig .<= 0] .= NaN   # a log colour scale needs positives
+
+# v_r here is one-sided, a wind blowing outwards rather than a balanced in-and-out field, so its
+# extremes are a poor guide to the range worth showing. Take a high percentile of |v_r| and apply
+# it symmetrically, which keeps zero at the centre of the diverging map so the SIGN stays readable.
+vlim = qq(abs.(mask(pvr.mean)), 0.90)
+
+sig  = mask(psd.std); sig[sig .<= 0] .= NaN   # a log colour scale needs strictly positive values
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
+# `xedges`/`yedges` are the bin BOUNDARIES, 141 of them for 140 bins. A heatmap wants one
+# coordinate per bin, so take each pair's midpoint; log10 because the axes are labelled in log10.
 xc = log10.((ph.xedges[1:end-1].+ph.xedges[2:end])./2)
 yc = log10.((ph.yedges[1:end-1].+ph.yedges[2:end])./2)
-lg(M) = log10.(replace(M, 0.0=>NaN))
+lg(M) = log10.(replace(M, 0.0=>NaN))    # log10 of a map, empty bins blanked instead of becoming -Inf
 fig = Figure(size=(1150,860))
+# Each row below is one panel. The title names the STATISTIC, because a colour means nothing
+# until you know whether it is a sum, a mean, a median or a spread.
 #          title (naming the statistic)          data              colourmap  range                          log?
 panels = (("sum of mass per bin  (H)",           lg(ph.H),         :magma,   nothing,                        identity),
           ("mean ⟨v_r⟩ [km/s]   (inflow / outflow)", mask(pvr.mean), :balance, (-vlim, vlim),                identity),
           ("std σ(v_r) [km/s]   (log colour)",   sig,              :viridis, (qq(sig,0.02), qq(sig,0.995)),  log10),
           ("median cell size [pc]",              mask(pcs.median), :cividis, nothing,                        identity))
 for (k,(lab,M,cm,rng,csc)) in enumerate(panels)
-    r=(k-1)÷2+1; c=2*((k-1)%2)+1
+    r=(k-1)÷2+1; c=2*((k-1)%2)+1        # 2×2 layout, each panel followed by its own colour bar
     ax  = Axis(fig[r,c], xlabel="log₁₀ n_H [cm⁻³]", ylabel="log₁₀ T [K]", title=lab)
-    kwc = rng === nothing ? (; colormap=cm) : (; colormap=cm, colorrange=rng)
+    kwc = rng === nothing ? (; colormap=cm) : (; colormap=cm, colorrange=rng)   # nothing = let Makie choose
     hm  = csc === log10 ? heatmap!(ax, xc, yc, M; colorscale=log10, kwc...) :
                           heatmap!(ax, xc, yc, M; kwc...)
-    ax.backgroundcolor = :black
+    ax.backgroundcolor = :black         # masked (NaN) bins show as background, not as a colour
     Colorbar(fig[r,c+1], hm)
 end
 fig
@@ -454,22 +487,42 @@ and the strongly one-sided vertical motion in the mid-disc, which is the interes
 invisible.
 
 ```julia
+# --- one profile carrying three extra kinds of information --------------------------------------
+# scale=:equal puts the bin EDGES at quantiles of the data instead of at fixed widths, so every bin
+# ends up holding roughly the same number of cells. Where the disc thins out, fixed-width bins run
+# empty and their statistics turn noisy; equal-count bins stay equally well determined, at the price
+# of being physically wider out there. Read the x axis as "bin centre", not "bin of constant size".
+#
+# bootstrap=800 resamples the cells inside each bin 800 times and looks at how much the per-bin mean
+# moves. The spread of those 800 means is the confidence interval, and it assumes nothing about the
+# distribution being Gaussian, which matters here because it is not. ci=:bca is the bias-corrected
+# and accelerated interval (the others are :percentile and :basic), and confidence_level=0.95 makes
+# it a 95% interval. The resampling is seeded, so
+# running the cell again gives exactly the same interval rather than a slightly different one.
 pe = profile(gas, :r_cylinder, :vz; weight=:mass, unit=:km_s, scale=:equal, nbins=18,
              center=ctr, range_unit=:kpc, xunit=:kpc, bootstrap=800, ci=:bca, confidence_level=0.95)
+
 println("equal-count points/bin (min..max): ", extrema(pe.count), "  → nearly equal")
-ok = pe.count .> 5
-x = pe.x[ok]; mu = pe.mean[ok]; lo = pe.mean_ci[ok,1]; hi = pe.mean_ci[ok,2]
-sk = pe.skewness[ok]; ku = pe.kurtosis[ok]
+
+ok = pe.count .> 5                 # a bin with a handful of cells has no meaningful shape
+x  = pe.x[ok]                      # bin centres, kpc
+mu = pe.mean[ok]                   # the mass-weighted ⟨v_z⟩ of each bin
+lo = pe.mean_ci[ok,1]              # mean_ci is nbins×2: column 1 is the lower end of the interval,
+hi = pe.mean_ci[ok,2]              # column 2 the upper. (median_ci and median_se come along too.)
+sk = pe.skewness[ok]               # asymmetry of the v_z distribution in the bin; 0 = symmetric
+ku = pe.kurtosis[ok]               # EXCESS kurtosis, i.e. tail weight; 0 = Gaussian, not 3
 
 # Skewness runs to -44 here and excess kurtosis to 2600: on one axis the skewness is a flat
 # line on zero and the panel says nothing. One axis each, and the kurtosis in log.
 fig = Figure(size=(1350,420))
 ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="⟨v_z⟩ [km/s]", title="equal-count bins + BCa bootstrap 95% CI")
+# The band is the confidence interval on the MEAN, not the spread of the gas. It is narrow because
+# each bin holds tens of thousands of cells; σ(v_z) itself is far wider (that is pe.std).
 band!(ax1, x, lo, hi, color=(:dodgerblue,0.25), label="95% CI (bootstrap)")
 lines!(ax1, x, mu, color=:dodgerblue, linewidth=2.5, label="⟨v_z⟩")
 axislegend(ax1, position=:rt, framevisible=false)
 ax2 = Axis(fig[1,2], xlabel="R [kpc]", ylabel="skewness", title="asymmetry of v_z per bin")
-hlines!(ax2, [0.0], color=:gray, linestyle=:dash)
+hlines!(ax2, [0.0], color=:gray, linestyle=:dash)     # the symmetric case, for reference
 lines!(ax2, x, sk, color=:crimson, linewidth=2)
 ax3 = Axis(fig[1,3], xlabel="R [kpc]", ylabel="excess kurtosis", yscale=log10,
            title="tail weight of v_z per bin")
