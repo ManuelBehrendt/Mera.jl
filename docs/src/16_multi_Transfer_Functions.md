@@ -104,13 +104,19 @@ I is in cm⁻³ · cm for j = n, and in cm⁻⁶ · cm for j = n²
 
 ## 2. Adding extinction: dust lanes
 
-Now let the **warm** gas glow and the **cold** gas block light, like stars and ionised gas seen
-through cold dusty clouds. `when` selects which cells take part; it takes the same conditions as
-[`filterdata`](@ref). `tau1_at=[5, :Msol_pc2]` says: a column of 5 M⊙/pc² of cold gas has an
-optical depth of 1.
+Now let the **warm** gas glow and the **cold** gas block light. This is a picture, not an
+observable: real recombination light goes as `n²`, and warm gas here includes million-degree
+coronal gas that emits no visible light. Section 9 gives recipes with real units.
 
-The lower panel shows the optical depth `τ` itself. `exp(-τ)` is the fraction of background light
-that gets through each pixel.
+`when` selects which cells take part; it takes the same conditions as [`filterdata`](@ref).
+`tau1_at=[5, :Msol_pc2]` says a column of 5 M⊙/pc² of cold gas has an optical depth of 1. That is
+about 4.6 times stronger than V-band dust, so it stands for far-ultraviolet extinction. Putting
+dust only in gas below 10⁴ K is also a choice: dust survives in warm ionised gas and is destroyed
+by sputtering only above about 10⁶ K.
+
+The lower panel shows the optical depth `τ`. For the fraction of a smooth background that gets
+through a pixel use `exp.(-m.tau_eff)`, which averages the transmission instead of the optical
+depth.
 
 ```julia
 glow = Emission(:rho; unit=:nH, when=Above(:T, 1e4; unit=:K))                  # warm gas glows
@@ -171,32 +177,45 @@ j ∝ n, α ∝ n:  light kept, 5th / 50th percentile = [0.046, 0.995]
 
 | keyword | meaning |
 |:--|:--|
-| `kappa=[210, :cm2_g]` | opacity per gram of gas; 210 cm²/g is V-band dust at solar metallicity |
-| `tau1_at=[23, :Msol_pc2]` | τ = 1 at this column; the same dust as `kappa=[210, :cm2_g]` |
+| `kappa=[209, :cm2_g]` | opacity per gram of gas; Milky Way diffuse dust in the V band |
+| `tau1_at=[23, :Msol_pc2]` | τ = 1 at this column; the same dust written as a column |
 | `sigma=[σ, :cm2]` with `unit=:nH` | a cross section per particle |
 | `median_tau=1` | picked from the data so the median τ of the map is 1 |
 | `alpha_scale=a` | a fixed factor, `α = a · q^power` per cm |
 
-The first three are physics. `median_tau` is for pictures, but it depends on the view, so it
-changes from frame to frame of a movie. Every map records the strength it used in `alpha_scale`;
-pass that back to keep it fixed. Extinction-only maps need no ordering and are quick.
+The first three are physics. `κ_V ≈ 209 cm²` per gram of gas comes from `C_ext = 4.89e-22 cm²`
+per hydrogen atom for R_V = 3.1 dust (Draine 2003, ARA&A 41, 241, Table 4) with 1.4 m_H of gas
+per H. Measurements span about 140 to 210 cm²/g, so treat it as good to some tens of percent.
+Optical depth becomes magnitudes as `A = 1.086 τ`.
+
+`median_tau` is for pictures, and it depends on the view, so it changes from frame to frame of a
+movie. Every map records the strength it used in `alpha_scale`; pass that back to keep it fixed.
+Extinction-only maps need no ordering and are quick.
+
+Dust follows metals and dies in hot gas. Both are one line with the function form of
+`Extinction`, which takes quantities like `Emission` does:
+
+```julia
+Extinction((ρ, Z) -> ρ * Z, :rho => :g_cm3, :metallicity => :Zsun;   # dust ∝ Z
+           kappa=[209, :cm2_g], when=Below(:T, 1e6; unit=:K))        # sputtered above ~10⁶ K
+```
 
 ```julia
 cold = Below(:T, 1e4; unit=:K)
-a = projection(gas, Extinction(:rho; kappa=[210, :cm2_g], when=cold); view...)
+a = projection(gas, Extinction(:rho; kappa=[209, :cm2_g], when=cold); view...)
 b = projection(gas, Extinction(:rho; tau1_at=[23, :Msol_pc2], when=cold); view...)
 c = projection(gas, Extinction(:rho; median_tau=1, when=cold); view...)
 d = projection(gas, Extinction(:rho; alpha_scale=c.alpha_scale, when=cold); view...)   # frozen
 
 medtau(m) = round(median(filter(>(0), vec(m.tau))), sigdigits=3)
-println("kappa = 210 cm²/g     : median τ = ", medtau(a))
+println("kappa = 209 cm²/g     : median τ = ", medtau(a))
 println("tau1_at = 23 Msol/pc² : median τ = ", medtau(b))
 println("median_tau = 1        : median τ = ", medtau(c), ",  alpha_scale = ", round(c.alpha_scale, sigdigits=4))
 println("alpha_scale frozen    : the same map as median_tau? ", d.tau ≈ c.tau)
 ```
 
 ```
-kappa = 210 cm²/g     : median τ = 0.677
+kappa = 209 cm²/g     : median τ = 0.674
 tau1_at = 23 Msol/pc² : median τ = 0.671
 median_tau = 1        : median τ = 1.0,  alpha_scale = 2.1000000000000002e-20
 alpha_scale frozen    : the same map as median_tau? true
@@ -204,10 +223,14 @@ alpha_scale frozen    : the same map as median_tau? true
 
 ## 5. Colour from a second quantity
 
-`color = :T => :K` records, for every pixel, the temperature of the gas you actually see: the
-average along the line of sight, weighted by the light that reaches you. [`tonemap`](@ref) turns it
-into hue while the emission sets the brightness; `saturation` sets how strong the hue is. Here all
-gas glows `∝ n²` and the cold gas is dust; with `:plasma`, violet is cold and yellow is hot.
+`color = :T => :K` records, for every pixel, the average temperature along the line of sight,
+weighted by the light that reaches you. With `j ∝ n²` that is an emission-measure-weighted
+temperature, dimmed by dust: it is what the glowing gas looks like, not a spectroscopic
+temperature. [`tonemap`](@ref) turns it into hue while the emission sets the brightness, and
+`saturation` sets how strong the hue is. With `:plasma`, dark blue is cold and yellow is hot.
+
+Keep in mind that Mera's `:T` assumes one mean molecular weight, μ = 1/X ≈ 1.32. In ionised gas
+the true temperature is about 2.2 times lower. Section 9 shows how to work around it.
 
 ```julia
 glow_T = Emission(:rho; unit=:nH, power=2, color=:T => :K)
@@ -229,8 +252,13 @@ temperature of the visible gas, 2nd to 98th percentile: [47.0, 2.0e6] K
 ## 6. Your own emission function
 
 Any Julia function works. Name each quantity it needs with its unit, in the order of the
-function's arguments. Emissions also add up. Here hot gas glows like bremsstrahlung, `j ∝ n² √T`,
-plus the warm gas with its own weight.
+function's arguments. Emissions also add up. Here hot gas follows the shape of thermal free-free
+emission, `j ∝ n² √T`, plus the warm gas with its own weight.
+
+Two honest caveats: free-free is the right shape only where it dominates, above about 10⁷ K at
+solar metallicity, since line emission dominates below that (Sutherland & Dopita 1993, ApJS 88,
+253). And the weights below mix two quantities that have different units, which makes this a
+picture rather than a measurement.
 
 ```julia
 # bremsstrahlung shape for the hot gas (the constant in front does not change the picture)
@@ -264,7 +292,7 @@ println("pixels that change by more than 10 %: ", round(100 * count(>(0.1), chan
 ```
 
 ```
-supersample = 2: 14.5 s;  off: 7.9 s
+supersample = 2: 12.9 s;  off: 7.7 s
 pixels that change by more than 10 %: 3.22 %
 ```
 
@@ -289,9 +317,108 @@ fig
 
 ![](16_multi_Transfer_Functions_files/16_multi_Transfer_Functions_19_1.png)
 
+## 9. Recipes with real units
+
+The pictures above are illustrations. The same two blocks also make quantities with units, as
+long as you put the physics into `j` yourself. Two rules carry most of it:
+
+* `m.I` is `∫ j dl` with `dl` in **cm**. For a surface brightness per steradian, divide an
+  emissivity that was summed over all directions by `4π`.
+* Mera's `:T` assumes μ = 1/X ≈ 1.32. Use `unit=:K_mu`, which returns `T/μ`, and multiply by the
+  μ you want (about 0.59 for ionised gas). Without a radiative-transfer run, temperature is the
+  only guide to what is ionised.
+
+The maps below are: the dispersion measure of free electrons, the emission measure, the Hα
+surface brightness in Rayleigh (case B recombination), the thermal Sunyaev-Zel'dovich `y`, and a
+V-band extinction map in magnitudes.
+
+One caveat decides how much these mean. Without a radiative-transfer run, gas counts as ionised
+only when it is hot enough to ionise itself. Real Hα comes mostly from gas photoionised by stars
+at about 8000 K, which this test fails, so the Hα map below shows only collisionally ionised gas
+and misses most HII regions. With a RAMSES-RT run, use the ionisation fractions instead
+(`:n_e`, `:n_HII`) and `:T_rt`, which carries the local mean molecular weight of each cell.
+
+```julia
+c   = gas.info.constants                  # cgs constants
+X, Y = 0.76, 0.24                          # RAMSES mass fractions
+ne_nH  = 1 + 2 * (Y / (4X))                # 1.158 electrons per H, H and He fully ionised
+mu_ion = 1 / (2X + 3Y/4)                   # 0.588 for ionised gas
+Pe_P   = mu_ion * (X + Y/2)                # 0.518: the electron share of the pressure
+ionised = Above(:T, 2e4 / mu_ion; unit=:K_mu)    # true T above 2e4 K
+
+# dispersion measure: DM = ∫ n_e dl  [pc cm⁻³]
+dm = projection(gas, Emission(:rho; unit=:nH, strength=ne_nH/c.pc, when=ionised); view...)
+
+# emission measure: EM = ∫ n_e n_p dl  [pc cm⁻⁶]
+em = projection(gas, Emission(:rho; unit=:nH, power=2, strength=ne_nH/c.pc, when=ionised); view...)
+
+# Halpha, case B: 4π j / (n_e n_p) = α_eff(T) hν, here in Rayleigh (Draine 2011, eq. 14.8)
+function halpha_R(nH, T_over_mu)
+    T4 = clamp(mu_ion * T_over_mu / 1e4, 0.1, 3.0)          # the fit is valid here
+    return ne_nH * nH^2 * 1.17e-13 * T4^(-0.942 - 0.031*log(T4)) / 1e6
+end
+ha = projection(gas, Emission(halpha_R, :rho => :nH, :T => :K_mu;
+                when = ionised & Below(:T, 5e4 / mu_ion; unit=:K_mu)); view...)
+
+# thermal SZ: y = (σ_T / m_e c²) ∫ P_e dl
+ysz = projection(gas, Emission(:p; unit=:Ba, strength = Pe_P * c.sigma_T / (c.me * c.c^2),
+                 when=ionised); view...)
+
+# V-band extinction of Milky Way dust, destroyed above ~1e6 K; A = 1.086 τ
+av = projection(gas, Extinction(:rho; kappa=[209, :cm2_g], when=Below(:T, 1e6; unit=:K)); view...)
+
+println("DM  [pc cm⁻³]     max = ", round(maximum(dm.I), sigdigits=3))
+println("EM  [pc cm⁻⁶]     max = ", round(maximum(em.I), sigdigits=3))
+println("Hα  [R]           max = ", round(maximum(ha.I), sigdigits=3))
+println("y                 max = ", round(maximum(ysz.I), sigdigits=3))
+println("A_V [mag]         max = ", round(1.086 * maximum(av.tau), sigdigits=3))
+
+# a physical cross-check: on the same gas, I[R] ≈ 0.36 EM T₄^-0.92 (Haffner et al. 2003)
+warm = ionised & Below(:T, 5e4 / mu_ion; unit=:K_mu)
+em_w = projection(gas, Emission(:rho; unit=:nH, power=2, strength=ne_nH/c.pc, when=warm); view...)
+ok   = em_w.I .> 1
+ratio = median(ha.I[ok] ./ (0.36 .* em_w.I[ok]))
+println("\nHα / (0.36 EM) on the same gas: ", round(ratio, digits=2),
+        "   (T₄^-0.92, so ≈1 at 8000 K and ≈0.3 at 3e4 K)")
+```
+
+```
+DM  [pc cm⁻³]     max = 1330.0
+EM  [pc cm⁻⁶]     max = 46100.0
+Hα  [R]           max = 633.0
+y                 max = 1.4e-7
+A_V [mag]         max = 33.5
+Hα / (0.36 EM) on the same gas: 0.34   (T₄^-0.92, so ≈1 at 8000 K and ≈0.3 at 3e4 K)
+```
+
+```julia
+# physical maps get a colorbar, not a tone mapping
+function physmap!(pos, m, data; title="", label="", colormap=:viridis)
+    x0, x1, y0, y1 = getextent(m, :kpc)
+    ax = Axis(pos[1, 1], title=title, xlabel="x [kpc]", ylabel="y [kpc]", aspect=DataAspect())
+    hm = heatmap!(ax, x0..x1, y0..y1, data, colormap=colormap)
+    Colorbar(pos[1, 2], hm, label=label, height=Relative(0.8))
+    return ax
+end
+lg(A, floor) = log10.(max.(A, floor))       # a floor keeps empty pixels finite
+
+fig = Figure(size=(1150, 800))
+physmap!(fig[1, 1], em,  lg(em.I, 1e-3),        title="emission measure", label="log₁₀ EM [pc cm⁻⁶]")
+physmap!(fig[1, 2], ha,  lg(ha.I, 1e-3),        title="Hα, case B",       label="log₁₀ I [R]", colormap=:magma)
+physmap!(fig[2, 1], ysz, lg(ysz.I, 1e-12),      title="thermal SZ",       label="log₁₀ y", colormap=:plasma)
+physmap!(fig[2, 2], av,  1.086 .* av.tau,       title="V-band dust",      label="A_V [mag]", colormap=:grays)
+fig
+```
+
+![](16_multi_Transfer_Functions_files/16_multi_Transfer_Functions_22_1.png)
+
 ## Limits and where to go next
 
 * Only gas cells emit and absorb. Stars are particles and do not glow here yet.
+* Light scattered **into** the line of sight is not modelled. Extinction removes light that is
+  absorbed and light that is scattered away, which is exact for a source behind a screen and
+  makes light from inside dusty gas somewhat too dark. Dust scatters about two thirds of the
+  V-band light it removes (Draine 2003).
 * The camera is orthographic: all rays are parallel, which is what makes the front-to-back order
   exact.
 * The cost grows with the number of cells that glow or block, and with `supersample²`.
@@ -300,3 +427,13 @@ fig
 
 API: [`Emission`](@ref), [`Extinction`](@ref), [`TransferMapType`](@ref), [`tonemap`](@ref),
 [`projection`](@ref).
+
+**References.** The per-cell solution is the formal solution of radiative transfer for a constant
+source function (Rybicki & Lightman 1979, eq. 1.30), the form used in volume rendering by Max
+(1995, IEEE TVCG 1, 99). Dust values: Draine (2003, ARA&A 41, 241); Bohlin, Savage & Drake (1978,
+ApJ 224, 132); the metallicity scaling in Rémy-Ruyer et al. (2014, A&A 563, A31); sputtering in
+hot gas in Draine & Salpeter (1979, ApJ 231, 77) and Tsai & Mathews (1995, ApJ 448, 84). Hα case B
+follows Draine (2011, *Physics of the Interstellar and Intergalactic Medium*, eq. 14.8), with the
+Rayleigh convention of Haffner et al. (2003, ApJS 149, 405). The thermal SZ effect is Sunyaev &
+Zel'dovich (1972); see Carlstrom, Holder & Reese (2002, ARA&A 40, 643). The asinh stretch follows
+Lupton et al. (2004, PASP 116, 133).
