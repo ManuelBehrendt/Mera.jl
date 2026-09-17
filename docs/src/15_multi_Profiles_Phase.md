@@ -114,19 +114,55 @@ how much the gas in that bin *actually varies*; it does not shrink when you add 
 well the *mean* is pinned down; it shrinks as more cells enter the bin. Error bars on a mean want
 `sem`. A claim about the gas wants `std`, or better, quantiles.
 
-### The `statistic` keyword
+### The `statistic` keyword: your own reduction, per bin
 
-`statistic=f` computes anything the built-ins do not, once per bin, and puts the answer in
-`custom`. Mera calls `f(y, w)` with the bin's values and weights if your function takes two
-arguments, and falls back to `f(y)` if it takes one, so both of these work:
+The table above is what Mera computes for you. `statistic=f` is the escape hatch for everything
+else. Mera sorts the cells into bins, and then, **once for each bin**, hands your function that
+bin's numbers and asks for a single value back. The answers land in `custom`, one per bin.
+
+Two things to know before writing one.
+
+**What your function receives.** `y` is a plain Julia vector of the `yvar` values of the cells that
+fell in this bin, and `w` is their weights (their masses, with `weight=:mass`). Nothing exotic:
+anything you can do to a vector, you can do here.
+
+**Which form Mera calls.** If your function takes two arguments it is called as `f(y, w)`, so you
+can weight. If it takes one it is called as `f(y)`, and then **the weights are not involved at
+all**, which is a real trap: a one-argument function treats a tiny cell and a massive one alike.
+
+Now read the line in the code below, right to left:
 
 ```julia
-statistic = (y, w) -> sqrt(sum(w .* y.^2) / sum(w))   # mass-weighted RMS
-statistic = y -> count(>(1e6), y)                      # how many cells above 10^6 K
+statistic = (y, w) -> sqrt(sum(w .* y.^2) / sum(w))
 ```
 
-Below it is the mass-weighted **RMS** temperature, which is deliberately a statistic Mera does not
-provide: it is the square root of the mean *square*, so a few very hot cells pull it up hard.
+`(y, w) -> …` is Julia's anonymous function: "given `y` and `w`, compute this". Then `y.^2` squares
+every temperature (the dot means element by element), `w .* y.^2` weights each square by that
+cell's mass, `sum(...) / sum(w)` is the mass-weighted mean of the squares, and `sqrt` brings it
+back to kelvin. That is the **root mean square**, and it is in here precisely because Mera does not
+provide it: squaring first means a few very hot cells count enormously, which is why the red curve
+sits a decade above the mean.
+
+Other things people actually want, all tested on this snapshot at mid-radius:
+
+```julia
+# how many cells in the bin are hotter than 10^6 K        -> 1391
+statistic = y -> count(>(1e6), y)
+
+# what fraction of the bin's MASS is hotter than 10^6 K    -> 0.0022
+statistic = (y, w) -> sum(w[y .> 1e6]) / sum(w)
+
+# the mass-weighted geometric mean, the natural average
+# for something spread over decades                        -> 6836 K
+statistic = (y, w) -> exp(sum(w .* log.(y)) / sum(w))
+
+# the interquartile range, a spread that ignores extremes  -> 7.5e6 K
+statistic = y -> quantile(y, 0.75) - quantile(y, 0.25)     # needs `using Statistics`
+```
+
+The first and last are one-argument forms, so they count cells rather than mass. That is the right
+choice for "how many cells" and the wrong one if you meant "how much gas", which is what the second
+example does instead.
 
 ### Reading the figure
 
@@ -138,23 +174,38 @@ The right panel is the same cells reduced three ways, and they do **not** agree.
 median is 6.0 × 10³ K, the mean 3.5 × 10⁴ K, and the RMS 6.6 × 10⁵ K: each about a decade above
 the last. That ordering, median < mean < RMS, is the signature of a strongly skewed distribution,
 where a small mass of very hot gas sets the mean and dominates the RMS while most of the gas is
-cool. Which one belongs in your paper depends on the question, and the gap between them is the
-reason to say which you used.
+cool.
 
 `±std` is deliberately **not** drawn. It is symmetric, and here the spread is larger than the mean,
 so `mean − std` is negative: meaningless for a temperature and impossible to draw on a log axis.
 For a quantity spread over decades, quantiles are the honest spread.
 
 ```julia
+# One set of binning options, reused for both calls so the two profiles share identical bins.
+# `weight=:mass` makes every statistic mass-weighted; `unit=:K` asks for the temperature in kelvin;
+# `xunit=:kpc` and `range_unit=:kpc` say the radii are kpc; `center=ctr` is the box centre.
 common = (weight=:mass, unit=:K, nbins=35, xrange=(0.5,20), center=ctr, range_unit=:kpc, xunit=:kpc)
-pT = profile(gas, :r_cylinder, :T; common..., quantiles=[0.16,0.5,0.84])
-pC = profile(gas, :r_cylinder, :T; common...,
-             statistic=(y,w) -> sqrt(sum(w .* y.^2) / sum(w)))    # mass-weighted RMS -> pC.custom
 
+# Profile 1: the built-in statistics. `quantiles=` asks for three percentiles per bin, which come
+# back as a matrix with one column per level, in the order requested.
+pT = profile(gas, :r_cylinder, :T; common..., quantiles=[0.16, 0.5, 0.84])
+
+# Profile 2: the same bins, but with our own reduction. Mera calls this once per bin with that
+# bin's temperatures `y` and masses `w`, and stores the result in `pC.custom`.
+pC = profile(gas, :r_cylinder, :T; common...,
+             statistic=(y,w) -> sqrt(sum(w .* y.^2) / sum(w)))    # mass-weighted RMS
+
+# Empty bins come back as NaN, and a zero minimum cannot be drawn on a log axis, so keep the bins
+# that actually hold gas. Every array below is filtered by the same mask, so they stay aligned.
 ok  = (pT.count .> 0) .& (pT.min .> 0)
-x   = pT.x[ok];  mn = pT.min[ok];  mx = pT.max[ok]
-q16 = pT.quantiles[ok,1]; q50 = pT.quantiles[ok,2]; q84 = pT.quantiles[ok,3]
-mu  = pT.mean[ok]; sem = pT.sem[ok]; rms = pC.custom[ok]
+x   = pT.x[ok]                       # bin centres, kpc
+mn  = pT.min[ok];  mx = pT.max[ok]   # the extremes present in each bin
+q16 = pT.quantiles[ok,1]             # column 1 = the 0.16 level we asked for
+q50 = pT.quantiles[ok,2]             # column 2 = 0.50, the median
+q84 = pT.quantiles[ok,3]             # column 3 = 0.84
+mu  = pT.mean[ok]                    # mass-weighted mean
+sem = pT.sem[ok]                     # uncertainty ON THE MEAN, not the spread of the gas
+rms = pC.custom[ok]                  # whatever `statistic` returned, here the RMS
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 NAVY=RGBf(0.16,0.25,0.45); BLUE=RGBf(0.20,0.47,0.74); ORANGE=RGBf(0.90,0.52,0.13); RED=RGBf(0.70,0.15,0.20)
@@ -170,7 +221,9 @@ ax2 = Axis(fig[1,2], yscale=log10, xlabel="R [kpc]", ylabel="T [K]",
 lines!(ax2, x, q50, color=NAVY,   linewidth=2.5, label="median  (50th percentile)")
 lines!(ax2, x, mu,  color=ORANGE, linewidth=2.5, label="mean  (mass-weighted)")
 lines!(ax2, x, rms, color=RED,    linewidth=2.5, label="RMS  (statistic=…)")
-se = [i for i in 1:3:length(x) if mu[i]-sem[i] > 0]     # sem whiskers, kept positive for the log axis
+# sem whiskers belong on the mean. Every third bin, and only where the lower whisker stays positive,
+# because a log axis cannot draw down to zero.
+se = [i for i in 1:3:length(x) if mu[i]-sem[i] > 0]
 errorbars!(ax2, x[se], mu[se], sem[se], color=ORANGE, whiskerwidth=7)
 axislegend(ax2, position=:rt, framevisible=false)
 fig
