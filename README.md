@@ -152,7 +152,9 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 - **`gethydro` / `getparticles` / `getgravity` / `getrt` / `getclumps` / `getsinks`**: load each data
   type, with optional spatial subregioning and refinement-level capping
 - **`subregion` / `shellregion`**: cuboid, sphere, cylinder and shell selections that preserve AMR
-  structure. Regions are values: combine them with `∩ ∪ \ !` (ASCII `& |`), tilt a cylinder's
+  structure. Regions are values: combine them with `∩ ∪ \ !`, that is intersection, union,
+  difference and complement. If you would rather not type Unicode, `&`, `|`, `intersect`,
+  `union`, `setdiff` and `!` do the same. Tilt a cylinder's
   axis, and boundary cells keep the fraction of themselves inside. `refine` / `refine_to`
   subdivide those edge cells for rendering, which sharpens a drawn boundary without changing
   any total, since the fraction already made the totals exact

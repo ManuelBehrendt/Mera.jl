@@ -53,6 +53,10 @@ simulation. `getvar(gas, :T, :K)` is a statement about physics.
 | to reuse one selection across a whole script | `withargs` / `myargs` | [Bundling Arguments](bundled_arguments.md) |
 | a region boundary that looks sharp in a figure | `subregion(..., refine_to=[px, :kpc])` | [How it is measured](computation_reference.md) |
 
+The operators are set **intersection**, **union**, **difference** and **complement**. Type `∩` as
+`\cap` then TAB and `∪` as `\cup` then TAB, or avoid Unicode entirely: `A & B`, `A | B`,
+`intersect(A, B)`, `union(A, B)`, `setdiff(A, B)` and `!A` all mean the same.
+
 Boundary cells are split by default, so a region and its complement add up to the parent exactly.
 That is worth checking once in any new script:
 `msum(subregion(gas, reg), :Msol) + msum(subregion(gas, !reg), :Msol)`.

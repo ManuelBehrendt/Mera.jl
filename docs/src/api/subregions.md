@@ -180,6 +180,10 @@ Regions compose with the operators `∩` (intersection), `∪` (union), `\` (dif
 (complement), each result is itself a region, so they nest. The children may even have
 different centres.
 
+Type `∩` as `\cap` then TAB and `∪` as `\cup` then TAB, in the REPL, Jupyter or VS Code. Unicode
+is never required: `A & B`, `A | B`, `intersect(A, B)`, `union(A, B)` and `setdiff(A, B)` are the
+same operations spelled in ASCII.
+
 ```julia
 subregion(gas, Sphere(20.0; range_unit=:kpc) \ Cylinder(5.0, 30.0; range_unit=:kpc))  # ball, cylinder drilled out
 subregion(gas, Sphere(20.0; range_unit=:kpc) ∩ Cuboid(xrange=[-10,10], yrange=[-10,10], zrange=[-3,3], range_unit=:kpc))

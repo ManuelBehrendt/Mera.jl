@@ -52,7 +52,9 @@ units; `viewfields(obj)` shows what an object holds.
     Mera.Cuboid(xrange=[a,b], yrange=[c,d], zrange=[e,f], center=[:bc], range_unit=:kpc)
     Mera.Cylinder(radius, half_height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
-Combine them with `∩` `∪` `\` `!` (ASCII `&` `|`), then `subregion(obj, region)`. A ring is one
+Combine them with `∩` `∪` `\` `!`, meaning intersection, union, difference and complement, then
+`subregion(obj, region)`. Every one has an ASCII spelling, so Unicode is never required:
+`A & B`, `A | B`, `intersect(A, B)`, `union(A, B)`, `setdiff(A, B)`, `!A`. A ring is one
 cylinder minus another. `subregion` splits boundary cells by default (`split=true`): a half-inside
 cell keeps half of itself as `:fraction`, and that weighting carries through `getvar`, `msum` and
 `projection`. Pass `split=false` for the classic whole-cell test.
