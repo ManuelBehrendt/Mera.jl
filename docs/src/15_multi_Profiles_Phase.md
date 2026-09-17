@@ -21,8 +21,11 @@ essentials with a plot each; the remaining features share the same API and are s
 
 ## Setup, load the galaxy once
 
-Load hydro, gravity and clumps from one snapshot, plus a companion run that carries **particles**
-(dark matter + stars). Define a reusable physical **center**; profiles take a `center` in any length unit.
+Load hydro, gravity and **particles** from **one** snapshot. That matters more than it looks: every
+number on this page is then about the same matter at the same time, so a mass decomposition can be
+compared against the gravity field of the same run. Mixing two runs would put gas from one and
+stars from another into the same total. Define a reusable physical **center**; profiles take a
+`center` in any length unit.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -35,7 +38,7 @@ BASE = MERA_EXAMPLES   # <-- change me
 info  = getinfo(100, joinpath(BASE,"RAMSES/spiral_clumps"), verbose=false)
 gas   = gethydro(info,  verbose=false, show_progress=false)
 grav  = getgravity(info, lmax=gas.lmax, verbose=false, show_progress=false)
-parts = getparticles(getinfo(1, joinpath(BASE,"RAMSES/spiral_ugrid"), verbose=false), verbose=false, show_progress=false)
+parts = getparticles(info, verbose=false, show_progress=false)   # SAME snapshot as the gas
 ctr = [:bc]                         # box centre; e.g. [24.,24.,24.] with range_unit=:kpc also works
 println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 ```
@@ -49,7 +52,7 @@ println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-gas cells = 590311   particles = 45470
+gas cells = 590311   particles = 453200
 ```
 
 ## 1. The simplest profile, binning a quantity
@@ -63,21 +66,26 @@ under `scale=:log`), or by fully custom `edges=`, `binsize`/`edges` override `nb
 (centres), `edges`, `count`, `sum` (Σweight), `sumw2`.
 
 ```julia
-pl  = profile(gas, :r_cylinder; weight=:mass, nbins=50, xrange=(0,24), center=ctr, range_unit=:kpc, xunit=:kpc)
-plg = profile(gas, :r_cylinder; weight=:mass, nbins=50, scale=:log, xrange=(0.3,24), center=ctr, range_unit=:kpc, xunit=:kpc)
+# Binning is a choice, and a bad one invents structure. 50 bins from R = 0 leaves the inner
+# ones nearly empty; on a log axis those become spikes several decades deep. Wider bins
+# starting at 1 kpc show the same galaxy without the noise.
+pl  = profile(gas, :r_cylinder; weight=:mass, binsize=1.0, xrange=(1.0,24), center=ctr, range_unit=:kpc, xunit=:kpc)
+plg = profile(gas, :r_cylinder; weight=:mass, nbins=18, scale=:log, xrange=(1.0,24), center=ctr, range_unit=:kpc, xunit=:kpc)
 pe  = profile(gas, :r_cylinder; weight=:mass, edges=[0.,2.,4.,8.,16.,24.], center=ctr, range_unit=:kpc, xunit=:kpc)
 pbs = profile(gas, :r_cylinder; weight=:mass, binsize=(500,:pc), xrange=(0,24), center=ctr, range_unit=:kpc, xunit=:kpc)
 println("binsize=(500,:pc) → bin width [kpc] = ", round(diff(pbs.edges)[1], digits=3), "  (", length(pbs.edges)-1, " bins)")
 M(p) = p.sum .* gas.scale.Msol      # code mass -> Msol
+
 fig = Figure(size=(1080,420))
-ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="mass / bin [M⊙]", title="linear bins")
+ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="mass / bin [M⊙]", title="linear bins  (1 kpc wide, from 1 kpc)")
 scatterlines!(ax1, pl.x, M(pl), color=:seagreen)
-ax2 = Axis(fig[1,2], xscale=log10, yscale=log10, xlabel="R [kpc]", ylabel="mass / bin [M⊙]", title="log bins + custom edges  (bins with ≥ 10 cells)")
-o = (M(plg) .> 0) .& (plg.count .>= 10)   # a bin holding a few cells is noise, not signal
-lines!(ax2, plg.x[o], M(plg)[o], color=:dodgerblue, linewidth=2, label="50 log bins")
+ax2 = Axis(fig[1,2], xscale=log10, yscale=log10, xlabel="R [kpc]", ylabel="mass / bin [M⊙]",
+           title="log bins + custom edges  (above 0.1 % of the peak)")
+o = M(plg) .> 1e-3 * maximum(M(plg))   # a bin can hold cells and almost no mass: filter on mass
+lines!(ax2, plg.x[o], M(plg)[o], color=:dodgerblue, linewidth=2, label="18 log bins")
 stairs!(ax2, pe.x, max.(M(pe),1), color=:crimson, step=:center, linewidth=2, label="custom edges")
 axislegend(ax2, position=:rb, framevisible=false)
-axislegend(ax2, position=:rt); fig
+fig
 ```
 
 ```
@@ -186,8 +194,13 @@ stars, dark matter, and they add **in quadrature**, `v_tot² = Σ v_i²`. The sq
 is the dynamical mass decomposition (≠ the *kinematic* ⟨v_ϕ⟩ of §7).
 
 **How `v_circ` is estimated:** the enclosed mass `M(<r)` is an *exact* direct sum of the binned masses;
-`v_circ = √(G·M(<r)/r)` is then the **spherical** (shell-theorem) idealization, it assumes spherical
-symmetry, so for a flattened disk it under-shoots at large R. The third panel overplots it against the
+`v_circ = √(G·M(<r)/r)` is then the **spherical** (shell-theorem) idealization. It assumes the
+enclosed mass is spherically arranged, and here the binning radius is *cylindrical*, so M(<R)
+sweeps the whole vertical column and takes in halo material that a sphere of the same radius would
+not. On this galaxy the estimate therefore runs **high**: 182 km/s against 110 km/s from the field
+at R = 10 kpc, a factor 1.7. Treat the decomposition as "who dominates where", which it answers
+well, rather than as a measurement of the rotation speed, which the third panel gets from the
+solved potential. The third panel overplots it against the
 **exact** curve from the solved gravity field, `v = √(R·|a_R|)` with `a_R = getvar(grav, :ar_cylinder)`
 (the true radial acceleration of all matter), the dynamically rigorous rotation curve.
 
