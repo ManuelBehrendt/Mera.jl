@@ -2910,8 +2910,8 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
     return nothing
 end
 
-# Chord geometry shared by `deposit_rotated_cells_exact!` and the transfer-function projection
-# (projection_transfer.jl), which integrates emission and extinction front to back with it.
+# Chord geometry shared by `deposit_rotated_cells_exact!` and the in-development transfer-function
+# projection (dev/transfer_functions), which integrates emission and extinction front to back.
 
 # affine coefficients (q,r,pmin,pmax) of tmin_k(x,y)=q·x+r·y+pmin and tmax_k=q·x+r·y+pmax
 # for cube axis k with projected components a=right·êk, b=up·êk, c=ŵ·êk.  Inactive (wall)

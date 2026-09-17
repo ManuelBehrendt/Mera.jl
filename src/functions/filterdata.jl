@@ -83,7 +83,7 @@ Base.:!(a::FilterCondition)                     = _Not(a)
 
 # vectorised quantity fetch (getvar in the requested unit; :standard = code units). `center` is
 # forwarded only when given, so plain filterdata/getmask calls behave exactly as before; the
-# transfer-function projection passes its own centre so :r_sphere & co. match the projection.
+# in-development transfer-function projection passes its own centre so :r_sphere & co. match it.
 function _qvals(obj, q::Symbol, unit::Symbol; center=nothing, center_unit::Symbol=:standard)
     center === nothing && return unit === :standard ? getvar(obj, q) : getvar(obj, q, unit)
     return unit === :standard ? getvar(obj, q, center=center, center_unit=center_unit) :

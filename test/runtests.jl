@@ -95,7 +95,6 @@ if isempty(_focus)
         tinclude("47_benchmark_tests.jl")  # data-free I/O benchmark (run_benchmark/plot_results) on a temp folder
         tinclude("54_clumpfind_synthetic_tests.jl")  # data-free: all 7 finders + features scored vs synthetic ground truth
         tinclude("55_region_algebra_tests.jl")  # data-free: composable regions + exact cell splitting vs analytic volumes
-        tinclude("83_transfer_projection_tests.jl")  # data-free: Emission/Absorption projections vs slab, two-layer, ray-march and conservation oracles
         tinclude("56_filterdata_tests.jl")  # data-free: value-space filtering on derived quantities (filterdata/getmask)
         tinclude("78_download_testdata_tests.jl")  # data-free: fixture catalogue, layout, already-present short-circuit
         tinclude("79_boundaries_tests.jl")  # data-free: boundary-condition inference from the namelist

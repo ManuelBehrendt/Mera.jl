@@ -412,8 +412,8 @@ end
 # FOV (xrange/yrange or a prior subregion's ranges); `win=nothing` auto-fits. `csize_all` are the
 # per-cell sizes (code units) for ALL cells. Returns `(x0,x1,y0,y1, sel)` with `sel` narrowed to the
 # (expanded) frame. Mirrors the inline logic in projection_hydro.jl `projection_offaxis`.
-# Camera-frame helper. Used by the transfer-function projection (projection_transfer.jl) and by
-# the out-of-tree modules under dev/ (loscubes, offaxis_eval, synthobs).
+# Camera-frame helper. Used by the out-of-tree modules under dev/ (loscubes, offaxis_eval,
+# synthobs, transfer_functions).
 function _offaxis_frame(x_cam, y_cam, sel, csize_all, cr, uc, pixsize, win)
     ar = abs(cr[1]) + abs(cr[2]) + abs(cr[3])
     au = abs(uc[1]) + abs(uc[2]) + abs(uc[3])
@@ -460,7 +460,7 @@ function _offaxis_view(info, boxlen, xrange, yrange, zrange, center, range_unit,
 end
 
 # Restrict `sel` to cells inside the requested world-space sub-box (coords about the box pivot).
-# Used by the transfer-function projection and by dev/ (loscubes, synthobs).
+# Used by the out-of-tree modules under dev/ (loscubes, synthobs, transfer_functions).
 function _offaxis_boxmask!(sel, px, py, pz, half, full)
     full[1] || (sel .= sel .& (abs.(px) .<= half[1]))
     full[2] || (sel .= sel .& (abs.(py) .<= half[2]))
