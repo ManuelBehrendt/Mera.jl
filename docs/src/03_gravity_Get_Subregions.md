@@ -413,9 +413,9 @@ for r in radii
     push!(vc_galaxy, sqrt(abs(ag) * r * KPC) / 1e5)     # km/s
     push!(vc_corner, sqrt(abs(ac) * r * KPC) / 1e5)
 end
-println("v_c at 8 kpc, origin = galaxy centre : ",
+println("v_c at 7.5 kpc, origin = galaxy centre : ",
         round(vc_galaxy[findfirst(==(7.5), radii)], digits=1), " km/s")
-println("v_c at 8 kpc, origin = box corner    : ",
+println("v_c at 7.5 kpc, origin = box corner    : ",
         round(vc_corner[findfirst(==(7.5), radii)], digits=1), " km/s")
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
@@ -433,8 +433,8 @@ fig
 ```
 
 ```
-v_c at 8 kpc, origin = galaxy centre : 189.1 km/s
-v_c at 8 kpc, origin = box corner    : 65.8 km/s
+v_c at 7.5 kpc, origin = galaxy centre : 189.1 km/s
+v_c at 7.5 kpc, origin = box corner    : 65.8 km/s
 ```
 
 ![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_18_3.png)
@@ -749,7 +749,17 @@ fig
 ![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_32_1.png)
 
 The hole is round, not staircased, and the outer rim ends where the cylinder
-does. For a figure at a chosen pixel size, `refine_to=[0.15, :kpc]` on the
+does, to within half a pixel.
+
+**The inner circle and the hole do not have the same radius, and should not.**
+The drawn circle is the sphere, radius 3 kpc. What you see is its *shadow*: a
+pixel goes fully black only where the sphere blocks the whole path through the
+slab, and the slab is only \|z\| ≤ 2 kpc. That happens out to
+$\sqrt{3^2-2^2} = 2.24$ kpc, so the black disc is 75 % of the drawn circle.
+Between 2.24 and 3 kpc the sphere removes the middle of each column and leaves
+the rest, so those pixels are dimmed rather than emptied. The same geometry is
+why subtracting a sphere from a thin disc removes the mass of
+`disc ∩ sphere` and not the mass of the sphere. For a figure at a chosen pixel size, `refine_to=[0.15, :kpc]` on the
 `subregion` call would push the feathering below the pixel scale, see §7 of
 the hydro page for what that costs and when it is worth it.
 
