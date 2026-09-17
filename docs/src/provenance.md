@@ -13,8 +13,8 @@
 
 Six months after you make a figure, the question is always the same: *which snapshot, which
 Mera version, what units produced this?* `provenance` answers it. It reads the metadata every
-Mera result already carries (its `InfoType`) and returns a compact, **deterministic** record
-you can print, compare, or stamp onto a figure or a FITS header.
+Mera result already carries (its `InfoType`) and returns a compact, **deterministic** record.
+You can print it, compare it in a test, or put it on a figure or into a log.
 
 !!! note "One part of a larger picture"
     A provenance record says what produced a number. It does not, by itself, let someone rebuild
@@ -30,7 +30,9 @@ MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera
 
 using Mera
 info = getinfo(300, joinpath(MERA_EXAMPLES, "RAMSES/mw_L10"))
-gas  = gethydro(info);
+
+# The loading messages add nothing on this page, so the data reads below are quiet.
+gas = gethydro(info, verbose=false, show_progress=false);
 ```
 
 ```
@@ -42,7 +44,7 @@ gas  = gethydro(info);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-09-11T08:44:24.298
+[Mera]: 2026-09-17T16:27:17.273
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -81,37 +83,13 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-09-11T08:44:26.143
-Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
-domain:
-xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-📊 Processing Configuration:
-   Total CPU files available: 640
-   Files to be processed: 640
-   Compute threads: 4
-   GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:19 (29.97 ms/it)
-✓ File processing complete! Combining results...
-✓ Data combination complete!
-Final data size: 28320979 cells, 7 variables
-Creating Table from 28320979 cells with max 4 threads...
-  Threading: 4 threads for 11 columns
-  Max threads requested: 4
-  Available threads: 4
-  Using parallel processing with 4 threads
-  Creating IndexedTable with 11 columns...
-✓ Table created in 42.567 seconds
-Memory used for data table :2.321086215786636 GB
--------------------------------------------------------
 ```
 
 ## The record
 
-`provenance(obj)` returns a `Provenance` struct. Its `show` is a compact human-readable block:
-Mera version, simulation + output (and code), snapshot time, box / level range, scale type.
+`provenance(obj)` returns a `Provenance` struct. Printed, it is a short block with the Mera
+version, the simulation and output (and the code that wrote it), the snapshot time, the box and
+level range, and the scale type.
 
 ```julia
 p = provenance(gas)
@@ -128,233 +106,196 @@ Provenance:
   scale type   : ScalesType003
 ```
 
-The time is human-readable: physical time in Myr/Gyr for a normal run, and **redshift**
-(plus expansion factor and age) for a cosmological one. `iscosmological` reports which.
+## Which build ran
+
+`pkgversion` reports the same version whether Mera came from the registry or from a checkout of
+a branch. A result made on a development version would then look like it was made on the release.
+[`mera_build`](@ref) closes that gap, and its value is the version field of every record.
 
 ```julia
-@show iscosmological(gas.info)
-@show p.time_myr        # physical snapshot time in Myr
-@show p.redshift        # 0 for a non-cosmological run
-@show p.aexp
+mera_build()
 ```
 
 ```
-iscosmological(gas.info) = false
-p.time_myr = 445.8861174695
-p.redshift = 0.0
-p.aexp = 1.0
+"1.8.0"
 ```
 
-```
-1.0
-```
-
-## What it records
-
-Every field is read straight from the snapshot's own metadata, so two runs over the same
-output produce identical provenance, safe to use in tests and comparisons.
-
-```julia
-@show p.mera_version
-@show p.mera_build
-@show p.path
-@show p.output
-@show p.simcode
-@show p.boxlen
-@show p.ndim
-@show p.levelmin
-@show p.levelmax
-@show p.scale_type
-@show p.file_ctime
-```
+On a normal install it is just the version, as above. On a git checkout it adds the branch and the
+commit. It also marks a working tree with uncommitted changes, because then the commit alone does
+not say what ran:
 
 ```
-p.mera_version = v"1.8.0"
-p.mera_build = "1.8.0"
-p.path = "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10"
-p.output = 300
-p.simcode = "RAMSES"
-p.boxlen = 48.0
-p.ndim = 3
-p.levelmin = 6
-p.levelmax = 10
-p.scale_type = :ScalesType003
-p.file_ctime = Dates.DateTime("2025-06-21T18:31:24.020")
+Mera v1.8.0 (dev master @ 3a91f2c) | mw_L10/output_00300 | 445.89 Myr | ...
+Mera v1.8.0 (dev my-feature @ 4f2a9c1 +uncommitted) | mw_L10/output_00300 | 445.89 Myr | ...
 ```
 
-```
-2025-06-21T18:31:24.020
-```
-
-## Stamping a figure or FITS header
-
-`provenance_string` renders a one-liner, drop it into a figure caption, a log, or a `COMMENT`
-card when you `savefits`.
-
-```julia
-s = provenance_string(gas)
-println(s)
-```
-
-```
-Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-```
-
-### Release build or development build
-
-`pkgversion` reports the same `v1.8.0` whether Mera came from the registry or from a checkout
-of a branch, so a notebook written against a development version would look like it was written
-against the release. The version field therefore names the build whenever it can tell.
-
-On a normal install it is just the version:
-
-```
-Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-```
-
-On a git checkout it carries the branch and the commit, and it marks a working tree with
-uncommitted changes, because then the commit alone does not say what ran:
-
-```
-Mera v1.9.0-DEV (dev multicode @ 3a91f2c) | mw_L10/output_00300 | 445.89 Myr | ...
-Mera v1.8.0 (dev revamp/2026 @ 4f2a9c1 +uncommitted) | mw_L10/output_00300 | 445.89 Myr | ...
-```
-
-This is what makes a shared script honest about what produced it. The Gallery page uses the
+This keeps a shared script honest about what produced it. The [Gallery](gallery.md) uses the
 same line in its attribution block, so a reader can tell a released Mera from somebody's branch.
 
 Set `MERA_PROVENANCE_PLAIN=1` to force the plain version. These pages are rendered that way, so
-the examples above show a release rather than the checkout the documentation was built from.
+they show a release rather than the checkout the documentation was built from.
+
+## What it records
+
+Every field is read from the snapshot's own metadata, plus the Mera build:
+
+| field | meaning |
+|:--|:--|
+| `mera_version` | the Mera version number |
+| `mera_build` | the version, plus branch and commit on a git checkout |
+| `path`, `output` | the simulation folder and the output number |
+| `simcode` | the code that wrote the output |
+| `cosmological` | `true` for a cosmological run |
+| `time_myr` | snapshot time in Myr; for a cosmological run, the age of the universe |
+| `redshift`, `aexp` | redshift and expansion factor; `0` and `1` for a normal run |
+| `boxlen`, `ndim` | box length in code units, number of dimensions |
+| `levelmin`, `levelmax` | the AMR level range of the snapshot |
+| `scale_type` | the version of the unit-scale struct, which matters for older saved files |
+| `file_ctime` | when the output was written |
+
+```julia
+for f in fieldnames(Provenance)
+    println(rpad(f, 13), "= ", repr(getfield(p, f)))
+end
+```
+
+```
+mera_version = v"1.8.0"
+mera_build   = "1.8.0"
+path         = "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10"
+output       = 300
+simcode      = "RAMSES"
+cosmological = false
+time_myr     = 445.8861174695
+redshift     = 0.0
+aexp         = 1.0
+boxlen       = 48.0
+ndim         = 3
+levelmin     = 6
+levelmax     = 10
+scale_type   = :ScalesType003
+file_ctime   = Dates.DateTime("2025-06-21T18:31:24.020")
+```
+
+## Cosmological runs
+
+For a normal run the time is physical, in Myr or Gyr. For a cosmological run the record shows the
+**redshift**, with the expansion factor and the age of the universe. `iscosmological` tells which
+case you have. The galaxy above is not cosmological, so here is one of the test simulations that
+is. Only its metadata is read.
+
+```julia
+cinfo = getinfo(80, joinpath(MERA_EXAMPLES, "RAMSES/yt_cosmo"), verbose=false)
+pc = provenance(cinfo)
+println(pc)
+println()
+println("iscosmological : ", iscosmological(cinfo), "   (the galaxy: ", iscosmological(info), ")")
+println("redshift       : ", pc.redshift)
+println("aexp           : ", pc.aexp)
+```
+
+```
+Provenance:
+  Mera version : v1.8.0
+  simulation   : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/yt_cosmo
+  output       : 80  (RAMSES, written 2026-06-01T07:42:48.561)
+  time         : z=0.1426  (aexp=0.8752, age 11.925 Gyr)
+  box / levels : L=1.0  ndim=3  levels 6–16
+  scale type   : ScalesType003
+iscosmological : true   (the galaxy: false)
+redshift       : 0.14255728632206321
+aexp           : 0.875229637910795
+```
+
+## Stamping a figure or a log
+
+`provenance_string` gives the record as one line. Put it in a figure caption, a log file or the
+header of a file you write. The time is in Myr or Gyr, or `z=…` for a cosmological run.
+
+```julia
+println(provenance_string(gas))
+println(provenance_string(cinfo))
+```
+
+```
+Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+Mera v1.8.0 | yt_cosmo/output_00080 | z=0.14256 | L=1.0 ndim=3 lmin=6 lmax=16 | ScalesType003
+```
 
 ## Where it applies
 
-`provenance` works on **any object that carries an `InfoType`**, every data object, the
-projection map, and an `InfoType` itself. Each derived result carries an `.info` field, so the
-same call works on all of them.
+`provenance` works on an `InfoType` and on every result that carries one in its `.info` field:
+
+* every data object, and any subregion of one
+* a [`projection`](@ref) map
+* a [`pdf`](@ref) of a data object or a map
+* a galaxy frame from [`face_on`](@ref) or [`edge_on`](@ref)
+
+The record describes the **snapshot**, not the selection. A subregion, or a read of one
+variable up to a lower level, gives the same record as the full read.
 
 ```julia
-# the InfoType directly
-println("from InfoType : ", provenance_string(gas.info))
+println("InfoType   : ", provenance_string(gas.info))
 
-# a projection map (AMRMapsType)
-sd = projection(gas, :sd, :Msol_pc2; center=[:bc])
-println("from a map    : ", provenance_string(sd))
+sd = projection(gas, :sd, :Msol_pc2; center=[:bc], verbose=false, show_progress=false)
+println("map        : ", provenance_string(sd))
+println("pdf        : ", provenance_string(pdf(gas, :rho)))
+
+parts = getparticles(info, verbose=false, show_progress=false)
+println("particles  : ", provenance_string(parts))
+
+# one variable up to level 8 is enough: the record still says levels 6 to 10
+grav = getgravity(info, :epot, lmax=8, verbose=false, show_progress=false)
+println("gravity    : ", provenance_string(grav))
 ```
 
 ```
-from InfoType : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-[Mera]: 2026-09-11T08:45:32.748
-center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-Selected var(s)=(:sd,)
-Weighting      = :mass
-Effective resolution: 1024^2
-Map size: 1024 x 1024
-Pixel size: 46.875 [pc]
-Simulation min.: 46.875 [pc]
-Available threads: 4
-Requested max_threads: 4
-Variables: 1 (sd)
-Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:01
-from a map    : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+InfoType   : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+map        : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+pdf        : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+particles  : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+gravity    : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
 ```
+
+A result without `.info` cannot know its snapshot: a [`profile`](@ref) or [`phase`](@ref), a
+[`timeseries`](@ref) table, or a `pdf` of a plain array. `provenance` then throws an
+`ArgumentError` that says so. Take the provenance of the data object you computed it from.
 
 ```julia
-# particles and gravity carry the same provenance
-parts = getparticles(info);
-grav  = getgravity(info);
-println("particles : ", provenance_string(parts))
-println("gravity   : ", provenance_string(grav))
+prof = profile(gas, :r_cylinder, :rho; nbins=10, center=[:bc])
+try
+    provenance(prof)
+catch err
+    println(sprint(showerror, err))
+end
+println()
+println("use the source instead : ", provenance_string(gas))
 ```
 
 ```
-[Mera]: Get particle data: 2026-09-11T08:45:36.849
-Using threaded processing with 4 threads
-Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-domain:
-xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-Processing 640 CPU files using 4 threads
-Mode: Threaded processing
-Combining results from 4 thread(s)...
-Found 5.445150e+05 particles
-Memory used for data table :38.428720474243164 MB
--------------------------------------------------------
-[Mera]: Get gravity data: 2026-09-11T08:45:41.917
-Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
-domain:
-xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-📊 Processing Configuration:
-   Total CPU files available: 640
-   Files to be processed: 640
-   Compute threads: 4
-   GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.55 ms/it)
-✓ File processing complete! Combining results...
-✓ Data combination complete!
-Final data size: 28320979 cells, 4 variables
-Creating Table from 28320979 cells with max 4 threads...
-   Threading: 4 threads for 8 columns
-   Max threads requested: 4
-   Available threads: 4
-   Using parallel processing with 4 threads
-   Creating IndexedTable with 8 columns...
-✓ Table created in 4.26 seconds
-Memory used for data table :1.6880627572536469 GB
--------------------------------------------------------
-particles : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-gravity   : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+ArgumentError: provenance: a NamedTuple carries no `.info`. Apply it to a data object (hydro/particles/gravity/clumps/RT), a projection map, a pdf of either, a galaxy frame, or an InfoType. For a result without it (profile, phase, timeseries, a pdf of a plain array), take provenance of the source data object.
+use the source instead : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
 ```
 
 ## Deterministic
 
-The record depends on the snapshot's own metadata and on the Mera build, never on the wall clock,
-so two independent reads of the same output in the same session produce identical provenance. That
-is what makes it safe to compare in a test.
+The record depends on the snapshot's own metadata and on the Mera build, never on the wall clock.
+Two independent reads of the same output give identical records, which makes the record safe to
+compare in a test.
 
 ```julia
-p2 = provenance(gethydro(info))
-println("identical to first read : ", provenance_string(p2) == provenance_string(p))
+# read the metadata of the same output again, from disk
+p2 = provenance(getinfo(300, joinpath(MERA_EXAMPLES, "RAMSES/mw_L10"), verbose=false))
+println("identical to the first read : ", p2 == p)
 ```
 
 ```
-[Mera]: Get hydro data: 2026-09-11T08:46:01.581
-Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
-domain:
-xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-📊 Processing Configuration:
-   Total CPU files available: 640
-   Files to be processed: 640
-   Compute threads: 4
-   GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.62 ms/it)
-✓ File processing complete! Combining results...
-✓ Data combination complete!
-Final data size: 28320979 cells, 7 variables
-Creating Table from 28320979 cells with max 4 threads...
-  Threading: 4 threads for 11 columns
-  Max threads requested: 4
-  Available threads: 4
-  Using parallel processing with 4 threads
-  Creating IndexedTable with 11 columns...
-✓ Table created in 45.671 seconds
-Memory used for data table :2.321086215786636 GB
--------------------------------------------------------
-identical to first read : true
+identical to the first read : true
 ```
 
-See also `getinfo` (the `InfoType` provenance is read from), `savefits` (the provenance
-string makes a good FITS header comment), and the MERA-Files page (the `scale_type` version
-matters when loading older files).
+## See also
+
+* [`getinfo`](@ref), the `InfoType` the record is read from
+* [Reproducibility](reproducibility.md), how the record fits with a pinned project and test simulations
+* [MERA files](07_multi_Mera_Files.md), where the `scale_type` version matters when loading older files
+* [Gallery](gallery.md), which puts the provenance line in the attribution block of its recipes
