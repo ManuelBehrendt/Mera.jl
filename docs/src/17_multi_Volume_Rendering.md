@@ -32,9 +32,10 @@ For maps with physical units use [`projection`](@ref).
 | [`volumepath`](@ref) | move the camera between keyframes: angles, centre and zoom |
 | [`volumelook`](@ref) | resolve colours and opacity once, and reuse them |
 
-All colour maps on this page are colour-blind friendly (`:viridis`, `:cividis`, `:magma`,
-`:inferno`, `:plasma`). Avoid rainbow maps such as `:jet` or `:turbo`: they invent structure that
-is not in the data and are hard to read for many people.
+All colour maps on this page are colour-blind friendly: `:viridis`, `:cividis`, `:magma`,
+`:inferno` and `:plasma`. If you want the reach of a rainbow, use a scientific one such as
+`:roma` or `:batlow` (Crameri), which keep an even lightness and stay readable for colour-blind
+readers.
 
 ## Setup
 
@@ -74,7 +75,6 @@ println("gas cells = ", length(gas.data), ",  threads = ", Threads.nthreads())
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Mera v1.8.0
 gas cells = 28320979,  threads = 8
 ```
 
@@ -85,7 +85,7 @@ from the data unless you set it.
 
 ```julia
 t = @elapsed m = volumerender(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), colormap=:inferno,
-                              opacity_gamma=2, tau_unit_length=[300, :pc], view...)
+                              opacity_gamma=2, tau_unit_length=[300, :pc], exposure=2.5, view...)
 println(m, "   (", round(t, digits=1), " s)")
 println(m.look)
 
@@ -95,8 +95,8 @@ fig
 ```
 
 ```
-VolumeRenderType: 1075 × 742 pixels, :rho, filled 20.1 %   (22.5 s)
-VolumeLook(:rho in :nH, log (-3.0, 2.0), :inferno, opacity (0.0, 1.0), τ=1 over 300.0 pc)
+VolumeRenderType: 1075 × 742 pixels, :rho, filled 20.1 %   (23.7 s)
+VolumeLook(:rho in :nH, log (-3.0, 2.0), :inferno, opacity (0.0, 1.0), exposure 2.5, τ=1 over 300.0 pc)
 ```
 
 ![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_5_4.png)
@@ -108,7 +108,7 @@ VolumeLook(:rho in :nH, log (-3.0, 2.0), :inferno, opacity (0.0, 1.0), τ=1 over
 | `unit` | the unit the quantity is read in, e.g. `:nH` for a density in cm⁻³ |
 | `scale` | `:log` (default) or `:linear`: how values are spread across the colour range |
 | `colorrange=(lo, hi)` | which values get colour. Below `lo` is transparent (with `opacity` starting at 0), above `hi` looks like `hi`. Without it, `percentiles` of the cell values are used. |
-| `colormap` | the colours; `:viridis`, `:cividis`, `:magma`, `:inferno`, `:plasma` |
+| `colormap` | the colours; `:viridis`, `:cividis`, `:magma`, `:inferno`, `:plasma`, or `:roma`/`:batlow` |
 | `opacity=(lo, hi)` | the ends of the opacity ramp across the colour range |
 | `opacity_gamma` | bends that ramp; above 1 keeps faint gas transparent so only the densest parts are solid |
 | `iso=[…]`, `iso_width`, `iso_alpha` | surfaces at chosen values (section 7) |
@@ -174,7 +174,7 @@ and you look through the disc.
 fig = Figure(size=(1150, 380))
 for (k, L) in enumerate((100, 300, 2000))
     mk = volumerender(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), colormap=:inferno,
-                      opacity_gamma=2, tau_unit_length=[L, :pc], panel...)
+                      opacity_gamma=2, tau_unit_length=[L, :pc], exposure=2.5, panel...)
     show_image!(fig[1, k], mk; title="τ = 1 over $L pc")
 end
 fig
@@ -189,7 +189,7 @@ render at 240 pc and at 30 pc pixels differs in sharpness, not in brightness or 
 fig = Figure(size=(1150, 380))
 for (k, px) in enumerate((240, 30))
     mk = volumerender(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), colormap=:inferno,
-                      opacity_gamma=2, tau_unit_length=[300, :pc],
+                      opacity_gamma=2, tau_unit_length=[300, :pc], exposure=2.5,
                       Base.setindex(view, [px, :pc], :pxsize)...)
     println("pixels of $px pc: ", size(mk.image), ", filled ",
             round(100 * sum(mk.alpha) / length(mk.alpha), digits=1), " %")
@@ -246,7 +246,7 @@ settings = [("wide range, straight ramp", (1e-4, 1e2), 1.0),
             ("narrow range on the dense gas", (1.0, 1e2), 1.0)]
 for (k, (title, cr, g)) in enumerate(settings)
     mk = volumerender(gas, :rho; unit=:nH, colorrange=cr, colormap=:inferno, opacity_gamma=g,
-                      tau_unit_length=[300, :pc], panel...)
+                      tau_unit_length=[300, :pc], exposure=2.5, panel...)
     show_image!(fig[1, k], mk; title=title)
 end
 fig
@@ -254,39 +254,44 @@ fig
 
 ![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_17_1.png)
 
-## 7. Isosurfaces: three phases at once
+## 7. Isosurfaces
 
-`iso=[…]` puts a **surface** at each value: only gas near it is opaque. With values far apart you
-can show different structures in one picture. Here:
+`iso=[…]` puts a **surface** at each value: only gas near it is opaque, everything else stays
+see-through. Values far apart pick out structures of very different size, from the small to the
+large. Here the three surfaces are **10⁻³**, **10⁻¹** and **10 cm⁻³**, which on this galaxy pick
+out the outer envelope, the shells that fill the disc, and the small dense clumps inside it.
 
-* **100 cm⁻³**, the dense clumps where stars form,
-* **1 cm⁻³**, the shells that supernovae blow into the disc,
-* **0.01 cm⁻³**, the thin outflowing gas above and below it.
+Choose values the data actually has: this galaxy reaches 103 cm⁻³, and a surface at 100 cm⁻³
+catches four cells, so it draws nothing.
 
-`iso_width` is the half width of a shell in **dex** (the scale is logarithmic), and `iso_alpha`
-how solid its centre is. With `opacity=(0, 0)` only the shells are drawn.
+* `iso_width` is the half width of a shell in **dex**, because the scale is logarithmic. Keep it
+  small (0.05) so a shell stays thin and you can see through it.
+* `iso_alpha` is how solid the centre of a shell is, one number or **one per shell**. The
+  outermost surface covers by far the largest area, so give it the smallest value, here
+  `[0.12, 0.3, 0.7]`, otherwise it hides everything inside.
+* `opacity=(0, 0)` draws the surfaces alone, and a long `tau_unit_length` with a higher
+  `exposure` keeps them translucent and still bright.
 
 ```julia
-shells = [100.0, 1.0, 0.01]         # clumps, supernova shells, outflow
-iso_only = volumerender(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), colormap=:viridis,
-                        opacity=(0.0, 0.0), iso=shells, iso_width=0.12, iso_alpha=0.9,
-                        exposure=1.5, tau_unit_length=[150, :pc], view...)
-println(iso_only.look)
+shells  = [1e-3, 1e-1, 1e1]
+alphas  = [0.12, 0.3, 0.7]          # the widest surface is the faintest
+iso_kw  = (unit=:nH, colorrange=(1e-4, 1e3), colormap=:roma, opacity=(0.0, 0.0),
+           iso_width=0.05, tau_unit_length=[500, :pc])
+iso_all = volumerender(gas, :rho; iso=shells, iso_alpha=alphas, exposure=10, iso_kw..., view...)
+println(iso_all.look)
 
-fig = Figure(size=(1150, 760))
-show_image!(fig[1, 1], iso_only; title="three surfaces: 100, 1 and 0.01 cm⁻³")
-for (k, (v, name)) in enumerate([(100.0, "100 cm⁻³: dense clumps"), (1.0, "1 cm⁻³: supernova shells"),
-                                 (0.01, "0.01 cm⁻³: outflow")])
-    mk = volumerender(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), colormap=:viridis,
-                      opacity=(0.0, 0.0), iso=[v], iso_width=0.12, iso_alpha=0.9,
-                      exposure=1.5, tau_unit_length=[150, :pc], panel...)
-    show_image!(fig[2, k], mk; title=name)
+fig = Figure(size=(1150, 800))
+show_image!(fig[1, 1], iso_all; title="10⁻³, 10⁻¹ and 10 cm⁻³ together")
+# alone, each surface needs its own exposure: a small surface catches less light
+for (k, (v, a, e)) in enumerate(zip(shells, alphas, [8, 10, 28]))
+    mk = volumerender(gas, :rho; iso=[v], iso_alpha=a, exposure=e, iso_kw..., panel...)
+    show_image!(fig[2, k], mk; title="$(v) cm⁻³ alone")
 end
 fig
 ```
 
 ```
-VolumeLook(:rho in :nH, log (-3.0, 2.0), :viridis, opacity (0.0, 0.0), 3 isosurface(s) at [100.0, 1.0, 0.01], exposure 1.5, τ=1 over 150.0 pc)
+VolumeLook(:rho in :nH, log (-4.0, 3.0), :roma, opacity (0.0, 0.0), 3 isosurface(s) at [0.001, 0.1, 10.0], exposure 10.0, τ=1 over 500.0 pc)
 ```
 
 ![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_19_4.png)
@@ -299,10 +304,10 @@ give it a **long** `tau_unit_length`, a **narrow** `colorrange`, and `opacity_ga
 ```julia
 fig = Figure(size=(1150, 380))
 mt = volumerender(gas, :T; unit=:K, colorrange=(3e5, 1e7), colormap=:plasma, opacity=(0.0, 0.8),
-                  opacity_gamma=4, tau_unit_length=[3000, :pc], panel...)
+                  opacity_gamma=4, tau_unit_length=[3000, :pc], exposure=4, panel...)
 show_image!(fig[1, 1], mt; title="temperature: the hot gas only")
 mv = volumerender(gas, :v; unit=:km_s, colorrange=(20, 300), colormap=:cividis, opacity_gamma=3,
-                  tau_unit_length=[1000, :pc], panel...)
+                  tau_unit_length=[1000, :pc], exposure=3, panel...)
 show_image!(fig[1, 2], mv; title="speed")
 fig
 ```
@@ -342,7 +347,7 @@ to cut the volume.
 
 ```julia
 look = volumelook(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), colormap=:inferno,
-                  opacity_gamma=2, tau_unit_length=[300, :pc], panel...)   # one look for all four
+                  opacity_gamma=2, tau_unit_length=[300, :pc], exposure=2.5, panel...)  # one look for all four
 fig = Figure(size=(1000, 760))
 for (k, (title, kw)) in enumerate([("face on",      (direction=:faceon,)),
                                    ("edge on",      (direction=:edgeon,)),
@@ -376,7 +381,7 @@ moviefromframes("frames", "orbit.gif"; fps=25)
 ```julia
 orbit = volumeorbit(gas, :rho; unit=:nH, angles=0:60:300, inclination=70, fov=16, fov_unit=:kpc,
                     center=[:bc], pxsize=[60, :pc], colorrange=(1e-3, 1e2), colormap=:inferno,
-                    opacity_gamma=2, tau_unit_length=[300, :pc], verbose=false)
+                    opacity_gamma=2, tau_unit_length=[300, :pc], exposure=2.5, verbose=false)
 println(length(orbit), " frames of ", size(orbit[1].image), " pixels, one look: ",
         all(f -> f.look === orbit[1].look, orbit))
 
@@ -405,7 +410,7 @@ pixels, which a movie needs.
 
 ```julia
 path = volumepath(gas, :rho; unit=:nH, colorrange=(1e-3, 1e2), colormap=:inferno,
-                  opacity_gamma=2, tau_unit_length=[300, :pc],
+                  opacity_gamma=2, tau_unit_length=[300, :pc], exposure=2.5,
                   keyframes=[(inclination=0,  azimuth=0,   fov=16),    # face on, wide
                              (inclination=80, azimuth=120, fov=16),    # tilt and turn
                              (inclination=80, azimuth=240, fov=5)],    # turn on and move in
@@ -479,14 +484,14 @@ fig
 ```
 
 ```
-pixel size 240 pc: (137, 95)  7.16 s
-pixel size 120 pc: (271, 187)  7.9 s
-pixel size 60 pc: (539, 372)  9.57 s
-pixel size 30 pc: (1075, 742)  14.94 s
-sphere of 4 kpc: 2427002 cells  1.03 s
-sphere of 8 kpc: 6626805 cells  2.87 s
-sphere of 16 kpc: 20737653 cells  8.45 s
-time ~ pixels^0.18   and   time ~ cells^0.98
+pixel size 240 pc: (137, 95)  6.82 s
+pixel size 120 pc: (271, 187)  7.06 s
+pixel size 60 pc: (539, 372)  9.23 s
+pixel size 30 pc: (1075, 742)  13.71 s
+sphere of 4 kpc: 2427002 cells  0.87 s
+sphere of 8 kpc: 6626805 cells  2.82 s
+sphere of 16 kpc: 20737653 cells  7.87 s
+time ~ pixels^0.17   and   time ~ cells^1.02
 ```
 
 ![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_31_14.png)
