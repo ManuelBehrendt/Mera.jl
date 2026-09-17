@@ -203,7 +203,6 @@ export
     profile,
     phase,
     profile3d,
-    rotationcurve,
     velocitydispersion,
     clumping,
     cosmic_time,

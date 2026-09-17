@@ -11,12 +11,12 @@
     This page is also an executable **Jupyter notebook**: [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-`profile`, `phase`, `profile3d`, `rotationcurve` and `profiletimeseries` are **general, weighted
+`profile`, `phase`, `profile3d` and `profiletimeseries` are **general, weighted
 reductions** over any Mera field, a *profile* bins by one quantity (often a **radius**) and reports
 per-bin **statistics** of another; a *phase diagram* is a 2-D weighted histogram. They work on
 **3-D data** (gas / gravity / particles) **and on projected 2-D maps**.
 
-This guide builds the core features up one at a time, on **one galaxy**. Seven sections cover the
+This guide builds the core features up one at a time, on **one galaxy**. Six sections cover the
 essentials with a plot each; the remaining features share the same API and are summarised at the end.
 
 ## Setup, load the galaxy once
@@ -32,7 +32,7 @@ stars from another into the same total. Define a reusable physical **center**; p
 # MERA_EXAMPLES environment variable; every path below is built from it.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
-using Mera, CairoMakie
+using Mera, CairoMakie, Statistics   # Statistics: quantile, used for the colour limits in §5
 CairoMakie.activate!()
 BASE = MERA_EXAMPLES   # <-- change me
 info  = getinfo(100, joinpath(BASE,"RAMSES/spiral_clumps"), verbose=false)
@@ -59,8 +59,9 @@ gas cells = 590311   particles = 453200
 
 With only a bin field, `profile` returns the **summed weight** per bin, e.g. the radial **mass
 profile** M(R). The radius is measured about `center`; `nbins`, `xrange`, `scale` and units are
-physical. `scale=:log` gives log-spaced bins (the low edge is clamped to the smallest positive
-value; the top edge is inclusive). Set bins by **count** (`nbins`), by a **physical width**
+physical. `scale=:log` gives log-spaced bins, **base 10 and not natural log**: the edges are
+`10 .^ range(log10(lo), log10(hi), length=nbins+1)`, the low edge is clamped to the smallest
+positive value, and the top edge is inclusive. Set bins by **count** (`nbins`), by a **physical width**
 (`binsize=0.5` in `xunit`, or `binsize=(500,:pc)` with its own unit; a dimensionless **dex** step
 under `scale=:log`), or by fully custom `edges=`, `binsize`/`edges` override `nbins`. Returns `x`
 (centres), `edges`, `count`, `sum` (Σweight), `sumw2`.
@@ -269,82 +270,95 @@ fig
 
 ## 4. Weighting & components, mass vs volume vs none
 
-`weight` is `:mass`, `:volume` (grid-only), `:none` (equal cells) or **any field**. Mass- and
-volume-weighted means differ wherever density varies within a bin; `:none` is the unweighted mean.
-Profiles work for every data type, but **gravity/RT carry no `:mass`** (use `:volume`/`:none`).
-To combine components, profile each on **shared `edges`** (here gas vs DM vs stars enclosed mass).
+A bin holds many cells, and `weight` decides how much each of them counts towards the bin's value.
+The choice is not cosmetic: on an AMR grid it changes the answer, because a refined region packs
+many small cells into the space of one coarse cell.
+
+| `weight` | each cell counts in proportion to | the mean then follows |
+|---|---|---|
+| `:mass` | its mass | where the material is |
+| `:volume` | the space it fills | where the volume is (grid data only) |
+| `:none` | nothing, every cell counts once | where the refinement is |
+| any field, e.g. `:T` | that field's value | whatever you chose |
+
+Dense gas occupies little volume and carries most of the mass, so a mass-weighted mean sits high
+above a volume-weighted one wherever a bin mixes dense clumps with thin gas. Neither is the right
+answer on its own: the gap between them is itself the measurement, and it tells you the bin is not
+uniform. Say which one you used.
+
+**Gravity and RT data carry no `:mass` column**, so `weight=:mass` cannot work there. Use `:volume`
+or `:none` for those.
+
+**Comparing components starts with shared bins.** Pass `edges=` (a vector of bin boundaries) instead
+of `nbins=`, and every profile built from it lands on exactly the same radii. Curves on shared edges
+can be divided, subtracted or stacked afterwards; curves on separately chosen bins cannot. Combine
+that with `mask=`, a boolean vector selecting rows, and one snapshot gives the gas, the stars and the
+dark matter on one axis.
 
 ```julia
-ed = collect(range(0,20,length=41))
-pmw = profile(gas, :r_sphere, :rho; weight=:mass,   unit=:nH, edges=ed, center=ctr, range_unit=:kpc, xunit=:kpc)
-pvw = profile(gas, :r_sphere, :rho; weight=:volume, unit=:nH, edges=ed, center=ctr, range_unit=:kpc, xunit=:kpc)
-pep = profile(grav, :r_sphere, :epot; weight=:volume, edges=ed, center=ctr, range_unit=:kpc, xunit=:kpc)  # gravity: no :mass
-fig = Figure(size=(1080,430))
-ax1 = Axis(fig[1,1], yscale=log10, xlabel="r [kpc]", ylabel="⟨n_H⟩ [cm⁻³]", title="weighting: mass vs volume (gas)")
-o1=(pmw.mean.>0); o2=(pvw.mean.>0)
+# --- shared bins ---------------------------------------------------------------------------
+# A vector of BIN BOUNDARIES, not a bin count. 41 boundaries make 40 bins of 0.5 kpc each.
+# Every profile below is handed this same vector, which is what makes the curves comparable:
+# identical radii, so they can be divided, subtracted or stacked afterwards.
+ed = collect(range(0, 20, length=41))
+
+# One bundle of options reused by every call, so a difference between two curves can only come
+# from what we deliberately change (the weight, or the component), never from the binning.
+common = (edges=ed, center=ctr, range_unit=:kpc, xunit=:kpc)
+
+# --- the same field, three weights ---------------------------------------------------------
+# :rho is the density of each cell; `unit=:nH` reports it as a hydrogen number density in cm^-3.
+pmw = profile(gas, :r_sphere, :rho; weight=:mass,   unit=:nH, common...)   # follows the material
+pvw = profile(gas, :r_sphere, :rho; weight=:volume, unit=:nH, common...)   # follows the space
+
+# Gravity data has no :mass column, so weight=:mass would fail here. :volume is the natural choice
+# for a field defined on the grid; :none would weight by refinement instead of by physical size.
+pep = profile(grav, :r_sphere, :epot; weight=:volume, common...)
+
+# --- components on those same bins ----------------------------------------------------------
+# `getparticlemask` builds a boolean vector, one entry per particle, true for the family asked for.
+# Passing it as `mask=` restricts the profile to those rows; nothing is copied or reloaded.
+mstars = getparticlemask(parts, :stars; verbose=false)
+mdm    = getparticlemask(parts, :dm;    verbose=false)
+
+# With no yvar, `profile` sums the WEIGHT per bin, so weight=:mass gives the mass per bin in `.sum`.
+# `cumulative=:forward` adds those bins up from the inside out, so `.cumsum` is the mass enclosed
+# inside each bin's outer edge. Results are in code units; multiply by scale.Msol for solar masses.
+cg = profile(gas,   :r_sphere; weight=:mass, cumulative=:forward, common...)
+cs = profile(parts, :r_sphere; weight=:mass, cumulative=:forward, mask=mstars, common...)
+cd = profile(parts, :r_sphere; weight=:mass, cumulative=:forward, mask=mdm,    common...)
+Mg = cg.cumsum .* gas.scale.Msol
+Ms = cs.cumsum .* parts.scale.Msol
+Md = cd.cumsum .* parts.scale.Msol
+
+# --- plot ------------------------------------------------------------------------------------
+fig = Figure(size=(1500, 430))
+
+ax1 = Axis(fig[1,1], yscale=log10, xlabel="r [kpc]", ylabel="⟨n_H⟩ [cm⁻³]",
+           title="same field, two weights (gas)")
+o1 = pmw.mean .> 0; o2 = pvw.mean .> 0        # log axis: drop empty bins, which report 0
 lines!(ax1, pmw.x[o1], pmw.mean[o1], color=:crimson, linewidth=2.5, label="mass-weighted")
 lines!(ax1, pvw.x[o2], pvw.mean[o2], color=:teal,    linewidth=2.5, label="volume-weighted")
-axislegend(ax1, position=:rt)
-ax2 = Axis(fig[1,2], xlabel="r [kpc]", ylabel="⟨Φ⟩ [code]", title="gravity potential (weight=:volume; no :mass)")
-og=isfinite.(pep.mean); lines!(ax2, pep.x[og], pep.mean[og], color=:slateblue, linewidth=2.5); fig
+axislegend(ax1, position=:rt, framevisible=false)
+
+ax2 = Axis(fig[1,2], xlabel="r [kpc]", ylabel="⟨Φ⟩ [code]",
+           title="gravity: weight=:volume, :mass not available")
+og = isfinite.(pep.mean)
+lines!(ax2, pep.x[og], pep.mean[og], color=:slateblue, linewidth=2.5)
+
+ax3 = Axis(fig[1,3], yscale=log10, xlabel="r [kpc]", ylabel="M(<r) [M⊙]",
+           title="three components, one set of edges")
+for (M, col, lab) in ((Md, :navy, "dark matter"), (Ms, :goldenrod, "stars"), (Mg, :seagreen, "gas"))
+    ok = M .> 0                                # again, only bins that have something in them
+    lines!(ax3, cg.x[ok], M[ok], color=col, linewidth=2.5, label=lab)
+end
+axislegend(ax3, position=:rb, framevisible=false)
+fig
 ```
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_11_1.png)
 
-## 5. Rotation curve, who contributes how much
-
-`rotationcurve` forms the enclosed mass M(<r) and returns the **dynamical** circular velocity
-`v_circ = √(G·M(<r)/r)`. Run it per **component**, gas (optionally **masked**, e.g. cold gas only),
-stars, dark matter, and they add **in quadrature**, `v_tot² = Σ v_i²`. The squared ratio
-`(v_i/v_tot)²` is exactly each component's **fractional contribution** to the rotational support. This
-is the dynamical mass decomposition (≠ the *kinematic* ⟨v_ϕ⟩ of §7).
-
-**How `v_circ` is estimated:** the enclosed mass `M(<r)` is an *exact* direct sum of the binned masses;
-`v_circ = √(G·M(<r)/r)` is then the **spherical** (shell-theorem) idealization. It assumes the
-enclosed mass is spherically arranged, and here the binning radius is *cylindrical*, so M(<R)
-sweeps the whole vertical column and takes in halo material that a sphere of the same radius would
-not. On this galaxy the estimate therefore runs **high**: 182 km/s against 110 km/s from the field
-at R = 10 kpc, a factor 1.7. Treat the decomposition as "who dominates where", which it answers
-well, rather than as a measurement of the rotation speed, which the third panel gets from the
-solved potential. The third panel overplots it against the
-**exact** curve from the solved gravity field, `v = √(R·|a_R|)` with `a_R = getvar(grav, :ar_cylinder)`
-(the true radial acceleration of all matter), the dynamically rigorous rotation curve.
-
-```julia
-opts = (rvar=:r_cylinder, xunit=:kpc, center=ctr, range_unit=:kpc, nbins=50, xrange=(0.3,25))
-rcg = rotationcurve(gas; opts...)                                  # all gas
-cold = getvar(gas, :T, :K) .< 1e4                                  # a gas mask: cold gas (< 10⁴ K)
-rcc = rotationcurve(gas; mask=cold, opts...)                       # cold-gas contribution
-rcs = rotationcurve(parts; mask=getparticlemask(parts,:stars; verbose=false), opts...)
-rcd = rotationcurve(parts; mask=getparticlemask(parts,:dm;    verbose=false), opts...)
-vtot = sqrt.(rcg.v_circ.^2 .+ rcs.v_circ.^2 .+ rcd.v_circ.^2)       # spherical-estimate total
-# EXACT curve from the solved gravity field: v = √(R·|a_R|), a_R = radial acceleration (all matter)
-pa  = profile(grav, :r_cylinder, :ar_cylinder; weight=:volume, unit=:cm_s2, nbins=50, xrange=(0.3,25), center=ctr, range_unit=:kpc, xunit=:kpc)
-Rcm = pa.x .* (getunit(info,:cm)/getunit(info,:kpc))
-vexact = sqrt.(Rcm .* abs.(pa.mean)) ./ 1e5                        # km/s
-fig = Figure(size=(1500,430))
-ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="v_circ [km/s]", title="rotation curve by component")
-lines!(ax1, rcd.x, rcd.v_circ, color=:navy,      linewidth=2, label="dark matter")
-lines!(ax1, rcs.x, rcs.v_circ, color=:goldenrod, linewidth=2, label="stars")
-lines!(ax1, rcg.x, rcg.v_circ, color=:seagreen,  linewidth=2, label="gas (all)")
-lines!(ax1, rcc.x, rcc.v_circ, color=:seagreen,  linewidth=1.5, linestyle=:dot, label="gas (cold, masked)")
-lines!(ax1, rcg.x, vtot, color=:black, linewidth=3, linestyle=:dash, label="total")
-axislegend(ax1, position=:rb)
-fd=(rcd.v_circ./vtot).^2; fs=(rcs.v_circ./vtot).^2; fg=(rcg.v_circ./vtot).^2
-ax2 = Axis(fig[1,2], xlabel="R [kpc]", ylabel="(v_i / v_tot)²", title="fractional contribution to v²  (stacks to 1)")
-band!(ax2, rcg.x, fill(0.0,length(rcg.x)), fd, color=(:navy,0.6), label="dark matter")
-band!(ax2, rcg.x, fd, fd.+fs, color=(:goldenrod,0.6), label="stars")
-band!(ax2, rcg.x, fd.+fs, fd.+fs.+fg, color=(:seagreen,0.6), label="gas")
-axislegend(ax2, position=:rc)
-ax3 = Axis(fig[1,3], xlabel="R [kpc]", ylabel="v_circ [km/s]", title="spherical estimate vs exact (from ∂Φ)")
-lines!(ax3, rcg.x, vtot, color=:gray, linewidth=2.5, label="√(GM(<r)/r)  (spherical)")
-lines!(ax3, pa.x, vexact, color=:crimson, linewidth=2.5, label="√(R·|a_R|)  (gravity, exact)")
-axislegend(ax3, position=:rb); fig
-```
-
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_1.png)
-
-## 6. Phase diagrams, colour is a knob
+## 5. Phase diagrams, colour is a knob
 
 `phase` is a 2-D weighted histogram of two fields, the classic mass-weighted **ρ to T** diagram.
 With a third field `cvar` each cell is coloured by the per-cell weighted **mean**; `cstat` swaps
@@ -384,7 +398,10 @@ function mask(M)
     @inbounds for i in eachindex(M); out[i] = keep[i] ? M[i] : NaN; end
     return out
 end
-qq(M, p) = (v = filter(isfinite, vec(M)); isempty(v) ? 0.0 : quantile(v, p))
+function qq(M, p)                       # a percentile of the finite entries of a map
+    v = filter(isfinite, vec(M))
+    return isempty(v) ? 0.0 : quantile(v, p)
+end
 vlim = qq(abs.(mask(pvr.mean)), 0.90)      # v_r is one-sided here: a wind, not a symmetric field
 sig  = mask(psd.std); sig[sig .<= 0] .= NaN   # a log colour scale needs positives
 
@@ -411,14 +428,15 @@ fig
 ```
 
 ```
+[Mera] Hint: getvar(:vr_sphere) has no `vcenter` — velocities are in the BOX frame.
              Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
              `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
              (shown once per session; verbose(false) silences Mera's messages)
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_2.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_3.png)
 
-## 7. Distribution shape & uncertainties, moments, equal-count bins, bootstrap CIs
+## 6. Distribution shape & uncertainties, moments, equal-count bins, bootstrap CIs
 
 Three statistics upgrades, all opt-in and composable:
 
@@ -463,7 +481,7 @@ fig
 equal-count points/bin (min..max): (32096, 33456)  → nearly equal
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_17_3.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_3.png)
 
 ## More features (same API, no separate plot here)
 
@@ -499,8 +517,8 @@ These use exactly the same `profile`/`phase` calls shown above:
 | per-bin mean/std/sem/quantiles/min/max/custom | `profile(obj, x, y; statistic=…)` |
 | density / enclosed mass / fraction / pdf | `geometry`, `cumulative`, `normalize` |
 | many fields in one pass | `profile(obj, x, [y1,y2])` → `.fields` |
-| mass/volume/none/field weighting; components | `weight=…`, shared `edges` |
-| rotation curve, gas (maskable) / stars / DM | `rotationcurve(obj; mask=…)` |
+| mass / volume / none / field weighting | `weight=…` |
+| components (gas / stars / DM) on shared bins | `edges=…` + `mask=getparticlemask(…)` |
 | velocity decomposition ⟨v_ϕ⟩/⟨v_r⟩ + σ_r/σ_ϕ/σ_z | `profile(obj, r, :vϕ_cylinder/:vr_cylinder/:vz)` |
 | select particles by type/family/tag | `getparticlemask` |
 | profile from a 2-D map (Σ(R), map-weighted) | `profile(m::DataMapsType, …)` |

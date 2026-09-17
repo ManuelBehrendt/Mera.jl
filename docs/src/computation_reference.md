@@ -725,13 +725,13 @@ field, or unweighted). Per bin, with members ``i``, weights ``w_i``, values ``y_
 | min / max / count / ``S_w`` | extrema, member count, summed weight (the mass/volume profile itself) |
 
 Also available: `var`, `neff`, optional bootstrap `mean_ci`/`median_ci` + `median_se` (`nboot>0`);
-bins `:linear` / `:log` / `:equal` (quantile-spaced, equal-population); `geometry=:spherical`/`:cylindrical`
+bins `:linear` / `:log` (base 10, so a `binsize` is a dex step) / `:equal` (quantile-spaced,
+equal-population); `geometry=:spherical`/`:cylindrical`
 adds `density = S_w/\text{shell volume}`; `cumulative` adds `cumsum` (e.g. enclosed mass ``M(<r)``);
-`normalize=:pdf` returns a normalised PDF. Two wrappers build on this:
+`normalize=:pdf` returns a normalised PDF. The dispersion wrappers build on this:
 
 | Quantity | Formula |
 |---|---|
-| Dynamical rotation curve `rotationcurve` | ``v_\mathrm{circ}(r) = \sqrt{G\,M(<r)/r}`` from the binned enclosed mass ``M(<r) = \sum_{r_i<r} m_i`` (also returns ``g = GM/r^2``) |
 | Kinematic dispersion `velocitydispersion` | the per-bin `std` of ``v_R, v_\phi, v_z`` → ``\sigma_R,\sigma_\phi,\sigma_z`` and total ``\sigma = \sqrt{\sigma_R^2+\sigma_\phi^2+\sigma_z^2}`` |
 | Total (turbulent ⊕ thermal) dispersion `velocitydispersion(…; thermal=true, mu=…)` | ``\sigma_\mathrm{turb,1D}=\sqrt{(\sigma_R^2+\sigma_\phi^2+\sigma_z^2)/3}``, thermal ``\sigma_\mathrm{th}=\sqrt{k_B\langle T\rangle/(\mu m_H)}``, total ``\sigma_\mathrm{tot}=\sqrt{\sigma_\mathrm{turb,1D}^2+\sigma_\mathrm{th}^2}``, Mach ``\mathcal{M}=\sigma_\mathrm{turb,1D}/\langle c_s\rangle`` |
 | Local de-streamed dispersion `localdispersion` | as above but the turbulent ``\sigma`` is the residual about the **per-patch** mean velocity (square `patchsize` tiles in ``x,y``), removes rotation/shear/streaming above the patch scale (TIGRESS/SILCC-style); also returns the anisotropy ``\sigma_z/\sigma_\mathrm{in\text{-}plane}`` and patch-to-patch percentile spread |

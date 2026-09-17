@@ -669,7 +669,7 @@ const _RAMSES_PARTICLE_FAMILY = Dict{Symbol,Int}(
     getparticlemask(dataobject::PartDataType, select; verbose=true) -> Vector{Bool}
 
 Boolean mask selecting a subset of particles, for use as the `mask=` argument of [`profile`](@ref),
-[`phase`](@ref), [`rotationcurve`](@ref) (and `projection`, `getvar`, …). `select` may be
+[`phase`](@ref) (and `projection`, `getvar`, …). `select` may be
 
 * a **named type** — `:all`, `:dm` (`:dark_matter`), `:stars` (`:star`), `:clouds` (`:sink`),
   `:debris`, `:other`, `:tracer` (family ≤ 0), `:gas` (gas tracer, family 0);
@@ -685,7 +685,7 @@ an error. The required column must be among the loaded particle variables.
 parts = getparticles(getinfo(1, "spiral_ugrid"))
 profile(parts, :r_cylinder; weight=:mass, mask=getparticlemask(parts, :stars),
         center=[:bc], range_unit=:kpc, xunit=:kpc)
-rotationcurve(parts; mask=getparticlemask(parts, :dm), center=[:bc], range_unit=:kpc)
+phase(parts, :r_cylinder, :vz; mask=getparticlemask(parts, :dm), center=[:bc], range_unit=:kpc)
 ```
 """
 function getparticlemask(dataobject::PartDataType, select; verbose::Bool=true)

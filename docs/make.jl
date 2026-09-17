@@ -23,6 +23,9 @@ const UNDOCUMENTED_OK = Set([
     # flux budgets, moved to the git-ignored src/dev while the method is being worked on: present
     # on this machine, absent from master and from any release, so they have no docs page
     :fluxbudget, :fluxtimeseries, :fluxprofile, :fluxshell, :fluxmap, :fluxmapplot,
+    # rotationcurve, moved to the git-ignored src/dev while the spherical enclosed-mass estimate
+    # is reconciled with the curve solved from the gravity field: same situation as the flux budgets
+    :rotationcurve,
 ])
 
 let

@@ -187,8 +187,8 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 ### Single numbers from the data
 - **`msum` / `center_of_mass` / `bulk_velocity` / `getextent`**: totals, centres and bounds, in any
   unit, for gas, particles or clumps
-- **`velocitydispersion` / `localdispersion` / `rotationcurve`**: dispersion overall and per cell,
-  and rotation as a function of radius
+- **`velocitydispersion` / `localdispersion`**: velocity dispersion as a function of radius, and
+  the local turbulent dispersion with bulk streaming removed
 - **`wstat`**: mean, median, standard deviation, skewness, kurtosis and extrema of any array, with
   optional weights and a mask
 

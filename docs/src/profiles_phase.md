@@ -44,6 +44,10 @@ A profile is configurable along a few **independent** axes: mix and match freely
 be non-negative.)
 **Binning**: `nbins` + `xrange` + `scale=:linear`/`:log`/**`:equal`** (quantile-spaced *adaptive*
 bins, ~equal count per bin, robust for sparse outer radii / noisy data), or explicit `edges=[…]`.
+`:log` is **base 10**, not natural log: the edges are `10 .^ range(log10(lo), log10(hi), …)`, so a
+`binsize` under `:log` is a dimensionless **dex** step (0.1 = ten bins per decade). The same holds
+for `xscale`/`yscale`/`zscale` in `phase` and `profile3d`. Values ≤ 0 have no log bin and are
+dropped with a warning.
 **Reference point**: `center` in `center_unit` (e.g. `center=[24,24,24], center_unit=:kpc`); the
 binning-axis unit is `xunit`, **not** `center_unit` (the axis can be any quantity). `range_unit` is
 a back-compat alias of `center_unit`.
@@ -103,7 +107,6 @@ What a `profile` returns (a `NamedTuple`; only the relevant fields are present):
 | `profile(obj, x[, y])` | 1 | `nbins` | Σweight, or stats of `y` | radial ρ(r), rotation curve, ⟨T⟩(r), PDFs |
 | `phase(obj, x, y[, c])` | 2 | `nbins²` (`H`) | joint Σweight; `cstat` of `c` | ρ-T diagram, joint PDF |
 | `profile3d(obj, x, y, z[, c])` | 3 | `nbins³` (`H`) | joint Σweight; `cstat` of `c` | ρ-T-Z cube; marginal ≡ `phase` |
-| `rotationcurve(obj)` | 1 (radius) | `nbins` | `v_circ=√(GM(<r)/r)` ≥ 0 | dynamical (mass-based) rotation curve |
 | `velocitydispersion(obj)` | 1 (radius) | `nbins` | σ_R/σ_φ/σ_z + total σ | kinematic dispersion profile |
 | `profiletimeseries(loadfn, outs, …)` | 1 × snapshots | `nbins×nsnap` | a profile per snapshot | radius-vs-time evolution |
 
@@ -118,7 +121,8 @@ The per-bin `std` of a velocity *component* is already its **rest-frame** kinema
 (weighted variance about the per-bin mean, net rotation/streaming does **not** inflate it), so
 `profile(gas, :r_cylinder, :vz).std` is σ_z(R), `…, :vϕ_cylinder).std` is σ_φ(R), etc.
 [`velocitydispersion`](@ref) is a convenience wrapper that returns σ_R / σ_φ / σ_z (cylindrical by
-default) and the total σ = √(σ_R²+σ_φ²+σ_z²) in one call. *(Worked example: tutorial §7.)*
+default) and the total σ = √(σ_R²+σ_φ²+σ_z²) in one call.
+*(Worked example: the tutorial's "More features" section.)*
 
 #### Turbulent ⊕ thermal = total line width
 
@@ -150,12 +154,12 @@ ld = localdispersion(solar; patchsize=[500,:pc], thermal=true, mu=2.33)
 ld.sigma_total, ld.mach, ld.anisotropy, ld.sigma_total_q   # scalars + (16,50,84)% patch spread
 ```
 
-!!! note "Kinematic ⟨v_ϕ⟩ vs dynamical v_circ"
-    A *kinematic* rotation curve: the binned mean azimuthal velocity, `profile(gas, :r_cylinder,
-    :vϕ_cylinder)`, carries the disk's **rotation sense**, so it can be **negative** (this galaxy's
-    ⟨v_ϕ⟩ ≈ −230…−100 km/s). The *dynamical* `rotationcurve` returns the speed `√(G·M/r) ≥ 0` (a
-    **spherical** idealization, for the disk-flattening-exact curve use the gravity field's
-    `:ar_cylinder`, tutorial §6). Plot `abs.(mean)` if you want a positive kinematic curve.
+!!! note "A rotation curve carries a sign"
+    The binned mean azimuthal velocity, `profile(gas, :r_cylinder, :vϕ_cylinder)`, keeps the disk's
+    **rotation sense**, so it can be **negative** (this galaxy's ⟨v_ϕ⟩ ≈ −230…−100 km/s). Plot
+    `abs.(mean)` if you want a positive curve. For the curve set by the mass rather than by the gas
+    motion, take it from the solved gravity field: `v = √(R·|a_R|)` with
+    `getvar(grav, :ar_cylinder)`, which needs no assumption about how the mass is arranged.
 
 ## Profiles from 2-D maps
 
@@ -163,8 +167,8 @@ ld.sigma_total, ld.mach, ld.anisotropy, ld.sigma_total_q   # scalars + (16,50,84
 surface-brightness Σ(R), a column-weighted `vlos(R)` (`weight=:sd`), a σlos(R), or any map vs any map.
 It works for axis-aligned **and off-axis** maps: `xvar=:r` measures radius from the **object centre**
 (the map's `cextent`/pivot), so the profile is correctly centred for asymmetric FOVs and off-axis
-views; pass `center=[cx,cy]` (camera-plane, in `center_unit`) to offset it. *(Worked examples,
-including off-axis: tutorial §9.)*
+views; pass `center=[cx,cy]` (camera-plane, in `center_unit`) to offset it.
+*(Worked examples, including off-axis: the tutorial's "More features" section.)*
 
 These are box-axis / camera-independent reductions; for line-of-sight distributions (per-pixel
 spectra, velocity cubes) see the [Off-axis Projection](06_offaxis_Projection.md) guide.
@@ -175,7 +179,6 @@ spectra, velocity cubes) see the [Off-axis Projection](06_offaxis_Projection.md)
 profile
 phase
 profile3d
-rotationcurve
 velocitydispersion
 localdispersion
 profiletimeseries

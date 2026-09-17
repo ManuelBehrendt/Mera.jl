@@ -209,15 +209,6 @@ end
         @test isapprox(sum(ph.pdf .* (diff(ph.xedges) * diff(ph.yedges)')), 1.0; rtol=1e-10)
     end
 
-    @testset "rotationcurve: enclosed mass → v_circ = √(GM/r)" begin
-        rc = rotationcurve(gas; center=[:bc], range_unit=:kpc, nbins=40, xrange=(0.3, 40), xunit=:kpc)
-        @test issorted(rc.m_enc) && length(rc.v_circ) == 40                  # enclosed mass is cumulative
-        @test all(rc.v_circ[rc.count .> 0] .> 0) && all(rc.g[rc.count .> 0] .> 0)
-        # independent oracle: G = 4.30091e-6 (km/s)² kpc / M⊙ with M⊙/kpc inputs
-        vchk = sqrt.(4.30091e-6 .* rc.m_enc ./ rc.x)
-        @test maximum(abs.(rc.v_circ .- vchk)) <= 5e-3 * maximum(vchk)
-    end
-
     @testset "getparticlemask: select by type / family / tag" begin
         parts = getparticles(getinfo(du.output, du.path, verbose=false), verbose=false, show_progress=false)
         n = length(parts.data); fam = getvar(parts, :family)
@@ -234,9 +225,6 @@ end
         ps = profile(parts, :r_cylinder; weight=:mass, mask=ms, nbins=20, center=[:bc], range_unit=:kpc, xunit=:kpc)
         @test isapprox(sum(ps.sum), mstars; rtol=1e-10)
         @test isapprox(sum(ps.sum), sum(getvar(parts,:mass)) - sum(getvar(parts,:mass)[md]); rtol=1e-10)
-        # rotationcurve accepts the same mask (DM-only enclosed mass)
-        rcd = rotationcurve(parts; mask=md, center=[:bc], range_unit=:kpc, nbins=20, xrange=(0.3,30))
-        @test all(rcd.v_circ[rcd.count .> 0] .> 0) && issorted(rcd.m_enc)
         @test_throws ArgumentError getparticlemask(parts, :bogus; verbose=false)
     end
 
@@ -335,7 +323,7 @@ end
     # Regression tests for the audited bug fixes (P0/P1/P2). Each pins a confirmed defect so it
     # cannot silently return: stdlib-reducer dispatch, vector-yvar timeseries, zero-spread cubes,
     # cube/projection window parity, subregion conservation, NaN-safe quantiles, log guards, empty
-    # masks, nmax floor, the rotationcurve radius pairing, phase quantiles, and phase(map,…).
+    # masks, nmax floor, phase quantiles, and phase(map,…).
     # ----------------------------------------------------------------------------------------------
     @testset "regression: audited bug fixes" begin
         rckw = (center=[:bc], range_unit=:kpc, xunit=:kpc)
@@ -391,16 +379,6 @@ end
         @testset "P1-7 binning=:overlap, nmax=0 is not an all-zero map" begin
             p0 = projection(gas, :sd, :Msol_pc2; los=[1.,1,1], binning=:overlap, nmax=0, verbose=false, show_progress=false)
             @test sum(p0.maps[:sd]) > 0
-        end
-
-        @testset "P2-1 rotationcurve pairs enclosed mass with the OUTER bin edge" begin
-            rc   = rotationcurve(gas; nbins=30, xrange=(0.5,30), rckw...)
-            rsph = getvar(gas, :r_sphere, :kpc, center=[:bc], center_unit=:kpc); mg = getvar(gas, :mass, :Msol)
-            # rc.x is the outer-edge radius; the cumulative mass is the mass inside [edges[1], rc.x]
-            Mindep = [sum(mg[(rsph .>= rc.edges[1]) .& (rsph .< r)]) for r in rc.x]
-            @test all(isapprox.(rc.m_enc, Mindep; rtol=1e-10))
-            vindep = sqrt.(4.30091e-6 .* Mindep ./ rc.x)             # √(G·M(<r)/r) at the OUTER edge
-            @test maximum(abs.(rc.v_circ .- vindep)) <= 5e-3 * maximum(vindep)
         end
 
         @testset "P2-2 phase emits per-bin quantiles (non-:mean cstat)" begin
@@ -459,8 +437,6 @@ end
         @test a.x == b.x && a.sum == b.sum
         @test phase(gas, :rho, :T; nbins=(16,16), center=[:bc], range_unit=:kpc).H ==
               phase(gas, :rho, :T; nbins=(16,16), center=[:bc], center_unit=:kpc).H
-        @test rotationcurve(gas; nbins=15, xrange=(0.5,30), center=[:bc], range_unit=:kpc).v_circ ==
-              rotationcurve(gas; nbins=15, xrange=(0.5,30), center=[:bc], center_unit=:kpc).v_circ
         @test profile3d(gas, :x, :y, :z; nbins=8, center=[:bc], range_unit=:kpc).H ==
               profile3d(gas, :x, :y, :z; nbins=8, center=[:bc], center_unit=:kpc).H
     end
