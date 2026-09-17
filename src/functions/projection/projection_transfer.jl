@@ -843,19 +843,22 @@ end
 
 """
     tonemap(m::TransferMapType; stretch=:asinh, percentiles=(1, 99.8), colormap=:inferno,
-            color_percentiles=(2, 98), color_scale=:auto, gamma=1.0) -> Matrix{RGB{Float64}}
+            color_percentiles=(2, 98), color_scale=:auto, saturation=0.7, gamma=1.0)
+        -> Matrix{RGB{Float64}}
 
 Turn a transfer-function map into an image. The map keeps the physical numbers; this only
 decides how they look. Empty pixels are black.
 
-* `stretch`: `:asinh` (default; faint and bright structure together, Lupton et al. 2004,
-  PASP 116, 133), `:log` or `:linear`
+* `stretch`: `:asinh` (default; linear for faint light and logarithmic above the median
+  brightness, so faint and bright structure show together, Lupton et al. 2004, PASP 116, 133),
+  `:log` or `:linear`
 * `percentiles`: the percentiles of the non-empty pixels shown as black and as full brightness
 * `colormap`: a ColorSchemes name. Without a colour quantity it colours the brightness. With
   one, it gives the hue of the quantity (each colour at full value) and the light sets the
   brightness.
 * `color_percentiles`, `color_scale` (`:log`, `:linear`, or `:auto`: log when all values are
   positive): the range of the colour quantity
+* `saturation`: how strong the hue is, from 0 (grey) to 1 (pure colour)
 * `gamma`: brightness correction, `b^(1/gamma)`
 
 An extinction-only map shows its opacity `1 − e^{−τ}`.
@@ -865,7 +868,8 @@ e.g. `save("galaxy.png", rotl90(img))`. With Makie:
 `x0, x1, y0, y1 = getextent(m, :kpc); image(x0..x1, y0..y1, img)`.
 """
 function tonemap(m::TransferMapType; stretch::Symbol=:asinh, percentiles=(1, 99.8), colormap::Symbol=:inferno,
-                 color_percentiles=(2, 98), color_scale::Symbol=:auto, gamma::Real=1.0)
+                 color_percentiles=(2, 98), color_scale::Symbol=:auto, saturation::Real=0.7,
+                 gamma::Real=1.0)
     stretch in (:asinh, :log, :linear) ||
         throw(ArgumentError("tonemap: stretch must be :asinh, :log or :linear, got :$stretch"))
     color_scale in (:auto, :log, :linear) ||
@@ -877,10 +881,11 @@ function tonemap(m::TransferMapType; stretch::Symbol=:asinh, percentiles=(1, 99.
     gamma == 1 || (b .= b .^ (1 / gamma))
     lit = light .> 0
     cval = isempty(m.color) ? nothing : _normalise(m.color, color_scale, color_percentiles, lit)
-    return _tonemap_pixels(colorschemes[colormap], b, cval)
+    0 <= saturation <= 1 || throw(ArgumentError("tonemap: saturation must be between 0 and 1"))
+    return _tonemap_pixels(colorschemes[colormap], b, cval, Float64(saturation))
 end
 
-function _tonemap_pixels(scheme::S, b::Matrix{Float64}, cval) where {S}
+function _tonemap_pixels(scheme::S, b::Matrix{Float64}, cval, sat::Float64) where {S}
     img = Matrix{RGB{Float64}}(undef, size(b))
     @inbounds for p in eachindex(b)
         if b[p] <= 0
@@ -888,12 +893,13 @@ function _tonemap_pixels(scheme::S, b::Matrix{Float64}, cval) where {S}
         elseif cval === nothing
             img[p] = RGB{Float64}(get(scheme, b[p]))
         else
-            # the colour carries only the hue, scaled to full value, so a dark end of the map
-            # (black in :inferno) cannot hide bright gas
+            # the colour carries only the hue: scaled to full value, so a dark end of the map
+            # (black in :inferno) cannot hide bright gas, then mixed with white by `sat`
             col = RGB{Float64}(get(scheme, isfinite(cval[p]) ? cval[p] : 0.0))
             peak = max(col.r, col.g, col.b)
-            s = peak > 0 ? b[p] / peak : 0.0
-            img[p] = RGB{Float64}(s * col.r, s * col.g, s * col.b)
+            h = peak > 0 ? sat / peak : 0.0
+            w = 1.0 - sat
+            img[p] = RGB{Float64}(b[p] * (h * col.r + w), b[p] * (h * col.g + w), b[p] * (h * col.b + w))
         end
     end
     return img
@@ -907,13 +913,15 @@ function _brightness(L::Matrix{Float64}, stretch::Symbol, percentiles)
     lo, hi = quantile!(positive, (percentiles[1] / 100, percentiles[2] / 100))
     hi > lo || ((lo, hi) = extrema(positive))
     hi > lo || (out[L .> 0] .= 1.0; return out)
-    llo = log10(lo); lspan = log10(hi) - llo; aspan = asinh((hi - lo) / lo)
+    # asinh is linear below its softening and logarithmic above; soften at the median brightness
+    soft = max(median(positive) - lo, eps(hi))
+    llo = log10(lo); lspan = log10(hi) - llo; aspan = asinh((hi - lo) / soft)
     @inbounds for p in eachindex(L)
         x = L[p]
         x > 0 || continue
         v = stretch === :linear ? (x - lo) / (hi - lo) :
             stretch === :log    ? (log10(max(x, lo)) - llo) / lspan :
-                                  asinh(max(x - lo, 0.0) / lo) / aspan
+                                  asinh(max(x - lo, 0.0) / soft) / aspan
         out[p] = clamp(v, 0.0, 1.0)
     end
     return out
