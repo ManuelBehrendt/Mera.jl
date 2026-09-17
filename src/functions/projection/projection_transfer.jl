@@ -22,12 +22,24 @@
 # Pixels. One pixel holds one τ, so cells that share a pixel but no ray still dim each other.
 # The error is second order in τ and vanishes when pixels are no larger than the cells. With
 # both emission and extinction the map is therefore rendered on a finer grid (`supersample`)
-# and averaged down: intensity and colour are means, and `tau` is the mean optical depth.
+# and averaged down: intensity and colour are means, `tau` is the mean optical depth and
+# `tau_eff = −ln⟨e^{−τ}⟩` gives the mean transmission of a background.
 #
-# Order. AMR leaf cells are disjoint cubes of an octree. For a parallel (orthographic) camera a
-# Morton key whose axis bits are flipped by the sign of the viewing direction is an exact
-# front-to-back visibility order (Frieder, Gordon & Reynolds 1985, IEEE CG&A 5(1), 52), so one
-# global sort is exact for every pixel.
+# Scattering. `α` removes light from the ray whether it is absorbed or scattered away. Light
+# scattered INTO the ray is not modelled: exact for a source behind a screen, too dark for light
+# made inside dusty gas. That needs Monte Carlo radiative transfer.
+#
+# Order. AMR leaf cells are disjoint cubes of an octree. Two such cells first differ in one
+# octant bit, and the axis-aligned plane of that bit separates them. Every ray of a parallel
+# (orthographic) camera crosses that plane in the same direction, so the cell on the observer's
+# side of it is always met first. A Morton key whose axis bits are flipped by the sign of the
+# viewing direction sorts exactly that way, so one global sort is exact for every pixel. It is
+# NOT valid for a perspective camera. Octree display in this order: Meagher 1982, Computer
+# Graphics and Image Processing 19, 129; linear octrees and their keys: Gargantini 1982, CGIP 20,
+# 365; separating planes as a priority order: Fuchs, Kedem & Naylor 1980, SIGGRAPH 14(3), 124.
+#
+# The per-cell solution is Rybicki & Lightman 1979, eq. 1.30, for constant source function; for
+# volume rendering see Max 1995, IEEE TVCG 1(2), 99.
 #
 # Threads. The update is associative: (I₁,τ₁) then (I₂,τ₂) gives (I₁ + e^{−τ₁} I₂, τ₁+τ₂). The
 # sorted cell list is cut into contiguous chunks of similar cost, each chunk is integrated into
@@ -63,7 +75,19 @@ Cells outside it do not emit. After these steps `j` must be finite and not negat
 
 `color = :T => :K` (or `color=:T` for code units) names a second quantity. The map then also
 holds the average of that quantity along each line of sight, weighted by the light that
-reaches you. [`tonemap`](@ref) shows it as hue, while the emission sets the brightness.
+reaches you. [`tonemap`](@ref) shows it as hue, while the emission sets the brightness. With
+`j ∝ n²` and extinction this is a dust-attenuated, emission-measure-weighted temperature, not a
+spectroscopic or X-ray temperature.
+
+**Units.** The map holds `∫ j e^{−τ} dl` with `dl` in cm. It is a surface brightness (per
+steradian) only when `j` is per steradian: divide an emissivity summed over all directions,
+such as `n_e n_i Λ(T)`, by `4π`.
+
+**Temperature.** Mera's `:T` assumes one mean molecular weight for all gas, `μ = 1/X ≈ 1.32`
+(the RAMSES convention, right for neutral atomic gas). In ionised gas `μ ≈ 0.59`, so the true
+temperature there is about 2.2 times lower than `:T`. For cuts and formulas in ionised gas use
+`unit=:K_mu`, which gives `T/μ` so you can multiply by your own `μ`; or [`setcomposition!`](@ref);
+or `:T_rt` in RAMSES-RT runs, which uses the local `μ` of each cell.
 
 The overall scale of `j` changes the numbers in the map, not the look of the picture.
 Emissions add, for example two density regimes:
@@ -137,37 +161,55 @@ Base.:*(e::EmissionSum, s::Real) = s * e
     Extinction(quantity=:rho; unit=:standard, power=1, when=nothing,
                kappa=nothing, sigma=nothing, tau1_at=nothing, median_tau=nothing,
                alpha_scale=nothing)
+    Extinction(f, quantity => unit, ...; when=nothing, kappa | sigma | tau1_at | median_tau | alpha_scale)
 
 What blocks light in a transfer-function [`projection`](@ref): the extinction coefficient `α`
 of every cell, per cm. Give exactly one way to set its strength:
 
-| keyword | meaning | quantity |
+| keyword | meaning | the quantity (or `f`) must be |
 |:--|:--|:--|
-| `kappa=[κ, :cm2_g]` | opacity per gram, `α = κ ρ` | a mass density such as `:rho` |
-| `sigma=[σ, :cm2]` | cross section per particle, `α = σ n` | a number density, with its `unit` (e.g. `:nH`) |
+| `kappa=[κ, :cm2_g]` | opacity per gram, `α = κ ρ` | a mass density |
+| `sigma=[σ, :cm2]` | cross section per particle, `α = σ n` | a number density |
 | `tau1_at=[Σ, :Msol_pc2]` | optical depth 1 at this mass column (`:g_cm2` also works) | a mass density |
-| `tau1_at=[N, :cm2]` | optical depth 1 at this number column | a number density, with its `unit` |
-| `median_tau=t` | the median optical depth of the map is `t` | any quantity, any `power` |
-| `alpha_scale=a` | `α = a · q^power` per cm, with `q` in `unit` | any quantity, any `power` |
+| `tau1_at=[N, :cm2]` | optical depth 1 at this number column | a number density |
+| `median_tau=t` | the median optical depth of the map is `t` | anything |
+| `alpha_scale=a` | `α = a · q^power` (or `a · f(...)`) per cm | anything |
 
-`kappa`, `sigma` and `tau1_at` are physical and need `power=1`. `median_tau` is for pictures:
-it picks the strength from the data, so dark structure is visible whatever the units are. It
-depends on the view and the pixel size, so it changes between the frames of a movie. To keep
-it fixed, read `m.alpha_scale` from one map and pass `alpha_scale=m.alpha_scale` afterwards.
+`kappa`, `sigma` and `tau1_at` are physical and need `power=1`. With one quantity, a mass density
+is read in g/cm³ automatically; a number density needs its `unit`, e.g. `unit=:nH`. The second
+form takes a function of one or more quantities, each read in its own unit; its result must be
+in g/cm³ for `kappa` and a mass `tau1_at`, and in cm⁻³ for `sigma` and a number `tau1_at`.
+
+`median_tau` is for pictures: it picks the strength from the data, so dark structure is visible
+whatever the units are. It depends on the view and the pixel size, so it changes between the
+frames of a movie. To keep it fixed, pass `alpha_scale=m.alpha_scale` from one map.
 
 ```julia
-Extinction(:rho; kappa=[210, :cm2_g])            # V-band dust at solar metallicity
-Extinction(:rho; tau1_at=[10, :Msol_pc2], when=Below(:T, 1e4; unit=:K))   # only cold gas blocks
-Extinction(:rho; median_tau=0.5)
+Extinction(:rho; kappa=[209, :cm2_g])            # Milky Way diffuse dust, V band
+Extinction(:rho; tau1_at=[23, :Msol_pc2])        # the same dust, as a column
+Extinction(:rho; kappa=[209, :cm2_g], when=Below(:T, 1e6; unit=:K))   # dust sputtered in hot gas
+Extinction((ρ, Z) -> ρ * Z, :rho => :g_cm3, :metallicity => :Zsun; kappa=[209, :cm2_g])  # dust ∝ Z
+Extinction(:rho; median_tau=0.5)                 # a strength for pictures
 ```
 
-`κ_V ≈ 210 cm²` per gram of gas follows from `A_V/N_H ≈ 5.3e-22 mag cm²` (Bohlin, Savage &
-Drew 1978, ApJ 224, 132) with 1.4 m_H per hydrogen atom. It is the same as
-`tau1_at=[23, :Msol_pc2]`. `when` is measured from the projection's `center`.
+**Dust values.** `κ_V ≈ 209 cm²` per gram of total gas: Draine 2003 (ARA&A 41, 241, Table 4)
+gives `C_ext = 4.89e-22 cm²` per H in the V band for R_V = 3.1 dust, with 1.4 m_H of gas per H.
+This matches `A_V/N_H ≈ 5.3e-22 mag cm²` from `N_H/E(B−V) = 5.8e21 cm⁻² mag⁻¹` (Bohlin, Savage &
+Drake 1978, ApJ 224, 132). Measured values span about 140 to 210 cm²/g (Güver & Özel 2009,
+MNRAS 400, 2050; Lenz, Hensley & Doré 2017, ApJ 846, 38). The value holds near solar metallicity;
+dust scales roughly with `Z` above about `Z⊙/4` and falls faster below (Rémy-Ruyer et al. 2014,
+A&A 563, A31). Thermal sputtering destroys grains in gas hotter than about 10⁶ K (Draine &
+Salpeter 1979, ApJ 231, 77; Tsai & Mathews 1995, ApJ 448, 84). In magnitudes, `A = 1.086 τ`.
+
+**Scattering.** Extinction counts light that is absorbed and light that is scattered out of the
+ray; in the V band dust scatters about two thirds of it (albedo 0.67, Draine 2003). Light
+scattered into the ray is not included. That is exact for a source behind a screen and makes
+light from inside dusty gas somewhat too dark. `when` is measured from the projection's `center`.
 """
 struct Extinction
-    quantity::Symbol
-    unit::Symbol
+    quantities::Vector{Symbol}
+    units::Vector{Symbol}
+    f::Union{Nothing,Function}
     power::Float64
     when::Union{Nothing,FilterCondition}
     mode::Symbol          # :kappa, :sigma, :tau1_mass, :tau1_number, :median_tau, :alpha_scale
@@ -177,50 +219,59 @@ end
 function Extinction(quantity::Symbol=:rho; unit::Symbol=:standard, power::Real=1,
                     when::Union{Nothing,FilterCondition}=nothing, kappa=nothing, sigma=nothing,
                     tau1_at=nothing, median_tau=nothing, alpha_scale=nothing)
+    p = Float64(power)
+    (isfinite(p) && p > 0) || throw(ArgumentError("Extinction: power must be positive, got $power"))
+    mode, value = _extinction_strength(kappa, sigma, tau1_at, median_tau, alpha_scale, p)
+    if mode === :kappa || mode === :tau1_mass
+        (unit === :standard || unit === :g_cm3) || throw(ArgumentError(
+            "Extinction: kappa and a mass tau1_at multiply a mass density in g/cm³; leave unit unset"))
+        unit = :g_cm3
+    elseif (mode === :sigma || mode === :tau1_number) && unit === :standard
+        throw(ArgumentError("Extinction: sigma and a number tau1_at need a number density; give its unit, e.g. unit=:nH"))
+    end
+    return Extinction([quantity], [unit], nothing, p, when, mode, value)
+end
+
+function Extinction(f::Function, quantities::Pair{Symbol,Symbol}...;
+                    when::Union{Nothing,FilterCondition}=nothing, kappa=nothing, sigma=nothing,
+                    tau1_at=nothing, median_tau=nothing, alpha_scale=nothing)
+    isempty(quantities) && throw(ArgumentError("Extinction(f, ...): name at least one quantity, e.g. :rho => :g_cm3"))
+    mode, value = _extinction_strength(kappa, sigma, tau1_at, median_tau, alpha_scale, 1.0)
+    return Extinction(collect(first.(quantities)), collect(last.(quantities)), f, 1.0, when, mode, value)
+end
+
+# (mode, value) from the strength keywords; columns are stored in cgs
+function _extinction_strength(kappa, sigma, tau1_at, median_tau, alpha_scale, power::Float64)
     given = count(!isnothing, (kappa, sigma, tau1_at, median_tau, alpha_scale))
     given == 1 || throw(ArgumentError(
         "Extinction: give exactly one of kappa=[κ, :cm2_g], sigma=[σ, :cm2], " *
         "tau1_at=[column, :Msol_pc2 | :g_cm2 | :cm2], median_tau=t or alpha_scale=a"))
-    p = Float64(power)
-    (isfinite(p) && p > 0) || throw(ArgumentError("Extinction: power must be positive, got $power"))
-    physical(name) = p == 1.0 || throw(ArgumentError(
+    physical(name) = power == 1.0 || throw(ArgumentError(
         "Extinction: $name is a physical opacity and needs power=1; use median_tau or alpha_scale"))
-
     if kappa !== nothing
-        physical("kappa")
-        _unit_arg(kappa, :cm2_g, "kappa")
-        (unit === :standard || unit === :g_cm3) || throw(ArgumentError(
-            "Extinction: kappa multiplies a mass density in g/cm³; leave unit unset"))
-        return Extinction(quantity, :g_cm3, p, when, :kappa, Float64(kappa[1]))
+        physical("kappa"); _unit_arg(kappa, :cm2_g, "kappa")
+        return :kappa, Float64(kappa[1])
     elseif sigma !== nothing
-        physical("sigma")
-        _unit_arg(sigma, :cm2, "sigma")
-        unit === :standard && throw(ArgumentError(
-            "Extinction: sigma multiplies a number density in cm⁻³; give its unit, e.g. unit=:nH"))
-        return Extinction(quantity, unit, p, when, :sigma, Float64(sigma[1]))
+        physical("sigma"); _unit_arg(sigma, :cm2, "sigma")
+        return :sigma, Float64(sigma[1])
     elseif tau1_at !== nothing
         physical("tau1_at")
         length(tau1_at) == 2 || throw(ArgumentError("Extinction: tau1_at=[column, unit], got $tau1_at"))
         col, cu = Float64(tau1_at[1]), tau1_at[2]
         (isfinite(col) && col > 0) || throw(ArgumentError("Extinction: the tau1_at column must be positive"))
-        if cu === :Msol_pc2 || cu === :g_cm2
-            (unit === :standard || unit === :g_cm3) || throw(ArgumentError(
-                "Extinction: a mass column needs a mass density; leave unit unset"))
+        if cu === :g_cm2 || cu === :Msol_pc2
             c = createconstants()
-            column_g_cm2 = cu === :g_cm2 ? col : col * c.Msol / c.pc^2
-            return Extinction(quantity, :g_cm3, p, when, :tau1_mass, column_g_cm2)
+            return :tau1_mass, (cu === :g_cm2 ? col : col * c.Msol / c.pc^2)
         elseif cu === :cm2
-            unit === :standard && throw(ArgumentError(
-                "Extinction: a number column needs a number density; give its unit, e.g. unit=:nH"))
-            return Extinction(quantity, unit, p, when, :tau1_number, col)
+            return :tau1_number, col
         end
         throw(ArgumentError("Extinction: tau1_at unit must be :Msol_pc2, :g_cm2 or :cm2, got :$cu"))
     elseif median_tau !== nothing
         (isfinite(median_tau) && median_tau > 0) || throw(ArgumentError("Extinction: median_tau must be positive"))
-        return Extinction(quantity, unit, p, when, :median_tau, Float64(median_tau))
+        return :median_tau, Float64(median_tau)
     end
     (isfinite(alpha_scale) && alpha_scale >= 0) || throw(ArgumentError("Extinction: alpha_scale must be ≥ 0"))
-    return Extinction(quantity, unit, p, when, :alpha_scale, Float64(alpha_scale))
+    return :alpha_scale, Float64(alpha_scale)
 end
 
 function _unit_arg(v, expected::Symbol, name::String)
@@ -246,9 +297,13 @@ end
 
 The result of a transfer-function [`projection`](@ref).
 
-* `I`: the observed intensity per pixel, `∫ j e^{−τ} dl`, in the unit of `j` times cm
-  (for `Emission(q; unit, power)` that is `unit^power · cm`)
-* `tau`: the mean optical depth over the pixel; the transmission of a background is `exp.(-m.tau)`
+* `I`: the light per pixel, `∫ j e^{−τ} dl`, in the unit of `j` times cm (for
+  `Emission(q; unit, power)` that is `unit^power · cm`). It is a surface brightness only when `j`
+  is per steradian.
+* `tau`: the mean optical depth over the pixel, the column of `α`
+* `tau_eff`: `−ln` of the mean transmission over the pixel, so `exp.(-m.tau_eff)` is how much of
+  a smooth background gets through. It is never larger than `tau`, and equals it when the pixel is
+  uniform. With `supersample=1` only one value per pixel is known and `tau_eff == tau`.
 * `color`: the light-weighted average of the emission's `color` quantity (empty without `color`)
 * `emission`, `extinction`: the building blocks that made the map
 * `alpha_scale`: the strength the extinction resolved to, `α = alpha_scale · q^power` per cm
@@ -264,6 +319,7 @@ Maps are indexed `[ix, iy]` with `iy` pointing up, like projection maps.
 struct TransferMapType
     I::Matrix{Float64}
     tau::Matrix{Float64}
+    tau_eff::Matrix{Float64}
     color::Matrix{Float64}
     emission::Union{Nothing,AnyEmission}
     extinction::Union{Nothing,Extinction}
@@ -370,13 +426,18 @@ function _color_weight(obj, j::Vector{Float64}, color::Symbol, unit::Symbol, cen
     return jc
 end
 
-# extinction per cell before its strength: g = q^power in the quantity's unit (0 outside `when`)
+# extinction per cell before its strength: q^power or f(...) (0 outside `when`), a fresh vector
 function _extinction_base(obj, x::Extinction, center, range_unit)
-    q = _cell_quantity(obj, x.quantity, x.unit, center, range_unit)
-    g = x.power == 1.0 ? Vector{Float64}(q) : Float64.(q .^ x.power)
-    g === q && (g = copy(g))
+    g = Vector{Float64}(undef, length(obj.data))
+    if x.f === nothing
+        q = _cell_quantity(obj, x.quantities[1], x.units[1], center, range_unit)
+        x.power == 1.0 ? (g .= q) : (g .= q .^ x.power)
+    else
+        cols = [_cell_quantity(obj, q, u, center, range_unit) for (q, u) in zip(x.quantities, x.units)]
+        broadcast!(x.f, g, cols...)
+    end
     x.when === nothing || (g[.!_when_mask(obj, x.when, center, range_unit)] .= 0.0)
-    _check_values(g, "The extinction quantity :$(x.quantity)")
+    _check_values(g, "The extinction from $(x.quantities)")
     return g
 end
 
@@ -665,7 +726,8 @@ give the same image orientation as the axis-aligned maps; `:faceon`, `:edgeon` n
 `xrange`/`yrange`/`zrange`, `center`, `range_unit`, `pxsize` or `res`, `mask`, `verbose`,
 `max_threads`. Without `pxsize` or `res` the longer side of the map has 1024 pixels, but pixels
 are never smaller than the finest selected cell. The camera is orthographic. Only hydro data is
-supported; stars are particles and do not emit here.
+supported; stars are particles and do not emit here. Light scattered into the line of sight is
+not modelled (see [`Extinction`](@ref)).
 """
 function projection(dataobject::HydroDataType, emission::AnyEmission, extinction::Extinction; kwargs...)
     return _transfer_projection(dataobject, emission, extinction; kwargs...)
@@ -822,16 +884,18 @@ function _transfer_projection(dataobject::HydroDataType, emission, extinction;
                 k > 1 ? ", supersample $k" : "")
         println("LOS (toward observer) = ", round.(cam_w, digits=4))
         extinction !== nothing && println("extinction: α = ", round(alpha_scale, sigdigits=4), " · ",
-                                          extinction.quantity, "^", extinction.power, " per cm")
+                                          extinction.f === nothing ? string(extinction.quantities[1], "^", extinction.power) :
+                                          string("f", Tuple(extinction.quantities)), " per cm")
     end
 
     Isub, tausub, Csub = _transfer_integrate(order, xs, ys, cs, js, gs, jcs, cam_right, cam_up, cam_w,
                                              grid_extent, (nx * k, ny * k), cm, nthr)
     I = _block_mean(Isub, k)
     tau = _block_mean(tausub, k)
+    tau_eff = k == 1 ? tau : .-log.(_block_mean(exp.(.-tausub), k))
     color = isempty(jcs) ? zeros(0, 0) : _color_ratio(_block_mean(Csub, k), I)
 
-    return TransferMapType(I, tau, color, emission, extinction, alpha_scale, k, cunit,
+    return TransferMapType(I, tau, tau_eff, color, emission, extinction, alpha_scale, k, cunit,
                            [x0, x1, y0, y1], pixsize, collect(cam_w), collect(cam_up),
                            collect(cam_right), _center_code(dataobject, center, range_unit),
                            boxlen, dataobject.scale, info)
@@ -861,7 +925,7 @@ decides how they look. Empty pixels are black.
 * `saturation`: how strong the hue is, from 0 (grey) to 1 (pure colour)
 * `gamma`: brightness correction, `b^(1/gamma)`
 
-An extinction-only map shows its opacity `1 − e^{−τ}`.
+An extinction-only map shows its opacity `1 − e^{−τ_eff}`.
 
 The image is indexed `[ix, iy]` like the map. To save it as a picture file use `rotl90(img)`,
 e.g. `save("galaxy.png", rotl90(img))`. With Makie:
@@ -876,7 +940,7 @@ function tonemap(m::TransferMapType; stretch::Symbol=:asinh, percentiles=(1, 99.
         throw(ArgumentError("tonemap: color_scale must be :auto, :log or :linear, got :$color_scale"))
     haskey(colorschemes, colormap) ||
         throw(ArgumentError("tonemap: unknown colormap :$colormap; try :inferno, :magma, :viridis or :thermal"))
-    light = m.emission === nothing ? -expm1.(-m.tau) : m.I
+    light = m.emission === nothing ? -expm1.(-m.tau_eff) : m.I
     b = _brightness(light, stretch, percentiles)
     gamma == 1 || (b .= b .^ (1 / gamma))
     lit = light .> 0

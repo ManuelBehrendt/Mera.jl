@@ -316,6 +316,39 @@ _mid(m) = (size(m.I, 1) ÷ 2, size(m.I, 2) ÷ 2)
         @test τ(projection(gas, Extinction(:rho; kappa=[κ1, :cm2_g], when=Above(:z, 0.5)); res=16, _TF_KW...)) ≈ 0.5 rtol=1e-10
     end
 
+    @testset "extinction from a function" begin
+        gas = _tf_uniform(4)
+        # f must return the same units the strength mode expects
+        half = projection(gas, Extinction(ρ -> ρ / 2, :rho => :g_cm3; kappa=[2κ1, :cm2_g]); res=16, _TF_KW...)
+        plain = projection(gas, Extinction(:rho; kappa=[κ1, :cm2_g]); res=16, _TF_KW...)
+        @test half.tau ≈ plain.tau rtol=1e-12
+        # two quantities, with `when` and a number-density mode
+        nH = getvar(gas, :rho, :nH)[1]
+        two = projection(gas, Extinction((n, z) -> n * (z > 0.5 ? 1.0 : 0.0), :rho => :nH, :z => :standard;
+                                         sigma=[1 / (nH * Lcm), :cm2]); res=16, _TF_KW...)
+        @test two.tau[_mid(two)...] ≈ 0.5 rtol=1e-10
+        @test_throws ArgumentError Extinction(ρ -> ρ, :rho => :g_cm3)                      # no strength
+        @test_throws ArgumentError Extinction(ρ -> ρ; kappa=[1, :cm2_g])                   # no quantity
+        @test_throws ArgumentError projection(gas, Extinction(ρ -> -ρ, :rho => :g_cm3; kappa=[1, :cm2_g]);
+                                              res=16, _TF_KW...)
+    end
+
+    @testset "effective optical depth" begin
+        gas = _tf_uniform(4)
+        # one thick column beside a clear one, inside a single pixel: the background that gets
+        # through is the average transmission, not exp(-mean tau)
+        kw = (direction=:z, pxsize=[1/8, :standard], verbose=false)
+        m = projection(gas, Emission(:rho; unit=:g_cm3, when=Above(:x, 9/16)),
+                       Extinction(:rho; kappa=[10κ1, :cm2_g], when=Below(:x, 9/16)); kw...)
+        iy = size(m.tau, 2) ÷ 2
+        @test m.tau[6, iy] ≈ 5.0 rtol=1e-10                       # mean of 10 and 0
+        @test exp(-m.tau_eff[6, iy]) ≈ 0.5 * (exp(-10.0) + 1.0) rtol=1e-10
+        @test m.tau_eff[6, iy] < m.tau[6, iy]
+        # without supersampling only one value per pixel is known
+        m1 = projection(gas, Emission(:rho), Extinction(:rho; kappa=[κ1, :cm2_g]); kw..., supersample=1)
+        @test m1.tau_eff === m1.tau
+    end
+
     @testset "colour quantity" begin
         gas = _tf_uniform(4)
         ex = Extinction(:rho; kappa=[2κ1, :cm2_g])
