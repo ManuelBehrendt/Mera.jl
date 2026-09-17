@@ -71,6 +71,34 @@ Pkg.add("CairoMakie")   # what most tutorial figures use
 Mera's Makie support is a package extension, it activates by itself once a backend is
 loaded, with nothing else to install.
 
+## `UndefVarError: Sphere not defined` (or `Cylinder`)
+
+Both Mera and Makie export geometry types called `Sphere` and `Cylinder`. When both packages are
+loaded, the bare name is ambiguous and Julia refuses to guess:
+
+```julia
+using Mera, CairoMakie
+Sphere(10.)          # UndefVarError: `Sphere` not defined
+```
+
+Say which one you mean. Either qualify it:
+
+```julia
+subregion(gas, Mera.Sphere(10.; center=[:bc], range_unit=:kpc))
+```
+
+or import Mera's region types once at the top of the script, which is what the tutorial pages do:
+
+```julia
+using Mera, CairoMakie
+import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
+
+subregion(gas, Sphere(10.))        # unambiguous from here on
+```
+
+`Cuboid`, `SphericalShell` and `CylindricalShell` do not clash, so only `Sphere` and `Cylinder`
+actually need this; importing the set keeps the intent obvious.
+
 ## `FieldError: type ScalesType003 has no field ...`
 
 ```

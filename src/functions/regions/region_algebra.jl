@@ -577,6 +577,26 @@ function subregion(obj::ClumpDataType, region::AbstractRegion; inverse::Bool=fal
 end
 
 
+function subregion(obj::SinkDataType, region::AbstractRegion; inverse::Bool=false, verbose::Bool=true)
+    verbose = checkverbose(verbose)
+    _, contains = _prepare(region, obj)
+    data = obj.data; bl = obj.boxlen          # a sink is a point at :x, :y, :z (code units)
+    xs = IndexedTables.select(data, :x); ys = IndexedTables.select(data, :y); zs = IndexedTables.select(data, :z)
+    _blo, _bhi = _bbox(region, obj)
+    blo1 = Float64(_blo[1]); blo2 = Float64(_blo[2]); blo3 = Float64(_blo[3])
+    bhi1 = Float64(_bhi[1]); bhi2 = Float64(_bhi[2]); bhi3 = Float64(_bhi[3])
+    nrows = length(data); keep = Vector{Bool}(undef, nrows)
+    _keeploop!(keep, contains, xs, ys, zs, Float64(bl), inverse,
+               blo1, blo2, blo3, bhi1, bhi2, bhi3)
+    cols = IndexedTables.columns(data)
+    newdata = IndexedTables.table(map(c -> c[keep], cols); pkey = collect(IndexedTables.pkeynames(data)))
+    if verbose
+        println("Region: ", nameof(typeof(region)), "  (sinks)")
+        println("Selected sinks: ", count(keep), " / ", nrows)
+    end
+    return _copy_with_data(obj, newdata)
+end
+
 # ---- @region: readability sugar for composite definitions --------------------------
 const _REGION_CTORS = Set([:Sphere, :Cuboid, :Cylinder, :SphericalShell, :CylindricalShell])
 

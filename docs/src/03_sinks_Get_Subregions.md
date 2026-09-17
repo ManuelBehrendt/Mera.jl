@@ -25,6 +25,8 @@ this page can be checked by hand.
 
 ```julia
 using Mera, Printf
+# Makie also exports Sphere and Cylinder; say which ones we mean
+import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 path = "$MERA_EXAMPLES/RAMSES/sinks3d_multi"
@@ -211,6 +213,47 @@ mass in the shell: 5228.77 Msol
 shell, then x < centre -> Int64[]
 ```
 
+## Regions as values, and the algebra
+
+Everything above passes the region as a **symbol** with keywords, which is the older interface and
+still works everywhere. The other form builds the region as a **value** first, and that form
+composes: `∪` for union, `∩` for intersection, `\\` for difference, `!` for the complement. A shell
+is one sphere minus another, written that way.
+
+Sinks gained this in Mera 1.8; before that they were the one data type where the algebra stopped.
+Both forms select identically, so use whichever reads better.
+
+Import Mera's region types explicitly if you also have Makie loaded, since both export `Sphere` and
+`Cylinder`:
+
+```julia
+import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
+```
+
+```julia
+core  = Sphere(55.; center=[:bc], range_unit=:pc)
+outer = Sphere(75.; center=[:bc], range_unit=:pc)
+above = Cuboid(xrange=[-125., 125.], yrange=[-125., 125.], zrange=[20., 125.];
+               center=[:bc], range_unit=:pc)
+
+println("Sphere(55)                    -> ", ids(subregion(sinks, core,  verbose=false)))
+println("Sphere(75) \\ Sphere(55)       -> ", ids(subregion(sinks, outer \ core, verbose=false)))
+println("that shell, and z > 20 pc     -> ", ids(subregion(sinks, (outer \ core) ∩ above, verbose=false)))
+println("everything except the core    -> ", ids(subregion(sinks, !core, verbose=false)))
+println()
+println("same answer as the symbol API : ",
+        ids(subregion(sinks, core, verbose=false)) ==
+        ids(subregion(sinks, :sphere, radius=55, center=[:bc], range_unit=:pc, verbose=false)))
+```
+
+```
+Sphere(55)                    -> [1, 2]
+Sphere(75) \ Sphere(55)       -> [3, 4, 6]
+that shell, and z > 20 pc     -> [4, 6]
+everything except the core    -> [3, 4, 5, 6]
+same answer as the symbol API : true
+```
+
 ## Summary
 
 | I want | Use |
@@ -220,9 +263,11 @@ shell, then x < centre -> Int64[]
 | a hollow shell between two radii | `shellregion(:sphere, radius=[in, out])` |
 | distance from an axis, with a height | `subregion(:cylinder, radius=…, height=…)` |
 | a box | `subregion(:cuboid, xrange=…, yrange=…, zrange=…)` |
+| any of those, combined | build them as values and use `∪ ∩ \\ !` |
 
 All of them return a catalogue you can keep working with, and all of them ignore `cell=`, because a
-sink is a point.
+sink is a point. The symbol form and the value form select identically; only the value form
+composes.
 
 ## Next steps
 
