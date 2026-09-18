@@ -95,7 +95,7 @@ fig
 ```
 
 ```
-VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.3 %   (25.6 s)
+VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.3 %   (23.4 s)
 VolumeLook(:rho in :nH, log (-2.0, 2.0), :inferno, opacity (0.0, 1.0), exposure 2.5, τ=1 over 120.0 pc)
 ```
 
@@ -108,6 +108,9 @@ one at a time:
 * `opacity_gamma=2.5`: keep the thin haze transparent so the structure stands out
 * `tau_unit_length=[120, :pc]`: dense gas becomes solid over about a hundred parsecs
 * `exposure=2.5`: bright enough without washing the picture out
+* `tone=:aces` (the default): bright gas rolls off toward white instead of turning into a
+  saturated patch. Rendering with `tone=:linear` at the same exposure looks harsher, because
+  every value above white is simply cut.
 
 ## 2. Every parameter, and what it does
 
@@ -123,6 +126,7 @@ one at a time:
 | `tau_unit_length=[L, :pc]` | the length over which the most opaque gas reaches optical depth 1 |
 | `tau_target` | used instead, when `tau_unit_length` is not given: the median optical depth of the map |
 | `exposure` | brightens the finished picture, like a camera exposure |
+| `tone` | what happens to light brighter than white: `:aces` (default) and `:reinhard` bend it so bright gas fades toward white and keeps its detail; `:linear` cuts it off, which holds full saturation and flattens bright regions |
 | `background` | `:black` (default), `:white`, or any colour |
 | `supersample` | sub-pixels per side, `:auto` by default |
 | view keywords | `direction`, `inclination`, `azimuth`, `axis`, `position_angle`, `center`, `range_unit`, `xrange`/`yrange`/`zrange`, `pxsize` or `res` |
@@ -218,8 +222,9 @@ pixels of 30 pc: (1075, 742), filled 15.3 %
 A thin, see-through rendering collects little light, so it looks dark. Four levers help, in this
 order:
 
-1. **`exposure`** brightens the finished picture, like a longer exposure on a camera. Colours that
-   run past white are clipped, so raise it until the brightest parts are white and no further.
+1. **`exposure`** brightens the finished picture, like a longer exposure on a camera. With the
+   default `tone=:aces` the bright end rolls off smoothly, so a high exposure fades toward white
+   rather than clipping into a flat patch.
 2. **A shorter `tau_unit_length`** makes the gas itself more opaque, so more of it contributes.
 3. **A narrower `colorrange`** puts the colours where your gas actually is, instead of spending
    them on empty space.
@@ -495,14 +500,14 @@ fig
 ```
 
 ```
-pixel size 240 pc: (137, 95)  7.37 s
-pixel size 120 pc: (271, 187)  7.31 s
-pixel size 60 pc: (539, 372)  9.39 s
-pixel size 30 pc: (1075, 742)  13.7 s
+pixel size 240 pc: (137, 95)  6.76 s
+pixel size 120 pc: (271, 187)  6.95 s
+pixel size 60 pc: (539, 372)  8.87 s
+pixel size 30 pc: (1075, 742)  12.75 s
 sphere of 4 kpc: 2427002 cells  0.76 s
-sphere of 8 kpc: 6626805 cells  2.46 s
-sphere of 16 kpc: 20737653 cells  7.56 s
-time ~ pixels^0.15   and   time ~ cells^1.07
+sphere of 8 kpc: 6626805 cells  2.44 s
+sphere of 16 kpc: 20737653 cells  7.12 s
+time ~ pixels^0.15   and   time ~ cells^1.05
 ```
 
 ![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_31_15.png)
