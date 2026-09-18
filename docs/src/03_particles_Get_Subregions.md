@@ -45,15 +45,14 @@ decoration.
 4. the geometry gallery
 5. composites and the `@region` block
 6. place *and* state: regions meet filters
-7. profiles that regions make easy
-8. reference: the classic symbol API
-9. practical guidance
+7. reference: the classic symbol API
+8. practical guidance
 
 ## 1. Points, Not Cells
 
 The same galaxy as the hydro and gravity pages, seen through its star
 particles. Each carries a position, a velocity, a mass, and a birth time,
-that last column is what makes §6 and §7 possible.
+that last column is what makes §6 possible.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -107,7 +106,7 @@ the [gravity page](03_gravity_Get_Subregions.md) measures a dynamical mass ten
 times larger in the same volume, so whatever dominates this galaxy's potential
 is not in this file.
 
-The ages matter for §6 and §7, so note their range now: **every star here
+The ages matter for §6, so note their range now: **every star here
 formed during the run**, so the population spans zero to about 530 Myr and
 nothing is older. "Old" on this page therefore means *a few hundred Myr*, not
 a Hubble time, the contrasts below are between stars that formed in the last
@@ -236,14 +235,6 @@ for i in 1:length(edges)-1
     push!(rows, (r=(edges[i]+edges[i+1])/2, n=n, m=m, err=n == 0 ? NaN : 100/sqrt(n)))
 end
 
-# the same walk with shells four times thinner, same regions, a quarter of the count
-rt, nt = Float64[], Int[]
-for r0 in 0.0:0.25:19.75
-    reg = r0 == 0 ? Sphere(0.25) : SphericalShell(r0, r0 + 0.25)
-    push!(rt, r0 + 0.125)
-    push!(nt, length(subregion(stars, reg, verbose=false).data))
-end
-
 println(rpad("shell [kpc]", 14), rpad("N", 9), rpad("M [Msol]", 13), "≈ 1/√N")
 println("-"^46)
 for t in rows[1:2:end]
@@ -254,30 +245,6 @@ end
 println()
 println("thinnest bin, 1.00 kpc shells : N = ", minimum(rows[i].n for i in 1:length(rows)),
         "  →  ", round(100/sqrt(minimum(t.n for t in rows)), digits=1), " %")
-println("thinnest bin, 0.25 kpc shells : N = ", minimum(nt),
-        "  →  ", round(100/sqrt(max(minimum(nt), 1)), digits=1), " %")
-
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(950, 400))
-ax1 = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="M in shell [M⊙]", yscale=log10,
-           title="mass per shell, with counting uncertainty")
-rr  = [t.r for t in rows]; mm = [max(t.m, 1e3) for t in rows]
-ee  = min.([isnan(t.err) ? 0.0 : t.err/100 for t in rows] .* mm, 0.9 .* mm)
-errorbars!(ax1, rr, mm, ee; whiskerwidth=8, color=:grey30)
-scatter!(ax1, rr, mm; color=:crimson, markersize=8)
-lines!(ax1, rr, mm; color=:crimson, linewidth=1)
-
-ax2 = Axis(fig[1, 2], xlabel="r [kpc]", ylabel="particles in shell", yscale=log10,
-           title="the number that decides whether the mass means anything")
-lines!(ax2, rr, [max(t.n, 1) for t in rows]; color=:royalblue, linewidth=2,
-       label="1.0 kpc shells")
-scatter!(ax2, rr, [max(t.n, 1) for t in rows]; color=:royalblue, markersize=7)
-lines!(ax2, rt, max.(nt, 1); color=:darkorange, linewidth=2, label="0.25 kpc shells")
-hlines!(ax2, [100.]; color=:grey, linestyle=:dash)
-text!(ax2, 19.5, 115; text="N = 100  →  10 % uncertainty", color=:grey, fontsize=10,
-      align=(:right, :bottom))
-axislegend(ax2; position=:lb, framevisible=false)
-fig
 ```
 
 ```
@@ -294,10 +261,7 @@ shell [kpc]   N        M [Msol]     ≈ 1/√N
 16.0 – 17.0   1484     1.685e7      2.6 %
 18.0 – 19.0   652      7.405e6      3.9 %
 thinnest bin, 1.00 kpc shells : N = 408  →  5.0 %
-thinnest bin, 0.25 kpc shells : N = 71  →  11.9 %
 ```
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_11_3.png)
 
 Inside 6 kpc each shell holds tens of thousands of particles and the mass is
 good to a fraction of a percent. Even the outermost 1-kpc shell still holds a
@@ -305,15 +269,14 @@ few hundred, so this particular profile is trustworthy at the few-percent
 level everywhere, which is worth stating plainly, because the interesting
 part is that you could not have known it without looking.
 
-Now halve the bin width twice. The orange curve is exactly the same sweep in
-0.25 kpc shells: identical regions, identical arithmetic, a quarter of the
-particles per point, and the outer bins cross into double-digit uncertainty.
-Nothing about the selection changed, only how finely it was sliced.
+That last column is the whole point, and it does not survive a finer sweep.
+Narrow the shells and the count per shell falls with them, while the regions,
+the arithmetic, and the selection stay exactly as they are. The outer bins are
+always the first to cross into double-digit uncertainty.
 
-The practical rule is therefore to choose bin widths by *count*, not by
-appearance. Equal-width bins look tidy and concentrate all the noise in the
-outermost points; widen the outer shells until they hold enough particles, and
-quote $N$ next to every value. The [hydro page's](03_hydro_Get_Subregions.md)
+So choose bin widths by *count*, not by appearance. Equal-width bins look tidy
+and concentrate all the noise in the outermost points; widen the outer shells
+until they hold enough particles, and quote $N$ next to every value. The [hydro page's](03_hydro_Get_Subregions.md)
 advice about boundary treatment has no analogue here, this is its
 replacement.
 
@@ -323,7 +286,10 @@ Every region value type applies to particles, with the same keywords:
 `center`, `range_unit`, `inverse=true` for the complement, and `axis` to tilt
 a cylinder or a cylindrical shell. Only the boundary machinery is absent,
 `split`, `nsub`, `refine`, `refine_to` have nothing to act on, since a point
-has no volume to divide.
+has no volume to divide. The exception is particle data that carries a
+`:volume` column, AREPO and GADGET gas for instance, where `split=true` does
+apply and sizes each particle as a sphere of the same volume. RAMSES star
+particles carry no volume, so on this page there is nothing to split.
 
 ```julia
 gallery = [
@@ -465,33 +431,8 @@ annulus 4–12 kpc, |z| < 2 : 286724   3.2728e9 Msol
 region∘filter == filter∘region : true
 ```
 
-```julia
-p_young = sproj(young)
-p_old   = sproj(old)
-
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(1000, 460))
-ax1 = Axis(fig[1, 1], title="younger than 50 Myr — where the gas is now",
-           xlabel="x − x꜀ [kpc]", ylabel="y − y꜀ [kpc]")
-show_sd!(ax1, p_young; decorate=true); limits!(ax1, -14, 14, -14, 14)
-ax2 = Axis(fig[1, 2], title="older than 300 Myr — a smooth, settled disc",
-           xlabel="x − x꜀ [kpc]")
-show_sd!(ax2, p_old; decorate=true); limits!(ax2, -14, 14, -14, 14)
-sd_bar!(fig[1, 3])
-fig
-```
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_21_1.png)
-
-Same region, same units, same colour scale, and two different galaxies. The
-young population traces the structure the gas has *right now*: clumpy, knotted,
-concentrated where star formation is happening. The old population has had time
-to phase-mix into a smooth axisymmetric disc.
-
-That contrast is only visible because the geometric cut and the value cut are
-independent operations on the same object. The
-[Masking & Filtering page](05_multi_Masking_Filtering.md) treats the value side
-in full, including how to combine conditions with `&`, `|`, and `!`.
+The region says *where*, the filter says *what*, and the last line is the
+promise that the order of the two never changes the answer.
 
 ### Place, State, and Type
 
@@ -533,116 +474,7 @@ The region kept a subset of rows and every column came with it, `:family` includ
 built on the subregion is as valid as one built on the whole box. Region, value condition and
 particle type compose in any order, and none of them is a special case.
 
-## 7. Profiles That Regions Make Easy
-
-Two profiles, both built the same way: a stack of `CylindricalShell` annuli,
-each one a region, each one asked for a mass-weighted mean.
-
-The first is rotation. Young stars inherit the near-circular orbits of the gas
-they formed from; old stars have been scattered, and a scattered population
-lags, its mean azimuthal speed falls below the circular speed by an amount
-that grows with its velocity dispersion. That is *asymmetric drift*, and it is
-one of the cleanest things a region stack can show.
-
-```julia
-r_ann = collect(1.5:1.0:14.5)
-vy, vo, ny, no = Float64[], Float64[], Int[], Int[]
-for r in r_ann
-    a  = subregion(stars, CylindricalShell(r-0.5, r+0.5, 2.), verbose=false)
-    ay = filterdata(a, Below(:age, 50,   unit=:Myr), verbose=false)
-    ao = filterdata(a, Above(:age, 300,  unit=:Myr), verbose=false)
-    for (obj, v, n) in ((ay, vy, ny), (ao, vo, no))
-        k = length(obj.data)
-        push!(n, k)
-        if k > 0
-            m = getvar(obj, :mass, :Msol)
-            push!(v, sum(getvar(obj, :vϕ_cylinder, :km_s, center=[:bc]) .* m) / sum(m))
-        else
-            push!(v, NaN)
-        end
-    end
-end
-println("at 7.5 kpc :  young ", round(vy[findfirst(==(7.5), r_ann)], digits=1),
-        " km/s (N=", ny[findfirst(==(7.5), r_ann)], ")   old ",
-        round(vo[findfirst(==(7.5), r_ann)], digits=1),
-        " km/s (N=", no[findfirst(==(7.5), r_ann)], ")")
-
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(660, 430))
-ax = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="⟨v_φ⟩  [km/s]",
-          title="asymmetric drift: old stars lag the young ones")
-lines!(ax, r_ann, vy; color=:dodgerblue, linewidth=2.5, label="age < 50 Myr")
-scatter!(ax, r_ann, vy; color=:dodgerblue, markersize=8)
-lines!(ax, r_ann, vo; color=:firebrick, linewidth=2.5, label="age > 300 Myr")
-scatter!(ax, r_ann, vo; color=:firebrick, markersize=8)
-axislegend(ax; position=:rb, framevisible=false)
-ylims!(ax, 0, nothing)
-fig
-```
-
-```
-[Mera] Hint: getvar(:vϕ_cylinder) has no `vcenter` — velocities are in the BOX frame.
-             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
-             (shown once per session; verbose(false) silences Mera's messages)
-at 7.5 kpc :  young 191.2 km/s (N=2396)   old 166.7 km/s (N=7878)
-```
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_27_4.png)
-
-The gap between the two curves is the drift: about 25 km/s at 7.5 kpc, where
-the young stars are turning at 191 km/s and the older ones at 167. It is a
-real dynamical measurement, and it came from a stack of annuli and one age
-condition.
-
-The second profile is vertical structure. The same age split, now measured
-perpendicular to the disc: a young population should be thin because it has
-not been heated yet.
-
-```julia
-disc  = subregion(stars, Cylinder(12., 3.), verbose=false)
-dyoung = filterdata(disc, Below(:age, 50,   unit=:Myr), verbose=false)
-dold   = filterdata(disc, Above(:age, 300,  unit=:Myr), verbose=false)
-
-# mass-weighted RMS height, one number per population
-function zrms(o)
-    z = getvar(o, :z, :kpc, center=[:bc]); m = getvar(o, :mass, :Msol)
-    sqrt(sum(m .* z.^2) / sum(m))
-end
-println("RMS height, age < 50 Myr : ", round(zrms(dyoung), digits=3), " kpc  (N=",
-        length(dyoung.data), ")")
-println("RMS height, age > 300 Myr   : ", round(zrms(dold), digits=3), " kpc  (N=",
-        length(dold.data), ")")
-
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(680, 400))
-ax = Axis(fig[1, 1], xlabel="z − z꜀ [kpc]", ylabel="stellar mass per bin [M⊙]",
-          yscale=log10, title="vertical structure of the disc, by age")
-for (o, c, l) in ((dyoung, :dodgerblue, "age < 50 Myr"), (dold, :firebrick, "age > 300 Myr"))
-    z = getvar(o, :z, :kpc, center=[:bc]); m = getvar(o, :mass, :Msol)
-    bins = range(-3, 3; length=61); mid = (bins[1:end-1] .+ bins[2:end]) ./ 2
-    h = [sum(m[(z .>= bins[i]) .& (z .< bins[i+1])]) for i in 1:length(bins)-1]
-    lines!(ax, mid, max.(h, 1e3); color=c, linewidth=2.5, label=l)
-end
-axislegend(ax; position=:rt, framevisible=false)
-fig
-```
-
-```
-RMS height, age < 50 Myr : 0.295 kpc  (N=68020)
-RMS height, age > 300 Myr   : 0.871 kpc  (N=103448)
-```
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_29_3.png)
-
-A factor of three in RMS height between the two populations, 0.3 kpc against
-0.87 kpc, in the same cylinder, from the same three lines of selection code.
-Stars are born in a thin gas layer and are scattered out of it afterwards, and
-a few hundred Myr is already enough to see it happen. The young profile is
-also visibly noisier in its wings: the counting story of §3, showing up again
-where the population thins out.
-
-## 8. Reference: the Classic Symbol API
+## 7. Reference: the Classic Symbol API
 
 The symbol-based interface works on particle data unchanged and remains the
 quickest way to take an exploratory cut.
@@ -676,7 +508,7 @@ value-type Sphere: 419529   4.7852795e9
 identical        : true
 ```
 
-## 9. Practical Guidance
+## 8. Practical Guidance
 
 **Quote $N$ with every number.** The selection is exact; the estimate built
 from it is not. A mass, a mean velocity, or a dispersion from a region is only
@@ -694,8 +526,9 @@ object, so cuts compose in any order and can be interleaved with `filterdata`
 count exactly. It is one line, it is free, and it catches a mis-specified
 centre or unit immediately (§2, §5).
 
-**`split`, `nsub`, `refine_to` do not apply.** They are grid concepts. If you
-find yourself reaching for them on particles, the question you actually have is
+**`split`, `nsub`, `refine_to` do not apply to points.** They are grid
+concepts, and a point has nothing for them to divide. If you find yourself
+reaching for them on star particles, the question you actually have is
 probably about counts.
 
 **Give `getvar` the same `center` as the region.** Derived quantities like
@@ -716,8 +549,6 @@ that costs when it is forgotten.
 - Geometric selection and value filtering are independent and commute, which
   makes population splits, young vs old, fast vs slow, a one-line
   refinement of any region (§6).
-- Stacks of annuli turn regions into profiles: asymmetric drift and the
-  age to scale-height relation both fall out of a dozen region objects (§7).
 
 **Continue with:**
 

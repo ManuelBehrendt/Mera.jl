@@ -22,10 +22,11 @@ for a `GravDataType`, and asking `getvar` for `:mass` returns an error rather
 than a number. What a region gives you here is a **volume**, and with it the
 right weights for averaging a field over that volume.
 
-That turns out to be enough to weigh the galaxy anyway, not by counting its
-mass, but by asking the force field how much mass it is responding to. The two
-answers disagree by a factor of about three and a half, and the disagreement
-is the point.
+One volume, correctly weighted, is worth more than it looks: it is what lets a
+mean potential or a mean acceleration be a statement about the region rather
+than about the cells that happened to fall inside it. The profile work built on
+that, shells, rotation curves, and the mass the field implies, now lives in the
+companion notebook `03_subregion_profiles_and_dynamics.ipynb`.
 
 **Reading convention.** Longer code cells are cut in two by a banner line:
 
@@ -42,19 +43,15 @@ decoration, read it if you want the plot, skim it otherwise.
 2. one sphere, three volumes
 3. averaging a field over a region
 4. two different `center`s, a trap worth naming
-5. shells: the rotation curve the force field implies
-6. weighing the galaxy: Gauss's law vs the mass ledger
-7. a second opinion: the gas rotation
-8. composites and the `@region` block
-9. the cut you measure is the cut you see
-10. reference: the classic symbol API
-11. practical guidance
+5. composites and the `@region` block
+6. the cut you measure is the cut you see
+7. reference: the classic symbol API
+8. practical guidance
 
 ## 1. The Field, and What It Cannot Weigh
 
-Three data types from one output, all loaded at the same resolution so the
-comparisons later are like for like: the gravity field, the gas, and the star
-particles. `lmax=10` is a deliberate choice, the potential is smooth on
+Two data types from one output, loaded at the same resolution so the
+comparisons later are like for like: the gravity field and the gas. `lmax=10` is a deliberate choice, the potential is smooth on
 scales far larger than the finest cells, so nothing in this page needs the
 deepest levels, and the page stays runnable on a laptop.
 
@@ -75,13 +72,11 @@ info = getinfo(400, path, verbose=false)
 grav  = getgravity(info, lmax=10, verbose=false, show_progress=false)
 gas   = gethydro(info, [:rho, :vx, :vy, :vz], lmax=10, smallr=1e-11,
                  verbose=false, show_progress=false)
-stars = getparticles(info, verbose=false, show_progress=false)
 
 kpc = info.scale.kpc          # code length -> kpc
 
 println("gravity cells  : ", length(grav.data), "   columns: ", keys(grav.data[1]))
 println("gas cells      : ", length(gas.data))
-println("star particles : ", length(stars.data))
 println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
         " kpc, centre [:bc] at (24, 24, 24) kpc")
 ```
@@ -97,7 +92,6 @@ println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
 gravity cells  : 4879946   columns: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
 gas cells      : 4879946
-star particles : 508939
 box            : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
 
@@ -113,8 +107,8 @@ getvar(subregion(grav, Sphere(10.)), :mass)   # "Variable :mass not found in gra
 The second message suggests the way out: `getvar` accepts a `hydro_data=`
 keyword, so gravity and hydro quantities can be requested from one object when
 the two cover the same cells. On this page we keep the datasets separate and
-let the *region* be what they share, the same `Sphere` value applied to gas,
-to stars, and to the field.
+let the *region* be what they share, the same `Sphere` value applied to the
+gas and to the field.
 
 First, what the field looks like. `projection` has a two-object form,
 `projection(hydro, gravity, var)`: the hydro object supplies the weights, the
@@ -186,7 +180,8 @@ The gas lives in a thin disc; the acceleration it feels does not fall away
 nearly as quickly off the plane. Read that panel carefully rather than
 literally, it is a *mass-weighted* average along the line of sight, so it
 shows the field where there is gas to weight it, not the field everywhere. It
-is a hint, not a measurement. §6 turns the hint into a number.
+is a hint, not a measurement, and turning a hint like that into a number is
+what a region and its volume weights are for.
 
 ## 2. One Sphere, Three Volumes
 
@@ -237,6 +232,15 @@ println("volume they would add if counted whole : ",
         round(sum((1 .- fr[edge]) .* cs[edge].^3), sigdigits=4), " kpc³")
 println("measured whole-cell excess            : ",
         round(V["whole cells (classic API)"] - V["split        (split=true)"], sigdigits=4), " kpc³")
+
+# a shell is a region like any other, and its volume is analytic too
+shell   = subregion(grav, SphericalShell(9., 11.), verbose=false)
+V_shell = sum(getvar(shell, :volume, :kpc3))
+V_shell_exact = 4/3 * π * (11.0^3 - 9.0^3)
+println()
+println("SphericalShell(9, 11) : ", rpad(round(V_shell, sigdigits=8), 14),
+        "analytic 4/3 π (R³ - r³) = ", rpad(round(V_shell_exact, sigdigits=8), 14),
+        "dev = ", round(100*(V_shell/V_shell_exact - 1), sigdigits=3), " %")
 ```
 
 ```
@@ -272,6 +276,10 @@ keeps and the value-type test does not.
 The lesson generalises: the error of a whole-cell cut is a property of the
 grid *where the boundary happens to fall*, not of the region's size. The same
 sphere centred somewhere fully refined would over-count far less.
+
+A shell behaves the same way. `SphericalShell(9, 11)` is a region like any
+other, and the last lines of the cell check its split volume against the
+analytic $\frac{4}{3}\pi (R^3 - r^3)$.
 
 Nothing about any of this is hydro-specific: it is the same `:fraction`
 column, and `getvar(:volume)` on gravity data is fraction-aware exactly as
@@ -382,274 +390,10 @@ pass `center` explicitly, and pass the same one you gave the region. Absolute
 positions (`:x`, `:y`, `:z`) are the exception: for those the box corner *is*
 the right default, because it returns the simulation's own coordinates.
 
-## 5. Shells: the Rotation Curve the Force Field Implies
+With the two `center`s straight, the rest of the page goes back to the regions
+themselves: how they compose, and what a cut looks like once you draw it.
 
-A `SphericalShell` is a region like any other, so a radial profile is a stack
-of them. For each shell we take the volume-weighted mean of $a_r$ and turn it
-into the speed a test particle would need to stay on a circular orbit there,
-
-$$v_\mathrm{c}(r) = \sqrt{|a_r|\, r}\,,$$
-
-which is a statement about the *potential*, it does not care whether the mass
-producing it is gas, stars, or something the output never wrote down.
-
-The loop below computes both variants from the same shells: the correct one,
-and the one with `getvar`'s `center` left at its default. The cost of one
-forgotten keyword is easier to see as a curve than as a number.
-
-```julia
-const KPC  = 3.085677581e21      # cm
-const GCGS = 6.67430e-8          # cm³ g⁻¹ s⁻²
-const MSOL = 1.98892e33          # g
-
-radii = collect(1.5:1.0:17.5)
-vc_galaxy = Float64[]
-vc_corner = Float64[]
-for r in radii
-    sh = subregion(grav, SphericalShell(r - 0.5, r + 0.5), verbose=false)
-    ws = getvar(sh, :volume)
-    ag = sum(getvar(sh, :ar_sphere, :cm_s2, center=[:bc]) .* ws) / sum(ws)
-    ac = sum(getvar(sh, :ar_sphere, :cm_s2)              .* ws) / sum(ws)
-    push!(vc_galaxy, sqrt(abs(ag) * r * KPC) / 1e5)     # km/s
-    push!(vc_corner, sqrt(abs(ac) * r * KPC) / 1e5)
-end
-println("v_c at 7.5 kpc, origin = galaxy centre : ",
-        round(vc_galaxy[findfirst(==(7.5), radii)], digits=1), " km/s")
-println("v_c at 7.5 kpc, origin = box corner    : ",
-        round(vc_corner[findfirst(==(7.5), radii)], digits=1), " km/s")
-
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(640, 420))
-ax  = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="v_c = √(|a_r| r)  [km/s]",
-           title="circular speed from the force field")
-lines!(ax, radii, vc_galaxy; color=:royalblue, linewidth=2.5, label="center=[:bc]  (correct)")
-scatter!(ax, radii, vc_galaxy; color=:royalblue, markersize=7)
-lines!(ax, radii, vc_corner; color=:crimson, linewidth=2, linestyle=:dash,
-       label="center left at default (box corner)")
-scatter!(ax, radii, vc_corner; color=:crimson, markersize=6)
-axislegend(ax; position=:rb, framevisible=false)
-ylims!(ax, 0, nothing)
-fig
-```
-
-```
-v_c at 7.5 kpc, origin = galaxy centre : 189.1 km/s
-v_c at 7.5 kpc, origin = box corner    : 65.8 km/s
-```
-
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_18_3.png)
-
-The blue curve rises through the inner few kpc and then flattens near 190 km/s
-a textbook galactic rotation curve, obtained without touching a single mass.
-The red curve is the same shells with the origin at the box corner: it is not
-noise, it is a perfectly well-defined measurement of the wrong thing, and
-nothing but the physics tells you so.
-
-## 6. Weighing the Galaxy: Gauss's Law vs the Mass Ledger
-
-Now the payoff, and the reason this page loads three datasets.
-
-For a roughly spherical potential, the radial acceleration on a shell measures
-all the mass inside it, Gauss's law, in the form
-
-$$M_\mathrm{dyn}(<r) \;=\; \frac{|a_r|\, r^2}{G}\,.$$
-
-That is one number. The other comes from the hydro page's machinery: apply the
-*same* `Sphere(r)` to the gas and to the star particles and sum what is
-actually there. Same region value, three data types, two independent answers
-to "how much mass is inside this sphere".
-
-```julia
-rows = NamedTuple[]
-for r in [2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 16.0]
-    sph_r = Sphere(r)                                   # ONE region value ...
-
-    sh   = subregion(grav, SphericalShell(r - 0.25, r + 0.25), verbose=false)
-    ws   = getvar(sh, :volume)
-    ar   = sum(getvar(sh, :ar_sphere, :cm_s2, center=[:bc]) .* ws) / sum(ws)
-    Mdyn = abs(ar) * (r*KPC)^2 / GCGS / MSOL            # ... asked of the field,
-
-    Mgas  = msum(subregion(gas,   sph_r, verbose=false), :Msol)   # ... of the gas,
-    Mstar = msum(subregion(stars, sph_r, verbose=false), :Msol)   # ... and of the stars
-
-    push!(rows, (r=r, Mdyn=Mdyn, Mgas=Mgas, Mstar=Mstar))
-end
-
-println(rpad("r [kpc]", 9), rpad("M_dyn", 12), rpad("M_gas", 12), rpad("M_star", 12),
-        rpad("M_baryon", 12), "M_dyn / M_baryon")
-println("-"^73)
-for t in rows
-    Mb = t.Mgas + t.Mstar
-    println(rpad(t.r, 9), rpad(round(t.Mdyn, sigdigits=4), 12),
-            rpad(round(t.Mgas, sigdigits=4), 12), rpad(round(t.Mstar, sigdigits=4), 12),
-            rpad(round(Mb, sigdigits=4), 12), round(t.Mdyn/Mb, digits=2))
-end
-```
-
-```
-r [kpc]  M_dyn       M_gas       M_star      M_baryon    M_dyn / M_baryon
--------------------------------------------------------------------------
-2.0      5.411e9     1.858e9     4.984e8     2.356e9     2.3
-4.0      2.328e10    5.918e9     1.853e9     7.77e9      3.0
-6.0      4.453e10    9.955e9     3.054e9     1.301e10    3.42
-8.0      6.694e10    1.486e10    4.148e9     1.901e10    3.52
-10.0     8.636e10    1.821e10    4.785e9     2.3e10      3.76
-12.0     1.063e11    2.329e10    5.27e9      2.856e10    3.72
-16.0     1.377e11    2.946e10    5.754e9     3.521e10    3.91
-```
-
-```julia
-rr    = [t.r for t in rows]
-Mdyn  = [t.Mdyn for t in rows]
-Mbary = [t.Mgas + t.Mstar for t in rows]
-
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(950, 400))
-ax1 = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="M(<r) [M⊙]", yscale=log10,
-           title="enclosed mass: field vs ledger")
-lines!(ax1, rr, Mdyn; color=:black, linewidth=2.5, label="M_dyn — from |a_r|")
-scatter!(ax1, rr, Mdyn; color=:black, markersize=8)
-lines!(ax1, rr, Mbary; color=:royalblue, linewidth=2, label="gas + stars")
-lines!(ax1, rr, [t.Mgas for t in rows]; color=:seagreen, linewidth=1.5, linestyle=:dash, label="gas")
-lines!(ax1, rr, [t.Mstar for t in rows]; color=:orange, linewidth=1.5, linestyle=:dash, label="stars")
-axislegend(ax1; position=:rb, framevisible=false)
-
-ax2 = Axis(fig[1, 2], xlabel="r [kpc]", ylabel="M(<r) [M⊙]",
-           title="the difference, and how it grows")
-band!(ax2, rr, zeros(length(rr)), Mdyn .- Mbary; color=(:purple, 0.18))
-lines!(ax2, rr, Mdyn .- Mbary; color=:purple, linewidth=2.5, label="M_dyn − M_baryon")
-lines!(ax2, rr, (Mdyn[end]-Mbary[end]) .* rr ./ rr[end]; color=:grey, linewidth=1.5,
-       linestyle=:dot, label="∝ r  (flat rotation curve)")
-axislegend(ax2; position=:lt, framevisible=false)
-fig
-```
-
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_22_1.png)
-
-The field consistently reports more mass than the gas and stars in the same
-sphere contain, a factor 2.3 at 2 kpc, rising to nearly 4 by 16 kpc. Over
-the outer half of that range the gap grows very nearly linearly with radius,
-which is the signature of a halo whose rotation curve is flat.
-
-And the shortfall is not something the region selection dropped. The *entire*
-particle population of this output, every particle in the box, not just those
-inside the sphere, weighs $5.8 \times 10^9\,M_\odot$, more than an order of
-magnitude less than the gap at 16 kpc.
-
-**Name it: this run carries an external potential.** Every one of the 508 939
-particles in this output has a birth time greater than zero, so every one of
-them is a star formed during the run. There is no dark-matter particle
-population here at all. The halo that the field is responding to is *imposed*,
-an analytic term added to the Poisson solve rather than matter that Mera can
-read, and in many isolated-galaxy setups a stellar disc or bulge is imposed the
-same way. Nothing is missing from the output and nothing is wrong with the
-ledger: the two sides are simply counting different things, and only one of
-them can be summed.
-
-!!! warning "What `M_dyn` is, and is not, when the potential is imposed"
-    $M_\mathrm{dyn} = |a_r| r^2 / G$ assumes a spherical mass distribution. A
-    halo term usually is spherical and the estimate is fair. A disc or bar
-    term is not, and then $M_\mathrm{dyn}$ is a *spherical-equivalent* mass:
-    the mass a spherical distribution would need to produce the measured radial
-    pull at that radius. Read the table as a detection of unmodelled mass, which
-    is robust, rather than as a measurement of its amount, which is not.
-
-    Which components are analytic is a property of the run, not of the output.
-    RAMSES records it in the namelist (`gravity_type` and its parameters, or a
-    patch), so check the setup rather than inferring it from the numbers.
-
-That is a completely ordinary situation for an isolated-galaxy run, and it is
-exactly the kind of thing a mass budget should be able to *detect* rather than
-quietly absorb: the ledger of what you can see, the field of what is actually
-pulling, and a region language that lets you ask both the same question.
-
-```julia
-# Is there a dark-matter particle population at all? In this particle format a birth time
-# of zero marks a primordial (dark-matter) particle; anything later formed during the run.
-b = getvar(stars, :birth)
-m = getvar(stars, :mass, :Msol)
-
-println("particles in the whole box      : ", length(b))
-println("  with birth = 0 (dark matter)  : ", count(==(0.0), b), "   ",
-        round(sum(m[b .== 0.0]), sigdigits=4), " Msol")
-println("  with birth > 0 (formed stars) : ", count(>(0.0), b), "   ",
-        round(sum(m[b .> 0.0]), sigdigits=4), " Msol")
-```
-
-```
-particles in the whole box      : 508939
-  with birth = 0 (dark matter)  : 0   0.0 Msol
-  with birth > 0 (formed stars) : 508939   5.804e9 Msol
-```
-
-## 7. A Second Opinion: the Gas Rotation
-
-One more cross-check, and one more region shape. If $v_\mathrm{c}$ from §5 is
-right, the gas, which sits in the midplane and moves in this potential,
-should be going round at about that speed. `CylindricalShell(r_in, r_out, H)`
-is the natural region for that: a thin annulus of the disc, half-height $H$.
-
-Note that the two estimators share nothing except the geometry. One is a
-volume-weighted mean of the gravitational acceleration; the other a
-mass-weighted mean of the gas azimuthal velocity.
-
-```julia
-r_ann  = collect(1.5:1.0:15.5)
-vphi   = Float64[]
-ncells = Int[]
-for r in r_ann
-    an = subregion(gas, CylindricalShell(r - 0.5, r + 0.5, 0.5), verbose=false)
-    m  = getvar(an, :mass, :Msol)                                  # fraction-aware
-    v  = getvar(an, :vϕ_cylinder, :km_s, center=[:bc])             # ... and centred!
-    push!(vphi, sum(v .* m) / sum(m))
-    push!(ncells, length(an.data))
-end
-println("annulus at 7.5 kpc : v_φ(gas) = ", round(vphi[findfirst(==(7.5), r_ann)], digits=1),
-        " km/s   vs   v_c(field) = ", round(vc_galaxy[findfirst(==(7.5), radii)], digits=1), " km/s")
-println("outermost annulus  : ", ncells[end], " cells — the gas disc has ended, the mean is meaningless")
-
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(660, 430))
-ax  = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="speed [km/s]",
-           title="what the field implies vs what the gas does")
-lines!(ax, radii, vc_galaxy; color=:royalblue, linewidth=2.5, label="v_c from |a_r|  (spherical shells)")
-scatter!(ax, r_ann, vphi; color=:darkorange, markersize=9, label="v_φ of the gas  (cylindrical annuli)")
-lines!(ax, r_ann, vphi; color=:darkorange, linewidth=1.2)
-vlines!(ax, [15.0]; color=:grey, linestyle=:dash, linewidth=1)
-text!(ax, 14.7, 55; text="beyond here the annulus\nholds too little gas\nto average",
-      color=:grey, fontsize=10, align=(:right, :bottom))
-axislegend(ax; position=:lt, framevisible=false)
-ylims!(ax, 0, 250)
-fig
-```
-
-```
-[Mera] Hint: getvar(:vϕ_cylinder) has no `vcenter` — velocities are in the BOX frame.
-             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
-             (shown once per session; verbose(false) silences Mera's messages)
-annulus at 7.5 kpc : v_φ(gas) = 190.3 km/s   vs   v_c(field) = 189.1 km/s
-outermost annulus  : 13942 cells — the gas disc has ended, the mean is meaningless
-```
-
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_26_4.png)
-
-Out to the edge of the gas disc the two curves track each other within about
-ten percent, and at 7.5 kpc they agree to better than one, good enough to
-trust the units, the centres, and the sign conventions on both sides, which is
-what a cross-check is for. The remaining scatter is physical:
-the gas is not on perfectly circular orbits, it has pressure support and
-non-axisymmetric structure, and a mass-weighted mean over a thick annulus is
-not the same average as a volume-weighted one over a spherical shell.
-
-Then the outermost orange point collapses, not because the rotation stops,
-but because the annulus has run past the edge of the gas disc and there is
-almost nothing left to average. The blue curve, which measures the field
-rather than the material, carries straight on. Any profile built from regions
-should report its cell counts alongside its values; that last point is a
-number a region produced faithfully and a galaxy never had.
-
-## 8. Composites, and the `@region` Block
+## 5. Composites, and the `@region` Block
 
 The boolean algebra of the hydro page, `∩` `∪` `\` `!`, or their ASCII forms
 `intersect`, `union`, `setdiff`, works unchanged on gravity data, and so does
@@ -712,7 +456,7 @@ integral to a hundredth of a percent, which is a stronger statement than it
 looks: it says the fractions on the cylinder's curved wall, on the sphere's
 curved cap, and on the flat slab faces are all consistent with one another.
 
-## 9. The Cut You Measure Is the Cut You See
+## 6. The Cut You Measure Is the Cut You See
 
 The two-object projection accepts sub-region objects, so a field map can be
 clipped by exactly the region the numbers came from. Because the gas object
@@ -746,7 +490,7 @@ a_bar!(fig[1, 3])
 fig
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_32_1.png)
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_21_1.png)
 
 The hole is round, not staircased, and the outer rim ends where the cylinder
 does, to within half a pixel.
@@ -763,7 +507,7 @@ why subtracting a sphere from a thin disc removes the mass of
 `subregion` call would push the feathering below the pixel scale, see §7 of
 the hydro page for what that costs and when it is worth it.
 
-## 10. Reference: the Classic Symbol API
+## 7. Reference: the Classic Symbol API
 
 The original symbol-based interface works on gravity data unchanged, and
 remains the quickest way to take a rough cut. It is whole-cell by default
@@ -810,7 +554,7 @@ analytically rather than sampled, a per-axis overlap product, so its split
 volume matches the exact slab to machine precision, while the whole-cell
 version carries a rim of boundary cells it never asked for.
 
-## 11. Practical Guidance
+## 8. Practical Guidance
 
 **Weight by volume.** For gravity data there is no `msum`, and the mean over
 cells is not the mean over the region. `getvar(obj, :volume)` is the weight you
@@ -829,8 +573,8 @@ both, it is one extra line.
 
 **Let the region be what the datasets share.** Gravity, hydro, and particles
 are separate objects with separate columns, but one `Sphere(r)` value applies
-to all three. That is what made §6 a comparison rather than an apples-to-oranges
-table.
+to all three. That is what turns three separate files into one comparison
+rather than an apples-to-oranges table.
 
 **Resolution.** The potential is smooth; `lmax` well below `levelmax` is
 usually plenty for field work and costs far less memory than the hydro side
@@ -848,13 +592,8 @@ the simulation was run at.
 - Average fields **by volume**, never by cell count (§3), and give `getvar` the
   same `center` you gave the region (§4), both mistakes return numbers rather
   than errors, though the second one now announces itself once per quantity.
-- Shells of regions make radial profiles: the volume-weighted $a_r$ gives a
-  rotation curve that flattens near 190 km/s (§5) and, through Gauss's law, an
-  enclosed mass three to four times the gas and stars found in the same
-  spheres (§6), a dark component the output never wrote down, detected by
-  asking one region two independent questions.
-- The gas's own rotation agrees with the field to about ten percent inside the
-  disc (§7), which is how you know the centres and units were right.
+- A sub-region projects like any other object, so the cut you measure is the
+  cut you see: round where the region is round, not staircased (§6).
 
 **Continue with:**
 

@@ -50,9 +50,8 @@ decoration.
 4. the geometry gallery
 5. composites and the `@region` block
 6. place *and* property: regions meet filters
-7. profiles, and why the counts are the limit
-8. reference: the classic symbol API
-9. practical guidance
+7. reference: the classic symbol API
+8. practical guidance
 
 ## 1. What a Clump Row Is
 
@@ -527,82 +526,7 @@ vocabulary. The important structural point is the last line: geometry and
 property are independent, so the order you apply them in cannot change the
 answer.
 
-## 7. Profiles, and Why the Counts Are the Limit
-
-A stack of `CylindricalShell` annuli turns the catalogue into a radial
-profile. With a few hundred objects in total, though, the honest constraint is
-not the geometry, it is how many clumps land in each ring.
-
-```julia
-r_ann = collect(1.0:1.0:15.0)
-n_cl, m_cl, area = Int[], Float64[], Float64[]
-for r in r_ann
-    a = subregion(clumps, CylindricalShell(r-0.5, r+0.5, 2.), verbose=false)
-    push!(n_cl, length(a.data))
-    push!(m_cl, length(a.data) == 0 ? 0.0 : msum(a, :Msol))
-    push!(area, π*((r+0.5)^2 - (r-0.5)^2))          # kpc²
-end
-
-println(rpad("annulus [kpc]", 16), rpad("N", 6), rpad("M [Msol]", 12), "1/√N")
-println("-"^44)
-for (r, n, m) in zip(r_ann, n_cl, m_cl)
-    println(rpad(string(r-0.5, " – ", r+0.5), 16), rpad(n, 6),
-            rpad(round(m, sigdigits=4), 12),
-            n == 0 ? "—" : string(round(100/sqrt(n), digits=0), " %"))
-end
-
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(960, 400))
-ax1 = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="clumps per kpc²",
-           title="surface number density of clumps")
-lines!(ax1, r_ann, n_cl ./ area; color=:steelblue, linewidth=2.5)
-errorbars!(ax1, r_ann, n_cl ./ area, sqrt.(max.(n_cl, 1)) ./ area;
-           whiskerwidth=8, color=:grey30)
-scatter!(ax1, r_ann, n_cl ./ area; color=:steelblue, markersize=8)
-
-ax2 = Axis(fig[1, 2], xlabel="r [kpc]", ylabel="clumps in annulus",
-           title="the count behind every point on the left")
-barplot!(ax2, r_ann, n_cl; color=(:steelblue, 0.6))
-hlines!(ax2, [25.]; color=:grey, linestyle=:dash)
-text!(ax2, 14.5, 27; text="N = 25 → 20 % uncertainty", color=:grey, fontsize=10,
-      align=(:right, :bottom))
-fig
-```
-
-```
-annulus [kpc]   N     M [Msol]    1/√N
---------------------------------------------
-0.5 – 1.5       16    1.907e8     25.0 %
-1.5 – 2.5       84    2.176e9     11.0 %
-2.5 – 3.5       48    6.661e8     14.0 %
-3.5 – 4.5       58    1.257e9     13.0 %
-4.5 – 5.5       20    4.817e8     22.0 %
-5.5 – 6.5       54    1.288e9     14.0 %
-6.5 – 7.5       70    1.888e9     12.0 %
-7.5 – 8.5       4     1.685e7     50.0 %
-8.5 – 9.5       26    1.355e9     20.0 %
-9.5 – 10.5      36    4.822e8     17.0 %
-10.5 – 11.5     53    8.519e8     14.0 %
-11.5 – 12.5     94    1.878e9     10.0 %
-12.5 – 13.5     61    9.12e8      13.0 %
-13.5 – 14.5     20    3.004e8     22.0 %
-14.5 – 15.5     0     0.0         —
-```
-
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_26_2.png)
-
-The left panel looks like a measured profile. The right panel is what it is
-made of: a dozen or two objects per ring, sometimes fewer. The error bars are
-$\sqrt{N}$, and outside the star-forming disc they are the entire story.
-
-This is the same lesson as the [particle page's](03_particles_Get_Subregions.md)
-§3, arriving sooner. A clump catalogue is a small sample by construction, the
-finder returns hundreds of objects where the grid has millions of cells, so
-it reaches the counting limit at radii where a particle or cell profile is
-still perfectly smooth. Bin wide, quote $N$, and resist reading structure into
-rings holding five objects.
-
-## 8. Reference: the Classic Symbol API
+## 7. Reference: the Classic Symbol API
 
 The symbol interface works on clump data unchanged, testing the same peak
 positions.
@@ -647,7 +571,7 @@ identical         : true
 catalogue extent  : x (-24.0, 24.0)  y (-24.0, 24.0)  z (-24.0, 24.0) kpc
 ```
 
-## 9. Practical Guidance
+## 8. Practical Guidance
 
 **The selection is exact; the interpretation is not.** `subregion` on a
 catalogue is a clean membership test on peak positions. "The clump mass inside
@@ -665,7 +589,9 @@ the catalogue as a partition of the gas is not.
 
 **Counts run out fast.** Hundreds of rows, not millions. Every profile point
 needs its $N$ quoted, and $\sqrt{N}$ is usually the largest error in the
-figure (§7).
+figure. The [particle page](03_particles_Get_Subregions.md) works that counting
+limit through in its §3; a catalogue of a few hundred objects reaches it at
+radii where a particle profile is still perfectly smooth.
 
 **Filter on the finder's own quality measures.** `:relevance` and `:ncell`
 exist to let you discard marginal detections; applying a region to an
@@ -684,8 +610,6 @@ unfiltered catalogue silently includes them (§6).
 - All region value types, boolean composition, `@region`, tilted axes and
   `inverse=true` behave as on every other page (§4, §5), and property filters
   compose with regions in either order (§6).
-- With a few hundred objects, counting noise arrives early: profiles are
-  limited by $N$ per bin, not by the geometry (§7).
 
 **Continue with:**
 
