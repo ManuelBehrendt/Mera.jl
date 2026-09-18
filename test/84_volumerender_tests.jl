@@ -239,6 +239,22 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
         @test_throws ArgumentError volumerender(gas, :rho; iso=[2.0, 3.0],
                                                 Base.structdiff(kw, (iso_alpha=0,))..., iso_alpha=[0.5])
         @test_throws ArgumentError volumerender(gas, :rho; iso=[-1.0], scale=:log, res=8, verbose=false)
+        # one width per surface, so a surface where the data is thin can have a wider band
+        pw = volumerender(gas, :rho; iso=[2.0, 3.0], Base.structdiff(kw, (iso_width=0,))...,
+                          iso_width=[0.05, 0.4])
+        @test length(pw.look.iso_width) == 2
+        @test pw.look.iso_width[2] ≈ 8 * pw.look.iso_width[1]      # the ratio survives the rescaling
+        one = volumerender(gas, :rho; iso=[2.0, 3.0], Base.structdiff(kw, (iso_width=0,))...,
+                           iso_width=0.05)
+        @test all(≈(one.look.iso_width[1]), one.look.iso_width)    # a scalar still fills every shell
+        # just outside the narrow band, only the wide one still adds opacity
+        t2 = pw.look.iso_t[2] + 2 * one.look.iso_width[2]
+        @test Mera._look_alpha(pw.look, t2) > Mera._look_alpha(one.look, t2)
+        @test Mera._look_alpha(pw.look, pw.look.iso_t[1]) ≈ Mera._look_alpha(one.look, one.look.iso_t[1])
+        @test_throws ArgumentError volumerender(gas, :rho; iso=[2.0, 3.0],
+                           Base.structdiff(kw, (iso_width=0,))..., iso_width=[0.05])
+        @test_throws ArgumentError volumerender(gas, :rho; iso=[2.0],
+                           Base.structdiff(kw, (iso_width=0,))..., iso_width=[-0.1])
     end
 
     @testset "line-of-sight velocity" begin
