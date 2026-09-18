@@ -116,6 +116,19 @@ _background_color(c::Symbol) = c === :black ? RGB{Float64}(0, 0, 0) :
                                c === :white ? RGB{Float64}(1, 1, 1) : RGB{Float64}(parse(Colorant, string(c)))
 _background_color(c::Colorant) = RGB{Float64}(c)
 
+# The values of the rendered quantity. `:vlos` is not a getvar field, because the line-of-sight
+# velocity depends on where the camera is; here it is known, so it is computed from the velocity
+# components. The sign follows the projection convention: positive means moving away from you.
+function _quantity_values(dataobject, quantity::Symbol, unit::Symbol, cam_w)
+    quantity === :vlos || return _quietly(() -> Float64.(getvar(dataobject, quantity, unit)))
+    cam_w === nothing && throw(ArgumentError(
+        "volumerender: :vlos needs the camera; pass colorrange yourself when calling volumelook"))
+    return _quietly() do
+        vx = getvar(dataobject, :vx, unit); vy = getvar(dataobject, :vy, unit); vz = getvar(dataobject, :vz, unit)
+        return Float64.(-(vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3]))
+    end
+end
+
 # value → position in the colour range, 0 to 1
 @inline function _look_t(l::VolumeLook, v::Float64)
     lo, hi = l.colorrange
@@ -192,13 +205,21 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
     tone in (:reinhard, :aces, :linear) ||
         throw(ArgumentError("volumelook: tone must be :reinhard, :aces or :linear, got :$tone"))
 
-    v = Float64.(getvar(dataobject, quantity, unit))
+    if quantity === :vlos && scale === :log
+        throw(ArgumentError("volumelook: :vlos is signed, so it needs scale=:linear"))
+    end
+    # :vlos depends on the camera; for the default range its spread is taken from the speed
+    v = quantity === :vlos ? _quietly(() -> Float64.(getvar(dataobject, :v, unit))) :
+                             _quietly(() -> Float64.(getvar(dataobject, quantity, unit)))
     lo, hi = if colorrange === nothing
         pos = scale === :log ? filter(x -> x > 0 && isfinite(x), v) : filter(isfinite, v)
         isempty(pos) && throw(ArgumentError("volumelook: :$quantity has no usable values"))
         quantile(pos, (percentiles[1] / 100, percentiles[2] / 100))
     else
         Float64(colorrange[1]), Float64(colorrange[2])
+    end
+    if quantity === :vlos && colorrange === nothing
+        hi = max(abs(lo), abs(hi)); lo = -hi          # signed: a symmetric range about zero
     end
     if !(hi > lo)      # a constant field, or one value left after the percentiles: widen it
         colorrange === nothing || throw(ArgumentError("volumelook: colorrange=(lo, hi) needs lo < hi, got ($lo, $hi)"))
@@ -274,13 +295,22 @@ gas contributes; or raise the low end of `opacity`. Choose a colour map that is 
 end, such as `:viridis` or `:cividis`, rather than one that starts black.
 
 Pass `look=` from [`volumelook`](@ref) to keep colours and opacity fixed across the frames of a
-movie; [`volumeorbit`](@ref) does that for a turning view. View keywords are those of the off-axis
+movie; [`volumeorbit`](@ref) does that for a turning view.
+
+`:vlos`, the velocity along the line of sight, works as a quantity even though it is not a
+`getvar` field: the renderer knows where the camera is. It is signed, so use `scale=:linear`, a
+symmetric `colorrange` and a diverging colour map such as `:vik` or `:berlin`. Positive means
+moving away from you, as in [`projection`](@ref).
+
+View keywords are those of the off-axis
 [`projection`](@ref): `direction`, `los`, `up`, `inclination`, `azimuth`, `axis`, `position_angle`,
 `angle_unit`, `xrange`/`yrange`/`zrange`, `center`, `range_unit`, `pxsize` or `res`, `mask`,
 `verbose`, `max_threads`.
 
 This is an illustration, not a measurement: the colours and opacity are choices. For physical
-maps, such as a surface density or an optical depth, use [`projection`](@ref).
+maps, such as a surface density or an optical depth, use [`projection`](@ref). Mera's hints about
+velocity frames and centres are silenced while a picture is made, since they are about physics
+rather than about drawing; call [`getvar`](@ref) yourself to see them.
 """
 function volumerender(dataobject::HydroDataType, quantity::Symbol; look::Union{Nothing,VolumeLook}=nothing,
                       unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
@@ -721,7 +751,7 @@ function _volume_setup(dataobject::HydroDataType, l::VolumeLook; direction=:z, l
     x1 = x0 + nx * pixsize; y1 = y0 + ny * pixsize
 
     # values, colour index and opacity per cell; fully transparent cells are dropped
-    v = Float64.(getvar(dataobject, l.quantity, l.unit))
+    v = _quantity_values(dataobject, l.quantity, l.unit, cam_w)
     idx = Int[]
     @inbounds for i in eachindex(sel)
         sel[i] || continue

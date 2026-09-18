@@ -241,6 +241,28 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
         @test_throws ArgumentError volumerender(gas, :rho; iso=[-1.0], scale=:log, res=8, verbose=false)
     end
 
+    @testset "line-of-sight velocity" begin
+        # the box rotates about +z, so seen along x one half approaches and the other recedes
+        gas = _vr_gas(4)
+        kw = (unit=:standard, scale=:linear, res=16,
+              tau_unit_length=[0.2, :standard], verbose=false)
+        m = volumerender(gas, :vlos; colorrange=(-0.5, 0.5), los=[1, 0, 0], kw...)
+        seen = filter(isfinite, m.value)
+        @test minimum(seen) < 0 < maximum(seen)                  # both signs are present
+        @test abs(mean(seen)) < 0.05 * maximum(seen)             # and they cancel
+        # looking at the same gas from behind, every pixel that approached now recedes:
+        # the picture is mirrored and its sign is flipped
+        back = volumerender(gas, :vlos; colorrange=(-0.5, 0.5), los=[-1, 0, 0], kw...)
+        a = replace(m.value, NaN => 0.0); b = reverse(replace(back.value, NaN => 0.0), dims=1)
+        @test sum(a .* b) < 0                                    # anticorrelated, not just noisy
+        @test isapprox(a, -b; atol=1e-6 + 0.05 * maximum(abs, a))
+        # the default colour range is symmetric about zero, because the quantity is signed
+        auto = volumerender(gas, :vlos; los=[1, 0, 0], kw...)
+        @test auto.look.colorrange[1] ≈ -auto.look.colorrange[2]
+        @test_throws ArgumentError volumerender(gas, :vlos;
+                                                Base.structdiff(kw, (scale=0,))..., scale=:log)
+    end
+
     @testset "camera path" begin
         gas = _vr_gas(4; rho=(x, y, z) -> 1 + 9exp(-((x-0.5)^2 + (y-0.5)^2 + 4(z-0.5)^2) / 0.02))
         common = (fov_unit=:standard, axis=:z, res=24, tau_unit_length=[0.05, :standard],
