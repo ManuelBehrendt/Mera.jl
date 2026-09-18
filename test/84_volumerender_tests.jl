@@ -90,7 +90,8 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
     @testset "colour, background and the visible value" begin
         gas = _vr_gas(4)
         m = volumerender(gas, :rho; scale=:linear, colorrange=(0.0, 2.0), colormap=:viridis,
-                         opacity=(1.0, 1.0), tau_unit_length=[1.0, :standard], res=16, _VR_KW...)
+                         opacity=(1.0, 1.0), tau_unit_length=[1.0, :standard], tone=:linear,
+                         res=16, _VR_KW...)
         p = _vmid(m)
         t = 0.5                                        # rho = 1 sits in the middle of (0, 2)
         col = Mera.RGB{Float64}(get(Mera.colorschemes[:viridis], (floor(Int, t * 256) + 0.5) / 256))
@@ -171,8 +172,8 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
         gas = _vr_gas(4)
         kw = (scale=:linear, colorrange=(0.0, 2.0), colormap=:viridis, opacity=(0.3, 0.3),
               tau_unit_length=[1.0, :standard], res=16, verbose=false)
-        a = volumerender(gas, :rho; kw...)
-        b = volumerender(gas, :rho; exposure=2.0, kw...)
+        a = volumerender(gas, :rho; tone=:linear, kw...)
+        b = volumerender(gas, :rho; exposure=2.0, tone=:linear, kw...)
         p = _vmid(a)
         @test b.image[p...].r ≈ min(2 * a.image[p...].r, 1.0) rtol=1e-10
         @test b.image[p...].g > a.image[p...].g                   # brighter, not clipped here
@@ -180,6 +181,19 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
         @test b.look.exposure == 2.0
         @test occursin("exposure", sprint(show, b.look))
         @test_throws ArgumentError volumerender(gas, :rho; exposure=0, kw...)
+        # a tone curve bends light brighter than white instead of cutting it off, so bright
+        # regions keep their detail rather than sitting at full saturation
+        lin = volumerender(gas, :rho; exposure=20, tone=:linear, kw...)
+        ace = volumerender(gas, :rho; exposure=20, tone=:aces, kw...)
+        rei = volumerender(gas, :rho; exposure=20, tone=:reinhard, kw...)
+        # a hard cut leaves channels sitting exactly at the maximum, which is where detail is
+        # lost; a curve bends them instead and never reaches it
+        clipped(img) = count(p -> p.r >= 0.999 || p.g >= 0.999 || p.b >= 0.999, img)
+        @test clipped(lin.image) > 0
+        @test clipped(ace.image) == 0 && clipped(rei.image) == 0
+        @test all(p -> p.r <= 1 && p.g <= 1 && p.b <= 1, ace.image)
+        @test ace.look.tone == :aces
+        @test_throws ArgumentError volumerender(gas, :rho; tone=:filmic, kw...)
         # the spin-axis camera says "box frame", so no velocity-frame hint is printed
         delete!(Mera._HINT_SHOWN, :vframe)
         @test !occursin("vcenter", _vr_capture(() -> volumerender(gas, :rho; direction=:faceon,

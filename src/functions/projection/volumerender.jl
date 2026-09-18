@@ -51,6 +51,7 @@ struct VolumeLook
     iso_width::Float64             # half width of a shell, in colour-range units (dex when log)
     iso_alpha::Vector{Float64}     # opacity added at the centre of each shell
     exposure::Float64              # brightness multiplier of the finished picture
+    tone::Symbol                   # how brightness above 1 is handled: :reinhard, :aces, :linear
     sigma::Float64                 # per cm, at opacity 1
     background::RGB{Float64}
 end
@@ -61,6 +62,7 @@ function Base.show(io::IO, l::VolumeLook)
           ", opacity ", l.opacity)
     isempty(l.iso) || print(io, ", ", length(l.iso), " isosurface(s) at ", round.(l.iso, sigdigits=3))
     l.exposure == 1 || print(io, ", exposure ", round(l.exposure, sigdigits=3))
+    l.tone === :aces || print(io, ", tone :", l.tone)
     print(io, ", τ=1 over ", round(1 / (l.sigma * 3.0857e18), sigdigits=3), " pc)")
 end
 
@@ -133,7 +135,7 @@ end
 """
     volumelook(gas, quantity; unit=:standard, scale=:log, colorrange=nothing,
                percentiles=(1, 99.9), colormap=:inferno, opacity=(0.0, 1.0), opacity_gamma=1.0,
-               iso=[], iso_width=0.05, iso_alpha=0.8, exposure=1.0,
+               iso=[], iso_width=0.05, iso_alpha=0.8, exposure=1.0, tone=:aces,
                tau_unit_length=nothing, tau_target=1.5, background=:black, <view keywords>)
         -> VolumeLook
 
@@ -153,8 +155,12 @@ Resolve how a quantity looks: the colour range, the colour map, and how opaque t
   example `iso_alpha=[0.15, 0.3, 0.6]`. With `opacity=(0, 0)` you see the surfaces alone.
 * `exposure` brightens the finished picture, like the exposure of a camera. A thin, see-through
   rendering is dark simply because little light is collected; `exposure=3` makes it three times
-  brighter. Colours that run past white are clipped, so raise it until the brightest parts are
-  white and no further.
+  brighter.
+* `tone` decides what happens to light brighter than white. `:aces` (default) and `:reinhard`
+  bend it smoothly, so bright regions fade toward white and keep their detail, the way a camera
+  or a film renderer behaves. `:linear` cuts it off instead, which holds colours at full
+  saturation and flattens anything bright into one solid patch. Use `:linear` only when you want
+  the raw numbers on screen.
 * `tau_unit_length=[100, :pc]` sets what full opacity means: optical depth 1 over that length.
   Without it the strength is taken from the data, so that the median optical depth of the map is
   `tau_target`.
@@ -169,8 +175,8 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
                     scale::Symbol=:log, colorrange=nothing, percentiles=(1, 99.9),
                     colormap::Symbol=:inferno, opacity=(0.0, 1.0), opacity_gamma::Real=1.0,
                     iso=Float64[], iso_width::Real=0.05, iso_alpha=0.8, exposure::Real=1.0,
-                    tau_unit_length=nothing, tau_target::Real=1.5, background=:black,
-                    mask=[false], verbose::Bool=false, kwargs...)
+                    tone::Symbol=:aces, tau_unit_length=nothing, tau_target::Real=1.5,
+                    background=:black, mask=[false], verbose::Bool=false, kwargs...)
     scale in (:log, :linear) || throw(ArgumentError("volumelook: scale must be :log or :linear, got :$scale"))
     haskey(colorschemes, colormap) ||
         throw(ArgumentError("volumelook: unknown colormap :$colormap; try :inferno, :magma, :viridis"))
@@ -183,6 +189,8 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
         "volumelook: iso_alpha must be one number or one per isosurface, got $(length(isoa)) for $(length(iso))"))
     all(a -> 0 <= a <= 1, isoa) || throw(ArgumentError("volumelook: every iso_alpha must be between 0 and 1"))
     (isfinite(exposure) && exposure > 0) || throw(ArgumentError("volumelook: exposure must be positive"))
+    tone in (:reinhard, :aces, :linear) ||
+        throw(ArgumentError("volumelook: tone must be :reinhard, :aces or :linear, got :$tone"))
 
     v = Float64.(getvar(dataobject, quantity, unit))
     lo, hi = if colorrange === nothing
@@ -211,7 +219,7 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
     look = VolumeLook(quantity, unit, scale, range01, colormap, lut,
                       (Float64(opacity[1]), Float64(opacity[2])), Float64(opacity_gamma),
                       isov, iso_t, Float64(iso_width) / span, isoa,
-                      Float64(exposure), 1.0, _background_color(background))
+                      Float64(exposure), tone, 1.0, _background_color(background))
 
     # strength: either given, or chosen so the median optical depth of this view is tau_target
     sigma = if tau_unit_length !== nothing
@@ -228,7 +236,7 @@ function volumelook(dataobject::HydroDataType, quantity::Symbol; unit::Symbol=:s
     end
     return VolumeLook(look.quantity, look.unit, look.scale, look.colorrange, look.colormap, look.lut,
                       look.opacity, look.opacity_gamma, look.iso, look.iso_t, look.iso_width,
-                      look.iso_alpha, look.exposure, sigma, look.background)
+                      look.iso_alpha, look.exposure, look.tone, sigma, look.background)
 end
 
 # ------------------------------------------------------------------------------------
@@ -278,14 +286,14 @@ function volumerender(dataobject::HydroDataType, quantity::Symbol; look::Union{N
                       unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
                       percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
                       opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha=0.8,
-                      exposure::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
+                      exposure::Real=1.0, tone::Symbol=:aces, tau_unit_length=nothing, tau_target::Real=1.5,
                       background=:black, supersample::Union{Symbol,Integer}=:auto,
                       mask=[false], verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
     l = look === nothing ?
         volumelook(dataobject, quantity; unit=unit, scale=scale, colorrange=colorrange,
                    percentiles=percentiles, colormap=colormap, opacity=opacity,
                    opacity_gamma=opacity_gamma, iso=iso, iso_width=iso_width, iso_alpha=iso_alpha,
-                   exposure=exposure, tau_unit_length=tau_unit_length,
+                   exposure=exposure, tone=tone, tau_unit_length=tau_unit_length,
                    tau_target=tau_target, background=background, mask=mask, verbose=false, kwargs...) :
         look
     return _volume_render(dataobject, l; supersample=supersample, mask=mask, verbose=verbose,
@@ -325,7 +333,7 @@ function volumeorbit(dataobject::HydroDataType, quantity::Symbol; angles=0:2:358
                      unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
                      percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
                      opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha=0.8,
-                     exposure::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
+                     exposure::Real=1.0, tone::Symbol=:aces, tau_unit_length=nothing, tau_target::Real=1.5,
                      background=:black, supersample::Union{Symbol,Integer}=:auto,
                      verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
     sweep in (:azimuth, :inclination, :position_angle) ||
@@ -338,7 +346,7 @@ function volumeorbit(dataobject::HydroDataType, quantity::Symbol; angles=0:2:358
                                          (inclination=inclination, axis=axis, position_angle=a)
     common = (center=center, range_unit=fov_unit, xrange=win, yrange=win, zrange=win, kwargs...)
     lookkw = (; unit, scale, colorrange, percentiles, colormap, opacity, opacity_gamma,
-              iso, iso_width, iso_alpha, exposure, tau_unit_length, tau_target, background)
+              iso, iso_width, iso_alpha, exposure, tone, tau_unit_length, tau_target, background)
     l = look === nothing ?
         volumelook(src, quantity; lookkw..., verbose=false, viewof(first(angles))..., common...) : look
     verbose && println("[Mera]: volume orbit, ", length(angles), " frames, ",
@@ -405,7 +413,7 @@ function volumepath(dataobject::HydroDataType, quantity::Symbol; keyframes, fram
                     unit::Symbol=:standard, scale::Symbol=:log, colorrange=nothing,
                     percentiles=(1, 99.9), colormap::Symbol=:inferno, opacity=(0.0, 1.0),
                     opacity_gamma::Real=1.0, iso=Float64[], iso_width::Real=0.05, iso_alpha=0.8,
-                    exposure::Real=1.0, tau_unit_length=nothing, tau_target::Real=1.5,
+                    exposure::Real=1.0, tone::Symbol=:aces, tau_unit_length=nothing, tau_target::Real=1.5,
                     background=:black, supersample::Union{Symbol,Integer}=:auto,
                     verbose::Bool=true, max_threads::Int=Threads.nthreads(), kwargs...)
     isempty(keyframes) && throw(ArgumentError("volumepath: give at least one keyframe"))
@@ -418,7 +426,7 @@ function volumepath(dataobject::HydroDataType, quantity::Symbol; keyframes, fram
             for k in 1:frames]
 
     lookkw = (; unit, scale, colorrange, percentiles, colormap, opacity, opacity_gamma,
-              iso, iso_width, iso_alpha, exposure, tau_unit_length, tau_target, background)
+              iso, iso_width, iso_alpha, exposure, tone, tau_unit_length, tau_target, background)
     first_src, first_kw = _volume_path_frame(dataobject, path[1], fov_unit, aperture, res, axis, kwargs)
     l = look === nothing ? volumelook(first_src, quantity; lookkw..., verbose=false, first_kw...) : look
     verbose && println("[Mera]: volume path, ", frames, " frames, ", l)
@@ -614,6 +622,20 @@ function _balanced_bounds(order, cellsize, cam_right, cam_up, pixsize::Float64, 
         bounds[t] = max(bounds[t-1], searchsortedfirst(cum, total * (t - 1) / nchunks))
     end
     return bounds
+end
+
+# How light brighter than white is handled. Clipping it (`:linear`) keeps a colour at full
+# saturation and turns everything bright into one flat patch; a curve lets it roll off toward
+# white, which is what a camera does and what makes a rendering look natural.
+#   :aces      the usual filmic approximation (default): natural roll-off, mid-tone contrast
+#   :reinhard  x / (1 + x)                          (Reinhard et al. 2002), gentler and softer
+function _tone_curve(tone::Symbol)
+    tone === :linear && return identity
+    tone === :reinhard && return x -> x / (1 + x)
+    return function (x)                              # :aces, the default
+        y = max(x, 0.0)
+        return (y * (2.51y + 0.03)) / (y * (2.43y + 0.59) + 0.14)
+    end
 end
 
 # mean over k×k blocks
@@ -871,9 +893,9 @@ function _volume_render(dataobject::HydroDataType, l::VolumeLook; supersample::U
     R = _block_mean(R, k); G = _block_mean(G, k); B = _block_mean(B, k)
     V = _block_mean(V, k); A = _block_mean(A, k); T = _block_mean(T, k)
 
-    bg = l.background; e = l.exposure
-    image = [RGB{Float64}(clamp(e*R[p] + T[p]*bg.r, 0, 1), clamp(e*G[p] + T[p]*bg.g, 0, 1),
-                          clamp(e*B[p] + T[p]*bg.b, 0, 1)) for p in eachindex(R)]
+    bg = l.background; e = l.exposure; f = _tone_curve(l.tone)
+    image = [RGB{Float64}(clamp(f(e*R[p]) + T[p]*bg.r, 0, 1), clamp(f(e*G[p]) + T[p]*bg.g, 0, 1),
+                          clamp(f(e*B[p]) + T[p]*bg.b, 0, 1)) for p in eachindex(R)]
     image = reshape(image, size(R))
     value = [A[p] > 0 ? V[p] / A[p] : NaN for p in eachindex(A)]
     value = reshape(value, size(A))
