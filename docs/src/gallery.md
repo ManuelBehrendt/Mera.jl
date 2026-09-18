@@ -42,6 +42,16 @@ run it.
   line-of-sight velocity, dispersion, temperature, pressure and the stars</span>
 </a>
 
+<a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/004_temperature_sweep">
+  <img src="assets/gallery/sweep_thumb.png"
+       alt="The same galaxy volume rendered at four temperatures: a cold spiral, a thick warm disc, a web of bubble walls, and a smooth hot envelope">
+  <span class="gallery-title">A temperature sweep through a galaxy</span>
+  <span class="gallery-meta">RAMSES · the camera holds still and the transfer function moves: a
+  window 0.12 dex wide slides from 30 K to 10⁷ K, volume rendered, so each phase of the gas lights
+  up where it lives, followed by the same window opening into fog and three phases nested
+  together</span>
+</a>
+
 </div>
 ```
 
