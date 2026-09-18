@@ -1,0 +1,212 @@
+// Mera.jl API type families : source for docs/src/assets/TypeHierarchyAPI.png
+// Render: dot -Tpng -Gdpi=170 docs/type_hierarchy_api.dot -o docs/src/assets/TypeHierarchyAPI.png
+//
+// Companion to docs/type_hierarchy.dot, which draws the data containers. This file draws the
+// six families you build and hand to a function: regions, filter conditions, clump finders,
+// clump validators, neighbour indices and report cards. Regenerate after ANY change to one of
+// these type trees; test/81 compares the drawn edges against subtypes() and fails on drift.
+//
+// Abstract supertype = italic, grey, dashed. Exported concrete type = filled colour card.
+// Internal combinator = grey, dotted: it exists, but the operators build it, you never name it.
+// Each card is its own connected component; pack + sortv stack them in one column, top to bottom.
+digraph TypeHierarchyAPI {
+    rankdir=TB;
+    ordering=out;
+    pack=true;
+    packmode="array_ul1";
+    bgcolor="transparent";
+    pad=0.25;
+    nodesep=0.4;
+    ranksep=0.55;
+    fontname="Helvetica";
+    edge [color="#475569", arrowsize=0.85, penwidth=1.5];
+    node [fontname="Helvetica", shape=box, style="rounded,filled", penwidth=1.6, margin="0.22,0.12"];
+
+    // ───────────────── regions ─────────────────
+    subgraph cluster_regions {
+        sortv=1;
+        style="rounded,filled";
+        fillcolor="#f6fefd";
+        color="#ccfbf1";
+        penwidth=2.2;
+        margin=18;
+        labelloc="t";
+        label=<<FONT POINT-SIZE="13" COLOR="#0f766e"><B>Regions: geometry value types for subregion()</B><BR/><FONT POINT-SIZE="10">a region is measured relative to center; split=true clips the boundary cells exactly</FONT></FONT>>;
+
+        node [fillcolor="#f1f5f9", color="#94a3b8", style="rounded,filled,dashed", fontcolor="#0f172a"];
+        RgAbs [label=<<I>AbstractRegion</I>>, fontsize=16];
+
+        node [style="rounded,filled", fillcolor="#ccfbf1", color="#0d9488", fontcolor="#134e4a", fontsize=14];
+        RgSphere [label=<<B>Sphere</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0f766e">ball of radius r</FONT>>];
+        RgSShell [label=<<B>SphericalShell</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0f766e">r_in &#8804; |r| &#8804; r_out</FONT>>];
+        RgCShell [label=<<B>CylindricalShell</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0f766e">shell about any axis</FONT>>];
+        RgCyl    [label=<<B>Cylinder</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0f766e">radius, &#177;height, any axis</FONT>>];
+        RgBox    [label=<<B>Cuboid</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0f766e">axis-aligned box</FONT>>];
+
+        node [style="rounded,filled,dotted", fillcolor="#f1f5f9", color="#94a3b8", fontcolor="#475569", fontsize=13];
+        RgAnd [label=<<B>RegionIntersection</B><BR/><FONT POINT-SIZE="10.5" COLOR="#64748b">a &#8745; b</FONT>>];
+        RgOr  [label=<<B>RegionUnion</B><BR/><FONT POINT-SIZE="10.5" COLOR="#64748b">a &#8746; b</FONT>>];
+        RgSub [label=<<B>RegionDifference</B><BR/><FONT POINT-SIZE="10.5" COLOR="#64748b">a &#92; b</FONT>>];
+        RgNot [label=<<B>RegionComplement</B><BR/><FONT POINT-SIZE="10.5" COLOR="#64748b">!a</FONT>>];
+
+        RgAbs -> RgSphere; RgAbs -> RgSShell; RgAbs -> RgCShell; RgAbs -> RgCyl; RgAbs -> RgBox;
+        RgAbs -> RgAnd [minlen=2, weight=0]; RgAbs -> RgOr [minlen=2, weight=0];
+        RgAbs -> RgSub [minlen=2, weight=0]; RgAbs -> RgNot [minlen=2, weight=0];
+        { rank=same; RgSphere; RgSShell; RgCShell; RgCyl; RgBox; }
+        { rank=same; RgAnd; RgOr; RgSub; RgNot; }
+    }
+
+    // ───────────────── filter conditions ─────────────────
+    subgraph cluster_filters {
+        sortv=2;
+        style="rounded,filled";
+        fillcolor="#fbfdff";
+        color="#e0f2fe";
+        penwidth=2.2;
+        margin=18;
+        labelloc="t";
+        label=<<FONT POINT-SIZE="13" COLOR="#0369a1"><B>Filter conditions: value-space selectors for filterdata() and getmask()</B><BR/><FONT POINT-SIZE="10">each names a getvar quantity and a unit, so derived physics can be selected on</FONT></FONT>>;
+
+        node [fillcolor="#f1f5f9", color="#94a3b8", style="rounded,filled,dashed", fontcolor="#0f172a", fontsize=16];
+        FcAbs [label=<<I>FilterCondition</I>>];
+
+        node [style="rounded,filled", fillcolor="#e0f2fe", color="#0284c7", fontcolor="#0c2a3e", fontsize=14];
+        FcAbove  [label=<<B>Above</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0369a1">value &gt; v</FONT>>];
+        FcBelow  [label=<<B>Below</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0369a1">value &lt; v</FONT>>];
+        FcRange  [label=<<B>InRange</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0369a1">lo &#8804; value &#8804; hi</FONT>>];
+        FcEq     [label=<<B>Equals</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0369a1">value == v, within atol</FONT>>];
+        FcFin    [label=<<B>IsFinite</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0369a1">drops NaN and Inf</FONT>>];
+        FcPAbove [label=<<B>AbovePercentile</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0369a1">top p percent</FONT>>];
+        FcPBelow [label=<<B>BelowPercentile</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0369a1">bottom p percent</FONT>>];
+        FcSat    [label=<<B>Satisfies</B><BR/><FONT POINT-SIZE="10.5" COLOR="#0369a1">f(value)::Bool</FONT>>];
+
+        node [style="rounded,filled,dotted", fillcolor="#f1f5f9", color="#94a3b8", fontcolor="#475569", fontsize=13];
+        FcAnd  [label=<<B>_And</B><BR/><FONT POINT-SIZE="10.5" COLOR="#64748b">a &amp; b</FONT>>];
+        FcOr   [label=<<B>_Or</B><BR/><FONT POINT-SIZE="10.5" COLOR="#64748b">a | b</FONT>>];
+        FcNot  [label=<<B>_Not</B><BR/><FONT POINT-SIZE="10.5" COLOR="#64748b">!a</FONT>>];
+        FcPred [label=<<B>_PredCond</B><BR/><FONT POINT-SIZE="10.5" COLOR="#64748b">the quantity + predicate form</FONT>>];
+
+        FcAbs -> FcAbove; FcAbs -> FcBelow; FcAbs -> FcRange; FcAbs -> FcEq;
+        FcAbs -> FcFin; FcAbs -> FcPAbove; FcAbs -> FcPBelow; FcAbs -> FcSat;
+        FcAbs -> FcAnd [minlen=2, weight=0]; FcAbs -> FcOr [minlen=2, weight=0];
+        FcAbs -> FcNot [minlen=2, weight=0]; FcAbs -> FcPred [minlen=2, weight=0];
+        { rank=same; FcAbove; FcBelow; FcRange; FcEq; FcFin; FcPAbove; FcPBelow; FcSat; }
+        { rank=same; FcAnd; FcOr; FcNot; FcPred; }
+    }
+
+    // ───────────────── clump finders ─────────────────
+    subgraph cluster_finders {
+        sortv=3;
+        style="rounded,filled";
+        fillcolor="#fbfaff";
+        color="#e9e3fb";
+        penwidth=2.2;
+        margin=18;
+        labelloc="t";
+        label=<<FONT POINT-SIZE="13" COLOR="#4c1d95"><B>Clump finders: the algorithm passed to clumpfind()</B><BR/><FONT POINT-SIZE="10">a finder is a parameter bundle: field, threshold, linking length, neighbour backend</FONT></FONT>>;
+
+        node [fillcolor="#f1f5f9", color="#94a3b8", style="rounded,filled,dashed", fontcolor="#0f172a", fontsize=16];
+        FdAbs [label=<<I>AbstractFinder</I>>];
+
+        node [style="rounded,filled", fillcolor="#ede9fe", color="#7c3aed", fontcolor="#2e1065", fontsize=14];
+        FdFoF   [label=<<B>ThresholdFoF</B><BR/><FONT POINT-SIZE="10.5" COLOR="#6d28d9">friends-of-friends</FONT>>];
+        FdWater [label=<<B>DensityWatershed</B><BR/><FONT POINT-SIZE="10.5" COLOR="#6d28d9">basins split at saddles</FONT>>];
+        FdDend  [label=<<B>Dendrogram</B><BR/><FONT POINT-SIZE="10.5" COLOR="#6d28d9">leaves plus a merge tree</FONT>>];
+        FdGraph [label=<<B>GraphSegFinder</B><BR/><FONT POINT-SIZE="10.5" COLOR="#6d28d9">graph segmentation</FONT>>];
+        FdHdb   [label=<<B>HDBSCANFinder</B><BR/><FONT POINT-SIZE="10.5" COLOR="#6d28d9">density-adaptive</FONT>>];
+        FdPhase [label=<<B>PhaseSpaceFoF</B><BR/><FONT POINT-SIZE="10.5" COLOR="#6d28d9">6-D, uses velocities</FONT>>];
+        FdPers  [label=<<B>PersistenceFinder</B><BR/><FONT POINT-SIZE="10.5" COLOR="#6d28d9">topological persistence</FONT>>];
+
+        FdAbs -> FdFoF; FdAbs -> FdWater; FdAbs -> FdDend; FdAbs -> FdGraph;
+        FdAbs -> FdHdb; FdAbs -> FdPhase; FdAbs -> FdPers;
+        { rank=same; FdFoF; FdWater; FdDend; FdGraph; FdHdb; FdPhase; FdPers; }
+    }
+
+    // ───────────────── validators + neighbour indices ─────────────────
+    subgraph cluster_clumpsupport {
+        sortv=4;
+        style="rounded,filled";
+        fillcolor="#fbfefb";
+        color="#dcfce7";
+        penwidth=2.2;
+        margin=18;
+        labelloc="t";
+        label=<<FONT POINT-SIZE="13" COLOR="#15803d"><B>Clump validators and neighbour indices</B><BR/><FONT POINT-SIZE="10">validators combine as an AND; clumpfind picks the index for you from the point set</FONT></FONT>>;
+
+        node [fillcolor="#f1f5f9", color="#94a3b8", style="rounded,filled,dashed", fontcolor="#0f172a", fontsize=15];
+        VdAbs [label=<<I>AbstractValidator</I>>];
+
+        node [style="rounded,filled", fillcolor="#dcfce7", color="#16a34a", fontcolor="#14352a", fontsize=14];
+        VdMin   [label=<<B>MinMembers</B><BR/><FONT POINT-SIZE="10.5" COLOR="#15803d">at least n members</FONT>>];
+        VdBound [label=<<B>Bound</B><BR/><FONT POINT-SIZE="10.5" COLOR="#15803d">self-bound energy budget</FONT>>];
+        VdVir   [label=<<B>VirialBelow</B><BR/><FONT POINT-SIZE="10.5" COLOR="#15803d">alpha_vir &lt; alpha</FONT>>];
+        VdMass  [label=<<B>MassAbove</B><BR/><FONT POINT-SIZE="10.5" COLOR="#15803d">mass &gt; m</FONT>>];
+        VdCust  [label=<<B>Custom</B><BR/><FONT POINT-SIZE="10.5" COLOR="#15803d">f(clump)::Bool</FONT>>];
+
+        node [fillcolor="#f1f5f9", color="#94a3b8", style="rounded,filled,dashed", fontcolor="#0f172a", fontsize=15];
+        NxAbs [label=<<I>AbstractNeighborIndex</I>>];
+
+        node [style="rounded,filled", fillcolor="#fef3c7", color="#d97706", fontcolor="#451a03", fontsize=14];
+        NxHash [label=<<B>HashGrid</B><BR/><FONT POINT-SIZE="10.5" COLOR="#b45309">sparse, Dict buckets</FONT>>];
+        NxCell [label=<<B>CellLinkedList</B><BR/><FONT POINT-SIZE="10.5" COLOR="#b45309">dense, flat arrays</FONT>>];
+        NxMort [label=<<B>MortonGrid</B><BR/><FONT POINT-SIZE="10.5" COLOR="#b45309">Z-order traversal</FONT>>];
+
+        VdAbs -> VdMin; VdAbs -> VdBound; VdAbs -> VdVir; VdAbs -> VdMass; VdAbs -> VdCust;
+        NxAbs -> NxHash; NxAbs -> NxCell; NxAbs -> NxMort;
+        // two separate trees; the invisible link keeps them on one row of the card (layout only)
+        VdAbs -> NxAbs [style=invis];
+        { rank=same; VdAbs; NxAbs; }
+        { rank=same; VdMin; VdBound; VdVir; VdMass; VdCust; NxHash; NxCell; NxMort; }
+    }
+
+    // ───────────────── report cards ─────────────────
+    subgraph cluster_cards {
+        sortv=5;
+        style="rounded,filled";
+        fillcolor="#fffafb";
+        color="#ffe4e6";
+        penwidth=2.2;
+        margin=18;
+        labelloc="t";
+        label=<<FONT POINT-SIZE="13" COLOR="#9f1239"><B>Report cards: one panel each, handed to report()</B><BR/><FONT POINT-SIZE="10">the card type picks which Mera function runs</FONT></FONT>>;
+
+        node [fillcolor="#f1f5f9", color="#94a3b8", style="rounded,filled,dashed", fontcolor="#0f172a", fontsize=16];
+        RcAbs [label=<<I>ReportCard</I>>];
+
+        node [style="rounded,filled", fillcolor="#ffe4e6", color="#e11d48", fontcolor="#4c0519", fontsize=14];
+        RcProj  [label=<<B>ProjectionCard</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#be123c">projection</FONT>>];
+        RcPhase [label=<<B>PhaseCard</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#be123c">phase</FONT>>];
+        RcProf  [label=<<B>ProfileCard</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#be123c">profile</FONT>>];
+        RcScal  [label=<<B>ScalarCard</B><BR/><FONT POINT-SIZE="10.5" COLOR="#be123c">a reduction</FONT>>];
+        RcSfr   [label=<<B>SFRCard</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#be123c">sfr</FONT>>];
+        RcComb  [label=<<B>CombinedCard</B><BR/><FONT POINT-SIZE="10.5" COLOR="#be123c">cross-datatype</FONT>>];
+        RcClump [label=<<B>ClumpCard</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#be123c">clumpfind</FONT>>];
+
+        RcAbs -> RcProj; RcAbs -> RcPhase; RcAbs -> RcProf; RcAbs -> RcScal;
+        RcAbs -> RcSfr; RcAbs -> RcComb; RcAbs -> RcClump;
+        { rank=same; RcProj; RcPhase; RcProf; RcScal; RcSfr; RcComb; RcClump; }
+    }
+
+    // ───────────────── legend ─────────────────
+    subgraph cluster_legend {
+        sortv=6;
+        style="rounded,filled";
+        fillcolor="#fcfcfd";
+        color="#e2e8f0";
+        penwidth=2.2;
+        margin=14;
+        labelloc="t";
+        label=<<FONT POINT-SIZE="12.5" COLOR="#64748b"><B>How to read the boxes</B></FONT>>;
+
+        node [style="rounded,filled,dashed", fillcolor="#f1f5f9", color="#94a3b8", fontcolor="#475569", fontsize=12, margin="0.20,0.10"];
+        LgAbstract [label=<<FONT POINT-SIZE="12"><I>italic, dashed</I> : abstract supertype</FONT>>];
+
+        node [style="rounded,filled", fillcolor="#e2e8f0", color="#64748b", fontcolor="#1e293b"];
+        LgPublic [label=<<FONT POINT-SIZE="12">filled colour : exported, you build it by name</FONT>>];
+
+        node [style="rounded,filled,dotted", fillcolor="#f1f5f9", color="#94a3b8", fontcolor="#475569"];
+        LgInternal [label=<<FONT POINT-SIZE="12">grey, dotted : internal, the operators build it</FONT>>];
+
+        { rank=same; LgAbstract; LgPublic; LgInternal; }
+    }
+}

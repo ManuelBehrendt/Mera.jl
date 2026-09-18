@@ -32,6 +32,8 @@ FilterCondition
 Above
 Below
 InRange
+Equals
+IsFinite
 AbovePercentile
 BelowPercentile
 Satisfies

@@ -207,9 +207,11 @@ makedocs(modules = [Mera],
                       # the length. Only the pages adding something beyond those stay listed.
                       # The rest are still built and still reachable by link.
                       "Julia & Ecosystem" => Any[
-                          "Essential Packages"             => "quickreference/03_packages.md",
-                          "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md",
+                          # one package list, not two: the former "Essential Packages" page now
+                          # covers only the mechanics (environments, where to search)
                           "Recommended Packages"           => "recommended_packages.md",
+                          "Finding & Installing Packages"  => "quickreference/03_packages.md",
+                          "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md",
                           "Resources & Community"          => "quickreference/06_resources.md"],
                       # The old "Miscellaneous" page was retired in favour of the four pages that
                       # cover its topics properly: bundled_arguments.md (myargs),

@@ -13,29 +13,27 @@ panel.
 ```@raw html
 <div style="display:flex;flex-wrap:wrap;gap:14px;margin:20px 0">
   <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #d0d7de">
-    <img src="assets/logo/mera-logo-black.svg" width="290" alt="Mera logo on a light page">
+    <div class="mera-logo-shot mera-logo-shot-black" role="img" aria-label="Mera logo on a light page"></div>
   </div>
   <div style="background:#0d1117;padding:20px;border-radius:8px">
-    <img src="assets/logo/mera-logo-black.svg" width="290" alt="Mera logo on a dark page">
+    <div class="mera-logo-shot mera-logo-shot-black" role="img" aria-label="Mera logo on a dark page"></div>
   </div>
 </div>
 ```
 
 ```@raw html
-<table>
-<thead><tr><th>File</th><th>Format</th><th>Use it for</th></tr></thead>
-<tbody>
-<tr><td><a href="assets/logo/mera-logo-black.svg" download>mera-logo-black.svg</a></td>
-    <td>SVG, 13 KB</td>
-    <td><b>Prefer this.</b> Vector, sharp at any size, from a slide title to a conference poster.</td></tr>
-<tr><td><a href="assets/logo/mera-logo-black-512.png" download>mera-logo-black-512.png</a></td>
-    <td>PNG, 512 px</td><td>Slides and anything on screen.</td></tr>
-<tr><td><a href="assets/logo/mera-logo-black-1024.png" download>mera-logo-black-1024.png</a></td>
-    <td>PNG, 1024 px</td><td>A full-width slide, or a figure in a paper.</td></tr>
-<tr><td><a href="assets/logo/mera-logo-black-2048.png" download>mera-logo-black-2048.png</a></td>
-    <td>PNG, 2048 px</td><td>Print and posters.</td></tr>
-</tbody>
-</table>
+<div class="logo-downloads">
+```
+
+| File | Format | Use it for |
+|:---|:---|:---|
+| [mera-logo-black.svg](assets/logo/mera-logo-black.svg) | SVG, 13 KB | **Prefer this.** Vector, sharp at any size, from a slide title to a conference poster. |
+| [mera-logo-black-512.png](assets/logo/mera-logo-black-512.png) | PNG, 512 px | Slides and anything on screen. |
+| [mera-logo-black-1024.png](assets/logo/mera-logo-black-1024.png) | PNG, 1024 px | A full-width slide, or a figure in a paper. |
+| [mera-logo-black-2048.png](assets/logo/mera-logo-black-2048.png) | PNG, 2048 px | Print and posters. |
+
+```@raw html
+</div>
 ```
 
 ## Transparent
@@ -46,31 +44,30 @@ of an image, without a background of its own.
 ```@raw html
 <div style="display:flex;flex-wrap:wrap;gap:14px;margin:20px 0">
   <div style="background:#fff;padding:20px;border-radius:8px;border:1px solid #d0d7de">
-    <img src="assets/logo/mera-logo-transparent.svg" width="230" alt="Mera logo on white">
+    <div class="mera-logo-shot mera-logo-shot-transparent" role="img" aria-label="Mera logo on white"></div>
   </div>
   <div style="background:#5a5f66;padding:20px;border-radius:8px">
-    <img src="assets/logo/mera-logo-transparent.svg" width="230" alt="Mera logo on grey">
+    <div class="mera-logo-shot mera-logo-shot-transparent" role="img" aria-label="Mera logo on grey"></div>
   </div>
   <div style="background:linear-gradient(120deg,#2b6cb0,#805ad5,#dd6b20);padding:20px;border-radius:8px">
-    <img src="assets/logo/mera-logo-transparent.svg" width="230" alt="Mera logo over an image">
+    <div class="mera-logo-shot mera-logo-shot-transparent" role="img" aria-label="Mera logo over an image"></div>
   </div>
 </div>
 ```
 
 ```@raw html
-<table>
-<thead><tr><th>File</th><th>Format</th><th>Use it for</th></tr></thead>
-<tbody>
-<tr><td><a href="assets/logo/mera-logo-transparent.svg" download>mera-logo-transparent.svg</a></td>
-    <td>SVG, 13 KB</td><td>Over a photograph, or wherever a black block would clash.</td></tr>
-<tr><td><a href="assets/logo/mera-logo-transparent-512.png" download>mera-logo-transparent-512.png</a></td>
-    <td>PNG, 512 px</td><td>Screen use.</td></tr>
-<tr><td><a href="assets/logo/mera-logo-transparent-1024.png" download>mera-logo-transparent-1024.png</a></td>
-    <td>PNG, 1024 px</td><td>Slides and figures.</td></tr>
-<tr><td><a href="assets/logo/mera-logo-transparent-2048.png" download>mera-logo-transparent-2048.png</a></td>
-    <td>PNG, 2048 px</td><td>Print and posters.</td></tr>
-</tbody>
-</table>
+<div class="logo-downloads">
+```
+
+| File | Format | Use it for |
+|:---|:---|:---|
+| [mera-logo-transparent.svg](assets/logo/mera-logo-transparent.svg) | SVG, 13 KB | Over a photograph, or wherever a black block would clash. |
+| [mera-logo-transparent-512.png](assets/logo/mera-logo-transparent-512.png) | PNG, 512 px | Screen use. |
+| [mera-logo-transparent-1024.png](assets/logo/mera-logo-transparent-1024.png) | PNG, 1024 px | Slides and figures. |
+| [mera-logo-transparent-2048.png](assets/logo/mera-logo-transparent-2048.png) | PNG, 2048 px | Print and posters. |
+
+```@raw html
+</div>
 ```
 
 ## Which format

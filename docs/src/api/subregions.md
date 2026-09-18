@@ -161,8 +161,8 @@ subregion(gas, Cylinder(15.0, 3.0; range_unit=:kpc); split=false)      # classic
 
 `split=false` reproduces the classic centre-inside, whole-cell selection (no `:fraction`).
 `inverse=true` selects the complement. The region types ([`AbstractRegion`](@ref),
-[`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref)) are listed in
-the [API reference](../api.md#Types).
+[`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref),
+[`CylindricalShell`](@ref)) are listed in the [API reference](../api.md#Types).
 
 The value-type form works on **all data types**: hydro, gravity and RT (AMR cells, with exact
 volume splitting and a `:fraction` column), and particles, where it is a point-membership test

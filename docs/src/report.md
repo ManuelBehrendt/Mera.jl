@@ -73,6 +73,7 @@ whichever you used, so `report(...; budget_s=...)` works the same either way.
 | [`ScalarCard`](@ref) | a reduction | `ScalarCard(:particles, :mass; reduce=:sum, unit=:Msol)` |
 | [`SFRCard`](@ref) | [`sfr`](@ref) | `SFRCard(:particles; tbinsize=50.0, mode=:probability)` |
 | [`CombinedCard`](@ref) | cross-datatype | `baryon_fraction()` |
+| [`ClumpCard`](@ref) | [`clumpfind`](@ref) | `ClumpCard(:hydro, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2)` |
 
 #### Absolute values vs fractions
 
