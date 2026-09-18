@@ -18,47 +18,45 @@ Off-axis adds exactly one thing to the [axis-aligned page](06_hydro_Projection.m
 Everything you already know, `center`, `range_unit`, `pxsize`, `weighting` and units, works
 unchanged.
 
-There are five knobs. Each one gets its own chapter below.
+Four things you set, one thing you read back. Each gets its own chapter below.
 
-| knob | keywords | chapter |
+| what you set / read | keywords | chapter |
 |---|---|---|
-| view | `direction`, `inclination`/`azimuth`/`axis`, `los` | 1, 3 |
-| framing | `fov`/`fov_unit`/`aperture`, `xrange`/`yrange`/`zrange` with `center` | 4 |
-| quantity | `var`/`unit` lists, `weighting` | 5 |
-| placement | `binning`, where the default is already the accurate one | 6 |
-| output | `m.maps`, `getextent`, camera metadata | 1, 10 |
+| view | `direction`, `inclination`, `azimuth`, `axis`, `los` | 1, 3 |
+| framing | `fov`, `fov_unit`, `aperture`, `xrange`/`yrange`/`zrange`, `center` | 4 |
+| quantity | `var`, `unit`, `weighting` | 5 |
+| placement | `binning` | 6 |
+| what you read back | `m.maps`, `getextent`, the camera vectors | 1, 10 |
 
-Everything on this page uses one dataset, `RAMSES/spiral_clumps` output 100: about 590 thousand
-cells, levels 5 to 7, in a 100 kpc box. The page runs 36 projection calls across 25 code cells and
-draws 8 figures.
+Everything on this page uses one dataset, the AVALON run `AV05CD`, output 390: 51.5 million cells,
+levels 6 to 12, in a 48 kpc box, at t = 580 Myr. It is one of the maintainer's research
+simulations and not part of the public example set, so point the path at a snapshot of your own,
+or set `MERA_AVALON`; every call on the page works the same on other data. The page runs 38 projection calls across 27 code
+cells and draws 8 figures, plus two schematic diagrams and one movie.
 
-The limitations are collected in Appendix A at the end, so nothing on this page points forward to
-them.
+The limitations are collected in Appendix A at the end.
 
 ## 1. Your first off-axis view
 
-"A projection is a camera. The data never moves, only the camera does. Two keywords prove it."
-
-Then, BEFORE the code, the first of the three admitted inline caveats:
+A projection is a camera. The data never moves, only the camera does. Two keywords show it.
 
 !!! warning "`direction=:faceon` needs `center` on the object"
     `:faceon`/`:edgeon` (and `axis=:angmom`) derive the orientation from the **angular momentum of the loaded data about `center`**. `center` defaults to `[0.,0.,0.]`, the box **corner**, and L about a corner is dominated by the lever arm of the whole box. You get a plausible-looking tilted galaxy, no error and no warning. Always pass `center=[:bc]` (or the object's own centre). Detection: edge-on, `:vlos` must be antisymmetric about the minor axis (Chapter 7).
 
 ```julia
-# Example-data root. Point this at your own simulation folder, or set the
-# MERA_EXAMPLES environment variable; every path below is built from it.
-MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+# The AVALON snapshot used by every cell below. Point this at your own run, or set the
+# MERA_AVALON environment variable.
+AVALON = get(ENV, "MERA_AVALON", "/Volumes/FASTStorage/Simulations/AVALONpaper/AV05CD/mera")
 
 using Mera, CairoMakie, Statistics
 CairoMakie.activate!(type="png")
 
-info = getinfo(100, joinpath(MERA_EXAMPLES,
-                "RAMSES/spiral_clumps"), verbose=false)
-gas  = gethydro(info, verbose=false, show_progress=false)
+gas  = loaddata(390, AVALON, :hydro; verbose=false)
+info = gas.info
 
 println("cells loaded : ", length(gas.data))
 println("box length   : ", info.boxlen, " kpc")
-println("levels       : ", gas.lmin, " – ", gas.lmax)
+println("levels       : ", gas.lmin, " to ", gas.lmax)
 println("threads      : ", Threads.nthreads())
 ```
 
@@ -70,11 +68,11 @@ println("threads      : ", Threads.nthreads())
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-cells loaded : 590311
-box length   : 100.0 kpc
-levels       : 3 – 7
-threads      : 4
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+cells loaded : 51500562
+box length   : 48.0 kpc
+levels       : 6 to 12
+threads      : 8
 ```
 
 ```julia
@@ -122,7 +120,7 @@ maprow (generic function with 1 method)
 ```julia
 # ONE window, reused by every chapter, so the only thing that changes between cells
 # is the keyword being taught.
-win = (center=[:bc], fov=22, fov_unit=:kpc, aperture=:square,
+win = (center=[:bc], fov=16, fov_unit=:kpc, aperture=:square,
        pxsize=[0.3, :kpc], verbose=false, show_progress=false)
 
 fo = projection(gas, :sd, :Msol_pc2; direction=:faceon, win...)
@@ -140,12 +138,12 @@ maprow([fo, eo], :sd, ["direction=:faceon", "direction=:edgeon"]; crange=cr)
 ```
 [Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
              Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             `vcenter=` the frame).
              (shown once per session; verbose(false) silences Mera's messages)
-line of sight  ŵ = [0.011, 0.02, -1.0]
-image up       û = [1.0, -0.0, 0.011]
+line of sight  ŵ = [0.0, 0.001, 1.0]
+image up       û = [1.0, -0.0, -0.0]
 projection centre (box fraction) = [0.5, 0.5, 0.5]
-frame: (147, 147)  and  (147, 147)
+frame: (107, 107)  and  (107, 107)
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_5_5.png)
@@ -156,7 +154,11 @@ Read the output back:
 - `getextent(m, :kpc)` returns `[xmin, xmax, ymin, ymax]` **in the image plane**, the raw `m.extent` is in code units, so always convert.
 - `m.los`, `m.up`, `m.cam_right` are the camera basis the call actually used; `m.direction` reads `:offaxis`.
 
-That `los = [0, 0, 1]`-ish vector is not a coincidence you chose, it is the disc's angular momentum axis, computed from your data about your `center`. That is what makes `:faceon` a *measurement*, not a guess.
+The `los` vector printed above is not a number you chose. It is the disc's angular momentum axis,
+computed from your data about your `center`. Aligning the camera with the net angular momentum of
+the disc is the standard way to define a simulated galaxy's own frame (Abadi et al. 2003). The
+viewing angle is then an explicit parameter of the image, and a chosen one (Torrey et al. 2015;
+Bottrell et al. 2017).
 
 ## 2. What a pixel contains
 
@@ -171,18 +173,21 @@ viewing direction. Those are the three vectors you read back as `m.cam_right`, `
 `ŵ` points *out of* the image, toward you: the observer stands on the `+ŵ` side, and the camera
 looks along `-ŵ`. Chapter 7 turns that into a sign you can check.
 
-A pixel value is then the integral of the requested quantity along the parallel ray through that
-pixel, over the whole depth of the selected data. That single sentence explains most of what
-follows: it is why a projection conserves mass, why `zrange` matters as much as `xrange`, and why
-a slice, which samples one plane instead of integrating through the volume (Chapter 8), answers
-a different question.
+A pixel value is then built from everything along the parallel ray through that pixel, over the
+whole depth of the selected data. For `:mass` it is the sum, for `:sd` the sum divided by the pixel
+area, and for every other quantity the weighted mean along the ray (Chapter 5). This is the
+emission-only limit of the standard volume rendering integral (Max 1995); in three dimensions it is
+the X-ray transform of the field (Natterer 1986), the same object Radon (1917) introduced for the
+two-dimensional case. That one picture explains most of what follows: it is why a projection
+conserves mass, why `zrange` matters as much as `xrange`, and why a slice, which samples one plane
+instead of integrating through the volume (Chapter 8), answers a different question.
 
 `position_angle` is a **roll**: it rotates `(r̂, û)` together about `ŵ`. The line of sight does
 not move, so the *scene* is unchanged, but whether the **frame** sees the same gas depends on
-the aperture, and it is worth measuring rather than assuming. Rolling by 30° here leaves
-`Σ` identical to the last digit with `aperture=:circle` (a disc is roll-invariant) and changes it
-by **2.3 %** with `aperture=:square`, because the square crop rotates inside the selection sphere
-and its corners sweep across different material.
+the aperture. With `aperture=:circle` a roll leaves `Σ` untouched, because the selection is a disc
+and a disc is roll-invariant. With `aperture=:square` it moves a little, because the square crop
+rotates inside the selection sphere and its corners sweep across different material. Measure it on
+your own data rather than assuming either way.
 
 One consequence deserves to be stated on its own, because the next chapter is built on it: since
 the projection is orthographic, **moving the camera away from the galaxy changes nothing**. There
@@ -194,7 +199,7 @@ completion, the roll matrix) lives in `?projection`; you do not need it to use a
 
 ![Off-axis camera geometry](assets/offaxis/offaxis_geometry_v2.svg)
 
-*Parallel rays, the image plane, and the camera basis `(r̂, û, ŵ)` planted at `center`. Right inset: `inclination` is measured from a **reference axis**, either the box `z` or the object's own angular-momentum axis `L`. They are not the same axis, and choosing the wrong one is the most common way to get a picture that looks right but is not.*
+*Parallel rays, the image plane, and the camera basis `(r̂, û, ŵ)` planted at `center`. Right inset: `inclination` is measured from a **reference axis**, either the box `z` or the object's own angular-momentum axis `L`. They are not the same axis, and choosing the wrong one is the most common way to get a picture that looks right but is not. Tilted-ring fits of observed discs describe an orientation the same way, one inclination and one position angle per radius (Rogstad, Lockhart & Wright 1974).*
 
 ## 3. Choosing the view
 
@@ -206,16 +211,31 @@ completion, the roll matrix) lives in `?projection`; you do not need it to use a
 | a specific inclination *i* | i = 60° | `inclination=60, axis=:angmom` |
 | a specific position angle on the sky | PA = 30° | `position_angle=30` |
 | a known viewing vector | ŵ = (1,1,1) | `los=[1,1,1]` |
-| spherical camera angles | θ, φ | `theta=`, `phi=` |
-| spin the object about its own axis | *(no observational counterpart)* | `azimuth=` |
+| spherical camera angles | θ, φ | `theta=`, `phi=` (deprecated in 1.8, to be removed in 2.0; use `inclination`/`azimuth`) |
+| turn the camera around the reference axis | *(no observational counterpart)* | `azimuth=` |
 
-`azimuth` rotates the object about its own spin axis. For an axisymmetric disc it is unobservable, it is a *movie* parameter, not a modelling one, which is why it earns no static panel here and reappears in Chapter 9.
+`inclination` is the angle between the line of sight and the disc's spin axis, `i = 0` face-on, the
+quantity observers infer from the projected axis ratio (Hubble 1926; Holmberg 1958).
+`position_angle` is the roll of the image about the line of sight, the analogue of the sky position
+angle measured from north through east (de Vaucouleurs et al. 1991). Together they are the pair a
+tilted-ring fit assigns to each radius of a disc (Rogstad, Lockhart & Wright 1974; Begeman 1989).
+
+`azimuth` turns the **camera** around the reference `axis`, which is the box `z` by default and the
+disc's own `L` with `axis=:angmom`. For an axisymmetric disc the picture only rotates, so it is a
+*movie* parameter, not a modelling one, which is why it earns no static panel here and reappears in
+Chapter 9.
 
 **Reference axis.** `axis=:z` (default) tilts away from the box z-axis; `axis=:angmom` tilts away from the disc's own L, computed about `center`. `axis=[vx,vy,vz]` takes an explicit axis. `direction=:faceon/:edgeon` already imply `:angmom`, so combining them with `axis=` is an `ArgumentError`.
 
-**Exactly one view specifier.** `los` | `inclination`/`azimuth` | `theta`/`phi` | `direction=:faceon/:edgeon` are mutually exclusive; giving two raises immediately. `up=` and `position_angle=` are *modifiers* and combine with any of them.
+**Exactly one view specifier.** `los` | `inclination`/`azimuth` | `theta`/`phi` | `direction=:x/:y/:faceon/:edgeon` are mutually exclusive; giving two raises immediately. `direction=:z` is the default and does not count. `up=` and `position_angle=` are *modifiers* and combine with any of them.
 
 **Angles are degrees by default** (`angle_unit=:rad` to switch).
+
+!!! warning "`azimuth` is not `phi`"
+    They cover the same directions when `axis=:z`, but the zero point differs by a quarter turn:
+    `inclination = theta`, `azimuth = phi + 90`. `phi` is measured from `+x`, the usual spherical
+    convention. `azimuth` starts 90° later, so that `inclination=0` gives the same image
+    orientation as `direction=:z`. Passing `azimuth=phi` rotates the picture by 90°.
 
 ```julia
 # Same window as Chapter 1, only `inclination` changes.
@@ -248,8 +268,8 @@ maprow(ladder, :sd, ["i = 0°", "i = 30°", "i = 60°", "i = 90°"]; crange=cr)
 ```
 max |ŵ_faceon − ŵ_inc0|     = 0.0
 angle(û_faceon, û_inc0)     = 90.0°
-max |Σ_faceon − Σ_inc0|     = 2407.1
-max |Σ_faceon − Σ_inc0,PA=-90| = 4.433786671143025e-11
+max |Σ_faceon − Σ_inc0|     = 52.5
+max |Σ_faceon − Σ_inc0,PA=-90| = 8.881784197001252e-14
 inclination + los         → ArgumentError
 direction=:faceon + axis  → ArgumentError
 ```
@@ -260,8 +280,8 @@ direction=:faceon + axis  → ArgumentError
 vectors agree to the last bit, but they are *not* the same image. A face-on view leaves the roll
 about `ŵ` undetermined, and the two code paths break that tie differently: the `û` vectors come out
 exactly **90° apart**, which is why the naive map-to-map difference above is large rather than zero.
-`position_angle=-90` recovers `:faceon` to floating-point round-off (the residual printed
-above is ~4e-11 M⊙/pc², summation order across threads, not a real difference).
+`position_angle=-90` recovers `:faceon` to floating-point round-off; the residual printed above
+is summation order across threads, not a real difference.
 
 The lesson generalises past this one preset: whenever a view leaves a degree of freedom free,
 compare the **camera vectors**, not the pixels. Two correct maps of the same scene can differ by a
@@ -275,12 +295,12 @@ This is the surprise that catches everyone, so take the problem first.
 
 `xrange`, `yrange`, `zrange` (with `center` and `range_unit`) are **world-space** bounds, they select a box inside the simulation, exactly as they do for the axis-aligned path and for `subregion`. The camera frame is then auto-fitted to the **bounding box of that region after rotation**. Two consequences:
 
-1. **The frame grows with tilt.** A ±22 kpc world window on a 100 kpc box comes out ±55 kpc at *i* = 60°. Frames at different angles are not comparable, and the object appears to zoom.
+1. **The frame grows with tilt.** A world window comes back much taller once the camera tilts; the frame sizes printed by the next cell show by how much. Frames at different angles are not comparable, and the object appears to zoom.
 2. **The window's own faces appear in the map** as straight edges cutting across the image. Worse than cosmetic: with no `zrange` the *entire box depth* of foreground and background gas sits in your disc map, so any column, scale height or Σ measured from it is contaminated.
 
 There is **no line-of-sight depth slab in `projection`.** `zrange` clips world *z*; it coincides with depth only when the line of sight is near ±z, precisely the face-on case where you need it least. (Also: an axis whose requested range already covers the loaded data's range is not clipped at all, so `zrange` on already-subregioned data can silently do nothing.)
 
-**The fix: `fov`.** Because the camera is orthographic (Chapter 2), the only framing control is the width of the frame. `fov` selects a **sphere** about `center` (radius `fov`, or `√2·fov` for `aperture=:square`), and a sphere projects to the same disc at every orientation, so the frame is fixed by construction.
+**The fix: `fov`.** The camera is orthographic, so the only framing control is `fov`, the half-width of the frame. `fov` selects a **sphere** about `center` (radius `fov`, or `√2·fov` for `aperture=:square`), and a sphere projects to the same disc at every orientation, so the frame is fixed by construction.
 
 | `aperture` | selection | frame |
 |---|---|---|
@@ -290,27 +310,27 @@ There is **no line-of-sight depth slab in `projection`.** `zrange` clips world *
 Use `:square` whenever you will compare or animate frames.
 
 !!! warning "`fov` always needs `fov_unit`"
-    `fov_unit` defaults to `:standard`, which is a **box fraction**. `fov=22` alone means 22 box lengths, silently clamped to 0.49·boxlen. Always write `fov=22, fov_unit=:kpc`.
+    `fov_unit` defaults to `:standard`, which is a **box fraction**. `fov=16` alone means 16 box lengths, silently clamped to 0.49·boxlen. Always write `fov=16, fov_unit=:kpc`.
 
     Three more things `fov` does: it **replaces** any `xrange`/`yrange`/`zrange` you pass; it makes `center` be read in `fov_unit` (your `range_unit` is discarded); and it **cannot be combined with a per-cell `mask`** (the sphere selection changes the cell count, so the mask no longer matches).
 
-    Caps: `:circle` at 0.49·boxlen, `:square` at 0.49/√2·boxlen (≈ 34.6 kpc on this fixture).
+    Caps: `:circle` at 0.49·boxlen, `:square` at 0.49/√2·boxlen, which is 16.6 kpc on this 48 kpc box. Above the cap `fov` is clamped with no warning, so pick a value below it on purpose.
 
 ```julia
 # WORLD-space window, verbose=true so Mera's own hint about this is on the page.
 world = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, center=[:bc],
-                   xrange=[-22,22], yrange=[-22,22], range_unit=:kpc,
+                   xrange=[-16,16], yrange=[-16,16], range_unit=:kpc,
                    pxsize=[0.3,:kpc], verbose=true, show_progress=false)
 
 # CAMERA-plane frame, rotation-invariant sphere selection.
 sq = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, center=[:bc],
-                fov=22, fov_unit=:kpc, aperture=:square,
+                fov=16, fov_unit=:kpc, aperture=:square,
                 pxsize=[0.3,:kpc], verbose=false, show_progress=false)
 ci = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, center=[:bc],
-                fov=22, fov_unit=:kpc, aperture=:circle,
+                fov=16, fov_unit=:kpc, aperture=:circle,
                 pxsize=[0.3,:kpc], verbose=false, show_progress=false)
 
-for (nm, m) in (("xrange/yrange ±22 kpc", world), ("fov=22 :square", sq), ("fov=22 :circle", ci))
+for (nm, m) in (("xrange/yrange ±16 kpc", world), ("fov=16 :square", sq), ("fov=16 :circle", ci))
     println(rpad(nm, 24), " frame ", lpad(string(size(m.maps[:sd])), 12),
             "   extent [kpc] = ", round.(getextent(m, :kpc), digits=1))
 end
@@ -321,56 +341,47 @@ end
              These are WORLD-space bounds, so after rotation the full box depth folds into
              the image. Pass `zrange`, or `fov=<half-width>` for a fixed camera frame.
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-08-31T13:47:41.022
-center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+[Mera]: 2026-09-18T22:20:21.673
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
-xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
-ymin::ymax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
+xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 Selected var(s)=(:sd,)
 Weighting      = :mass
-Off-axis LOS   = [-0.0059, 0.8781, -0.4785]  (binning=:overlap)
-Effective resolution: 334^2  →  map size: 158 x 372
-xrange/yrange ±22 kpc    frame   (158, 372)   extent [kpc] = [-23.6, 23.8, -54.9, 56.5]
-fov=22 :square           frame   (147, 147)   extent [kpc] = [-22.0, 22.0, -22.0, 22.0]
-fov=22 :circle           frame   (156, 161)   extent [kpc] = [-23.4, 23.3, -24.2, 24.0]
+Off-axis LOS   = [0.0, -0.8657, 0.5006]  (binning=:overlap)
+Effective resolution: 161^2  →  map size: 112 x 194
+xrange/yrange ±16 kpc    frame   (112, 194)   extent [kpc] = [-16.7, 16.7, -29.0, 28.9]
+fov=16 :square           frame   (107, 107)   extent [kpc] = [-16.0, 15.9, -16.0, 15.9]
+fov=16 :circle           frame   (110, 111)   extent [kpc] = [-16.4, 16.4, -16.5, 16.6]
 ```
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 cr = sharedrange([world, sq, ci], :sd)
-ttl = ["xrange/yrange = ±22 kpc\n" * string(size(world.maps[:sd])),
-       "fov=22, aperture=:square\n"  * string(size(sq.maps[:sd])),
-       "fov=22, aperture=:circle\n"  * string(size(ci.maps[:sd]))]
+ttl = ["xrange/yrange = ±16 kpc\n" * string(size(world.maps[:sd])),
+       "fov=16, aperture=:square\n"  * string(size(sq.maps[:sd])),
+       "fov=16, aperture=:circle\n"  * string(size(ci.maps[:sd]))]
 fig = maprow([world, sq, ci], :sd, ttl; crange=cr)
-# draw the REQUESTED ±22 kpc window on panel 1, so request and result are both visible
-lines!(contents(fig[1,1])[1], [-22,22,22,-22,-22], [-22,-22,22,22,-22],
+# draw the REQUESTED ±16 kpc window on panel 1, so request and result are both visible
+lines!(contents(fig[1,1])[1], [-16,16,16,-16,-16], [-16,-16,16,16,-16],
        color=:cyan, linestyle=:dash, linewidth=2)
 fig
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_16_1.png)
 
-Read the frame sizes above, not just the pictures.
+Read the frame sizes above, not just the pictures. The ±16 kpc request came back far taller:
+`xrange`/`yrange`/`zrange` bound a box **in simulation coordinates**, and the frame is that box's
+bounding box *after rotation*. The dashed cyan rectangle is what was asked for; everything outside
+it is the rotated box's own footprint, and its faces are the straight edges cutting across the map.
 
-The world-space window was asked for ±22 kpc and came back far taller, because `xrange`/`yrange`/
-`zrange` bound a box **in simulation coordinates** and the camera frame is the bounding box of
-that box *after rotation*. Leave `zrange` out, as is natural when you are thinking about an image,
-and the full depth of the run folds into the image height as you tilt. The dashed cyan rectangle
-on the first panel is what was requested; everything outside it is the rotated box's own footprint.
-
-Worse, the window's **faces become features**. A sight line just inside the slab crosses its full
-depth; a sight line just outside clips only a corner. The column density therefore drops along a
-straight line, a hard edge across your map that looks like a rendering artefact but is the
-selection box seen from an angle.
+Those faces are worse than cosmetic. A sight line just inside the slab crosses its full depth; a
+sight line just outside clips only a corner. The column density therefore drops along a straight
+line, a hard edge that looks like a rendering artefact but is the selection box seen from an angle.
 
 `fov` avoids all of this by framing the **camera plane** instead. The selection is a sphere, which
-projects to the same disc at every orientation, so the frame cannot breathe:
-
-* `aperture=:square`, a slightly larger sphere cropped to the ±`fov` square, giving a full
-  rectangular frame that is **pixel-identical at every angle**. This is what a comparison figure,
-  a ladder, or an orbit sequence needs.
-* `aperture=:circle` (the default), the sphere itself, so the frame's corners are empty.
+projects to the same disc at every orientation, so the frame cannot breathe.
 
 Mera prints a one-off note when it sees an off-axis view with a windowed `xrange`/`yrange` and no
 `zrange`, because the result is easy to mistake for a bug in the data.
@@ -379,18 +390,13 @@ Mera prints a one-off note when it sees an off-axis view with a windowed `xrange
 
 `fov` is a **half-width**: the frame spans ±`fov`, so `fov=15, fov_unit=:kpc` gives a 30 kpc image.
 
-It is worth being explicit about what `fov` does *not* do, because the name invites the wrong
-picture. The camera is orthographic at every setting (Chapter 2), there is no perspective to
-tune, no camera distance, no vanishing point. Changing `fov` does not move a camera nearer or
-further; it widens or narrows the frame, and with it the sphere of data that is selected.
-
 **What a given `fov` costs you in depth.** The selection is a sphere of radius `R`, `fov` for
 `aperture=:circle`, `√2·fov` for `:square`. A ray at in-plane distance `d` from the centre
 therefore integrates a **chord**, not a slab:
 
 `depth(d) = 2·√(R² − d²)`
 
-For `fov=15, aperture=:square` on this fixture (`R` = 21.2 kpc):
+For `fov=15, aperture=:square` (`R` = 21.2 kpc):
 
 | where in the frame | offset from centre | column depth |
 |---|---|---|
@@ -408,20 +414,22 @@ larger than the structure you are measuring.** For a galaxy centred in frame thi
 the disc sits where the depth is flattest, but never read a diffuse column, a profile, or a scale
 height out to the frame boundary.
 
-**So what is a natural `fov`?** One that (a) puts the object inside the flat-depth part of the
-frame and (b) keeps the selection sphere inside the box. Here the gas disc is ~10 kpc across, so
-15 to 25 kpc is the natural range: at `fov=15` the disc lives in the innermost third of the frame
-where depth varies by under 10 %. The upper bound is enforced for you, `fov` is capped at
-0.49·boxlen for `:circle` and 0.49/√2·boxlen for `:square` (≈ 34.6 kpc here), which is what keeps
-the sphere from reaching outside the box and dragging the box faces back into the image.
+**So what is a natural `fov`?** One that puts the object inside the flat-depth part of the frame
+and keeps the selection sphere inside the box. The gas disc here is about 23 kpc across, nine tenths of the gas mass sitting inside a
+radius of 11.4 kpc, so a
+`fov` of 16 kpc leaves it well inside the frame, where the depth is nearly flat. The upper bound
+is enforced for you: `fov` is capped at 0.49·boxlen for `:circle` and 0.49/√2·boxlen for `:square`,
+16.6 kpc on this box, which keeps the sphere from reaching outside the box and dragging the box
+faces back into the image.
 
 **Why you would deliberately change it.** A *smaller* `fov` is not just a tighter crop: it is a
 **shallower column**, so it removes foreground and background that a wider frame would integrate
 into your disc, the closest thing `projection` has to a depth cut, since there is no line-of-sight
 slab. It also buys resolution, since the same pixel budget covers less sky. A *larger* `fov` buys
-context and a deeper column, at the price of more unrelated material along every ray. And whatever
-value you pick, `fov` is the only framing control that is rotation-invariant, so any set of frames
-meant to be compared, angles, snapshots, movie frames, has to be framed this way.
+context and a deeper column, at the price of more unrelated material along every ray.
+
+`fov` is the only framing control that does not change with angle. Frame every set you mean to
+compare this way: angle ladders, snapshot series, movie frames.
 
 ## 5. What you can ask for, and what the number means
 
@@ -433,16 +441,16 @@ One call returns as many maps as you ask for. But the maps are not all the same 
 | **per-area (extensive, divided)** | `:sd` | mass ÷ pixel area | no, `sum(:sd)` is not a mass; multiply by `pixsize²` in the right units first, or just use `:mass` |
 | **weighted mean (intensive)** | `:T`, `:vx`, `:vlos`, `:σlos` | Σ(field·w) / Σw along the ray | no |
 
-`weighting` is an **Array** for hydro/RT, `weighting=[:mass, missing]` (the default) means "mass-weight the first variable, leave the second unweighted". (For particles it is a plain `Symbol`; see Chapter 11.)
+`weighting` is an **Array** for hydro/RT: `[quantity, unit]`. The default `[:mass, missing]` means mass weighting in code units. The same weight applies to every variable in the call. (For particles it is a plain `Symbol`; see Chapter 11.)
 
 **A weighted mean is not an observable.** A mass-weighted projected `T` along a multiphase sightline is dominated by cold dense gas; `weighting=[:volume]` gives a different number again; neither is the emission-weighted temperature an X-ray observation would report. Quote projected means as *diagnostics*, not as measurements.
 
-**Not available off-axis.** `:σx`, `:σy`, `:σz`, `:σ`, `:σr_cylinder`, `:σϕ_cylinder`, `:r_cylinder`, `:r_sphere`, `:ϕ` are tied to the box axes and are rejected with a clear error. **The exit ramp:** if you want any of those, use the axis-aligned path (`direction=:x/:y/:z`), which is also faster and populates `maps_lmax`. If you want line-of-sight kinematics along +z specifically, that is still this page: write `los=[0,0,1]` (Chapter 7).
+**Not available off-axis.** `:σx`, `:σy`, `:σz`, `:σ`, `:σr_cylinder`, `:σϕ_cylinder`, `:r_cylinder`, `:r_sphere`, `:ϕ` are tied to the box axes and are rejected with a clear error. **The exit ramp:** if you want any of those, use the axis-aligned path (`direction=:x/:y/:z`). If you want line-of-sight kinematics along +z specifically, that is still this page: write `los=[0,0,1]` (Chapter 7).
 
 ```julia
 mv = projection(gas, [:mass, :T], [:Msol, :K];
                 inclination=35, axis=:angmom, center=[:bc],
-                fov=20, fov_unit=:kpc, aperture=:square, pxsize=[0.3,:kpc],
+                fov=16, fov_unit=:kpc, aperture=:square, pxsize=[0.3,:kpc],
                 weighting=[:mass, missing], verbose=false, show_progress=false)
 
 # a mass-weighted call ships a free :sd map you did not ask for, expect it when you iterate keys
@@ -460,7 +468,7 @@ for v in (:σx, :σy, :σz, :σ, :r_cylinder, :r_sphere, :ϕ)
         projection(gas, v; inclination=35, axis=:angmom, center=[:bc], xrange=[-15,15],
                    yrange=[-15,15], zrange=[-15,15], range_unit=:kpc, pxsize=[1.0,:kpc],
                    verbose=false, show_progress=false)
-        "NO ERROR — the page is wrong"
+        "NO ERROR, the page is wrong"
     catch e
         first(replace(sprint(showerror, e), "\n" => " "), 62) * "…"
     end
@@ -471,7 +479,7 @@ end
 ```
 maps returned : Any[:T, :mass, :sd]
 units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
-Σ(map) / msum(gas) − 1  =  0.0
+Σ(map) / msum(gas) − 1  =  -1.1102230246251565e-16
 σx            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 σy            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 σz            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
@@ -481,7 +489,7 @@ r_sphere      projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 ϕ             projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 ```
 
-That relative error is at the floating-point floor, and it stays there at **any** viewing angle, **any** pixel size and **any** `binning`, the deposit is a partition of unity, so every cell's weight is fully accounted for somewhere on the map. Appendix B says where the systematic sweep that establishes this lives.
+That relative error is at the floating-point floor, and it stays there at any viewing angle, any pixel size and any `binning` (Appendix B).
 
 One consequence worth knowing: cells whose deposit stencil crosses the map edge fold the outside fraction onto the **edge pixel**. Conservation is preserved by piling that mass into the outermost row, so the last radial bin of any profile taken from an off-axis map is wrong. Take profiles from a frame larger than the region you care about.
 
@@ -497,9 +505,8 @@ plane, i.e. when any component of `ŵ` is zero. Then only two faces front-face, 
 familiar square, `direction=:x/:y/:z`, face-on and edge-on are all that case. Off-axis you are
 generically in the hexagonal regime.
 
-One more thing follows, and it is why a single footprint rule can serve a whole AMR hierarchy:
-every cell is an **axis-aligned** cube, so for a given camera every cell casts the *same* hexagon,
-differing only in scale.
+Every cell is an **axis-aligned** cube, so for one camera every cell casts the same hexagon, only
+at a different scale. One footprint rule serves the whole AMR hierarchy.
 
 That hexagon generally straddles several pixels. The four `binning` kernels are four answers to
 "how is it shared out", they all share it out completely (hence one total), but they place it
@@ -509,28 +516,33 @@ differently.
 
 | `binning` | what it does | use it for |
 |---|---|---|
-| `:ngp` | all weight into the pixel containing the cell centre | fastest preview; holes and moiré when pixels are finer than cells |
-| `:cic` | bilinear split over the 2×2 neighbouring pixels | fast preview; smoother, still no footprint |
-| `:overlap` **(default)** | the cube is supersampled over its true footprint, `n³` sub-points with `n = ⌈cellsize/pixel⌉`, capped at `nmax=64`; cells past the cap deposit a footprint-sized top-hat, which is what keeps coarse cells hole-free | **everything you publish** |
+| `:ngp` | all weight into the pixel containing the cell centre (nearest grid point, Hockney & Eastwood 1988) | fastest preview; holes and moiré when pixels are finer than cells |
+| `:cic` | bilinear split over the 2×2 neighbouring pixels (cloud in cell, Hockney & Eastwood 1988) | fast preview; smoother, still no footprint |
+| `:overlap` **(default)** | the cube is supersampled over its true footprint, the splatting idea of Westover (1990): `n³` sub-points with `n = ⌈cellsize/pixel⌉`, capped at `nmax=64`; cells past the cap deposit a footprint-sized top-hat, which is what keeps coarse cells hole-free | **everything you publish** |
 | `:exact` | the analytic footprint integral (a box-spline chord field over the hexagon) | the reference the others are checked against; no cap, slower |
 
-`:overlap` and `:exact` are threaded; `:ngp` and `:cic` run serially. `:exact` follows from the
-box-spline representation of a projected cube (de Boor, *Box Splines*); nothing about choosing a
-`binning` depends on that derivation, so it is not reproduced here.
+`:overlap` and `:exact` are threaded; `:ngp` and `:cic` run serially. `:exact` is the analytic
+footprint integral. The projected shadow of a uniform cube is a box spline (de Boor, Höllig &
+Riemenschneider 1993), and box splines are closed under the Radon transform (Entezari, Nilchian &
+Unser 2012), which is what makes the per-pixel integral analytic. You do not need the derivation to
+choose a `binning`.
 
 The table is a claim. The cell below measures it, all four kernels on the same data, against
 `:exact` as the reference.
 
 ```julia
 # Which regime are you in? Binning only matters when PIXELS ARE FINER THAN CELLS.
+PXFINE = 0.005          # kpc, the zoomed pixel size used by every binning comparison below
+PXPREV = 0.02           # kpc, roughly one pixel per cell here, the sensible preview size
+
 for l in sort(unique(getvar(gas, :level)))
     cs = info.boxlen / 2^l
-    println("level ", l, ":  cell ", rpad(round(cs, digits=2), 5), " kpc",
-            "  →  ", round(cs / 0.1, digits=1), " pixels per cell at pxsize = 0.1 kpc")
+    println("level ", l, ":  cell ", rpad(round(cs, digits=4), 7), " kpc",
+            "  →  ", round(cs / PXFINE, digits=1), " pixels per cell at pxsize = ", PXFINE, " kpc")
 end
 
-zoom = (center=[:bc], fov=8, fov_unit=:kpc, aperture=:square,
-        pxsize=[0.1,:kpc], verbose=false, show_progress=false)
+zoom = (center=[:bc], fov=1.5, fov_unit=:kpc, aperture=:square,
+        pxsize=[PXFINE, :kpc], verbose=false, show_progress=false)
 
 kern = Dict{Symbol,Any}(); secs = Dict{Symbol,Float64}()
 for k in (:ngp, :cic, :overlap, :exact)
@@ -553,14 +565,18 @@ end
 ```
 
 ```
-level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
-level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
-level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
+level 6.0:  cell 0.75    kpc  →  150.0 pixels per cell at pxsize = 0.005 kpc
+level 7.0:  cell 0.375   kpc  →  75.0 pixels per cell at pxsize = 0.005 kpc
+level 8.0:  cell 0.1875  kpc  →  37.5 pixels per cell at pxsize = 0.005 kpc
+level 9.0:  cell 0.0938  kpc  →  18.8 pixels per cell at pxsize = 0.005 kpc
+level 10.0:  cell 0.0469  kpc  →  9.4 pixels per cell at pxsize = 0.005 kpc
+level 11.0:  cell 0.0234  kpc  →  4.7 pixels per cell at pxsize = 0.005 kpc
+level 12.0:  cell 0.0117  kpc  →  2.3 pixels per cell at pxsize = 0.005 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       85.7 %     0.017     1.0381
-cic       64.4 %     0.006     0.9733
-overlap   0.0 %      0.026     0.0021
-exact     0.0 %      0.1       0.0
+ngp       39.0 %     1.278     0.4115
+cic       14.8 %     1.216     0.2638
+overlap   0.0 %      2.633     0.0131
+exact     0.0 %      9.369     0.0
 ```
 
 ### One number is not enough: where the disagreement lives
@@ -591,11 +607,11 @@ end
 ```
 
 ```
-total flux  overlap/exact = 0.999997
+total flux  overlap/exact = 0.999995
 pixels                    count   median    p99       max  [dex]
-faint   (<0.1% of peak)   14335   0.00213   0.01424   0.0691
-mid     (0.1-10%)         10110   0.00205   0.00733   0.01193
-bright  (>10% of peak)    1155    0.00278   0.01001   0.01279
+faint   (<0.1% of peak)   74819   0.00173   0.0179    0.0277
+mid     (0.1-10%)         238525  0.01616   0.0476    0.13302
+bright  (>10% of peak)    46656   0.02052   0.04878   0.07281
 ```
 
 **Do not carry these numbers to another simulation.** They are a property of *this* map: how many
@@ -603,7 +619,7 @@ cells fall in a pixel, the viewing angle, and how sparse the outskirts are. Repe
 measurement on a Milky-Way-like run at two angles and pixel sizes gave worst-case differences from
 0.058 to 0.143 dex, all different from the value above.
 
-What does carry over is the shape of the result, and it follows from how the two kernels work.
+The shape of the result does carry over, and it follows from how the two kernels work.
 `:exact` integrates the footprint analytically. `:overlap` samples it with `n³` sub-points, so a
 pixel's value is exact in the limit of many sub-points and noisy when few land in it. Hence:
 
@@ -624,48 +640,47 @@ run the cell above on your own data and let it decide.
 ```julia
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 # Show the REGIME, not one strawman: :cic where you would actually use it, then the four
-# kernels at pixels 8x finer than the cell. :exact sits next to :overlap on purpose. The table
-# above puts them 0.002 dex apart; the last two panels are where you confirm that with your own
-# eyes instead of taking the number on trust.
+# kernels at pixels a few times finer than the local cell. :exact sits next to :overlap on
+# purpose, so you can confirm the table's last column with your own eyes.
 pc_ok = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, binning=:cic,
-                   center=[:bc], fov=8, fov_unit=:kpc, aperture=:square,
-                   pxsize=[0.8,:kpc], verbose=false, show_progress=false)
+                   center=[:bc], fov=1.5, fov_unit=:kpc, aperture=:square,
+                   pxsize=[PXPREV,:kpc], verbose=false, show_progress=false)
 k_exa = kern[:exact]
 allv = reduce(vcat, [log10.(filter(>(0), vec(Float64.(p.maps[:sd]))))
                      for p in (pc_ok, k_ngp, k_cic, k_ovl, k_exa)])
 cr = (quantile(allv, 0.02), maximum(allv))
 maprow([pc_ok, k_ngp, k_cic, k_ovl, k_exa], :sd,
-       [":cic @ 0.8 kpc pixels
-1 pixel per cell, a fine preview",
-        ":ngp @ 0.1 kpc pixels
+       [":cic @ $(PXPREV) kpc pixels
+about 1 pixel per cell, a fine preview",
+        ":ngp @ $(PXFINE) kpc pixels
 all weight at cell centres",
-        ":cic @ 0.1 kpc pixels
+        ":cic @ $(PXFINE) kpc pixels
 2x2 split, still no footprint",
-        ":overlap @ 0.1 kpc pixels
+        ":overlap @ $(PXFINE) kpc pixels
 same pixels, footprint deposit",
-        ":exact @ 0.1 kpc pixels
-analytic, 0.002 dex from :overlap"]; crange=cr)
+        ":exact @ $(PXFINE) kpc pixels
+the analytic reference"]; crange=cr)
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_27_1.png)
 
-The totals agree and the pictures do not, which is the point, and the reason "is it
-conservative?" is the wrong question to stop at.
+The totals agree and the pictures do not. Conservation alone is not enough.
 
-Read the panels as one statement: **it is the pixel-to-cell ratio that decides, not the kernel.**
-At 0.8 kpc pixels, about one pixel per cell here, `:cic` is a perfectly good preview and leaves
-**0 %** of pixels empty. Push to 0.1 kpc, eight pixels across every cell, and the point-deposit
-kernels fall apart: `:cic` leaves **27.8 %** of pixels empty and `:ngp` **64.4 %**. Each puts a
-cell's whole contribution at a single point, so the gaps between cell centres receive nothing and
-the map acquires a texture that belongs to the grid rather than to the galaxy. `:overlap` spreads
-each cell over the area its shadow actually covers and leaves **no** pixel empty at any pixel size.
+Read the panels and the table together as one statement: **it is the pixel-to-cell ratio that
+decides, not the kernel.** At the coarser pixel size, about one pixel per cell here, `:cic` is a
+perfectly good preview. Push to pixels several times finer than a cell and the point-deposit
+kernels fall apart: the empty-pixel column of the table above says how much of the map `:ngp` and
+`:cic` leave blank. Each puts a cell's whole contribution at a single point, so the gaps between
+cell centres receive nothing and the map acquires a texture that belongs to the grid rather than to
+the galaxy. `:overlap` spreads each cell over the area its shadow actually covers and leaves **no**
+pixel empty at any pixel size.
 
-**And the number that justifies the default.** Against `:exact`, the analytic footprint integral,
-`:overlap` agrees to a **median 0.0005 dex** per pixel (99th percentile 0.005, worst pixel 0.033;
-mass-weighted mean 0.0009 dex), a 0.1 % effect, for roughly a third of the cost. The point-deposit
-kernels differ from the same reference by a **median 1.3 dex**, a factor of 20, on the pixels they
-do fill. That is the whole case for the default in two numbers. `:exact` is the last panel above, so
-you can check the claim yourself: it should be indistinguishable from `:overlap`.
+**And the numbers that justify the default.** The last column of that table is the median
+per-pixel disagreement with `:exact`, the analytic footprint integral. `:overlap` sits far closer to
+it than either point-deposit kernel, and the time column says what that costs. Those two columns
+are the whole case for the default. They are printed rather than quoted here, because both move
+with the data. `:exact` is the last panel above, so you can check the claim by eye as well: it
+should be indistinguishable from `:overlap`.
 
 The level table tells you which regime you are in: divide the local cell size by your `pxsize`.
 Below about one pixel per cell, any kernel will do; well above it, only the footprint methods are
@@ -681,15 +696,19 @@ rather than a sampled approximation to it.
 and it is defined for **any** camera. That is what makes it different from `:σx`/`:σy`/`:σz`, which only exist along the box axes
 and are rejected off-axis.
 
-`:σlos` is `√(⟨v_LOS²⟩ − ⟨v_LOS⟩²)` over the mass in a pixel. It is a **width of a distribution
-inside one pixel**, not a per-cell quantity, many cells along the ray land in the same pixel, each
-with its own `v·ŵ`, and σ is how spread out they are. Edge-on, that spread is dominated by *ordered
-rotation along the sightline*, not by turbulence, do not call it a turbulent dispersion.
+`:σlos` is `√(⟨v_LOS²⟩ − ⟨v_LOS⟩²)` over the mass in a pixel. With `:sd` and `:vlos` it completes
+the zeroth, first and second moments of the line-of-sight velocity distribution, the three maps an
+H I or CO cube is reduced to (Walter et al. 2008). It is a **width of a distribution inside one
+pixel**, not a per-cell quantity, many cells along the ray land in the same pixel, each with its own
+`v·ŵ`, and σ is how spread out they are. Edge-on, that spread is dominated by ordered rotation
+along the sightline, not by turbulence. Do not call it a turbulent dispersion: an observed
+dispersion carries the velocity gradient inside the resolution element and has to be corrected
+before anyone calls it intrinsic (Davies et al. 2011).
 
 In the map below that shows up as the **brightest σ_LOS off the disc plane, not in it**: a sightline
 through the disc samples gas that is nearly co-rotating, while one passing above it crosses infalling
-and outflowing material with a far wider velocity spread. σ_LOS runs 15 → 1071 km/s here, so the
-panels are on a log scale.
+and outflowing material with a far wider velocity spread. The printed median and the panel colour
+bar give the range σ_LOS covers here, and it is wide enough that the panels need a log scale.
 
 The obvious next worry is that σ_LOS is then an artefact of how finely you pixelate. The code below
 measures whether it is.
@@ -722,9 +741,9 @@ println("median σ_LOS edge-on  = ", round(median(finite(keo.maps[:σlos])), dig
 ```
 
 ```
-edge-on   max |v_LOS| = 516.1 km/s
-face-on   max |v_LOS| = 124.6 km/s
-median σ_LOS edge-on  = 95.1 km/s
+edge-on   max |v_LOS| = 209.5 km/s
+face-on   max |v_LOS| = 20.3 km/s
+median σ_LOS edge-on  = 21.1 km/s
 ```
 
 ```julia
@@ -745,8 +764,8 @@ end
 
 # Colour range from the 2nd to 98th percentile of ALL pixels, not just the bright ones. Scaling to
 # the disc alone drives the halo off the end of the scale, and a saturated slab hides structure
-# just as effectively as a mask does. σ_LOS here runs 15 → 1071 km/s (the disc is only 27 to 145),
-# so it needs a log scale to show both at once.
+# just as effectively as a mask does. σ_LOS spans the disc and the halo by a large factor here, so
+# it needs a log scale to show both at once.
 pix(m, key) = filter(isfinite, vec(Float64.(m.maps[key])))
 vmax = quantile(abs.(pix(keo, :vlos)), 0.98)
 sl   = filter(>(0), vcat(pix(keo, :σlos), pix(kfo, :σlos)))
@@ -770,7 +789,8 @@ fig
 
 ```julia
 # Does σ_LOS depend on how finely you pixelate? Measure it rather than assume.
-# (cells here are 0.78 / 1.56 / 3.12 kpc, so this sweep straddles the cell size)
+# (cells here run from 48/2^12 = 0.012 kpc at lmax to 48/2^6 = 0.75 kpc at lmin, so this
+#  sweep sits at and above the coarse end of the hierarchy)
 med(A) = median(filter(x -> isfinite(x) && x > 0, vec(Float64.(A))))
 println(rpad("pxsize [kpc]", 15), rpad("median σ_LOS", 16), "mean σ_LOS")
 for px in (0.15, 0.6, 2.4)
@@ -783,23 +803,23 @@ end
 
 ```
 pxsize [kpc]   median σ_LOS    mean σ_LOS
-0.15           93.8            274.1
-0.6            94.3            275.4
-2.4            102.6           274.8
+0.15           20.3            25.2
+0.6            20.7            26.0
+2.4            21.3            28.8
 ```
 
 Now the result, and it is not the one the "width inside a pixel" picture suggests: a **16× change
-in `pxsize` moves the median σ_LOS by a few km/s**, and the mean barely at all. σ_LOS is set by the
-spread of velocities **along the ray**, and the ray is the same ray whatever the pixel width. Making
-pixels smaller sub-divides the sky, not the sightline.
+in `pxsize` barely moves σ_LOS at all**, as the table above shows. σ_LOS is set by the spread of
+velocities **along the ray**, and the ray is the same ray whatever the pixel width. Making pixels
+smaller sub-divides the sky, not the sightline.
 
 That is a useful licence: choose `pxsize` for the *image* you want, and σ_LOS will not move under
 you. Quote it anyway, so a reader can check.
 
 !!! note "Shipped separately"
-    Position to position to velocity cubes, emission and absorption forward modelling, mock observations
-    and FITS export are **in development in a separate module** and are not part of the released
-    package. This page covers only the moment maps `:vlos` and `:σlos`. (Stated once, here.)
+    Position-position-velocity (PPV) cubes, emission and absorption forward modelling, mock
+    observations and FITS export are **in development in a separate module** and are not part of the
+    released package. This page covers only the moment maps `:vlos` and `:σlos`. (Stated once, here.)
 
 ### Taking the rotation out
 
@@ -812,7 +832,9 @@ velocity field before projecting.
 
 `rotation_frame` measures the field from the data itself: cells are binned by cylindrical radius,
 the mass-weighted mean `vϕ` is taken per bin, and the result is a function of position.
-`restframe` applies it and hands back an object every later call can use.
+`restframe` applies it and hands back an object every later call can use. This is the simulation
+counterpart of correcting an observed dispersion for the velocity gradient across the beam
+(Begeman 1989; Davies et al. 2011).
 
 ```julia
 sig = (direction=:edgeon, center=:bc, fov=15, fov_unit=:kpc, aperture=:square,
@@ -820,8 +842,9 @@ sig = (direction=:edgeon, center=:bc, fov=15, fov_unit=:kpc, aperture=:square,
 good(A) = filter(x -> isfinite(x) && x > 0, vec(A))
 
 # Do it twice: on everything, and on the disc alone. The contrast is the point.
-for (label, zr) in (("all gas", [-50.,50.]), ("disc only, |z| < 2 kpc", [-2.,2.]))
-    g  = gethydro(info, zrange=zr, center=[:bc], range_unit=:kpc, verbose=false, show_progress=false)
+# `subregion` cuts the object already in memory, so the snapshot is read once, not once per loop.
+for (label, zr) in (("all gas", [-24.,24.]), ("disc only, |z| < 2 kpc", [-2.,2.]))
+    g  = subregion(gas, :cuboid, zrange=zr, center=[:bc], range_unit=:kpc, verbose=false)
     f  = rotation_frame(g; center=:bc)          # the rotation curve measured from THIS gas
     gr = restframe(g; vcenter=f, center=:bc)
     a  = projection(g,  :σlos, :km_s; sig...).maps[:σlos]
@@ -834,8 +857,8 @@ end
 ```
 
 ```
-all gas                 σ_LOS 95.1 → 89.2 km/s   (6.3 % was rotation)
-disc only, |z| < 2 kpc  σ_LOS 84.6 → 16.2 km/s   (80.9 % was rotation)
+all gas                 σ_LOS 21.1 → 59.9 km/s   (-184.2 % was rotation)
+disc only, |z| < 2 kpc  σ_LOS 56.1 → 7.4 km/s   (86.9 % was rotation)
 ```
 
 Read those two lines together, because they say different things.
@@ -844,9 +867,9 @@ Over **all** the gas, taking the rotation out barely moves σ_LOS. That is not t
 is the measurement telling you that this σ_LOS is not rotation. Chapter 7 already showed why, the
 brightest σ_LOS is *off* the disc plane, where a sightline crosses infalling and outflowing gas.
 
-Restricted to the **disc**, most of it goes: σ_LOS falls to roughly a fifth of its value, so about
-four fifths of what looked like a dispersion in the plane was the rotation curve sampled along the
-ray. What is left is the genuine spread about that curve.
+Restricted to the **disc**, much more of it goes. The percentage printed on that line is the
+fraction of what looked like a dispersion in the plane that was really the rotation curve sampled
+along the ray. What is left is the genuine spread about that curve.
 
 So the frame is also a diagnostic. The fraction that disappears tells you how much of your
 dispersion was ordered motion, and that number is worth quoting.
@@ -902,11 +925,11 @@ println("σ_total = √(σ_bulk² + σ_therm²)  = ", round(sqrt(σ_bulk_disc^2 
 ```
 
 ```
-σ_thermal per cell : 0.11 .. 1917.32 km/s
+σ_thermal per cell : 0.28 .. 1662.53 km/s
 equals cs/√γ       : true
-σ_bulk  (disc, rotation removed) = 16.17 km/s
-σ_therm (all gas, median)        = 134.58 km/s
-σ_total = √(σ_bulk² + σ_therm²)  = 135.54 km/s
+σ_bulk  (disc, rotation removed) = 7.38 km/s
+σ_therm (all gas, median)        = 19.05 km/s
+σ_total = √(σ_bulk² + σ_therm²)  = 20.43 km/s
 ```
 
 One caveat if you are comparing against an observed line. `:σ_thermal` is the width of the
@@ -918,7 +941,8 @@ so for a species of mass `m_X`:
 ```
 
 CO is 28 times heavier than hydrogen, so its thermal width is 5.3 times narrower. Use `getvar(gas, :mu)`
-for the local μ when you need that scaling.
+for the local μ when you need that scaling. Draine (2011) sets out the thermal and turbulent line
+widths and the species-mass scaling in full.
 
 ## 8. Cutting planes: a sample, not an integral
 
@@ -935,10 +959,11 @@ And one API trap that is the *opposite* of Chapter 4: on `slice`, `xrange`/`yran
 ```julia
 view = (inclination=60, azimuth=30, axis=:angmom, center=[:bc])
 
-# pxsize is 0.25 kpc, not finer: cells here are 0.78 kpc (1.56 kpc further out), and a column
-# integral sampled well below the local cell size resolves the SHADOW OF EACH CELL, flat,
-# straight-edged plateaus that overlap and read as stacked slabs. That is the AMR grid being
-# displayed, not structure. Chapter 6 is where pixel-vs-cell size is treated properly.
+# pxsize is 0.25 kpc, which is coarser than the cells over most of this frame (the finest cell
+# here is 48/2^12 = 0.012 kpc). Sample a column integral well BELOW the local cell size and you
+# resolve the SHADOW OF EACH CELL instead, flat straight-edged plateaus that overlap and read as
+# stacked slabs. That is the AMR grid being displayed, not structure. Chapter 6 treats
+# pixel-vs-cell size properly.
 sl = slice(gas, :rho, :nH; view..., xrange=[-15,15], yrange=[-15,15],
            range_unit=:kpc, pxsize=[0.25,:kpc], verbose=false)
 
@@ -953,7 +978,7 @@ println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
 
 ```
 slice frame      (120, 120)   0.0 % NaN
-projection frame (120, 120)
+projection frame (121, 121)
 slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
 
@@ -982,11 +1007,11 @@ end
 
 ```
 offset [kpc]  filled px   median nH [cm^-3]
--15.0         14400       5.958e-6
--5.0          14400       1.39e-5
-0.0           14400       6.55e-6
-5.0           14400       6.46e-6
-15.0          14400       4.146e-6
+-15.0         14353       6.584e-6
+-5.0          14400       3.14e-5
+0.0           14400       3.886e-5
+5.0           14400       3.04e-5
+15.0          14353       6.917e-6
 ```
 
 Every offset fills the frame, and the density changes with depth: the plane really is moving
@@ -1036,10 +1061,10 @@ cr = (quantile(filter(isfinite, vcat(vec(As), vec(Ap))), 0.02),
 es = sl.extent .* gas.scale.kpc
 
 fig = Figure(size=(880, 400))
-ax1 = Axis(fig[1,1], aspect=DataAspect(), title="projection — column integral",
+ax1 = Axis(fig[1,1], aspect=DataAspect(), title="projection: column integral",
            xlabel="x' [kpc]", ylabel="y' [kpc]")
 h = showmap!(ax1, pr, :rho; crange=cr, cmap=:viridis)
-ax2 = Axis(fig[1,2], aspect=DataAspect(), title="slice — nearest-cell sample", xlabel="x' [kpc]")
+ax2 = Axis(fig[1,2], aspect=DataAspect(), title="slice: nearest-cell sample", xlabel="x' [kpc]")
 heatmap!(ax2, range(es[1],es[2],length=size(As,1)), range(es[3],es[4],length=size(As,2)),
          As, colormap=:viridis, colorrange=cr, nan_color=:black, interpolate=false)
 hideydecorations!(ax2, grid=false)
@@ -1049,15 +1074,14 @@ fig
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_49_1.png)
 
-Two things in the left panel are the *selection* rather than the gas, and both are worth
-recognising because they show up in every `fov` projection:
+Two things in the left panel are the *selection* rather than the gas, and both show up in every
+`fov` projection:
 
-- the soft darkening into the **corners** is the selection sphere, at `fov=15, aperture=:square`
-  the corners sit on the sphere and integrate zero depth (see "Choosing `fov`" in Chapter 4);
+- the soft darkening into the **corners** is the selection sphere tapering to zero depth at the
+  corners of a `:square` frame (Chapter 4);
 - any **flat, straight-edged plateau** in the outskirts is a single AMR cell's projected shadow.
-  Sample a column integral much finer than the local cell and you resolve individual cell
-  footprints, which tile the map and read as overlapping slabs. At 0.25 kpc pixels against
-  0.78 kpc cells that is mostly gone; at 0.12 kpc it dominates the outer frame.
+  You only see it when you sample a column integral much finer than the local cell. At 0.25 kpc
+  pixels the cells here are finer than the pixels almost everywhere, so it stays out of the way.
 
 Neither is a projection error, mass is conserved either way (Chapter 5). They are what you get
 for asking the map a question finer than the data can answer.
@@ -1069,14 +1093,14 @@ for asking the map a question finer than the data can answer.
 It uses **the same framing rule as Chapter 4, swept**: a rotation-invariant sphere selection, `aperture=:circle` or `:square`. That is the whole reason it exists, a cubic window's rotated bounding box changes size frame by frame, so the movie breathes.
 
 !!! note "One difference from `projection`"
-    Omit `fov` on `rotation_sequence` and it **auto-fits** to the 99 % enclosed-mass radius, so the frame follows the object rather than the sparse outermost cells. `projection` has **no** auto-fit, omit `fov` there and you are back on world ranges. If you learned `fov=22` in Chapter 4 and drop it here, your framing rule silently changes. Pass `fov` explicitly whenever it matters.
+    Omit `fov` on `rotation_sequence` and it **auto-fits** to the 99 % enclosed-mass radius, so the frame follows the object rather than the sparse outermost cells. `projection` has **no** auto-fit, omit `fov` there and you are back on world ranges. If you learned `fov=16` in Chapter 4 and drop it here, your framing rule silently changes. Pass `fov` explicitly whenever it matters.
 
 `parallel_frames=true` runs the frames concurrently with single-threaded projections instead of the reverse; it is typically ~1.5 to 2× faster when there are at least as many frames as threads, at proportionally more transient memory. Keep the total at or below 8 threads on a laptop.
 
 ```julia
 frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:90:270,
                            inclination=55, axis=:angmom, center=[:bc],
-                           fov=22, fov_unit=:kpc, aperture=:square,
+                           fov=16, fov_unit=:kpc, aperture=:square,
                            pxsize=[0.5,:kpc], parallel_frames=false)
 
 # The numerical proof that the frame does not breathe, stronger than watching it.
@@ -1087,10 +1111,10 @@ end
 ```
 
 ```
-azimuth   0°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.781, 22.0]
-azimuth  90°   frame (88, 88)   extent [kpc] = [-21.817, 21.964, -21.837, 21.944]
-azimuth 180°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.925, 21.857]
-azimuth 270°   frame (88, 88)   extent [kpc] = [-21.786, 21.995, -21.917, 21.864]
+azimuth   0°   frame (65, 65)   extent [kpc] = [-16.007, 16.158, -15.959, 16.205]
+azimuth  90°   frame (65, 65)   extent [kpc] = [-16.009, 16.156, -15.96, 16.205]
+azimuth 180°   frame (65, 65)   extent [kpc] = [-16.007, 16.158, -15.959, 16.205]
+azimuth 270°   frame (65, 65)   extent [kpc] = [-16.009, 16.156, -15.96, 16.205]
 ```
 
 ```julia
@@ -1107,8 +1131,7 @@ numbers say the same thing from opposite directions. That invariance is what mak
 usable as a movie: nothing breathes, so the eye reads rotation rather than zoom.
 
 Write the frames to disk with any Makie/`FileIO` recorder, or hand the vector straight to
-`Makie.record`. For a long sweep, `parallel_frames=true` renders the frames concurrently (each
-projection single-threaded), typically 1.5 to 2× faster once you have more frames than threads.
+`Makie.record`.
 
 Every frame is the same array, the same physical extent and the same pixel scale. Turning that
 into a movie is one `Makie.record` call, Makie ships its own ffmpeg through `FFMPEG_jll`, so
@@ -1118,34 +1141,37 @@ this needs nothing installed on the system and runs as part of the notebook:
 # Rendered here rather than pasted in, so the movie can never drift from the code above.
 #
 # The four frames above are for READING: a montage you compare panel by panel. A movie wants many
-# more, or the orbit steps rather than turns. 24 frames at 15 degrees is one revolution in three
-# seconds at framerate 8, which reads as motion; the four-frame version reads as a slideshow.
-# Same camera, same fixed FOV, so nothing else about the sequence changes.
-smooth = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:15:345,
+# more, or the orbit steps rather than turns. `record` writes exactly one GIF frame per rendered
+# projection, so the angle step IS the smoothness: 120 angles at 3 degrees is one revolution, and
+# at framerate 30 that revolution takes 4 seconds. Same camera, same fixed FOV, so nothing else
+# about the sequence changes.
+smooth = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:3:357,
                            inclination=55, axis=:angmom, center=[:bc],
-                           fov=22, fov_unit=:kpc, aperture=:square,
-                           pxsize=[0.5,:kpc], parallel_frames=false)
+                           fov=16, fov_unit=:kpc, aperture=:square,
+                           pxsize=[0.5,:kpc], parallel_frames=true)
 
 cr  = sharedrange(smooth, :sd)          # one colour range across the whole orbit
-fig = Figure(size=(360, 360))           # frame COUNT drives smoothness, resolution drives file
-                                        # size, so keep 24 frames and shrink the canvas instead
+fig = Figure(size=(300, 300))           # frame COUNT drives smoothness, canvas size drives file
+                                        # size. The map itself is far smaller than the canvas (the
+                                        # frame size is printed below), so a 300 px canvas loses
+                                        # nothing and keeps a 120-frame GIF manageable.
 ax  = Axis(fig[1, 1], aspect=DataAspect(), title="orbit movie (fixed FOV, square)")
 hidedecorations!(ax)
 
 mkpath("assets/offaxis")
-record(fig, "assets/offaxis/orbit_movie.gif", eachindex(smooth); framerate=12) do k
+record(fig, "assets/offaxis/orbit_movie.gif", eachindex(smooth); framerate=30) do k
     empty!(ax)
     showmap!(ax, smooth[k], :sd; crange=cr)
 end
 println("wrote assets/offaxis/orbit_movie.gif  (", length(smooth), " frames, ",
         round(filesize("assets/offaxis/orbit_movie.gif") / 1024, digits=1), " KB)")
-println("every frame the same size: ",
+println("map size: ", size(smooth[1].maps[:sd]), "   every frame the same size: ",
         all(size(f.maps[:sd]) == size(smooth[1].maps[:sd]) for f in smooth))
 ```
 
 ```
-wrote assets/offaxis/orbit_movie.gif  (24 frames, 1967.3 KB)
-every frame the same size: true
+wrote assets/offaxis/orbit_movie.gif  (120 frames, 5771.5 KB)
+map size: (65, 65)   every frame the same size: true
 ```
 
 ![Orbit movie, the camera sweeps azimuth at fixed inclination; the frame does not breathe.](assets/offaxis/orbit_movie.gif)
@@ -1157,7 +1183,7 @@ Everything you need to debug an off-axis map travels on the result. You already 
 - `m.los`, `m.up`, `m.cam_right`, the basis actually used. If `m.los` is not what you expected, your view specifier or your `center` is the problem, not the renderer.
 - `m.center` is a **box fraction** on a map object (a `slice` result's `.center` is code units, different quantity, same field name).
 - `m.direction` reads `:offaxis`.
-- `m.maps_lmax` is **empty** off-axis by design; `m.maps_weight` exists on AMR map objects only, not on particle ones.
+- `m.maps_lmax` is **empty**, off-axis and on the axis-aligned path alike; `m.maps_weight` exists on AMR map objects only, not on particle ones.
 - `m.pixsize` and `m.extent` are code units, use `getextent(m, :kpc)`.
 
 **Orientation fixes.** `position_angle=` rolls the image about `ŵ`; `up=` pins the image-y direction outright. Note that when you write your own loop over hand-made `los=` vectors, the automatic up-vector (the world axis least parallel to `ŵ`) can **flip mid-sweep** and your animation will jump. Fix `up=` explicitly, or use `rotation_sequence`, which sets an up-hint for you.
@@ -1181,14 +1207,14 @@ camera survives the round trip : true
 .direction                     : offaxis
 ```
 
-**Troubleshooting**, six symptoms, six causes:
+**Troubleshooting**, seven symptoms, seven causes:
 
 | symptom | cause | fix |
 |---|---|---|
 | `:edgeon` looks face-on, or the disc is tilted at a random angle | L computed about the box corner | pass `center=[:bc]` (Ch 1) |
-| "face-on" is off by 10 to 30° for a warped or fountain-rich disc | L over the full box is dominated by slow, high-lever-arm CGM gas | take `:angmom` on an inner-disc `subregion`, then project the full data with that explicit `los=` (App. C) |
+| "face-on" is off by 10 to 30 degrees for a warped or fountain-rich disc | L over the full box is dominated by slow, high-lever-arm CGM gas | take `:angmom` on an inner-disc `subregion`, then project the full data with that explicit `los=` (App. C) |
 | straight edges cut across the map; the frame is bigger than requested | world-space `xrange`/`yrange` | `fov` + `fov_unit` + `aperture=:square` (Ch 4) |
-| the galaxy is a dot in a huge frame | `fov` without `fov_unit`, 22 *box lengths*, clamped | always pair them (Ch 4) |
+| the galaxy is a dot in a huge frame | `fov` without `fov_unit`, 16 *box lengths*, clamped | always pair them (Ch 4) |
 | `projection(gas, :vlos; direction=:z)` errors in `getvar` | `:vlos`/`:σlos` exist only in the off-axis engine | write `los=[0,0,1]` (Ch 5) |
 | holes or moiré in a zoomed map | `:cic`/`:ngp` with pixels finer than cells | `binning=:overlap` (Ch 6) |
 | an orbit movie tumbles across snapshots | `direction=:faceon` recomputed per snapshot; L drifts | freeze one `los=` (App. C) |
@@ -1202,28 +1228,28 @@ The view keywords are the same everywhere. What differs is a short list of defau
 | | hydro / RT | particles |
 |---|---|---|
 | `binning` default | `:overlap` | **`:cic`**; `:overlap`/`:exact` fall back to `:cic` (points have no footprint) and say so once per session |
-| `weighting` | **Array**, `[:mass, missing]` | **Symbol**, `:mass`, `:volume`, `:sph`, `:voronoi`, all available off-axis. `:sph` conserves mass to ~0.2 % independent of angle; `:voronoi` trades that for sharp cell edges (~3 % angle spread), so prefer `:sph` for quantitative maps |
+| `weighting` | **Array**, `[:mass, missing]` | **Symbol**, `:mass`, `:volume`, `:sph`, `:voronoi`, all available off-axis. `:sph` is the standard SPH kernel weighting (Monaghan 1992) and conserves mass nearly independently of angle; `:voronoi` trades that for sharp cell edges, so prefer `:sph` for quantitative maps |
 | `fov` / `fov_unit` / `aperture` | yes | **yes**, same rotation-invariant sphere selection; the framing is a selection, so it does not care what is deposited |
 | `mode`, `nmax`, `max_threads`, `gravity_data` | yes | absent |
 | `data_center` | **silently ignored** on the off-axis hydro path | honoured |
 | `slice` | yes, with `offset` to move the plane | no, and by design: a plane through points is empty. Use `thickness`/`offset` on `projection` for a slab |
 | `thickness` / `offset` | not applicable (a slice is the cell equivalent) | **yes**, project a slab of finite depth and move it along the line of sight |
 
-Gravity goes through the combined call form `projection(hydro, gravity, var; …)`. RT data has no velocity field, so `:angmom`, `:faceon` and `:edgeon` are unavailable, give an explicit `los=`, or take `[:lx,:ly,:lz]` from the matching hydro object with `getvar` and pass the result as `axis=[lx,ly,lz]`. (This fixture has no RT output; see the [radiative transfer page](10_multi_RadiativeTransfer.md).)
+Gravity goes through the combined call form `projection(hydro, gravity, var; …)`. RT data has no velocity field, so `:angmom`, `:faceon` and `:edgeon` are unavailable, give an explicit `los=`, or take `[:lx,:ly,:lz]` from the matching hydro object with `getvar` and pass the result as `axis=[lx,ly,lz]`. (This dataset has no RT output; see the [radiative transfer page](10_multi_RadiativeTransfer.md).)
 
 ```julia
-part = getparticles(info, verbose=false, show_progress=false)
+part = loaddata(390, AVALON, :particles; verbose=false)
 ps = projection(part, :sd, :Msol_pc2; direction=:edgeon, center=[:bc],
                 xrange=[-20,20], yrange=[-20,20], zrange=[-20,20], range_unit=:kpc,
                 pxsize=[0.4,:kpc], verbose=false, show_progress=false)
 println("stars   : frame ", size(ps.maps[:sd]), "   los = ", round.(ps.los, digits=3))
 
-grav = getgravity(info, verbose=false, show_progress=false)
+grav = loaddata(390, AVALON, :gravity; verbose=false)
 pe = projection(gas, grav, :epot; direction=:faceon, center=[:bc],
                 xrange=[-20,20], yrange=[-20,20], zrange=[-20,20], range_unit=:kpc,
                 pxsize=[0.4,:kpc], verbose=false, show_progress=false)
-# NB the raw extrema read (-0.53, 0.0), that 0.0 is EMPTY pixels, not a physical potential.
-# Report the filled pixels, and say how many were empty.
+# NB the raw extrema of an off-axis potential map include an exact 0.0, and that 0.0 is EMPTY
+# pixels, not a physical potential. Report the filled pixels, and say how many were empty.
 epot = pe.maps[:epot]; filled = filter(<(0), epot)
 println("gravity : maps ", collect(keys(pe.maps)))
 println("          epot over filled pixels ", round.(extrema(filled), sigdigits=4),
@@ -1231,9 +1257,9 @@ println("          epot over filled pixels ", round.(extrema(filled), sigdigits=
 ```
 
 ```
-stars   : frame (107, 109)   los = [0.999, -0.002, -0.037]
+stars   : frame (71, 6)   los = [1.0, 0.0, 0.0]
 gravity : maps Any[:epot, :sd]
-          epot over filled pixels (-0.5327, -0.03714)   (530 of 11448 pixels empty)
+          epot over filled pixels (-0.9694, -0.1409)   (416 of 11025 pixels empty)
 ```
 
 ### A slab instead of a slice, for particles
@@ -1269,21 +1295,22 @@ end
 
 ```
 thickness [kpc]   total       fraction of the full column
-20.0              273951.0    0.9052
-5.0               178911.0    0.5912
-1.0               28693.2     0.0948
+20.0              808.64      0.9986
+5.0               599.121     0.7399
+1.0               170.516     0.2106
 offset [kpc]      total in a 2 kpc slab
--6.0              11801.2
--2.0              115805.0
-0.0               67432.2
-2.0               16791.2
-6.0               5921.15
+-6.0              11.0482
+-2.0              102.361
+0.0               303.723
+2.0               103.869
+6.0               13.1556
 ```
 
-The slab total rises with thickness, as it must. The offset sweep is more interesting: the mass
-peaks at **-2 kpc**, not at 0. That is not a bug in the slab, it is the slab reporting where the
-stars actually are. `center=[:bc]` is the box centre, and this galaxy's stellar centroid does not
-sit exactly there, so the densest slab is the one offset toward it.
+The slab total rises with thickness, as it must. The offset sweep is more interesting: read the
+column above and see which offset holds the most mass. If the peak is not at 0, that is not a bug
+in the slab, it is the slab reporting where the stars actually are. `center=[:bc]` is the box
+centre, and a galaxy's stellar centroid need not sit exactly there, so the densest slab is the one
+offset toward it.
 
 That is the check worth running on your own data. If the peak is not where you expect the object
 to be, either the centre is wrong or the object is not where you think, and both are worth knowing
@@ -1293,8 +1320,8 @@ before you quote a number from the map.
 # The same camera, pointed at a different data type. `fov` frames both identically, so the two
 # panels can be compared pixel for pixel.
 # 0.6 kpc pixels: fine enough to show both discs, coarse enough that the STAR map is not
-# dominated by Poisson noise (453 200 particles, the outskirts get very few per pixel)
-shot = (direction=:edgeon, center=[:bc], fov=20, fov_unit=:kpc, aperture=:square,
+# dominated by Poisson noise, since the outskirts get very few particles per pixel.
+shot = (direction=:edgeon, center=[:bc], fov=16, fov_unit=:kpc, aperture=:square,
         pxsize=[0.6, :kpc], verbose=false, show_progress=false)
 gas_eo  = projection(gas,  :sd, :Msol_pc2; shot...)
 star_eo = projection(part, :sd, :Msol_pc2; shot...)
@@ -1332,8 +1359,8 @@ fig
 ```
 
 ```
-gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
-φ along the line of sight: (-1976.0, -175.5) km²/s²
+gas   frame (54, 54)   stars (5, 5)   potential (54, 54)
+φ along the line of sight: (-2888.0, -821.8) km²/s²
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_66_2.png)
@@ -1349,8 +1376,7 @@ supplies the weights and the gravity object the field, so both must describe the
 load them from the same `info` at the same `lmax`. `fov` cuts both together, so the three panels
 above are framed identically and can be compared pixel for pixel.
 
-`fov` works for particles as it does for the grid, the framing is a selection, so it does not care
-what is being deposited. What *does* differ is the deposit itself: points have no footprint, so
+What *does* differ between the two data types is the deposit itself: points have no footprint, so
 particle projections use `:cic` and the footprint kernels fall back to it.
 
 That difference is visible if you push the pixels: a grid map degrades smoothly, while a particle
@@ -1399,7 +1425,7 @@ particle binning=:overlap falls back to :cic : true
 particle binning=:exact   falls back to :cic : true
 weighting=:sph off-axis (needs :volume)      : ArgumentError
 weighting=:voronoi off-axis (needs :volume)  : ArgumentError
-fov works on particles                       : (30, 30)
+fov works on particles                       : (4, 4)
 slice(part, …)                               : MethodError
 particle nmax                                : MethodError
 particle max_threads                         : NO ERROR
@@ -1411,9 +1437,8 @@ keywords mean the same thing for every projectable data type:
 
 * **particles**, point masses, deposited with the same kernels; `:sd` is a stellar surface
   density here rather than a gas one;
-* **gravity**, projected through the two-object form `projection(hydro, gravity, var)`, where the
-  hydro object supplies the weights and the gravity object the field. Both must describe the same
-  cells, so load them from the same `info` at the same `lmax`.
+* **gravity**, projected through the two-object form `projection(hydro, gravity, var)` described in
+  Chapter 11.
 
 The empty-pixel count printed above is worth carrying with you: an off-axis frame that is *not*
 completely filled is normal, and the zeros are absence of data, not zero potential. Aggregate the
@@ -1421,21 +1446,21 @@ filled pixels, not the whole array.
 
 ## Appendix A, Limitations, in one place
 
-The one limitations table. Twelve rows, one line each. Nothing here is repeated anywhere else in the notebook.
+The one limitations table. Twelve rows, one line each, gathering what the chapters above establish.
 
 | | |
 |---|---|
 | **Orthographic only** | parallel rays, observer at infinity. No perspective, no observer-inside-the-box view. |
 | **No line-of-sight depth slab** | `xrange`/`yrange`/`zrange` are world-space; the frame always auto-fits the rotated footprint. `zrange` clips world *z*, and only coincides with depth near a ±z line of sight. |
 | **`zrange` can be a no-op** | an axis whose requested range already covers the loaded data's range is not clipped at all. |
-| **Slab edges are cell-centre cuts** | cells are kept or dropped by their centre; straddlers are not clipped, so a world-range selection is accurate to about one cell size per face (3.1 kpc at level 5 here). |
+| **Slab edges are cell-centre cuts** | cells are kept or dropped by their centre; straddlers are not clipped, so a world-range selection is accurate to about one cell size per face (0.75 kpc at level 6, the coarsest here). |
 | **Border fold-back** | stencils crossing the map edge fold onto the edge pixel, the outermost row/column of any off-axis map is not a clean measurement. |
 | **`fov` footguns** | `fov_unit` defaults to a box fraction; `fov` replaces `xrange`/`yrange`/`zrange`; `center` is then read in `fov_unit`; `fov` cannot be combined with a per-cell `mask`. |
 | **Frames match, but not bit-exactly** | `aperture=:square` gives identical pixel dimensions and identical physical scale at every angle; co-registration is good to the auto-fit rounding, not to the bit. |
 | **`nmax=64`** | zoom far enough into a coarse-AMR region and `:overlap` deposits a footprint-sized top-hat rather than a 64³ sub-point lattice. Detect by raising `nmax`, or use `:exact` (no cap). |
 | **Off-axis ≠ axis-aligned pixel grids** | differencing `los=[0,0,1]` against `direction=:z` shows a sub-pixel origin offset. That is a grid convention, not an error. |
 | **Variables unavailable off-axis** | `:σx :σy :σz :σ :σr_cylinder :σϕ_cylinder :r_cylinder :r_sphere :ϕ`, use `direction=:x/:y/:z`. |
-| **Result-object quirks** | `maps_lmax` is empty off-axis; `maps_weight` is AMR-only; `.center` is a box fraction on a map but code units on a `slice`; a mass-weighted call returns a bonus `:sd` map; `lmax` off-axis only sets the default resolution and never coarsens the data. |
+| **Result-object quirks** | `maps_lmax` is empty (it is empty on the axis-aligned path too); `maps_weight` is AMR-only; `.center` is a box fraction on a map but code units on a `slice`; a mass-weighted call returns a bonus `:sd` map; `lmax` off-axis only sets the default resolution and never coarsens the data. |
 | **Shipped separately** | column integrals, emission/absorption, PPV cubes, mock observations and FITS export are in development in a separate module, not in the released package. |
 
 ## Appendix B, Where the guarantees are measured
@@ -1451,7 +1476,7 @@ onto the edge pixel, so the sum is preserved rather than leaking. For `:overlap`
 holds per sub-point, and for `:exact` the per-pixel footprint integrals are renormalised to the
 cell volume, so the conserved total is exact by construction in both.
 
-Chapter 5 measures it once on this dataset: `Σ(map) / msum(gas) − 1 = 0.0`.
+Chapter 5 measures it once on this dataset, and prints `Σ(map) / msum(gas) − 1`.
 
 **The kinematics recover the right axis.** `:vlos` is antisymmetric about the minor axis edge-on
 and near-zero face-on, the check in Chapter 7, which is also how you detect a mis-centred
@@ -1469,13 +1494,13 @@ The most common way a multi-snapshot off-axis analysis goes wrong: `direction=:f
 The fix is to compute the orientation **once**, on the region you actually mean, and then freeze it:
 
 ```julia
-# NOT EXECUTED — this fixture ships a single output (output_00100).
+# NOT EXECUTED: this page uses a single output (output_00390).
 # Shown for the mechanics; substitute your own output list.
 
 # 1. Orientation from the INNER DISC of one reference snapshot, not the whole box.
 #    L over the full box is dominated by slow, high-lever-arm CGM gas, which is
-#    why a whole-box "face-on" can be 10–30° off for a warped or fountain-rich disc.
-ref  = gethydro(getinfo(100, path, verbose=false), verbose=false, show_progress=false)
+#    why a whole-box "face-on" can be 10 to 30 degrees off for a warped or fountain-rich disc.
+ref  = loaddata(390, path, :hydro; verbose=false)
 disc = subregion(ref, :cylinder, radius=8., height=2., range_unit=:kpc,
                  center=[:bc], verbose=false)
 Lfix = [sum(getvar(disc, :lx, center=[:bc])),
@@ -1486,12 +1511,12 @@ Lfix ./= sqrt(sum(abs2, Lfix))
 # 2. Project every snapshot with that ONE frozen line of sight and a fixed FOV.
 #    `up=` is pinned too, so the auto-up tie-break cannot flip mid-series.
 for out in outputs
-    g = gethydro(getinfo(out, path, verbose=false), verbose=false, show_progress=false)
+    g = loaddata(out, path, :hydro; verbose=false)
     m = projection(g, :sd, :Msol_pc2; los=Lfix, up=[0,0,1], center=[:bc],
-                   fov=22, fov_unit=:kpc, aperture=:square, pxsize=[0.3,:kpc],
+                   fov=16, fov_unit=:kpc, aperture=:square, pxsize=[0.3,:kpc],
                    verbose=false, show_progress=false)
     savemap(m, "faceon_$(out).jld2", verbose=false)
 end
 ```
 
-Gas L and stellar L are not the same vector (bars, warps, counter-rotating components), so decide which tracer defines your frame and stick to it. And note that this is also how you get a *comparable* frame: the same `los`, the same `fov`, the same `pxsize`, so every snapshot is the same camera.
+A drifting orientation is not a cosmetic problem: viewing angle biases the quantities measured from an image, so a time series taken at a wandering angle is not a time series of the galaxy (Bottrell et al. 2017). Gas L and stellar L are not the same vector either (bars, warps, counter-rotating components), so decide which tracer defines your frame and stick to it. And note that this is also how you get a *comparable* frame: the same `los`, the same `fov`, the same `pxsize`, so every snapshot is the same camera.
