@@ -64,10 +64,11 @@ end
 """    AbstractRegion
 
 Supertype of the composable region value types passed to [`subregion`](@ref):
-[`Cuboid`](@ref), [`Sphere`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref). A region
-is a geometry-relative-to-`center` value type; `subregion(obj, region)` selects the cells it
-covers and, with `split=true`, attaches the exact per-cell inside-fraction. Regions compose
-with the boolean operators `∩` (intersection), `∪` (union), `\\` (difference) and `!`
+[`Cuboid`](@ref), [`Sphere`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref),
+[`CylindricalShell`](@ref). A region is a geometry-relative-to-`center` value type;
+`subregion(obj, region)` selects the cells it covers and, with `split=true`, attaches the
+exact per-cell inside-fraction. Regions compose with the boolean operators
+`∩` (intersection), `∪` (union), `\\` (difference) and `!`
 (complement) — e.g. `Sphere(20) \\ Cylinder(5, 30)` drills a cylindrical hole through a ball."""
 abstract type AbstractRegion end
 

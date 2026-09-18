@@ -81,13 +81,20 @@ Base.:&(a::FilterCondition, b::FilterCondition) = _And(a, b)
 Base.:|(a::FilterCondition, b::FilterCondition) = _Or(a, b)
 Base.:!(a::FilterCondition)                     = _Not(a)
 
-# vectorised quantity fetch (getvar in the requested unit; :standard = code units). `center` is
-# forwarded only when given, so plain filterdata/getmask calls behave exactly as before; the
-# in-development transfer-function projection passes its own centre so :r_sphere & co. match it.
-function _qvals(obj, q::Symbol, unit::Symbol; center=nothing, center_unit::Symbol=:standard)
-    center === nothing && return unit === :standard ? getvar(obj, q) : getvar(obj, q, unit)
-    return unit === :standard ? getvar(obj, q, center=center, center_unit=center_unit) :
-                                getvar(obj, q, unit, center=center, center_unit=center_unit)
+# Vectorised quantity fetch (getvar in the requested unit; :standard = code units).
+#
+# `center` and `vcenter` are forwarded only when given, so a call that passes neither behaves
+# exactly as before. They matter because a condition on a derived quantity inherits getvar's
+# defaults: without `center` a radius like :r_cylinder is measured from the box CORNER, and
+# without `vcenter` a velocity-derived quantity like :mach is in the BOX frame. On a galaxy
+# sitting in the middle of its box, and rotating, both defaults give an answer nobody wants.
+function _qvals(obj, q::Symbol, unit::Symbol; center=nothing, center_unit::Symbol=:standard,
+                vcenter=nothing)
+    kw = NamedTuple()
+    center  === nothing || (kw = (; kw..., center=center, center_unit=center_unit))
+    vcenter === nothing || (kw = (; kw..., vcenter=vcenter))
+    isempty(kw) && return unit === :standard ? getvar(obj, q) : getvar(obj, q, unit)
+    return unit === :standard ? getvar(obj, q; kw...) : getvar(obj, q, unit; kw...)
 end
 
 _mask(c::Above, obj; kw...)   = _qvals(obj, c.quantity, c.unit; kw...) .> c.value
@@ -111,10 +118,20 @@ Build a boolean selection mask over `obj`'s rows from a value-space `condition`
 pair (e.g. `getmask(gas, :T, >(1e4); unit=:K)`). The mask is computed vectorised through
 [`getvar`](@ref), so it works on any derived quantity; pass it to `getvar`/`projection`/
 statistics via their `mask=` keyword without copying the data.
+
+A condition inherits [`getvar`](@ref)'s defaults, so give it the same frame you would give
+`getvar`: `center` (with `center_unit`) for a quantity measured from a point, and `vcenter`
+for one measured in a velocity frame. Without `center`, a radius such as `:r_cylinder` is
+measured from the box corner. Without `vcenter`, `:mach` and the other velocity-derived
+quantities are in the box frame, which on a rotating disc is not the number you want.
 """
-getmask(obj, c::FilterCondition) = BitVector(_mask(c, obj))
-getmask(obj, quantity::Symbol, pred; unit::Symbol=:standard) =
-    BitVector(pred.(_qvals(obj, quantity, unit)))
+getmask(obj, c::FilterCondition; center=nothing, center_unit::Symbol=:standard,
+        vcenter=nothing) =
+    BitVector(_mask(c, obj; center=center, center_unit=center_unit, vcenter=vcenter))
+getmask(obj, quantity::Symbol, pred; unit::Symbol=:standard, center=nothing,
+        center_unit::Symbol=:standard, vcenter=nothing) =
+    BitVector(pred.(_qvals(obj, quantity, unit; center=center, center_unit=center_unit,
+                           vcenter=vcenter)))
 
 """
     getmask(obj, region::AbstractRegion) -> BitVector
@@ -187,13 +204,22 @@ compose with `&`/`|`/`!`; several positional conditions are AND-combined. The `q
 ```julia
 hot   = filterdata(gas, Above(:T, 1e4; unit=:K))
 cold_dense = filterdata(gas, Below(:T, 1e3; unit=:K) & Above(:rho, 100; unit=:nH))
-disc  = filterdata(gas, InRange(:r_cylinder, 0, 15; unit=:kpc), Below(:vz, 50; unit=:km_s))
-projection(hot, :sd, :Msol_pc2)        # the result is a normal Mera object
+disc  = filterdata(gas, InRange(:r_cylinder, 0, 15; unit=:kpc), center=[:bc])
 ```
+
+`center`, `center_unit` and `vcenter` are passed straight to [`getvar`](@ref) and default to
+its defaults, which means a radius is measured from the box corner and a velocity-derived
+quantity is in the box frame. Give them whenever the condition names a quantity that depends
+on where the object is, or on how fast it moves:
+
+```julia
+filterdata(gas, InRange(:r_cylinder, 0, 10; unit=:kpc), center=[:bc])   # about the box centre
+filterdata(gas, Above(:mach, 1), vcenter=:auto)                        # in the gas rest frame
 """
-function filterdata(obj, c::FilterCondition; verbose::Bool=true)
+function filterdata(obj, c::FilterCondition; center=nothing, center_unit::Symbol=:standard,
+                    vcenter=nothing, verbose::Bool=true)
     verbose = checkverbose(verbose)
-    mask = _mask(c, obj)
+    mask = _mask(c, obj; center=center, center_unit=center_unit, vcenter=vcenter)
     data = obj.data
     cols = IndexedTables.columns(data)
     newdata = IndexedTables.table(map(col -> col[mask], cols); pkey = collect(IndexedTables.pkeynames(data)))
@@ -203,11 +229,11 @@ function filterdata(obj, c::FilterCondition; verbose::Bool=true)
     end
     return _copy_with_data(obj, newdata)
 end
-filterdata(obj, c1::FilterCondition, c2::FilterCondition, rest::FilterCondition...; verbose::Bool=true) =
-    filterdata(obj, foldl(&, (c1, c2, rest...)); verbose=verbose)
-filterdata(obj, quantity::Symbol, pred; unit::Symbol=:standard, verbose::Bool=true) =
-    filterdata(obj, _PredCond(quantity, pred, unit); verbose=verbose)
+filterdata(obj, c1::FilterCondition, c2::FilterCondition, rest::FilterCondition...; kw...) =
+    filterdata(obj, foldl(&, (c1, c2, rest...)); kw...)
+filterdata(obj, quantity::Symbol, pred; unit::Symbol=:standard, kw...) =
+    filterdata(obj, _PredCond(quantity, pred, unit); kw...)
 
 # adapter so the quantity/predicate shorthand reuses the same machinery
 struct _PredCond <: FilterCondition; quantity::Symbol; pred; unit::Symbol; end
-_mask(c::_PredCond, obj) = c.pred.(_qvals(obj, c.quantity, c.unit))
+_mask(c::_PredCond, obj; kw...) = c.pred.(_qvals(obj, c.quantity, c.unit; kw...))
