@@ -103,7 +103,6 @@ println("gas cells = ", length(gas.data), ",  threads = ", Threads.nthreads())
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Mera v1.8.0
 gas cells = 28320979,  threads = 8
 ```
 
@@ -124,7 +123,7 @@ fig
 ```
 
 ```
-VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.3 %   (23.0 s)
+VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.3 %   (23.5 s)
 VolumeLook(:rho in :nH, log (-2.0, 2.0), :inferno, opacity (0.0, 1.0), exposure 2.5, τ=1 over 120.0 pc)
 ```
 
@@ -315,7 +314,7 @@ catches four cells and draws nothing.
   appears. That one setting is the whole difference here.
 
 ```julia
-shells = [1e-3, 1e-1, 1e1]                # cm⁻³: three very different scales of structure
+shells = [1e-3, 1e-1, 1e1]               # cm⁻³: three very different scales of structure
 alphas = [0.25, 0.30, 0.80]              # the surface that wraps everything is the faintest
 expos  = [6, 7, 14]                      # a small surface catches less light
 labels = ["10⁻³ cm⁻³", "10⁻¹ cm⁻³", "10 cm⁻³"]
@@ -349,14 +348,20 @@ colour-blind readers. Two surfaces at ±100 km/s then separate the gas coming to
 gas going away, which for a disc seen at 70° splits it cleanly in half. On a linear scale
 `iso_width` is in the units of the quantity, so `iso_width=8` is a shell 8 km/s wide.
 
+Keep those two surfaces **translucent**, with a small `iso_alpha` and a long `tau_unit_length`.
+Made solid they fill in as two flat blocks of colour and the picture says only which half is
+which. Translucent, the near side and the far side of each surface show through one another, the
+two colours interleave where the arms cross the line of sight, and the rotation becomes visible
+rather than merely labelled.
+
 ```julia
 fig = Figure(size=(1150, 380))
 mt = volumerender(gas, :T; unit=:K, colorrange=(1e6, 1e7), colormap=:plasma, opacity=(0.0, 0.5),
                   opacity_gamma=6, tau_unit_length=[900, :pc], exposure=8, panel...)
 show_image!(fig[1, 1], mt; title="temperature: the 10⁶ to 10⁷ K phase")
 mv = volumerender(gas, :vlos; unit=:km_s, scale=:linear, colorrange=(-150, 150), colormap=:vik,
-                  opacity=(0.0, 0.0), iso=[-100.0, 100.0], iso_alpha=[0.6, 0.6], iso_width=8.0,
-                  tau_unit_length=[400, :pc], exposure=8, panel...)
+                  opacity=(0.0, 0.0), iso=[-100.0, 100.0], iso_alpha=[0.2, 0.2], iso_width=8.0,
+                  tau_unit_length=[1800, :pc], exposure=5, panel...)
 show_image!(fig[1, 2], mv; title="line of sight velocity: ±100 km/s")
 fig
 ```
@@ -496,7 +501,11 @@ its slope is the exponent, printed above the figure.
   about twice the time instead of sixty-four times.
 * **Right: time against the number of cells.** Three points, because the volume is cut three ways
   and not four: spheres of 4, 8 and 16 kpc radius around the centre. The grey dashed line is
-  exactly linear and the measurement lies on it.
+  exactly linear, and the measurement runs parallel to it, a touch steeper at cells^1.1, because a
+  larger volume also holds more of the coarse cells that each cover many pixels.
+
+In both panels the grey line is what the cost would be if it followed the axis one for one. On
+the left the measurement stays far below it, on the right it lies along it.
 
 ```julia
 look_s = volumelook(gas, :rho; unit=:nH, colorrange=(1e-2, 1e2), opacity_gamma=2.5,
@@ -528,7 +537,9 @@ println("\ntime ~ pixels^", round(slope(pix, tpix), digits=2),
 fig = Figure(size=(1000, 380))
 ax1 = Axis(fig[1, 1], xscale=log10, yscale=log10, xlabel="megapixels", ylabel="time [s]",
            title="resolution: almost free")
-scatterlines!(ax1, pix, tpix, color=:steelblue)
+scatterlines!(ax1, pix, tpix, color=:steelblue, label="measured")
+lines!(ax1, pix, tpix[1] .* pix ./ pix[1], color=:gray, linestyle=:dash, label="linear")
+axislegend(ax1, position=:lt, framevisible=false)
 ax2 = Axis(fig[1, 2], xscale=log10, yscale=log10, xlabel="million cells", ylabel="time [s]",
            title="cells: a straight line")
 scatterlines!(ax2, ncell, tcell, color=:darkorange)
@@ -538,17 +549,17 @@ fig
 ```
 
 ```
-pixel size 240 pc: (137, 95)  6.81 s
-pixel size 120 pc: (271, 187)  6.89 s
-pixel size 60 pc: (539, 372)  8.66 s
-pixel size 30 pc: (1075, 742)  13.3 s
-sphere of 4 kpc: 2427002 cells  0.69 s
-sphere of 8 kpc: 6626805 cells  2.42 s
-sphere of 16 kpc: 20737653 cells  7.08 s
-time ~ pixels^0.16   and   time ~ cells^1.09
+pixel size 240 pc: (137, 95)  7.41 s
+pixel size 120 pc: (271, 187)  7.37 s
+pixel size 60 pc: (539, 372)  9.4 s
+pixel size 30 pc: (1075, 742)  15.19 s
+sphere of 4 kpc: 2427002 cells  0.84 s
+sphere of 8 kpc: 6626805 cells  2.49 s
+sphere of 16 kpc: 20737653 cells  7.73 s
+time ~ pixels^0.17   and   time ~ cells^1.03
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_32_14.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_32_15.png)
 
 ## 14. What it is, and what it is not
 
