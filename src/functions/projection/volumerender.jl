@@ -694,11 +694,12 @@ function _volume_setup(dataobject::HydroDataType, l::VolumeLook; direction=:z, l
                        angle_unit::Symbol=:deg, xrange=[missing, missing], yrange=[missing, missing],
                        zrange=[missing, missing], center=[0., 0., 0.], range_unit::Symbol=:standard,
                        res::Union{Nothing,Real}=nothing, pxsize=nothing, mask=[false],
-                       verbose::Bool=false, kwargs...)
+                       interpolate::Bool=false, verbose::Bool=false, kwargs...)
     isempty(kwargs) || throw(ArgumentError(
         "volumerender does not take: $(join(string.(keys(kwargs)), ", ")). Supported view keywords: " *
         "direction, los, up, inclination, azimuth, axis, position_angle, angle_unit, " *
-        "xrange, yrange, zrange, center, range_unit, pxsize, res, mask, verbose, max_threads"))
+        "xrange, yrange, zrange, center, range_unit, pxsize, res, mask, interpolate, verbose, " *
+        "max_threads"))
     info = dataobject.info
     boxlen = dataobject.boxlen
     data = dataobject.data
@@ -756,14 +757,102 @@ function _volume_setup(dataobject::HydroDataType, l::VolumeLook; direction=:z, l
 
     # values, colour index and opacity per cell; fully transparent cells are dropped
     v = _quantity_values(dataobject, l.quantity, l.unit, cam_w)
+    # the colour range lives in log space for a log scale, and so do the slopes
+    xv = l.scale === :log ? [x > 0 ? log10(x) : NaN for x in v] : copy(v)
     idx = Int[]
     @inbounds for i in eachindex(sel)
         sel[i] || continue
         _look_alpha(l, _look_t(l, v[i])) > 0 && push!(idx, i)
     end
-    return (; idx, xs=x_cam[idx], ys=y_cam[idx], cs=cellsize[idx], vs=v[idx],
-            grid_extent=(x0, x1, y0, y1), nx, ny, pixsize, cam_right, cam_up, cam_w,
+    gas = gbs = nothing
+    if interpolate && !isempty(idx)
+        # slopes come from the whole field, not from the cells that survived the drop: a cell
+        # just outside the band is exactly the neighbour that tells the band where to end
+        ga, gb = _cell_slopes(data, xv, level, boxlen, dataobject.lmax, cam_right, cam_up)
+        gas = ga[idx]; gbs = gb[idx]
+    end
+    return (; idx, xs=x_cam[idx], ys=y_cam[idx], cs=cellsize[idx], vs=v[idx], xvs=xv[idx],
+            gas, gbs, grid_extent=(x0, x1, y0, y1), nx, ny, pixsize, cam_right, cam_up, cam_w,
             level, data, ncells, center, pivot, boxlen, info)
+end
+
+# Piecewise-linear reconstruction of the field inside a cell.
+#
+# A cell carries a single value, so a narrow band selects whole cells and its boundary is
+# quantised to the grid: the picture shows the cells as blocks, and where the field varies
+# smoothly they line up into concentric contour rings. Giving the value a slope inside the cell,
+# reconstructed from its neighbours, is the volume-rendering equivalent of sampling an
+# interpolated field rather than a blocky one, which is what removes them.
+#
+# The value is evaluated at the midpoint of each chord, so only the two slopes the camera can see
+# are needed, along `cam_right` and `cam_up`. That is two numbers per cell instead of three, and
+# two multiply-adds per pixel.
+#
+# Slopes are taken in the space the colour range lives in, log10 for a log scale, so a band that
+# is narrow in dex stays narrow after the reconstruction.
+function _cell_slopes(data, xv, level, boxlen, lmax, cam_right, cam_up)
+    n = length(xv)
+    bits = max(1, Int(lmax))
+    3 * bits + 5 <= 63 || throw(ArgumentError(
+        "volumerender: interpolate=true needs lmax <= 19, got $lmax"))
+    cx = select(data, :cx); cy = select(data, :cy); cz = select(data, :cz)
+    key(i) = (UInt64(level[i]) << (3bits)) | (UInt64(cx[i]) << (2bits)) |
+             (UInt64(cy[i]) << bits) | UInt64(cz[i])
+    keys = Vector{UInt64}(undef, n)
+    @inbounds for i in 1:n
+        keys[i] = key(i)
+    end
+    # the table is keyed on (level, cx, cy, cz), so this is normally already in order
+    perm = issorted(keys) ? nothing : sortperm(keys)
+    sorted = perm === nothing ? keys : keys[perm]
+
+    @inline function at(k::UInt64)
+        j = searchsortedfirst(sorted, k)
+        (j <= n && sorted[j] == k) || return 0
+        return perm === nothing ? j : perm[j]
+    end
+
+    ga = zeros(Float64, n); gb = zeros(Float64, n)
+    a = (Float64(cam_right[1]), Float64(cam_right[2]), Float64(cam_right[3]))
+    b = (Float64(cam_up[1]),    Float64(cam_up[2]),    Float64(cam_up[3]))
+    Threads.@threads for i in 1:n
+        @inbounds begin
+            isfinite(xv[i]) || continue
+            Δ = boxlen / 2.0^level[i]
+            base = (UInt64(level[i]) << (3bits))
+            lo = xv[i]; hi = xv[i]
+            g1 = g2 = g3 = 0.0
+            base_xy = UInt64(cx[i]) << 2bits | UInt64(cy[i]) << bits
+            for d in 1:3
+                shift = d == 1 ? 2bits : d == 2 ? bits : 0
+                c = d == 1 ? cx[i] : d == 2 ? cy[i] : cz[i]
+                rest = d == 1 ? UInt64(cy[i]) << bits | UInt64(cz[i]) :
+                       d == 2 ? UInt64(cx[i]) << 2bits | UInt64(cz[i]) :
+                                base_xy
+                jp = at(base | (UInt64(c + 1) << shift) | rest)
+                jm = c > 1 ? at(base | (UInt64(c - 1) << shift) | rest) : 0
+                vp = jp == 0 ? NaN : xv[jp]
+                vm = jm == 0 ? NaN : xv[jm]
+                isfinite(vp) && (lo = min(lo, vp); hi = max(hi, vp))
+                isfinite(vm) && (lo = min(lo, vm); hi = max(hi, vm))
+                gd = isfinite(vp) && isfinite(vm) ? (vp - vm) / (2Δ) :
+                     isfinite(vp) ? (vp - xv[i]) / Δ :
+                     isfinite(vm) ? (xv[i] - vm) / Δ : 0.0
+                d == 1 ? (g1 = gd) : d == 2 ? (g2 = gd) : (g3 = gd)
+            end
+            # limit the slope so the reconstruction never leaves the range the neighbours span,
+            # otherwise a steep cell overshoots and invents values the data does not have
+            reach = 0.5Δ * (abs(g1) + abs(g2) + abs(g3))
+            room = min(xv[i] - lo, hi - xv[i])
+            if reach > room
+                f = room > 0 ? room / reach : 0.0
+                g1 *= f; g2 *= f; g3 *= f
+            end
+            ga[i] = g1 * a[1] + g2 * a[2] + g3 * a[3]
+            gb[i] = g1 * b[1] + g2 * b[2] + g3 * b[3]
+        end
+    end
+    return ga, gb
 end
 
 # optical depth map at sigma = 1, used to pick the automatic strength (order does not matter)
@@ -858,15 +947,26 @@ end
 
 # one chunk of the ordered compositing
 function _volume_chunk!(R, G, B, T, V, A, order, s, l::VolumeLook)
+    ga, gb = s.gas, s.gbs
+    x_min, y_min = s.grid_extent[1], s.grid_extent[3]
+    pxx = (s.grid_extent[2] - x_min) / s.nx; pxy = (s.grid_extent[4] - y_min) / s.ny
+    lo, hi = l.colorrange; inv_span = 1.0 / (hi - lo)
     _volume_cells(order, s) do i, ix, iy, ℓ
         @inbounds begin
-            t = _look_t(l, s.vs[i])
+            if ga === nothing
+                t = _look_t(l, s.vs[i]); vi = s.vs[i]
+            else                      # the value at the midpoint of this chord, not at the centre
+                xvi = s.xvs[i] + ga[i] * (x_min + (ix - 0.5) * pxx - s.xs[i]) +
+                                 gb[i] * (y_min + (iy - 0.5) * pxy - s.ys[i])
+                t = clamp((xvi - lo) * inv_span, 0.0, 1.0)
+                vi = l.scale === :log ? exp10(xvi) : xvi
+            end
             α = -expm1(-_look_alpha(l, t) * l.sigma * ℓ)
             α > 0 || return nothing
             col = l.lut[clamp(floor(Int, t * 256) + 1, 1, 256)]
             w = T[ix, iy] * α
             R[ix, iy] += w * col.r; G[ix, iy] += w * col.g; B[ix, iy] += w * col.b
-            V[ix, iy] += w * s.vs[i]; A[ix, iy] += w
+            V[ix, iy] += w * vi; A[ix, iy] += w
             T[ix, iy] *= 1 - α
         end
         nothing

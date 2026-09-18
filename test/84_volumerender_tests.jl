@@ -257,6 +257,32 @@ _vmid(m) = (size(m.alpha, 1) ÷ 2, size(m.alpha, 2) ÷ 2)
                            Base.structdiff(kw, (iso_width=0,))..., iso_width=[-0.1])
     end
 
+    @testset "interpolate: a slope inside each cell" begin
+        # a field that rises linearly across the box: reconstructed inside a cell it is exact,
+        # so the visible value at a pixel follows the ramp instead of stepping from cell to cell
+        gas = _vr_gas(4; rho=(x, y, z) -> 1 + 3x)
+        kw = (scale=:linear, colorrange=(0.5, 4.5), opacity=(1.0, 1.0),
+              tau_unit_length=[0.02, :standard], direction=:z, res=32, verbose=false)
+        flat = volumerender(gas, :rho; kw...)
+        smooth = volumerender(gas, :rho; interpolate=true, kw...)
+        @test size(smooth.image) == size(flat.image)
+        row(m) = [m.value[ix, size(m.value, 2) ÷ 2] for ix in 1:size(m.value, 1)]
+        # the steps of the blocky version are bigger than those of the reconstructed one
+        dflat = diff(filter(isfinite, row(flat)))
+        dsm   = diff(filter(isfinite, row(smooth)))
+        @test maximum(abs, dsm) < maximum(abs, dflat)
+        @test std(dsm) < std(dflat)                       # a ramp, not a staircase
+        # a uniform box has nothing to reconstruct, so nothing may change
+        flatgas = _vr_gas(4)
+        a = volumerender(flatgas, :rho; kw...)
+        b = volumerender(flatgas, :rho; interpolate=true, kw...)
+        fin = isfinite.(a.value)
+        @test fin == isfinite.(b.value)
+        @test a.value[fin] ≈ b.value[fin]
+        @test all(p -> abs(a.image[p].r - b.image[p].r) < 1e-12, eachindex(a.image))
+        @test flat.look === flat.look                     # the look is untouched by interpolation
+    end
+
     @testset "line-of-sight velocity" begin
         # the box rotates about +z, so seen along x one half approaches and the other recedes
         gas = _vr_gas(4)
