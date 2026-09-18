@@ -172,15 +172,19 @@ makedocs(modules = [Mera],
                           # notebook with the pipeline detail in ?projection and the guarantees in
                           # the test suite (Appendix B).
                           "Off-axis"                     => "06_offaxis_Projection.md",
-                          "Volume Rendering"             => "17_multi_Volume_Rendering.md"],
+                          # Both ways of making a volume rendering sit together: Mera's own
+                          # renderer, and the VTK export for ParaView. They used to be one nav
+                          # group apart, which hid the choice from the reader.
+                          "Volume Rendering" => Any[
+                              "In Mera"             => "17_multi_Volume_Rendering.md",
+                              "ParaView: Intro"     => "paraview/paraview_intro.md",
+                              "ParaView: Hydro"     => "paraview/08_hydro_VTK_export.md",
+                              "ParaView: Particles" => "paraview/08_particles_VTK_export.md"]],
 
-                      "Data & Visualization" => Any[
+                      "Data" => Any[
                           "MERA-Files"          => Any[ "Mera-Files" => "07_multi_Mera_Files.md",
                                                         "Converter"  => "07_1_multi_Mera_Files_Converter.md"],
-                          "Export/Import (ASCII, binary)" => "examples/ExportImportData.md",
-                          "Volume Rendering"    => Any[ "Intro"     => "paraview/paraview_intro.md",
-                                                        "Hydro"     => "paraview/08_hydro_VTK_export.md",
-                                                        "Particles" => "paraview/08_particles_VTK_export.md"]],
+                          "Export/Import (ASCII, binary)" => "examples/ExportImportData.md"],
 
                       # Grouped by what the reader is trying to do, not by how advanced it is.
                       # Notifications sit here because telling you a long read has finished is part
