@@ -35,9 +35,37 @@ For maps with physical units use [`projection`](@ref).
 All colour maps on this page are colour-blind friendly: `:viridis`, `:cividis`, `:magma`,
 `:inferno` and `:plasma`. If you want the reach of a rainbow, use a scientific one such as
 `:roma` or `:batlow` (Crameri), which keep an even lightness and stay readable for colour-blind
-readers.
+readers. For a signed quantity, one that runs from negative through zero to positive, use
+a diverging map such as `:vik` or `:berlin`.
 
-## Setup
+## 1. Every parameter at a glance
+
+The whole renderer is this table. Everything below it is one of these settings varied on the
+same galaxy, so you can come back here once you know what you are looking for.
+
+| parameter | what it decides |
+|:--|:--|
+| `unit` | the unit the quantity is read in, e.g. `:nH` for a density in cm⁻³ |
+| `scale` | `:log` (default) or `:linear`: how values are spread across the colour range |
+| `colorrange=(lo, hi)` | which values get colour. Below `lo` is transparent (with `opacity` starting at 0), above `hi` looks like `hi`. Without it, `percentiles` of the cell values are used. |
+| `colormap` | the colours; `:viridis`, `:cividis`, `:magma`, `:inferno`, `:plasma`, or `:roma`/`:batlow` |
+| `opacity=(lo, hi)` | the ends of the opacity ramp across the colour range |
+| `opacity_gamma` | bends that ramp; above 1 keeps faint gas transparent so only the densest parts are solid |
+| `iso=[…]`, `iso_width`, `iso_alpha` | surfaces at chosen values (section 8) |
+| `tau_unit_length=[L, :pc]` | the length over which the most opaque gas reaches optical depth 1 |
+| `tau_target` | used instead, when `tau_unit_length` is not given: the median optical depth of the map |
+| `exposure` | brightens the finished picture, like a camera exposure |
+| `tone` | what happens to light brighter than white: `:aces` (default) and `:reinhard` bend it so bright gas fades toward white and keeps its detail; `:linear` cuts it off, which holds full saturation and flattens bright regions |
+| `background` | `:black` (default), `:white`, or any colour |
+| `supersample` | sub-pixels per side, `:auto` by default |
+| view keywords | `direction`, `inclination`, `azimuth`, `axis`, `position_angle`, `center`, `range_unit`, `xrange`/`yrange`/`zrange`, `pxsize` or `res` |
+
+The next sections show what the important ones do to the same galaxy.
+
+The ones that decide whether a picture works at all are `colorrange`, `opacity_gamma`,
+`tau_unit_length` and `exposure`, in that order.
+
+## 2. Setup
 
 One galaxy, two views: a detailed one at 30 pc pixels for single pictures, and a coarser one at
 60 pc for the panels that compare settings side by side.
@@ -75,10 +103,11 @@ println("gas cells = ", length(gas.data), ",  threads = ", Threads.nthreads())
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[ Info: Mera v1.8.0
 gas cells = 28320979,  threads = 8
 ```
 
-## 1. The first picture
+## 3. The first picture
 
 `volumerender` needs a quantity. Everything else has a default, and the opacity strength is taken
 from the data unless you set it.
@@ -95,11 +124,11 @@ fig
 ```
 
 ```
-VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.3 %   (23.4 s)
+VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.3 %   (23.0 s)
 VolumeLook(:rho in :nH, log (-2.0, 2.0), :inferno, opacity (0.0, 1.0), exposure 2.5, τ=1 over 120.0 pc)
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_5_4.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_6_4.png)
 
 These four settings are a good starting point for a galaxy, and the rest of the page varies them
 one at a time:
@@ -112,28 +141,7 @@ one at a time:
   saturated patch. Rendering with `tone=:linear` at the same exposure looks harsher, because
   every value above white is simply cut.
 
-## 2. Every parameter, and what it does
-
-| parameter | what it decides |
-|:--|:--|
-| `unit` | the unit the quantity is read in, e.g. `:nH` for a density in cm⁻³ |
-| `scale` | `:log` (default) or `:linear`: how values are spread across the colour range |
-| `colorrange=(lo, hi)` | which values get colour. Below `lo` is transparent (with `opacity` starting at 0), above `hi` looks like `hi`. Without it, `percentiles` of the cell values are used. |
-| `colormap` | the colours; `:viridis`, `:cividis`, `:magma`, `:inferno`, `:plasma`, or `:roma`/`:batlow` |
-| `opacity=(lo, hi)` | the ends of the opacity ramp across the colour range |
-| `opacity_gamma` | bends that ramp; above 1 keeps faint gas transparent so only the densest parts are solid |
-| `iso=[…]`, `iso_width`, `iso_alpha` | surfaces at chosen values (section 7) |
-| `tau_unit_length=[L, :pc]` | the length over which the most opaque gas reaches optical depth 1 |
-| `tau_target` | used instead, when `tau_unit_length` is not given: the median optical depth of the map |
-| `exposure` | brightens the finished picture, like a camera exposure |
-| `tone` | what happens to light brighter than white: `:aces` (default) and `:reinhard` bend it so bright gas fades toward white and keeps its detail; `:linear` cuts it off, which holds full saturation and flattens bright regions |
-| `background` | `:black` (default), `:white`, or any colour |
-| `supersample` | sub-pixels per side, `:auto` by default |
-| view keywords | `direction`, `inclination`, `azimuth`, `axis`, `position_angle`, `center`, `range_unit`, `xrange`/`yrange`/`zrange`, `pxsize` or `res` |
-
-The next sections show what the important ones do to the same galaxy.
-
-## 3. The transfer functions themselves
+## 4. The transfer functions themselves
 
 Two curves decide everything: how a value becomes a **colour**, and how it becomes an **opacity**.
 Both live on the colour range. The plot below shows them for the settings used above and for two
@@ -171,13 +179,13 @@ rowsize!(fig.layout, 2, Relative(0.22))
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_8_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_9_1.png)
 
 The opacity curve says how solid a cell of a given value is; `tau_unit_length` then turns that
 into a real optical depth over a real length. The colour curve says which colour it gets. Nothing
 else is hidden: these two curves plus the length scale are the whole model.
 
-## 4. Opacity is set per length
+## 5. Opacity is set per length
 
 A short `tau_unit_length` makes the gas solid, so you see its surface; a long one makes it glassy
 and you look through the disc.
@@ -192,7 +200,7 @@ end
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_11_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_12_1.png)
 
 Because opacity is per length, the picture does not depend on how finely you sample it. The same
 render at 240 pc and at 30 pc pixels differs in sharpness, not in brightness or depth.
@@ -215,9 +223,9 @@ pixels of 240 pc: (137, 95), filled 14.8 %
 pixels of 30 pc: (1075, 742), filled 15.3 %
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_13_5.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_14_5.png)
 
-## 5. When a picture comes out too dark
+## 6. When a picture comes out too dark
 
 A thin, see-through rendering collects little light, so it looks dark. Four levers help, in this
 order:
@@ -249,11 +257,26 @@ show_image!(fig[2, 2], volumerender(gas, :rho; unit=:nH, colorrange=(1e-2, 1e2),
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_15_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_16_1.png)
 
-## 6. Colour range, ramp and gamma
+## 7. Colour range, ramp and gamma
 
-The same three knobs, each on its own.
+The three panels use the same data, the same opacity per length and the same exposure. Only the
+colour range and the shape of the opacity ramp change, and that alone decides how far into the
+galaxy you can see.
+
+* **Wide range, straight ramp.** The range starts at 10⁻⁴ cm⁻³, so the thin halo already gets
+  colour and opacity. Every line of sight collects a little of it and the disc vanishes behind an
+  even haze. This is the most common way to lose a rendering.
+* **Wide range, gamma 3.** The same range, but the ramp is bent: a cell only becomes opaque near
+  the top of it. The haze turns transparent, the spiral arms and the holes blown by feedback come
+  back, and the faint outer gas stays as a halo around them.
+* **Narrow range, gamma 2.5.** The range starts at 10⁻² cm⁻³, so the halo gets no opacity at all
+  and the whole colour scale is spent on the disc. This is the crispest of the three, at the price
+  of the outer gas.
+
+The rule: **the colour range decides what is in the picture, the gamma decides what is solid.**
+Widen the range to keep the faint gas, then raise the gamma until it stops hiding the structure.
 
 ```julia
 fig = Figure(size=(1150, 380))
@@ -268,74 +291,77 @@ end
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_17_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_18_1.png)
 
-## 7. Isosurfaces
+## 8. Isosurfaces
 
-`iso=[…]` puts a **surface** at each value: only gas near it is opaque, everything else stays
-see-through. Values far apart pick out structures of very different size, from the small to the
-large. Here the three surfaces are **10⁻³**, **10⁻¹** and **10 cm⁻³**, which on this galaxy pick
-out the outer envelope, the shells that fill the disc, and the small dense clumps inside it.
+`iso=[…]` puts a **surface** at each value: only gas within `iso_width` of it is opaque,
+everything else stays see-through. Values far apart pick out structures of very different size.
+The three panels use **10⁻³**, **10⁻¹** and **10 cm⁻³**.
 
-Choose values the data actually has: this galaxy reaches 103 cm⁻³, and a surface at 100 cm⁻³
-catches four cells, so it draws nothing.
+Choose values the data actually has. This galaxy reaches 103 cm⁻³, so a surface at 100 cm⁻³
+catches four cells and draws nothing.
 
-* `iso_width` is the half width of a shell in **dex**, because the scale is logarithmic. Keep it
-  small (0.05) so a shell stays thin and you can see through it.
-* `iso_alpha` is how solid the centre of a shell is, one number or **one per shell**. The
-  outermost surface covers by far the largest area, so give it the smallest value, here
-  `[0.12, 0.3, 0.7]`, otherwise it hides everything inside.
-* `opacity=(0, 0)` draws the surfaces alone, and a long `tau_unit_length` with a higher
-  `exposure` keeps them translucent and still bright.
+* `iso_width` is the half width of a shell, in the units of the colour scale: **dex** when
+  `scale=:log`, the units of the quantity when `scale=:linear`. Keep it small, 0.04 dex here, so
+  the shell stays thin enough to see through.
+* `iso_alpha` is how solid the centre of a shell is, one number or **one per shell**. A surface at
+  a low value wraps around everything inside it, so it needs the smallest value of the three.
+* `exposure` rises from panel to panel. A surface at a high value is small and catches little
+  light, so it needs more.
+* **Leave a faint haze underneath.** A surface on its own has a single colour, nothing says which
+  part of it is near and which is far, and it reads as a tangle. `opacity=(0, 0.04)` keeps a thin
+  continuous glow between the surfaces, the shell then sits in front of something, and its shape
+  appears. That one setting is the whole difference here.
 
 ```julia
-shells  = [1e-3, 1e-1, 1e1]
-alphas  = [0.12, 0.3, 0.7]          # the widest surface is the faintest
-iso_kw  = (unit=:nH, colorrange=(1e-4, 1e3), colormap=:roma, opacity=(0.0, 0.0),
-           iso_width=0.05, tau_unit_length=[500, :pc])
-iso_all = volumerender(gas, :rho; iso=shells, iso_alpha=alphas, exposure=10, iso_kw..., view...)
-println(iso_all.look)
+shells = [1e-3, 1e-1, 1e1]                # cm⁻³: three very different scales of structure
+alphas = [0.25, 0.30, 0.80]              # the surface that wraps everything is the faintest
+expos  = [6, 7, 14]                      # a small surface catches less light
+labels = ["10⁻³ cm⁻³", "10⁻¹ cm⁻³", "10 cm⁻³"]
+iso_kw = (unit=:nH, colorrange=(1e-4, 1e3), colormap=:roma, iso_width=0.04,
+          opacity=(0.0, 0.04), opacity_gamma=2.5,      # the faint haze the surfaces sit in
+          tau_unit_length=[500, :pc])
 
-fig = Figure(size=(1150, 800))
-show_image!(fig[1, 1], iso_all; title="10⁻³, 10⁻¹ and 10 cm⁻³ together")
-# alone, each surface needs its own exposure: a small surface catches less light
-for (k, (v, a, e)) in enumerate(zip(shells, alphas, [8, 10, 28]))
+fig = Figure(size=(1150, 380))
+for (k, (v, a, e, lab)) in enumerate(zip(shells, alphas, expos, labels))
     mk = volumerender(gas, :rho; iso=[v], iso_alpha=a, exposure=e, iso_kw..., panel...)
-    show_image!(fig[2, k], mk; title="$(v) cm⁻³ alone")
+    show_image!(fig[1, k], mk; title=lab)
 end
 fig
 ```
 
-```
-VolumeLook(:rho in :nH, log (-4.0, 3.0), :roma, opacity (0.0, 0.0), 3 isosurface(s) at [0.001, 0.1, 10.0], exposure 10.0, τ=1 over 500.0 pc)
-```
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_20_1.png)
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_19_4.png)
+## 9. Other quantities
 
-## 8. Other quantities
+Any quantity works, and these two show what changes when the field is not a density.
 
-Any quantity works. One that fills the whole volume, such as temperature, easily turns into fog:
-give it a **long** `tau_unit_length`, a **narrow** `colorrange`, and `opacity_gamma > 1`.
+**Temperature** fills the whole volume, so a wide range turns it into fog. Give it a **narrow**
+`colorrange` around the phase you want, 10⁶ to 10⁷ K here, a **steep** `opacity_gamma` so only
+that phase is solid, and a **long** `tau_unit_length`: the hot gas is smooth and deep, and a short
+one would turn it into a wall. What is left is the hot outflow above and below the disc.
+
+**Line-of-sight velocity** is a quantity the renderer works out itself, `:vlos`, because it
+depends on where the camera is. It is signed, so it needs `scale=:linear`, a `colorrange`
+symmetric about zero and a diverging colour map; `:vik` is one that stays readable for
+colour-blind readers. Two surfaces at ±100 km/s then separate the gas coming toward you from the
+gas going away, which for a disc seen at 70° splits it cleanly in half. On a linear scale
+`iso_width` is in the units of the quantity, so `iso_width=8` is a shell 8 km/s wide.
 
 ```julia
 fig = Figure(size=(1150, 380))
-mt = volumerender(gas, :T; unit=:K, colorrange=(3e5, 1e7), colormap=:plasma, opacity=(0.0, 0.8),
-                  opacity_gamma=4, tau_unit_length=[1200, :pc], exposure=4, panel...)
-show_image!(fig[1, 1], mt; title="temperature: the hot gas only")
-mv = volumerender(gas, :v; unit=:km_s, colorrange=(50, 300), colormap=:cividis, opacity_gamma=3,
-                  tau_unit_length=[400, :pc], exposure=3, panel...)
-show_image!(fig[1, 2], mv; title="speed")
+mt = volumerender(gas, :T; unit=:K, colorrange=(1e6, 1e7), colormap=:plasma, opacity=(0.0, 0.5),
+                  opacity_gamma=6, tau_unit_length=[900, :pc], exposure=8, panel...)
+show_image!(fig[1, 1], mt; title="temperature: the 10⁶ to 10⁷ K phase")
+mv = volumerender(gas, :vlos; unit=:km_s, scale=:linear, colorrange=(-150, 150), colormap=:vik,
+                  opacity=(0.0, 0.0), iso=[-100.0, 100.0], iso_alpha=[0.6, 0.6], iso_width=8.0,
+                  tau_unit_length=[400, :pc], exposure=8, panel...)
+show_image!(fig[1, 2], mv; title="line of sight velocity: ±100 km/s")
 fig
 ```
 
-```
-[Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
-             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame).
-             (shown once per session; verbose(false) silences Mera's messages)
-```
-
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_21_3.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_22_1.png)
 
 Besides the picture, a render carries two maps: `alpha`, how much of each pixel is filled, and
 `value`, the value of the quantity you actually see along that line of sight.
@@ -352,9 +378,9 @@ Colorbar(fig[1, 4], hm2, label="log₁₀ n_H [cm⁻³]", height=Relative(0.8))
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_23_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_24_1.png)
 
-## 9. Choosing the view
+## 10. Choosing the view
 
 The view keywords are those of the off-axis [`projection`](@ref): `direction` (`:x`, `:y`, `:z`,
 `:faceon`, `:edgeon`), or `inclination` and `azimuth` about a reference `axis` (`:angmom` is the
@@ -375,9 +401,9 @@ end
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_25_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_26_1.png)
 
-## 10. Movies: orbits
+## 11. Movies: orbits
 
 `volumeorbit` turns the view around the object. It selects a **sphere** around the centre, so every
 frame shares one field of view and the galaxy does not appear to zoom, and it resolves the look
@@ -414,9 +440,9 @@ fig
 6 frames of (540, 543) pixels, one look: true
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_27_3.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_28_3.png)
 
-## 11. Movies: a camera path
+## 12. Movies: a camera path
 
 `volumepath` moves the camera between keyframes. Each keyframe can set `inclination`, `azimuth`,
 `position_angle`, `fov` (half the width of the picture, so smaller means closer) and `center`;
@@ -446,19 +472,31 @@ fig
 pixel size per frame [pc]: [72.6, 72.6, 72.6, 64.4, 34.2, 22.7]
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_29_3.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_30_3.png)
 
-## 12. How the cost scales
+## 13. How the cost scales
 
 Two numbers decide how long a render takes, and they behave very differently.
 
 * **The number of cells sets the cost**, in a straight line: twice the cells, twice the time. Cut
   the volume with `xrange`/`yrange`/`zrange` or a [`subregion`](@ref) and it gets faster in
   proportion.
-* **Pixels are nearly free.** Most cells are smaller than a pixel, and such a cell costs the same
-  whatever the resolution is. A finer picture is cheap; a bigger volume is not.
+* **Pixels are cheap.** Most cells are smaller than a pixel, and such a cell costs the same
+  whatever the resolution is, so only the few large cells feel the resolution. A finer picture is
+  cheap; a bigger volume is not.
 
 `supersample` adds a modest amount per level, not the square of it, for the same reason.
+
+Both plots below are measured while the page is built, on this galaxy, with one fixed look so that
+only the amount of work changes. Both axes are logarithmic, so a straight line is a power law and
+its slope is the exponent, printed above the figure.
+
+* **Left: time against megapixels.** Four points, one per pixel size: 240, 120, 60 and 30 pc.
+  The slope is about 0.15, so going from 240 pc to 30 pc pixels, sixty-four times as many, costs
+  about twice the time instead of sixty-four times.
+* **Right: time against the number of cells.** Three points, because the volume is cut three ways
+  and not four: spheres of 4, 8 and 16 kpc radius around the centre. The grey dashed line is
+  exactly linear and the measurement lies on it.
 
 ```julia
 look_s = volumelook(gas, :rho; unit=:nH, colorrange=(1e-2, 1e2), opacity_gamma=2.5,
@@ -500,19 +538,19 @@ fig
 ```
 
 ```
-pixel size 240 pc: (137, 95)  6.76 s
-pixel size 120 pc: (271, 187)  6.95 s
-pixel size 60 pc: (539, 372)  8.87 s
-pixel size 30 pc: (1075, 742)  12.75 s
-sphere of 4 kpc: 2427002 cells  0.76 s
-sphere of 8 kpc: 6626805 cells  2.44 s
-sphere of 16 kpc: 20737653 cells  7.12 s
-time ~ pixels^0.15   and   time ~ cells^1.05
+pixel size 240 pc: (137, 95)  6.81 s
+pixel size 120 pc: (271, 187)  6.89 s
+pixel size 60 pc: (539, 372)  8.66 s
+pixel size 30 pc: (1075, 742)  13.3 s
+sphere of 4 kpc: 2427002 cells  0.69 s
+sphere of 8 kpc: 6626805 cells  2.42 s
+sphere of 16 kpc: 20737653 cells  7.08 s
+time ~ pixels^0.16   and   time ~ cells^1.09
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_31_15.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_32_14.png)
 
-## 13. What it is, and what it is not
+## 14. What it is, and what it is not
 
 * **An illustration.** Colour and opacity are choices. Nothing here is a surface brightness or an
   optical depth of a real observation; use [`projection`](@ref) for maps with units.
