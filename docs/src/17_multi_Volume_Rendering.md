@@ -313,6 +313,44 @@ catches four cells and draws nothing.
   continuous glow between the surfaces, the shell then sits in front of something, and its shape
   appears. That one setting is the whole difference here.
 
+### When a surface comes out as scattered dots
+
+A surface is drawn from the cells whose value falls inside `iso_width`. Where the data holds few
+cells at that value, or where the quantity changes steeply from one cell to the next, the band
+catches isolated cells instead of a connected sheet, and the picture is speckled.
+
+Two different causes look alike, so it is worth telling them apart before changing settings.
+
+**Not enough samples.** A renderer that marches a ray in steps can step straight over a thin band.
+Mera does not march: every cell contributes its exact path length, and the cells are composited in
+their exact front-to-back order, so there is no step size, and the banding, moire and wood-grain
+patterns that come with ray marching do not arise. `supersample` decides how a pixel averages what
+lies behind it, not which cells exist. If raising it changes nothing, the dots are real cells and
+the cause is the other one.
+
+**Not enough data.** Then the cure has to act on the band or on the field, and the one that works
+is to **widen `iso_width`** until the shell holds enough cells to join up. That is the remedy the
+literature names. Engel, Kraus and Ertl (*High-Quality Pre-Integrated Volume Rendering Using
+Hardware-Accelerated Pixel Shading*, Graphics Hardware 2001) show that the sampling rate a volume
+rendering needs is the product of the Nyquist frequencies of the field and of the transfer
+function, so halving the width of a band doubles what it demands, and note that such artefacts
+"are frequently observed unless they are avoided by very smooth transfer functions". Knoll et al.
+(*Volume Ray Casting with Peak Finding and Differential Sampling*, IEEE TVCG 15, 1571, 2009) give
+the limiting case: an isosurface is a transfer function with a Dirac impulse in it, and drawing one
+without artefacts requires "either infinite sampling or smoothing of the transfer function".
+
+Two cautions on how to widen:
+
+* **Widen only where it is needed.** A wider band everywhere costs the detail a thin one buys.
+  Open it over the range that is thin, and leave it alone elsewhere.
+* **Do not widen until every band holds the same amount of gas.** A band that grows until it
+  reaches a nearby peak in the distribution shows you that peak rather than the value you asked
+  for, which is worse than speckle because it looks correct.
+
+The gallery recipe
+[A temperature sweep through a galaxy](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/004_temperature_sweep)
+does exactly this, with the numbers worked out on a real snapshot.
+
 ```julia
 shells = [1e-3, 1e-1, 1e1]               # cm⁻³: three very different scales of structure
 alphas = [0.25, 0.30, 0.80]              # the surface that wraps everything is the faintest
