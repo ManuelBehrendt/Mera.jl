@@ -764,15 +764,15 @@ function _volume_setup(dataobject::HydroDataType, l::VolumeLook; direction=:z, l
         sel[i] || continue
         _look_alpha(l, _look_t(l, v[i])) > 0 && push!(idx, i)
     end
-    gas = gbs = nothing
+    gas = gbs = gcs = nothing
     if interpolate && !isempty(idx)
         # slopes come from the whole field, not from the cells that survived the drop: a cell
         # just outside the band is exactly the neighbour that tells the band where to end
-        ga, gb = _cell_slopes(data, xv, level, boxlen, dataobject.lmax, cam_right, cam_up)
-        gas = ga[idx]; gbs = gb[idx]
+        ga, gb, gc = _cell_slopes(data, xv, level, boxlen, dataobject.lmax, cam_right, cam_up, cam_w)
+        gas = ga[idx]; gbs = gb[idx]; gcs = gc[idx]
     end
     return (; idx, xs=x_cam[idx], ys=y_cam[idx], cs=cellsize[idx], vs=v[idx], xvs=xv[idx],
-            gas, gbs, grid_extent=(x0, x1, y0, y1), nx, ny, pixsize, cam_right, cam_up, cam_w,
+            gas, gbs, gcs, grid_extent=(x0, x1, y0, y1), nx, ny, pixsize, cam_right, cam_up, cam_w,
             level, data, ncells, center, pivot, boxlen, info)
 end
 
@@ -790,7 +790,7 @@ end
 #
 # Slopes are taken in the space the colour range lives in, log10 for a log scale, so a band that
 # is narrow in dex stays narrow after the reconstruction.
-function _cell_slopes(data, xv, level, boxlen, lmax, cam_right, cam_up)
+function _cell_slopes(data, xv, level, boxlen, lmax, cam_right, cam_up, cam_w)
     n = length(xv)
     bits = max(1, Int(lmax))
     3 * bits + 5 <= 63 || throw(ArgumentError(
@@ -812,9 +812,10 @@ function _cell_slopes(data, xv, level, boxlen, lmax, cam_right, cam_up)
         return perm === nothing ? j : perm[j]
     end
 
-    ga = zeros(Float64, n); gb = zeros(Float64, n)
+    ga = zeros(Float64, n); gb = zeros(Float64, n); gc = zeros(Float64, n)
     a = (Float64(cam_right[1]), Float64(cam_right[2]), Float64(cam_right[3]))
     b = (Float64(cam_up[1]),    Float64(cam_up[2]),    Float64(cam_up[3]))
+    c = (Float64(cam_w[1]),     Float64(cam_w[2]),     Float64(cam_w[3]))
     Threads.@threads for i in 1:n
         @inbounds begin
             isfinite(xv[i]) || continue
@@ -825,12 +826,12 @@ function _cell_slopes(data, xv, level, boxlen, lmax, cam_right, cam_up)
             base_xy = UInt64(cx[i]) << 2bits | UInt64(cy[i]) << bits
             for d in 1:3
                 shift = d == 1 ? 2bits : d == 2 ? bits : 0
-                c = d == 1 ? cx[i] : d == 2 ? cy[i] : cz[i]
+                ci = d == 1 ? cx[i] : d == 2 ? cy[i] : cz[i]
                 rest = d == 1 ? UInt64(cy[i]) << bits | UInt64(cz[i]) :
                        d == 2 ? UInt64(cx[i]) << 2bits | UInt64(cz[i]) :
                                 base_xy
-                jp = at(base | (UInt64(c + 1) << shift) | rest)
-                jm = c > 1 ? at(base | (UInt64(c - 1) << shift) | rest) : 0
+                jp = at(base | (UInt64(ci + 1) << shift) | rest)
+                jm = ci > 1 ? at(base | (UInt64(ci - 1) << shift) | rest) : 0
                 vp = jp == 0 ? NaN : xv[jp]
                 vm = jm == 0 ? NaN : xv[jm]
                 isfinite(vp) && (lo = min(lo, vp); hi = max(hi, vp))
@@ -850,9 +851,10 @@ function _cell_slopes(data, xv, level, boxlen, lmax, cam_right, cam_up)
             end
             ga[i] = g1 * a[1] + g2 * a[2] + g3 * a[3]
             gb[i] = g1 * b[1] + g2 * b[2] + g3 * b[3]
+            gc[i] = g1 * c[1] + g2 * c[2] + g3 * c[3]
         end
     end
-    return ga, gb
+    return ga, gb, gc
 end
 
 # optical depth map at sigma = 1, used to pick the automatic strength (order does not matter)
@@ -955,7 +957,10 @@ function _volume_chunk!(R, G, B, T, V, A, order, s, l::VolumeLook)
         @inbounds begin
             if ga === nothing
                 t = _look_t(l, s.vs[i]); vi = s.vs[i]
-            else                      # the value at the midpoint of this chord, not at the centre
+            else                      # the value where this chord passes, not at the cell centre
+                # Across the picture the value is reconstructed from the slope. Along the ray it
+                # is not: that needs the chord split into sub-samples, which this renderer does
+                # not do, so a cell still contributes one slab of optical depth.
                 xvi = s.xvs[i] + ga[i] * (x_min + (ix - 0.5) * pxx - s.xs[i]) +
                                  gb[i] * (y_min + (iy - 0.5) * pxy - s.ys[i])
                 t = clamp((xvi - lo) * inv_span, 0.0, 1.0)
