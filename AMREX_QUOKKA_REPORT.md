@@ -39,8 +39,8 @@ Everything below was run on the production dataset at
 | `src/read_data/AMReX/reader_quokka.jl` | 394 | The **Quokka layer**: `metadata.yaml` (units), the component-name table, radiation groups and passive scalars, `Fields.yaml` particle dimensions, detection |
 | `scripts/jamr` | 1041 | The command-line tool |
 | `test/fixtures_amrex.jl` | 202 | A synthetic AMReX plotfile **writer** (the test fixture) |
-| `test/76_amrex_reader_tests.jl` | 398 | 96 assertions on the reader |
-| `test/77_jamr_cli_tests.jl` | 221 | 85 assertions on the CLI |
+| `test/83_amrex_reader_tests.jl` | 398 | 96 assertions on the reader |
+| `test/84_jamr_cli_tests.jl` | 221 | 85 assertions on the CLI |
 | `docs/src/amrex_reader.md` | 283 | User documentation |
 | `scripts/validation/yt_covering_grid.py` | 57 | Dumps a yt covering grid — the reference half of the cross-check |
 | `scripts/validation/compare_amrex_vs_yt.jl` | 79 | Compares Mera against that dump, cell by cell |
@@ -592,8 +592,8 @@ Three decisions worth naming:
 ## Tests
 
 ```bash
-julia --project=$MERA_DEV -e 'using Mera, Test; include("test/76_amrex_reader_tests.jl")'
-julia --project=$MERA_DEV -e 'using Mera, Test; include("test/77_jamr_cli_tests.jl")'
+julia --project=$MERA_DEV -e 'using Mera, Test; include("test/83_amrex_reader_tests.jl")'
+julia --project=$MERA_DEV -e 'using Mera, Test; include("test/84_jamr_cli_tests.jl")'
 julia --project=$MERA_DEV -e 'using Mera, Test; cd("test"); include("59_multicode_contract_tests.jl")'
 ```
 

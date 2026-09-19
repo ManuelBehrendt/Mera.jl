@@ -1,5 +1,5 @@
 # ====================================================================================
-# Synthetic AMReX plotfile writer — the fixture behind test/76_amrex_reader_tests.jl
+# Synthetic AMReX plotfile writer — the fixture behind test/83_amrex_reader_tests.jl
 #
 # No public multi-level AMReX dataset ships with Mera (the Quokka runs the reader was
 # developed against are single-level and tens of GB), and the part of the reader that
