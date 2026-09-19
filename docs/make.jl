@@ -171,7 +171,12 @@ makedocs(modules = [Mera],
                           # other two derived, so the material is now a single step-by-step
                           # notebook with the pipeline detail in ?projection and the guarantees in
                           # the test suite (Appendix B).
-                          "Off-axis"                     => "06_offaxis_Projection.md",
+                          # Two pages, on purpose. The tutorial teaches on a real galaxy; the
+                          # validation page is data free and tests instead, scoring the projection
+                          # against a sphere whose answers are known in closed form. Do not merge
+                          # them: the first would lose its narrative, the second its independence.
+                          "Off-axis" => Any[ "Tutorial"              => "06_offaxis_Projection.md",
+                                             "Validation (analytic)" => "offaxis_validation.md"],
                           # Both ways of making a volume rendering sit together: Mera's own
                           # renderer, and the VTK export for ParaView. They used to be one nav
                           # group apart, which hid the choice from the reader.

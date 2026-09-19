@@ -890,6 +890,21 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         end
     end
     # ========================================================
+    # A hydro cell has a volume, so :mass is an extensive map there and the pixels sum to the total
+    # mass. A particle has none, so :mass falls through to the generic branch and returns the
+    # mass-weighted mean PARTICLE mass in the pixel. Summing that map gives a number that means
+    # nothing and that drifts with the pixel size, which looks like a conservation failure. The
+    # conserving map for points is :sd. Say so once, rather than letting the user find out from a
+    # broken budget.
+    if :mass in selected_vars
+        hint(:particle_mass_not_extensive,
+             "projection(particles, :mass) is a mean, not a sum.",
+             "On cell data :mass is extensive and the map sums to the total mass.",
+             "A particle has no volume, so this map holds the mass-weighted mean particle mass.",
+             "For the mass per pixel use :sd and multiply by the pixel area:",
+             "    sum(p.maps[:sd]) * (p.pixsize * p.scale.pc)^2   # Msol, from :Msol_pc2";
+             verbose=verbose)
+    end
     weighting in (:mass, :volume, :sph, :voronoi) || throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default), :volume, :sph, or :voronoi."))
     if weighting == :mass
         use_sd_map = Mera.checkformaps(selected_vars, ranglecheck)
