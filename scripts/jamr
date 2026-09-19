@@ -1,0 +1,1041 @@
+#!/usr/bin/env julia
+# =====================================================================================
+# jamr — quick look at AMR simulation output, from the shell
+#
+# A command-line front end to Mera: point it at a plotfile (or a whole run directory)
+# and get a slice, a projection, a phase diagram or a table of numbers, without writing
+# a script. It is the Julia counterpart of Quokka's `scripts/python/quick_plot`, and
+# takes the same shape of arguments, but it reads through Mera's multi-code frontends —
+# so the same command works on a Quokka/AMReX plotfile, a RAMSES output, an Athena++
+# snapshot, and so on.
+#
+# The one thing it does that a plotting script usually does not: it decides what to READ
+# before it reads it. A field name and a window imply a set of stored components and a
+# set of AMR boxes; `jamr` resolves both and asks Mera for exactly that. On the 33 GB
+# Quokka box this was written against, `jamr slice -f rho` touches ~4 GB, not 33.
+#
+# Run `jamr --help` (or `jamr help <command>`) for the full option list.
+# =====================================================================================
+
+module JAMR
+
+# Make the script usable straight from a checkout: if Mera is not on the current load
+# path, fall back to the project this script lives in.
+if Base.find_package("Mera") === nothing
+    import Pkg
+    Pkg.activate(joinpath(@__DIR__, ".."); io=devnull)
+end
+
+using Mera
+using Printf
+using Statistics
+
+const VERSION = "0.1"
+
+# -------------------------------------------------------------------------------------
+# Field vocabulary
+# -------------------------------------------------------------------------------------
+#
+# A CLI field name resolves to (Mera symbol, unit, log?, colour map, kind). `kind` tells
+# the projection command how to reduce along the line of sight:
+#   :extensive — sum per unit area (a column density)
+#   :intensive — weighted average (a temperature, a velocity)
+# Anything not in the table is passed through as a bare symbol in code units, so a
+# plotfile-specific component (`scalar_0`, `Erad_1`, `gpot`, …) works without a change here.
+
+struct FieldSpec
+    sym::Symbol
+    unit::Symbol
+    log::Bool
+    cmap::String
+    kind::Symbol
+    label::String
+end
+
+const FIELD_ALIASES = Dict{String,String}(
+    "density" => "rho", "den" => "rho", "d" => "rho",
+    "nh" => "n", "n_h" => "n", "ndens" => "n", "number_density" => "n",
+    "t" => "temperature", "temp" => "temperature",
+    "velocity_x" => "vx", "velocity_y" => "vy", "velocity_z" => "vz",
+    "velocity" => "v", "speed" => "v",
+    "pressure" => "p",
+    "sigma" => "sd", "surface_density" => "sd", "column" => "sd",
+    "sound_speed" => "cs", "potential" => "gpot", "phi" => "gpot",
+)
+
+const FIELD_TABLE = Dict{String,FieldSpec}(
+    "rho"         => FieldSpec(:rho, :g_cm3, true,  "viridis", :intensive, "ρ [g cm⁻³]"),
+    "n"           => FieldSpec(:rho, :g_cm3, true,  "viridis", :intensive, "n [cm⁻³]"),
+    "sd"          => FieldSpec(:sd, :Msol_pc2, true, "viridis", :extensive, "Σ [M⊙ pc⁻²]"),
+    "mass"        => FieldSpec(:mass, :Msol, true,  "viridis", :extensive, "M [M⊙]"),
+    "temperature" => FieldSpec(:temperature, :standard, true, "inferno", :intensive, "T [K]"),
+    "p"           => FieldSpec(:p, :Ba, true,       "magma",   :intensive, "P [Ba]"),
+    "cs"          => FieldSpec(:cs, :km_s, true,    "cividis", :intensive, "c_s [km s⁻¹]"),
+    "vx"          => FieldSpec(:vx, :km_s, false,   "RdBu_r",  :intensive, "v_x [km s⁻¹]"),
+    "vy"          => FieldSpec(:vy, :km_s, false,   "RdBu_r",  :intensive, "v_y [km s⁻¹]"),
+    "vz"          => FieldSpec(:vz, :km_s, false,   "RdBu_r",  :intensive, "v_z [km s⁻¹]"),
+    "v"           => FieldSpec(:v, :km_s, true,     "plasma",  :intensive, "|v| [km s⁻¹]"),
+    "mach"        => FieldSpec(:mach, :standard, true, "plasma", :intensive, "ℳ"),
+    "gpot"        => FieldSpec(:gpot, :standard, false, "cividis", :intensive, "Φ [code]"),
+    "level"       => FieldSpec(:level, :standard, false, "turbo", :intensive, "AMR level"),
+)
+
+"""
+    fieldspec(name, info; mu) -> FieldSpec
+
+Resolve a CLI field name against the snapshot at hand.
+
+Two resolutions depend on the data rather than the name:
+
+* `T` maps to the `:temperature` column when the reader provides one (every AMReX/Quokka
+  snapshot does — read from the file when it is there, reconstructed otherwise; see
+  `amrex_provenance`), and falls back to Mera's derived `:T` in kelvin for a code whose
+  frontend has no temperature column.
+* `n` is `ρ/(μ·m_u)`, so it inherits whatever `--mu` the run is being read with. The map
+  is computed as a density map and rescaled, which is exact because both the weighted
+  average and the column sum are linear in the field.
+"""
+function fieldspec(name::AbstractString, info; mu::Float64=1.0)
+    key = get(FIELD_ALIASES, lowercase(name), lowercase(name))
+    if key == "temperature"
+        if :temperature in info.variable_list
+            return FIELD_TABLE["temperature"]
+        else
+            return FieldSpec(:T, :K, true, "inferno", :intensive, "T [K]")
+        end
+    end
+    haskey(FIELD_TABLE, key) && return FIELD_TABLE[key]
+    # unknown → a bare column of the snapshot, in code units
+    sym = Symbol(name)
+    return FieldSpec(sym, :standard, false, "viridis", :intensive, "$(name) [code]")
+end
+
+# `n` is a density map divided by μ·m_u; every other field is used as it comes.
+_field_rescale(key::AbstractString, info, mu::Float64) =
+    get(FIELD_ALIASES, lowercase(key), lowercase(key)) == "n" ? 1.0 / (mu * info.constants.amu) : 1.0
+
+# -------------------------------------------------------------------------------------
+# Argument parsing
+# -------------------------------------------------------------------------------------
+
+const COMMANDS = ["info", "list", "slice", "proj", "phase", "profile", "stats", "help"]
+
+# option name => (kind, default). kind ∈ :flag :str :int :float :list :pair
+const OPTIONS = Dict{String,Tuple{Symbol,Any}}(
+    "field"          => (:str,   "rho"),
+    "direction"      => (:str,   "z"),
+    "center"         => (:str,   "data"),
+    "width"          => (:str,   ""),
+    "depth"          => (:str,   ""),
+    "pos"            => (:str,   ""),
+    "res"            => (:int,   512),
+    "lmax"           => (:int,   0),
+    "unit"           => (:str,   ""),
+    "axis-unit"      => (:str,   ""),
+    "weight"         => (:str,   ""),
+    "zlim"           => (:pair,  ("", "")),
+    "log"            => (:flag,  false),
+    "linear"         => (:flag,  false),
+    "cmap"           => (:str,   ""),
+    "figsize"        => (:float, 6.0),
+    "dpi"            => (:int,   200),
+    "outdir"         => (:str,   "."),
+    "name"           => (:str,   ""),
+    "title"          => (:str,   ""),
+    "skip-existing"  => (:flag,  false),
+    "particles"      => (:list,  String[]),
+    "p-size"         => (:float, 5.0),
+    "p-marker"       => (:str,   "."),
+    "p-color"        => (:str,   ""),
+    "p-depth"        => (:float, 0.1),
+    "grids"          => (:flag,  false),
+    "no-time"        => (:flag,  false),
+    "mu"             => (:float, 1.0),
+    "gamma"          => (:float, 5/3),
+    "yfield"         => (:str,   "temperature"),
+    "cfield"         => (:str,   ""),
+    "bins"           => (:int,   200),
+    "xvar"           => (:str,   "r_cylinder"),
+    "first-only"     => (:flag,  false),
+    "max-snapshots"  => (:int,   0),
+    "every"          => (:int,   1),
+    "outputs"        => (:str,   ""),
+    "csv"            => (:str,   ""),
+    "quiet"          => (:flag,  false),
+    "dry-run"        => (:flag,  false),
+    "fields"         => (:flag,  false),
+)
+
+const SHORT = Dict("f" => "field", "d" => "direction", "c" => "center", "w" => "width",
+                   "o" => "outdir", "r" => "res", "u" => "unit", "q" => "quiet",
+                   "h" => "help", "n" => "dry-run")
+
+struct Args
+    cmd::String
+    opts::Dict{String,Any}
+    paths::Vector{String}
+end
+
+Base.getindex(a::Args, k::String) = a.opts[k]
+
+function parse_args(argv::Vector{String})
+    argv = copy(argv)
+    (isempty(argv) || argv[1] in ("-h", "--help", "help")) &&
+        return Args("help", Dict{String,Any}("topic" => (length(argv) > 1 ? argv[2] : "")), String[])
+    cmd = popfirst!(argv)
+    cmd in COMMANDS || error("jamr: unknown command \"$cmd\". One of: " * join(COMMANDS, ", ") *
+                             ".  Try `jamr --help`.")
+    # `copy` the mutable defaults — a repeated `--particles` appends, and the entry in
+    # OPTIONS must not become that accumulated list for the next call.
+    opts = Dict{String,Any}(k => (v[2] isa Vector ? copy(v[2]) : v[2]) for (k, v) in OPTIONS)
+    paths = String[]
+    i = 1
+    while i <= length(argv)
+        a = argv[i]
+        if startswith(a, "--")
+            name = a[3:end]
+            if occursin('=', name)
+                name, inline = split(name, '=', limit=2)
+                argv = vcat(argv[1:i], String(inline), argv[i+1:end])
+            end
+            name = String(name)
+            (name in ("help", "h")) && return Args("help", Dict{String,Any}("topic" => cmd), String[])
+            haskey(OPTIONS, name) || error("jamr: unknown option --$name  (see `jamr help $cmd`)")
+            i = _consume!(opts, name, argv, i)
+        elseif startswith(a, "-") && length(a) > 1 && !isdigit(a[2]) && a != "-"
+            s = a[2:end]
+            haskey(SHORT, s) || error("jamr: unknown option -$s  (see `jamr help $cmd`)")
+            s == "h" && return Args("help", Dict{String,Any}("topic" => cmd), String[])
+            i = _consume!(opts, SHORT[s], argv, i)
+        else
+            push!(paths, a); i += 1
+        end
+    end
+    opts["log"] && opts["linear"] && error("jamr: --log and --linear are mutually exclusive.")
+    return Args(cmd, opts, paths)
+end
+
+function _consume!(opts, name, argv, i)
+    kind = OPTIONS[name][1]
+    need(n) = (i + n <= length(argv)) ||
+              error("jamr: --$name needs $n value$(n == 1 ? "" : "s").")
+    if kind === :flag
+        opts[name] = true; return i + 1
+    elseif kind === :pair
+        need(2); opts[name] = (argv[i+1], argv[i+2]); return i + 3
+    elseif kind === :list
+        # ONE comma-separated value, not a greedy run of words: a variadic option cannot be
+        # told apart from the positional paths that follow it (`--particles a b run/` would
+        # eat `run/`). Repeat the flag to add more.
+        need(1)
+        append!(opts[name]::Vector{String}, String.(split(argv[i+1], ',', keepempty=false)))
+        return i + 2
+    end
+    need(1)
+    v = argv[i+1]
+    opts[name] = kind === :int ? parse(Int, v) : kind === :float ? parse(Float64, v) : String(v)
+    return i + 2
+end
+
+# -------------------------------------------------------------------------------------
+# Values with units:  "2_kpc", "2,kpc", "2kpc" or a bare number (code units)
+# -------------------------------------------------------------------------------------
+
+"""
+    parse_length(spec, info) -> (value, unit_symbol)
+
+Parse a length written the way `quick_plot` writes it — `10_kpc`, `10,kpc`, `10kpc` — or a
+bare number, which means Mera's `:standard` unit (a fraction of the box).
+"""
+function parse_length(spec::AbstractString, info)
+    s = strip(String(spec))
+    isempty(s) && return (NaN, :standard)
+    for sep in ('_', ',')
+        if occursin(sep, s)
+            a, b = split(s, sep, limit=2)
+            return (parse(Float64, a), Symbol(strip(b)))
+        end
+    end
+    m = match(r"^([-+0-9.eE]+)\s*([A-Za-z_]+)$", s)
+    m === nothing && return (parse(Float64, s), :standard)
+    return (parse(Float64, m.captures[1]), Symbol(m.captures[2]))
+end
+
+# "1,2,3_kpc" / "1,2,3" / "data" / "box" -> (Vector{Float64}, unit)
+function parse_center(spec::AbstractString, info)
+    s = strip(String(spec))
+    (s == "" || s == "data") && return (:data, :standard)
+    s == "box" && return ([0.5, 0.5, 0.5], :standard)
+    unit = :standard
+    for sep in ('_',)
+        if occursin(sep, s)
+            s, u = split(s, sep, limit=2)
+            unit = Symbol(strip(u))
+        end
+    end
+    v = parse.(Float64, split(s, ','))
+    length(v) == 3 || error("--center wants three comma-separated numbers, got \"$spec\".")
+    return (v, unit)
+end
+
+# The part of Mera's box the data actually occupies. For an AMReX/Quokka run with a
+# non-cubic domain that is NOT the whole box, and framing on the box would waste most of
+# the image on empty padding; every other frontend fills its box.
+function data_extent(info)
+    try
+        return amrex_extent(info)
+    catch
+        return Float64[0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+    end
+end
+
+"""
+    to_boxfrac(value, unit, info) -> Float64
+
+A length in `unit` as a fraction of Mera's box. Mera's `scale.<unit>` converts CODE units
+INTO that unit, so the physical→code direction divides by it — getting this backwards
+turns `--width 1_kpc` into a window of 1e-44 boxes and an empty selection.
+"""
+to_boxfrac(value::Real, unit::Symbol, info) =
+    unit === :standard ? Float64(value) :
+    Float64(value) / Mera._resolve_unit(info.scale, unit) / info.boxlen
+
+"""
+    phys_to_boxfrac(value, unit, info, axis) -> Float64
+
+A POSITION on `axis` (1/2/3), given in the simulation's own coordinates, as a fraction of
+Mera's box. Same as [`to_boxfrac`](@ref) plus the `domain_left_edge` offset, because Mera puts
+its origin there — `--center 0,0,0_kpc` on a box running z ∈ [−2, 2] kpc means the midplane,
+not the bottom face. A bare number (`:standard`) is already a Mera box fraction and is left
+alone.
+"""
+function phys_to_boxfrac(value::Real, unit::Symbol, info, axis::Int)
+    unit === :standard && return Float64(value)
+    dlo = try
+        amrex_domain(info)[1]
+    catch
+        zeros(3)
+    end
+    return to_boxfrac(value, unit, info) - dlo[axis] / info.boxlen
+end
+
+"""
+    domain_shift(info, axunit) -> Vector{Float64}
+
+What to add to a Mera coordinate to get the simulation's own, in `axunit`. Mera puts the
+origin at `domain_left_edge`; for an AMReX/Quokka run that edge is usually not zero (the
+production box here runs z from −6.04e21 cm), and labelling the axes 0…L would move every
+feature. Zero for frontends whose box already starts at the origin.
+"""
+function domain_shift(info, axunit::Symbol)
+    try
+        dlo, _ = amrex_domain(info)          # code length → axis unit, like every other length
+        return dlo .* Mera._resolve_unit(info.scale, axunit)
+    catch
+        return zeros(3)
+    end
+end
+
+# A sensible axis unit for a box of this size.
+function auto_axis_unit(info)
+    L = info.boxlen * info.scale.pc
+    L > 3e5 && return :Mpc
+    L > 3e2 && return :kpc
+    L > 1e-2 && return :pc
+    return :cm
+end
+
+# -------------------------------------------------------------------------------------
+# Snapshot discovery
+# -------------------------------------------------------------------------------------
+
+struct Snapshot
+    path::String        # what to hand getinfo
+    output::Int
+    label::String       # for file names, e.g. "plt0145664" or "output_00300"
+end
+
+"""
+    snapshots(paths, a) -> Vector{Snapshot}
+
+Expand the positional arguments into snapshots. Each argument may be a single snapshot
+(an AMReX plotfile directory, a RAMSES `output_NNNNN`, …) or a run directory holding
+many; `--outputs 10:20` or `--outputs 3,7,9` narrows a run directory, and
+`--every`/`--max-snapshots`/`--first-only` thin the result.
+"""
+function snapshots(paths::Vector{String}, a::Args)
+    out = Snapshot[]
+    for p in paths
+        p = String(rstrip(p, '/'))
+        isdir(p) || error("$p is not a directory.")
+        nums = amrex_output_numbers(p)
+        if length(nums) == 1 && Mera._is_amrex_plotfile(p)
+            push!(out, Snapshot(p, nums[1], basename(abspath(p))))
+        elseif !isempty(nums)
+            for n in nums
+                push!(out, Snapshot(p, n, basename(amrex_plotfile(n, p))))
+            end
+        else
+            # not AMReX: fall back to Mera's own output discovery
+            n = _nonamrex_outputs(p)
+            isempty(n) && error("no simulation output found in $p.")
+            for k in n
+                push!(out, Snapshot(p, k, "output_" * lpad(k, 5, '0')))
+            end
+        end
+    end
+    sel = a["outputs"]
+    if !isempty(sel)
+        want = _parse_output_selector(sel)
+        filter!(s -> s.output in want, out)
+    end
+    a["every"] > 1 && (out = out[1:a["every"]:end])
+    a["max-snapshots"] > 0 && (out = out[1:min(end, a["max-snapshots"])])
+    a["first-only"] && !isempty(out) && (out = out[1:1])
+    isempty(out) && error("no snapshots selected.")
+    return out
+end
+
+function _nonamrex_outputs(p::String)
+    nums = Int[]
+    for d in readdir(p)
+        m = match(r"^output_(\d+)$", d)
+        m === nothing || push!(nums, parse(Int, m.captures[1]))
+    end
+    isempty(nums) || return sort!(nums)
+    # a single RAMSES output directory given directly
+    m = match(r"^output_(\d+)$", basename(abspath(p)))
+    m === nothing || return [parse(Int, m.captures[1])]
+    return nums
+end
+
+function _parse_output_selector(s::AbstractString)
+    want = Set{Int}()
+    for part in split(s, ',')
+        if occursin(':', part)
+            a, b = split(part, ':', limit=2)
+            union!(want, parse(Int, a):parse(Int, b))
+        else
+            push!(want, parse(Int, part))
+        end
+    end
+    return want
+end
+
+# getinfo with the CLI's assumptions attached where the frontend accepts them.
+function load_info(s::Snapshot, a::Args; verbose::Bool=false)
+    code = Mera.detect_simcode(s.path)
+    if code === :quokka
+        return getinfo(s.output, s.path; mu=a["mu"], gamma=a["gamma"], verbose=verbose)
+    elseif code === :amrex
+        return getinfo(s.output, s.path; mu=a["mu"], gamma=a["gamma"], verbose=verbose)
+    end
+    return getinfo(s.output, s.path; verbose=verbose)
+end
+
+# -------------------------------------------------------------------------------------
+# Windows: what to read
+# -------------------------------------------------------------------------------------
+
+struct Window
+    xrange::Vector{Float64}     # box-normalised [0,1]
+    yrange::Vector{Float64}
+    zrange::Vector{Float64}
+    center::Vector{Float64}     # box-normalised centre of the frame
+end
+
+"""
+    window(info, a) -> Window
+
+Turn `--center`, `--width` and `--depth` into the box-normalised ranges Mera reads with.
+
+The default frame is the extent of the DATA, not of Mera's box: an AMReX domain is padded
+to a cube (see `amrex_extent`), and framing on the cube would put a 512×512×2048 Quokka
+run in the corner of a mostly empty image.
+"""
+function window(info, a::Args)
+    e = data_extent(info)
+    ctr, cunit = parse_center(a["center"], info)
+    c = ctr === :data ? [(e[1]+e[2])/2, (e[3]+e[4])/2, (e[5]+e[6])/2] :
+        [phys_to_boxfrac(v, cunit, info, d) for (d, v) in enumerate(ctr)]
+    w, wunit = parse_length(a["width"], info)
+    d, dunit = parse_length(a["depth"], info)
+    hw = isnan(w) ? nothing : to_boxfrac(w, wunit, info) / 2
+    hd = isnan(d) ? nothing : to_boxfrac(d, dunit, info) / 2
+    dir = Symbol(a["direction"])
+
+    xr, yr, zr = e[1:2], e[3:4], e[5:6]
+    if hw !== nothing                       # --width applies to the two IMAGE axes
+        if dir === :z
+            xr = [c[1]-hw, c[1]+hw]; yr = [c[2]-hw, c[2]+hw]
+        elseif dir === :y
+            xr = [c[1]-hw, c[1]+hw]; zr = [c[3]-hw, c[3]+hw]
+        else
+            yr = [c[2]-hw, c[2]+hw]; zr = [c[3]-hw, c[3]+hw]
+        end
+    end
+    if hd !== nothing                       # --depth applies to the line of sight
+        dir === :z ? (zr = [c[3]-hd, c[3]+hd]) :
+        dir === :y ? (yr = [c[2]-hd, c[2]+hd]) : (xr = [c[1]-hd, c[1]+hd])
+    end
+    # Clip to the data. A frame that lands entirely outside it would otherwise reach Mera as
+    # an inverted range and come back as "xmin > xmax", which says nothing about the request.
+    function clip(r, lo, hi, axis)
+        out = [max(r[1], lo), min(r[2], hi)]
+        out[1] < out[2] || error(
+            "the requested $axis window $(round.(r, digits=5)) lies outside the data, which " *
+            "spans $(round.((lo, hi), digits=5)) (box fractions). Check --center/--width/--depth.")
+        return out
+    end
+    return Window(clip(xr, e[1], e[2], "x"), clip(yr, e[3], e[4], "y"),
+                  clip(zr, e[5], e[6], "z"), c)
+end
+
+# Where the cutting plane sits, box-normalised: `--pos` if given, else the frame centre.
+function slice_position(info, a::Args, w::Window, dir::Symbol)
+    pos, punit = parse_length(a["pos"], info)
+    d = dir === :z ? 3 : dir === :y ? 2 : 1
+    isnan(pos) && return w.center[d]
+    return phys_to_boxfrac(pos, punit, info, d)
+end
+
+# Narrow a window to `centre ± half` along the line of sight.
+function restrict_los(w::Window, dir::Symbol, centre::Float64, half::Float64)
+    lo, hi = centre - half, centre + half
+    dir === :z && return Window(w.xrange, w.yrange,
+                                [max(lo, w.zrange[1]), min(hi, w.zrange[2])], w.center)
+    dir === :y && return Window(w.xrange, [max(lo, w.yrange[1]), min(hi, w.yrange[2])],
+                                w.zrange, w.center)
+    return Window([max(lo, w.xrange[1]), min(hi, w.xrange[2])], w.yrange, w.zrange, w.center)
+end
+
+# Which columns must be READ for these Mera symbols. Restricted to what the snapshot
+# actually stores, so a frontend without column selection is unaffected and a derived
+# quantity still pulls in its inputs (`:mach` needs `:p`, `:rho` and the velocities).
+function needed_columns(info, syms::Vector{Symbol})
+    avail = Set(info.variable_list)
+    want = Set{Symbol}()
+    for s in syms
+        s in avail && (push!(want, s); continue)
+        for r in Mera.getvar_requirements(:hydro, s)
+            r in avail && push!(want, r)
+        end
+    end
+    isempty(want) && (want = Set(info.variable_list))
+    return sort!(collect(want); by=string)
+end
+
+function load_hydro(info, a::Args, w::Window, syms::Vector{Symbol}; verbose::Bool=false)
+    vars = needed_columns(info, syms)
+    kw = (xrange=w.xrange, yrange=w.yrange, zrange=w.zrange,
+          center=[0.0, 0.0, 0.0], range_unit=:standard,
+          verbose=verbose, show_progress=verbose)
+    rdr = Mera._reader_by_simcode(info.simcode)
+    if rdr !== nothing && rdr.code !== :ramses && rdr.select_vars
+        return gethydro(info; vars=vars, kw...)
+    end
+    return gethydro(info; kw...)
+end
+
+# -------------------------------------------------------------------------------------
+# Plotting
+# -------------------------------------------------------------------------------------
+
+const _PLT = Ref{Any}(nothing)
+
+# PyPlot is loaded LAZILY: `jamr info`/`list`/`stats` are useful on a machine with no
+# matplotlib, and importing it costs seconds. Loading a module mid-run advances the world
+# age, so every command that plots is dispatched through `invokelatest` in `main` — that
+# is what makes the freshly-imported bindings callable from here.
+function plt()
+    if _PLT[] === nothing
+        try
+            @eval Main begin
+                import PyPlot
+                PyPlot.matplotlib.use("Agg")
+            end
+        catch err
+            error("plotting needs PyPlot (matplotlib). Add it to the environment you run " *
+                  "jamr in:  julia --project=… -e 'using Pkg; Pkg.add(\"PyPlot\")'\n" *
+                  "  (underlying error: " * sprint(showerror, err) * ")")
+        end
+        _PLT[] = getfield(Main, :PyPlot)
+    end
+    return _PLT[]
+end
+
+# Colour limits: explicit --zlim wins; "min"/"max" mean the data's own.
+function color_limits(a::Args, data::AbstractArray, logscale::Bool)
+    lo_s, hi_s = a["zlim"]
+    fin = filter(x -> isfinite(x) && (!logscale || x > 0), vec(data))
+    isempty(fin) && return (nothing, nothing)
+    lo = (lo_s == "" || lowercase(lo_s) == "min") ? minimum(fin) : parse(Float64, lo_s)
+    hi = (hi_s == "" || lowercase(hi_s) == "max") ? maximum(fin) : parse(Float64, hi_s)
+    if lo == hi                          # a constant field still needs a finite colour range
+        lo, hi = lo - abs(lo) * 0.1 - eps(), hi + abs(hi) * 0.1 + eps()
+    end
+    return (lo, hi)
+end
+
+"""
+    render_map(map2d, extent, axunit, spec, a; ...) -> path
+
+Draw a 2-D map and save it. `extent` is `[x0, x1, y0, y1]` in `axunit`; `map2d` is indexed
+`[i, j]` with `i` along the horizontal axis, which is Mera's convention and matplotlib's
+transpose — hence the `permutedims` on the way in.
+"""
+function render_map(map2d::AbstractMatrix, extent::Vector{Float64}, axunit::Symbol,
+                    spec::FieldSpec, a::Args; title::String="", fname::String,
+                    particles=nothing, gridlines=nothing, axlabels=("x", "y"))
+    P = plt()
+    logscale = a["log"] ? true : a["linear"] ? false : spec.log
+    lo, hi = color_limits(a, map2d, logscale)
+    cmap = isempty(a["cmap"]) ? spec.cmap : a["cmap"]
+    fs = a["figsize"]
+    fig = P.figure(figsize=(fs * 1.15, fs))
+    ax = fig.add_subplot(1, 1, 1)
+    img = permutedims(Float64.(map2d))
+    norm = logscale ? P.matplotlib.colors.LogNorm(vmin=lo, vmax=hi) :
+                      P.matplotlib.colors.Normalize(vmin=lo, vmax=hi)
+    im = ax.imshow(img; origin="lower", extent=extent, cmap=cmap, norm=norm,
+                   aspect="equal", interpolation="nearest")
+    ax.set_facecolor("black")
+    ax.set_xlabel("$(axlabels[1]) [$axunit]")
+    ax.set_ylabel("$(axlabels[2]) [$axunit]")
+    isempty(title) || ax.set_title(title, fontsize=10)
+    cb = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.02)
+    cb.set_label(spec.label)
+    if gridlines !== nothing
+        for (x0, x1, y0, y1) in gridlines
+            ax.add_patch(P.matplotlib.patches.Rectangle((x0, y0), x1-x0, y1-y0;
+                         fill=false, edgecolor="white", linewidth=0.4, alpha=0.5))
+        end
+    end
+    if particles !== nothing
+        for (px, py, col) in particles
+            isempty(px) && continue
+            # 2e5 star particles at alpha=1 paint over the map; fade them as N grows so the
+            # gas stays readable underneath without the user having to tune --p-size.
+            alpha = clamp(3000 / length(px), 0.12, 0.9)
+            ax.scatter(px, py; s=a["p-size"], marker=a["p-marker"], c=col,
+                       edgecolors="none", alpha=alpha)
+        end
+    end
+    fig.savefig(fname; dpi=a["dpi"], bbox_inches="tight", pad_inches=0.05)
+    P.close(fig)
+    return fname
+end
+
+# The two image axes for a line of sight, as (index into a 3-vector, name).
+image_axes(dir::Symbol) = dir === :z ? ((1, "x"), (2, "y")) :
+                          dir === :y ? ((1, "x"), (3, "z")) : ((2, "y"), (3, "z"))
+
+function out_name(a::Args, s::Snapshot, kind::String, field::String)
+    base = isempty(a["name"]) ? "$(s.label)_$(kind)_$(a["direction"])_$(field)" : a["name"]
+    endswith(base, ".png") || (base *= ".png")
+    return joinpath(a["outdir"], base)
+end
+
+_time_label(info) = begin
+    t = info.time * info.scale.Myr
+    abs(t) >= 1e3 ? @sprintf("t = %.3f Gyr", t/1e3) :
+    abs(t) >= 1e-3 ? @sprintf("t = %.3f Myr", t) : @sprintf("t = %.4g yr", info.time * info.scale.yr)
+end
+
+# -------------------------------------------------------------------------------------
+# Commands
+# -------------------------------------------------------------------------------------
+
+function cmd_info(a::Args)
+    for s in snapshots(a.paths, a)
+        println("═"^76)
+        println(s.path, "   →   ", s.label)
+        info = load_info(s, a; verbose=true)
+        try
+            println("\ncolumn provenance:")
+            for (k, v) in sort(collect(amrex_provenance(info)), by=x -> string(x[1]))
+                @printf("  %-14s %s\n", ":$k", v)
+            end
+            if a["fields"]
+                println("\nstored-component extrema (from the level indices, no cell data read):")
+                for (k, v) in sort(collect(amrex_extrema(info)))
+                    @printf("  %-22s %14.6e   %14.6e\n", k, v[1], v[2])
+                end
+            end
+        catch
+            # not an AMReX-family snapshot; getinfo already printed everything it knows
+        end
+    end
+    return 0
+end
+
+function cmd_list(a::Args)
+    @printf("%-24s %10s %16s %16s\n", "snapshot", "output", "time [Myr]", "cells (level 0)")
+    for s in snapshots(a.paths, a)
+        info = load_info(s, a)
+        n = try
+            prod(amrex_meta(info)[:domain_dimensions])
+        catch
+            missing
+        end
+        @printf("%-24s %10d %16.6g %16s\n", s.label, s.output, info.time * info.scale.Myr,
+                n === missing ? "-" : string(n))
+    end
+    return 0
+end
+
+function cmd_map(a::Args, kind::Symbol)
+    isdir(a["outdir"]) || mkpath(a["outdir"])
+    verbose = !a["quiet"]
+    for s in snapshots(a.paths, a)
+        info = load_info(s, a)
+        spec = fieldspec(a["field"], info; mu=a["mu"])
+        unit = isempty(a["unit"]) ? spec.unit : Symbol(a["unit"])
+        axunit = isempty(a["axis-unit"]) ? auto_axis_unit(info) : Symbol(a["axis-unit"])
+        fname = out_name(a, s, String(kind), a["field"])
+        if a["skip-existing"] && isfile(fname)
+            verbose && println("skip (exists): ", fname); continue
+        end
+        w = window(info, a)
+        dir = Symbol(a["direction"])
+        spos = slice_position(info, a, w, dir)
+        # A cutting plane needs one cell along the line of sight, not the whole column.
+        # Without this a `slice` on the production box reads all 5.4e8 cells to keep 2.6e5
+        # of them. The slab is half the COARSEST cell wide on each side, so a coarse cell
+        # that straddles the plane is still loaded (the load-time filter tests centres).
+        if kind === :slice && isempty(a["depth"])
+            half = 0.5 / 2.0^info.levelmin + 0.5 / 2.0^info.levelmax
+            w = restrict_los(w, dir, spos, half)
+        end
+        if a["dry-run"]
+            @printf("%s: %s %s  field=%s unit=%s  x=%s y=%s z=%s  vars=%s → %s\n",
+                    s.label, kind, dir, spec.sym, unit, string(round.(w.xrange, digits=5)),
+                    string(round.(w.yrange, digits=5)), string(round.(w.zrange, digits=5)),
+                    string(needed_columns(info, [spec.sym])), fname)
+            continue
+        end
+        verbose && println("→ ", s.label, "  ", kind, " ", dir, "  field=", spec.sym)
+        gas = load_hydro(info, a, w, [spec.sym]; verbose=verbose)
+        length(gas.data) == 0 && error(
+            "the window selects no cells — x=$(round.(w.xrange, digits=5)) " *
+            "y=$(round.(w.yrange, digits=5)) z=$(round.(w.zrange, digits=5)) (box fractions). " *
+            "Check --center/--width/--depth; the data spans $(round.(data_extent(info), digits=5)).")
+        scale = _field_rescale(a["field"], info, a["mu"])
+        lmax = a["lmax"] > 0 ? a["lmax"] : info.levelmax
+
+        local m, extent
+        if kind === :slice
+            sl = slice(gas, spec.sym, unit; slice_axis=dir, slice_pos=spos,
+                       lmax=lmax, xrange=w.xrange, yrange=w.yrange, zrange=w.zrange,
+                       range_unit=:standard, pos_unit=axunit, verbose=false)
+            m = sl[spec.sym] .* scale                 # slice axis already dropped
+            e6 = collect(Float64, sl.extent)          # 3-D extent in `pos_unit`
+            (ja, _), (jb, _) = image_axes(dir)
+            extent = [e6[2ja-1], e6[2ja], e6[2jb-1], e6[2jb]]
+        else
+            wgt = isempty(a["weight"]) ? [:mass] :
+                  a["weight"] in ("volume", "vol") ? [:volume] :
+                  a["weight"] in ("none",) ? [:mass] : [Symbol(a["weight"])]
+            pvar = spec.kind === :extensive ? spec.sym : spec.sym
+            pr = projection(gas, pvar, unit; direction=dir, lmax=lmax, res=a["res"],
+                            weighting=wgt, xrange=w.xrange, yrange=w.yrange, zrange=w.zrange,
+                            center=[0.0, 0.0, 0.0], range_unit=:standard,
+                            verbose=false, show_progress=false)
+            m = pr.maps[pvar] .* scale
+            extent = collect(Float64, pr.extent) .* Mera._resolve_unit(info.scale, axunit)
+        end
+
+        # Mera measures from `domain_left_edge`; the axes are labelled in the simulation's
+        # own coordinates, so a Quokka box centred on z=0 reads ±2 kpc, not 0…4 kpc.
+        (ia0, _), (ib0, _) = image_axes(dir)
+        shift = domain_shift(info, axunit)
+        extent = extent .+ [shift[ia0], shift[ia0], shift[ib0], shift[ib0]]
+
+        title = isempty(a["title"]) ? (a["no-time"] ? s.label : s.label * "   " * _time_label(info)) :
+                a["title"]
+        parts = a["particles"]
+        pdata = isempty(parts) ? nothing : particle_overlay(info, a, w, axunit, dir)
+        glines = a["grids"] ? box_outlines(info, w, axunit, dir) : nothing
+        (ia, ib) = image_axes(dir)
+        render_map(m, extent, axunit, spec, a; title=title, fname=fname,
+                   particles=pdata, gridlines=glines, axlabels=(ia[2], ib[2]))
+        verbose && println("  saved ", fname)
+    end
+    return 0
+end
+
+# Particle positions in the image plane, in `axunit`, restricted to a slab around the frame.
+function particle_overlay(info, a::Args, w::Window, axunit::Symbol, dir::Symbol)
+    colors = ["red", "magenta", "cyan", "yellow", "lime", "orange", "deepskyblue"]
+    types = try
+        amrex_meta(info)[:particle_types]::Vector{String}
+    catch
+        String[]
+    end
+    out = Tuple{Vector{Float64},Vector{Float64},String}[]
+    (ia, _), (ib, _) = image_axes(dir)
+    los = dir === :z ? 3 : dir === :y ? 2 : 1
+    lr = (dir === :z ? w.zrange : dir === :y ? w.yrange : w.xrange)
+    hd = a["p-depth"]
+    for (k, want) in enumerate(a["particles"])
+        want in types || (println("  no particle container \"$want\" in this snapshot"); continue)
+        pd = getparticles(info; ptype=want, verbose=false)
+        length(pd.data) == 0 && continue
+        cols = (:x, :y, :z)
+        pos = [Float64.(Mera.select(pd.data, cols[d])) ./ info.boxlen for d in 1:3]
+        c = (lr[1] + lr[2]) / 2
+        keep = (abs.(pos[los] .- c) .<= max(hd, (lr[2]-lr[1])/2)) .&
+               (w.xrange[1] .<= pos[1] .<= w.xrange[2]) .&
+               (w.yrange[1] .<= pos[2] .<= w.yrange[2]) .&
+               (w.zrange[1] .<= pos[3] .<= w.zrange[2])
+        f = info.boxlen * Mera._resolve_unit(info.scale, axunit)
+        sh = domain_shift(info, axunit)          # same axis convention as the map
+        col = isempty(a["p-color"]) ? colors[mod1(k, length(colors))] : a["p-color"]
+        push!(out, (pos[ia][keep] .* f .+ sh[ia], pos[ib][keep] .* f .+ sh[ib], col))
+    end
+    return isempty(out) ? nothing : out
+end
+
+# AMReX box boundaries projected into the image plane (the `--grids` annotation).
+function box_outlines(info, w::Window, axunit::Symbol, dir::Symbol)
+    pf = try
+        read_amrex_header(amrex_meta(info)[:plotfile]::String)
+    catch
+        return nothing
+    end
+    (ia, _), (ib, _) = image_axes(dir)
+    f = info.boxlen * Mera._resolve_unit(info.scale, axunit)
+    sh = domain_shift(info, axunit)
+    out = NTuple{4,Float64}[]
+    for lv in pf.levels, b in lv.boxes
+        bb = Mera._amrex_box_bbox(b, lv.prob_domain, lv.mera_level)
+        lohi(d) = (bb[2d-1], bb[2d])
+        (x0, x1) = lohi(ia); (y0, y1) = lohi(ib)
+        push!(out, (x0*f + sh[ia], x1*f + sh[ia], y0*f + sh[ib], y1*f + sh[ib]))
+    end
+    return out
+end
+
+function cmd_phase(a::Args)
+    isdir(a["outdir"]) || mkpath(a["outdir"])
+    for s in snapshots(a.paths, a)
+        info = load_info(s, a)
+        xs = fieldspec(a["field"], info; mu=a["mu"])
+        ys = fieldspec(a["yfield"], info; mu=a["mu"])
+        w = window(info, a)
+        fname = out_name(a, s, "phase", "$(a["field"])_$(a["yfield"])")
+        if a["skip-existing"] && isfile(fname)
+            println("skip (exists): ", fname); continue
+        end
+        if a["dry-run"]
+            println(s.label, ": phase ", xs.sym, " vs ", ys.sym, " → ", fname); continue
+        end
+        gas = load_hydro(info, a, w, [xs.sym, ys.sym, :rho]; verbose=!a["quiet"])
+        ph = phase(gas, xs.sym, ys.sym; weight=:mass, weight_unit=:Msol,
+                   xunit=xs.unit, yunit=ys.unit,
+                   xscale=(a["linear"] ? :linear : :log), yscale=(a["linear"] ? :linear : :log),
+                   nbins=(a["bins"], a["bins"]))
+        P = plt()
+        fig = P.figure(figsize=(a["figsize"]*1.2, a["figsize"]))
+        ax = fig.add_subplot(1, 1, 1)
+        H = permutedims(ph.H); H[H .<= 0] .= NaN
+        xc = (ph.xedges[1:end-1] .+ ph.xedges[2:end]) ./ 2
+        yc = (ph.yedges[1:end-1] .+ ph.yedges[2:end]) ./ 2
+        im = ax.pcolormesh(xc, yc, H; cmap=(isempty(a["cmap"]) ? "magma" : a["cmap"]),
+                           norm=P.matplotlib.colors.LogNorm())
+        a["linear"] || (ax.set_xscale("log"); ax.set_yscale("log"))
+        ax.set_xlabel(xs.label); ax.set_ylabel(ys.label)
+        ax.set_title(isempty(a["title"]) ? s.label * "   " * _time_label(info) : a["title"], fontsize=10)
+        cb = fig.colorbar(im, ax=ax); cb.set_label("mass [M⊙]")
+        fig.savefig(fname; dpi=a["dpi"], bbox_inches="tight", pad_inches=0.05)
+        P.close(fig)
+        println("  saved ", fname)
+    end
+    return 0
+end
+
+function cmd_profile(a::Args)
+    isdir(a["outdir"]) || mkpath(a["outdir"])
+    for s in snapshots(a.paths, a)
+        info = load_info(s, a)
+        spec = fieldspec(a["field"], info; mu=a["mu"])
+        xvar = Symbol(a["xvar"])
+        w = window(info, a)
+        fname = out_name(a, s, "profile", "$(a["xvar"])_$(a["field"])")
+        if a["dry-run"]
+            println(s.label, ": profile ", spec.sym, " vs ", xvar, " → ", fname); continue
+        end
+        gas = load_hydro(info, a, w, [spec.sym, :rho]; verbose=!a["quiet"])
+        length(gas.data) == 0 && error("the window selects no cells; check --center/--width/--depth.")
+        axunit = isempty(a["axis-unit"]) ? auto_axis_unit(info) : Symbol(a["axis-unit"])
+        wgt = isempty(a["weight"]) ? :mass :
+              a["weight"] in ("volume", "vol") ? :volume :
+              a["weight"] == "none" ? :none : Symbol(a["weight"])
+        pr = profile(gas, xvar, spec.sym; weight=wgt, nbins=a["bins"],
+                     xunit=axunit, unit=spec.unit, center=[w.center...])
+        scale = _field_rescale(a["field"], info, a["mu"])   # e.g. ρ → n
+        P = plt()
+        fig = P.figure(figsize=(a["figsize"]*1.2, a["figsize"]*0.8))
+        ax = fig.add_subplot(1, 1, 1)
+        ax.plot(pr.x, pr.mean .* scale; lw=1.6)
+        (a["linear"] || !spec.log) || ax.set_yscale("log")
+        ax.set_xlabel("$(xvar) [$axunit]"); ax.set_ylabel(spec.label)
+        ax.set_title(isempty(a["title"]) ? s.label * "   " * _time_label(info) : a["title"], fontsize=10)
+        ax.grid(alpha=0.3)
+        fig.savefig(fname; dpi=a["dpi"], bbox_inches="tight", pad_inches=0.05)
+        P.close(fig)
+        println("  saved ", fname)
+    end
+    return 0
+end
+
+function cmd_stats(a::Args)
+    rows = String[]
+    hdr = @sprintf("%-22s %14s %14s %14s %14s %14s", "snapshot", "time[Myr]", "mass[Msol]",
+                   "min", "max", "mean(mass-w)")
+    println(hdr)
+    for s in snapshots(a.paths, a)
+        info = load_info(s, a)
+        spec = fieldspec(a["field"], info; mu=a["mu"])
+        unit = isempty(a["unit"]) ? spec.unit : Symbol(a["unit"])
+        w = window(info, a)
+        if a["dry-run"]
+            println(s.label, ": stats ", spec.sym); continue
+        end
+        gas = load_hydro(info, a, w, [spec.sym, :rho]; verbose=false)
+        scale = _field_rescale(a["field"], info, a["mu"])
+        v = getvar(gas, spec.sym, unit) .* scale
+        m = getvar(gas, :mass, :Msol)
+        line = @sprintf("%-22s %14.6g %14.6g %14.6g %14.6g %14.6g",
+                        s.label, info.time * info.scale.Myr, sum(m),
+                        minimum(v), maximum(v), sum(v .* m) / sum(m))
+        println(line)
+        push!(rows, @sprintf("%s,%d,%.10g,%.10g,%.10g,%.10g,%.10g", s.label, s.output,
+                             info.time * info.scale.Myr, sum(m), minimum(v), maximum(v),
+                             sum(v .* m) / sum(m)))
+    end
+    if !isempty(a["csv"])
+        open(a["csv"], "w") do io
+            println(io, "snapshot,output,time_Myr,mass_Msol,min,max,mean_mass_weighted")
+            for r in rows; println(io, r); end
+        end
+        println("wrote ", a["csv"])
+    end
+    return 0
+end
+
+# -------------------------------------------------------------------------------------
+# Help
+# -------------------------------------------------------------------------------------
+
+const HELP_MAIN = """
+jamr $VERSION — quick look at AMR simulation output (Mera)
+
+USAGE
+  jamr <command> [options] <plotfile-or-run-directory> ...
+
+COMMANDS
+  info      what a snapshot contains: fields, domain, AMR levels, particles, and where
+            each Mera column came from (stored vs. derived).  --fields adds per-component
+            extrema, read from the level indices without touching cell data.
+  list      one line per snapshot in a run directory: number, time, base resolution.
+  slice     a single cutting plane through the volume.
+  proj      a line-of-sight projection: a column for an extensive field (:sd, :mass),
+            a weighted average for an intensive one (temperature, velocity).
+  phase     a 2-D mass-weighted histogram of two fields (default ρ–T).
+  profile   a 1-D binned profile of a field against a coordinate.
+  stats     per-snapshot reductions to the terminal, and to CSV with --csv.
+
+FIELDS (-f)
+  rho|density   n|nH          T|temperature   p|pressure    cs
+  vx vy vz  v   sd|Sigma      mass            mach          level
+  …or any column the snapshot stores (scalar_0, Erad_0, gpot, …), in code units.
+
+  `T` uses the file's own temperature when it has one. Quokka's hydro solver has no
+  temperature — it belongs to the EOS and the cooling module — so most runs do not store
+  one, and it is reconstructed from the internal energy with an assumed mean molecular
+  weight (`--mu`, default 1.0 amu). `jamr info` prints which branch was taken.
+  `n` is ρ/(μ·m_u) and follows the same --mu.
+
+GEOMETRY
+  -c, --center  data|box|X,Y,Z[_unit]   frame centre (default: centre of the data)
+  -w, --width   VALUE[_unit]            full width of the image axes
+      --depth   VALUE[_unit]            line-of-sight depth (proj), slab (slice)
+      --pos     VALUE[_unit]            slice position along the line of sight
+  -d, --direction x|y|z                 line of sight (default z)
+
+  A bare number is a fraction of the box; `10_kpc`, `10,kpc` and `10kpc` all work.
+  A POSITION with a unit (--center, --pos) is in the SIMULATION's own coordinates, the
+  same ones the axes are labelled in — `--center 0,0,0_kpc` on a box running z = ±2 kpc
+  is the midplane. A bare number is a fraction of Mera's box instead.
+  The default frame is the extent of the DATA. An AMReX domain is padded to a cube in
+  Mera's coordinates, so a 512×512×2048 run occupies a quarter of the box in x and y —
+  framing on the box would waste most of the image.
+
+OUTPUT
+  -o, --outdir DIR      --name FILE      --skip-existing     --dpi N
+      --res N           --lmax N         --figsize INCHES    --title TEXT
+      --zlim LO HI      (min/max allowed)  --log | --linear  --cmap NAME
+  -u, --unit UNIT       --axis-unit UNIT   --weight mass|volume
+      --particles TYPE[,TYPE]   --p-size --p-marker --p-color --p-depth
+      --grids           draw AMReX box boundaries
+      --no-time         do not annotate the time
+
+SNAPSHOT SELECTION
+      --outputs 10:20,35     --every N     --max-snapshots N     --first-only
+
+OTHER
+      --mu VALUE   --gamma VALUE   --bins N   --yfield NAME   --xvar NAME
+  -q, --quiet      -n, --dry-run   --csv FILE
+
+EXAMPLES
+  jamr info  run1/                                  # every snapshot's contents
+  jamr info --fields run1/plt0145664                # + per-component extrema, no data read
+  jamr list  run1/
+  jamr slice -f rho run1/plt0145664
+  jamr slice -f T --direction x --width 2_kpc --zlim 1e3 1e7 run1/plt0145664
+  jamr proj  -f sd --axis-unit kpc -o figures run1/
+  jamr proj  -f T --weight volume --depth 1_kpc run1/plt0145664
+  jamr phase -f rho --yfield T run1/plt0145664
+  jamr stats -f temperature --csv T.csv run1/
+"""
+
+function cmd_help(a::Args)
+    print(HELP_MAIN)
+    return 0
+end
+
+# -------------------------------------------------------------------------------------
+
+function main(argv::Vector{String})
+    a = try
+        parse_args(argv)
+    catch err
+        println(stderr, sprint(showerror, err))
+        return 2
+    end
+    try
+        a.cmd == "help"    && return cmd_help(a)
+        a.cmd == "info"    && return cmd_info(a)
+        a.cmd == "list"    && return cmd_list(a)
+        a.cmd == "stats"   && return cmd_stats(a)
+        # Plotting commands: import PyPlot first, then call in the NEW world age.
+        a["dry-run"] || plt()
+        a.cmd == "slice"   && return Base.invokelatest(cmd_map, a, :slice)
+        a.cmd == "proj"    && return Base.invokelatest(cmd_map, a, :proj)
+        a.cmd == "phase"   && return Base.invokelatest(cmd_phase, a)
+        a.cmd == "profile" && return Base.invokelatest(cmd_profile, a)
+    catch err
+        err isa InterruptException && return 130
+        println(stderr, "jamr: ", sprint(showerror, err))
+        get(ENV, "JAMR_DEBUG", "") == "" || Base.show_backtrace(stderr, catch_backtrace())
+        return 1
+    end
+    return 0
+end
+
+end # module JAMR
+
+if abspath(PROGRAM_FILE) == abspath(@__FILE__)
+    exit(JAMR.main(ARGS))
+end

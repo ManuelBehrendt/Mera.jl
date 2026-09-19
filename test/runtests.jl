@@ -117,6 +117,8 @@ if isempty(_focus)
         tinclude("60_gadget_reader_tests.jl")  # data-free: GADGET HDF5 particle reader contract (synthetic HDF5)
         tinclude("64_datautils_coverage_tests.jl")  # data-free: viewdata/infodata/miscellaneous/mera_convert branches (synthetic snapshots + stdin-driven batch flows)
         tinclude("66_chombo_reader_tests.jl")  # data-free: Chombo/PLUTO-AMR reader contract (synthetic 2-level HDF5; leaf extraction + Orion mapping)
+        tinclude("83_amrex_reader_tests.jl")          # data-free: AMReX/BoxLib container + Quokka layer (synthetic 2-level plotfile; geometry, leaves, temperature cascade, particles)
+        tinclude("84_jamr_cli_tests.jl")              # data-free: the `jamr` command line (parsing, window arithmetic, field resolution, figures when matplotlib is present)
 
         # The analytic correctness oracles. These were included in the data-dependent tier below,
         # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and
