@@ -2074,12 +2074,14 @@ end
             w = pv.los
             vxk = getvar(hydro,:vx,:km_s); vyk = getvar(hydro,:vy,:km_s); vzk = getvar(hydro,:vz,:km_s)
             mm  = getvar(hydro,:mass)
-            vlos_glob = sum(mm .* (vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3])) / sum(mm)
+            # NOTE the minus: ŵ (pv.los) points toward the observer, but :vlos follows the
+            # observational convention where POSITIVE means receding, so the map is -(v·ŵ).
+            vlos_glob = -sum(mm .* (vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3])) / sum(mm)
             sdm = projection(hydro,:sd,direction=:edgeon,center=[:bc],verbose=false,show_progress=false).maps[:sd]
             map_mean = sum(pv.maps[:vlos] .* sdm) / sum(sdm)        # column-mass-weighted map mean
             @test isapprox(map_mean, vlos_glob; rtol=1e-4)
             # σ_los oracle: the global second moment about the global mean (mass-weighted)
-            σ_glob = sqrt(sum(mm .* (vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3] .- vlos_glob).^2) / sum(mm))
+            σ_glob = sqrt(sum(mm .* (.-(vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3]) .- vlos_glob).^2) / sum(mm))
             # the map dispersion is per-pixel; its column-mass-weighted RMS incl. the bulk velocity
             # spread must bracket the global σ (sanity: same order, both > 0)
             @test σ_glob > 0 && maximum(ps.maps[:σlos]) > 0
@@ -2255,4 +2257,144 @@ end
         end
     end
 
+end
+
+# ── gravity quantities that need the cell mass ───────────────────────────────────────────────
+# epot/ax/ay/az are intensive and live on the gravity object alone. Energy and force are
+# extensive: they are mass times a gravity field, and the mass is on the hydro object. These
+# check the physics against a hand computation rather than re-deriving it the same way twice.
+if DATA_AVAILABLE
+    @testset "gravity: energy and force need hydro" begin
+        p3 = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC/sedov3d_grav_part")
+        if isdir(p3)
+            i3   = getinfo(3, p3, verbose=false)
+            gasg = gethydro(i3,   verbose=false, show_progress=false)
+            grv  = getgravity(i3, verbose=false, show_progress=false)
+            m    = getvar(gasg, :mass)
+            phi  = getvar(grv, :epot)
+            amag = getvar(grv, :a_magnitude)
+
+            @test getvar(grv, gasg, :gravitational_energy) ≈ m .* phi          rtol=1e-12
+            @test getvar(grv, gasg, :total_binding_energy) ≈ -m .* phi         rtol=1e-12
+            @test getvar(grv, gasg, :Fg)                   ≈ m .* amag         rtol=1e-12
+            @test getvar(grv, gasg, :Fx)                   ≈ m .* getvar(grv, :ax)  rtol=1e-12
+
+            # Every force component is the mass times the acceleration of the SAME name, fetched
+            # through getvar rather than recomputed, so the two can never drift apart in either
+            # definition or centre handling.
+            for (F, a) in ((:Fr_cylinder, :ar_cylinder), (:Fphi_cylinder, :aphi_cylinder),
+                           (:Fr_sphere, :ar_sphere), (:Ftheta_sphere, :atheta_sphere),
+                           (:Fphi_sphere, :aphi_sphere),
+                           (:F_magnitude_cylinder, :a_magnitude_cylinder))
+                @test getvar(grv, gasg, F, center=[:bc]) ≈ m .* getvar(grv, a, center=[:bc]) rtol=1e-12
+                @test_throws ErrorException getvar(grv, F, center=[:bc])   # needs the mass
+            end
+            # the cylindrical force magnitude is the in-plane part, so never exceeds the full one
+            @test hypot.(getvar(grv, gasg, :Fr_cylinder,   center=[:bc]),
+                         getvar(grv, gasg, :Fphi_cylinder, center=[:bc])) ≈
+                  getvar(grv, gasg, :F_magnitude_cylinder, center=[:bc])  rtol=1e-12
+            @test all(getvar(grv, gasg, :F_magnitude_cylinder, center=[:bc]) .<=
+                      getvar(grv, gasg, :Fg, center=[:bc]) .+ 1e-14)
+
+            # removed on 2026-08-30: both assumed a fixed zero point for the potential
+            @test_throws ErrorException getvar(grv, :escape_speed)
+            @test_throws ErrorException getvar(grv, :gravitational_redshift)
+
+            # in-plane magnitude completes the cylindrical set and can never exceed the full one
+            ac = getvar(grv, :a_magnitude_cylinder, center=[:bc])
+            @test ac ≈ hypot.(getvar(grv, :ar_cylinder, center=[:bc]),
+                              getvar(grv, :aphi_cylinder, center=[:bc]))       rtol=1e-12
+            @test all(ac .<= amag .+ 1e-12)
+
+            # without the mass these must refuse rather than invent a number
+            @test_throws ErrorException getvar(grv, :Fg)
+            @test_throws ErrorException getvar(grv, :gravitational_energy)
+
+            # and they survive the combined projection path
+            for q in (:gravitational_energy, :total_binding_energy, :Fg, :a_magnitude_cylinder)
+                mp = projection(gasg, grv, q, center=[:bc], verbose=false, show_progress=false)
+                @test haskey(mp.maps, q) && any(isfinite, mp.maps[q])
+            end
+        end
+    end
+end
+
+# ── thermal dispersion, spherical dispersions, and varying velocity frames ───────────────────
+if DATA_AVAILABLE
+    @testset "thermal dispersion and velocity frames" begin
+        pr = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC/ramses_rt_dirac")
+        if isdir(pr)
+            ir = getinfo(2, pr, verbose=false)
+            g  = gethydro(ir, verbose=false, show_progress=false)
+            γ  = ir.gamma; kB = ir.constants.kB; mH = ir.constants.mH
+
+            # sigma_thermal = sqrt(P/rho) is the 1D width of the mean particle. Checked against
+            # BOTH equivalent forms: cs/sqrt(gamma), and sqrt(kB T/(mu mH)) using the LOCAL mu.
+            # The second is the one that matters: it holds without assuming an ionization state.
+            st = getvar(g, :σ_thermal, :cm_s)
+            @test isapprox(st, getvar(g, :cs, :cm_s) ./ sqrt(γ); rtol=1e-12)
+            @test isapprox(st, sqrt.(kB .* getvar(g, :T_rt) ./ (getvar(g, :mu) .* mH)); rtol=1e-6)
+            @test getvar(g, :sigma_thermal, :cm_s) == st          # ASCII alias
+            @test all(st .> 0)
+
+            # squared spherical components, which the spherical dispersions are built from
+            for q in (:vr_sphere2, :vθ_sphere2, :vϕ_sphere2)
+                base = getvar(g, Symbol(String(q)[1:end-1]), center=[:bc])
+                @test isapprox(getvar(g, q, center=[:bc]), base .^ 2; rtol=1e-12)
+            end
+        end
+
+        ps = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC/sedov3d_grav_part")
+        if isdir(ps)
+            gs = gethydro(getinfo(3, ps, verbose=false), verbose=false, show_progress=false)
+            kw = (direction=:z, center=:bc, verbose=false, show_progress=false)
+
+            # A dispersion already subtracts the per-pixel mean, so a CONSTANT boost cannot change
+            # it. Use a fixed axis: :faceon/:edgeon re-derive their orientation from the angular
+            # momentum, which a boost legitimately changes, so the view would move underneath us.
+            boost = 50.0
+            a = projection(gs, :σz, :km_s; kw...).maps[:σz]
+            b = projection(restframe(gs; vcenter=[0.0,0.0,boost], vunit=:km_s), :σz, :km_s; kw...).maps[:σz]
+            m = isfinite.(a) .& isfinite.(b)
+            # Compare the change against the BOOST, not against sigma. sqrt(<v^2>-<v>^2) loses
+            # precision in proportion to the mean it subtracts, so the boost is the right yardstick.
+            # This fixture has sigma_z ~ 1e-14 km/s (no velocity structure), and dividing by that
+            # turns a 1e-6 km/s rounding difference into a relative 1e8.
+            @test maximum(abs.(b[m] .- a[m])) < 1e-6 * boost
+
+            # a varying field is what a dispersion CAN see, so it must change the result
+            f = (x, y, z) -> (0.0, 0.0, 1e-3 * x)      # a shear in code units
+            c = projection(restframe(gs; vcenter=f, center=:bc), :σz, :km_s; kw...).maps[:σz]
+            @test !isapprox(filter(isfinite, c), filter(isfinite, a); rtol=1e-6)
+
+            # the spherical dispersions exist and are finite
+            for q in (:σr_sphere, :σθ_sphere, :σϕ_sphere)
+                mp = projection(gs, q, :km_s; kw...)
+                @test haskey(mp.maps, q) && any(isfinite, mp.maps[q])
+            end
+
+            # a function returning the wrong shape must say so, not silently mis-broadcast
+            @test_throws ErrorException restframe(gs; vcenter=(x,y,z) -> (0.0, 0.0))
+
+            # PARTICLES must have the same set. The spherical dispersions were added to the
+            # particle projection path while the squared spherical velocities existed only for
+            # hydro, so they returned an all-NaN map with a warning rather than failing. A NaN map
+            # is easy to miss in a plot, which is why this is pinned per data type.
+            pt = getparticles(getinfo(3, ps, verbose=false), verbose=false, show_progress=false)
+            for (q, base) in ((:vr_sphere2, :vr_sphere), (:vθ_sphere2, :vθ_sphere),
+                              (:vϕ_sphere2, :vϕ_sphere))
+                @test isapprox(getvar(pt, q, center=[:bc]),
+                               getvar(pt, base, center=[:bc]) .^ 2; rtol=1e-12)
+            end
+            for q in (:σr_sphere, :σθ_sphere, :σϕ_sphere, :σr_cylinder, :σϕ_cylinder)
+                mp = projection(pt, q, :km_s; kw...)
+                @test haskey(mp.maps, q) && any(isfinite, mp.maps[q])   # not an all-NaN map
+            end
+            # frames work on particles too: they need only position, velocity and mass
+            @test restframe(pt; vcenter=:auto) isa PartDataType
+            @test restframe(pt; vcenter=rotation_frame(pt; center=:bc), center=:bc) isa PartDataType
+            # but a thermal width does not exist for a collisionless population
+            @test_throws ErrorException getvar(pt, :σ_thermal)
+        end
+    end
 end

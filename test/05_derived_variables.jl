@@ -644,31 +644,8 @@ end
         gravity = load_test_gravity(:spiral_clumps)
         N = length(gravity.data)
 
-        @testset "Escape Speed: v_esc = √(-2φ)" begin
-            v_esc = getvar(gravity, :escape_speed)
-            epot = getvar(gravity, :epot)
-
-            # Only test where potential is negative (bound regions)
-            bound = epot .< 0
-            if any(bound)
-                expected = sqrt.(-2 .* epot[bound])
-                @test isapprox(v_esc[bound], expected, rtol=RTOL_PHYSICS)
-            end
-            @test all(v_esc .>= 0)
-        end
-
-        @testset "Gravitational Redshift: z = φ/c²" begin
-            z_grav = getvar(gravity, :gravitational_redshift)
-            epot = getvar(gravity, :epot)
-
-            # Weak-field: z < 0 where potential is negative (bound)
-            bound = epot .< 0
-            @test all(z_grav[bound] .< 0)
-            # Redshift magnitude should be tiny (weak field)
-            @test all(abs.(z_grav) .< 1.0)
-            # Proportional to potential: deeper potential → more negative z
-            @test cor(epot, z_grav) > 0.99
-        end
+        # :escape_speed and :gravitational_redshift were removed on 2026-08-30: both read an
+        # absolute meaning into a potential whose zero point RAMSES leaves arbitrary.
 
         @testset "Specific Gravitational Energy = epot" begin
             e_spec = getvar(gravity, :specific_gravitational_energy)

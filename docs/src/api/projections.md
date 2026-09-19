@@ -6,20 +6,33 @@ Functions for creating 2D projections from 3D simulation data.
 
 ### Main Projection Function
 
-**Function**: [`projection`](@ref) - Create 2D projections from 3D simulation data
+**Function**: [`projection`](@ref), create 2D projections from 3D simulation data
 
 The `projection` function uses Julia's multiple dispatch to provide specialized implementations for different data types. Since the complete API documentation is extensive, this section provides focused guidance for each data type.
 
+### Periodic boxes
+
+On a periodic run a structure sitting on a box face is split across opposite edges of the map.
+[`periodic_recenter`](@ref) rolls a finished projection around the boundary so it appears whole,
+which is exact for an axis-aligned map because a whole-pixel shift is a translation of the box.
+
+```@docs
+@project
+periodic_recenter
+```
+
+See [Periodic Boxes](../periodic_boxes.md) for what else needs care on a wrapping run.
+
 ### Performance & Threading Functions
 
-- [`benchmark_projection_hydro`](@ref) - Benchmark projection performance for hydro data
-- [`show_threading_info`](@ref) - Display threading information and capabilities
+- [`benchmark_projection_hydro`](@ref): Benchmark projection performance for hydro data
+- [`show_threading_info`](@ref): Display threading information and capabilities
 
 ## Data Type Support
 
 ### Hydro and RT projections
 
-The hydro methods dispatch on `Union{HydroDataType, RtDataType}` — the same call works on
+The hydro methods dispatch on `Union{HydroDataType, RtDataType}`, the same call works on
 an object from [`getrt`](@ref).
 
 ```julia
@@ -34,7 +47,7 @@ projection(dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1}, 
 
 ### Gravity (combined form)
 
-Gravity quantities are projected by passing the gravity object alongside the hydro one — the
+Gravity quantities are projected by passing the gravity object alongside the hydro one, the
 cells come from the hydro object, the quantity from gravity:
 
 ```julia
@@ -45,11 +58,11 @@ projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbo
 
 | Keyword | What it does |
 |---|---|
-| `pxsize=[value, :unit]` | physical size of a map pixel — the preferred way to set resolution |
+| `pxsize=[value, :unit]` | physical size of a map pixel, the preferred way to set resolution |
 | `res` | grid cells per side instead of a physical pixel size |
 | `lmax` | cap the AMR level used; defaults to the object's own `lmax` |
-| `direction` | `:x`, `:y`, `:z` (default `:z`), or `:faceon`/`:edgeon` after [`galaxyframe`](../galaxyframe.md) |
-| `los`, `up`, `theta`, `phi`, `inclination`, `azimuth` | off-axis line of sight — see [Off-axis](offaxis.md) |
+| `direction` | `:x`, `:y`, `:z` (default `:z`), or `:faceon`/`:edgeon`, which derive the orientation from the data's own angular momentum |
+| `los`, `up`, `theta`, `phi`, `inclination`, `azimuth` | off-axis line of sight: see [Off-axis](offaxis.md) |
 | `weighting` | how intensive quantities are averaged (see the note below) |
 | `mode` | `:standard` normalises per area; `:sum` returns the raw weighted sum |
 | `mask` | a boolean array from [`getmask`](@ref), applied before projecting |
@@ -57,7 +70,7 @@ projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbo
 | `data_center`, `data_center_unit` | origin the map axes and cylindrical/spherical quantities are measured from |
 | `xrange`, `yrange`, `zrange` | restrict the projected volume |
 | `max_threads` | cap the threads used |
-| `myargs` | pass a bundle instead of repeating keywords — see [Bundling Arguments](../bundled_arguments.md) |
+| `myargs` | pass a bundle instead of repeating keywords: see [Bundling Arguments](../bundled_arguments.md) |
 
 !!! warning "`weighting` has a different type for particles"
     Hydro, gravity and RT take an **array**: `weighting=[:mass]`, `weighting=[:volume]`, or
@@ -72,7 +85,7 @@ projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbo
 
 **Common variables**: `:rho`, `:T`, `:sd`, `:v`, `:p`, `:cs`, velocity dispersion (`:σx`, `:σy`, `:σz`)
 
-**Tutorial**: [Hydro Projections](../06_hydro_Projection.md) - Complete examples and usage
+**Tutorial**: [Hydro Projections](../06_hydro_Projection.md), complete examples and usage
 
 ### Particle Data Projections (PartDataType)  
 
@@ -97,7 +110,7 @@ projection(dataobject::PartDataType, vars::Array{Symbol,1}, unit::Symbol)
 
 **Common variables**: `:mass`, `:age`, `:sd`, `:v`, `:birth`, `:metal`, `:id`, `:family`
 
-**Tutorial**: [Particle Projections](../06_particles_Projection.md) - Complete examples and usage
+**Tutorial**: [Particle Projections](../06_particles_Projection.md), complete examples and usage
 
 ## Quick Usage Examples
 
@@ -118,14 +131,14 @@ projection(particles, :mass, :Msol)          # Mass distribution
 ## General Projection Types
 
 Both data types support:
-- **Density projections** - Surface density maps (`:sd`)
-- **Mass-weighted projections** - Intensive quantities with proper averaging
-- **Velocity projections** - Velocity fields and dispersion maps  
-- **Custom derived quantities** - Temperature, pressure, kinematic analysis
+- **Density projections**: Surface density maps (`:sd`)
+- **Mass-weighted projections**: Intensive quantities with proper averaging
+- **Velocity projections**: Velocity fields and dispersion maps  
+- **Custom derived quantities**: Temperature, pressure, kinematic analysis
 
 ## Drawing the AMR grid on a map
 
-Overlay the cell boundaries of a refinement level on a finished projection — useful for
+Overlay the cell boundaries of a refinement level on a finished projection, useful for
 showing where resolution changes relative to a structure. `gridoverlay!` draws into an
 existing axis; `gridoverlay` returns the segments so you can draw them yourself.
 
@@ -142,4 +155,17 @@ show_threading_info
 ```
 
 ---
-*For complete function documentation, see the [Complete API Reference](../api.md).*
+Not sure which of Mera's map-making tools you want? [Projections: which tool](../projection_which_tool.md)
+compares them and says when to reach for each.
+
+[`@project`](@ref) projects several quantities in one line and binds each map to a name of
+its own. See [Pipelines](../pipelines.md).
+
+*For complete function documentation: see the [Complete API Reference](../api.md).*
+
+## Function Reference
+
+```@docs
+projection
+project
+```

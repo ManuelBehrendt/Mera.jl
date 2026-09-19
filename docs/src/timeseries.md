@@ -1,21 +1,29 @@
+```@raw html
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: timeseries.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+```
+
 # Time Series (multi-snapshot analysis)
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `timeseries.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/timeseries.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `timeseries.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/timeseries.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-Most post-processing is not about one snapshot — it is about *evolution*: how a mass, a
+
+Most post-processing is not about one snapshot, it is about *evolution*: how a mass, a
 peak density, a star-formation rate, or a profile changes across the outputs of a run.
 Writing that loop by hand (find the outputs, load each one, handle a missing snapshot,
 collect the numbers, keep memory under control) is boilerplate everyone re-implements.
 
-[`timeseries`](@ref) turns it into a single call: you give it a **reducer** — a function
-that maps one loaded snapshot to a scalar or a `NamedTuple` — and it returns one tidy
+[`timeseries`](@ref) turns it into a single call: you give it a **reducer**, a function
+that maps one loaded snapshot to a scalar or a `NamedTuple`, and it returns one tidy
 table with a row per output.
 
 ![How timeseries processes a run: outputs → load one → reduce → append a row → analyse, repeating for every output with only one snapshot resident at a time.](assets/timeseries/pipeline.svg)
 
 It works identically on **raw RAMSES outputs** and on **mera (`.jld2`) files**, and it loads
-**one snapshot at a time** — each is reduced and released before the next is read — so peak
+**one snapshot at a time**, each is reduced and released before the next is read, so peak
 memory stays bounded on a laptop.
 
 !!! note "3-D data"
@@ -25,11 +33,11 @@ memory stays bounded on a laptop.
 
 1. **Discover** the outputs in `path` (via [`checkoutputs`](@ref) for RAMSES, or a scan of
    `output_*.jld2` for mera files). Select all of them, a range, or an explicit list.
-2. **Load** output *k* — [`gethydro`](@ref) for RAMSES, [`loaddata`](@ref) for mera files.
+2. **Load** output *k*, [`gethydro`](@ref) for RAMSES, [`loaddata`](@ref) for mera files.
    Only this one snapshot is in memory.
 3. **Reduce** it: your `reducer(d)` returns the quantities you care about.
 4. **Append** a row `(output, time, …your fields…)` to the result table; free the snapshot.
-5. **Analyse** the resulting table — plot, fit, compare.
+5. **Analyse** the resulting table, plot, fit, compare.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -44,22 +52,18 @@ co = checkoutputs(run)
 println("outputs found : ", co.outputs)
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
 Outputs - existing: 13 betw. 1:13 - missing: 0
-
 outputs found : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 ```
-
 
 ## A real example: a 3-D Sedov blast
 
@@ -109,20 +113,19 @@ output  time       mass         rho_max  ncells
 13      0.200449   6.28425e-35  18.3208  261969
 ```
 
-
-The result is an `IndexedTables` table — one row per output, with `output` and `time`
-columns added automatically (see [Physical time](#Physical-time-and-cosmological-runs) — the
+The result is an `IndexedTables` table, one row per output, with `output` and `time`
+columns added automatically (see [Physical time](#Physical-time-and-cosmological-runs), the
 default `time` is in **Myr**; the dimensionless Sedov sim is shown here in code units).
 
 Plotting those columns against `time` tells the whole story of the run at a glance:
 
 ![Evolution curves from the table: peak density rises as the blast forms, total mass is conserved, and the AMR cell count grows as refinement tracks the shock.](assets/timeseries/evolution.png)
 
-- **`rho_max(t)`** climbs as the shock steepens — the blast forms.
+- **`rho_max(t)`** climbs as the shock steepens, the blast forms.
 - **`mass(t)`** is flat: mass is conserved to round-off (the panel shows mass relative to
   its initial value, pinned at 1.0).
 - **`ncells(t)`** grows from 32 768 to ~262 000 as the AMR mesh refines onto the expanding
-  shock — a free diagnostic of how the grid is working.
+  shock, a free diagnostic of how the grid is working.
 
 Each column is a plain vector you can pull out with `IndexedTables.columns`:
 
@@ -145,21 +148,22 @@ t = [0.0, 0.0168274109063273, 0.0334922695630072, 0.0502054026812579, 0.06700141
 rho = [1.0, 2.4620841187532374, 2.7350213089012847, 2.8953918239760763, 3.037285921194034, 4.532394520680104, 5.1676847422567995, 5.674611306033254, 6.15750882977664, 6.584083574556392, 6.955331402702706, 7.268339045626411, 18.320822161297333]
 extrema(m) = (6.284249157910609e-35, 6.284249157910612e-35)
 (nc[1], nc[end]) = (32768, 261969)
-
-(32768, 261969)
 ```
 
+```
+(32768, 261969)
+```
 
 ## Masking and other Mera functions
 
 The reducer receives the **full data object** for the snapshot, so anything that operates
-on a Mera data object composes inside it — there is nothing extra to wire up. That includes
+on a Mera data object composes inside it, there is nothing extra to wire up. That includes
 [`getvar`](@ref), reductions like [`msum`](@ref) / [`center_of_mass`](@ref) /
 [`bulk_velocity`](@ref), spatial selections like [`subregion`](@ref) / [`shellregion`](@ref),
 [`projection`](@ref) (see below), and **masking** via the `mask=` keyword that most
 reductions accept.
 
-For example, the mass of the *dense* gas (and its fraction) at every output — a boolean
+For example, the mass of the *dense* gas (and its fraction) at every output, a boolean
 mask built from the snapshot and fed straight to `msum`:
 
 ```julia
@@ -189,7 +193,9 @@ timeseries: 13 snapshot(s) from "/Volumes/FASTStorage/Simulations/Mera-Tests/RAM
   [12/13] output 00012  t=0.183733818129636
   [13/13] output 00013  t=0.20044896107714
 (columns(tsm)).f_dense = [0.0, 0.0, 0.0, 0.0, 0.0024885796552046873, 0.04568311531952604, 0.140885107600832, 0.27492312592427803, 0.32419613075023884, 0.33554232939318124, 0.34071834186383704, 0.3411209721585522, 0.36393986186171234]
+```
 
+```
 13-element Vector{Float64}:
  0.0
  0.0
@@ -206,17 +212,16 @@ timeseries: 13 snapshot(s) from "/Volumes/FASTStorage/Simulations/Mera-Tests/RAM
  0.36393986186171234
 ```
 
-
 The same pattern covers "mass inside a sphere over time" (`subregion(d, :sphere, …)` then
 `msum`), "centre-of-mass drift" ([`center_of_mass`](@ref)), kinematics
-([`bulk_velocity`](@ref)), and so on — each is just a one-line reducer.
+([`bulk_velocity`](@ref)), and so on, each is just a one-line reducer.
 
 ## Watching the blast evolve: projections over time
 
 The reducer can return *anything*, so it can return a [`projection`](@ref). This makes a
 projection a natural per-snapshot reduction: the small 2-D map is kept while the heavy AMR
 data of that snapshot is freed before the next is read. Reducing each output to its
-column-density map gives a **time-series of maps** — the frames of a movie:
+column-density map gives a **time-series of maps**, the frames of a movie:
 
 ```julia
 movie = timeseries(run,
@@ -239,23 +244,32 @@ frame size       : (64, 64)
 peak Sigma/frame : [0.5, 1.413, 3.343]
 ```
 
+That stack of maps is what a movie is made of. Two ways to go from here:
+
+* hand it to a `MeraMovie` and then [`savemovie`](@ref), which writes the GIF
+* or skip the loop entirely: [`getmovie`](@ref) does exactly this reduction for you, with the
+  frame bookkeeping already wired up, and adds camera motion across the series (`angles` for a
+  turn at each snapshot, `sweep` for turning as time passes)
+
+`timeseries` remains the escape hatch for a frame `getmovie` cannot produce, because the reducer
+can return anything: a [`slice`](@ref), a profile, a scalar. `getmovie` only makes projections.
 
 Laid side by side, the maps show the shell sweeping outward through the box:
 
 ![Column-density projection of the Sedov blast at outputs 1, 7 and 13: a uniform box, then an expanding shell, then a strong shock structure.](assets/timeseries/blast_montage.png)
 
-Return a scalar instead when you only need a number per snapshot — for example the peak
+Return a scalar instead when you only need a number per snapshot, for example the peak
 column density over time, `d -> maximum(projection(d, :sd, verbose=false).maps[:sd])`.
 
 ## Physical time and cosmological runs
 
-The `time` column is **physical** by default — Myr (from [`gettime`](@ref)), not code units —
+The `time` column is **physical** by default, Myr (from [`gettime`](@ref)), not code units,
 so a time-series plots against a meaningful axis straight away. Choose another unit with
 `time_unit` (`:Gyr`, `:yr`, …), or `time_unit = :standard` for code units (as the
 dimensionless Sedov fixture above).
 
 A **cosmological** run is detected automatically ([`iscosmological`](@ref)) and gets two extra
-columns — `redshift` (`z = 1/aexp − 1`) and `aexp` — so you can plot any quantity against
+columns, `redshift` (`z = 1/aexp − 1`) and `aexp`, so you can plot any quantity against
 redshift directly. The `time` column then holds the **age of the universe** in Myr.
 
 ## Selecting which outputs
@@ -267,7 +281,7 @@ gap in the output sequence is handled without special-casing.
 ## Keeping memory bounded
 
 `timeseries` already loads one snapshot at a time and frees it before the next. Two more
-levers cut the memory of *each* load — the main thing to reach for on a RAM-limited
+levers cut the memory of *each* load, the main thing to reach for on a RAM-limited
 machine or with large outputs:
 
 ```julia
@@ -291,7 +305,6 @@ output  time       value
 5       0.0670014  512
 ```
 
-
 Snapshots are processed **sequentially**, so the loop never multiplies memory across
 outputs; the loaders themselves respect `JULIA_NUM_THREADS` (cap it at 4 on a laptop).
 
@@ -313,18 +326,16 @@ lines!(ax3, t, Float64.(nc)); scatter!(ax3, t, Float64.(nc))
 fig
 ```
 
-
-![](timeseries_files/timeseries_13_0.png)
-
+![](timeseries_files/timeseries_15_1.png)
 
 ## From mera files
 
 If you have converted a run to mera files with [`savedata`](@ref), point `timeseries` at
 the folder of `output_*.jld2` files and set `mera_files=true`. The reducer and the
-resulting table are identical — mera files are typically several times smaller and faster
+resulting table are identical, mera files are typically several times smaller and faster
 to read.
 
-## Other data types — gravity, particles, clumps, RT
+## Other data types, gravity, particles, clumps, RT
 
 Set `datatype` to pick the loader. Radiative-transfer data (`:rt`) is a first-class type;
 mera files round-trip RT too (`savedata`/`loaddata` support it), so the mera path works
@@ -336,9 +347,9 @@ fields (e.g. `d -> length(d.data)` for a clump count, or a particle-mass sum).
 
 ## A custom loader
 
-For full control over how each snapshot is read — specific variables, a different data
-type, special keywords — pass a `loader` (`info -> data`). It overrides the built-in
-loading — e.g. `loader = info -> gethydro(info, [:rho]; lmax = 6)`.
+For full control over how each snapshot is read, specific variables, a different data
+type, special keywords, pass a `loader` (`info -> data`). It overrides the built-in
+loading, e.g. `loader = info -> gethydro(info, [:rho]; lmax = 6)`.
 
 ## Options
 
@@ -350,13 +361,13 @@ loading — e.g. `loader = info -> gethydro(info, [:rho]; lmax = 6)`.
 | `loader` | `nothing` | custom `info -> data` (overrides `datatype`/ranges/`lmax`) |
 | `lmax` | `info.levelmax` | max AMR level to read (hydro/gravity) |
 | `xrange`,`yrange`,`zrange`,`center`,`range_unit` | full box | spatial selection → less RAM |
-| `time_unit` | `:Myr` | unit of the `time` column — physical by default; `:standard` for code units (see [`gettime`](@ref)). Cosmological runs also get `redshift`/`aexp` columns |
+| `time_unit` | `:Myr` | unit of the `time` column, physical by default; `:standard` for code units (see [`gettime`](@ref)). Cosmological runs also get `redshift`/`aexp` columns |
 | `verbose` | `true` | per-snapshot progress |
 | `notify` | `false` | call [`notifyme`](@ref) when finished |
 
 ## See also
 
-- [`checkoutputs`](@ref) — list the outputs available in a run.
-- [`gethydro`](@ref), [`loaddata`](@ref) — the per-snapshot loaders.
-- [`savedata`](@ref) — convert RAMSES outputs to mera files.
-- [`gettime`](@ref) — the value in the `time` column.
+- [`checkoutputs`](@ref), list the outputs available in a run.
+- [`gethydro`](@ref), [`loaddata`](@ref), the per-snapshot loaders.
+- [`savedata`](@ref), convert RAMSES outputs to mera files.
+- [`gettime`](@ref), the value in the `time` column.

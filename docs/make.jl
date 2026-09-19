@@ -2,13 +2,94 @@ using Documenter, Mera, Dates
 
 const _YEAR = year(now())   # keep the footer copyright current automatically
 
+# ---------------------------------------------------------------------------
+# Undocumented-export gate.
+#
+# Every exported function should appear in some `@docs` block, so that it is
+# reachable from a curated page rather than only from the autodocs dump on
+# api.md. This drifted badly once: 82 exports had no entry, and nothing
+# reported it, because `checkdocs` was off.
+#
+# Documenter's own `checkdocs` cannot exempt individual names, and a few are
+# legitimately exempt, so the gate is here instead: anything undocumented that
+# is NOT on the list below fails the build.
+#
+# Only add a name here with a reason. Removing one is always an improvement.
+const UNDOCUMENTED_OK = Set([
+    # development-only, lives in the git-ignored src/dev and never ships
+    :bubble, :bubbletimeseries,
+    # exported, deliberately left undocumented for now
+    :createconstants!,
+    # flux budgets, moved to the git-ignored src/dev while the method is being worked on: present
+    # on this machine, absent from master and from any release, so they have no docs page
+    :fluxbudget, :fluxtimeseries, :fluxprofile, :fluxshell, :fluxmap, :fluxmapplot,
+])
+
+let
+    exported = filter(n -> isdefined(Mera, n) && getfield(Mera, n) isa Function, names(Mera))
+    blocks = String[]
+    for (root, _, files) in walkdir(joinpath(@__DIR__, "src")), f in files
+        endswith(f, ".md") || continue
+        for m in eachmatch(r"```@docs(.*?)```"s, read(joinpath(root, f), String))
+            push!(blocks, m.captures[1])
+        end
+    end
+    haystack = join(blocks, "\n")
+    documented(n) = occursin(Regex("(^|[^A-Za-z0-9_.])" * string(n) * "(\\s|\\(|\$)", "m"), haystack)
+
+    missing_docs = sort([n for n in exported if !documented(n) && !(n in UNDOCUMENTED_OK)])
+    if !isempty(missing_docs)
+        error("""
+              $(length(missing_docs)) exported function(s) have no @docs entry on any page:
+
+                $(join(missing_docs, "\n  "))
+
+              Add each to the API page it belongs to, or, if it should not be
+              public, drop it from the export list in src/Mera.jl. To exempt one
+              deliberately, add it to UNDOCUMENTED_OK in docs/make.jl with a reason.
+              """)
+    end
+    @info "Undocumented-export gate: all $(length(exported)) exported functions documented \
+           ($(length(UNDOCUMENTED_OK)) deliberately exempt)"
+end
+
+# The multicode site is the frontends and what they need, nothing else. It publishes to its
+# own folder, and the 2.0 documentation will be written from scratch rather than grown out of
+# the RAMSES pages, so listing every tutorial here would only be material to throw away later.
+# The API section stays: the reader pages carry 111 `@ref` links into it, and dropping it
+# would break every one of them.
+# Frontend pages for the multicode site. A page listed as OPTIONAL appears only once its
+# file exists, so someone contributing a reader adds one markdown file and nothing here, and
+# does not collide with this nav in a merge. Remove the guard once the page is permanent.
+# Each code gets a first-look notebook (what the data is) and a reader page (what the format
+# stores and what it does not). The notebook is the way in; the reader page is the reference.
+const _READER_PAGES = Any[ "Overview" => "multicode.md",
+                           "PLUTO"    => Any["First Inspection" => "40_pluto_First_Inspection.md",
+                                             "Reader"           => "pluto_reader.md"],
+                           "Chombo"   => Any["First Inspection" => "41_chombo_First_Inspection.md",
+                                             "Reader"           => "chombo_reader.md"],
+                           "Athena++" => Any["First Inspection" => "42_athena_First_Inspection.md",
+                                             "Reader"           => "athena_reader.md"],
+                           "FLASH"    => Any["First Inspection" => "43_flash_First_Inspection.md",
+                                             "Reader"           => "flash_reader.md"],
+                           "GADGET"   => Any["First Inspection" => "44_gadget_First_Inspection.md",
+                                             "Reader"           => "gadget_reader.md"],
+                           "AREPO"    => Any["First Inspection" => "45_arepo_First_Inspection.md",
+                                             "Reader"           => "arepo_reader.md"]]
+for (label, file) in ["AMReX / Quokka" => "amrex_reader.md"]        # OPTIONAL, see above
+    isfile(joinpath(@__DIR__, "src", file)) && push!(_READER_PAGES, label => file)
+end
+
+const _MULTICODE_SITE = get(ENV, "GITHUB_REF_NAME", "") == "multicode" ||
+                        get(ENV, "MERA_MULTICODE_SITE", "0") == "1"
+
 makedocs(modules = [Mera],
          sitename = "Mera.jl",
          doctest = false,
          clean = true,
-         checkdocs = :none,
+         checkdocs = :exports,
          linkcheck = false,
-         warnonly = [:cross_references],
+         warnonly = [:cross_references, :missing_docs],
          remotes = nothing,
          format = Documenter.HTML(
 		prettyurls = get(ENV, "CI", nothing) == "true", 
@@ -25,7 +106,7 @@ makedocs(modules = [Mera],
 		# The search index scales with TOTAL content, not per-page size, so splitting pages
 		# would not shrink it; currently ~2.3 MiB.
 		search_size_threshold_warn = 5_000_000,   # ~4.8 MiB; default was 500 KiB
-		assets = ["assets/custom.css", "assets/custom.js", "assets/music_player.js"],
+		assets = ["assets/custom.css", "assets/custom.js"],
 		canonical = "https://manuelbehrendt.github.io/Mera.jl/",
 		footer = "© $(_YEAR) Manuel Behrendt. Built with [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) and [Julia](https://julialang.org). ",
 		collapselevel = 1,  # Optimize section collapsing for left sidebar
@@ -33,8 +114,45 @@ makedocs(modules = [Mera],
 		repolink = "https://github.com/ManuelBehrendt/Mera.jl"),  # Add repository link
          
 		authors = "Manuel Behrendt",
-		pages = Any[ "Home"                  => "index.md",
-		              "First Look"             => "report.md",
+		pages = _MULTICODE_SITE ? Any[
+                         "Home" => "index.md",
+                         "Other Simulation Codes" => _READER_PAGES,
+
+                         # Contributing sits on its own: adding a reader is a different job from
+                         # using one, and the people doing it arrive from the README, not from a
+                         # reader page.
+                         "Contributing a Reader" => Any[
+                             "How to Add a Reader" => "adding_a_reader.md",
+                             "Helping, Credits and the Badge" => "multicode_contributing.md"],
+
+                         # Topics, not codes. These used to sit under "Other Simulation Codes",
+                         # where a reader looking for a format found a cosmology page instead.
+                         "Topics" => Any[
+                             "AREPO/GADGET Run-time Logs" => "gadget_logs.md",
+                             "Cosmological Units"         => "cosmological_units.md",
+                             "Zoom Simulations"           => "zoom_simulations.md",
+                             "Derived Fields"             => "derived_fields.md"],
+                         "API Reference" => Any[
+                             "Data Inspection"     => "api/data_inspection.md",
+                             "Data Loading"        => "api/data_loading.md",
+                             "Subregions"          => "api/subregions.md",
+                             "Calculations"        => "api/calculations.md",
+                             "Masking & Filtering" => "api/masking_filtering.md",
+                             "Structure Finding"   => "api/structure_finding.md",
+                             "Profiles & Phase"    => "profiles_phase.md",
+                             "Projections"         => "api/projections.md",
+                             "Off-axis Projection" => "api/offaxis.md",
+                             "Mera-Files"          => "api/mera_files.md",
+                             "Volume Rendering"    => "api/volume_rendering.md",
+                             "Multi-Threading"     => "api/multithreading.md",
+                             "Cosmology"           => "api/cosmology.md",
+                             "Movies"              => "api/movies.md",
+                             "Configuration"       => "api/configuration.md",
+                             "Notifications"       => "api/notifications.md",
+                             "Complete API"        => "api.md"],
+                       ] : Any[ "Home"                  => "index.md",
+		              "First Look"             => "first_look.md",
+		              "Composable Reports"     => "report.md",
 		              "Getting Started"        => Any[
 		                  "First Steps"                    => "00_multi_FirstSteps.md",
 		                  "Coming from Other Tools"        => "switching_to_mera.md",
@@ -47,27 +165,38 @@ makedocs(modules = [Mera],
                           "Data Inspection"   => Any[ "Hydro"     => "01_hydro_First_Inspection.md",
                                                       "Gravity"   => "01_gravity_First_Inspection.md",
                                                       "Particles" => "01_particles_First_Inspection.md",
-                                                      "Clumps"    => "01_clumps_First_Inspection.md"],
+                                                      "Clumps"    => "01_clumps_First_Inspection.md",
+                                                      "Sinks"     => "01_sinks_First_Inspection.md",
+                                                          "RT"        => "01_rt_First_Inspection.md"],
                           "Load by Selection" => Any[ "Hydro"     => "02_hydro_Load_Selections.md",
                                                       "Gravity"   => "02_gravity_Load_Selections.md",
                                                       "Particles" => "02_particles_Load_Selections.md",
-                                                      "Clumps"    => "02_clumps_Load_Selections.md"],
+                                                      "Clumps"    => "02_clumps_Load_Selections.md",
+                                                      "Sinks"     => "02_sinks_Load_Selections.md"],
                           "Get Subregions"    => Any[ "Hydro"     => "03_hydro_Get_Subregions.md",
                                                       "Gravity"   => "03_gravity_Get_Subregions.md",
                                                       "Particles" => "03_particles_Get_Subregions.md",
-                                                      "Clumps"    => "03_clumps_Get_Subregions.md"],
+                                                      "Clumps"    => "03_clumps_Get_Subregions.md",
+                                                      "Sinks"     => "03_sinks_Get_Subregions.md"],
                           # shaping the loaded data into another representation
                           "Uniform Grid / Resampling" => "covering_grid.md",
                           # working with a cosmological run (redshift, scale factor, comoving units)
-                          "Cosmological Runs" => "09_multi_Cosmology.md"],
+                          "Cosmological Runs" => "09_multi_Cosmology.md",
+                          # Physics that the simulation itself carries: MHD is extra columns on
+                          # hydro, RT is a data type of its own. Both used to sit two levels deep
+                          # under Analysis & Calculations, where readers did not find them.
+                          "Simulation Physics" => Any[
+                              "Magnetic Fields (MHD)" => "magnetic_fields.md",
+                              "Radiative Transfer"    => "10_multi_RadiativeTransfer.md"]],
 
                       "Analysis & Calculations" => Any[
                           "Quantities & Fields" => Any[
                               "Basic Calculations"          => "04_multi_Basic_Calculations.md",
                               "How Quantities Are Computed" => "computation_reference.md",
-                              "Derived Fields & add_field"  => "derived_fields.md",
-                              "Magnetic Fields (MHD)"       => "magnetic_fields.md",
-                              "Radiative Transfer"          => "10_multi_RadiativeTransfer.md"],
+                              # the unit tables and constants, split out of First Steps, which
+                              # they had grown to dominate
+                              "Units & Constants"           => "units_and_constants.md",
+                              "Derived Fields & add_field"  => "derived_fields.md"],
                           "Selection, Statistics & Metadata" => Any[
                               "Mask/Filter/Meta"            => "05_multi_Masking_Filtering.md",
                               "Statistics (PDFs)"           => "statistics.md",
@@ -75,9 +204,8 @@ makedocs(modules = [Mera],
                               "Provenance"                  => "provenance.md"],
                           "Structure Finding" => Any[
                               "Clump Finding"               => "clumpfind.md",
-                              "Clump Finding — Synthetic Example" => "clumpfind_synthetic.md"],
+                              "Clump Finding: Synthetic Example" => "clumpfind_synthetic.md"],
                           "Gas Flows & Star Formation" => Any[
-                              "Flux Budgets"                => "fluxbudget.md",
                               "Star-Formation Rate"         => "sfr.md"],
                           "Time Series & Movies" => Any[
                               "Time Series (multi-snapshot)"=> "timeseries.md",
@@ -86,6 +214,11 @@ makedocs(modules = [Mera],
                       # projection IS map-making; overlay/absorption/mock-observe operate on its
                       # output and auto-frame sets up the view — so they live together here.
                       "Projection & Maps" => Any[
+                          # A router, not a tutorial. "Make a rotating movie" used to land on
+                          # movie.md, which does not mention rotation_sequence, and the off-axis
+                          # page was reachable only from the nav: index.md and both axis-aligned
+                          # tutorials link to it nowhere.
+                          "Which tool?"                  => "projection_which_tool.md",
                           "Auto-Frame (center & orient)" => "galaxyframe.md",
                           "Axis-aligned (x/y/z)" => Any[ "Hydro"     => "06_hydro_Projection.md",
                                                          "Particles" => "06_particles_Projection.md"],
@@ -105,7 +238,6 @@ makedocs(modules = [Mera],
 
                       # --- code-agnostic readers: their own top-level section, not buried under Data ---
                       "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
-                                                       "Worked Examples" => "multicode_examples.md",
                                                        "PLUTO"    => "pluto_reader.md",
                                                        "Athena++" => "athena_reader.md",
                                                        "AMReX / Quokka" => "amrex_reader.md",
@@ -130,6 +262,9 @@ makedocs(modules = [Mera],
                           "Mera-Files"          => "api/mera_files.md",
                           "Volume Rendering"    => "api/volume_rendering.md",
                           "Multi-Threading"     => "api/multithreading.md",
+                          "Cosmology"           => "api/cosmology.md",
+                          "Movies"              => "api/movies.md",
+                          "Configuration"       => "api/configuration.md",
                           "Notifications"       => "api/notifications.md",
                           "Complete API"        => "api.md"],
 
@@ -139,19 +274,19 @@ makedocs(modules = [Mera],
                               "Bundling Arguments (myargs)" => "bundled_arguments.md",
                               "Verbose & Progress Switches" => "verbose_progress_switches.md",
                               "Multi-Threading"     => "multi-threading/multi-threading_intro.md",
+                              "Adding a Reader"     => "adding_a_reader.md",
                               "Testing Framework"   => "advanced_features/testing_guide.md",
                               "Notifications"       => Any[ "Overview"      => "notifications/index.md",
                                                             "Setup & Usage" => "notifications/setup_and_usage.md",
                                                             "Examples"      => "notifications/examples.md"]],
-                          "Benchmarks" => Any[ "Server IO"                     => "benchmarks/IO/IOperformance.md",
-                                               "Parallel RAMSES-Files Reading" => "benchmarks/RAMSES_reading/ramses_reading.md",
-                                               "Mera-Files Reading"            => "benchmarks/JLD2_reading/Mera_files_reading.md",
-                                               "Projections"                   => "benchmarks/Projection/multi_projections.md"],
-                          "Quick Reference" => Any[ "Julia Basics"            => "quickreference/01_getting_started.md",
-                                                    "From Other Languages"    => "quickreference/02_migrators.md",
-                                                    "Essential Packages"      => "quickreference/03_packages.md",
-                                                    "Julia Fundamentals"      => "quickreference/04_mera_patterns.md",
-                                                    "Performance & Debugging" => "quickreference/05_performance.md",
+                          "Benchmarks" => Any[ "Measured Performance"    => "benchmarks/performance.md",
+                                              "Run Your Own Benchmarks" => "benchmarks/run_your_own.md"],
+                          # Getting Started already answers "coming from another tool"
+                          # (switching_to_mera) and "Julia for this kind of work"
+                          # (julia_for_simulation_analysis), in curated pages roughly a tenth of
+                          # the length. Only the pages adding something beyond those stay listed.
+                          # The rest are still built and still reachable by link.
+                          "Quick Reference" => Any[ "Essential Packages"      => "quickreference/03_packages.md",
                                                     "Resources & Community"   => "quickreference/06_resources.md",
                                                     "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md"],
                           # "Miscellaneous" is deliberately not listed: its four sections (myargs,
@@ -160,9 +295,17 @@ makedocs(modules = [Mera],
                           # / `?notifyme` REPL output that api.md already renders properly. Meeting the
                           # same four topics twice, at two levels of quality, is what the docs panel
                           # flagged. The page and its notebook are kept, just not offered as a route.
-                          "Examples & Misc" => Any[ "Examples"             => "examples.md",
-                                                    "Recommended Packages" => "recommended_packages.md"]]
+                          "Examples & Misc" => Any[ "Recommended Packages" => "recommended_packages.md"]]
                     ]
 )
 
-deploydocs(repo = "github.com/ManuelBehrendt/Mera.jl.git")
+# The release line is published from `master`, the multi-code line from `multicode`, each
+# into its own folder on the docs site. Without this, the frontend pages exist only as raw
+# markdown on a branch, which is not something you can send a collaborator.
+# Branch-aware rather than branch-specific on purpose: the file stays identical on both
+# branches, so a merge never has to resolve it.
+const _REF = get(ENV, "GITHUB_REF_NAME", "")
+deploydocs(repo      = "github.com/ManuelBehrendt/Mera.jl.git",
+           devbranch = _REF == "multicode" ? "multicode" : "master",
+           devurl    = _REF == "multicode" ? "multicode" : "dev",
+           versions  = ["stable" => "v^", "v#.#", "dev" => "dev", "multicode" => "multicode"])

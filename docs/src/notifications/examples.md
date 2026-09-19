@@ -1,10 +1,10 @@
 # Notifications: Examples & Troubleshooting
 
 Complete, realistic Mera workflows using the notification functions. For
-configuration and the full option list, see [Setup & Usage](setup_and_usage.md).
+configuration and the full option list: see [Setup & Usage](setup_and_usage.md).
 
 !!! info "Which channel does each example use?"
-    `notifyme` sends to **everything you have configured** — one call, both channels if
+    `notifyme` sends to **everything you have configured**, one call, both channels if
     both are set up. But the two are not equally capable, so an example using
     attachments or `zulip_channel` is effectively a Zulip example: email still arrives,
     carrying the message text only.
@@ -20,7 +20,7 @@ configuration and the full option list, see [Setup & Usage](setup_and_usage.md).
     | `send_results` | **✗** | ✓ |
 
     The email body is the message *after* timing and exception details are folded in, but
-    *before* captured output and attachments — those are assembled for the Zulip upload
+    *before* captured output and attachments, those are assembled for the Zulip upload
     only. So `capture_output` reaches Zulip and not your inbox.
 
     Examples below marked **email + Zulip** work fully on either; the rest need Zulip to
@@ -65,7 +65,7 @@ timed_notify("Mera-file conversion",
 
 !!! warning "No `do` blocks"
     `timed_notify` and `safe_execute` take the block as their **second** argument, so
-    `timed_notify("name") do … end` raises a `MethodError` — Julia's `do` syntax passes
+    `timed_notify("name") do … end` raises a `MethodError`, Julia's `do` syntax passes
     the function *first*. Use `() -> …` as above.
 
 ## Notify on success or failure  *(email + Zulip)*
@@ -142,7 +142,7 @@ send_results("Paper figures", "./figures/";
 
 ## Attachment size and image compression  *(Zulip)*
 
-Images are **compressed automatically** before upload — resized to at most 1024 px on the
+Images are **compressed automatically** before upload, resized to at most 1024 px on the
 long side, targeting roughly 1 MB. You do not have to do anything; a 0.5 MB figure
 typically arrives at about 0.3 MB.
 
@@ -217,13 +217,13 @@ throttles its own updates, so a fast pipeline posts a handful of messages rather
 per step.
 
 !!! tip "Rehearse without sending"
-    `MERA_ZULIP_DRY_RUN=true` prints what *would* be posted instead of posting it — useful
+    `MERA_ZULIP_DRY_RUN=true` prints what *would* be posted instead of posting it, useful
     when developing a pipeline against a shared team channel.
 
 ## Report progress through a long loop  *(Zulip)*
 
 For work that runs for hours, `notifyme` at the end is too late to be useful. A progress
-tracker sends periodic updates instead — throttled both by elapsed time and by percentage,
+tracker sends periodic updates instead, throttled both by elapsed time and by percentage,
 so a fast loop does not flood the channel:
 
 ```julia
@@ -247,22 +247,22 @@ final summary including total wall-clock time. The tracker is a plain `Dict`, so
 
 ## Keep going when a step fails  *(email + Zulip)*
 
-`safe_execute` runs a block, and on an exception sends a report — with context and stack
-trace — before rethrowing:
+`safe_execute` runs a block, and on an exception sends a report, with context and stack
+trace, before rethrowing:
 
 ```julia
 result = safe_execute("Load snapshot 300", () -> gethydro(getinfo(300, path)))
 ```
 
 !!! warning "Argument order"
-    The function is the **second** argument, so `do`-block syntax does **not** work here —
+    The function is the **second** argument, so `do`-block syntax does **not** work here,
     `safe_execute("desc") do … end` raises a `MethodError`, because `do` passes the block
     as the *first* argument. Use `() -> …` as shown. Note also that `safe_execute`
-    **rethrows** after notifying: it reports failures, it does not swallow them.
+    **rethrows** after notifying: it reports failures rather than swallowing them.
 
 ## Organising a Zulip channel  *(Zulip)*
 
-Email has no routing — every message lands in one inbox with the subject `MERA`. Zulip
+Email has no routing, every message lands in one inbox with the subject `MERA`. Zulip
 does, and using it well is what makes team notifications readable rather than noise. A
 structure that works:
 
@@ -285,7 +285,7 @@ so the split above is the one the API already assumes.
 ## Troubleshooting
 
 **Nothing is sent.**
-Print what Mera actually resolved — this answers most questions at once:
+Print what Mera actually resolved, this answers most questions at once:
 
 ```julia
 mera_config()        # the merged configuration in effect
@@ -302,7 +302,7 @@ intentionally a no-op. `mera_config_example()` prints a template to fill in.
 - Check spam folders; the subject is always `MERA`.
 
 **Zulip message doesn't appear.**
-- All three of `bot_email`, `api_key` and `server` must be set — Zulip is skipped
+- All three of `bot_email`, `api_key` and `server` must be set: Zulip is skipped
   if any is missing. Check with `mera_config()["zulip"]`.
 - The bot must be allowed to post to `zulip_channel`; the channel must exist.
 - Verify the server URL is reachable from the machine running Mera.
@@ -317,7 +317,7 @@ entirely, drop `api_key` from the file and export `MERA_ZULIP_API_KEY` instead.
 
 **An attachment is missing.**
 - Non-image files larger than `max_file_size` (default ≈25 MB) are skipped with
-  a warning — raise the limit or compress the file.
+  a warning, raise the limit or compress the file.
 - `attachment_folder` only attaches images (`.png/.jpg/.jpeg/.gif/.svg`), up to
   `max_attachments`.
 - Images are auto-resized for upload; if exact pixels matter, attach via

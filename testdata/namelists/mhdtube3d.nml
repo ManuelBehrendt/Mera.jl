@@ -1,0 +1,100 @@
+! mhdtube3d.nml — Mera test fixture: 3-D MHD shock tube (Ryu & Jones 1995, test 2a)
+!
+! Derived from RAMSES 2026.05 `namelist/tube_mhd.nml`. Upstream is a 1-D tube at levelmin=
+! levelmax=8; Mera reads 3-D only, so this runs the SAME tube in 3-D — uniform in y and z, with
+! the discontinuity normal to x. Changes:
+!   levelmin/levelmax 8 -> 4/5   (a 256^3 uniform grid is 16.7M cells; this is a fixture).
+!                                MEASURED: 5/6 costs 259 MB for 6 outputs — in 3-D the AMR
+!                                refines WHOLE y-z PLANES at each discontinuity, so one extra
+!                                level is expensive here in a way it is not for a point blast.
+!   z_center/length_z added      (the 1-D namelist omits them; regions need all three in 3-D)
+!   noutput/tout -> 5 snapshots  (upstream writes one at t=0.5)
+! Physical state (d, u, v, p, and the field components A=Bx, B=By, C=Bz) is untouched.
+!
+! ANALYTIC ORACLE — an EXACT one, valid at every cell and every time, independent of resolution:
+!
+!     For a tube whose only spatial variation is along x, the solenoidal constraint reduces to
+!         div B = d(Bx)/dx = 0     =>     Bx(x,y,z,t) = const = A_region = 1.0
+!
+!     RAMSES evolves B with constrained transport on the CELL FACES, and Mera reconstructs the
+!     cell-centred value as bx = 1/2 (bx_left + bx_right). So `getvar(gas, :bx)` must equal 1.0
+!     in EVERY cell of EVERY snapshot, to round-off. Any error in Mera's face pairing, component
+!     ordering, or left/right averaging shows up immediately and unambiguously — this is a much
+!     sharper test of the MHD reader than comparing a profile to a reference curve.
+!
+!     By and Bz do evolve (the rotational and fast/slow structure), so they are checked only for
+!     finiteness and for the jump across the discontinuity.
+!
+! Boundaries are outflow in x (bound_type=2), so mass is NOT conserved here — do not assert it.
+!
+! MEASURED (RAMSES 2026.05 SOLVER=mhd, 8 ranks): 6 outputs, 69 MB, 4 s.
+! max|Bx - 1| over ALL cells and ALL snapshots = 6.66e-16, i.e. 3 machine epsilons, and
+! bx_centre == 1/2 (bx_left + bx_right) held exactly at every snapshot. By evolves over
+! [0.00, 1.65]; Bz stays identically 0. Cells grow 11264 -> 32768 as the structure refines.
+! NOTE: Mera stores the six FACE values as columns (:bx_left/:bx_right/...); the cell-centred
+! :bx/:by/:bz are DERIVED getvar quantities, not columns — checking propertynames for :bx fails.
+!
+! Run:  mpirun -np 8 <build>/bin/ramses3d_mhd mhdtube3d.nml > run.log 2>&1
+
+&RUN_PARAMS
+hydro=.true.
+nremap=0
+ncontrol=100
+nsubcycle=4*1,
+/
+
+&AMR_PARAMS
+levelmin=4
+levelmax=5
+ngridmax=100000
+nexpand=1
+boxlen=2.0
+/
+
+&BOUNDARY_PARAMS
+nboundary=2
+ibound_min=-1,+1
+ibound_max=-1,+1
+bound_type= 2, 2
+/
+
+&INIT_PARAMS
+nregion=2
+region_type(1)='square'
+region_type(2)='square'
+x_center=0.5,1.5
+y_center=1.0,1.0
+z_center=1.0,1.0
+length_x=1.0,1.0
+length_y=10.0,10.0
+length_z=10.0,10.0
+exp_region=10.0,10.0
+d_region=1.0,0.2
+u_region=0.0,1.186
+v_region=0.0,2.967
+w_region=0.0,0.0
+p_region=2.0,0.1368
+A_region=1.0,1.0
+B_region=0.0,1.6405
+C_region=0.0,0.0
+/
+
+&OUTPUT_PARAMS
+noutput=5
+tout=0.05,0.12,0.22,0.35,0.5
+/
+
+&HYDRO_PARAMS
+gamma=1.6666667
+courant_factor=0.8
+slope_type=0
+riemann='roe'
+/
+
+&REFINE_PARAMS
+err_grad_d=0.01
+err_grad_u=0.05
+err_grad_p=0.05
+interpol_var=0
+interpol_type=2
+/

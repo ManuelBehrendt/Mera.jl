@@ -25,7 +25,7 @@ lines!(ax, t.a, t.sfr_total)                # plain Vector{Float64} columns
 | `:config` | `eos.txt`, `sfrrate.txt`, `cooling_metal_bins_*.txt`, `stellar_photometrics_bins.txt`, `variable_wind_scaling.txt` | on request (`:config` / `:all`) |
 | `:performance` | `cpu.txt`, `cpu.csv`, `timebins.txt`, `timings.txt`, `balance.txt`, `domain.txt`, `memory.txt` | **never** |
 
-The performance logs are bookkeeping rather than science and are *enormous* — on the run
+The performance logs are bookkeeping rather than science and are *enormous*, on the run
 this reader was written against, `cpu.txt` alone was 8.3 GB and the group came to ~16 GB.
 They are excluded from `:physics` and from `:all`, so reading one is always explicit:
 
@@ -34,7 +34,7 @@ getlogs(info, :cpu; max_bytes=1e10)         # opt in, and raise the ceiling deli
 ```
 
 Every read is capped by `max_bytes` (200 MB by default). Rather than raising it, prefer
-down-sampling — both keywords are applied **while streaming**, so a 179 MB `sfr.txt` never
+down-sampling, both keywords are applied **while streaming**, so a 179 MB `sfr.txt` never
 has to be held in memory:
 
 ```julia
@@ -56,18 +56,18 @@ snapshot's own `/Config` group:
 "GFM" in configflags(info)          # metal fields present → metals_*.txt should exist
 ```
 
-## Columns are build-dependent — treat names as a guess
+## Columns are build-dependent, treat names as a guess
 
 !!! warning "`colnames` is best-effort unless you set it"
     How many columns a log has, and what each one means, depends on the same compile-time
     flags. Mera therefore always returns the **raw** columns plus `ncols`, and marks the
     names:
 
-    - `colnames` — a best-effort guess for the common TNG-like layout;
-    - `colnames_verified` — `false` unless you passed `colnames` yourself.
+    - `colnames`, a best-effort guess for the common TNG-like layout;
+    - `colnames_verified`, `false` unless you passed `colnames` yourself.
 
     Nothing is renamed or rescaled on a guess. The 6-column `sfr.txt` Mera knows about is an
-    example, not a guarantee — check against your own `/Config` before trusting a name, and
+    example, not a guarantee, check against your own `/Config` before trusting a name, and
     override when you know better:
 
     ```julia
@@ -81,7 +81,7 @@ Two things happen to a file that a running code is appending to, and both are ha
 than left to surprise you:
 
 **Truncation.** The last line can be a half-written row when you read while the run is
-going. That row is dropped and `truncated` is set — no error, and no `NaN` row smuggled into
+going. That row is dropped and `truncated` is set, no error, and no `NaN` row smuggled into
 your data.
 
 **Restarts.** AREPO restarts by appending, and the scale factor then steps *backwards*, so a
@@ -97,7 +97,7 @@ t.restart_events                          # turnarounds (maximal descending runs
 ```
 
 `restarts` and `restart_events` say a run *was* resumed. `restart_at` and `restart_a` say
-**where** — the row indices of each backward step, and the scale factor there:
+**where**: the row indices of each backward step, and the scale factor there:
 
 ```julia
 t = getlogs(info, :sfr)
@@ -109,14 +109,14 @@ That is the part worth having when a physics curve shows a discontinuity: a jump
 exactly on a resume boundary is an artifact of the restart, a jump between them is not.
 Without it you can tell *that* a run restarted but not *where*, so you cannot make that check.
 
-`restart_at` indexes the **parsed** rows, i.e. before `dedupe` removes anything — after
+`restart_at` indexes the **parsed** rows, i.e. before `dedupe` removes anything, after
 `dedupe=:last` the series is monotonic by construction and has no backward steps left to point
 at. `restart_a` is the one that stays meaningful either way, which is why it is the one to plot.
 
 Both counts are reported because "how many restarts" stops being obvious once a descent
 covers more than one row. A restart that simply re-emits an earlier block gives one step and
 one event, so they agree in the ordinary case. They also count only the rows Mera **parsed**,
-so a `wc -l`-style count over the raw file can read one higher — a truncated final row is
+so a `wc -l`-style count over the raw file can read one higher, a truncated final row is
 dropped here but is still a line there.
 
 ### `every` samples the raw stream; `dedupe` runs after
@@ -131,10 +131,10 @@ The order is parse → `arange` → `every` → `dedupe`. Measured on a real 175
 | `getlogs(info, :sfr; every=100)` | 19 538 |
 | `getlogs(info, :sfr; every=100, dedupe=:none)` | 20 414 |
 
-So `every=100` is **not** "a hundredth of what the default returns" — it is a hundredth of the
+So `every=100` is **not** "a hundredth of what the default returns". It is a hundredth of the
 raw stream, which then deduplicates. That order is deliberate: sampling first is what keeps
-`every=` O(1) in memory. Deduplicating first would mean holding the whole distinct set —
-47.8 MB instead of 0.9 MB for the file above, 51× more — and would remove the only reason
+`every=` O(1) in memory. Deduplicating first would mean holding the whole distinct set, 
+47.8 MB instead of 0.9 MB for the file above, 51× more, and would remove the only reason
 `every=` is cheap on a multi-gigabyte log. If you need every Nth *distinct* time, sample the
 returned columns yourself.
 
@@ -143,7 +143,7 @@ AREPO writes several rows per scale factor either way.
 
 ## `info.txt`
 
-`info.txt` is not a table — it is one sync-point record per line of comma-separated prose:
+`info.txt` is not a table. It is one sync-point record per line of comma-separated prose:
 
 ```
 Sync-Point 0, TimeBin=0, Time: 0.0078125, Redshift: 127, Systemstep: 0, Dloga: 0, Nsync-grv:  298215990, Nsync-hyd:  149107995
@@ -181,16 +181,16 @@ sf_threshold(info)                            # :parameter, when CritPhysDensity
 sf_threshold(info, gas; method=:measured)     # exact: min n_H among cells with sfr > 0
 ```
 
-When `CritPhysDensity` is `0` — as it is on a TNG-like run — AREPO does **not** use a
+When `CritPhysDensity` is `0`, as it is on a TNG-like run, AREPO does **not** use a
 supplied threshold: it derives one at run time from the Springel & Hernquist self-regulation
 condition, and that number is not stored anywhere. Two nearby values are commonly mistaken
 for it and are both wrong: `CritOverDensity` is a separate comoving-overdensity floor (three
 decades lower at z ≈ 3.4), and `SelfShieldingDensity` merely lands close. On the reference
 run the measured threshold was 0.1065 cm⁻³ against `SelfShieldingDensity` = 0.1295 and the
-commonly quoted 0.13 — both ~22 % high. Mera refuses rather than substituting either.
+commonly quoted 0.13, both ~22 % high. Mera refuses rather than substituting either.
 
 **Which catalogue fields exist.** [`groupfields`](@ref) lists them without reading the
-payload — name, table (`:Group` or `:Subhalo`), shape as Mera returns it (row = group) and
+payload, name, table (`:Group` or `:Subhalo`), shape as Mera returns it (row = group) and
 element type:
 
 ```julia
@@ -200,10 +200,25 @@ for f in groupfields(info); f.table === :Group && println(f.name, " ", f.shape);
 **Mean densities.** [`mean_baryon_density`](@ref), [`mean_matter_density`](@ref) and
 [`critical_density`](@ref) all take `unit=` and `z=`, and work for any code. Note
 `critical_density` carries the full Friedmann `E(a)` while the mean densities scale exactly
-as `(1+z)³` — they are not interchangeable, and differ by percent at z ≈ 3.
+as `(1+z)³`. They are not interchangeable, and differ by percent at z ≈ 3.
 
 ## Related
 
-- [Reading GADGET data](gadget_reader.md) — the snapshot frontend
-- [Reading AREPO data](arepo_reader.md) — moving-mesh gas
-- [`getgroups`](@ref) — the FoF group catalogue
+- [Reading GADGET data](gadget_reader.md), the snapshot frontend
+- [Reading AREPO data](arepo_reader.md), moving-mesh gas
+- [`getgroups`](@ref), the FoF group catalogue
+
+## Function Reference
+
+A run-time log is what the code wrote while it ran, rather than a snapshot of
+the state. These read the GADGET and AREPO logs, list what a run produced, and
+pull out the values that are otherwise buried in them.
+
+```@docs
+getlogs
+getlogs_gadget
+loglist
+configflags
+groupfields
+sf_threshold
+```

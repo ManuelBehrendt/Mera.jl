@@ -85,7 +85,6 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :cellsize=>[:level], :volume=>[:cellsize],
     :x=>[:cx], :y=>[:cy], :z=>[:cz],
     :a_magnitude=>[:ax,:ay,:az],
-    :escape_speed=>[:epot], :gravitational_redshift=>[:epot],
     :specific_gravitational_energy=>[:epot],
     :ar_cylinder=>[:x,:y,:ax,:ay], :aϕ_cylinder=>[:x,:y,:ax,:ay],
     :ar_sphere=>[:x,:y,:z,:ax,:ay,:az], :aθ_sphere=>[:x,:y,:z,:ax,:ay,:az],
@@ -492,6 +491,14 @@ const _VAR_ASCII = Dict{Symbol,Symbol}(
     :lphi_cylinder   => :lϕ_cylinder,
     :atheta_sphere   => :aθ_sphere,    :aphi_sphere    => :aϕ_sphere,
     :aphi_cylinder   => :aϕ_cylinder,
+    :Ftheta_sphere   => :Fθ_sphere,    :Fphi_sphere    => :Fϕ_sphere,
+    :Fphi_cylinder   => :Fϕ_cylinder,
+    :btheta_sphere   => :bθ_sphere,    :bphi_sphere    => :bϕ_sphere,
+    :bphi_cylinder   => :bϕ_cylinder,
+    :vtheta_sphere2  => :vθ_sphere2,   :vphi_sphere2   => :vϕ_sphere2,
+    :sigma_thermal   => :σ_thermal,
+    :sigmar_sphere   => :σr_sphere,    :sigmatheta_sphere => :σθ_sphere,
+    :sigmaphi_sphere => :σϕ_sphere,
 )
 _canon_var(v::Symbol) = get(_VAR_ASCII, v, v)
 

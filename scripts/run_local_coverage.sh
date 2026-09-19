@@ -30,8 +30,43 @@ find src test -name '*.cov' -type f -delete 2>/dev/null || true
 rm -f coverage.lcov lcov.info
 
 echo ">>> Running full test suite with coverage"
-julia --project=. --color=yes \
-      -e 'using Pkg; Pkg.test("Mera"; coverage=true)'
+
+# Julia block-buffers stdout when it is redirected to a file, so a coverage run can look frozen
+# for hours while it is in fact working. Give it a pty and it switches to line buffering. `script`
+# cannot do this from a non-interactive shell, so use python's pty module, which can. Every line
+# is then stamped with the wall clock and the elapsed time, so a gap between two lines is exactly
+# the cost of whatever sits between them.
+#
+# A heartbeat every two minutes reports liveness even during a long silent stretch, which is what
+# a stalled run looks like from outside.
+#
+# Set MERA_SMOKE_ONLY=1 to cover only the data-free tier: minutes rather than hours, and it is the
+# figure CI reports.
+COV_START=$(date +%s)
+stamp() { local n=$(( $(date +%s) - COV_START )); printf '%s +%02d:%02d' "$(date +%H:%M:%S)" $((n/60)) $((n%60)); }
+
+(
+  while sleep 120; do
+      # pick the BUSIEST julia binary, not a pattern match: the python pty wrapper carries the
+      # julia arguments in its own command line, so pgrep on those reports the wrapper, which sits
+      # at 0 % CPU and 4 MB and would claim everything is fine even if Julia had died.
+      pid=$(ps aux | grep '[j]ulia' | sort -k3 -rn | head -1 | awk '{print $2}') || true
+      if [ -n "${pid:-}" ]; then
+          read -r cpu rss <<<"$(ps -p "$pid" -o %cpu=,rss= | tr -s ' ')"
+          printf '[%s] heartbeat: pid %s alive, cpu %s%%, rss %s MB\n' "$(stamp)" "$pid" "$cpu" "$((rss/1024))"
+      fi
+  done
+) &
+HEARTBEAT=$!
+trap 'kill "$HEARTBEAT" 2>/dev/null || true' EXIT
+
+python3 -c 'import pty,sys; sys.exit(pty.spawn(sys.argv[1:]))' \
+      julia --project=. --color=yes \
+      -e 'using Pkg; Pkg.test("Mera"; coverage=true)' 2>&1 \
+  | while IFS= read -r line; do printf '[%s] %s\n' "$(stamp)" "$line"; done
+cov_status=${PIPESTATUS[0]}
+kill "$HEARTBEAT" 2>/dev/null || true
+echo ">>> test run exited with status ${cov_status} after $(( ($(date +%s)-COV_START)/60 )) min"
 
 echo ">>> Aggregating coverage -> coverage.lcov"
 # process_coverage.jl provisions Coverage.jl into a temporary env, so it's

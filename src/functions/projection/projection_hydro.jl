@@ -84,9 +84,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
-                        center::Array{<:Any,1}=[0., 0., 0.],
+                        center::CenterType=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center::CenterType=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
@@ -157,9 +157,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
-                        center::Array{<:Any,1}=[0., 0., 0.],
+                        center::CenterType=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center::CenterType=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
@@ -230,9 +230,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
-                        center::Array{<:Any,1}=[0., 0., 0.],
+                        center::CenterType=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center::CenterType=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
@@ -304,9 +304,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
-                        center::Array{<:Any,1}=[0., 0., 0.],
+                        center::CenterType=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center::CenterType=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
@@ -371,6 +371,21 @@ projection(hydro, gravity, [:epot, :rho], :standard) # Mixed gravity/hydro varia
 projection(hydro, gravity, [:epot, :rho], [:erg, :g_cm3]) # Custom units per variable
 ```
 """
+# Either order works. `getvar` reads gravity-first (you are asking the gravity object for a
+# quantity, hydro only supplies the mass) while `projection` grew up hydro-first (hydro supplies
+# the geometry and the weight). Rather than break one of the two released spellings, both are
+# accepted in both functions and the docs teach one. These four just swap and delegate.
+projection(gravity::GravDataType, hydro::HydroDataType, var::Symbol; kwargs...) =
+    projection(hydro, gravity, var; kwargs...)
+projection(gravity::GravDataType, hydro::HydroDataType, var::Symbol, unit::Symbol; kwargs...) =
+    projection(hydro, gravity, var, unit; kwargs...)
+projection(gravity::GravDataType, hydro::HydroDataType, vars::Array{Symbol,1}; kwargs...) =
+    projection(hydro, gravity, vars; kwargs...)
+projection(gravity::GravDataType, hydro::HydroDataType, vars::Array{Symbol,1}, unit::Symbol; kwargs...) =
+    projection(hydro, gravity, vars, unit; kwargs...)
+projection(gravity::GravDataType, hydro::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1}; kwargs...) =
+    projection(hydro, gravity, vars, units; kwargs...)
+
 function projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol; kwargs...)
     return projection(hydro, [var]; gravity_data=gravity, kwargs...)
 end
@@ -457,9 +472,9 @@ projection(dataobject::HydroDataType, vars::Array{Symbol,1};
            xrange::Array{<:Any,1}=[missing, missing],
            yrange::Array{<:Any,1}=[missing, missing],
            zrange::Array{<:Any,1}=[missing, missing],
-           center::Array{<:Any,1}=[0., 0., 0.],
+           center::CenterType=[0., 0., 0.],
            range_unit::Symbol=:standard,
-           data_center::Array{<:Any,1}=[missing, missing, missing],
+           data_center::CenterType=[missing, missing, missing],
            data_center_unit::Symbol=:standard,
            verbose::Bool=true,
            show_progress::Bool=true,
@@ -515,6 +530,18 @@ return AMRMapsType
 Give any of the following to project along an arbitrary line of sight instead of an axis.
 When none are given, the axis-aligned path above runs unchanged. **Angles are in degrees by
 default** (`angle_unit=:rad` to switch).
+There are five ways to say where the camera looks, and they are alternatives: give exactly one.
+Which to reach for:
+
+- an **object** you want face-on or inclined → `inclination`/`azimuth` with `axis=:angmom`
+- a **box-aligned** view → `direction=:x/:y/:z`
+- a direction you already hold as a **vector**, e.g. one frozen from an earlier snapshot so a time
+  series keeps a fixed orientation → `los=`
+- **spherical angles in the box frame**, the usual physics convention → `theta`/`phi`. This is the
+  same family as `los=`; `theta`/`phi` name the direction with two angles instead of three
+  components, and unlike `inclination`/`azimuth` it is measured from the box axes rather than from a
+  reference axis you choose.
+
 - **`inclination`, `azimuth`** (user-oriented; `azimuth` alias `position_angle`): tilt the view
   away from a reference `axis` by `inclination` (0°⇒down the axis, 90°⇒⟂ to it) and rotate
   around it by `azimuth`.
@@ -855,9 +882,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
-                        center::Array{<:Any,1}=[0., 0., 0.],
+                        center::CenterType=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center::CenterType=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
@@ -885,11 +912,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
         if _offaxis && _windowed && _deep
             hint(:offaxis_unbounded_depth,
                  "off-axis view with `xrange`/`yrange` but no `zrange`.",
-                 "These are WORLD-space bounds, so the camera frame is the bounding box of that",
-                 "region AFTER rotation: the full box depth folds into the image height, and the",
-                 "window's own faces show up as straight edges across the map. Pass `zrange` to",
-                 "bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane",
-                 "frame (add aperture=:square for an identical frame at every angle).";
+                 "These are WORLD-space bounds, so after rotation the full box depth folds into",
+                 "the image. Pass `zrange`, or `fov=<half-width>` for a fixed camera frame.";
                  verbose=verbose)
         end
     end
@@ -916,31 +940,31 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
 
     
     # Override parameters with myargs struct if provided
-    if !(myargs.pxsize        === missing)        pxsize = myargs.pxsize end
-    if !(myargs.res           === missing)           res = myargs.res end
-    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
-    if !(myargs.direction     === missing)     direction = myargs.direction end
-    if !(myargs.los           === missing)           los = myargs.los end
-    if !(myargs.up            === missing)            up = myargs.up end
-    if !(myargs.theta         === missing)         theta = myargs.theta end
-    if !(myargs.phi           === missing)           phi = myargs.phi end
-    if !(myargs.angle_unit    === missing)    angle_unit = myargs.angle_unit end
-    if !(myargs.binning       === missing)       binning = myargs.binning end
-    if !(myargs.nmax          === missing)       nmax = myargs.nmax end
-    if !(myargs.inclination    === missing)    inclination = myargs.inclination end
-    if !(myargs.azimuth        === missing)        azimuth = myargs.azimuth end
-    if !(myargs.position_angle === missing) position_angle = myargs.position_angle end
-    if !(myargs.axis           === missing)           axis = myargs.axis end
-    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
-    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
-    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.data_center   === missing)   data_center = myargs.data_center end
-    if !(myargs.data_center_unit === missing) data_center_unit = myargs.data_center_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
-    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
-    if !(myargs.verbose_threads === missing) verbose_threads = myargs.verbose_threads end
+    if !(myargs.pxsize === missing) && isequal(pxsize, [missing, missing]) pxsize = myargs.pxsize end
+    if !(myargs.res === missing) && isequal(res, missing) res = myargs.res end
+    if !(myargs.lmax === missing) && isequal(lmax, dataobject.lmax) lmax = myargs.lmax end
+    if !(myargs.direction === missing) && isequal(direction, :z) direction = myargs.direction end
+    if !(myargs.los === missing) && isequal(los, nothing) los = myargs.los end
+    if !(myargs.up === missing) && isequal(up, nothing) up = myargs.up end
+    if !(myargs.theta === missing) && isequal(theta, nothing) theta = myargs.theta end
+    if !(myargs.phi === missing) && isequal(phi, nothing) phi = myargs.phi end
+    if !(myargs.angle_unit === missing) && isequal(angle_unit, :deg) angle_unit = myargs.angle_unit end
+    if !(myargs.binning === missing) && isequal(binning, :overlap) binning = myargs.binning end
+    if !(myargs.nmax === missing) && isequal(nmax, 64) nmax = myargs.nmax end
+    if !(myargs.inclination === missing) && isequal(inclination, nothing) inclination = myargs.inclination end
+    if !(myargs.azimuth === missing) && isequal(azimuth, nothing) azimuth = myargs.azimuth end
+    if !(myargs.position_angle === missing) && isequal(position_angle, nothing) position_angle = myargs.position_angle end
+    if !(myargs.axis === missing) && isequal(axis, nothing) axis = myargs.axis end
+    if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+    if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+    if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+    if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.data_center === missing) && isequal(data_center, [missing, missing, missing]) data_center = myargs.data_center end
+    if !(myargs.data_center_unit === missing) && isequal(data_center_unit, :standard) data_center_unit = myargs.data_center_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) && isequal(show_progress, true) show_progress = myargs.show_progress end
+    if !(myargs.verbose_threads === missing) && isequal(verbose_threads, false) verbose_threads = myargs.verbose_threads end
 
     # RT data carry no mass density, so default mass-weighting to volume-weighting
     # (avoids the :rho/:sd path in check_need_rho). Users can still override.
@@ -1010,13 +1034,17 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     density_names = [:density, :rho, :ρ]
     rcheck = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
+              :σr_sphere, :σθ_sphere, :σϕ_sphere]
     σ_to_v = SortedDict(  :σx => [:vx, :vx2],
             :σy => [:vy, :vy2],
             :σz => [:vz, :vz2],
             :σ  => [:v,  :v2],
             :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
-            :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
+            :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2],
+                          :σr_sphere   => [:vr_sphere,   :vr_sphere2],
+                          :σθ_sphere   => [:vθ_sphere,   :vθ_sphere2],
+                          :σϕ_sphere   => [:vϕ_sphere,   :vϕ_sphere2] )
 
     # checks to use maps instead of projections
     notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck, σcheck, σ_to_v)
@@ -1168,7 +1196,6 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
             println("   ├─ Variables: $num_variables across AMR levels $lmin to $simlmax")
             println("   ├─ Total cells: $total_cells")
             println("   ├─ Cells per variable: $(div(total_cells, num_variables))")
-            println("   └─ Expected efficiency: 85-95% (no combining overhead)")
         elseif verbose && verbose_threads && !use_parallel
             # Explain why sequential processing was chosen
             if num_variables < min_variables_for_parallel
@@ -1297,13 +1324,14 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                     total_cells = length(xval)
                     total_operations = total_cells * n_variables  # Each cell processed for each variable
                     cells_per_second = total_operations / parallel_processing_time
-                    theoretical_sequential_time = parallel_processing_time * effective_threads
-                    parallel_efficiency = (theoretical_sequential_time / parallel_processing_time / effective_threads) * 100
+                    # A real efficiency number needs a single-thread run to compare against, which
+                    # this call does not have. The line that used to sit here computed
+                    # (t * k) / t / k * 100, exactly 100.0 whatever happened, so it printed a
+                    # constant as if it were a measurement. See the benchmarks for real scaling.
                     
                     println("   📊 Performance Metrics:")
                     println("      ├─ Total operations: $total_operations ($(total_cells) cells × $n_variables vars)")
                     println("      ├─ Processing rate: $(round(Int, cells_per_second)) cells/second")
-                    println("      ├─ Parallel efficiency: $(round(parallel_efficiency, digits=1))% (target: 85-95%)")
                     println("      ├─ Threads utilized: $effective_threads / $(Threads.nthreads()) available")
                     println("      └─ Memory benefit: Direct allocation (no intermediate combining buffers)")
                 end
@@ -1694,13 +1722,17 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     footprint = (binning === :overlap || binning === :exact)
     csize = footprint ? Float64.(cellsize_all[sel]) : Float64[]
 
-    # line-of-sight velocity v·ŵ (code units) — for the off-axis kinematics :vlos / :σlos.
-    # ŵ is the viewing direction (cam_w); v is the cell/particle velocity. This is the genuine
-    # observable component along the chosen line of sight, available at any angle.
+    # Line-of-sight velocity for the off-axis kinematics :vlos / :σlos (code units).
+    #
+    # SIGN: cam_w points OUT of the image, toward the observer, so v·ŵ > 0 is gas moving toward
+    # us. Observational work uses the opposite sign, where a positive radial velocity means
+    # RECEDING (redshifted), so we negate here and :vlos matches the convention of the papers it
+    # will be compared against. Do not "simplify" this minus away: it inverts every rotation
+    # curve. σlos is a width and is unaffected by the sign.
     vlossel = Float64[]
     if (:vlos in selected_vars) || (:σlos in selected_vars)
         vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
-        vlossel = Float64.((vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+        vlossel = Float64.(-(vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
     end
     # requested unit symbol for a variable (aligned with selected_vars; default :standard)
     req_unit(iv) = (k = findfirst(==(iv), selected_vars);
@@ -1802,7 +1834,7 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # resolved centre (fractional, all 3 components) for faithful provenance — not the FOV pivot,
     # whose LOS component defaults to the box centre when no zrange is given. The image itself is
     # built about `pivot`, so this changes only the recorded metadata, not the map.
-    center_frac = collect(float.(center_in_standardnotation(dataobject.info, collect(Any, center), range_unit)))
+    center_frac = collect(float.(center_in_standardnotation(dataobject.info, collect(Any, _as_center(center)), range_unit)))
     return AMRMapsType(imaps, maps_unit, SortedDict(), maps_weight, maps_mode,
                        lmax_projected, lmin, simlmax, ranges, extent, copy(extent), ratio,
                        res, pixsize, boxlen, _smallr, _smallc, dataobject.scale, dataobject.info,
@@ -3316,11 +3348,12 @@ The system provides multiple specialized mapping algorithms:
 
 ### 5. Performance Optimizations
 
-#### Threading Architecture  
-- **Variable-Based Parallelization**: Revolutionary approach where each thread processes one complete variable
-- **Zero Combining Overhead**: Eliminates the 98s data combining bottleneck of traditional chunked approaches
-- **Parallel Efficiency**: Achieves 85-95% efficiency by eliminating shared mutable state
-- **Automatic Selection**: Intelligent choice between parallel and sequential based on data characteristics
+#### Threading Architecture
+- **Variable-Based Parallelization**: each thread processes one complete variable, so the work
+  splits across the variables you ask for, not across cells. Asking for several quantities in one
+  call is therefore what gains from threads; a single-variable call does not.
+- **Zero Combining Overhead**: no chunk-merging phase, because threads write to separate outputs
+- **Automatic Selection**: parallel or sequential is chosen from the data characteristics
 
 #### Memory Management
 - **Direct Allocation**: Thread-safe memory patterns without complex pool management  

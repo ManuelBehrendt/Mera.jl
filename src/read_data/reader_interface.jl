@@ -34,6 +34,41 @@ end
 const _READERS = Dict{Symbol,SimReader}()
 const _SIMCODE_TO_READER = Dict{String,Symbol}()
 
+# Report the composition a foreign snapshot ended up with. X and mu decide :nH and :T, no format
+# records them, and the fallback is the RAMSES convention. Printed once per getinfo so the number is
+# visible rather than assumed; readers that determine their own value show it here instead.
+function _composition_notice(info, verbose::Bool)
+    verbose || return nothing
+    try
+        mu = info.scale.K / info.scale.T_mu
+        X  = info.scale.nH / (info.unit_d / info.constants.mH)
+        dX  = isapprox(X, 0.76;    rtol=1e-6)
+        dmu = isapprox(mu, 1/0.76; rtol=1e-6)
+        dX && dmu && return println("[Mera]: composition not recorded by this format; using X = 0.76, " *
+                                    "mu = 1.32 (RAMSES convention) for :nH and :T. " *
+                                    "Change with setcomposition!(info; X_frac=…, mu=…).")
+        println("[Mera]: composition in use: X = $(round(X, digits=4)), mu = $(round(mu, digits=4))" *
+                (dX ? " (X is the default; the format does not record one)" : ""))
+    catch
+    end
+    return nothing
+end
+
+"""
+    _can_select_columns(info) -> Bool
+
+Whether `gethydro(info; vars=…)` will actually be honoured for this snapshot's code.
+
+True for native RAMSES, which reads a column subset itself, and for a frontend that declared
+`select_vars=true`. False otherwise, where asking for a subset raises rather than quietly
+returning everything. Callers that request a subset as an OPTIMISATION (quicklook) must check
+this first and fall back to a full read, or they break on every reader that cannot narrow.
+"""
+function _can_select_columns(info::InfoType)
+    rdr = _reader_by_simcode(info.simcode)
+    return rdr === nothing || rdr.code === :ramses || rdr.select_vars
+end
+
 """
     register_reader!(code::Symbol; simcodes, name="", detect=nothing, priority=100,
                      note="", info=nothing, hydro=nothing, particles=nothing, groups=nothing,
@@ -57,11 +92,11 @@ points then raise a clear error, `supports` returns `false`, and the docs capabi
 matrix shows a gap. `detect` (optional) is tried by `detect_simcode` before the
 built-in detection chain.
 
-`select_vars=true` declares that the `hydro` entry point implements COLUMN SELECTION, i.e.
+`select_vars=true` declares that the `hydro` entry point implements COLUMN SELECTION: it
 accepts `vars=[…]` and reads only what those columns need. `gethydro` then forwards the
-user's `vars`; by default it refuses a `vars=` it cannot honour rather than silently
-returning every variable. Only claim this when the reader really reads less — a format
-whose records interleave every field cannot.
+user's `vars`. By default it refuses a `vars=` it cannot honour, rather than silently
+returning every variable. Only claim this when the reader really reads less. A format whose
+records interleave every field cannot.
 """
 function register_reader!(code::Symbol; simcodes::Vector{String},
                           name::String=String(code),

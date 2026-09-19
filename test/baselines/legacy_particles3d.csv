@@ -1,0 +1,5 @@
+quantity,measured,expected
+pversion,0,0
+n_particles,64,64
+total_mass,2.08,2.08
+max_mass_diff,6.938893904e-18,0.0

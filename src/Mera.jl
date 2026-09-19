@@ -24,6 +24,7 @@ using Dates
 using Statistics
 using Random
 using Downloads
+using Tar
 using TOML
 using PrecompileTools
 using Pkg
@@ -145,8 +146,10 @@ export
     getrt,
     getparticles,
     getclumps,
+    getsinks,
     supports,
     capabilities,
+    register_reader!,      # public extension point: add a reader for another simulation code
 
 # mera files
     savedata,
@@ -187,6 +190,8 @@ export
     pdf,
     provenance,
     provenance_string,
+    mera_build,
+    makethumb,
     Provenance,
 
 # basic calcs
@@ -194,6 +199,8 @@ export
     center_of_mass,
     com,
     bulk_velocity,
+    rotation_frame,
+    restframe,
     average_velocity,
     average_mweighted,
     getvar,
@@ -256,14 +263,6 @@ export
     CoveringGridResult,
 
     # immersive 3-D visualisation (volume ray-caster)
-    fluxbudget,
-    fluxtimeseries,
-    fluxprofile,
-    fluxshell,
-    fluxmap,
-    fluxmapplot,
-    FluxBudgetType,
-    FluxMapType,
     report,
     preview,
     render,
@@ -290,6 +289,8 @@ export
     VirialBelow,
     MassAbove,
     Custom,
+    download_testdata,
+    periodic_recenter,
     synthetic_clumps,
     save_synthetic_clumps,
     load_synthetic_clumps,
@@ -354,6 +355,8 @@ export
     createscales,
     createconstants,
     createconstants!,
+    createscales!,
+    setcomposition!,
     humanize,
     bell,
     notifyme,
@@ -366,13 +369,7 @@ export
     update_progress!,
     complete_progress!,
     safe_execute,
-    simple_base64encode,
     optimize_image_for_zulip,
-    get_system_info_command,
-    get_memory_info_command,
-    get_disk_info_command,
-    get_network_info_command,
-    get_process_info_command,
 # adaptive I/O optimization
     get_simulation_characteristics,
     configure_adaptive_io,
@@ -390,7 +387,6 @@ export
     reset_auto_optimization!,
     show_auto_optimization_status,
 # enhanced I/O functions
-    enhanced_fortran_read,
     show_mera_cache_stats,
     clear_mera_cache!,
 # volume rendering
@@ -439,7 +435,21 @@ export
     IOBenchmark,
     plot_results,
     run_reading_benchmark,
+    reading_sweep,
     run_merafile_benchmark,
+    benchmark_conversion,
+    loadall,
+    @loadall,
+    withargs,
+    @project,
+    benchmark_report,
+    benchmark_levels,
+    collect_levels,
+    levelsplot,
+    BenchmarkReport,
+    benchmarkplot,
+    filesystem_info,
+    allocated_cpus,
     clumpfind_benchmarks
 
 include("types.jl")
@@ -465,6 +475,7 @@ include("functions/getvar/getvar_gravity.jl")
 include("functions/getvar/getvar_rt.jl")
 include("functions/getvar/getvar_particles.jl")
 include("functions/getvar/getvar_clumps.jl")
+include("functions/getvar/getvar_sinks.jl")
 # ============================================
 
 include("read_data/reader_interface.jl")     # multi-code reader registry (routing + capabilities)
@@ -501,6 +512,7 @@ include("read_data/RAMSES/getparticles.jl")
 include("read_data/RAMSES/reader_particles.jl")
 
 include("read_data/RAMSES/getclumps.jl")
+include("read_data/RAMSES/getsinks.jl")
 
 include("read_data/register_readers.jl")     # register all built-in frontends (after all entry points)
 # ============================================
@@ -533,6 +545,7 @@ include("functions/regions/subregion_gravity.jl")
 include("functions/regions/subregion_rt.jl")
 include("functions/regions/subregion_particles.jl")
 include("functions/regions/subregion_clumps.jl")
+include("functions/regions/subregion_sinks.jl")
 # ============================================
 
 # Shellregion
@@ -544,24 +557,27 @@ include("functions/regions/shellregion_gravity.jl")
 include("functions/regions/shellregion_rt.jl")
 include("functions/regions/shellregion_particles.jl")
 include("functions/regions/shellregion_clumps.jl")
+include("functions/regions/shellregion_sinks.jl")
 include("functions/restframe.jl")
 include("functions/contamination.jl")
 include("functions/clumping.jl")
 include("functions/profile.jl")
 include("functions/quicklook.jl")
 include("functions/covering_grid.jl")
-include("functions/flux.jl")
 include("functions/sfr.jl")
 include("functions/report/report.jl")
 include("functions/report/report_render.jl")
 include("functions/report/report_cost.jl")
 include("functions/clumpfind.jl")
 include("functions/synthetic_clumps.jl")
+include("functions/download_testdata.jl")
+include("functions/periodic_recenter.jl")
 include("functions/timeseries.jl")
 include("functions/galaxy_frame.jl")
 include("functions/gridoverlay.jl")
 include("functions/statistics.jl")
 include("functions/provenance.jl")
+include("functions/thumbnail.jl")
 include("functions/movie.jl")
 # ============================================
 
@@ -574,9 +590,15 @@ include("functions/data/export_particles_to_vtk.jl")
 include("macros/filter_data.jl")
 
 # Benchmarks
+include("functions/pipeline/loadall.jl")
 include("benchmarks/IO/IOperformance.jl")
 include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
+include("benchmarks/RAMSES_reading/reading_sweep.jl")
 include("benchmarks/JLD2_reading/merafile_reading_stats.jl")
+include("benchmarks/Conversion/conversion_benchmark.jl")
+include("benchmarks/Report/benchmark_report.jl")
+include("benchmarks/Report/benchmark_levels.jl")
+include("benchmarks/Report/collect_levels.jl")
 include("benchmarks/Projections/projection_benchmarks.jl")
 include("benchmarks/Clumpfind/clumpfind_benchmarks.jl")
 
@@ -593,6 +615,34 @@ end
 # workload hiccup can never break precompilation. (The full read→project workload needs a bundled mini
 # output, which we don't ship yet.)
 @setup_workload begin
+    # A synthetic hydro object, built from numbers rather than files, so the table-level
+    # paths (getvar and the projection wrapper around it) can be precompiled too. Measured:
+    # a first projection costs ~10 s cold, and ~7 s of that is the getvar machinery rather
+    # than the deposit kernels, which is why precompiling the kernels alone bought nothing.
+    _pc_gas = try
+        _i = InfoType()
+        _i.boxlen = 1.0; _i.levelmin = 4; _i.levelmax = 6
+        _i.unit_l = 3.086e21; _i.unit_d = 1.0e-24; _i.unit_t = 3.156e13; _i.unit_m = 1.989e33
+        _i.constants = createconstants()
+        _i.scale = createscales(_i.unit_l, _i.unit_d, _i.unit_t, _i.unit_m, _i.constants)
+        _n = 64
+        _o = ones(_n)
+        _t = IndexedTables.table(fill(6, _n), collect(1:_n), fill(1, _n), fill(1, _n),
+                                 _o, _o, _o, _o, _o;
+                                 names = [:level,:cx,:cy,:cz,:rho,:vx,:vy,:vz,:p],
+                                 pkey  = [:level,:cx,:cy,:cz])
+        _g = HydroDataType()
+        _g.data = _t; _g.info = _i
+        _g.lmin = 4; _g.lmax = 6; _g.boxlen = 1.0
+        _g.ranges = [0.,1.,0.,1.,0.,1.]
+        _g.selected_hydrovars = [1,2,3,4,5]
+        _g.used_descriptors = Dict{Any,Any}()
+        _g.smallr = 0.0; _g.smallc = 0.0; _g.scale = _i.scale
+        _g
+    catch
+        nothing
+    end
+
     @compile_workload begin
         try
             r, u, w = build_camera_basis([0.3, 0.2, 1.0])
@@ -608,6 +658,22 @@ end
             cs = fill(0.1, 60); vv = ones(60); ww = ones(60); ext = (-2.0, 2.0, -2.0, 2.0)
             deposit_rotated_cells_overlap!(zeros(nx,ny), zeros(nx,ny), xc, yc, cs, vv, ww, r, u, ext, (nx,ny); nmax=8, max_threads=1)
             deposit_rotated_cells_exact!(  zeros(nx,ny), zeros(nx,ny), xc, yc, cs, vv, ww, r, u, w, ext, (nx,ny); max_threads=1)
+
+            # Table-level paths: this is where the first-call cost actually sits.
+            if _pc_gas !== nothing
+                getvar(_pc_gas, :rho)
+                getvar(_pc_gas, :mass)
+                getvar(_pc_gas, :cellsize)
+                getvar(_pc_gas, :vx)
+                projection(_pc_gas, :sd, verbose=false, show_progress=false)
+            end
+        catch
+        end
+        # A once-per-session hint records itself in a const Set, which would otherwise be
+        # serialised into the image and silence the hint for every user. Clear it so the
+        # build leaves no trace in observable behaviour.
+        try
+            empty!(_HINT_SHOWN)
         catch
         end
     end

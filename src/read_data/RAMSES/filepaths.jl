@@ -17,6 +17,7 @@ function createpath(output::Real, path::String; namelist::String="")
         RT_descriptor = "info_rt_0000$output.txt"
         Part_file   = "part_0000$output."
         Clump_file  = "clump_0000$output."
+        Sink_file   = "sink_0000$output.csv"
         Timer_file  = "timer_0000$output.txt"
         Header_file = "header_0000$output.txt"
 
@@ -30,6 +31,7 @@ function createpath(output::Real, path::String; namelist::String="")
         RT_descriptor = "info_rt_000$output.txt"
         Part_file   = "part_000$output."
         Clump_file  = "clump_000$output."
+        Sink_file   = "sink_000$output.csv"
         Timer_file  = "timer_000$output.txt"
         Header_file = "header_000$output.txt"
 
@@ -43,6 +45,7 @@ function createpath(output::Real, path::String; namelist::String="")
         RT_descriptor = "info_rt_00$output.txt"
         Part_file   = "part_00$output."
         Clump_file  = "clump_00$output."
+        Sink_file   = "sink_00$output.csv"
         Timer_file  = "timer_00$output.txt"
         Header_file = "header_00$output.txt"
 
@@ -56,6 +59,7 @@ function createpath(output::Real, path::String; namelist::String="")
         RT_descriptor = "info_rt_0$output.txt"
         Part_file   = "part_0$output."
         Clump_file  = "clump_0$output."
+        Sink_file   = "sink_0$output.csv"
         Timer_file  = "timer_0$output.txt"
         Header_file = "header_0$output.txt"
 
@@ -69,6 +73,7 @@ function createpath(output::Real, path::String; namelist::String="")
         RT_descriptor = "info_rt_$output.txt"
         Part_file   = "part_$output."
         Clump_file  = "clump_$output."
+        Sink_file   = "sink_$output.csv"
         Timer_file  = "timer_$output.txt"
         Header_file = "header_$output.txt"
 
@@ -82,6 +87,7 @@ function createpath(output::Real, path::String; namelist::String="")
         RT_descriptor = "info_rt_$output.txt"
         Part_file   = "part_$output."
         Clump_file  = "clump_$output."
+        Sink_file   = "sink_$output.csv"
         Timer_file  = "timer_$output.txt"
         Header_file = "header_$output.txt"
 
@@ -100,6 +106,7 @@ function createpath(output::Real, path::String; namelist::String="")
     fnames.rt_descriptor    = joinpath(path, Path_folder, "rt_file_descriptor.txt") # newer version
     fnames.rt_descriptor_v0  = joinpath(path, Path_folder, RT_descriptor) # older version
     fnames.clumps    = joinpath(path, Path_folder, Clump_file)
+    fnames.sinks     = joinpath(path, Path_folder, Sink_file)
     fnames.timer     = joinpath(path, Path_folder, Timer_file)
     fnames.header    = joinpath(path, Path_folder, Header_file)
 

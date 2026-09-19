@@ -1,10 +1,18 @@
+```@raw html
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: derived_fields.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+```
+
 # Derived Fields & `add_field`
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `derived_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/derived_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `derived_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/derived_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 
 Mera computes a large catalogue of **derived quantities** on demand through
-[`getvar`](@ref) — temperature, sound speed, Mach number, cylindrical/spherical velocities,
+[`getvar`](@ref), temperature, sound speed, Mach number, cylindrical/spherical velocities,
 specific angular momentum, Jeans length, kinetic/thermal energy, and many more. You ask for
 them by name and Mera builds them from the raw stored variables:
 
@@ -18,19 +26,16 @@ info = getinfo(300, joinpath(MERA_EXAMPLES, "RAMSES/mw_L10"))
 gas  = gethydro(info, verbose=false);
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-
-[Mera]: 2026-08-03T11:35:24.684
-
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T14:13:55.676
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -54,7 +59,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -68,13 +73,11 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:19 (29.71 ms/it)
 ✓ File processing complete! Combining results...
 ```
 
-
-These derived names also work everywhere `getvar` is used internally — in
+These derived names also work everywhere `getvar` is used internally, in
 [`projection`](@ref), [`profile`](@ref), [`phase`](@ref), and friends.
 
 !!! tip "Exact formulas"
@@ -96,10 +99,11 @@ A few derived quantities carry physical assumptions worth stating explicitly:
   ``v_{f}=\sqrt{c_s^2+v_A^2}`` and the isotropic ``v_{s}=c_s v_A/\sqrt{c_s^2+v_A^2}``. All three are
   dimensionless. (Because they need the field components, `getvar_requirements` lists `:bx,:by,:bz,:rho`
   among their dependencies.)
-- **Escape speed** `:escape_speed` ``= \sqrt{-2φ}`` is defined only where the potential ``φ<0`` (bound);
-  unbound cells (``φ≥0``, possible near boundaries) are clamped to `0` rather than erroring.
-- **Cosmological-only** quantities — `:overdensity`/`:delta` (hydro) and `:age`-relatives
-  `:formation_time`/`:formation_redshift`/`:zform` (particles) — are defined only for cosmological runs
+- **Gravity energy and force** `:gravitational_energy`, `:total_binding_energy`, `:Fg` and the
+  `:F…` components are mass times a gravity field, so they need the hydro object for the cell
+  mass: `getvar(gravity, hydro, :Fg)`. On gravity alone they raise an error naming the fix.
+- **Cosmological-only** quantities, `:overdensity`/`:delta` (hydro) and `:age`-relatives
+  `:formation_time`/`:formation_redshift`/`:zform` (particles), are defined only for cosmological runs
   and error on non-cosmological output.
 
 ## The dependency registry
@@ -116,12 +120,15 @@ println("requirements [:sd,:T] : ", getvar_requirements(:hydro, [:sd, :T]))
 
 ```
 T [K] range           : (10.195354771220304, 2.3032126579487386e8)
+[Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             (shown once per session; verbose(false) silences Mera's messages)
 Mach range            : (0.0015019848658968961, 790.5001832586903)
 ekin [erg] (sum)      : 3.445146674042365e57
 requirements :ekin    : [:rho, :vx, :vy, :vz]
 requirements [:sd,:T] : [:p, :rho]
 ```
-
 
 This is what lets the one-call verbs read **only what they need** instead of the whole hydro
 state. `project(info, :sd)` reads just `:rho`; `project(info, :sd; direction=:edgeon)` also
@@ -131,7 +138,7 @@ stored in that output) the readers safely fall back to reading everything.
 
 ## Adding your own field: `add_field`
 
-Register a custom derived field once and it behaves like any built-in quantity — including
+Register a custom derived field once and it behaves like any built-in quantity, including
 inside `projection` and `profile`.
 
 ```julia
@@ -148,19 +155,18 @@ println(":vmag2 projection map : ", size(m.maps[:vmag2]))
 :vmag2 projection map : (1024, 1024)
 ```
 
-
 ### The compute kernel
 
 `compute(dataobject, deps)`:
 
-* `dataobject` — the data object the field is being evaluated on.
-* `deps` — a `Dict{Symbol,Vector}` holding the arrays named in `depends_on`, already
+* `dataobject`, the data object the field is being evaluated on.
+* `deps`, a `Dict{Symbol,Vector}` holding the arrays named in `depends_on`, already
   evaluated with the **same** centering and masking as the outer `getvar` call.
 * **Return** the field in **code units**; Mera applies the requested `unit` (or this field's
   default `unit`) for you.
 
 Dependencies may be raw variables, other built-in derived quantities, or even other user
-fields — they are resolved recursively:
+fields, they are resolved recursively:
 
 ```julia
 add_field(:mach_custom, (o, d) -> sqrt.(d[:vx].^2 .+ d[:vy].^2 .+ d[:vz].^2) ./ d[:cs];
@@ -172,58 +178,13 @@ println(":mach_custom range    : ", extrema(getvar(gas, :mach_custom)))
 :mach_custom range    : (0.0015019848658968961, 790.5001832586903)
 ```
 
-### Optional dependencies — columns that change the answer but are not required
-
-Some fields need one set of columns to work at all and merely *prefer* another. AREPO gas
-temperature is the case: `getvar(gas, :T)` throws without `:u`, but takes the mean molecular
-weight μ from the electron abundance `:ne` **when that was loaded**, and otherwise falls back
-to a neutral-primordial μ ≈ 1.22. On ionised gas the two differ by nearly a factor of two.
-
-That makes `:T` a function of the snapshot **and** of the `vars=` used at load time — and a
-single `depends_on` list cannot express it. Naming `:ne` there would make a perfectly valid
-`getparticles(…; vars=[:rho,:u])` look insufficient; leaving it out would record nothing about
-the silent change in result. So there is a second slot:
-
-```julia
-add_field(:T_custom, compute;
-          depends_on = [:u],          # required — the field cannot run without these
-          optional   = [:ne],         # improves the result when present; never demanded
-          variants   = "μ from :ne when loaded; neutral-primordial μ≈1.22 otherwise")
-```
-
-The two are reported separately, and [`getvar_requirements`](@ref) never returns the optional
-set — that is the whole point:
-
-```julia
-getvar_requirements(:particles, :T)                          # [:u]
-getvar_optional(:particles, :T)                              # [:ne]
-getvar_requirements(:particles, :T; include_optional=true)   # [:ne, :u] — only if you ask
-field_info(:T; kind=:particles).variants                     # the note above
-```
-
-The payoff is [`list_fields`](@ref) called on a **loaded object** rather than on a kind. It
-says which fields are available, what is missing, and — where it matters — which variant would
-actually run:
-
-```julia
-gas = getparticles(info; families=[0], vars=[:rho, :u])      # no :ne
-for f in list_fields(gas)
-    f.name === :T && println(f.available, "  using: ", f.using_optional, "  ", f.note)
-end
-# true  using: Symbol[]  μ from :ne when loaded; neutral-primordial μ≈1.22 otherwise
-```
-
-Load the same gas with `vars=[:rho, :u, :ne]` and `using_optional` becomes `[:ne]`. This is the
-only place that tells you which temperature you are actually looking at.
-
-
 A registered field is a first-class citizen: it flows through [`getvar`](@ref), [`projection`](@ref),
 [`profile`](@ref) and the rest, with its dependencies read and resolved automatically. For example,
 once `:mach_custom` is registered, `projection(gas, :mach_custom)` just works:
 
 ![A user-defined field projected like any built-in. `add_field(:mach_custom, …)` registers the local
 Mach number ℳ = |v|/c_s on top of the built-in sound speed `:cs`; `projection(gas, :mach_custom)` then
-renders it — supersonic disk gas (red) over the subsonic halo (blue).](assets/features/derived_fields.png)
+renders it, supersonic disk gas (red) over the subsonic halo (blue).](assets/features/derived_fields.png)
 
 ### Units
 
@@ -258,7 +219,7 @@ delete_field(:vmag2)                # remove it (delete_field(name; datatypes=:a
 ```
 
 `list_fields(kind; builtin=true)` is the quickest way to discover what you can ask `getvar` for on a
-given data type — it returns the dependency-registry built-ins together with any fields you registered.
+given data type, it returns the dependency-registry built-ins together with any fields you registered.
 It covers most but not every built-in quantity (a few specialised fields are computed directly in
 `getvar`); for the complete human-readable catalogue call `getvar()` with no arguments.
 
@@ -307,14 +268,14 @@ list_fields(:particle; builtin=true)
     Put your `add_field` calls in a startup script or at the top of your analysis to make them
     available every run.
 
-Registered fields also work as quantities in [First-Look Reports](report.md) cards — the report reads
+Registered fields also work as quantities in [First-Look Reports](report.md) cards, the report reads
 only the dependencies your field declares.
 
 ## Custom units
 
 A field's `unit` can be an existing `info.scale` field, `:standard`, a plain **number** (a literal
 code→display factor), or a **custom unit** you register with [`add_unit`](@ref). Registered units work
-everywhere a unit is accepted — including `getvar(obj, var, unit)` for built-in quantities:
+everywhere a unit is accepted, including `getvar(obj, var, unit)` for built-in quantities:
 
 ```julia
 add_unit(:Msun_per_century, 1e-2)               # 1 code-unit value × 1e-2

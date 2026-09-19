@@ -23,31 +23,31 @@ c.families         # which PartTypes were classified high-res vs boundary
 
 !!! danger "Read `conclusive` with `clean`"
     If the loaded data contains no low-resolution particle **at all**, `clean` is `true` because
-    nothing was found — which is not the same as nothing being there. A selection that is too
+    nothing was found, which is not the same as nothing being there. A selection that is too
     small, or a `search_radius` that does not reach the boundary, produces exactly this. When
     `conclusive` is `false`, widen the selection before believing the answer.
 
 [`contamination`](@ref) **derives** which families are boundary rather than assuming
-`PartType2` and `PartType3`. Among the collisionless candidates (`1,2,3` by default — gas,
+`PartType2` and `PartType3`. Among the collisionless candidates (`1,2,3` by default, gas,
 stars and black holes are excluded as *baryonic*, not by mass, since a black-hole seed
 outweighs a high-resolution DM particle), the lightest **median** mass is the high-resolution
 family, and any family whose **lightest** member exceeds `ratio ×` that median is boundary.
 
 Testing the minimum rather than a single table mass matters: multi-level zoom ICs give
 successive boundary shells *different and varying* masses, so such a family has no `MassTable`
-entry at all. A rule of "must have one mass" drops it silently — on a production run that
+entry at all. A rule of "must have one mass" drops it silently, on a production run that
 misclassified 933 435 boundary particles as baryonic and under-counted the contamination.
 
 Two numbers make the check:
 
-- `d_over_radius` — how far the nearest boundary particle is, in units of your radius. On a
+- `d_over_radius`, how far the nearest boundary particle is, in units of your radius. On a
   typical clean halo this is 2–3.
-- `distinct_masses` — the number of distinct high-resolution masses inside the radius. It must
+- `distinct_masses`, the number of distinct high-resolution masses inside the radius. It must
   be 1. Anything else means a second family has entered.
 
 !!! tip "The haloes can be clean while the volume between them is not"
     On a two-protocluster zoom the nearest boundary particle sat at 2.85 and 2.35 R200c of the
-    two haloes — both clean — while the inter-halo medium was contaminated. Statistics computed
+    two haloes, both clean, while the inter-halo medium was contaminated. Statistics computed
     over the box *between* the objects were biased until this was checked separately. Run the
     check on **every region you quote**, not once per snapshot.
 
@@ -61,7 +61,7 @@ frac = getvar(gas, :highresgasmass) ./ getvar(gas, :mass)   # 1 = fully high-res
 
 ## 2. Work in the object's rest frame
 
-`center=` fixes the **origin**. It does not fix the **frame** — a Galilean transformation has
+`center=` fixes the **origin**. It does not fix the **frame**, a Galilean transformation has
 three translation parameters and three boost parameters, and knowing where a halo sits tells you
 nothing about how fast it is moving. Velocity-derived quantities are computed from box-frame
 velocities unless you say otherwise.
@@ -81,7 +81,7 @@ Why it matters, concretely. Angular momentum is
 ```
 
 Without a frame you get `J + [Σ m(r−r₀)] × v₀`. The spurious term vanishes only if `v₀ = 0`, or
-if `r₀` is *exactly* the centre of mass of your selection — and `r₀` is normally the potential
+if `r₀` is *exactly* the centre of mass of your selection, and `r₀` is normally the potential
 minimum or most-bound particle, so it is not. On a halo streaming through the box at 197 km/s
 this made `|J|` wrong by **33.8 %** and its direction by **4.89°**; on a second halo at
 248 km/s, a published gas–DM misalignment moved from **45.0° to 21.1°** once corrected.
@@ -93,12 +93,12 @@ numbers. Mera mentions it once per session when you compute one without a frame.
 !!! note "`:auto` is the frame of *your selection*"
     `vcenter=:auto` computes the mass-weighted mean velocity of exactly the particles you
     selected. For a closed, roughly symmetric halo that is what you want. For a deliberately
-    lopsided selection its rest frame legitimately includes that selection's net streaming —
+    lopsided selection its rest frame legitimately includes that selection's net streaming, 
     which is correct, but not the same as removing only the halo's bulk motion. Pass an
     explicit vector when you mean a specific frame.
 
 The maps are worse than the numbers. A uniform ~200 km/s pedestal on a colour scale symmetric
-about zero renders a rotation dipole as one flat colour — the structure is not faint, it is
+about zero renders a rotation dipole as one flat colour, the structure is not faint, it is
 outside the range.
 
 ## 3. Resolution is a field, not a number
@@ -112,31 +112,31 @@ phase(gas, :rho, :T, :cellsize; cstat=:median, cunit=:pc)  # the convergence fig
 ```
 
 Take the median **of `:cellsize`**, not the cube root of a median volume. The cube root is
-monotonic, so it commutes with order statistics — but an even-sized median *averages* the two
+monotonic, so it commutes with order statistics, but an even-sized median *averages* the two
 middle values, and averaging does not commute with a nonlinear map. For `V = k³, k = 1…8`:
 `median(V)^(1/3) = 4.5549` against `median(V^(1/3)) = 4.5`.
 
-!!! warning "`:cellsize` is the cube-equivalent side — papers often quote the sphere radius"
+!!! warning "`:cellsize` is the cube-equivalent side, papers often quote the sphere radius"
     A Voronoi cell is an irregular polyhedron with **no single size**. The only well-defined
     quantity is its volume `V = m/ρ`; every "size" is a nominal length derived from it, and the
     conventions differ by up to 1.6×:
 
     | quantity | formula | × `V^(1/3)` |
     |---|---|---|
-    | **`:cellsize`** | `V^(1/3)` — side of the equal-volume **cube** | 1.000 |
+    | **`:cellsize`** | `V^(1/3)`, side of the equal-volume **cube** | 1.000 |
     | SPH smoothing `h` (`weighting=:sph`) | `1.5·(3V/4π)^(1/3)` | 0.931 |
-    | `:voronoi` reach cap | `(√3/2)·V^(1/3)` — cube centre-to-corner | 0.866 |
+    | `:voronoi` reach cap | `(√3/2)·V^(1/3)`, cube centre-to-corner | 0.866 |
     | sphere-equivalent **radius** | `(3V/4π)^(1/3)` | 0.620 |
 
     `:cellsize` is the cube side deliberately: it is what compares to a Cartesian grid spacing
     `Δx`, which is what makes `cellsize < l_cool` a meaningful test. AREPO papers frequently
-    quote the **sphere-equivalent radius** instead, which is `0.62 ×` this — a 383 pc
+    quote the **sphere-equivalent radius** instead, which is `0.62 ×` this, a 383 pc
     `:cellsize` is a 238 pc "cell radius". Check which one a published number means.
 
     Two AREPO-specific caveats: it is an *equivalent* size, saying nothing about shape (cells
     elongate in shear and squash in compression); and because AREPO refines to constant target
-    **mass**, `cellsize ∝ ρ^(-1/3)`, so the distribution stays narrow — 400–560 pc across every
-    phase in the table above — even where density spans six decades. Cell size is therefore a
+    **mass**, `cellsize ∝ ρ^(-1/3)`, so the distribution stays narrow, 400–560 pc across every
+    phase in the table above, even where density spans six decades. Cell size is therefore a
     poor proxy for anything density-dependent.
 
 See [Cosmological Units](cosmological_units.md) for why the comoving→physical conversion on this quantity is a
@@ -154,7 +154,7 @@ resolved = getvar(gas, :cellsize, :pc) .< getvar(gas, :l_cool, :pc)
 ```
 
 `l_cool` is the scale on which thermal instability fragments gas, so `cellsize < l_cool` is the
-condition for resolving it — a measurement rather than an appeal to a published number.
+condition for resolving it, a measurement rather than an appeal to a published number.
 
 !!! danger "A global `mean(cellsize < l_cool)` is not the convergence criterion"
     It is dominated by hot diffuse gas, where `l_cool` is hundreds of kpc and any cell
@@ -174,18 +174,18 @@ condition for resolving it — a measurement rather than an appeal to a publishe
     The shattering scale is the **minimum** of `l_cool`, not its local value, and that minimum
     sits in the cold phase near `10⁴ K`. So the same run "passes" a published *resolve `l_cool`
     at `T ~ 10⁵ K`* criterion at 92.5 % and fails a *resolve the shattering scale* criterion
-    outright — different claims, which a single 88.8 % conflates. **Restrict by phase, and
+    outright, different claims, which a single 88.8 % conflates. **Restrict by phase, and
     report the low percentiles of `l_cool` alongside.**
 
-!!! danger "Filter on `:coolrate .< 0` — the `Inf` sentinel does not do it for you"
+!!! danger "Filter on `:coolrate .< 0`, the `Inf` sentinel does not do it for you"
     Cells with `Λ ≥ 0` are being net **heated**: they have no cooling time, and `:t_cool`
     returns `Inf` rather than a magnitude (a magnitude there is a heating time wearing a
     cooling time's label). But `Inf` makes `cellsize < l_cool` **trivially true**, so a
     convergence statistic that does not exclude them counts every heated cell as resolved.
     The sentinel is honest about the value and actively unhelpful as a filter.
 
-    This is not a rare population. In the diffuse inter-halo medium — the medium the whole
-    question is about — it is **20.4 % of cells and 46.4 % of the mass** (measured over
+    This is not a rare population. In the diffuse inter-halo medium, the medium the whole
+    question is about. It is **20.4 % of cells and 46.4 % of the mass** (measured over
     121.8 M IPM cells; heated gas sits at `T ≈ 1.6×10⁴ K`, `n_H ≈ 7.6×10⁻⁵ cm⁻³`, held up by
     the UV background). Including it roughly **doubles** the apparent resolved fraction where
     it matters:
@@ -204,12 +204,12 @@ condition for resolving it — a measurement rather than an appeal to a publishe
     mean(resolved[cooling])          # …and restrict by phase as well
     ```
 
-    Negative `:coolrate` is net cooling — measured, not assumed, with **no cells exactly
+    Negative `:coolrate` is net cooling, measured, not assumed, with **no cells exactly
     zero** on a real AREPO run.
 
 !!! note "Quoting `l_cool` at a temperature carries a μ assumption"
     `l_cool` itself needs no mean molecular weight: `u` already encodes it, so
-    `c_s = √(γ(γ−1)u)` and everything downstream is μ-free — `:t_cool` and `:l_cool` are
+    `c_s = √(γ(γ−1)u)` and everything downstream is μ-free, `:t_cool` and `:l_cool` are
     bit-identical whether or not `:ne` is loaded. But *labelling* a cell by temperature is not:
     `T = (γ−1)uμm_H/k_B`, so the same `u` reads as different `T` under ionized `μ ≈ 0.6` versus
     neutral-primordial `μ ≈ 1.22`. A statement of the form "`l_cool` = 800 pc at `T = 10⁴ K`"
@@ -218,7 +218,7 @@ condition for resolving it — a measurement rather than an appeal to a publishe
 
 ### Clumping, and the number papers actually quote
 
-`C = ⟨n²⟩/⟨n⟩²` measures how much of the mass sits in how little of the volume — the standard
+`C = ⟨n²⟩/⟨n⟩²` measures how much of the mass sits in how little of the volume, the standard
 IGM convergence statistic, and one where two people can compute different numbers from the same
 snapshot without either being wrong:
 
@@ -231,7 +231,7 @@ clumping(gas; mask=getvar(gas,:cellsize,:pc) .< 500)   # resolution-restricted
 !!! danger "Cell-by-cell and fixed-grid C are different quantities"
     A Voronoi mesh spanning six decades in density gives enormous weight to its smallest cells;
     a fixed grid does not. Measured on one IPM box: **12 800** cell-by-cell against **2 276**
-    over well-resolved cells only — a factor 5.6 from the resolution cut alone. Published
+    over well-resolved cells only, a factor 5.6 from the resolution cut alone. Published
     values are almost always fixed-grid, so **quote the grid size with the number**.
 
 Weighting matters too, and not in the obvious direction. `:mass` weighting does *not* simply
@@ -244,8 +244,8 @@ volume-weighted but `1.01` mass-weighted. Neither approximates the other.
 Two separate traps.
 
 **`weighting=:sph` needs a smoothing length**, and collisionless particles have no volume to
-derive one from. Where the run wrote `SubfindHsml` — Mera reads it as `:subfind_hsml`, for all
-six PartTypes — that *is* a smoothing length, and `:sph` uses it directly:
+derive one from. Where the run wrote `SubfindHsml`, Mera reads it as `:subfind_hsml`, for all
+six PartTypes, that *is* a smoothing length, and `:sph` uses it directly:
 
 ```julia
 dm = getparticles(info, families=[1], vars=[:subfind_hsml])
@@ -258,7 +258,7 @@ with a reach cap of `(√3/2)·V^(1/3)`, which has no meaning for a particle tha
 
 **Low-resolution particles start on a lattice.** In the initial conditions they sit on a
 regular grid, and in low-density regions they have barely moved by `z ~ 3`. Projecting them
-produces **moiré** — a regular interference pattern between the particle lattice and the pixel
+produces **moiré**, a regular interference pattern between the particle lattice and the pixel
 grid that looks like structure. Coarsening the pixels only shifts the beat frequency; it does
 not remove it. This is easy to misdiagnose as shot noise, and it is not: a map of low-resolution
 boundary particles is not meaningful at any pixel size.
@@ -269,13 +269,13 @@ The DM map being empty outside the refined region is likewise expected, not a bu
 
 It is the local **dark matter** velocity dispersion, not the gas dispersion. Measured on one
 run it tracks `GFM_WindDMVelDisp` to 0.7 % in the median over 45.9 million gas cells, and sits
-around 297 km/s over a ~1.2 pkpc kernel — impossible for gas, which would shock away. Dropping
+around 297 km/s over a ~1.2 pkpc kernel, impossible for gas, which would shock away. Dropping
 it into a σ-vs-ρ diagram silently changes the physics being plotted.
 
 ## 6. `vars=` silently omits stored columns
 
 Passing `vars=[...]` to a reader loads exactly those columns. Stored quantities you did not
-name — including `:mach` and the whole `:subfind_*` family — are simply absent, with no warning.
+name, including `:mach` and the whole `:subfind_*` family, are simply absent, with no warning.
 Use [`list_fields`](@ref) on the loaded object to see what is actually available:
 
 ```julia
@@ -284,7 +284,7 @@ list_fields(gas)     # which derived fields will run, and which variant
 
 ## Quick checklist
 
-1. `contamination(...)` on **every region you quote** — check `.clean`.
+1. `contamination(...)` on **every region you quote**, check `.clean`.
 2. `vcenter=` on anything velocity-derived.
 3. `:cellsize` for resolution; take medians of the field itself.
 4. Don't trust maps of boundary particles at any pixel size.
@@ -293,6 +293,6 @@ list_fields(gas)     # which derived fields will run, and which variant
 
 ## See also
 
-- [Cosmological Units](cosmological_units.md) — code vs comoving vs physical
-- [AREPO](arepo_reader.md) — the reader and its field mapping
-- [Derived Fields](derived_fields.md) — `getvar` fields and `add_field`
+- [Cosmological Units](cosmological_units.md), code vs comoving vs physical
+- [AREPO](arepo_reader.md), the reader and its field mapping
+- [Derived Fields](derived_fields.md), `getvar` fields and `add_field`

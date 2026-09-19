@@ -1,6 +1,6 @@
 # Bundling Arguments (`myargs`)
 
-Many Mera functions share the same arguments — a spatial region, a center, a resolution, the
+Many Mera functions share the same arguments: a spatial region, a center, a resolution, the
 verbose/progress switches. Repeating them on every `gethydro`, `getparticles`, `projection`,
 `subregion`, … call is verbose and error-prone. [`ArgumentsType`](@ref) lets you fill them in
 **once** and pass the whole bundle as the single keyword `myargs=…`.
@@ -28,18 +28,66 @@ part = getparticles(info, myargs=myargs)
 p    = projection(gas, :sd, :Msun_pc2, myargs=myargs)
 ```
 
+`ArgumentsType` also takes the same fields as keywords, which is shorter when you know them
+up front:
+
+```julia
+myargs = ArgumentsType(pxsize=[100., :pc], xrange=[-10., 10.], yrange=[-10., 10.],
+                       zrange=[-2., 2.], center=[:boxcenter], range_unit=:kpc)
+```
+
 Every field left `missing` is ignored, so a bundle only overrides what you set. A value you
 pass **explicitly** still wins over the bundle, so you can share a base bundle and tweak one
 call:
 
 ```julia
-projection(gas, :sd, :Msun_pc2, myargs=myargs, res=512)   # res=512 overrides the bundle
+projection(gas, :sd, :Msun_pc2, myargs=myargs, pxsize=[50., :pc])   # 50 pc, not the bundle's 100
 ```
+
+Override with the *same* keyword the bundle sets. Passing a different one that
+means the same thing does not work: the bundle above sets `pxsize`, and
+`pxsize` takes precedence over `res`, so adding `res=512` to that call would be
+ignored rather than overriding anything.
+
+!!! note "One edge case"
+    Mera decides that you passed a value explicitly by seeing that it differs
+    from the function's own default. So passing a value that *equals* the
+    default, `verbose=true` where `true` is already the default, does not
+    override a bundle that sets it to `false`. Leave such a field out of the
+    bundle if you want to vary it per call.
 
 See the current contents of a bundle with [`viewfields`](@ref):
 
 ```julia
 viewfields(myargs)
+```
+
+## Deriving a variant: `withargs`
+
+A bundle is mutable, so changing a field changes it for every later call. When you want a
+variant, [`withargs`](@ref) returns a **copy** with some fields replaced and leaves the
+original alone:
+
+```julia
+base   = ArgumentsType(lmax=10, xrange=[-10., 10.], center=[:boxcenter], range_unit=:kpc)
+
+coarse = withargs(base; lmax=7)                            # same region, fewer levels
+zoom   = withargs(base; xrange=[-2., 2.], yrange=[-2., 2.])  # same levels, smaller region
+
+gas    = gethydro(info, myargs=base)
+gas_c  = gethydro(info, myargs=coarse)
+```
+
+`base` is untouched in both cases. The copy is deep, so editing `zoom.xrange` in place cannot
+reach back into `base`.
+
+Without it you would write `deepcopy` and then an assignment, and a plain assignment
+(`variant = base`) is the trap: it gives you the *same* bundle under a second name, and the
+next field you set changes both.
+
+```julia
+variant = base            # NOT a copy: variant and base are one object
+variant = withargs(base)  # a copy, safe to change
 ```
 
 ## What you can bundle
@@ -57,13 +105,14 @@ functions:
 | output | `verbose`, `show_progress`, `verbose_threads` |
 
 !!! note
-    Any function that accepts these arguments accepts the `myargs` bundle — `getinfo`,
+    Any function that accepts these arguments accepts the `myargs` bundle: `getinfo`,
     `gethydro`/`getparticles`/`getgravity`/`getclumps`/`getrt`, `subregion`/`shellregion`,
-    `projection`, and the data converters.
+    `projection`, [`loadall`](@ref), and the data converters. `getsinks` is the exception: a
+    sink catalogue has no spatial selection to apply, so it takes no bundle.
 
 ## A silent, reusable bundle
 
-Because the bundle includes `verbose` and `show_progress`, you can make a "quiet" preset and
+Because the bundle includes `verbose` and `show_progress`: you can make a "quiet" preset and
 apply it to a batch of calls:
 
 ```julia
@@ -75,10 +124,10 @@ gas  = gethydro(info, myargs=quiet)
 part = getparticles(info, myargs=quiet)
 ```
 
-For silencing **all** Mera calls at once (without threading a bundle through each), use the
-global switch instead — see [Verbose & progress switches](verbose_progress_switches.md).
+For silencing **all** Mera calls at once (without threading a bundle through each): use the
+global switch instead: see [Verbose & progress switches](verbose_progress_switches.md).
 
-## Other ways to bundle — and when `myargs` is the right one
+## Other ways to bundle: and when `myargs` is the right one
 
 Julia itself has a first-class way to bundle keyword arguments: a `NamedTuple` **splatted**
 with `;`. It works directly with Mera functions, no special type needed:
@@ -126,10 +175,13 @@ Rule of thumb:
 | **one** bundle spanning functions with **different** signatures | `myargs=ArgumentsType()` (tolerant) |
 | a preconfigured shorthand function | a closure, `myhydro(info; kw...) = gethydro(info; opts..., kw...)` |
 
-You can also combine them — pass a `myargs` bundle *and* splat a `NamedTuple` of extra
+You can also combine them: pass a `myargs` bundle *and* splat a `NamedTuple` of extra
 keywords in the same call.
 
 ## See also
 
-- [Verbose & progress switches](verbose_progress_switches.md) — global master switch for messages and progress bars.
-- [`gethydro`](@ref), [`projection`](@ref), [`subregion`](@ref) — the functions that accept `myargs`.
+- [Verbose & progress switches](verbose_progress_switches.md): global master switch for messages and progress bars.
+- [`gethydro`](@ref), [`projection`](@ref), [`subregion`](@ref): the functions that accept `myargs`.
+- [`withargs`](@ref): derive a variant of a bundle without touching the original.
+- [Pipelines](pipelines.md): bundles combined with `loadall` and the projection macros.
+- [Gallery](gallery.md): complete workflows that use a bundle across a whole analysis.

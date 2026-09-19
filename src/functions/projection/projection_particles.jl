@@ -242,6 +242,13 @@ end
   (`angle_unit=:rad`/`:deg`), or the disk presets `direction=:faceon`/`:edgeon`
   (line of sight from the particle angular momentum). The off-axis camera basis is
   stored on the returned map (`.los`, `.up`, `.cam_right`, `.center`; `.direction==:offaxis`).
+- **`thickness` / `thickness_unit`, `offset` / `offset_unit`:** project a **slab** rather than
+  the full depth. A cutting plane through point particles is empty by construction (a particle
+  has no extent), so the useful analogue of a slice is a projection of finite depth along the
+  line of sight: `thickness` sets that depth and `offset` moves the slab, the same way `offset`
+  moves the plane in [`offaxis_slice`](@ref). Both default to `range_unit`. A non-positive
+  `thickness` is refused rather than silently returning an empty map.
+
   Point particles have no footprint, so `binning=:cic` (default) / `:ngp` apply
   (`:overlap` and `:exact` fall back to `:cic`). See the hydro `projection` docstring for details.
 - select between mass (default), volume, SPH-kernel, or Voronoi (nearest-generator) weighting
@@ -263,9 +270,9 @@ projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 xrange::Array{<:Any,1}=[missing, missing],
                 yrange::Array{<:Any,1}=[missing, missing],
                 zrange::Array{<:Any,1}=[missing, missing],
-                center::Array{<:Any,1}=[0., 0., 0.],
+                center::CenterType=[0., 0., 0.],
                 range_unit::Symbol=:standard,
-                data_center::Array{<:Any,1}=[missing, missing, missing],
+                data_center::CenterType=[missing, missing, missing],
                 data_center_unit::Symbol=:standard,
                 ref_time::Real=dataobject.info.time,
                 verbose::Bool=true,
@@ -371,6 +378,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -379,9 +388,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -406,6 +415,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -444,6 +455,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -452,9 +465,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -479,6 +492,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -517,6 +532,8 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -525,9 +542,9 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -552,6 +569,8 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -590,6 +609,8 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -598,9 +619,9 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -625,6 +646,8 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -662,6 +685,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -670,9 +695,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -697,6 +722,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            thickness=thickness, thickness_unit=thickness_unit,
+                            offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 nlos=nlos,
@@ -735,6 +762,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             binning::Symbol=:cic,
                             fov=nothing,
                             fov_unit::Symbol=:standard,
+                            thickness=nothing, thickness_unit=nothing,
+                            offset=nothing, offset_unit=nothing,
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -743,9 +772,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Any,1}=[missing, missing, missing],
+                            data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
@@ -755,29 +784,29 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
 
     # take values from myargs if given
-    if !(myargs.pxsize        === missing)        pxsize = myargs.pxsize end
-    if !(myargs.res           === missing)           res = myargs.res end
-    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
-    if !(myargs.direction     === missing)     direction = myargs.direction end
-    if !(myargs.los           === missing)           los = myargs.los end
-    if !(myargs.up            === missing)            up = myargs.up end
-    if !(myargs.theta         === missing)         theta = myargs.theta end
-    if !(myargs.phi           === missing)           phi = myargs.phi end
-    if !(myargs.angle_unit    === missing)    angle_unit = myargs.angle_unit end
-    if !(myargs.binning       === missing)       binning = myargs.binning end
-    if !(myargs.inclination    === missing)    inclination = myargs.inclination end
-    if !(myargs.azimuth        === missing)        azimuth = myargs.azimuth end
-    if !(myargs.position_angle === missing) position_angle = myargs.position_angle end
-    if !(myargs.axis           === missing)           axis = myargs.axis end
-    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
-    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
-    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.data_center   === missing)   data_center = myargs.data_center end
-    if !(myargs.data_center_unit === missing) data_center_unit = myargs.data_center_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
-    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
+    if !(myargs.pxsize === missing) && isequal(pxsize, [missing, missing]) pxsize = myargs.pxsize end
+    if !(myargs.res === missing) && isequal(res, missing) res = myargs.res end
+    if !(myargs.lmax === missing) && isequal(lmax, dataobject.lmax) lmax = myargs.lmax end
+    if !(myargs.direction === missing) && isequal(direction, :z) direction = myargs.direction end
+    if !(myargs.los === missing) && isequal(los, nothing) los = myargs.los end
+    if !(myargs.up === missing) && isequal(up, nothing) up = myargs.up end
+    if !(myargs.theta === missing) && isequal(theta, nothing) theta = myargs.theta end
+    if !(myargs.phi === missing) && isequal(phi, nothing) phi = myargs.phi end
+    if !(myargs.angle_unit === missing) && isequal(angle_unit, :deg) angle_unit = myargs.angle_unit end
+    if !(myargs.binning === missing) && isequal(binning, :cic) binning = myargs.binning end
+    if !(myargs.inclination === missing) && isequal(inclination, nothing) inclination = myargs.inclination end
+    if !(myargs.azimuth === missing) && isequal(azimuth, nothing) azimuth = myargs.azimuth end
+    if !(myargs.position_angle === missing) && isequal(position_angle, nothing) position_angle = myargs.position_angle end
+    if !(myargs.axis === missing) && isequal(axis, nothing) axis = myargs.axis end
+    if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+    if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+    if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+    if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.data_center === missing) && isequal(data_center, [missing, missing, missing]) data_center = myargs.data_center end
+    if !(myargs.data_center_unit === missing) && isequal(data_center_unit, :standard) data_center_unit = myargs.data_center_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) && isequal(show_progress, true) show_progress = myargs.show_progress end
 
     verbose = Mera.checkverbose(verbose)
     show_progress = Mera.checkprogress(show_progress)
@@ -792,6 +821,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                               theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
                               position_angle=position_angle, axis=axis, angle_unit=angle_unit,
                               binning=binning, weighting=weighting, nlos=nlos,
+                              thickness=thickness, thickness_unit=thickness_unit,
+                              offset=offset, offset_unit=offset_unit,
                               max_threads=max_threads, xrange=win, yrange=win,
                               zrange=win, center=center, range_unit=fov_unit,
                               data_center=data_center, data_center_unit=data_center_unit,
@@ -832,7 +863,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     # for velocity dispersion add necessary velocity components
     # ========================================================
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
+              :σr_sphere, :σθ_sphere, :σϕ_sphere]
     rσanglecheck = [rcheck...,σcheck...,anglecheck...]
 
     σ_to_v = SortedDict(  :σx => [:vx, :vx2],
@@ -840,7 +872,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                           :σz => [:vz, :vz2],
                           :σ  => [:v,  :v2],
                           :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
-                          :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
+                          :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2],
+                          :σr_sphere   => [:vr_sphere,   :vr_sphere2],
+                          :σθ_sphere   => [:vθ_sphere,   :vθ_sphere2],
+                          :σϕ_sphere   => [:vϕ_sphere,   :vϕ_sphere2] )
 
     for i in σcheck
         idx = findall(x->x==i, selected_vars) #[1]
@@ -895,7 +930,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         return projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                             ranges, data_centerm, range_unit, mask,
                                             los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
-                                            boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos, max_threads)
+                                            boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos, max_threads;
+                                            thickness=thickness, thickness_unit=thickness_unit,
+                                            offset=offset, offset_unit=offset_unit)
     end
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
@@ -1372,12 +1409,15 @@ end
 function projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                        ranges, data_centerm, range_unit, mask,
                                        los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
-                                       boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing, max_threads=Threads.nthreads())
+                                       boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing, max_threads=Threads.nthreads();
+                                       thickness=nothing, thickness_unit=nothing,
+                                       offset=nothing, offset_unit=nothing)
 
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
     rcheck = [:r_cylinder, :r_sphere]; anglecheck = [:ϕ]
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
+              :σr_sphere, :σθ_sphere, :σϕ_sphere]
     rσanglecheck = [rcheck..., σcheck..., anglecheck...]
     for v in selected_vars
         if v in rσanglecheck
@@ -1385,7 +1425,20 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                   "variable :$v (radius/angle/velocity-dispersion). Use an axis direction=:x/:y/:z.")
         end
     end
-    bin = (binning === :overlap || binning === :exact) ? :cic : binning   # points have no footprint
+    # Points have no footprint, so the two footprint kernels have nothing to integrate over and
+    # fall back to :cic. That is the right physics, but it used to happen silently: a caller asking
+    # for :exact got :cic and was told nothing, while the tutorial listed all four as if they
+    # applied. Say so once per session instead.
+    bin = binning
+    if binning === :overlap || binning === :exact
+        bin = :cic
+        hint(:particle_binning_footprint,
+             "binning=:$binning has no meaning for point particles; using :cic.",
+             ":overlap and :exact integrate a cell's footprint over the pixels it covers.",
+             "A particle is a point: it has no footprint, so there is nothing to integrate.",
+             "Use :cic (default, bilinear) or :ngp (nearest pixel) to say which you meant.";
+             verbose=verbose)
+    end
     if !(bin in (:cic, :ngp))
         throw(ArgumentError("binning must be :cic, :ngp, :overlap or :exact, got :$binning"))
     end
@@ -1418,6 +1471,22 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     if length(mask) > 1
         length(mask) == npart || error("[Mera]: mask length $(length(mask)) ≠ particle count $npart")
         sel = collect(Bool.(mask))
+    end
+    # A cutting plane through POINT particles catches nothing: a particle has no extent, so a
+    # zero-thickness plane is empty by construction. The useful analogue is a projection of a
+    # SLAB: `thickness` sets its depth along the line of sight and `offset` moves it, the same
+    # way `offset` moves the plane in offaxis_slice.
+    if thickness !== nothing || offset !== nothing
+        cu(u) = u === :standard ? 1.0/boxlen : getunit(dataobject.info, u)
+        zoff = offset === nothing ? 0.0 :
+               float(offset) / cu(offset_unit === nothing ? range_unit : offset_unit)
+        if thickness !== nothing
+            float(thickness) > 0 ||
+                error("projection: `thickness` must be positive; a zero-thickness slab through " *
+                      "point particles is empty by construction. Got $thickness")
+            half = 0.5 * float(thickness) / cu(thickness_unit === nothing ? range_unit : thickness_unit)
+            sel = sel .& (abs.(z_cam .- zoff) .<= half)
+        end
     end
     # subregion clip on WORLD coords (px,py,pz about the sub-box-centre pivot), NOT the rotated camera
     # coords: clipping a rotated coord (x_cam/y_cam/z_cam) against an axis-aligned half-extent drops
@@ -1452,11 +1521,13 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     massv = Float64.(getvar(dataobject, :mass)[sel])
     ones_w = ones(Float64, length(xc))
 
-    # line-of-sight velocity v·ŵ (code units) for off-axis kinematics :vlos / :σlos
+    # Line-of-sight velocity for off-axis kinematics :vlos / :σlos (code units).
+    # Negated for the same reason as in the hydro path: cam_w points toward the observer, while
+    # observational work counts a positive radial velocity as RECEDING. See projection_hydro.jl.
     vlossel = Float64[]
     if (:vlos in selected_vars) || (:σlos in selected_vars)
         vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
-        vlossel = Float64.((vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+        vlossel = Float64.(-(vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
     end
     req_unit(iv) = (k = findfirst(==(iv), selected_vars);
                     (k !== nothing && length(units) >= k) ? units[k] : :standard)

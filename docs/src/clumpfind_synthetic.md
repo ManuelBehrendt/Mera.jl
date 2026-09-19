@@ -1,11 +1,19 @@
-# Clump Finding — a synthetic, ground-truth example
+```@raw html
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: clumpfind_synthetic.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+```
+
+# Clump Finding, a synthetic, ground-truth example
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `clumpfind_synthetic.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/clumpfind_synthetic.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `clumpfind_synthetic.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/clumpfind_synthetic.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 
 This page is a self-contained, **data-free** worked example for the structure finder
-([`clumpfind`](@ref)). It builds a small Mera simulation *from scratch* — a real
-`HydroDataType` + `PartDataType` on a self-consistent unit system, no RAMSES files — whose
+([`clumpfind`](@ref)). It builds a small Mera simulation *from scratch*, a real
+`HydroDataType` + `PartDataType` on a self-consistent unit system, no RAMSES files, whose
 clump population is **known exactly**. Because the ground truth is known, every finder and
 every feature can be both *exercised* and *scored* (Adjusted Rand Index, completeness,
 purity, recovered mass, virial state). The same field drives the accuracy test
@@ -23,7 +31,7 @@ only `using Mera`.
 ```julia
 using Mera
 
-# Regenerate the identical field locally (deterministic — no download):
+# Regenerate the identical field locally (deterministic, no download):
 F = synthetic_clumps()
 gas, particles, truth = F.gas, F.particles, F.truth
 
@@ -32,22 +40,19 @@ println("particles      : ", length(particles.data))
 println("ground-truth clumps : ", length(truth))
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
 gas cells      : 51514
 particles      : 2438
 ground-truth clumps : 8
 ```
-
 
 ```julia
 # Option B — download the prebuilt dataset once (cached in `dir`), then load it:
@@ -64,11 +69,11 @@ with `save_synthetic_clumps(dir)`.
 Eight clumps are injected into a `128³` grid in a 1 kpc box (Gaussian gas overdensities;
 matching particle bags; plus a two-component kinematic stream for the phase-space finder):
 
-* **A–E** — five isolated, self-gravitating (cold) clumps spanning ~2 dex in mass — the
+* **A to E**, five isolated, self-gravitating (cold) clumps spanning ~2 dex in mass, the
   bread-and-butter case and the mass-function spectrum.
-* **Fhot** — a massive but *kinematically hot* clump (σ = 28 km/s): spatially obvious yet
-  **gravitationally unbound** — the boundedness/virial test case.
-* **G1 + G2** — two cores sharing one envelope, ~0.1 kpc apart — the **deblending /
+* **Fhot**, a massive but *kinematically hot* clump (σ = 28 km/s): spatially obvious yet
+  **gravitationally unbound**, the boundedness/virial test case.
+* **G1 + G2**, two cores sharing one envelope, ~0.1 kpc apart, the **deblending /
   substructure** test case that single-threshold friends-of-friends cannot split.
 
 ![Synthetic clump field](assets/clumpfind/synthetic_overview.png)
@@ -79,13 +84,13 @@ injected ground-truth clumps, coloured by id.*
 ### The data and finders are fully 3-D
 
 The figures above collapse the box along `z` for display, but the field is a genuine **3-D
-volume** and every finder runs in three dimensions. The clumps sit at different depths — in
+volume** and every finder runs in three dimensions. The clumps sit at different depths, in
 particular clump **E** (z ≈ 0.25) lies almost directly under the **G1/G2** pair (z ≈ 0.75),
-so they overlap in the x–y projection yet are distinct in 3-D:
+so they overlap in the x to y projection yet are distinct in 3-D:
 
 ![3-D clump distribution](assets/clumpfind/three_d.png)
 
-*Left: the clumps in the 3-D volume. Right: the x–y projection — E and G1/G2 (red circle)
+*Left: the clumps in the 3-D volume. Right: the x to y projection, E and G1/G2 (red circle)
 land on the same sky position. A 3-D finder separates them by depth; a 2-D connected-component
 search on the projection would merge them. `test/54` asserts exactly this.*
 
@@ -106,7 +111,6 @@ end
 7     pos=(0.46, 0.52, 0.75)
 8     pos=(0.56, 0.52, 0.75)
 ```
-
 
 ## Run every finder and score it
 
@@ -140,7 +144,6 @@ end
 ```
 candidate cells above threshold : 51514
 ground-truth clumps             : 8
-
 finder            clumps  ARI     completeness  purity
 ThresholdFoF      7       0.953   1.0           0.927
 DensityWatershed  8       0.998   1.0           0.994
@@ -148,7 +151,6 @@ Dendrogram        8       0.998   1.0           0.995
 PersistenceFinder 8       0.998   1.0           0.995
 HDBSCANFinder     7       0.953   1.0           0.927
 ```
-
 
 | Finder             | clumps | ARI   | completeness | purity | notes |
 |--------------------|:------:|:-----:|:------------:|:------:|-------|
@@ -188,13 +190,12 @@ DensityWatershed clumps near G1/G2 : 2   (split)
 a FoF clump with 2 bound subclumps : true
 ```
 
-
 ## Accuracy, boundedness and the mass function
 
 ![Accuracy panel](assets/clumpfind/accuracy.png)
 
 *Left: recovery metrics per finder. Centre: with `boundedness=true` the six cold clumps
-land at `α_vir ≪ 1` (bound) while the hot clump Fhot sits at `α_vir ≈ 18` (unbound) — the
+land at `α_vir ≪ 1` (bound) while the hot clump Fhot sits at `α_vir ≈ 18` (unbound), the
 finder labels it `bound=false`. Right: the recovered cumulative clump mass function.*
 
 ```julia
@@ -214,8 +215,7 @@ clumps after virial filter  : 6
 Fhot removed                : true
 ```
 
-
-## Backgrounds & noise — telling clumps from the ISM floor
+## Backgrounds & noise, telling clumps from the ISM floor
 
 Real clumps don't sit on a flat floor; they're embedded in a structured, turbulent ISM. The
 generator can place the same eight clumps in different environments via `synthetic_clumps`:
@@ -226,15 +226,15 @@ noisy  = synthetic_clumps(noise=0.35, lmax=6)                 # +35% log-normal 
 galaxy = synthetic_clumps(background=:galaxy, noise=0.2, lmax=6)   # clumps inside an exp. ISM disk
 ```
 
-* **Turbulent floor** — log-normal per-cell noise far below the threshold is simply rejected:
+* **Turbulent floor**, log-normal per-cell noise far below the threshold is simply rejected:
   the resolved clumps are still recovered and the floor produces **no spurious clumps**.
-* **Structured disk** — when the diffuse ISM itself rises above the threshold, the choice of
+* **Structured disk**, when the diffuse ISM itself rises above the threshold, the choice of
   finder becomes decisive:
 
 ![Clumps in an ISM disk](assets/clumpfind/ism_background.png)
 
 *Left: the eight clumps embedded in a smooth exponential disk. Centre: a fixed-threshold
-`ThresholdFoF` connects the elevated disk and the clumps into **2 giant blobs** — only 2 of 8
+`ThresholdFoF` connects the elevated disk and the clumps into **2 giant blobs**, only 2 of 8
 clumps are detected. Right: `DensityWatershed` (and `Dendrogram`/`PersistenceFinder` with a
 prominence/`min_delta` cut) reject the smooth floor by **density contrast** and recover all 8.*
 
@@ -259,29 +259,28 @@ ThresholdFoF on ISM disk     : 2/8  (disk fuses)
 DensityWatershed on ISM disk : 8/8  (contrast wins)
 ```
 
-
 The lesson: on a structured background, prefer a **density-contrast** finder
 (`DensityWatershed`, `Dendrogram` with `min_delta`, `PersistenceFinder`, or `HDBSCANFinder`),
-or raise the threshold above the local ISM — a single absolute threshold with friends-of-friends
+or raise the threshold above the local ISM, a single absolute threshold with friends-of-friends
 will merge clumps into the floor. This is exactly what
 `test/54_clumpfind_synthetic_tests.jl` asserts.
 
-## Tuning — how the parameters behave
+## Tuning, how the parameters behave
 
 Because the ground truth is known, the bench doubles as a **tuning guide**: you can watch
 recovery respond as you turn each knob. Sweeping the three most important parameters:
 
 ![Parameter sensitivity](assets/clumpfind/sensitivity.png)
 
-* **Linking length** (`ThresholdFoF`) — *left*. Below one cell nothing links (empty catalog);
+* **Linking length** (`ThresholdFoF`), *left*. Below one cell nothing links (empty catalog);
   then a **wide stable plateau** (ARI ≈ 0.89, 7 clumps) that is forgiving of the exact value;
   then a **cliff** where clumps fuse and the partition collapses toward a single blob. Pick a
-  value a few cells wide — well inside the plateau, far from the cliff.
-* **Persistence / `min_delta`** (`DensityWatershed`, `Dendrogram`, `PersistenceFinder`) —
+  value a few cells wide, well inside the plateau, far from the cliff.
+* **Persistence / `min_delta`** (`DensityWatershed`, `Dendrogram`, `PersistenceFinder`),
   *centre*. A pure contrast knob: below the **saddle prominence** (~150 here) the touching pair
   splits into two; above it they merge into one. Set it to the smallest peak-to-saddle contrast
   you want to call a separate clump.
-* **Threshold** — *right*. The classic **detection-vs-purity trade-off**: raising it sharpens
+* **Threshold**, *right*. The classic **detection-vs-purity trade-off**: raising it sharpens
   purity (clumps shed their diffuse envelopes) but **drops the low-mass clumps** entirely
   (detection falls). Lower to be complete, raise to be clean.
 
@@ -298,11 +297,10 @@ ll=0.0156  -> 7 clumps
 ll=0.0391  -> 7 clumps
 ```
 
-
 `test/54_clumpfind_synthetic_tests.jl` pins these trends (plateau, over-merge cliff, the
 persistence split point, and the threshold dropout).
 
-## One figure — the gas column density
+## One figure, the gas column density
 
 Collapse the box along `z` for display (the field and every finder are genuinely 3-D). Note
 the G1+G2 "peanut" near the centre.
@@ -319,30 +317,24 @@ fig
 ```
 
 ```
-[Mera]: 2026-08-03T11:34:04.043
-
+[Mera]: 2026-08-31T14:12:37.235
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 1000.0 [pc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [pc] :: 1000.0 [pc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 1000.0 [pc]
-
-Selected var(s)=(:sd,) 
+Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 128^2
 Map size: 128 x 128
 Pixel size: 7.812 [pc]
 Simulation min.: 7.812 [pc]
-
 Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```
 
-
-![](clumpfind_synthetic_files/clumpfind_synthetic_19_1.png)
-
+![](clumpfind_synthetic_files/clumpfind_synthetic_20_7.png)
 
 ## When to use which finder
 
@@ -364,7 +356,7 @@ self-gravitating structures, and a [`validators`](clumpfind.md) chain to filter 
 **Rules of thumb:** start with `ThresholdFoF`; reach for `DensityWatershed`/`Dendrogram`/
 `PersistenceFinder` when clumps **touch** or sit on a **structured background**; use
 `PhaseSpaceFoF` when the separation is **kinematic**; and always score new settings against a
-known case — that's what `synthetic_clumps()` is for.
+known case, that's what `synthetic_clumps()` is for.
 
 See [Clump Finding](clumpfind.md) for the full API, the seven finders, and the
 gravitational-boundedness / validator details.

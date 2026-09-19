@@ -57,14 +57,19 @@ function projection()
     println()
     println("==============[off-axis views]:==================")
     println("project along ANY line of sight (degrees by default):")
-    println("  inclination=, azimuth=, axis=(:z|:angmom|vector)")
+    println("  inclination=, azimuth=, axis=(:x|:y|:z|:angmom|:L|[ax,ay,az])")
     println("  direction=:faceon / :edgeon   (disk from L)")
-    println("  los=[lx,ly,lz]   or   theta=, phi=")
+    println("  los=[lx,ly,lz]")
+    println("  theta=, phi=   (deprecated in 1.8: azimuth = phi + 90 for axis=:z)")
     println("  position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact")
+    println("    (:overlap/:exact integrate a cell's footprint; point particles have none,")
+    println("     so on particle data they fall back to :cic)")
+    println("  thickness=, offset= (particles): project a SLAB of finite depth instead of the")
+    println("     full column, and move it along the line of sight")
     println()
     println("  line-of-sight tools (same view kwargs):")
     println("    :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)")
-    println("    slice (off-axis kwargs)       -> cutting plane ;  profile / phase -> 1D/2D reductions")
+    println("    slice (off-axis kwargs)       -> cutting plane (offset= moves it) ;  profile / phase -> 1D/2D reductions")
     println("    rotation_sequence             -> shared-FOV angle sweep (orbit movies)")
     println("    savemap/loadmap (JLD2)        -> store/restore a projection result")
     println()
@@ -214,7 +219,7 @@ function _resolve_axis(axis, L)
         n = norm(L); n > 0 || throw(ArgumentError("angular-momentum vector L is zero"))
         return collect(float.(L)) ./ n
     end
-    throw(ArgumentError("axis must be a 3-vector, :x/:y/:z or :angmom, got :$axis"))
+    throw(ArgumentError("axis must be a 3-vector, :x/:y/:z, or :angmom (alias :L), got :$axis"))
 end
 
 # deterministic orthonormal basis (e1,e2) spanning the plane ⟂ ahat
@@ -235,6 +240,7 @@ function _check_view_specifiers(los, direction, inclination, azimuth, theta, phi
         "  los=[1, 0, 0.5]                            explicit viewing direction (any length)\n" *
         "  inclination=60, azimuth=30, axis=:angmom   tilt off a reference axis (degrees)\n" *
         "  theta=60, phi=30                           spherical angles about the box axes\n" *
+        "                                             (note: azimuth = phi + 90 when axis=:z)\n" *
         "  direction=:faceon   (or :edgeon)           presets using the object's angular momentum"))
     if (direction === :faceon || direction === :edgeon) && axis !== nothing
         throw(ArgumentError("`axis` is not used with `direction=:$direction` — these presets " *
@@ -255,14 +261,33 @@ in `angle_unit` (**`:deg`** by default, or `:rad`):
 1. explicit `los` 3-vector,
 2. **`inclination`/`azimuth`** — tilt the view away from a reference `axis` by `inclination`
    (0 ⇒ looking straight down the axis, 90° ⇒ perpendicular to it) and rotate around the axis
-   by `azimuth`. `axis` defaults to the box `:z`; use `:x`/`:y`/`:z`, a 3-vector, or `:angmom`
+   by `azimuth`. `axis` defaults to the box `:z`; use `:x`/`:y`/`:z`, a 3-vector, or `:angmom` (alias `:L`)
    (the object's angular momentum `L`, for disks). The reference axis is kept pointing "up".
-3. spherical angles `(theta, phi)` about the box axes (`los=[sinθcosφ, sinθsinφ, cosθ]`),
+3. spherical angles `(theta, phi)` about the box axes (`los=[sinθcosφ, sinθsinφ, cosθ]`).
+   **Deprecated in 1.8, removed in 2.0.** Use `inclination`/`azimuth`, see the note below,
 4. preset `direction`: `:x`/`:y`/`:z`, `:faceon` (look along `L`), `:edgeon` (⟂ `L`, up = `L̂`).
 
 `:faceon`/`:edgeon` and `axis=:angmom` need the pre-computed `L`; the projection wiring supplies
 it via `getvar(obj,[:lx,:ly,:lz])`. The image roll (`position_angle`) is applied separately in
-`build_camera_basis`, so it is *not* a line-of-sight specifier here. Pure — touches no data.
+`build_camera_basis`, so it is *not* a line-of-sight specifier here. Pure, touches no data.
+
+!!! warning "`azimuth` is not `phi`"
+    Options 2 and 3 cover the same directions when `axis=:z`, but their zero point differs by
+    90 degrees:
+
+        inclination = theta,  azimuth = phi + 90        (for axis=:z)
+
+    `inclination` and `theta` are the same angle: both measure the tilt away from the reference
+    axis. `azimuth` and `phi` both turn around that axis, but they do not start from the same
+    place. `phi` is measured from the `+x` axis, in the usual spherical convention. `azimuth`
+    starts one quarter turn later, so that a view with `inclination=0` has the same image
+    orientation as `direction=:z`. Passing `azimuth=phi` gives a picture rotated by 90 degrees.
+
+    The two options are not equally capable. Use `inclination`/`azimuth` unless you specifically
+    want angles measured about the box axes: it accepts any reference `axis` (including
+    `:angmom`, the object's angular momentum) and it returns an image "up" direction, so the
+    roll of the picture is defined. `theta`/`phi` is always about the box axes and leaves the
+    roll to the automatic choice.
 """
 function resolve_los(; los=nothing, theta=nothing, phi=nothing,
                        inclination=nothing, azimuth=nothing,
@@ -302,6 +327,15 @@ function resolve_los(; los=nothing, theta=nothing, phi=nothing,
 
     # (3) spherical angles about the box axes
     if theta !== nothing || phi !== nothing
+        # Deprecated in 1.8, to be removed in 2.0. `inclination`/`azimuth` does everything this
+        # pair does and more: any reference axis (including :angmom), plus a defined image "up".
+        # Still fully supported here, so existing scripts keep running unchanged. The hint gives
+        # the conversion, not just the replacement, because the two do NOT share a zero point:
+        # swapping the names without the +90 silently rotates the figure by a quarter turn.
+        hint(:theta_phi_deprecated,
+             "`theta`/`phi` is deprecated in Mera 1.8 and will be removed in 2.0.",
+             "Use `inclination`/`azimuth`, which also takes any reference `axis` (:angmom) and",
+             "defines the image roll. NOT the same zero point: azimuth = phi + 90 for axis=:z.")
         th = theta === nothing ? 0.0 : float(theta)
         ph = phi   === nothing ? 0.0 : float(phi)
         return _los_from_angles(th, ph, angle_unit), up
@@ -352,7 +386,7 @@ end
 # numeric center in CODE units, so it can be stored on the returned cube/map for provenance
 # (round-trips through savecube/loadcube).  Mirrors the centering getvar applies internally.
 function _center_code(dataobject, center, range_unit::Symbol)
-    frac = center_in_standardnotation(dataobject.info, collect(Any, center), range_unit)  # → 0..1
+    frac = center_in_standardnotation(dataobject.info, collect(Any, _as_center(center)), range_unit)  # → 0..1
     return Float64.(frac) .* dataobject.boxlen
 end
 
@@ -378,6 +412,9 @@ end
 # FOV (xrange/yrange or a prior subregion's ranges); `win=nothing` auto-fits. `csize_all` are the
 # per-cell sizes (code units) for ALL cells. Returns `(x0,x1,y0,y1, sel)` with `sel` narrowed to the
 # (expanded) frame. Mirrors the inline logic in projection_hydro.jl `projection_offaxis`.
+# Camera-frame helper. Used by the out-of-tree modules under dev/ (loscubes, offaxis_eval,
+# synthobs), not by the package's own projection path: keep it even though a search of src/
+# alone makes it look unused.
 function _offaxis_frame(x_cam, y_cam, sel, csize_all, cr, uc, pixsize, win)
     ar = abs(cr[1]) + abs(cr[2]) + abs(cr[3])
     au = abs(uc[1]) + abs(uc[2]) + abs(uc[3])
@@ -424,6 +461,7 @@ function _offaxis_view(info, boxlen, xrange, yrange, zrange, center, range_unit,
 end
 
 # Restrict `sel` to cells inside the requested world-space sub-box (coords about the box pivot).
+# Also called from dev/ (loscubes, synthobs) as well as from here.
 function _offaxis_boxmask!(sel, px, py, pz, half, full)
     full[1] || (sel .= sel .& (abs.(px) .<= half[1]))
     full[2] || (sel .= sel .& (abs.(py) .<= half[2]))
@@ -436,6 +474,9 @@ end
 #   • a SUMMED quantity (e.g. a mass cube channel): accum = the quantity, wt = ones  → g = Σ quantity;
 #   • a WEIGHTED MEAN (e.g. ⟨v_los⟩): accum = the field, wt = mass → g/w = Σ(field·mass)/Σmass.
 # (named `accum`/`wt` rather than values/weights so the asymmetric meaning of the two grids is explicit.)
+# Kernel dispatch for :overlap / :exact. The package's projection path calls the two kernels
+# directly, so this wrapper exists for the out-of-tree dev/ modules. Searching src/ alone makes
+# it look dead; it is not.
 function _offaxis_deposit!(g, w, xc, yc, csize, accum, wt, cr, uc, wv, ext, res, binning, max_threads; nmax::Int=64)
     if binning === :overlap
         deposit_rotated_cells_overlap!(g, w, xc, yc, csize, accum, wt, cr, uc, ext, res; nmax=nmax, max_threads=max_threads)
@@ -457,6 +498,11 @@ off-axis intent spelled out at the call site. `slice(obj, var; los=…/inclinati
 here automatically whenever an off-axis view keyword is given, so the two are interchangeable and
 return the same `NamedTuple`.
 
+**`offset` / `offset_unit`** move the plane along the line of sight, which is what lets a
+cutting plane *travel* through an object: `offset=0` (the default) puts it through `center`,
+and sweeping `offset` produces the frames of a fly-through. `offset_unit` defaults to
+`range_unit`. The axis-aligned path spells the same idea `slice_pos`/`slice_unit`.
+
 **Prefer `slice`**: it is the one name for a cutting plane, axis-aligned or off-axis, and it is
 what the documentation uses. See [`slice`](@ref) for the full description, the view keywords, and
 why empty (NaN) pixels are expected.
@@ -465,7 +511,8 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
         los=nothing, theta=nothing, phi=nothing, inclination=nothing, azimuth=nothing,
         position_angle=nothing, axis=nothing, direction=:z, angle_unit::Symbol=:deg, up=nothing,
         center=[:bc], range_unit::Symbol=:standard, res::Int=256, pxsize=nothing,
-        xrange=[missing,missing], yrange=[missing,missing], mask=[false], verbose::Bool=true)
+        xrange=[missing,missing], yrange=[missing,missing], offset=nothing, offset_unit=nothing,
+        mask=[false], verbose::Bool=true)
     info = dataobject.info; boxlen = dataobject.boxlen
     Lvec = (direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L) ?
         [sum(getvar(dataobject,:lx,center=center,center_unit=range_unit)),
@@ -489,8 +536,19 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
     # half-thickness along ŵ of 0.5·csize·(|w₁|+|w₂|+|w₃|) (=0.5·csize only for an axis-aligned view,
     # up to 0.5·csize·√3 at a corner-on tilt). Omitting this factor drops cells the plane really
     # crosses on tilted views and leaves scattered interior holes.
-    sel = sel .& (abs.(zcam) .<= 0.5 .* csize .* (abs(w[1]) + abs(w[2]) + abs(w[3])))
-    xc = Float64.(xcam[sel]); yc = Float64.(ycam[sel]); zc = Float64.(abs.(zcam[sel]))
+    # `offset` slides the plane along the line of sight, which is what makes a cutting plane
+    # TRAVEL through the object. Without it the plane is pinned at the pivot: the orientation was
+    # fully parameterised but the position was not, so a sweep was impossible off-axis while the
+    # axis-aligned path had `slice_pos` all along.
+    zoff = if offset === nothing
+        0.0
+    else
+        ou  = offset_unit === nothing ? range_unit : offset_unit
+        cuw = ou === :standard ? 1.0/boxlen : getunit(info, ou)   # as _fov_selection converts fov
+        float(offset) / cuw
+    end
+    sel = sel .& (abs.(zcam .- zoff) .<= 0.5 .* csize .* (abs(w[1]) + abs(w[2]) + abs(w[3])))
+    xc = Float64.(xcam[sel]); yc = Float64.(ycam[sel]); zc = Float64.(abs.(zcam[sel] .- zoff))
     cs = Float64.(csize[sel]); vv = Float64.(vals[sel])
     pcx = Float64.(px[sel]); pcy = Float64.(py[sel]); pcz = Float64.(pz[sel])   # cell world coords (about pivot)
     pixsize = _pixsize_code(info, boxlen, res, pxsize)
@@ -517,6 +575,10 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
     # tilted view), not the oversized projected rectangle — so cells keep their real shape and large
     # border cells no longer bleed a low-value frame outward.
     rx,ry,rz = cr[1],cr[2],cr[3]; ux,uy,uz = uc[1],uc[2],uc[3]
+    # The pixel's world point lies ON THE PLANE, which `offset` moves along the line of sight:
+    # X*r + Y*u + offset*w. Without this term the piercing test below still describes the plane
+    # through the pivot, so an offset selects cells and then pierces none of them.
+    ox, oy, oz = zoff*w[1], zoff*w[2], zoff*w[3]
     pxstep = (x1-x0)/nx; pystep = (y1-y0)/ny
     tol = 0.5*pixsize                 # half-pixel slack: adjacent cells overlap by ≤1px so the
                                       # true cross-sections tile with no sub-pixel seam at level
@@ -531,7 +593,8 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
             X = x0 + (ix-0.5)*pxstep
             for iy in iy0:iy1
                 Y = y0 + (iy-0.5)*pystep
-                (abs(X*rx + Y*ux - pX) <= ht && abs(X*ry + Y*uy - pY) <= ht && abs(X*rz + Y*uz - pZ) <= ht) || continue
+                (abs(X*rx + Y*ux + ox - pX) <= ht && abs(X*ry + Y*uy + oy - pY) <= ht &&
+                 abs(X*rz + Y*uz + oz - pZ) <= ht) || continue
                 if zi < zbuf[ix,iy]; zbuf[ix,iy]=zi; vbuf[ix,iy]=vv[i]; end
             end
         end

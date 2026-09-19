@@ -36,6 +36,13 @@ end
 # per-cell filter. A full-box read (`window === nothing`) keeps the fast single bulk read.
 function _read_level(g, ncomp::Int; window=nothing)
     pd = read(attributes(g)["prob_domain"])          # a Chombo "box" compound → NamedTuple
+    # A 2-D Chombo file has no k box bounds at all. Without this the reader reached for `lo_k`
+    # and died with a FieldError naming an internal field, which tells a user nothing. Mera is
+    # three-dimensional throughout, so the honest answer is to say so and stop.
+    hasproperty(pd, :lo_k) || error(
+        "[Mera]: this is a 2-D Chombo file (its boxes carry only i and j bounds). " *
+        "Mera analyses three-dimensional data, so it cannot read it. " *
+        "The yt KelvinHelmholtz sample is 2-D; IsothermalSphere is 3-D.")
     lo = (Int(pd.lo_i), Int(pd.lo_j), Int(pd.lo_k))
     n = (Int(pd.hi_i)-lo[1]+1, Int(pd.hi_j)-lo[2]+1, Int(pd.hi_k)-lo[3]+1)
     dx = Float64(read(attributes(g)["dx"]))
@@ -98,6 +105,16 @@ function getinfo_chombo(output::Int, path::String; verbose::Bool=true)
         base = round(Int, log2(n0))
         2^base == n0 || error("Chombo reader: level-0 size $n0 must be a power of two.")
         dx0 = Float64(read(attributes(f["level_0"])["dx"]))
+
+        # Refuse a 2-D file HERE, not later. getinfo used to assert ndim = 3 without looking,
+        # so a 2-D snapshot passed inspection, printed a confident 3-D summary, and only failed
+        # when gethydro reached for a k bound that was never there.
+        let pd = read(attributes(f["level_0"])["prob_domain"])
+            hasproperty(pd, :lo_k) || error(
+                "[Mera]: $(basename(fn)) is a 2-D Chombo file (its boxes carry only i and j " *
+                "bounds). Mera analyses three-dimensional data, so it cannot read it. " *
+                "The yt KelvinHelmholtz sample is 2-D; IsothermalSphere is 3-D.")
+        end
 
         info = InfoType(); info.descriptor = _external_descriptor()
         info.output = output; info.path = abspath(path); info.simcode = "CHOMBO"

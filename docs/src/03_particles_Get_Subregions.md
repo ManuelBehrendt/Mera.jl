@@ -1,7 +1,15 @@
+```@raw html
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 03_particles_Get_Subregions.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+```
+
 # 3. Particles: Sub-Regions of a Point Population
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `03_particles_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/03_particles_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `03_particles_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/03_particles_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 
 On an AMR grid a region boundary is a *choice*. A cell straddling the edge can
 be kept whole, judged by its centre, or split by volume fraction, and the
@@ -11,7 +19,7 @@ that choice.
 For particles there is no choice to make. A star is a point: it is inside the
 region or it is outside, and `msum` over the selection is exact by
 construction. There is no `:fraction` column, no `split` keyword, no
-whole-cell/centre-test trade-off — the arithmetic that took the hydro page
+whole-cell/centre-test trade-off, the arithmetic that took the hydro page
 several sections to make trustworthy is free here.
 
 What is *not* free is the counting. A region that selects exactly can still
@@ -44,7 +52,7 @@ decoration.
 ## 1. Points, Not Cells
 
 The same galaxy as the hydro and gravity pages, seen through its star
-particles. Each carries a position, a velocity, a mass, and a birth time —
+particles. Each carries a position, a velocity, a mass, and a birth time,
 that last column is what makes §6 and §7 possible.
 
 ```julia
@@ -53,7 +61,7 @@ that last column is what makes §6 and §7 possible.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
 using Mera, CairoMakie
-# Makie also exports geometric names (Sphere, Cylinder, ...) — state explicitly
+# Makie also exports geometric names (Sphere, Cylinder, ...), state explicitly
 # that we mean Mera's region types:
 import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 CairoMakie.activate!()
@@ -74,20 +82,17 @@ println("particle mass  : ", round(minimum(getvar(stars, :mass, :Msol)), sigdigi
 println("ages           : ", round(minimum(age), digits=1), " – ",
         round(maximum(age), digits=1), " Myr")
 println("box            : ", round(stars.boxlen * kpc, sigdigits=4), " kpc")
-
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
 particles      : 508939   columns: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)
 with birth = 0 : 0 (dark matter, if any)
 total mass     : 5.8044e9 Msol
@@ -96,8 +101,7 @@ ages           : 0.0 – 531.0 Myr
 box            : 48.0 kpc
 ```
 
-
-Every particle loaded here carries a non-zero birth time — this population is
+Every particle loaded here carries a non-zero birth time, this population is
 stars. Their combined mass, $5.8 \times 10^9\,M_\odot$, is worth remembering:
 the [gravity page](03_gravity_Get_Subregions.md) measures a dynamical mass ten
 times larger in the same volume, so whatever dominates this galaxy's potential
@@ -106,12 +110,12 @@ is not in this file.
 The ages matter for §6 and §7, so note their range now: **every star here
 formed during the run**, so the population spans zero to about 530 Myr and
 nothing is older. "Old" on this page therefore means *a few hundred Myr*, not
-a Hubble time — the contrasts below are between stars that formed in the last
+a Hubble time, the contrasts below are between stars that formed in the last
 few tens of Myr and stars that have had a few disc orbits to settle.
 
 ```julia
 # ─────────────────────────────────────────────────────────────────────
-# FIGURE INFRASTRUCTURE for the whole page — skim freely on first read.
+# FIGURE INFRASTRUCTURE for the whole page, skim freely on first read.
 # The one Mera-relevant definition is `sproj`: the projection defaults every
 # stellar surface-density map reuses.
 # ─────────────────────────────────────────────────────────────────────
@@ -139,19 +143,17 @@ sd_bar!(pos) = Colorbar(pos; colormap=:inferno, colorrange=SDLIM,
 pos(o) = (getvar(o, :x, :kpc, center=[:bc]),
           getvar(o, :y, :kpc, center=[:bc]),
           getvar(o, :z, :kpc, center=[:bc]))
-
 ```
 
 ```
 pos (generic function with 1 method)
 ```
 
-
 ```julia
 p_face = sproj(stars)
 p_edge = sproj(stars; direction=:x)
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(1000, 460))
 axf = Axis(fig[1, 1], title="face-on — stellar surface density",
            xlabel="x − x꜀ [kpc]", ylabel="y − y꜀ [kpc]")
@@ -167,17 +169,14 @@ lines!(axe, [-12., 12., 12., -12., -12.], [-2., -2., 2., 2., -2.];
 text!(axe, -11.5, 2.4; text="Cylinder(12, 2)", color=:cyan, fontsize=11)
 sd_bar!(fig[1, 3])
 fig
-
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_5_0.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_6_1.png)
 
 ## 2. One Sphere, and Arithmetic That Cannot Drift
 
 `subregion` takes the same region values as everywhere else. What it returns
-is a particle object holding a *subset of the rows* — nothing is weighted,
+is a particle object holding a *subset of the rows*, nothing is weighted,
 nothing is partial.
 
 Two consequences worth checking rather than assuming: a region and its
@@ -196,20 +195,17 @@ println()
 println("count residual : ", length(s_in.data) + length(s_out.data) - N)
 println("mass  residual : ", (msum(s_in, :Msol) + msum(s_out, :Msol)) / M - 1,
         "   (floating-point summation only)")
-
 ```
 
 ```
 all particles      : 508939   5.804426e9 Msol
 inside  Sphere(10) : 419529   4.7852795e9
 outside Sphere(10) : 89410    1.0191465e9
-
 count residual : 0
 mass  residual : 1.5543122344752192e-15   (floating-point summation only)
 ```
 
-
-The counts close on the nose — they are integers, and every particle is
+The counts close on the nose, they are integers, and every particle is
 classified exactly once. The mass residual is a few units in the last place:
 not a boundary effect, just the order in which floating-point additions
 happen.
@@ -223,7 +219,7 @@ additivity is a property of set membership.
 
 The error that *does* appear grows as regions get smaller. A population of
 points sampled in a shell gives a mass with a statistical uncertainty of
-roughly $M/\sqrt{N}$ — nothing to do with geometry, everything to do with how
+roughly $M/\sqrt{N}$, nothing to do with geometry, everything to do with how
 many particles the shell caught.
 
 The table below walks a stack of spherical shells outward. Watch the count
@@ -240,7 +236,7 @@ for i in 1:length(edges)-1
     push!(rows, (r=(edges[i]+edges[i+1])/2, n=n, m=m, err=n == 0 ? NaN : 100/sqrt(n)))
 end
 
-# the same walk with shells four times thinner — same regions, a quarter of the count
+# the same walk with shells four times thinner, same regions, a quarter of the count
 rt, nt = Float64[], Int[]
 for r0 in 0.0:0.25:19.75
     reg = r0 == 0 ? Sphere(0.25) : SphericalShell(r0, r0 + 0.25)
@@ -261,7 +257,7 @@ println("thinnest bin, 1.00 kpc shells : N = ", minimum(rows[i].n for i in 1:len
 println("thinnest bin, 0.25 kpc shells : N = ", minimum(nt),
         "  →  ", round(100/sqrt(max(minimum(nt), 1)), digits=1), " %")
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(950, 400))
 ax1 = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="M in shell [M⊙]", yscale=log10,
            title="mass per shell, with counting uncertainty")
@@ -282,7 +278,6 @@ text!(ax2, 19.5, 115; text="N = 100  →  10 % uncertainty", color=:grey, fontsi
       align=(:right, :bottom))
 axislegend(ax2; position=:lb, framevisible=false)
 fig
-
 ```
 
 ```
@@ -298,38 +293,35 @@ shell [kpc]   N        M [Msol]     ≈ 1/√N
 14.0 – 15.0   4500     5.113e7      1.5 %
 16.0 – 17.0   1484     1.685e7      2.6 %
 18.0 – 19.0   652      7.405e6      3.9 %
-
 thinnest bin, 1.00 kpc shells : N = 408  →  5.0 %
 thinnest bin, 0.25 kpc shells : N = 71  →  11.9 %
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_10_1.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_11_3.png)
 
 Inside 6 kpc each shell holds tens of thousands of particles and the mass is
 good to a fraction of a percent. Even the outermost 1-kpc shell still holds a
 few hundred, so this particular profile is trustworthy at the few-percent
-level everywhere — which is worth stating plainly, because the interesting
+level everywhere, which is worth stating plainly, because the interesting
 part is that you could not have known it without looking.
 
 Now halve the bin width twice. The orange curve is exactly the same sweep in
 0.25 kpc shells: identical regions, identical arithmetic, a quarter of the
 particles per point, and the outer bins cross into double-digit uncertainty.
-Nothing about the selection changed — only how finely it was sliced.
+Nothing about the selection changed, only how finely it was sliced.
 
 The practical rule is therefore to choose bin widths by *count*, not by
 appearance. Equal-width bins look tidy and concentrate all the noise in the
 outermost points; widen the outer shells until they hold enough particles, and
 quote $N$ next to every value. The [hydro page's](03_hydro_Get_Subregions.md)
-advice about boundary treatment has no analogue here — this is its
+advice about boundary treatment has no analogue here, this is its
 replacement.
 
 ## 4. The Geometry Gallery
 
 Every region value type applies to particles, with the same keywords:
 `center`, `range_unit`, `inverse=true` for the complement, and `axis` to tilt
-a cylinder or a cylindrical shell. Only the boundary machinery is absent —
+a cylinder or a cylindrical shell. Only the boundary machinery is absent,
 `split`, `nsub`, `refine`, `refine_to` have nothing to act on, since a point
 has no volume to divide.
 
@@ -348,7 +340,7 @@ for (name, reg) in gallery
             round(100*msum(s, :Msol)/msum(stars, :Msol), digits=1), " % of the stellar mass")
 end
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(1020, 470))
 xa, ya, za = pos(stars)
 for (k, (name, reg)) in enumerate(gallery)
@@ -365,7 +357,6 @@ for (k, (name, reg)) in enumerate(gallery)
 end
 rowgap!(fig.layout, 4); colgap!(fig.layout, 8)
 fig
-
 ```
 
 ```
@@ -377,19 +368,17 @@ CylindricalShell(6, 10, 2)    145216   28.6 % of the stellar mass
 Cylinder(8, 2) tilted 40°     229964   45.2 % of the stellar mass
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_13_1.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_14_5.png)
 
 Every panel is the same edge-on view of the same population; grey is
 everything, orange is what the region kept. The tilted cylinder is the one to
-look at twice — `axis=[sin 40°, 0, cos 40°]` rotates the selection, not the
+look at twice, `axis=[sin 40°, 0, cos 40°]` rotates the selection, not the
 data, which is what makes it usable on a warped or inclined disc.
 
 ## 5. Composites and the `@region` Block
 
-Boolean composition — `∩` `∪` `\` `!`, or `intersect` / `union` / `setdiff` if
-you prefer ASCII — behaves exactly as on the grid, and `@region` hoists the
+Boolean composition, `∩` `∪` `\` `!`, or `intersect` / `union` / `setdiff` if
+you prefer ASCII, behaves exactly as on the grid, and `@region` hoists the
 shared keywords out of a composite so the shapes stay readable.
 
 `∪` is typed in the Julia REPL and in VS Code as `\cup` followed by TAB;
@@ -418,18 +407,15 @@ println("off-plane fraction of the inner stellar mass : ",
 println("counts partition exactly : ",
         length(s_halo.data) + length(subregion(s_ball, Cylinder(15., 2.), verbose=false).data)
         == length(s_ball.data))
-
 ```
 
 ```
 Sphere(15)                 : 502097   5.7267e9 Msol
   ∩ disc slab              : 489072   5.5788e9
   minus the slab (@region) : 13101    1.4881e8
-
 off-plane fraction of the inner stellar mass : 2.6 %
 counts partition exactly : true
 ```
-
 
 The last line is the particle version of the hydro page's ledger check, and it
 is worth making a habit of: a composite and its complement, applied to the
@@ -438,14 +424,14 @@ because fractions are complementary; here it holds because membership is a
 predicate. Either way, if it fails, the region is not describing what you
 think it describes.
 
-Note also that `subregion` chains — `subregion(s_ball, Cylinder(...))` narrows
+Note also that `subregion` chains, `subregion(s_ball, Cylinder(...))` narrows
 an already-selected object, because the return value is a full particle object
 of the same type.
 
 ## 6. Place *and* State: Regions Meet Filters
 
 A region answers *where*. `filterdata` answers *what*: it selects on the value
-of any `getvar` quantity — age, speed, angular momentum, anything derived —
+of any `getvar` quantity, age, speed, angular momentum, anything derived,
 and returns the same kind of object, so the two compose in either order.
 
 Stars carry a birth time, so "young" and "old" are one condition away. The
@@ -470,23 +456,20 @@ println("  older than 300 Myr        : ", rpad(length(old.data), 9),
         round(msum(old, :Msol), sigdigits=5))
 println()
 println("region∘filter == filter∘region : ", length(young.data) == length(young2.data))
-
 ```
 
 ```
 annulus 4–12 kpc, |z| < 2 : 286724   3.2728e9 Msol
   younger than 50 Myr    : 45119    5.2864e8
   older than 300 Myr        : 65342    7.4213e8
-
 region∘filter == filter∘region : true
 ```
-
 
 ```julia
 p_young = sproj(young)
 p_old   = sproj(old)
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(1000, 460))
 ax1 = Axis(fig[1, 1], title="younger than 50 Myr — where the gas is now",
            xlabel="x − x꜀ [kpc]", ylabel="y − y꜀ [kpc]")
@@ -496,14 +479,11 @@ ax2 = Axis(fig[1, 2], title="older than 300 Myr — a smooth, settled disc",
 show_sd!(ax2, p_old; decorate=true); limits!(ax2, -14, 14, -14, 14)
 sd_bar!(fig[1, 3])
 fig
-
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_21_1.png)
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_20_0.png)
-
-
-Same region, same units, same colour scale — and two different galaxies. The
+Same region, same units, same colour scale, and two different galaxies. The
 young population traces the structure the gas has *right now*: clumpy, knotted,
 concentrated where star formation is happening. The old population has had time
 to phase-mix into a smooth axisymmetric disc.
@@ -513,6 +493,46 @@ independent operations on the same object. The
 [Masking & Filtering page](05_multi_Masking_Filtering.md) treats the value side
 in full, including how to combine conditions with `&`, `|`, and `!`.
 
+### Place, State, and Type
+
+The two axes above are *where* a particle is and *what its values are*. There is a third: **what a
+particle is**. RAMSES tags each one with a family code, dark matter, star, sink-cloud, debris, or
+a tracer (a test particle, advected by the flow without acting back on it). `getparticlemask` turns
+that tag into a mask, and it survives a region: subset first, select the type afterwards, or the
+other way round.
+
+The galaxy on this page cannot show it. Written in the **legacy** particle format, it has no
+`:family` column, every particle here is a star, which is why §6 selects on `:age` instead. The
+compact public run below carries Monte-Carlo tracers, so the composition can be shown directly.
+
+```julia
+tracer_run = "$MERA_EXAMPLES/RAMSES-PUBLIC/sedov3d_grav_part"
+if isdir(tracer_run)
+    tp   = getparticles(getinfo(3, tracer_run, verbose=false), verbose=false, show_progress=false)
+    core = subregion(tp, Sphere(0.15; range_unit=:standard), verbose=false)
+
+    println("whole box   : ", length(tp.data),   " particles, families ",
+            Int.(sort(unique(getvar(tp, :family)))))
+    println("in a sphere : ", length(core.data), " particles")
+    println("…of which tracers: ", count(getparticlemask(core, :tracer, verbose=false)))
+    println(":family column survived the subregion: ",
+            :family in propertynames(Mera.columns(core.data)))
+else
+    println("fixture not installed: ", tracer_run)
+end
+```
+
+```
+whole box   : 124990 particles, families [0]
+in a sphere : 1707 particles
+…of which tracers: 1707
+:family column survived the subregion: true
+```
+
+The region kept a subset of rows and every column came with it, `:family` included, so a type mask
+built on the subregion is as valid as one built on the whole box. Region, value condition and
+particle type compose in any order, and none of them is a special case.
+
 ## 7. Profiles That Regions Make Easy
 
 Two profiles, both built the same way: a stack of `CylindricalShell` annuli,
@@ -520,7 +540,7 @@ each one a region, each one asked for a mass-weighted mean.
 
 The first is rotation. Young stars inherit the near-circular orbits of the gas
 they formed from; old stars have been scattered, and a scattered population
-lags — its mean azimuthal speed falls below the circular speed by an amount
+lags, its mean azimuthal speed falls below the circular speed by an amount
 that grows with its velocity dispersion. That is *asymmetric drift*, and it is
 one of the cleanest things a region stack can show.
 
@@ -547,7 +567,7 @@ println("at 7.5 kpc :  young ", round(vy[findfirst(==(7.5), r_ann)], digits=1),
         round(vo[findfirst(==(7.5), r_ann)], digits=1),
         " km/s (N=", no[findfirst(==(7.5), r_ann)], ")")
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(660, 430))
 ax = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="⟨v_φ⟩  [km/s]",
           title="asymmetric drift: old stars lag the young ones")
@@ -558,16 +578,17 @@ scatter!(ax, r_ann, vo; color=:firebrick, markersize=8)
 axislegend(ax; position=:rb, framevisible=false)
 ylims!(ax, 0, nothing)
 fig
-
 ```
 
 ```
+[Mera] Hint: getvar(:vϕ_cylinder) has no `vcenter` — velocities are in the BOX frame.
+             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
+             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             (shown once per session; verbose(false) silences Mera's messages)
 at 7.5 kpc :  young 191.2 km/s (N=2396)   old 166.7 km/s (N=7878)
 ```
 
-
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_23_1.png)
-
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_27_4.png)
 
 The gap between the two curves is the drift: about 25 km/s at 7.5 kpc, where
 the young stars are turning at 191 km/s and the older ones at 167. It is a
@@ -583,7 +604,7 @@ disc  = subregion(stars, Cylinder(12., 3.), verbose=false)
 dyoung = filterdata(disc, Below(:age, 50,   unit=:Myr), verbose=false)
 dold   = filterdata(disc, Above(:age, 300,  unit=:Myr), verbose=false)
 
-# mass-weighted RMS height — one number per population
+# mass-weighted RMS height, one number per population
 function zrms(o)
     z = getvar(o, :z, :kpc, center=[:bc]); m = getvar(o, :mass, :Msol)
     sqrt(sum(m .* z.^2) / sum(m))
@@ -593,7 +614,7 @@ println("RMS height, age < 50 Myr : ", round(zrms(dyoung), digits=3), " kpc  (N=
 println("RMS height, age > 300 Myr   : ", round(zrms(dold), digits=3), " kpc  (N=",
         length(dold.data), ")")
 
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(680, 400))
 ax = Axis(fig[1, 1], xlabel="z − z꜀ [kpc]", ylabel="stellar mass per bin [M⊙]",
           yscale=log10, title="vertical structure of the disc, by age")
@@ -605,7 +626,6 @@ for (o, c, l) in ((dyoung, :dodgerblue, "age < 50 Myr"), (dold, :firebrick, "age
 end
 axislegend(ax; position=:rt, framevisible=false)
 fig
-
 ```
 
 ```
@@ -613,12 +633,10 @@ RMS height, age < 50 Myr : 0.295 kpc  (N=68020)
 RMS height, age > 300 Myr   : 0.871 kpc  (N=103448)
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_29_3.png)
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_25_1.png)
-
-
-A factor of three in RMS height between the two populations — 0.3 kpc against
-0.87 kpc — in the same cylinder, from the same three lines of selection code.
+A factor of three in RMS height between the two populations, 0.3 kpc against
+0.87 kpc, in the same cylinder, from the same three lines of selection code.
 Stars are born in a thin gas layer and are scattered out of it afterwards, and
 a few hundred Myr is already enough to see it happen. The young profile is
 also visibly noisier in its wings: the counting story of §3, showing up again
@@ -639,7 +657,7 @@ quickest way to take an exploratory cut.
 
 Shared keywords: `center`, `range_unit`, `inverse=true`. The `cell` and
 `split` keywords of the grid interfaces have no meaning for points and are
-simply absent — which is why the classic and value-type selections agree
+simply absent, which is why the classic and value-type selections agree
 exactly here, unlike on the hydro side.
 
 ```julia
@@ -650,7 +668,6 @@ println("classic :sphere  : ", rpad(length(classic.data), 9), round(msum(classic
 println("value-type Sphere: ", rpad(length(value_t.data), 9), round(msum(value_t, :Msol), sigdigits=8))
 println("identical        : ", length(classic.data) == length(value_t.data) &&
                                msum(classic, :Msol) == msum(value_t, :Msol))
-
 ```
 
 ```
@@ -658,7 +675,6 @@ classic :sphere  : 419529   4.7852795e9
 value-type Sphere: 419529   4.7852795e9
 identical        : true
 ```
-
 
 ## 9. Practical Guidance
 
@@ -684,7 +700,7 @@ probably about counts.
 
 **Give `getvar` the same `center` as the region.** Derived quantities like
 `:vϕ_cylinder`, `:r_cylinder`, and `:z` are measured about `getvar`'s own
-`center`, which defaults to the box corner — a different argument from the
+`center`, which defaults to the box corner, a different argument from the
 region's. See §4 of the [gravity page](03_gravity_Get_Subregions.md) for what
 that costs when it is forgotten.
 
@@ -698,19 +714,23 @@ that costs when it is forgotten.
 - All region value types, boolean composition, `@region`, tilted axes, and
   `inverse=true` work exactly as on the grid (§4, §5).
 - Geometric selection and value filtering are independent and commute, which
-  makes population splits — young vs old, fast vs slow — a one-line
+  makes population splits, young vs old, fast vs slow, a one-line
   refinement of any region (§6).
 - Stacks of annuli turn regions into profiles: asymmetric drift and the
-  age–scale-height relation both fall out of a dozen region objects (§7).
+  age to scale-height relation both fall out of a dozen region objects (§7).
 
 **Continue with:**
 
-- [Hydro sub-regions](03_hydro_Get_Subregions.md) — exact splitting, region
+- [Hydro sub-regions](03_hydro_Get_Subregions.md), exact splitting, region
   algebra, and mass budgets on the grid.
-- [Gravity sub-regions](03_gravity_Get_Subregions.md) — the same regions
+- [Gravity sub-regions](03_gravity_Get_Subregions.md), the same regions
   applied to the force field, and the mass this galaxy's stars do not account
   for.
-- [Clumps sub-regions](03_clumps_Get_Subregions.md) — regions applied to a
+- [Clumps sub-regions](03_clumps_Get_Subregions.md), regions applied to a
   catalogue of extended objects represented by their peaks.
-- [Masking & Filtering](05_multi_Masking_Filtering.md) — the value-space
+- [Masking & Filtering](05_multi_Masking_Filtering.md), the value-space
   counterpart of this page.
+
+---
+
+**The same steps on the other data types:** [Hydro](03_hydro_Get_Subregions.md) · [Gravity](03_gravity_Get_Subregions.md) · [Clumps](03_clumps_Get_Subregions.md) · [Sinks](03_sinks_Get_Subregions.md)

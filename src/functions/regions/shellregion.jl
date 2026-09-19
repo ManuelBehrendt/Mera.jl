@@ -13,10 +13,11 @@ shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             height::Real=0.,                  # cylinder
             direction::Symbol=:z,             # cylinder
 
-            center::Array{<:Any,1}=[0., 0., 0.],   # all
+            center::CenterType=[0., 0., 0.],   # all
             range_unit::Symbol=:standard,  # all
             cell::Bool=true,                        # hydro and gravity
             inverse::Bool=false,                    # all
+    periodic=false,                         # all
             verbose::Bool=true,             # all
             myargs::ArgumentsType=ArgumentsType() ) # all
 ```
@@ -55,20 +56,21 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             height::Real=0.,                  # cylinder
             direction::Symbol=:z,             # cylinder
 
-            center::Array{<:Any,1}=[0., 0., 0.],   # all
+            center::CenterType=[0., 0., 0.],   # all
             range_unit::Symbol=:standard,  # all
             cell::Bool=true,                        # hydro and gravity
             inverse::Bool=false,                    # all
+    periodic=false,                         # all
             verbose::Bool=true,             # all
             myargs::ArgumentsType=ArgumentsType() ) # all
 
     # take values from myargs if given
-    if !(myargs.direction     === missing)     direction = myargs.direction end
-    if !(myargs.radius        === missing)        radius = myargs.radius end
-    if !(myargs.height        === missing)        height = myargs.height end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.direction === missing) && isequal(direction, :z) direction = myargs.direction end
+    if !(myargs.radius === missing) && isequal(radius, [0.,0.]) radius = myargs.radius end
+    if !(myargs.height === missing) && isequal(height, 0.) height = myargs.height end
+    if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
 
     verbose = checkverbose(verbose)
     verbose && typeof(dataobject) == HydroDataType &&
@@ -90,6 +92,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         direction=direction,
                                         cell=cell,
                                         inverse=inverse,
+                        periodic=periodic,
                                         verbose=verbose)
         else
             return shellregioncylinder(dataobject,
@@ -99,6 +102,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         range_unit=range_unit,
                                         direction=direction,
                                         inverse=inverse,
+                        periodic=periodic,
                                         verbose=verbose)
         end
 
@@ -111,6 +115,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         range_unit=range_unit,
                                         cell=cell,
                                         inverse=inverse,
+                        periodic=periodic,
                                         verbose=verbose)
         else
             return shellregionsphere(  dataobject,
@@ -118,6 +123,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         center=center,
                                         range_unit=range_unit,
                                         inverse=inverse,
+                        periodic=periodic,
                                         verbose=verbose)
 
         end

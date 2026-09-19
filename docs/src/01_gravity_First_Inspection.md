@@ -1,12 +1,19 @@
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook**: [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+```@raw html
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 01_gravity_First_Inspection.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+```
+
 !!! note "Renaming is not wired up yet"
     You can assign into `info.descriptor.gravity`, but nothing reads it: `usegravity` is set to
     `false` when the simulation is read, and the branch that would honour custom names is not
     active. Use the canonical names; descriptor-driven naming is reserved for a future release.
 
 ### Package Import and Initial Setup
-
-!!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 Let's start by importing Mera.jl and loading simulation information for output 300:
 
@@ -19,19 +26,16 @@ using Mera
 info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-
-[Mera]: 2026-08-07T11:33:37.518
-
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-09-13T10:48:43.279
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -55,7 +59,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -64,13 +68,13 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
+boundaries:       not periodic (&BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
 ```
-
 
 ### Understanding Gravity Properties
 
@@ -105,7 +109,6 @@ info.descriptor.gravity
  :az
 ```
 
-
 ### Customizing Variable Names
 
 You can modify variable names in the descriptor to better match your simulation setup or personal preferences. For example, changing the second gravity variable to a more descriptive name:
@@ -122,7 +125,6 @@ info.descriptor.gravity
  :az
 ```
 
-
 ### Exploring Descriptor Properties
 
 Let's examine the complete structure of the descriptor object to understand all available configuration options:
@@ -130,7 +132,6 @@ Let's examine the complete structure of the descriptor object to understand all 
 ```julia
 viewfields(info.descriptor)
 ```
-
 
 ```
 [Mera]: Descriptor overview
@@ -161,7 +162,6 @@ usesinks	= false
 sinksfile	= false
 ```
 
-
 For a simple list of all available descriptor fields:
 
 ```julia
@@ -172,7 +172,6 @@ propertynames(info.descriptor)
 (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
 ```
 
-
 ## Loading Gravity Data
 
 Now that we understand our simulation's structure and variable organization, let's load the actual gravitational field data. We'll use Mera's powerful data loading capabilities to read both the gravity field components and their associated AMR grid structure.
@@ -181,7 +180,7 @@ Now that we understand our simulation's structure and variable organization, let
 
 The `getgravity()` function is the primary tool for loading gravitational field data from RAMSES simulations. It provides extensive options for:
 - **Variable selection** - Choose specific gravity quantities (potential, acceleration components)
-- **Spatial filtering** - Focus on regions of interest  
+- **Spatial filtering** - Focus on regions of interest
 - **AMR level control** - Select refinement levels
 - **Physical constraints** - Set minimum values for AMR cells
 
@@ -197,7 +196,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10", verbose=false); # here, used
 
 Now let's load the AMR and gravity data from all files. This will read:
 - **Full simulation box** - All spatial regions
-- **All gravity variables** - Gravitational potential and acceleration components  
+- **All gravity variables** - Gravitational potential and acceleration components
 - **All AMR levels** - Complete refinement hierarchy
 - **Cell positions** - Only leaf cells (actual data cells, not parent cells)
 
@@ -206,23 +205,19 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-07T11:33:41.294
-
+[Mera]: Get gravity data: 2026-09-13T10:48:46.678
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (21.94 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -232,11 +227,10 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 3.903 seconds
+✓ Table created in 2.738 seconds
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 ```
-
 
 ### Memory Usage Analysis
 
@@ -250,7 +244,6 @@ usedmemory(grav);
 Memory used: 1.688 GB
 ```
 
-
 ## Understanding Data Types
 
 The loaded data object is now of type `GravDataType`, which is specifically designed for gravitational field simulation data:
@@ -262,7 +255,6 @@ typeof(grav)
 ```
 GravDataType
 ```
-
 
 ### Type Hierarchy
 
@@ -277,7 +269,6 @@ supertype( GravDataType )
 DataSetType
 ```
 
-
 ![TypeHierarchy](./assets/TypeHierarchy.png)
 
 ## Data Organization and Structure
@@ -288,21 +279,16 @@ The gravity data is stored in an **IndexedTables** table format, with user-selec
 viewfields(grav)
 ```
 
-
 ```
 data ==> IndexedTables: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
-
-info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
-
+info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :boundaries, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
 lmin	= 6
 lmax	= 10
 boxlen	= 48.0
 ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
 selected_gravvars	= [1, 2, 3, 4]
-
 scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :nG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
 ```
-
 
 ### Convenient Data Access
 
@@ -328,7 +314,6 @@ propertynames(grav)
 (:data, :info, :lmin, :lmax, :boxlen, :ranges, :selected_gravvars, :used_descriptors, :scale)
 ```
 
-
 ## Data Analysis and Exploration
 
 Now that we have loaded our gravity data, let's explore its structure and properties in detail. This section demonstrates the key analysis functions available in Mera.jl.
@@ -339,7 +324,7 @@ We'll cover two main types of analysis:
 
 - **AMR Structure Analysis** - Understanding the adaptive mesh refinement hierarchy and how gravitational fields are organized across refinement levels, analyzing spatial distribution of field data
 
-- **Statistical Data Overview** - Computing basic statistical properties of gravity variables, understanding potential and acceleration field distributions, ranges, and assessing data quality 
+- **Statistical Data Overview** - Computing basic statistical properties of gravity variables, understanding potential and acceleration field distributions, ranges, and assessing data quality
 
 ### AMR Grid Structure Analysis
 
@@ -355,7 +340,9 @@ overview_amr = amroverview(grav)
 
 ```
 Counting...
+```
 
+```
 Table with 5 rows, 3 columns:
 level  cells     cellsize
 ─────────────────────────
@@ -365,7 +352,6 @@ level  cells     cellsize
 9      12774134  0.09375
 10     7298576   0.046875
 ```
-
 
 ### Statistical Data Analysis
 
@@ -381,7 +367,9 @@ data_overview = dataoverview(grav)
 
 ```
 Calculating...
+```
 
+```
 Table with 5 rows, 10 columns:
 Columns:
 #   colname   type
@@ -397,7 +385,6 @@ Columns:
 9   az_min    Any
 10  az_max    Any
 ```
-
 
 ### Working with IndexedTables
 
@@ -429,7 +416,6 @@ level  epot_tot    epot_min   epot_max
 10     -3.57477e6  -0.986489  -0.271161
 ```
 
-
 ### Single column Extraction Example
 
 Extract total potential data from a specific column. The `column()` function retrieves data from a specific table column, maintaining the order consistent with the table structure:
@@ -446,7 +432,6 @@ column(data_overview, :epot_tot)
      -4.355786574891018e6
      -3.5747698183847037e6
 ```
-
 
 ## Data Structure Deep Dive
 
@@ -519,7 +504,6 @@ level  cx   cy   cz   epot       ax         ay         az
 10     814  496  512  -0.284306  -0.735572  0.0390361  0.00736339
 ```
 
-
 ### Focused Data Examination
 
 For a more detailed view of specific columns, we can select key fields to understand the gravity data organization better:
@@ -558,6 +542,144 @@ level  cx   cy   cz   epot
 10     814  496  512  -0.284306
 ```
 
+## Derived quantities: what gravity alone can tell you
+
+The stored columns are the potential and the three acceleration components. From those, `getvar`
+derives the acceleration in cylindrical and spherical components, and their magnitudes.
+
+Everything measured about an axis or a centre depends on `center`, exactly as the velocity
+components do. Pass the same centre you use elsewhere in the analysis.
+
+```julia
+ctr = :bc                       # a bare symbol works; [:bc] does too                     # box centre; use the object's centre for a real galaxy
+
+using Printf
+for q in (:a_magnitude, :a_magnitude_cylinder,
+          :ar_cylinder, :aphi_cylinder,
+          :ar_sphere, :atheta_sphere, :aphi_sphere)
+    v = getvar(grav, q, :cm_s2, center=ctr)
+    @printf("%-24s %10.3e .. %10.3e  cm/s^2\n", q, minimum(v), maximum(v))
+end
+```
+
+```
+a_magnitude               1.723e-09 ..  1.251e-07  cm/s^2
+a_magnitude_cylinder      2.757e-11 ..  9.097e-08  cm/s^2
+ar_cylinder              -9.097e-08 .. -2.757e-11  cm/s^2
+aphi_cylinder            -3.811e-09 ..  4.831e-09  cm/s^2
+ar_sphere                -1.251e-07 .. -1.723e-09  cm/s^2
+atheta_sphere            -4.505e-08 ..  4.000e-08  cm/s^2
+aphi_sphere              -3.811e-09 ..  4.831e-09  cm/s^2
+```
+
+## Energy and force: these need the hydro object
+
+A potential is energy **per unit mass** and an acceleration is force **per unit mass**. To get an
+energy or a force you need the mass of the cell, and the mass lives on the hydro object, not the
+gravity one.
+
+One thing to be clear about before using the numbers: `:epot` is the **total** potential. RAMSES
+solves Poisson once, for everything that gravitates, so it already contains the gas, the particles,
+the sinks and any external analytic potential the run was set up with. This run is `gravity_type
+= -3`, external potential **and** self-gravity:
+
+```julia
+info.namelist_content["&POISSON_PARAMS"]["gravity_type"]
+```
+
+So `m * phi` is the energy of that cell's **gas** in the **total** field. Summing it over cells
+does not give the system's gravitational self-energy. That is `W = (1/2) * integral of rho * phi`.
+The factor 1/2 is needed because each pair of mass elements would otherwise be counted twice, and
+the sum here also leaves out the particles' own binding.
+
+So these quantities take both objects. Either order works, gravity first or hydro first:
+
+```julia
+getvar(grav, gas, :Fg, :dyne)     # `grav` and `gas` are the objects this page loads
+```
+
+Called on gravity alone they raise an error that names the fix, rather than guessing a mass.
+
+If you work on a **subregion**, cut both objects with the same region. The mass comes from the
+hydro object, so the boundary cells that count are the hydro ones:
+
+```julia
+gas = gethydro(info, verbose=false, show_progress=false)   # loaded in the cell below too
+R   = Sphere(10.)
+gs  = subregion(grav, R)
+hs  = subregion(gas,  R)         # the same region, so the same boundary cells
+getvar(gs, hs, :total_binding_energy, :erg)
+```
+
+Mera compares the cells of the two objects, so a mismatched pair is refused rather than pairing a
+mass with another cell's potential. See
+[Subregions](api/subregions.md) for what the cell fraction is applied to.
+
+```julia
+gas = gethydro(info, verbose=false, show_progress=false);
+
+for (q, u) in ((:gravitational_energy, :erg), (:total_binding_energy, :erg),
+               (:Fg, :dyne), (:Fr_cylinder, :dyne), (:Fr_sphere, :dyne),
+               (:Fθ_sphere, :dyne), (:F_magnitude_cylinder, :dyne))
+    v = getvar(grav, gas, q, u, center=ctr)
+    @printf("%-24s %10.3e .. %10.3e  %s\n", q, minimum(v), maximum(v), u)
+end
+```
+
+```
+gravitational_energy     -2.869e+52 .. -1.115e+45  erg
+total_binding_energy      1.115e+45 ..  2.869e+52  erg
+Fg                        9.260e+23 ..  4.539e+31  dyne
+Fr_cylinder              -4.538e+31 .. -2.271e+22  dyne
+Fr_sphere                -4.538e+31 .. -9.259e+23  dyne
+Fθ_sphere                -7.828e+30 ..  6.246e+30  dyne
+F_magnitude_cylinder      2.271e+22 ..  4.539e+31  dyne
+```
+
+`:gravitational_energy` is ``m\,\phi``, negative where the cell is bound.
+`:total_binding_energy` is its negative, positive where bound, the sign binding energies are
+usually quoted in.
+
+Each force component is the mass times the acceleration component **of the same name**, so the two
+always share one definition and one treatment of `center`.
+
+Mera checks that the two objects describe the same cells in the same order. Load them over the
+same `lmax` and the same ranges, or the call refuses rather than pairing a mass with another
+cell's potential.
+
+## Projecting a gravity field
+
+Gravity carries no mass and no density, so it cannot weight its own line-of-sight average. There
+is therefore no single-argument `projection(grav, …)`. Pass hydro alongside, and it supplies the
+weight:
+
+```julia
+p = projection(gas, grav, :epot, center=ctr, verbose=false, show_progress=false)
+e = getvar(grav, :epot)
+@printf("epot map  %10.4f .. %10.4f\n", minimum(p.maps[:epot]), maximum(p.maps[:epot]))
+@printf("per cell  %10.4f .. %10.4f\n", minimum(e), maximum(e))
+println("\nthe map lies inside the per-cell range: ",
+        minimum(p.maps[:epot]) >= minimum(e) && maximum(p.maps[:epot]) <= maximum(e))
+```
+
+```
+epot map     -0.9849 ..    -0.1244
+per cell     -0.9865 ..    -0.1055
+the map lies inside the per-cell range: true
+```
+
+The map lies inside the range of the cell values, because it is a **weighted mean** along each
+ray and not a column integral. That is the right treatment for an intensive field: summing a
+potential along a sightline would simply scale with the depth of the box.
+
+`weighting` takes a vector, `weighting=[:mass]` (the default) or `[:volume]`. The two answer
+different questions and give different numbers, so say which one you used.
+
+!!! note "Removed in 1.8"
+    `:escape_speed` and `:gravitational_redshift` were withdrawn. Both treated the potential as if
+    its zero point were fixed at infinity, and RAMSES does not fix it: the offset depends on the
+    boundary conditions and differs between a periodic box, a zoom region and an isolated halo.
+    They returned confident numbers that meant nothing without a stated reference level.
 
 ## Summary and Next Steps
 
@@ -592,6 +714,6 @@ Now that you understand gravity data fundamentals, you can explore:
 - **Time series analysis**: Working with multiple simulation outputs to study gravitational evolution
 - **Performance optimization**: Advanced techniques for large-scale gravity data processing
 
-```julia
+---
 
-```
+**The same steps on the other data types:** [Hydro](01_hydro_First_Inspection.md) · [Particles](01_particles_First_Inspection.md) · [Clumps](01_clumps_First_Inspection.md) · [Sinks](01_sinks_First_Inspection.md) · [RT](01_rt_First_Inspection.md)

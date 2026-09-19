@@ -90,12 +90,21 @@ function getinfo_flash(output::Int, path::String; unit_length::Real=1.0, unit_de
                        unit_velocity::Real=1.0, verbose::Bool=true)
     fn = _flash_file(output, path)
     info = InfoType(); info.descriptor = _external_descriptor()
+    _flash_mu = nothing            # set from the file below, used after the block closes
     h5open(fn, "r") do f
         rp = _flash_params(f, "real runtime parameters")
         ip = _flash_params(f, "integer runtime parameters")
         isc = _flash_params(f, "integer scalars")
         rsc = _flash_params(f, "real scalars")
         sp  = _flash_params(f, "string runtime parameters")
+        # Mean molecular weight. FLASH records it as a runtime parameter, so it does not have to be
+        # guessed or measured: `eos_singlespeciesa` is the average atomic mass for a gamma-law run
+        # without species. yt reads the same parameter. Without it Mera would fall back to the
+        # RAMSES value of 1.32 and every temperature would be wrong by that ratio.
+        _flash_mu = let v = get(rp, "eos_singlespeciesa", nothing)
+            (v !== nothing && isfinite(Float64(v)) && Float64(v) > 0) ? Float64(v) : nothing
+        end
+
         geom = lowercase(_flash_str(get(sp, "geometry", "cartesian")))
         geom == "cartesian" || error("FLASH reader (v1): cartesian geometry only; got $geom.")
         ndim = Int(get(isc, "dimensionality", 3))
@@ -142,7 +151,16 @@ function getinfo_flash(output::Int, path::String; unit_length::Real=1.0, unit_de
             println("-------------------------------------------------------")
         end
     end
-    createconstants!(info); createscales!(info)
+    createconstants!(info)
+    # Apply the run's own mean molecular weight, so getvar(:T) matches the simulation rather than
+    # the RAMSES default. An explicit setcomposition! afterwards still overrides it.
+    if _flash_mu === nothing
+        createscales!(info)
+    else
+        setcomposition!(info; mu=_flash_mu)
+        verbose && println("[Mera]: FLASH eos_singlespeciesa = $(round(_flash_mu, digits=4)) " *
+                           "used as the mean molecular weight.")
+    end
     _fill_undefined!(info)
     return info
 end
@@ -258,5 +276,6 @@ function gethydro_flash(info::InfoType;
     h.ranges = ranges; h.selected_hydrovars = collect(1:length(vsyms))
     h.used_descriptors = Dict{Any,Any}(); h.smallr = 0.; h.smallc = 0.; h.scale = info.scale
     verbose && println("[Mera]: FLASH hydro $(ncell) cells, vars ", join(string.(vsyms), ", "))
+
     return h
 end

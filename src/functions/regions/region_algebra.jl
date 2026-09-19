@@ -18,7 +18,7 @@
 
 # Is `center` the (default) box corner — i.e. was one never given? A SINGLE zero component is
 # legitimate (a sphere sitting on the x = 0 face), so only an all-zero centre counts as unset.
-_center_is_corner(center) = all(c -> c isa Real && iszero(c), center)
+_center_is_corner(center) = all(c -> c isa Real && iszero(c), _as_center(center))
 
 # One-off reminder when a distance-based region (sphere, cylinder, either shell) is placed at
 # the box CORNER because no `center` was given. Nothing is refused — a corner-placed sphere is
@@ -77,7 +77,7 @@ A ball of `radius` (in `range_unit`) about `center`."""
 struct Sphere <: AbstractRegion
     radius::Float64; center::Vector{Any}; range_unit::Symbol
 end
-Sphere(radius::Real; center=[:bc], range_unit::Symbol=:kpc) = Sphere(Float64(radius), Vector{Any}(center), range_unit)
+Sphere(radius::Real; center=[:bc], range_unit::Symbol=:kpc) = Sphere(Float64(radius), Vector{Any}(_as_center(center)), range_unit)
 
 """    SphericalShell(r_in, r_out; center=[:bc], range_unit=:kpc)
 
@@ -86,7 +86,7 @@ struct SphericalShell <: AbstractRegion
     r_in::Float64; r_out::Float64; center::Vector{Any}; range_unit::Symbol
 end
 SphericalShell(r_in::Real, r_out::Real; center=[:bc], range_unit::Symbol=:kpc) =
-    SphericalShell(Float64(r_in), Float64(r_out), Vector{Any}(center), range_unit)
+    SphericalShell(Float64(r_in), Float64(r_out), Vector{Any}(_as_center(center)), range_unit)
 
 """    CylindricalShell(r_in, r_out, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
@@ -96,7 +96,7 @@ struct CylindricalShell <: AbstractRegion
     r_in::Float64; r_out::Float64; height::Float64; axis::Vector{Float64}; center::Vector{Any}; range_unit::Symbol
 end
 CylindricalShell(r_in::Real, r_out::Real, height::Real; axis=[0.,0.,1.], center=[:bc], range_unit::Symbol=:kpc) =
-    CylindricalShell(Float64(r_in), Float64(r_out), Float64(height), Float64.(axis), Vector{Any}(center), range_unit)
+    CylindricalShell(Float64(r_in), Float64(r_out), Float64(height), Float64.(axis), Vector{Any}(_as_center(center)), range_unit)
 
 """    Cylinder(radius, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
@@ -108,7 +108,7 @@ struct Cylinder <: AbstractRegion
     radius::Float64; height::Float64; axis::Vector{Float64}; center::Vector{Any}; range_unit::Symbol
 end
 Cylinder(radius::Real, height::Real; axis=[0.,0.,1.], center=[:bc], range_unit::Symbol=:kpc) =
-    Cylinder(Float64(radius), Float64(height), Float64.(axis), Vector{Any}(center), range_unit)
+    Cylinder(Float64(radius), Float64(height), Float64.(axis), Vector{Any}(_as_center(center)), range_unit)
 
 """    Cuboid(; xrange, yrange, zrange, center=[:bc], range_unit=:kpc)
 
@@ -119,7 +119,7 @@ struct Cuboid <: AbstractRegion
     center::Vector{Any}; range_unit::Symbol
 end
 Cuboid(; xrange, yrange, zrange, center=[:bc], range_unit::Symbol=:kpc) =
-    Cuboid(Float64.(xrange), Float64.(yrange), Float64.(zrange), Vector{Any}(center), range_unit)
+    Cuboid(Float64.(xrange), Float64.(yrange), Float64.(zrange), Vector{Any}(_as_center(center)), range_unit)
 
 # physical center (handles :bc) + a length→normalised factor, exactly as prepranges does.
 # NB "as prepranges does" means the CORRECTED form: divide by boxlen·selected_unit. The inverted
@@ -128,6 +128,7 @@ Cuboid(; xrange, yrange, zrange, center=[:bc], range_unit::Symbol=:kpc) =
 # at the wrong place — zero cells, no error. Invisible only when one code length happens to equal
 # one `range_unit` (selected_unit == 1), which is true of every RAMSES fixture in the test suite.
 function _norm_frame(obj, center, range_unit)
+    center = _as_center(center)
     c = prepboxcenter(obj.info, range_unit, center)
     tonorm(v) = range_unit === :standard ? Float64(v) :
                 Float64(v) / (obj.boxlen * getunit(obj.info, range_unit))

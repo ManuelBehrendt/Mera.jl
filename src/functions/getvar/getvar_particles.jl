@@ -2,7 +2,7 @@ function get_data(dataobject::PartDataType,
                 vars::Array{Symbol,1},
                 units::Array{Symbol,1},
                 direction::Symbol,
-                center::Array{<:Any,1},
+                center::CenterType,
                 mask::MaskType,
                 ref_time::Real)
 
@@ -152,7 +152,14 @@ function get_data(dataobject::PartDataType,
                 ne = select(masked_data, :ne)
                 vars_dict[i] = @. T_over_mu * 4 / (1 + 3XH + 4XH * ne) * selected_unit
             else
-                vars_dict[i] = T_over_mu .* (4 / (1 + 3XH)) .* selected_unit
+                # No electron abundance in the file, so the ionisation state is unknown. Use the
+                # composition the object carries, which is the RAMSES default unless the reader
+                # determined one or the user called setcomposition!. Previously this substituted a
+                # hardcoded neutral-primordial mu = 1.22 and cancelled the configured one, so
+                # setcomposition! silently had no effect on particle temperatures while it worked
+                # on grid data.
+                mu_cfg = dataobject.info.scale.K / dataobject.info.scale.T_mu
+                vars_dict[i] = T_over_mu .* mu_cfg .* selected_unit
             end
 
         elseif i == :cellsize
@@ -334,6 +341,21 @@ function get_data(dataobject::PartDataType,
            vars_dict[:vz2] =  (vz .* selected_unit ).^2
 
 
+       # Squared spherical components. Particles carry :vr_sphere/:vθ_sphere/:vϕ_sphere but were
+       # missing their squares, so the spherical dispersions had nothing to build a mean-square
+       # from and returned an all-NaN map with only a warning.
+       elseif i == :vr_sphere2
+           selected_unit = getunit(dataobject, :vr_sphere2, vars, units)
+           vars_dict[:vr_sphere2] = (getvar(filtered_dataobject, :vr_sphere, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
+
+       elseif i == :vθ_sphere2
+           selected_unit = getunit(dataobject, :vθ_sphere2, vars, units)
+           vars_dict[:vθ_sphere2] = (getvar(filtered_dataobject, :vθ_sphere, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
+
+       elseif i == :vϕ_sphere2
+           selected_unit = getunit(dataobject, :vϕ_sphere2, vars, units)
+           vars_dict[:vϕ_sphere2] = (getvar(filtered_dataobject, :vϕ_sphere, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
+
        elseif i == :vr_cylinder2
 
         selected_unit = getunit(dataobject, :vr_cylinder2, vars, units)
@@ -354,6 +376,23 @@ function get_data(dataobject::PartDataType,
                                           selected_unit * sqrt( (p[apos] - center[1] * boxlen )^2  +
                                                                   (p[bpos] - center[2] * boxlen )^2 +
                                                                   (p[cpos] - center[3] * boxlen )^2 )  )
+
+       # Periodic (minimum-image) radii. :r_sphere / :r_cylinder measure the DIRECT separation
+       # from `center`; RAMSES boxes are periodic, so for a centre within half a box of a face
+       # the true nearest separation wraps around and the direct one is the long way round.
+       # These variants wrap each component into [-boxlen/2, +boxlen/2] first.
+       elseif i == :r_sphere_periodic
+           selected_unit = getunit(dataobject, :r_sphere_periodic, vars, units)
+           vars_dict[:r_sphere_periodic] = select( masked_data, (apos, bpos, cpos)=>p->
+               selected_unit * sqrt( _minimum_image(p[apos] - center[1] * boxlen, boxlen)^2 +
+                                     _minimum_image(p[bpos] - center[2] * boxlen, boxlen)^2 +
+                                     _minimum_image(p[cpos] - center[3] * boxlen, boxlen)^2 )  )
+       
+       elseif i == :r_cylinder_periodic
+           selected_unit = getunit(dataobject, :r_cylinder_periodic, vars, units)
+           vars_dict[:r_cylinder_periodic] = select( masked_data, (apos, bpos)=>p->
+               selected_unit * sqrt( _minimum_image(p[apos] - center[1] * boxlen, boxlen)^2 +
+                                     _minimum_image(p[bpos] - center[2] * boxlen, boxlen)^2 )  )
 
        # Spherical velocity components
        elseif i == :vr_sphere

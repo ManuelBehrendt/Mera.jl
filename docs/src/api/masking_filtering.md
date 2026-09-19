@@ -15,6 +15,16 @@ filterdata
 getmask
 ```
 
+## Particle-type selection
+
+Particles carry a RAMSES **family** code, so a subset can be selected by what the particles *are*
+rather than by a value: dark matter, stars, sinks/clouds, debris, or tracers (RAMSES's test
+particles, which follow the flow without acting back on it).
+
+```@docs; canonical=false
+getparticlemask
+```
+
 ## Conditions
 
 ```@docs; canonical=false
@@ -30,7 +40,7 @@ Satisfies
 ## Table macros
 
 These operate on the underlying table rather than on Mera quantities, so they see stored
-columns only — use [`filterdata`](@ref) when you need a derived quantity such as `:T` or `:v`.
+columns only: use [`filterdata`](@ref) when you need a derived quantity such as `:T` or `:v`.
 
 ```@docs; canonical=false
 @filter
@@ -47,3 +57,14 @@ geometry, not by value. Extracting a quantity is [`getvar`](@ref), in the
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Rebuilding a Data Object
+
+Masking with a `BitArray` gives you values. Filtering the underlying table
+instead gives you rows, and `construct_datatype` wraps those rows back into a
+Mera object so the result stays usable with `getvar`, `projection` and the
+region functions. This is the pattern the masking and subregion tutorials use.
+
+```@docs
+construct_datatype
+```

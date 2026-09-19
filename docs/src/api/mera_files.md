@@ -1,6 +1,6 @@
 # MERA Files API Reference
 
-Docstrings for Mera's own save format — an LZ4-compressed JLD2 file that round-trips a loaded
+Docstrings for Mera's own save format, an LZ4-compressed JLD2 file that round-trips a loaded
 object far faster than re-reading the simulation. The narrative guides are
 [Mera-Files](../07_multi_Mera_Files.md) and [Converter](../07_1_multi_Mera_Files_Converter.md).
 
@@ -31,7 +31,7 @@ To write a plain-text or binary export instead of Mera's own format, see
 ## I/O tuning
 
 Reading large outputs is usually I/O bound, so Mera exposes its buffer and cache settings.
-Most users never need these — [`optimize_mera_io`](@ref) picks settings for a given simulation
+Most users never need these, [`optimize_mera_io`](@ref) picks settings for a given simulation
 and is the one entry point worth knowing.
 
 ```@docs; canonical=false

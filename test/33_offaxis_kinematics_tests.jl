@@ -112,6 +112,57 @@ isortho(r, u, w) = isapprox(dot(r, u), 0; atol=1e-12) &&
         @test Mera.is_offaxis(inclination=30) && Mera.is_offaxis(azimuth=10)
     end
 
+    # The two angle pairs describe the same directions when the reference axis is box +z, but
+    # they do not share a zero point: `phi` starts at +x, `azimuth` a quarter turn later, so that
+    # `inclination=0` matches the image orientation of `direction=:z`. The docstring states the
+    # conversion, so pin it here: if either convention is ever changed, this fails instead of
+    # silently rotating every off-axis figure by 90 degrees.
+    @testset "resolve_los -- azimuth is phi plus 90 degrees (axis=:z)" begin
+        for (tilt, ph) in [(0, 0), (30, 0), (60, 30), (90, 0), (90, 90), (45, 180), (20, 270)]
+            from_spherical = Mera.resolve_los(theta=tilt, phi=ph)[1]
+            from_tilt      = Mera.resolve_los(inclination=tilt, azimuth=ph + 90, axis=:z)[1]
+            @test isapprox(from_spherical, from_tilt; atol=1e-12)
+        end
+        # `inclination` and `theta` are the same angle: both set the component along the axis.
+        for tilt in (0, 15, 45, 90, 135)
+            @test isapprox(Mera.resolve_los(theta=tilt, phi=0)[1][3], cosd(tilt); atol=1e-12)
+            @test isapprox(Mera.resolve_los(inclination=tilt)[1][3],  cosd(tilt); atol=1e-12)
+        end
+        # Passing azimuth=phi is the mistake the docstring warns about: 90 degrees off, not equal.
+        @test !isapprox(Mera.resolve_los(theta=60, phi=30)[1],
+                        Mera.resolve_los(inclination=60, azimuth=30)[1]; atol=1e-6)
+        # Only inclination/azimuth defines the image up; theta/phi leaves the roll automatic.
+        @test Mera.resolve_los(inclination=60, azimuth=30)[2] !== nothing
+        @test Mera.resolve_los(theta=60, phi=30)[2] === nothing
+    end
+
+    # theta/phi keeps working in 1.8; it only warns. The point of the test is that the
+    # deprecation is a message and NOT a behaviour change: same vector as before, once per
+    # session, and silent when the user has turned Mera's output off.
+    @testset "resolve_los -- theta/phi deprecation notice" begin
+        Mera.reset_hints()
+        out = capture_stdout() do; Mera.resolve_los(theta=60, phi=30); end
+        @test occursin("deprecated", out)
+        @test occursin("azimuth = phi + 90", out)
+        # once per session only
+        again = capture_stdout() do; Mera.resolve_los(theta=10, phi=20); end
+        @test isempty(strip(again))
+        # the replacement pair never triggers it
+        Mera.reset_hints()
+        quiet = capture_stdout() do; Mera.resolve_los(inclination=60, azimuth=120); end
+        @test isempty(strip(quiet))
+        # verbose(false) silences it
+        Mera.reset_hints(); Mera.verbose(false)
+        off = capture_stdout() do; Mera.resolve_los(theta=5, phi=5); end
+        Mera.verbose(true)
+        @test isempty(strip(off))
+        # and the result itself is unchanged by any of this
+        Mera.reset_hints()
+        @test isapprox(Mera.resolve_los(theta=60, phi=30)[1],
+                       Mera.resolve_los(inclination=60, azimuth=120, axis=:z)[1]; atol=1e-12)
+        Mera.reset_hints()
+    end
+
     @testset "image roll (position_angle) & input validation" begin
         # roll rotates the image frame about the line of sight; the line of sight is unchanged
         r0, u0, w0 = Mera.build_camera_basis([0.0,0,1], [0.0,1,0])

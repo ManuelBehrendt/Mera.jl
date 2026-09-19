@@ -6,7 +6,7 @@ converting multiple data types into compressed JLD2 format with full benchmarkin
 threading control capabilities.
 
 ## Features:
-- **Multi-datatype support**: Handles :hydro, :particles, :gravity, :clumps data types
+- **Multi-datatype support**: Handles :hydro, :particles, :gravity, :clumps, :rt, :sinks data types
 - **Threading control**: Configurable threading for performance optimization (excluding clumps)
 - **Compression options**: Multiple compression algorithms with automatic selection
 - **Spatial filtering**: Select specific data ranges with flexible unit support
@@ -29,7 +29,7 @@ lmax::Union{Int, Missing}=missing,
 xrange::Array{<:Any,1}=[missing, missing],
 yrange::Array{<:Any,1}=[missing, missing],
 zrange::Array{<:Any,1}=[missing, missing],
-center::Array{<:Any,1}=[0., 0., 0.],
+center::CenterType=[0., 0., 0.],
 range_unit::Symbol=:standard,
 smallr::Real=0.,
 smallc::Real=0.,
@@ -48,7 +48,8 @@ return statistics_dictionary
 
 ### Optional Keywords:
 - **`datatypes`:** Array of datatypes to convert. 
-  - Default: `[missing]` → converts all available data (:hydro, :gravity, :particles, :clumps)
+  - Default: `[missing]` → converts all available data (:hydro, :gravity, :particles, :clumps,
+    :rt, :sinks)
   - Examples: `[:hydro, :particles]`, `[:hydro]`, `:particles`
   
 - **`path`:** Path to RAMSES simulation folders (default: `"./"`).
@@ -90,7 +91,7 @@ return statistics_dictionary
 - **`max_threads`:** Threading control for data loading operations
   - Default: `Threads.nthreads()` → uses all available Julia threads
   - **Applied to**: :hydro, :gravity, :particles data loading
-  - **NOT applied to**: :clumps data (single-threaded)
+  - **NOT applied to**: :clumps and :sinks data (single-threaded)
   - Examples: `max_threads=4` (limit to 4 threads), `max_threads=1` (single-threaded)
   
 - **`verbose`:** Enable detailed console output (default: `true`)
@@ -114,7 +115,7 @@ Returns a comprehensive statistics dictionary containing:
 
 ## Threading Behavior:
 - **Threaded operations**: File-level parallelism for :hydro, :gravity, :particles
-- **Single-threaded**: :clumps data processing (threading not beneficial)
+- **Single-threaded**: :clumps and :sinks data processing (threading not beneficial)
 - **Thread safety**: All operations use thread-safe file I/O and memory management
 - **Performance**: Optimal threading automatically balances CPU files across threads
 
@@ -145,7 +146,7 @@ function convertdata(output::Int, datatypes::Array{Symbol, 1};   # Method 1: Vec
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     smallr::Real=0.,
                     smallc::Real=0.,
@@ -184,7 +185,7 @@ function convertdata(output::Int, datatypes::Symbol;
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     smallr::Real=0.,
                     smallc::Real=0.,
@@ -225,7 +226,7 @@ function convertdata(output::Int;
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     smallr::Real=0.,
                     smallc::Real=0.,
@@ -241,14 +242,14 @@ function convertdata(output::Int;
     
     # Override function parameters with values from myargs struct if provided
     # This allows batch configuration via ArgumentsType struct
-    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
-    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
-    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
-    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
-    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
+    if !(myargs.lmax === missing) && isequal(lmax, missing) lmax = myargs.lmax end
+    if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+    if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+    if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+    if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) && isequal(show_progress, true) show_progress = myargs.show_progress end
 
     # Validate and normalize verbose/progress settings
     verbose = checkverbose(verbose)
@@ -266,11 +267,12 @@ function convertdata(output::Int;
     if length(datatypes) == 1 &&  datatypes[1] === missing || 
        length(datatypes) == 0 || 
        length(datatypes) == 1 &&  datatypes[1] == :all
-       datatypes = [:hydro, :gravity, :particles, :clumps, :rt]
+       datatypes = [:hydro, :gravity, :particles, :clumps, :rt, :sinks]
     else
         # Validate that at least one known datatype is specified
         if !(:hydro in datatypes) && !(:gravity in datatypes) &&
-           !(:particles in datatypes) && !(:clumps in datatypes) && !(:rt in datatypes)
+           !(:particles in datatypes) && !(:clumps in datatypes) && !(:rt in datatypes) &&
+           !(:sinks in datatypes)
             error("unknown datatype(s) given...")
         end
     end
@@ -522,6 +524,41 @@ function convertdata(output::Int;
 
         # Memory cleanup
         clumps = 0.
+        GC.gc()
+    end
+
+    # ============================================================================
+    # SECTION 9a: SINK DATA PROCESSING (SINGLE-THREADED BY DESIGN)
+    # ============================================================================
+
+    # A sink catalogue is one small csv per output, rarely more than a handful of rows, so there is
+    # nothing here for threading to do.
+    if info.sinks && :sinks in datatypes
+        if verbose
+            println("- sinks (single-threaded: threading not applied)")
+        end
+
+        @timeit lt "sinks" sinks = getsinks(info,
+                                            xrange=xrange,
+                                            yrange=yrange,
+                                            zrange=zrange,
+                                            center=center,
+                                            range_unit=range_unit,
+                                            verbose=false)
+
+        memtot += Base.summarysize(sinks)
+        storage_tot += si[:sink]
+
+        first_flag, fmode = JLD2flag(first_flag)
+        @timeit wt "sinks" savedata(sinks,
+                                    path=fpath,
+                                    fname=fname,
+                                    fmode=fmode,
+                                    compress=compress,
+                                    comments=comments,
+                                    verbose=false)
+
+        sinks = 0.
         GC.gc()
     end
 

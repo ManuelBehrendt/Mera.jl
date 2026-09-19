@@ -16,10 +16,15 @@ over boundary handling in adaptive mesh refinement (AMR) simulations.
 - `xrange::Array{<:Any,1}=[missing, missing]`: X-coordinate range [min, max]
 - `yrange::Array{<:Any,1}=[missing, missing]`: Y-coordinate range [min, max]  
 - `zrange::Array{<:Any,1}=[missing, missing]`: Z-coordinate range [min, max]
-- `center::Array{<:Any,1}=[0., 0., 0.]`: Reference center for ranges
+- `center::CenterType=[0., 0., 0.]`: Reference center for ranges
 - `range_unit::Symbol=:standard`: Units for ranges (:standard, :kpc, :Mpc, etc.)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
+- `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
+  a run that wraps in some directions only takes `(x=true, y=true, z=false)`. Needed when the
+  region touches a face: without it the part outside the box is dropped, not wrapped, so a
+  sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
+  (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
 - `verbose::Bool=verbose_mode`: Print progress information
 
 # Selection Modes
@@ -47,17 +52,31 @@ subregion = subregioncuboid(gas,
 - `subregionsphere`: Spherical subregions
 - `subregion`: Unified interface for all geometries
 """
+# Cuboid overlap on one axis. A wrapped cuboid is two intervals in box coordinates,
+# which is awkward to test directly; expressed as a distance from the range centre it
+# stays a single comparison, and the minimum image does the wrapping. `half_cell` is
+# zero for point-based selection.
+@inline function _axis_overlaps(cell_mid, lo, hi, half_cell, on::Bool)
+    c = (lo + hi) / 2
+    h = (hi - lo) / 2
+    d = cell_mid - c
+    on && (d -= round(d))          # coordinates run 0..1 here, so the period is 1
+    return abs(d) < h + half_cell
+end
+
 function subregioncuboid(dataobject::HydroDataType;
     xrange::Array{<:Any,1}=[missing, missing],
     yrange::Array{<:Any,1}=[missing, missing],
     zrange::Array{<:Any,1}=[missing, missing],
-    center::Array{<:Any,1}=[0., 0., 0.],
+    center::CenterType=[0., 0., 0.],
     range_unit::Symbol=:standard,
     cell::Bool=true,
     inverse::Bool=false,
+    periodic=false,
     verbose::Bool=verbose_mode)
 
     printtime("", verbose)
+    bflags = _periodic_flags(periodic)
 
     boxlen = dataobject.boxlen
     scale = dataobject.scale
@@ -65,9 +84,11 @@ function subregioncuboid(dataobject::HydroDataType;
     isamr = checkuniformgrid(dataobject, lmax)
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject.info, range_unit, verbose, xrange, yrange, zrange, center)
+    # on a periodic axis the clamped range has already lost the part that wraps
+    ranges, ranges_raw = prepranges(dataobject.info, range_unit, verbose,
+                                    xrange, yrange, zrange, center; unclamped=true)
 
-    xmin, xmax, ymin, ymax, zmin, zmax = ranges
+    xmin, xmax, ymin, ymax, zmin, zmax = any(bflags) ? ranges_raw : ranges
 
     #if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
     #   yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
@@ -94,9 +115,10 @@ function subregioncuboid(dataobject::HydroDataType;
                         cell_zmax = c.cz[i] / level_factor
                         
                         # Check for overlap: cell overlaps if its max > range_min AND its min < range_max
-                        (cell_xmax > xmin && cell_xmin < xmax) &&
-                        (cell_ymax > ymin && cell_ymin < ymax) &&
-                        (cell_zmax > zmin && cell_zmin < zmax)
+                        hx = (cell_xmax - cell_xmin) / 2
+                        _axis_overlaps((cell_xmin + cell_xmax) / 2, xmin, xmax, hx, bflags[1]) &&
+                        _axis_overlaps((cell_ymin + cell_ymax) / 2, ymin, ymax, hx, bflags[2]) &&
+                        _axis_overlaps((cell_zmin + cell_zmax) / 2, zmin, zmax, hx, bflags[3])
                     end))
                 else
                     # Point-based selection: include cells whose centers lie within the range
@@ -107,9 +129,9 @@ function subregioncuboid(dataobject::HydroDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x >= xmin && cell_x <= xmax &&
-                        cell_y >= ymin && cell_y <= ymax &&
-                        cell_z >= zmin && cell_z <= zmax
+                        _axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) &&
+                        _axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) &&
+                        _axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             else # for uniform grid
@@ -127,9 +149,9 @@ function subregioncuboid(dataobject::HydroDataType;
                         cell_zmax = c.cz[i] / level_factor
                         
                         # Check for overlap
-                        (cell_xmax > xmin && cell_xmin < xmax) &&
-                        (cell_ymax > ymin && cell_ymin < ymax) &&
-                        (cell_zmax > zmin && cell_zmin < zmax)
+                        _axis_overlaps((cell_xmin + cell_xmax) / 2, xmin, xmax, (cell_xmax - cell_xmin) / 2, bflags[1]) &&
+                        _axis_overlaps((cell_ymin + cell_ymax) / 2, ymin, ymax, (cell_xmax - cell_xmin) / 2, bflags[2]) &&
+                        _axis_overlaps((cell_zmin + cell_zmax) / 2, zmin, zmax, (cell_xmax - cell_xmin) / 2, bflags[3])
                     end))
                 else
                     # Point-based selection for uniform grid
@@ -140,9 +162,9 @@ function subregioncuboid(dataobject::HydroDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x >= xmin && cell_x <= xmax &&
-                        cell_y >= ymin && cell_y <= ymax &&
-                        cell_z >= zmin && cell_z <= zmax
+                        _axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) &&
+                        _axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) &&
+                        _axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             end
@@ -177,9 +199,9 @@ function subregioncuboid(dataobject::HydroDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x < xmin || cell_x > xmax ||
-                        cell_y < ymin || cell_y > ymax ||
-                        cell_z < zmin || cell_z > zmax
+                        !_axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) ||
+                        !_axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) ||
+                        !_axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             else # for uniform grid
@@ -210,9 +232,9 @@ function subregioncuboid(dataobject::HydroDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x < xmin || cell_x > xmax ||
-                        cell_y < ymin || cell_y > ymax ||
-                        cell_z < zmin || cell_z > zmax
+                        !_axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) ||
+                        !_axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) ||
+                        !_axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             end
@@ -331,10 +353,18 @@ This function handles both cell-based and point-based selection modes:
 For cell-based selection, finds the closest point on the cell boundary to the
 axis using clamp operations. For point-based selection, uses cell center.
 """
-function get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell)
+
+# Of the periodic images of `center`, the one nearest `cell_mid`. Coordinates run
+# 0..1 here, so the period is 1. With `on=false` the centre is returned unchanged,
+# which is what every existing caller gets.
+@inline _nearest_image_center(center, cell_mid, on::Bool) =
+    on ? center + round(cell_mid - center) : center
+
+function get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell,
+                             periodic=(false, false, false))
     level_factor = 2^level
-    axis_x = cx_shift  # Axis position in physical coordinates
-    axis_y = cy_shift
+    axis_x = _nearest_image_center(cx_shift, (cx - 0.5) / level_factor, periodic[1])
+    axis_y = _nearest_image_center(cy_shift, (cy - 0.5) / level_factor, periodic[2])
     
     if cell == false
         # Point-based: distance from cell center to axis
@@ -355,74 +385,6 @@ function get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell)
         return sqrt((closest_x - axis_x)^2 + (closest_y - axis_y)^2)
     end
 end
-
-"""
-    smooth_transition(distance_to_boundary, boundary_width)
-
-Calculate smooth transition weight for boundary cells.
-
-Creates a smooth transition zone that eliminates sharp cutoffs while maintaining
-the overall cylindrical geometry. Uses a cosine-based transition function.
-
-# Arguments
-- `distance_to_boundary`: Signed distance from cylinder boundary (negative = inside)
-- `boundary_width`: Width of transition zone
-
-# Returns
-- `Float64`: Weight between 0.0 (excluded) and 1.0 (fully included)
-"""
-function smooth_transition(distance_to_boundary::Float64, boundary_width::Float64)
-    if distance_to_boundary <= -boundary_width
-        return 1.0  # Full inclusion (well inside cylinder)
-    elseif distance_to_boundary >= boundary_width
-        return 0.0  # Full exclusion (well outside cylinder)
-    else
-        # Smooth transition using cosine function
-        # distance_to_boundary ranges from -boundary_width to +boundary_width
-        # We want weight 1.0 at -boundary_width and weight 0.0 at +boundary_width
-        t = (distance_to_boundary + boundary_width) / (2 * boundary_width)
-        return 0.5 * (1 + cos(π * t))
-    end
-end
-
-"""
-    get_cylinder_inclusion_weight(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, 
-                                 radius_shift, height_shift, cell, smooth_boundary, boundary_width)
-
-Calculate inclusion weight for a cell in cylindrical subregion with optional smooth boundaries.
-
-# Returns
-- `Float64`: Weight between 0.0 (excluded) and 1.0 (fully included)
-"""
-function get_cylinder_inclusion_weight(cx, cy, cz, level, cx_shift, cy_shift, cz_shift,
-                                     radius_shift::Float64, height_shift::Float64, cell::Bool,
-                                     smooth_boundary::Bool, boundary_width::Float64)
-    # Get distances to cylinder boundaries
-    radial_distance = get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell)
-    height_distance = get_height_cylinder(cz, level, cz_shift, cell)
-    
-    if !smooth_boundary
-        # Original sharp boundary logic
-        if radial_distance <= radius_shift && height_distance <= height_shift
-            return 1.0
-        else
-            return 0.0
-        end
-    else
-        # Smooth boundary logic
-        # Calculate signed distances from boundaries (negative = inside)
-        radial_distance_from_boundary = radial_distance - radius_shift
-        height_distance_from_boundary = height_distance - height_shift
-        
-        # Calculate weights for both radial and height boundaries
-        radial_weight = smooth_transition(radial_distance_from_boundary, boundary_width * radius_shift)
-        height_weight = smooth_transition(height_distance_from_boundary, boundary_width * height_shift)
-        
-        # Use minimum weight (most restrictive boundary)
-        return min(radial_weight, height_weight)
-    end
-end
-
 
 """
     get_height_cylinder(cz, level, cz_shift, cell)
@@ -486,53 +448,34 @@ It supports both cell-based and point-based selection modes for precise boundary
 # Keywords
 - `radius::Real=0.`: Cylinder radius in units specified by `range_unit`
 - `height::Real=0.`: Total cylinder height (extends ±height/2 from center plane)
-- `center::Array{<:Any,1}=[0., 0., 0.]`: Cylinder center position
+- `center::CenterType=[0., 0., 0.]`: Cylinder center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
 - `direction::Symbol=:z`: Cylinder axis orientation — only `:z` is implemented (`:x`/`:y` raise an error); for arbitrary orientations use the value-type `Cylinder(r, h; axis=…)` region
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
-- `smooth_boundary::Bool=false`: Enable smooth boundary transitions (eliminates grid artifacts)
-- `boundary_width::Real=0.1`: Relative width of smooth transition zone (0.0-1.0)
+- `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
+  a run that wraps in some directions only takes `(x=true, y=true, z=false)`. Needed when the
+  region touches a face: without it the part outside the box is dropped, not wrapped, so a
+  sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
+  (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
 - `verbose::Bool=verbose_mode`: Print progress information
 
 # Selection Modes
 - **Cell-based (`cell=true`)**: Includes cells that intersect the cylinder boundary
 - **Point-based (`cell=false`)**: Includes only cells whose centers lie within the cylinder
 
-# Smooth Boundaries (OPTIONAL)
-When `smooth_boundary=true`, cells near the cylinder boundary receive fractional weights
-instead of binary inclusion/exclusion. This eliminates sharp grid artifacts while
-maintaining overall cylindrical geometry:
-- `boundary_width=0.1`: 10% of radius/height used for smooth transition (default)
-- `boundary_width=0.05`: 5% transition (sharper but still smooth)
-- Cells well inside: weight = 1.0 (full inclusion)
-- Cells in transition zone: weight = smooth function (0.0 to 1.0)
-- Cells well outside: weight = 0.0 (excluded)
-
-The default behavior uses sharp boundaries for backward compatibility.
+For a boundary cell counted by the fraction of it that actually lies inside, use the region
+value form, `subregion(gas, Cylinder(radius, height))`, which attaches a `:fraction` column that
+`getvar(:mass)` and `getvar(:volume)` apply.
 
 # Returns
 - `HydroDataType`: New hydro data object containing filtered cells
-- When `smooth_boundary=true`, adds `cylinder_weight` column for boundary cells with smooth transitions
 
 # Examples
 ```julia
-# Default cylindrical selection (sharp boundaries)
 subregion = subregioncylinder(gas,
     radius=5., height=4., center=[:boxcenter],
     range_unit=:kpc, direction=:z)
-
-# Enhanced smooth boundary selection (eliminates grid artifacts)
-smooth_subregion = subregioncylinder(gas,
-    radius=5., height=4., center=[:boxcenter],
-    range_unit=:kpc, direction=:z,
-    smooth_boundary=true)
-
-# Custom smooth transition width
-fine_subregion = subregioncylinder(gas,
-    radius=5., height=4., center=[:boxcenter],
-    range_unit=:kpc, direction=:z,
-    smooth_boundary=true, boundary_width=0.05)  # 5% transition zone
 ```
 
 # See Also
@@ -543,14 +486,14 @@ fine_subregion = subregioncylinder(gas,
 function subregioncylinder(dataobject::HydroDataType;
                             radius::Real=0.,
                             height::Real=0.,
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             cell::Bool=true,
                             inverse::Bool=false,
-                            smooth_boundary::Bool=false,
-                            boundary_width::Real=0.1,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    cflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -570,71 +513,25 @@ function subregioncylinder(dataobject::HydroDataType;
     ranges, cx_shift, cy_shift, cz_shift, radius_shift, height_shift = prepranges(dataobject.info, center, radius, height, range_unit, verbose)
 
     if inverse == false
-        if smooth_boundary
-            # Enhanced filtering with smooth boundaries and weighted cells
-            if verbose
-                println("   Using smooth cylindrical boundaries with transition width: $(boundary_width * 100)%")
-            end
-            
-            # Calculate weights for all cells
-            weights = Float64[]
-            included_indices = Int[]
-            
-            for (i, row) in enumerate(dataobject.data)
-                if isamr
-                    weight = get_cylinder_inclusion_weight(row.cx, row.cy, row.cz, row.level, 
-                                                         cx_shift, cy_shift, cz_shift,
-                                                         radius_shift, height_shift, cell,
-                                                         smooth_boundary, boundary_width)
-                else
-                    weight = get_cylinder_inclusion_weight(row.cx, row.cy, row.cz, lmax,
-                                                         cx_shift, cy_shift, cz_shift,
-                                                         radius_shift, height_shift, cell,
-                                                         smooth_boundary, boundary_width)
-                end
-                
-                if weight > 0.0  # Include cells with any positive weight
-                    push!(weights, weight)
-                    push!(included_indices, i)
-                end
-            end
-            
-            # Create filtered dataset
-            sub_data = dataobject.data[included_indices]
-            
-            # Add weight column for boundary cells (weights < 1.0)
-            boundary_cells = weights .< 1.0
-            if any(boundary_cells)
-                # For IndexedTables, add the weight column using insertcolsafter
-                Nafter = IndexedTables.ncols(sub_data)
-                sub_data = IndexedTables.insertcolsafter(sub_data, Nafter, :cylinder_weight => weights)
-                if verbose
-                    n_boundary = sum(boundary_cells)
-                    println("   - Added smooth transition weights to $n_boundary boundary cells")
-                end
-            end
-        else
-            # Original sharp boundary filtering
-            if isamr
-                sub_data = _subset_table(dataobject.data,
-                                   _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell) <= radius_shift &&
-                                    get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) <= height_shift))
-            else # for uniform grid
-                sub_data = _subset_table(dataobject.data,
-                                   _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell) <= radius_shift &&
-                                    get_height_cylinder(c.cz[i], lmax, cz_shift, cell) <= height_shift))
-            end
+        if isamr
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) <= radius_shift &&
+                                get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) <= height_shift))
+        else # for uniform grid
+            sub_data = _subset_table(dataobject.data,
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) <= radius_shift &&
+                                get_height_cylinder(c.cz[i], lmax, cz_shift, cell) <= height_shift))
         end
 
     else # inverse == true
         ranges = dataobject.ranges
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell) > radius_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) > radius_shift ||
                                 get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) > height_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell) > radius_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) > radius_shift ||
                                 get_height_cylinder(c.cz[i], lmax, cz_shift, cell) > height_shift))
         end
     end
@@ -662,7 +559,7 @@ end
 ##### SPHERE #####-------------------------------------------------------------
 
 """
-    get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell)
+    get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell, periodic=(false,false,false))
 
 Calculate distance from cell to sphere center for spherical subregion selection.
 
@@ -690,11 +587,15 @@ uses the Euclidean distance from cell center to sphere center.
 distance = get_radius_sphere(10, 20, 30, 2, 0.5, 0.5, 0.5, true)
 ```
 """
-function get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell)
+function get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell,
+                           periodic=(false, false, false))
     level_factor = 2^level
-    center_x = cx_shift  # Sphere center in physical coordinates
-    center_y = cy_shift
-    center_z = cz_shift
+    # Coordinates here run 0..1, so the period is 1. On a periodic axis, move the
+    # centre to its nearest image of THIS cell first; everything below is then the
+    # ordinary non-periodic maths, and a region on a face reaches around correctly.
+    center_x = _nearest_image_center(cx_shift, (cx - 0.5) / level_factor, periodic[1])
+    center_y = _nearest_image_center(cy_shift, (cy - 0.5) / level_factor, periodic[2])
+    center_z = _nearest_image_center(cz_shift, (cz - 0.5) / level_factor, periodic[3])
     
     if cell == false
         # Point-based: distance from cell center to sphere center
@@ -735,10 +636,15 @@ and point-based selection modes for precise boundary handling in AMR simulations
 
 # Keywords
 - `radius::Real=0.`: Sphere radius in units specified by `range_unit`
-- `center::Array{<:Any,1}=[0., 0., 0.]`: Sphere center position
+- `center::CenterType=[0., 0., 0.]`: Sphere center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
+- `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
+  a run that wraps in some directions only takes `(x=true, y=true, z=false)`. Needed when the
+  region touches a face: without it the part outside the box is dropped, not wrapped, so a
+  sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
+  (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
 - `verbose::Bool=verbose_mode`: Print progress information
 
 # Selection Modes
@@ -770,11 +676,13 @@ subregion = subregionsphere(gas,
 """
 function subregionsphere(dataobject::HydroDataType;
                             radius::Real=0.,
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             cell::Bool=true,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -798,19 +706,19 @@ function subregionsphere(dataobject::HydroDataType;
     if inverse == false
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell) <= radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) <= radius_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell) <= radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) <= radius_shift))
         end
     else # inverse == true
         ranges = dataobject.ranges
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell) > radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) > radius_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell) > radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) > radius_shift))
         end
     end
 

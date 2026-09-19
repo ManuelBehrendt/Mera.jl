@@ -3,11 +3,13 @@
 function shellregioncylinder(dataobject::ClumpDataType;
                             radius::Array{<:Real,1}=[0.,0.],
                             height::Real=0.,
-                            center::Array{<:Any,1}=[0.,0.,0.],
+                            center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -17,7 +19,7 @@ function shellregioncylinder(dataobject::ClumpDataType;
     _region_corner_hint(:cylinder, center; shell=true, verbose=verbose)
     # face like [24., 24., 0.]) is a legitimate center
     # reject only an all-zero (unset) center — a single 0.0 component is legitimate
-    if radius_in == 0. || radius_out == 0. || height == 0. || all(==(0.), center)
+    if radius_in == 0. || radius_out == 0. || height == 0. || all(==(0.), _as_center(center))
         error("[Mera]: shellregion(:cylinder) needs nonzero inner and outer radii and `height` — got " *
               "radius = [$(radius_in), $(radius_out)], height = $(height).")
     end
@@ -31,23 +33,23 @@ function shellregioncylinder(dataobject::ClumpDataType;
 
     if inverse == false
         sub_data = _subset_table(dataobject.data,
-                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2)
                                     >= ( radius_in_shift*boxlen )  &&
 
-                              sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
+                              sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2)
                                     <= ( radius_out_shift*boxlen ) &&
 
                             abs(c.peak_z[i] - cz_shift*boxlen) <= ( height_shift*boxlen)))
     elseif inverse == true
         sub_data = _subset_table(dataobject.data,
-                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2)
                                     < ( radius_in_shift*boxlen )  ||
 
-                              sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2)
+                              sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2)
                                     > ( radius_out_shift*boxlen ) ||
 
                             abs(c.peak_z[i] - cz_shift*boxlen) > ( height_shift*boxlen)))
@@ -71,10 +73,12 @@ end
 ##### SPHERE/SHELL #####-------------------------------------------------------
 function shellregionsphere(dataobject::ClumpDataType;
                             radius::Array{<:Real,1}=[0.,0.],
-                            center::Array{<:Any,1}=[0.,0.,0.],
+                            center::CenterType=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -83,7 +87,7 @@ function shellregionsphere(dataobject::ClumpDataType;
     radius_out = radius[2]
     # a centre was never given -> the region lands at the box corner: say so once
     _region_corner_hint(:sphere, center; shell=true, verbose=verbose)
-    if radius_in == 0. || radius_out == 0. || all(==(0.), center)
+    if radius_in == 0. || radius_out == 0. || all(==(0.), _as_center(center))
         error("[Mera]: shellregion(:sphere) needs nonzero inner and outer radii — got " *
               "radius = [$(radius_in), $(radius_out)].")
     end
@@ -96,26 +100,26 @@ function shellregionsphere(dataobject::ClumpDataType;
 
     if inverse == false
         sub_data = _subset_table(dataobject.data,
-                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
-                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2+
+                                    _pdiff(c.peak_z[i] - cz_shift*boxlen, boxlen, pflags[3])^2 )
                                     >= ( radius_in_shift*boxlen ) &&
 
-                                sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
-                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                                sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2+
+                                    _pdiff(c.peak_z[i] - cz_shift*boxlen, boxlen, pflags[3])^2 )
                                     <= ( radius_out_shift*boxlen )))
 
     elseif inverse == true
         sub_data = _subset_table(dataobject.data,
-                           _mask_rows(dataobject.data, (c, i) -> sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
-                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                           _mask_rows(dataobject.data, (c, i) -> sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2+
+                                    _pdiff(c.peak_z[i] - cz_shift*boxlen, boxlen, pflags[3])^2 )
                                     < ( radius_in_shift*boxlen ) ||
 
-                                sqrt( (c.peak_x[i] -  cx_shift*boxlen)^2 +
-                                    (c.peak_y[i] -  cy_shift*boxlen )^2+
-                                    (c.peak_z[i] -  cz_shift*boxlen)^2 )
+                                sqrt( _pdiff(c.peak_x[i] - cx_shift*boxlen, boxlen, pflags[1])^2 +
+                                    _pdiff(c.peak_y[i] - cy_shift*boxlen, boxlen, pflags[2])^2+
+                                    _pdiff(c.peak_z[i] - cz_shift*boxlen, boxlen, pflags[3])^2 )
                                     > ( radius_out_shift*boxlen )))
         ranges = dataobject.ranges
     end

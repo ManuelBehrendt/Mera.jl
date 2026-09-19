@@ -5,7 +5,7 @@ function loaddata(output::Int, datatype::Symbol;
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     regenerate_scales::Bool=true,
                     verbose::Bool=true,
@@ -29,7 +29,7 @@ function loaddata(output::Int, path::String, datatype::Symbol;
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     regenerate_scales::Bool=true,
                     verbose::Bool=true,
@@ -55,7 +55,7 @@ function loaddata(output::Int, path::String;
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     regenerate_scales::Bool=true,
                     verbose::Bool=true,
@@ -88,7 +88,7 @@ function loaddata(output::Int; path::String="./",
             xrange::Array{<:Any,1}=[missing, missing],
             yrange::Array{<:Any,1}=[missing, missing],
             zrange::Array{<:Any,1}=[missing, missing],
-            center::Array{<:Any,1}=[0., 0., 0.],
+            center::CenterType=[0., 0., 0.],
             range_unit::Symbol=:standard,
             verbose::Bool=true,
             myargs::ArgumentsType=ArgumentsType() )
@@ -100,7 +100,7 @@ return dataobject
 #### Arguments
 ##### Required:
 - **`output`:** output number
-- **`datatype`:** :hydro, :particles, :gravity, :clumps or :rt
+- **`datatype`:** :hydro, :particles, :gravity, :clumps, :rt or :sinks
 ##### Predefined/Optional Keywords:
 - **`path`:** path to the file; default is local path.
 - **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.
@@ -125,19 +125,19 @@ function loaddata(output::Int; path::String="./",
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     regenerate_scales::Bool=true,
                     verbose::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
     # take values from myargs if given
-    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
-    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
-    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+    if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+    if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+    if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
 
 
     printtime("",verbose)
@@ -197,6 +197,7 @@ function loaddata(output::Int; path::String="./",
         "Mera.RtDataType" => JLD2.Upgrade(RtDataType),
         "Mera.PartDataType" => JLD2.Upgrade(PartDataType),
         "Mera.ClumpDataType" => JLD2.Upgrade(ClumpDataType),
+        "Mera.SinkDataType" => JLD2.Upgrade(SinkDataType),
     )
     
     dataobject = JLD2.load(fpath, dlink, typemap=typemap)

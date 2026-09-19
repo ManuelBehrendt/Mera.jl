@@ -5,7 +5,7 @@
 #   containers, map types, …) used across the whole package. Feature-local *value* types that are
 #   tightly coupled to one subsystem may live with that subsystem instead of here — e.g. the
 #   clumpfind finder/neighbour-index/catalog/tree types in functions/clumpfind.jl, the report card
-#   types in functions/report/report.jl, FluxBudgetType/FluxMapType in functions/flux.jl, and
+#   types in functions/report/report.jl, and
 #   QuickLookResult in functions/quicklook.jl. (Co-locating a struct with its constructor and
 #   methods is intentional; api.md harvests all of them via a module-wide @autodocs regardless.)
 # ============================================================================================
@@ -620,6 +620,7 @@ mutable struct FileNamesType
     rt_descriptor::String
     rt_descriptor_v0::String
     clumps::String
+    sinks::String
     timer::String
     header::String
     namelist::String
@@ -783,6 +784,12 @@ mutable struct InfoType
 
     namelist::Bool
     namelist_content::Dict{Any,Any}
+    # Boundary conditions are NOT recorded in info_*.txt. When the namelist is
+    # present they can be inferred: RAMSES is periodic unless &BOUNDARY_PARAMS
+    # says otherwise. This is reported, never acted on automatically, because
+    # wrapping a non-periodic run would silently produce wrong physics.
+    # :periodic | :nonperiodic | :unknown
+    boundaries::Symbol
     headerfile::Bool
     makefile::Bool
     files_content::FilesContentType
@@ -916,6 +923,42 @@ end
 
 
 """
+Mutable Struct: Contains the RAMSES sink-particle catalogue and the simulation metadata
+
+```julia
+mutable struct SinkDataType <: ContainMassDataSetType
+    data
+    info::InfoType
+    boxlen::Float64
+    ranges::Array{Float64,1}
+    selected_sinkvars::Array{Symbol,1}
+    used_descriptors::Dict{Any,Any}
+    scale::ScalesType003
+end
+```
+
+Sinks are written by RAMSES as a single CSV per output (`sink_NNNNN.csv`), not as one file per
+CPU like the AMR data — the catalogue is small and global. The file carries TWO header lines: the
+column names, and the dimensional formula of each column in terms of `m`, `l` and `t`
+(e.g. `l t**-1` for a velocity). Mera keeps those formulas in `used_descriptors[:units]` so the
+physical meaning of every column survives the read.
+
+Load with [`getsinks`](@ref).
+"""
+mutable struct SinkDataType <: ContainMassDataSetType
+# exported
+    data
+    info::InfoType
+    boxlen::Float64
+    ranges::Array{Float64,1}
+    selected_sinkvars::Array{Symbol,1}
+    used_descriptors::Dict{Any,Any}
+    scale::ScalesType003
+    SinkDataType() = new()
+end
+
+
+"""
 Mutable Struct: Contains clump data and information about the selected simulation
 > ClumpDataType <: ContainMassDataSetType
 """
@@ -936,6 +979,22 @@ Union Type: Mask-array that is of type Bool or BitArray
 MaskType = Union{Array{Bool,1},BitArray{1}}
 """
 MaskType = Union{Array{Bool,1},BitArray{1}} # exported
+
+"""
+Union Type: what may be given as a `center` (or `data_center`).
+
+    CenterType = Union{Symbol, Array{<:Any,1}}
+
+A vector as before, `[:bc]`, `[x, y, z]`, or a mix such as `[value, :bc, :bc]`, and now also the
+bare symbol `:bc` / `:boxcenter`, which means the same as `[:bc]`. The bare form is normalised to
+a vector at the first thing that reads it, so everything downstream still sees a vector.
+"""
+CenterType = Union{Symbol, Array{<:Any,1}} # exported
+
+# A bare `center=:bc` means the same as `[:bc]`. Normalise once, here, so every converter and
+# every downstream index sees a vector and nothing else has to know about the short form.
+_as_center(c::Symbol) = Any[c]
+_as_center(c) = c
 
 """
 Union Type: A vector of masks, one per data object
@@ -1519,13 +1578,28 @@ function _mera_rconvert(::Type{T}, nt::NamedTuple) where {T}
             FT = fieldtype(T, i)
             # zero-fill a NEW field only when it is a CONCRETE Number (zero(Real) etc. would throw on an
             # abstract type); abstract-Number and ref fields are left unset rather than fabricated.
-            (FT <: Number && isconcretetype(FT)) && setfield!(obj, f, zero(FT))
+            if FT <: Number && isconcretetype(FT)
+                setfield!(obj, f, zero(FT))
+            elseif FT === String
+                # An empty String, not "leave it undefined". Leaving it unset let the object LOAD but
+                # made it impossible to SAVE again: JLD2 refuses an undefined field, so an old
+                # mera-file round-tripped into a file Mera could no longer read (seen with
+                # FileNamesType.sinks, a field newer than the AVALON files). "" is not a fabricated
+                # filename, it is an honest "not recorded", and isfile("") is false, which is the
+                # answer callers want anyway.
+                setfield!(obj, f, "")
+            elseif FT === Symbol
+                # Same reasoning as String above: a file written before this field
+                # existed must still round-trip. :unknown is not a guess, it is the
+                # honest answer for "this file predates the field".
+                setfield!(obj, f, :unknown)
+            end
         end
     end
     return obj
 end
 
 for T in (FileNamesType, GridInfoType, PartInfoType, CompilationInfoType, DescriptorType, InfoType,
-          HydroDataType, GravDataType, RtDataType, PartDataType, ClumpDataType)
+          HydroDataType, GravDataType, RtDataType, PartDataType, ClumpDataType, SinkDataType)
     @eval JLD2.rconvert(::Type{$T}, nt::NamedTuple) = _mera_rconvert($T, nt)
 end

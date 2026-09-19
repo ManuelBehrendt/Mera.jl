@@ -2,8 +2,8 @@
 
 ![MERA.jl Multi-Threading Performance](../assets/representtative_multithreading_60.png)
 
-Reference for Mera's threading controls. The guide — what is parallel, what to expect, how to
-choose a thread count — is [Multi-Threading](../multi-threading/multi-threading_intro.md).
+Reference for Mera's threading controls. The guide: what is parallel, what to expect, how to
+choose a thread count, is [Multi-Threading](../multi-threading/multi-threading_intro.md).
 
 Threads are set when Julia starts, not from inside a session:
 
@@ -15,7 +15,7 @@ julia -t 8              # or: export JULIA_NUM_THREADS=8
 
 The functions below accept `max_threads::Int` to cap what they use, defaulting to
 `Threads.nthreads()`. The *dimension* each one parallelises over decides whether more threads
-help — a single-variable projection stays flat no matter how many you give it.
+help, a single-variable projection stays flat no matter how many you give it.
 
 | Function | Parallel over |
 |---|---|
@@ -32,7 +32,7 @@ projection(gas, [:sd, :T, :vx], :km_s, max_threads=3)     # one task per variabl
 ```
 
 !!! note "What the particle backend parallelises over"
-    Unlike the cell backend, particle projection does **not** parallelise over variables — it
+    Unlike the cell backend, particle projection does **not** parallelise over variables, it
     splits the work inside a single map, so one variable already benefits:
 
     - `weighting=:voronoi` partitions the **pixels**. Each ray is independent and each thread
@@ -43,7 +43,7 @@ projection(gas, [:sd, :T, :vx], :km_s, max_threads=3)     # one task per variabl
       from the serial sum only by floating-point association (~1e-15 relative).
 
     `:voronoi` scales best because it is compute-bound; the deposition schemes are limited by
-    memory bandwidth and gain roughly 2–4×.
+    memory bandwidth and gain roughly 2 to 4×.
 
 ## Diagnostics
 
@@ -53,13 +53,24 @@ show_threading_info
 
 ## Benchmarking
 
-Measure on your own data and storage rather than assuming — reading is usually I/O bound and
+Measure on your own data and storage rather than assuming, reading is usually I/O bound and
 saturates when the storage does.
 
 ```@docs; canonical=false
 benchmark_projection_hydro
 run_reading_benchmark
+reading_sweep
 run_merafile_benchmark
+benchmark_conversion
+benchmark_report
+benchmark_levels
+collect_levels
+levelsplot
+BenchmarkReport
+IOBenchmark
+benchmarkplot
+filesystem_info
+allocated_cpus
 benchmark_mera_io
 benchmark_buffer_sizes
 ```
@@ -72,11 +83,39 @@ are documented with the rest of the I/O controls in the
 
 ## Related
 
-- [Multi-Threading](../multi-threading/multi-threading_intro.md) — the guide, including what
+- [Multi-Threading](../multi-threading/multi-threading_intro.md): the guide, including what
   to expect from more threads and the measured numbers
-- [Projection benchmarks](../benchmarks/Projection/multi_projections.md) — thread scaling for
+- [Performance](../benchmarks/performance.md): thread scaling for
   single- and multi-variable projections
-- [Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md) — read scaling
+- [Run Your Own Benchmarks](../benchmarks/run_your_own.md): read scaling
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Storage Benchmarks
+
+Before committing to a long run it is worth knowing what the machine's storage
+actually delivers, which is often the limit rather than the CPU.
+`run_benchmark` measures IOPS, throughput and open/close cost across thread
+counts, and `plot_results` turns the result into a figure. The plotting method
+lives in a package extension, so it becomes available once a Makie backend is
+loaded:
+
+```julia
+using Mera, CairoMakie
+
+results = run_benchmark("/path/to/simulation/folder"; runs=3)
+fig = plot_results(results)
+```
+
+```@docs
+run_benchmark
+plot_results
+```
+
+## Structure-Finder Benchmarks
+
+```@docs
+clumpfind_benchmarks
+```
+

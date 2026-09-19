@@ -16,10 +16,15 @@ over boundary handling in adaptive mesh refinement (AMR) simulations.
 - `xrange::Array{<:Any,1}=[missing, missing]`: X-coordinate range [min, max]
 - `yrange::Array{<:Any,1}=[missing, missing]`: Y-coordinate range [min, max]  
 - `zrange::Array{<:Any,1}=[missing, missing]`: Z-coordinate range [min, max]
-- `center::Array{<:Any,1}=[0., 0., 0.]`: Reference center for ranges
+- `center::CenterType=[0., 0., 0.]`: Reference center for ranges
 - `range_unit::Symbol=:standard`: Units for ranges (:standard, :kpc, :Mpc, etc.)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
+- `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
+  a run that wraps in some directions only takes `(x=true, y=true, z=false)`. Needed when the
+  region touches a face: without it the part outside the box is dropped, not wrapped, so a
+  sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
+  (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
 - `verbose::Bool=verbose_mode`: Print progress information
 
 # Selection Modes
@@ -51,11 +56,13 @@ function subregioncuboid(dataobject::GravDataType;
     xrange::Array{<:Any,1}=[missing, missing],
     yrange::Array{<:Any,1}=[missing, missing],
     zrange::Array{<:Any,1}=[missing, missing],
-    center::Array{<:Any,1}=[0., 0., 0.],
+    center::CenterType=[0., 0., 0.],
     range_unit::Symbol=:standard,
     cell::Bool=true,
     inverse::Bool=false,
+    periodic=false,
     verbose::Bool=verbose_mode)
+    bflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -64,9 +71,10 @@ function subregioncuboid(dataobject::GravDataType;
     isamr = checkuniformgrid(dataobject, lmax)
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center)
+    ranges, ranges_raw = prepranges(dataobject.info, range_unit, verbose,
+                                    xrange, yrange, zrange, center; unclamped=true)
 
-    xmin, xmax, ymin, ymax, zmin, zmax = ranges
+    xmin, xmax, ymin, ymax, zmin, zmax = any(bflags) ? ranges_raw : ranges
 
     #if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
     #   yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
@@ -93,9 +101,9 @@ function subregioncuboid(dataobject::GravDataType;
                         cell_zmax = c.cz[i] / level_factor
                         
                         # Check for overlap: cell overlaps if its max > range_min AND its min < range_max
-                        (cell_xmax > xmin && cell_xmin < xmax) &&
-                        (cell_ymax > ymin && cell_ymin < ymax) &&
-                        (cell_zmax > zmin && cell_zmin < zmax)
+                        _axis_overlaps((cell_xmin + cell_xmax) / 2, xmin, xmax, (cell_xmax - cell_xmin) / 2, bflags[1]) &&
+                        _axis_overlaps((cell_ymin + cell_ymax) / 2, ymin, ymax, (cell_xmax - cell_xmin) / 2, bflags[2]) &&
+                        _axis_overlaps((cell_zmin + cell_zmax) / 2, zmin, zmax, (cell_xmax - cell_xmin) / 2, bflags[3])
                     end))
                 else
                     # Point-based selection: include cells whose centers lie within the range
@@ -106,9 +114,9 @@ function subregioncuboid(dataobject::GravDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x >= xmin && cell_x <= xmax &&
-                        cell_y >= ymin && cell_y <= ymax &&
-                        cell_z >= zmin && cell_z <= zmax
+                        _axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) &&
+                        _axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) &&
+                        _axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             else # for uniform grid
@@ -126,9 +134,9 @@ function subregioncuboid(dataobject::GravDataType;
                         cell_zmax = c.cz[i] / level_factor
                         
                         # Check for overlap
-                        (cell_xmax > xmin && cell_xmin < xmax) &&
-                        (cell_ymax > ymin && cell_ymin < ymax) &&
-                        (cell_zmax > zmin && cell_zmin < zmax)
+                        _axis_overlaps((cell_xmin + cell_xmax) / 2, xmin, xmax, (cell_xmax - cell_xmin) / 2, bflags[1]) &&
+                        _axis_overlaps((cell_ymin + cell_ymax) / 2, ymin, ymax, (cell_xmax - cell_xmin) / 2, bflags[2]) &&
+                        _axis_overlaps((cell_zmin + cell_zmax) / 2, zmin, zmax, (cell_xmax - cell_xmin) / 2, bflags[3])
                     end))
                 else
                     # Point-based selection for uniform grid
@@ -139,9 +147,9 @@ function subregioncuboid(dataobject::GravDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x >= xmin && cell_x <= xmax &&
-                        cell_y >= ymin && cell_y <= ymax &&
-                        cell_z >= zmin && cell_z <= zmax
+                        _axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) &&
+                        _axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) &&
+                        _axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
 
@@ -176,9 +184,9 @@ function subregioncuboid(dataobject::GravDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x < xmin || cell_x > xmax ||
-                        cell_y < ymin || cell_y > ymax ||
-                        cell_z < zmin || cell_z > zmax
+                        !_axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) ||
+                        !_axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) ||
+                        !_axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             else # for uniform grid
@@ -209,9 +217,9 @@ function subregioncuboid(dataobject::GravDataType;
                         cell_y = (c.cy[i] - 0.5) / level_factor
                         cell_z = (c.cz[i] - 0.5) / level_factor
                         
-                        cell_x < xmin || cell_x > xmax ||
-                        cell_y < ymin || cell_y > ymax ||
-                        cell_z < zmin || cell_z > zmax
+                        !_axis_overlaps(cell_x, xmin, xmax, 0.0, bflags[1]) ||
+                        !_axis_overlaps(cell_y, ymin, ymax, 0.0, bflags[2]) ||
+                        !_axis_overlaps(cell_z, zmin, zmax, 0.0, bflags[3])
                     end))
                 end
             end
@@ -290,11 +298,16 @@ It supports both cell-based and point-based selection modes for precise boundary
 # Keywords
 - `radius::Real=0.`: Cylinder radius in units specified by `range_unit`
 - `height::Real=0.`: Total cylinder height (extends ±height/2 from center plane)
-- `center::Array{<:Any,1}=[0., 0., 0.]`: Cylinder center position
+- `center::CenterType=[0., 0., 0.]`: Cylinder center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
 - `direction::Symbol=:z`: Cylinder axis orientation (:x, :y, or :z)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
+- `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
+  a run that wraps in some directions only takes `(x=true, y=true, z=false)`. Needed when the
+  region touches a face: without it the part outside the box is dropped, not wrapped, so a
+  sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
+  (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
 - `verbose::Bool=verbose_mode`: Print progress information
 
 # Selection Modes
@@ -325,12 +338,14 @@ disk = subregioncylinder(gravity,
 function subregioncylinder(dataobject::GravDataType;
                             radius::Real=0.,
                             height::Real=0.,
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             cell::Bool=true,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    cflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -352,11 +367,11 @@ function subregioncylinder(dataobject::GravDataType;
     if inverse == false
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell) <= radius_shift &&
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) <= radius_shift &&
                                 get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) <= height_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell) <= radius_shift &&
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) <= radius_shift &&
                                 get_height_cylinder(c.cz[i], lmax, cz_shift, cell) <= height_shift))
         end
 
@@ -364,11 +379,11 @@ function subregioncylinder(dataobject::GravDataType;
         ranges = dataobject.ranges
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell) > radius_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) > radius_shift ||
                                 get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) > height_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell) > radius_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) > radius_shift ||
                                 get_height_cylinder(c.cz[i], lmax, cz_shift, cell) > height_shift))
         end
     end
@@ -407,10 +422,15 @@ and point-based selection modes for precise boundary handling in AMR simulations
 
 # Keywords
 - `radius::Real=0.`: Sphere radius in units specified by `range_unit`
-- `center::Array{<:Any,1}=[0., 0., 0.]`: Sphere center position
+- `center::CenterType=[0., 0., 0.]`: Sphere center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
+- `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
+  a run that wraps in some directions only takes `(x=true, y=true, z=false)`. Needed when the
+  region touches a face: without it the part outside the box is dropped, not wrapped, so a
+  sphere on a face returns a hemisphere. `getinfo` reports whether the run is periodic
+  (`info.boundaries`). Cylinders wrap in their two radial axes, never along their height.
 - `verbose::Bool=verbose_mode`: Print progress information
 
 # Selection Modes
@@ -442,11 +462,13 @@ subregion = subregionsphere(gravity,
 """
 function subregionsphere(dataobject::GravDataType;
                             radius::Real=0.,
-                            center::Array{<:Any,1}=[0., 0., 0.],
+                            center::CenterType=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             cell::Bool=true,
                             inverse::Bool=false,
+                            periodic=false,
                             verbose::Bool=verbose_mode)
+    pflags = _periodic_flags(periodic)
 
     printtime("", verbose)
 
@@ -470,19 +492,19 @@ function subregionsphere(dataobject::GravDataType;
     if inverse == false
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell) <= radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) <= radius_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell) <= radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) <= radius_shift))
         end
     else # inverse == true
         ranges = dataobject.ranges
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell) > radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) > radius_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell) > radius_shift))
+                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) > radius_shift))
         end
     end
 

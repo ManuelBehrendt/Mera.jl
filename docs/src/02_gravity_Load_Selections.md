@@ -1,7 +1,15 @@
+```@raw html
+<!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 02_gravity_Load_Selections.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. -->
+```
+
 # Gravity Data: Load Selected Variables and Spatial Ranges
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `02_gravity_Load_Selections.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/02_gravity_Load_Selections.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook**: [open / download `02_gravity_Load_Selections.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/02_gravity_Load_Selections.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 
 This notebook provides a comprehensive guide to selective gravitational field data loading and spatial filtering in Mera.jl. You'll learn advanced techniques for efficiently loading only the gravity data you need from large gravitational field simulations.
 
@@ -42,7 +50,7 @@ grav = getgravity(info, :epot)                        # Single variable
 ```julia
 # RAMSES standard notation (domain: [0:1]³)
 grav = getgravity(info, xrange=[0.2, 0.8],           # X-range filter
-                        yrange=[0.2, 0.8],           # Y-range filter  
+                        yrange=[0.2, 0.8],           # Y-range filter
                         zrange=[0.4, 0.6])           # Z-range filter
 
 # Center-relative coordinates (RAMSES units)
@@ -107,19 +115,16 @@ using Mera
 info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 ```
 
-
 ```
-*__   __ _______ ______   _______ 
+*__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0
-
-[Mera]: 2026-08-05T15:55:54.492
-
+Mera v1.8.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-08-31T13:26:20.063
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -143,7 +148,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -158,7 +163,6 @@ makefile:         true
 patchfile:        true
 =======================================================
 ```
-
 
 ## Variable Selection Techniques
 
@@ -194,23 +198,19 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:55:57.071
-
+[Mera]: Get gravity data: 2026-08-31T13:26:22.770
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.79 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -220,11 +220,10 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 5.356 seconds
+✓ Table created in 3.618 seconds
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 ```
-
 
 ```julia
 grav.data
@@ -260,33 +259,28 @@ level  cx   cy   cz   epot       ax         ay         az
 10     814  496  512  -0.284306  -0.735572  0.0390361  0.00736339
 ```
 
-
 ### Selecting Multiple Variables
 
 Mera provides multiple ways to select specific gravitational field components. You can use keyword arguments or positional arguments with flexible syntax.
 
 ```julia
-grav_a = getgravity(info, vars=[:epot, :ax]); 
+grav_a = getgravity(info, vars=[:epot, :ax]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:56:21.230
-
+[Mera]: Get gravity data: 2026-08-31T13:26:44.257
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2) = (:epot, :ax) 
-
+Using var(s)=(1, 2) = (:epot, :ax)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (21.99 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -296,36 +290,31 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 6 columns...
-✓ Table created in 2.381 seconds
+✓ Table created in 1.734 seconds
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
 ```
-
 
 **Alternative:** Use variable numbers instead of symbolic names. This approach provides identical functionality with numeric references:
 
 ```julia
-grav_a = getgravity(info, vars=[:var1, :var2]); 
+grav_a = getgravity(info, vars=[:var1, :var2]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:56:38.547
-
+[Mera]: Get gravity data: 2026-08-31T13:27:00.352
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2) = (:epot, :ax) 
-
+Using var(s)=(1, 2) = (:epot, :ax)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.40 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -335,36 +324,31 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 6 columns...
-✓ Table created in 1.529 seconds
+✓ Table created in 1.675 seconds
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
 ```
-
 
 **Keyword-free syntax:** When following the specific order (InfoType object, then variables), keyword arguments are optional:
 
 ```julia
-grav_a = getgravity(info, [:epot, :ax]); 
+grav_a = getgravity(info, [:epot, :ax]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:56:54.463
-
+[Mera]: Get gravity data: 2026-08-31T13:27:16.968
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2) = (:epot, :ax) 
-
+Using var(s)=(1, 2) = (:epot, :ax)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.45 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -374,11 +358,10 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 6 columns...
-✓ Table created in 1.423 seconds
+✓ Table created in 1.298 seconds
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
 ```
-
 
 ```julia
 grav_a.data
@@ -414,33 +397,28 @@ level  cx   cy   cz   epot       ax
 10     814  496  512  -0.284306  -0.735572
 ```
 
-
 ### Selecting Single Variables
 
 For single variable selection, arrays and keywords are unnecessary. Maintain the order: InfoType object, then variable symbol:
 
 ```julia
-grav_c = getgravity(info, :ax ); 
+grav_c = getgravity(info, :ax );
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:57:09.875
-
+[Mera]: Get gravity data: 2026-08-31T13:27:33.022
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(2,) = (:ax,) 
-
+Using var(s)=(2,) = (:ax,)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (23.03 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 1 variables
@@ -450,11 +428,10 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 5 columns...
-✓ Table created in 1.674 seconds
+✓ Table created in 1.46 seconds
 Memory used for data table :1.0550392987206578 GB
 -------------------------------------------------------
 ```
-
 
 ```julia
 grav_c.data
@@ -490,13 +467,12 @@ level  cx   cy   cz   ax
 10     814  496  512  -0.735572
 ```
 
-
 ## Spatial Range Selection Techniques
 
 Spatial filtering is essential for focusing gravitational field analysis on specific regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different gravitational analysis needs.
 
 **Available Coordinate Systems:**
-- **RAMSES Standard:** Normalized domain [0:1]³ 
+- **RAMSES Standard:** Normalized domain [0:1]³
 - **Center-Relative:** Coordinates relative to specified points
 - **Physical Units:** Real astronomical units (kpc, pc, etc.)
 - **Box-Centered:** Convenient shortcuts for simulation center
@@ -516,30 +492,26 @@ The RAMSES standard provides a normalized coordinate system that simplifies nume
 **Performance Optimization:** Use `lmax` to limit maximum refinement levels for faster loading and preview analysis. This is particularly useful for gravitational field analysis where you might not need the finest resolution everywhere.
 
 ```julia
-grav = getgravity(info, lmax=8, 
-                xrange=[0.2,0.8], 
-                yrange=[0.2,0.8], 
-                zrange=[0.4,0.6]); 
+grav = getgravity(info, lmax=8,
+                xrange=[0.2,0.8],
+                yrange=[0.2,0.8],
+                zrange=[0.4,0.6]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:57:26.233
-
+[Mera]: Get gravity data: 2026-08-31T13:27:49.774
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:07 (10.95 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1233232 cells, 4 variables
@@ -549,11 +521,10 @@ Creating Table from 1233232 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.046 seconds
+✓ Table created in 0.048 seconds
 Memory used for data table :75.27139282226562 MB
 -------------------------------------------------------
 ```
-
 
 **Range Verification:** The loaded gravitational field data ranges are stored in the `ranges` field using RAMSES standard notation (domain: [0:1]³):
 
@@ -571,39 +542,33 @@ grav.ranges
  0.6
 ```
 
-
 ### Center-Relative Coordinate Selection
 
 Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing gravitational fields around specific massive objects, galaxies, or regions of interest:
 
 ```julia
-grav = getgravity(info, lmax=8, 
-                xrange=[-0.3, 0.3], 
-                yrange=[-0.3, 0.3], 
-                zrange=[-0.1, 0.1], 
-                center=[0.5, 0.5, 0.5]); 
+grav = getgravity(info, lmax=8,
+                xrange=[-0.3, 0.3],
+                yrange=[-0.3, 0.3],
+                zrange=[-0.1, 0.1],
+                center=[0.5, 0.5, 0.5]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:57:33.657
-
+[Mera]: Get gravity data: 2026-08-31T13:27:57.178
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.53 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1233232 cells, 4 variables
@@ -613,11 +578,10 @@ Creating Table from 1233232 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.047 seconds
+✓ Table created in 0.046 seconds
 Memory used for data table :75.27139282226562 MB
 -------------------------------------------------------
 ```
-
 
 ### Physical Unit Coordinate System
 
@@ -632,31 +596,27 @@ Working with physical units provides intuitive scale references for astronomical
 The following example demonstrates kiloparsec (kpc) coordinate selection for gravitational field analysis:
 
 ```julia
-grav = getgravity(info, lmax=8, 
-                xrange=[2.,22.], 
-                yrange=[2.,22.], 
-                zrange=[22.,26.], 
-                range_unit=:kpc); 
+grav = getgravity(info, lmax=8,
+                xrange=[2.,22.],
+                yrange=[2.,22.],
+                zrange=[22.,26.],
+                range_unit=:kpc);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:57:35.792
-
+[Mera]: Get gravity data: 2026-08-31T13:27:58.948
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.60 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 229992 cells, 4 variables
@@ -671,13 +631,11 @@ Memory used for data table :14.038482666015625 MB
 -------------------------------------------------------
 ```
 
-
 **Available Physical Units:** The `range_unit` keyword accepts various length units defined in the simulation's `scale` field:
 
 ```julia
 viewfields(info.scale)  # or e.g.: grav.info.scale
 ```
-
 
 ```
 [Mera]: Fields to scale from user/code units to selected units
@@ -734,16 +692,16 @@ Ba	= 2.910484414358466e-9
 g_cm_s2	= 2.910484414358466e-9
 p_kB	= 2.1080552800592083e7
 K_cm3	= 2.1080552800592083e7
-erg_g_K	= 3.114563011649217e29
-keV_cm2	= 1.252773885965637e65
-erg_K	= 6.193464189866091e71
-J_K	= 6.193464189866091e64
-erg_cm3_K	= 2.1080552800592083e7
-J_m3_K	= 2.1080552800592083e8
+erg_g_K	= 1.0
+keV_cm2	= 1.0
+erg_K	= 1.9885499720830952e42
+J_K	= 1.988549972083095e35
+erg_cm3_K	= 6.76838218451376e-23
+J_m3_K	= 6.76838218451376e-24
 kB_per_particle	= 1.380649e-16
-J_s	= 4.023715412864333e70
+J_s	= 4.023715412864333e63
 g_cm2_s	= 4.023715412864333e70
-kg_m2_s	= 4.023715412864333e71
+kg_m2_s	= 4.023715412864333e63
 Gauss	= 0.00019124389093025845
 muG	= 191.24389093025846
 microG	= 191.24389093025846
@@ -756,26 +714,26 @@ erg_s	= 1.8172160775884043e41
 Lsol	= 4.747168436751317e7
 Lsun	= 4.747168436751317e7
 cm_3	= 3.4036771916893676e-65
-pc_3	= 1.158501842524895e-120
+pc_3	= 9.999999999980552e-10
 n_e	= 30.987773856809987
 erg_g_s	= 0.09138397843151959
 erg_cm3_s	= 6.185216915658869e-24
-erg_cm2_s	= 6.185216915658869e-24
-Jy	= 0.6185216915658869
-mJy	= 618.5216915658868
-microJy	= 618521.6915658868
+erg_cm2_s	= 0.019085585172014773
+Jy	= 8.98081650805659e35
+mJy	= 8.980816508056591e38
+microJy	= 8.98081650805659e41
 atoms_cm2	= 1.2581352511025663e23
 NH_cm2	= 1.2581352511025663e23
 cm_s2	= 1.3935734353956443e-8
 m_s2	= 1.3935734353956443e-10
 km_s2	= 1.3935734353956443e-13
-pc_Myr2	= 3.09843657823729e-9
+pc_Myr2	= 4.497666485038892
 erg_g	= 4.30011830747048e13
-J_kg	= 4.30011830747048e6
+J_kg	= 4.30011830747048e9
 km2_s2	= 4300.1183074704795
 u_grav	= 2.910484414358466e-9
 erg_cell	= 8.55100014027443e55
-dyne	= 9.432237612943517e-31
+dyne	= 2.7711904160517516e34
 s_2	= 4.516263928056473e-30
 lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
@@ -803,7 +761,7 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 9.432237612943517e-31
+Fg	= 2.7711904160517516e34
 poisson_source	= 4.5162639280564735e-30
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
@@ -818,38 +776,32 @@ rad	= 1.0
 deg	= 57.29577951308232
 ```
 
-
 **Center-Relative with Physical Units:** Combine center-relative positioning with physical unit specifications for precise gravitational field analysis:
 
 ```julia
-grav = getgravity(info, lmax=8, 
-                xrange=[-16.,16.], 
-                yrange=[-16.,16.], 
-                zrange=[-2.,2.], 
-                center=[24.,24.,24.], 
-                range_unit=:kpc); 
+grav = getgravity(info, lmax=8,
+                xrange=[-16.,16.],
+                yrange=[-16.,16.],
+                zrange=[-2.,2.],
+                center=[24.,24.,24.],
+                range_unit=:kpc);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:57:37.763
-
+[Mera]: Get gravity data: 2026-08-31T13:28:00.784
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.70 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -859,18 +811,17 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.024 seconds
+✓ Table created in 0.022 seconds
 Memory used for data table :39.725494384765625 MB
 -------------------------------------------------------
 ```
-
 
 ### Box Center Coordinate Shortcuts
 
 Mera provides convenient shortcuts for box-centered coordinate systems, simplifying gravitational field analysis focused on the simulation center.
 
 **Available Shortcuts:**
-- `:bc` or `:boxcenter` - Center coordinate for all dimensions  
+- `:bc` or `:boxcenter` - Center coordinate for all dimensions
 - Can be applied to individual dimensions selectively
 - Combines seamlessly with physical units and range specifications
 - Ideal for symmetric gravitational field analysis around simulation center
@@ -883,34 +834,29 @@ Mera provides convenient shortcuts for box-centered coordinate systems, simplify
 - Reduces coordinate specification errors in field filtering
 
 ```julia
-grav = getgravity(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:boxcenter], 
-                range_unit=:kpc); 
+grav = getgravity(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:boxcenter],
+                range_unit=:kpc);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:57:39.597
-
+[Mera]: Get gravity data: 2026-08-31T13:28:02.640
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.55 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -925,36 +871,30 @@ Memory used for data table :39.725494384765625 MB
 -------------------------------------------------------
 ```
 
-
 ```julia
-grav = getgravity(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc], 
-                range_unit=:kpc); 
+grav = getgravity(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc],
+                range_unit=:kpc);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:57:41.564
-
+[Mera]: Get gravity data: 2026-08-31T13:28:04.457
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.60 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -964,43 +904,37 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.026 seconds
+✓ Table created in 0.022 seconds
 Memory used for data table :39.725494384765625 MB
 -------------------------------------------------------
 ```
-
 
 **Selective Dimension Centering:** Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 24 kpc:
 
 ```julia
-grav = getgravity(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc, 24., :bc], 
-                range_unit=:kpc); 
+grav = getgravity(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc, 24., :bc],
+                range_unit=:kpc);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-05T15:57:43.464
-
+[Mera]: Get gravity data: 2026-08-31T13:28:06.256
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.60 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -1010,11 +944,10 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.023 seconds
+✓ Table created in 0.022 seconds
 Memory used for data table :39.725494384765625 MB
 -------------------------------------------------------
 ```
-
 
 ## Summary
 
@@ -1027,7 +960,7 @@ This notebook demonstrated comprehensive gravitational field data selection tech
 - **Syntax Variations:** Keyword and positional argument approaches for different coding styles
 - **Single vs. Multiple Variables:** Appropriate syntax for different gravitational analysis scenarios
 
-### Spatial Filtering Expertise  
+### Spatial Filtering Expertise
 - **Coordinate Systems:** RAMSES standard, physical units, center-relative, and box-centered approaches
 - **Gravitational Focus:** Targeting regions with significant gravitational effects
 - **Performance Optimization:** Using `lmax` restrictions and tight spatial bounds for field analysis
@@ -1040,3 +973,7 @@ This notebook demonstrated comprehensive gravitational field data selection tech
 - **Coordinate Shortcuts:** Using box center notation for simplified gravitational field positioning
 - **Quality Assurance:** Verifying loaded field data ranges and component consistency
 - **Multi-Physics Integration:** Preparing gravity data for combined hydro-gravity analysis
+
+---
+
+**The same steps on the other data types:** [Hydro](02_hydro_Load_Selections.md) · [Particles](02_particles_Load_Selections.md) · [Clumps](02_clumps_Load_Selections.md) · [Sinks](02_sinks_Load_Selections.md)

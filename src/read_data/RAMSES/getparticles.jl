@@ -8,7 +8,7 @@ function getparticles( dataobject::InfoType, var::Symbol;
                     xrange::Array{<:Any,1}=[missing, missing], # X spatial range [min, max]
                     yrange::Array{<:Any,1}=[missing, missing], # Y spatial range [min, max]
                     zrange::Array{<:Any,1}=[missing, missing], # Z spatial range [min, max]
-                    center::Array{<:Any,1}=[0., 0., 0.],     # Center point for ranges
+                    center::CenterType=[0., 0., 0.],     # Center point for ranges
                     range_unit::Symbol=:standard,            # Units for ranges
                     presorted::Bool=true,                    # Sort output table by key variables
                     print_filenames::Bool=false,             # Print each CPU file being read
@@ -43,7 +43,7 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     presorted::Bool=true,
                     print_filenames::Bool=false,
@@ -87,7 +87,7 @@ function getparticles( dataobject::InfoType;
                     xrange::Array{<:Any,1}=[missing, missing], # X spatial range [min, max]
                     yrange::Array{<:Any,1}=[missing, missing], # Y spatial range [min, max]
                     zrange::Array{<:Any,1}=[missing, missing], # Z spatial range [min, max]
-                    center::Array{<:Any,1}=[0., 0., 0.],     # Center point for ranges
+                    center::CenterType=[0., 0., 0.],     # Center point for ranges
                     range_unit::Symbol=:standard,            # Units for ranges (:standard, :kpc, etc.)
                     presorted::Bool=true,                    # Sort output table by key variables
                     print_filenames::Bool=false,             # Print each CPU file being read
@@ -188,7 +188,7 @@ function getparticles( dataobject::InfoType;
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     presorted::Bool=true,
                     print_filenames::Bool=false,
@@ -218,14 +218,14 @@ function getparticles( dataobject::InfoType;
     # ===== ARGUMENT OVERRIDE SECTION =====
     # Allow myargs struct to override individual function arguments
     # This provides a convenient way to pass multiple arguments at once
-    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
-    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
-    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
-    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
-    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
+    if !(myargs.lmax === missing) && isequal(lmax, dataobject.levelmax) lmax = myargs.lmax end
+    if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+    if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+    if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+    if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) && isequal(show_progress, true) show_progress = myargs.show_progress end
 
     # ===== INITIALIZATION AND VALIDATION =====
     verbose = checkverbose(verbose)                    # Validate and normalize verbose setting

@@ -80,12 +80,15 @@ function analyze_amr_structure(gas_data)
     
     # Basic metrics
     total_cells = length(gas_data.data)
-    data_size_gb = sizeof(gas_data.data) / 1024^3
+    data_size_gb = Base.summarysize(gas_data.data) / 1024^3   # sizeof() measures the wrapper, not the table
     println("Total cells: $(total_cells)")
     println("Data size: $(round(data_size_gb, digits=2)) GiB")
     
     # Refinement level analysis
-    levels = select(gas_data.data, :level)
+    # Uniform-grid data carries no :level column; treat it as a single level rather
+    # than throwing inside a benchmark.
+    levels = :level in colnames(gas_data.data) ? select(gas_data.data, :level) :
+             fill(gas_data.lmax, length(gas_data.data))
     unique_levels = sort(unique(levels))
     min_level, max_level = extrema(levels)
     
@@ -249,7 +252,10 @@ function perform_sanity_checks(gas_data)
     
     # Check 5: AMR levels
     try
-        levels = select(gas_data.data, :level)
+        # Uniform-grid data carries no :level column; treat it as a single level rather
+    # than throwing inside a benchmark.
+    levels = :level in colnames(gas_data.data) ? select(gas_data.data, :level) :
+             fill(gas_data.lmax, length(gas_data.data))
         unique_levels = unique(levels)
         level_range = extrema(levels)
         
@@ -345,17 +351,20 @@ function benchmark_single_variable_projection(gas_data, n_threads::Int, n_runs::
     for run in 1:n_runs
         print("    Run $run/$n_runs: ")
         
-        gc_start = time()
+        # Collect first so the timed section starts from a clean heap. The cost of THIS
+        # collection is not the projection's GC cost, so it is not what gets reported:
+        # the counters below capture only what the projection itself triggers.
         GC.gc()
-        gc_time = time() - gc_start
         mem_before = Base.gc_live_bytes()
-        
+        gc_before  = Base.gc_num().total_time
+
         start_time = time()
         try
             projection(gas_data, var, unit, verbose=false, show_progress=false, max_threads=n_threads)
             
             elapsed = time() - start_time
             mem_used = (Base.gc_live_bytes() - mem_before) / 1024^3
+            gc_time  = (Base.gc_num().total_time - gc_before) / 1e9   # GC caused by the projection
             
             push!(times, elapsed)
             push!(memory_usage, mem_used)
@@ -492,17 +501,20 @@ function benchmark_multi_variable_projection(gas_data, n_threads::Int, n_runs::I
     for run in 1:n_runs
         print("    Run $run/$n_runs: ")
         
-        gc_start = time()
+        # Collect first so the timed section starts from a clean heap. The cost of THIS
+        # collection is not the projection's GC cost, so it is not what gets reported:
+        # the counters below capture only what the projection itself triggers.
         GC.gc()
-        gc_time = time() - gc_start
         mem_before = Base.gc_live_bytes()
-        
+        gc_before  = Base.gc_num().total_time
+
         start_time = time()
         try
             projection(gas_data, vars, unit, verbose=false, show_progress=false, max_threads=n_threads)
             
             elapsed = time() - start_time
             mem_used = (Base.gc_live_bytes() - mem_before) / 1024^3
+            gc_time  = (Base.gc_num().total_time - gc_before) / 1e9   # GC caused by the projection
             
             push!(times, elapsed)
             push!(memory_usage, mem_used)

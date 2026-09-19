@@ -238,6 +238,22 @@ using DataStructures: SortedDict
     # to build the current `T`, filling missing fields with the
     # documented defaults.  We test with hand-built NamedTuples to
     # cover this fallback path without needing an old-layout .jld2.
+    # A String field that is NEW since the file was written must come back as "", not undefined.
+    # Leaving it unset let an old mera-file LOAD but not be SAVED again: JLD2 refuses to write an
+    # undefined field, so a legacy file round-tripped into one Mera could no longer read. Seen with
+    # FileNamesType.sinks on the AVALON files, which predate that field.
+    @testset "rconvert fills a missing String, so a legacy file can be re-saved" begin
+        nt = (output = "output_00390", info = "info_00390.txt")   # everything else absent
+        f  = JLD2.rconvert(Mera.FileNamesType, nt)
+        @test f isa Mera.FileNamesType
+        @test f.output == "output_00390"
+        for fld in fieldnames(Mera.FileNamesType)
+            @test isdefined(f, fld)                # the point: nothing is left unset
+        end
+        @test f.sinks == ""                        # honest "not recorded", and isfile("") is false
+        @test !isfile(f.sinks)
+    end
+
     @testset "rconvert ScalesType002 ← NamedTuple" begin
         nt = (kpc = 3.5, Msol = 1.989e33, km_s = 1.0e5, T_mu = 1234.5)
         s = JLD2.rconvert(Mera.ScalesType002, nt)

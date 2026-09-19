@@ -2,7 +2,7 @@
 #                     xrange::Array{<:Any,1}=[missing, missing],
 #                     yrange::Array{<:Any,1}=[missing, missing],
 #                     zrange::Array{<:Any,1}=[missing, missing],
-#                     center::Array{<:Any,1}=[0., 0., 0.],
+#                     center::CenterType=[0., 0., 0.],
 #                     range_unit::Symbol=:standard,
 #                     print_filenames::Bool=false,
 #                     verbose::Bool=verbose_mode)
@@ -23,7 +23,7 @@ function getclumps(dataobject::InfoType, vars::Array{Symbol,1};
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     print_filenames::Bool=false,
                     verbose::Bool=true,
@@ -58,7 +58,7 @@ getclumps(  dataobject::InfoType;
             xrange::Array{<:Any,1}=[missing, missing],
             yrange::Array{<:Any,1}=[missing, missing],
             zrange::Array{<:Any,1}=[missing, missing],
-            center::Array{<:Any,1}=[0., 0., 0.],
+            center::CenterType=[0., 0., 0.],
             range_unit::Symbol=:standard,
             print_filenames::Bool=false,
             verbose::Bool=true,
@@ -165,7 +165,7 @@ function getclumps(dataobject::InfoType;
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center::CenterType=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     print_filenames::Bool=false,
                     verbose::Bool=true,
@@ -175,12 +175,12 @@ function getclumps(dataobject::InfoType;
     _require_capability(dataobject, :clumps, "getclumps")
 
     # take values from myargs if given
-    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
-    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
-    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
-    if !(myargs.center        === missing)        center = myargs.center end
-    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
-    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+    if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+    if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+    if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+    if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+    if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
 
     verbose = checkverbose(verbose)
     printtime("Get clump data: ", verbose)

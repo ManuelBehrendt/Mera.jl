@@ -7,7 +7,7 @@ object contains afterwards. The narrative guide is
 ## Before loading
 
 [`checksimulations`](@ref) answers "what runs are on this disk?" and
-[`checkoutputs`](@ref) answers "which outputs does this run have?" — both worth reaching for
+[`checkoutputs`](@ref) answers "which outputs does this run have?", both worth reaching for
 before a path error rather than after one.
 
 ```@docs; canonical=false
@@ -18,7 +18,7 @@ checkoutputs
 
 ## Inspecting an object
 
-`viewfields` works on any Mera object and is the quickest way to see what you actually have —
+`viewfields` works on any Mera object and is the quickest way to see what you actually have,
 including [`InfoType`](@ref) sub-structures such as `info.scale` and `info.fnames`.
 
 ```@docs; canonical=false
@@ -54,8 +54,36 @@ createpath
 
 ## Related
 
-Provenance — which Mera version, output and simulation code produced a result — is
+Provenance, which Mera version, output and simulation code produced a result, is
 [`provenance`](@ref), documented on the [Provenance](../provenance.md) page.
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Function Reference
+
+```@docs
+getextent
+getpositions
+getvelocities
+capabilities
+supports
+register_reader!
+provenance
+provenance_string
+mera_build
+quicklook
+quicklookplot
+```
+
+## Simulation Build Information
+
+RAMSES records how the binary that produced an output was built. These print
+that record back, which is what you need when a result has to be traced to a
+specific code version.
+
+```@docs
+makefile
+patchfile
+timerfile
+```

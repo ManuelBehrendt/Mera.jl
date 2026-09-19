@@ -1,0 +1,110 @@
+name: Fixtures
+
+# The data-backed tier. CI.yml runs only the data-free tests (MERA_SMOKE_ONLY=1) because the
+# runners have no simulation data; this workflow supplies that data by downloading the public
+# fixtures published as release assets, so the reader -> getvar -> region -> projection chain and
+# the RAMSES reference solutions are exercised on every push too, not only on the maintainer's
+# laptop.
+#
+# The fixtures live as assets on the `testdata-v1` tag, NOT in the git tree: Mera is a registered
+# package, so anything committed here would be downloaded by every Pkg.add("Mera") and would stay
+# in history forever.
+
+on:
+  # No push or pull_request trigger, and this is not the old "the release does not exist yet"
+  # reason: testdata-v1 is published with 12 assets and the download works.
+  #
+  # The blocker is the test suite's data model. Setting MERA_TEST_DATA flips one global
+  # DATA_AVAILABLE flag (test/test_config.jl), after which the data-backed tier assumes EVERY
+  # simulation is present. The public release is a subset: it has no spiral_clumps, mw_L10 or
+  # manu_sim_sf_L14, so a dozen test files reach for a fixture that a runner cannot have and the
+  # job fails on missing data rather than on a defect. Measured on 2026-09-14: the `small` set
+  # failed in 16 minutes with "File or folder does not exist: .../RAMSES/spiral_clumps".
+  #
+  # The nightly schedule is off for the same reason: it would go red every morning on missing
+  # data, which is noise rather than signal.
+  #
+  # Restore push, pull_request and the schedule together once those files guard per fixture, the
+  # way test/63_region_coverage_tests.jl already does:
+  #     if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
+  # Until then this is manual, so a red run is always something a person chose to look at.
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  fixtures:
+    # `small` on every push (~130 MB); the nightly run adds ramses_smbh_bondi (165 MB), whose
+    # 40 published reference quantities are the most expensive to fetch and the least likely to
+    # regress from an ordinary code change.
+    name: Data-backed (${{ matrix.set }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - set: small
+            flag: --small
+          - set: full
+            flag: --all
+    steps:
+      - uses: actions/checkout@v5
+
+      # Skip the expensive `full` set unless this is the nightly run or a manual dispatch.
+      - name: Should this set run?
+        id: gate
+        run: |
+          if [ "${{ matrix.set }}" = "full" ] && \
+             [ "${{ github.event_name }}" != "schedule" ] && \
+             [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: julia-actions/setup-julia@v2
+        if: steps.gate.outputs.run == 'true'
+        with:
+          version: '1.12'
+      - uses: julia-actions/cache@v2
+        if: steps.gate.outputs.run == 'true'
+      - uses: julia-actions/julia-buildpkg@v1
+        if: steps.gate.outputs.run == 'true'
+
+      # Cache the unpacked fixtures on the SHA256SUMS content: when the manifest changes the
+      # fixtures changed, so the key changes and they are re-fetched.
+      - name: Cache fixtures
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/cache@v4
+        with:
+          path: testdata/fixtures
+          key: fixtures-${{ matrix.set }}-${{ hashFiles('testdata/SHA256SUMS') }}
+
+      - name: Fetch fixtures
+        if: steps.gate.outputs.run == 'true'
+        run: ./testdata/fetch_fixtures.sh ${{ matrix.flag }}
+
+      - name: Data-backed tests
+        if: steps.gate.outputs.run == 'true'
+        env:
+          MERA_TEST_DATA: ${{ github.workspace }}/testdata/fixtures
+          # MERA_SMOKE_ONLY=1 is REQUIRED here, not a contradiction. The maintainer-local tier
+          # (spiral_clumps, mw_L10, ...) is gated on DATA_AVAILABLE, which is merely
+          # isdir(MERA_TEST_DATA) — so pointing that at the downloaded fixtures would make the
+          # runner try to open datasets that are not published, and the job would fail on its
+          # first run. The public-fixture oracles are NOT affected: 76/77 sit in the always-run
+          # block and guard themselves on PUBLIC_AVAILABLE, which the download satisfies.
+          MERA_SMOKE_ONLY: "1"
+          JULIA_NUM_THREADS: "4"
+        run: julia --project -e 'using Pkg; Pkg.test("Mera")'
+
+      # The measured diagnostics: what each oracle actually got, next to what theory says.
+      # Useful on a failure, and the artifact a reviewer can inspect without running anything.
+      - name: Upload diagnostics
+        if: steps.gate.outputs.run == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{ matrix.set }}
+          path: test/results/
+          if-no-files-found: ignore

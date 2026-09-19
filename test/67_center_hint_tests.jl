@@ -218,4 +218,22 @@
             @test !(v in Mera._CENTER_RELATIVE_VARS)
         end
     end
+
+    # The list above is hand-written, so it can only catch what someone remembered to add. That is
+    # exactly how six gravity force components shipped unlisted on 2026-08-30: they were measured
+    # about the box corner and said nothing. This derives the expectation from the IMPLEMENTED
+    # fields instead, so a new frame-relative quantity fails until it is registered.
+    @testset "every implemented _sphere/_cylinder quantity is registered" begin
+        frame_shaped(v) = occursin("_sphere", String(v)) || occursin("_cylinder", String(v))
+        # Sinks store :l as RAMSES's own spin column, not a frame-relative derivation.
+        exempt = Set{Symbol}()
+        for kind in (:hydro, :gravity, :particles, :rt)
+            fields = try Mera.list_fields(kind; builtin=true) catch; Symbol[] end
+            for v in fields
+                frame_shaped(v) || continue
+                v in exempt && continue
+                @test v in Mera._CENTER_RELATIVE_VARS
+            end
+        end
+    end
 end

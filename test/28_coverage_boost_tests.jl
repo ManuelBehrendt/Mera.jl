@@ -27,7 +27,7 @@
 #   14_io_notifications.jl         -- viewdata verbose, checkoutputs,
 #                                     getinfo verbose
 #   20_clump_tests.jl              -- clump getvar + subregion
-#   21_untested_surfaces_tests.jl  -- gravity a_magnitude / escape_speed,
+#   21_untested_surfaces_tests.jl  -- gravity a_magnitude,
 #                                     particle r_sphere / r_cylinder /
 #                                     v² decompositions, subregion on
 #                                     gravity / particles
@@ -55,7 +55,6 @@
 #     clumps) -- the public helper that wraps a filtered IndexedTable
 #     back into a Mera *DataType
 #   - Gravity-derived variables NOT in 21:
-#       * :gravitational_redshift   (finiteness)
 #       * :specific_gravitational_energy (finiteness)
 #   - Particle-derived variables NOT in 21:
 #       * :ekin   (positivity)
@@ -210,14 +209,9 @@ else
     # ========================================================================
     # Gravity derived variables NOT in 21
     # ========================================================================
-    # 21 owns :a_magnitude and :escape_speed against hand-formulas.
-    # The two redshift/specific-energy variables below have no clean
-    # closed form (mix sound-speed / G·m/r conventions), so we only
-    # assert finiteness.
+    # 21 owns :a_magnitude against hand-formulas. :gravitational_redshift was removed on
+    # 2026-08-30 (arbitrary potential zero point), so only specific energy remains here.
     @testset "Gravity derived variables (long tail)" begin
-        z_grav = getvar(grav, :gravitational_redshift)
-        @test all(isfinite.(z_grav))
-
         e_grav = getvar(grav, :specific_gravitational_energy)
         @test all(isfinite.(e_grav))
     end

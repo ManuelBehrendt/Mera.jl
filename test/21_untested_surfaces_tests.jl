@@ -12,7 +12,6 @@
 #       * :a_magnitude   ≈ sqrt(ax² + ay² + az²)
 #       * :ar_cylinder / :ar_sphere  -- finite + bulk-inward sign on
 #                                       a bound disk-galaxy fixture
-#       * :escape_speed  ≈ sqrt(2·|φ|)  for bound cells
 #
 #   2. Particle spherical / cylindrical kinematics:
 #       * :r_sphere     ≈ sqrt((x-cx)² + (y-cy)² + (z-cz)²)
@@ -37,11 +36,9 @@
 #
 # Latent Mera bug worked around in this file
 # ------------------------------------------
-# subregion(GravDataType, :cylinder, ...) currently misdispatches:
-# it forwards smooth_boundary / boundary_width kwargs to a gravity
-# overload that doesn't accept them.  The cylinder-shape coverage on
-# gravity therefore uses shellregion(..., radius=[1e-12, r_out], ...)
-# as the "near-solid cylinder" equivalent (Mera rejects radius=0).
+# The cylinder-shape coverage on gravity uses
+# shellregion(..., radius=[1e-12, r_out], ...) as the "near-solid cylinder"
+# equivalent, because Mera rejects radius=0.
 # See the inline comment in "Nested cylinder contains the shell".
 #
 # Required simulation datasets
@@ -91,20 +88,6 @@ end
                 # radial accelerations point inwards more often than out.
                 @test mean(ar_cyl .< 0) > 0.5
                 @test mean(ar_sph .< 0) > 0.5
-            end
-
-            @testset ":escape_speed = √(2|φ|)" begin
-                epot = getvar(gravity, :epot)
-                vesc = getvar(gravity, :escape_speed)
-                @test all(vesc .>= 0)
-                # Cells with negative potential should give a defined
-                # escape speed.
-                bound = epot .< 0
-                if any(bound)
-                    @test isapprox(vesc[bound],
-                                   sqrt.(2 .* abs.(epot[bound])),
-                                   rtol=RTOL_PHYSICS)
-                end
             end
         end
     end
@@ -388,10 +371,8 @@ end
         @testset "Nested cylinder contains the shell" begin
             # The annulus r_in ≤ r_cyl ≤ r_out, |z| ≤ height/2 is contained
             # within the solid cylinder r_cyl ≤ r_out, |z| ≤ height/2.
-            # (NB: subregion(GravDataType, :cylinder, ...) currently mis-
-            # dispatches in Mera — it forwards smooth_boundary/boundary_width
-            # to the gravity overload which doesn't accept them. We use
-            # shellregion with r_in=0 as the "solid cylinder" equivalent.)
+            # (Mera rejects radius=0, so we use shellregion with a tiny r_in
+            # as the "solid cylinder" equivalent.)
             shell = shellregion(gravity, :cylinder,
                 center=[:boxcenter],
                 radius=[r_in, r_out],

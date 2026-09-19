@@ -11,10 +11,14 @@ only the part of the box you need rather than filtering afterwards.
 ## Loaders
 
 ```@docs; canonical=false
+loadall
+@loadall
+withargs
 gethydro
 getparticles
 getgravity
 getclumps
+getsinks
 getrt
 getgroups
 ```
@@ -44,3 +48,14 @@ see the [Mera-Files API](mera_files.md).
 
 ---
 *Every docstring in the package is also on the [Complete API Reference](../api.md).*
+
+## Covering Grid
+
+```@docs
+covering_grid
+covering_grid_memory
+```
+
+```@docs
+download_testdata
+```
