@@ -55,7 +55,7 @@ function _make_fixture(dir; quokka::Bool=false)
     l1 = AMReXTestLevel([((16,4,16), (31,11,47))], (0,0,0), (31,15,63))
     fields = quokka ? ["gasDensity", "x-GasMomentum", "y-GasMomentum", "z-GasMomentum",
                        "gasInternalEnergy"] : _AMREX_FIELDS
-    meta = quokka ? "quokka_version: 25.03\nunits:\n  unit_length: 1\n  unit_mass: 1\n  unit_time: 1\n" : nothing
+    meta = quokka ? _QUOKKA_FIXTURE_METADATA : nothing
     write_amrex_plotfile(dir, fields, [l0, l1];
                          domain_lo=(-1.0, 2.0, 0.0), domain_hi=(3.0, 4.0, 8.0),
                          time=1.25, ref_ratio=[2],
@@ -242,21 +242,71 @@ end
         qdir = _make_fixture(joinpath(tmp, "plt00011"); quokka=true)
         info = getinfo_quokka(11, qdir; verbose=false)
         @test info.simcode == "Quokka"
-        @test info.unit_l == 1.0 && info.unit_m == 1.0 && info.unit_t == 1.0
+        # fixture units are deliberately ≠ 1 (see _QUOKKA_FIXTURE_METADATA)
+        @test info.unit_l ≈ 3.08567758128e21
+        @test info.unit_m ≈ 1.9891e33
+        @test info.unit_t ≈ 3.15576e13
+        @test amrex_meta(info)[:unit_temperature] ≈ 1.0e8
+        @test info.constants.kB ≈ 1.3806488e-16          # from metadata, not Mera default
+        @test info.constants.k_B ≈ info.constants.kB
+        @test info.constants.G ≈ 6.6743e-8
+        @test info.unit_d ≈ info.unit_m / info.unit_l^3
+        @test info.scale.kpc ≈ info.unit_l / info.constants.kpc
         @test info.variable_list == [:rho, :vx, :vy, :vz, :eint, :p, :temperature]
-        # the same bytes through the Quokka names give the same numbers as the generic path
+        # the same bytes through the Quokka names give the same code-unit numbers as the
+        # generic path (rho / velocity do not depend on the unit factors)
         gq = gethydro(info; verbose=false, show_progress=false)
         gg = gethydro(getinfo_amrex(7, plotdir; verbose=false); verbose=false, show_progress=false)
         @test getvar(gq, :rho) == getvar(gg, :rho)
         @test getvar(gq, :vx)  == getvar(gg, :vx)
+        # derived temperature must use the file k_B and unit_v² (wrong factor → fail)
+        Tq = getvar(gq, :temperature)
+        Tex = (info.gamma - 1) .* getvar(gq, :eint) ./ getvar(gq, :rho) .*
+              (1.0 * info.constants.amu / info.constants.kB) .* info.unit_v^2
+        @test Tq ≈ Tex
+        @test info.constants.kB != Mera.createconstants().kB   # fixture k_B ≠ default
 
-        # `.nan` units mean "no units recorded" — read as 1, never as NaN
-        nan_meta = "quokka_version: 25.03\nunits:\n  unit_length: .nan\n  unit_mass: .nan\n  unit_time: .nan\nconstants:\n  k_B: 1\n"
+        # `.nan` units (UnitSystem::CONSTANTS) → code units = 1, physics in constants:
+        nan_meta = """
+            quokka_version: 25.03
+            units:
+              unit_length: .nan
+              unit_mass: .nan
+              unit_time: .nan
+              unit_temperature: .nan
+            constants:
+              k_B: 1.0
+              G: 2.0
+              c: 3.0
+              a_rad: 7.5657e-15
+              c_hat: 2.99792458e10
+            """
         ndir = joinpath(tmp, "plt00012")
         _make_fixture(ndir; quokka=true)
         write(joinpath(ndir, "metadata.yaml"), nan_meta)
         inan = getinfo_quokka(12, ndir; verbose=false)
         @test inan.unit_l == 1.0 && isfinite(inan.unit_d) && inan.unit_d == 1.0
+        @test amrex_meta(inan)[:unit_temperature] == 1.0
+        @test inan.constants.kB == 1.0 && inan.constants.k_B == 1.0
+        @test inan.constants.G == 2.0 && inan.constants.c == 3.0
+        # radiation-only keys have no PhysicalUnitsType slot — kept in the stash
+        @test amrex_meta(inan)[:file_constants]["a_rad"] ≈ 7.5657e-15
+
+        # stored temperature × unit_temperature → kelvin (CUSTOM)
+        tdir = joinpath(tmp, "plt00013")
+        l0t = AMReXTestLevel([((0,0,0), (3,3,3))], (0,0,0), (3,3,3))
+        write_amrex_plotfile(tdir, ["gasDensity", "temperature"], [l0t];
+                             domain_lo=(0.0,0.0,0.0), domain_hi=(1.0,1.0,1.0),
+                             value=(n, x, y, z) -> n == "gasDensity" ? 1.0 : 2.5,
+                             metadata=_QUOKKA_FIXTURE_METADATA)
+        it = getinfo_quokka(13, tdir; verbose=false)
+        @test occursin("unit_temperature", amrex_provenance(it)[:temperature])
+        gt = gethydro(it; vars=[:temperature], verbose=false, show_progress=false)
+        @test all(getvar(gt, :temperature) .≈ 2.5 * 1.0e8)
+        # keyword override of unit_temperature
+        it2 = getinfo_quokka(13, tdir; unit_temperature=10.0, verbose=false)
+        gt2 = gethydro(it2; vars=[:temperature], verbose=false, show_progress=false)
+        @test all(getvar(gt2, :temperature) .≈ 25.0)
 
         # explicit units override the side-car and propagate to the scale system
         icgs = getinfo_quokka(11, qdir; unit_length=3.0857e21, unit_mass=1.989e33,
@@ -370,6 +420,15 @@ end
         @test Mera._reader(:amrex).select_vars
         @test Mera._reader(:quokka).select_vars
         @test !Mera._reader(:pluto).select_vars
+    end
+
+    @testset "amrex_project defaults to serial and refuses max_threads>1" begin
+        info = getinfo_amrex(7, plotdir; verbose=false)
+        img = amrex_project(c -> c.rho, info; vars=[:rho], verbose=false, show_progress=false)
+        @test size(img.image) == (16, 8)          # level-0 transverse for :z
+        @test img.ncells > 0
+        @test_throws ErrorException amrex_project(c -> c.rho, info; vars=[:rho],
+                                                  max_threads=2, verbose=false, show_progress=false)
     end
 
     @testset "unsupported geometry is refused, not approximated" begin

@@ -75,7 +75,7 @@ function _synth_amrex(dir; quokka::Bool=true)
                          domain_lo=(0.0, 0.0, 0.0), domain_hi=(1.0, 1.0, 1.0),
                          time=0.0, ref_ratio=[2],
                          value=(n, x, y, z) -> startswith(n, "gasDensity") || n == "density" ? 1.0 : 0.0,
-                         metadata=(quokka ? "quokka_version: 25.03\nunits:\n  unit_length: 1\n  unit_mass: 1\n  unit_time: 1\n" : nothing))
+                         metadata=(quokka ? _QUOKKA_FIXTURE_METADATA : nothing))
 end
 
 # ---- the universal contract every reader must satisfy ------------------------------------------

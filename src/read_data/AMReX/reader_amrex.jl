@@ -458,7 +458,7 @@ end
 
 """
     amrex_field_spec(fields; varmap=AMREX_VARMAP, gamma=5/3, mu=1.0, unit_v=1.0,
-                     constants=createconstants()) -> AMReXFieldSpec
+                     unit_temperature=1.0, constants=createconstants()) -> AMReXFieldSpec
 
 Build the stored-component → Mera-column translation for a plotfile whose components are
 `fields`.
@@ -472,8 +472,12 @@ is written against them:
 * `:temperature` — in **kelvin**, by this cascade (the order matters, and the choice is
   reported in `provenance`):
 
-  1. a stored temperature component, taken as ground truth;
-  2. else the stored internal energy density: `T = (γ−1)·e_int/ρ · μ·m_u/k_B`;
+  1. a stored temperature component, scaled by `unit_temperature` (code → kelvin). When
+     `unit_temperature == 1` (CGS / identity), the field is already kelvin and is taken as
+     ground truth; under Quokka `UnitSystem::CUSTOM` the field is code units and this factor
+     is required.
+  2. else the stored internal energy density: `T = (γ−1)·e_int/ρ · μ·m_u/k_B`
+     (with `k_B` / `amu` from `constants`, and code specific energy × `unit_v²`);
   3. else the total energy density minus the kinetic term (and the magnetic term
      `B²/8π` when the run stores a field), then as (2).
 
@@ -483,10 +487,13 @@ is written against them:
 """
 function amrex_field_spec(fields::Vector{String}; varmap::AbstractDict=AMREX_VARMAP,
                           gamma::Real=5/3, mu::Real=1.0, unit_v::Real=1.0,
+                          unit_temperature::Real=1.0,
                           constants=createconstants())
     γ = Float64(gamma); μ = Float64(mu)
     kB = constants.kB; amu = constants.amu
     v2 = Float64(unit_v)^2                       # code specific energy → cgs (cm²/s²)
+    uT = Float64(unit_temperature)
+    (isfinite(uT) && uT != 0.0) || (uT = 1.0)
     spec = AMReXFieldSpec()
 
     # ---- classify the stored components ------------------------------------------------
@@ -516,6 +523,16 @@ function amrex_field_spec(fields::Vector{String}; varmap::AbstractDict=AMREX_VAR
             _spec_add!(spec, sym, [ci, irho],
                        c -> c[ci] ./ c[irho],
                        "stored: $(fields[ci+1]) / density")
+        elseif role === :temp
+            # code → kelvin via unit_temperature (identity under CGS / unit factors of 1)
+            if uT == 1.0
+                _spec_add!(spec, sym, [ci], c -> c[ci],
+                           "stored: $(fields[ci+1])  [kelvin, ground truth]")
+            else
+                _uT = uT
+                _spec_add!(spec, sym, [ci], c -> c[ci] .* _uT,
+                           "stored: $(fields[ci+1]) × unit_temperature=$uT → kelvin")
+            end
         elseif role === :eint
             _spec_add!(spec, sym, [ci], c -> c[ci], "stored: $(fields[ci+1])")
         else
@@ -565,9 +582,12 @@ function amrex_field_spec(fields::Vector{String}; varmap::AbstractDict=AMREX_VAR
     # ---- temperature, by the documented cascade ----------------------------------------
     if !isempty(itemp)
         ci = itemp[1][3]
-        # already added above as a direct column; just record the provenance clearly
-        spec.provenance[itemp[1][1]] = "stored: $(fields[ci+1])  [kelvin, ground truth]"
-        push!(spec.notes, "temperature :$(itemp[1][1]) read from the stored field \"$(fields[ci+1])\"")
+        # column already added above (with unit_temperature scaling when needed)
+        if uT == 1.0
+            push!(spec.notes, "temperature :$(itemp[1][1]) read from the stored field \"$(fields[ci+1])\" [kelvin]")
+        else
+            push!(spec.notes, "temperature :$(itemp[1][1]) = stored \"$(fields[ci+1])\" × unit_temperature=$uT → kelvin")
+        end
     elseif eint_f !== nothing && irho !== nothing
         f = eint_f
         deps = unique(vcat(eint_deps, irho))
@@ -1045,13 +1065,14 @@ function _amrex_rebuild_spec(info::InfoType, pf::AMReXPlotfile)
     m = amrex_meta(info)
     builder = get(m, :specbuilder, :amrex)::Symbol
     mu = Float64(get(m, :mu, 1.0))
+    uT = Float64(get(m, :unit_temperature, 1.0))
     if builder === :quokka
         return quokka_field_spec(pf.fields; gamma=info.gamma, mu=mu, unit_v=info.unit_v,
-                                 constants=info.constants)
+                                 unit_temperature=uT, constants=info.constants)
     end
     return amrex_field_spec(pf.fields; varmap=get(m, :varmap, AMREX_VARMAP)::AbstractDict,
                             gamma=info.gamma, mu=mu, unit_v=info.unit_v,
-                            constants=info.constants)
+                            unit_temperature=uT, constants=info.constants)
 end
 
 # Read one box and scatter its leaf cells into the output columns.
@@ -1520,18 +1541,19 @@ end
 """
     amrex_project(kernel, info; direction=:z, nx=nothing, res=nothing, vars,
                   weight=nothing, xrange, yrange, zrange, center, range_unit,
-                  max_threads=Threads.nthreads(), verbose=true, show_progress=true)
+                  max_threads=1, verbose=true, show_progress=true)
 
 A line-of-sight projection computed **while streaming**, for plotfiles too large to load.
 
-!!! warning "Not thread-safe: pass `max_threads = 1`"
-    With `max_threads > 1` this loses scattered cell contributions and the result is not
-    reproducible. Two identical 16-thread runs over a 1024×1024×8192 Quokka plotfile
-    disagreed with yt on 15 and on 81 pixels respectively, with **no overlap** between the
-    two sets, each time dropping a whole cell's contribution to a pixel rather than
-    perturbing it; the totals were low by 5e-7 and 1e-6 relative. `max_threads = 1` is
-    exact (checked against yt over 5.26 million pixels: max relative difference 1.3e-15,
-    identical totals), at roughly 2.4× the wall time.
+!!! warning "Not thread-safe: `max_threads` defaults to 1"
+    Multi-thread mode (`max_threads > 1`) loses scattered cell contributions and the result
+    is not reproducible, so the default is serial until that race is fixed. Two identical
+    16-thread runs over a 1024×1024×8192 Quokka plotfile disagreed with yt on 15 and on 81
+    pixels respectively, with **no overlap** between the two sets, each time dropping a
+    whole cell's contribution to a pixel rather than perturbing it; the totals were low by
+    5e-7 and 1e-6 relative. `max_threads = 1` is exact (checked against yt over 5.26 million
+    pixels: max relative difference 1.3e-15, identical totals), at roughly 2.4× the wall
+    time of a (broken) 16-thread run.
 
     `amrex_foreach_box` itself is *not* implicated — a caller that streams with it and
     accumulates into its own `task_local_storage` buffers reproduces yt exactly at 16
@@ -1595,9 +1617,14 @@ function amrex_project(kernel::Function, info::InfoType;
                        weight::Union{Nothing,Function}=nothing,
                        xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
                        center=[0., 0., 0.], range_unit::Symbol=:standard,
-                       max_threads::Int=Threads.nthreads(),
+                       max_threads::Int=1,
                        verbose::Bool=true, show_progress::Bool=true)
     direction in (:x, :y, :z) || error("[Mera] amrex_project: direction must be :x, :y or :z.")
+    max_threads > 1 && error(
+        "[Mera] amrex_project: max_threads=$max_threads is refused — multi-thread projection " *
+        "currently drops scattered cell contributions (non-reproducible under-count). " *
+        "Use the default max_threads=1, or stream with amrex_foreach_box and your own " *
+        "per-task accumulators (see scripts/quokka_neutral_projection_mera.jl).")
     m = amrex_meta(info)
     pf = read_amrex_header(m[:plotfile]::String)
     _amrex_check_geometry(pf)

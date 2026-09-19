@@ -142,6 +142,47 @@ function _quokka_unit(units, key::String, default::Float64=1.0)
     return x
 end
 
+# Quokka metadata `constants:` keys → PhysicalUnitsType002 field(s). Radiation-only keys
+# (`a_rad`, `c_hat`, …) have no Mera slot; they stay in amrex_meta[:file_constants].
+const _QUOKKA_CONST_FIELDS = Dict{String,Tuple{Symbol,Vararg{Symbol}}}(
+    "k_B"  => (:kB, :k_B),
+    "kB"   => (:kB, :k_B),
+    "G"    => (:G,),
+    "c"    => (:c,),
+    "m_u"  => (:amu, :m_u),
+    "amu"  => (:amu, :m_u),
+    "mH"   => (:mH,),
+    "mp"   => (:mp,),
+    "h"    => (:h,),
+    "hbar" => (:hbar,),
+)
+
+"""
+    _quokka_apply_constants!(constants, meta_constants) -> constants
+
+Overlay Quokka's `metadata.yaml` `constants:` block onto a Mera `PhysicalUnitsType`.
+Known keys (`k_B`, `G`, `c`, …) update the matching fields; aliases (`kB`/`k_B`,
+`amu`/`m_u`) stay in sync. Unknown keys are ignored here (kept in the stash for callers).
+
+This matters for `UnitSystem::CONSTANTS`, where Quokka sets all four `unit_*` to NaN and
+the real physics lives only in this block — without it, temperature reconstruction would
+use Mera's default `kB` against a dimensionless energy density.
+"""
+function _quokka_apply_constants!(constants, meta_constants)
+    meta_constants isa AbstractDict || return constants
+    for (k, v) in meta_constants
+        v isa Number || continue
+        x = Float64(v)
+        isfinite(x) || continue
+        fields = get(_QUOKKA_CONST_FIELDS, String(k), nothing)
+        fields === nothing && continue
+        for f in fields
+            setfield!(constants, f, x)
+        end
+    end
+    return constants
+end
+
 # ------------------------------------------------------------------------------------
 # Component names
 # ------------------------------------------------------------------------------------
@@ -193,15 +234,19 @@ function quokka_varmap(fields::Vector{String})
 end
 
 """
-    quokka_field_spec(fields; gamma=5/3, mu=1.0, unit_v=1.0, constants=…) -> AMReXFieldSpec
+    quokka_field_spec(fields; gamma=5/3, mu=1.0, unit_v=1.0, unit_temperature=1.0,
+                      constants=…) -> AMReXFieldSpec
 
 The Quokka field translation: [`amrex_field_spec`](@ref) driven by [`quokka_varmap`](@ref).
 Everything about derived pressure and the temperature cascade is documented there.
+`unit_temperature` scales a stored temperature field from code units to kelvin (identity
+under CGS / unit factors of 1; required for Quokka `UnitSystem::CUSTOM`).
 """
 quokka_field_spec(fields::Vector{String}; gamma::Real=5/3, mu::Real=1.0, unit_v::Real=1.0,
+                  unit_temperature::Real=1.0,
                   constants=createconstants()) =
     amrex_field_spec(fields; varmap=quokka_varmap(fields), gamma=gamma, mu=mu,
-                     unit_v=unit_v, constants=constants)
+                     unit_v=unit_v, unit_temperature=unit_temperature, constants=constants)
 
 """
     quokka_radiation_groups(fields) -> Int
@@ -308,23 +353,28 @@ end
 """
     getinfo_quokka(output::Int, path::String; gamma=5/3, mu=1.0, prefix="plt",
                    unit_length=nothing, unit_mass=nothing, unit_time=nothing,
-                   verbose=true) -> InfoType
+                   unit_temperature=nothing, verbose=true) -> InfoType
 
 Read a Quokka plotfile's metadata into a Mera `InfoType` (`simcode = "Quokka"`). `path`
 may be the plotfile directory itself or the run directory holding `plt<output>` with any
 zero-padding, so `getinfo(145664, "run1/")` finds `run1/plt0145664`.
 
-**Units** come from `metadata.yaml`. Quokka records `unit_length` [cm], `unit_mass` [g] and
-`unit_time` [s]; a dimensionless run writes `.nan` for all of them, which is read as 1 —
-i.e. the data is taken as already CGS, which is what a Quokka run with unit factors of 1
-means. `unit_length` / `unit_mass` / `unit_time` keywords override the file, for a run
-whose side-car is missing or wrong. Everything downstream (`:kpc`, `:Msol`, `:Myr`, …)
-follows from these.
+**Units** come from `metadata.yaml`. Quokka records four factors — `unit_length` [cm],
+`unit_mass` [g], `unit_time` [s], and `unit_temperature` [K] — plus a `constants:` block
+(`k_B`, `G`, `c`, and radiation constants when present). A dimensionless run
+(`UnitSystem::CONSTANTS`) writes `.nan` for all four units; those are read as 1 (code
+units), and the physics then lives in `constants:`, which is overlaid onto
+`info.constants` before temperature reconstruction. Under `UnitSystem::CUSTOM` a stored
+temperature field is in code units and is scaled by `unit_temperature` to kelvin; under
+CGS (`unit_* = 1`) the field is already kelvin. The `unit_length` / `unit_mass` /
+`unit_time` / `unit_temperature` keywords override the file. Everything downstream
+(`:kpc`, `:Msol`, `:Myr`, …) follows from the length/mass/time factors.
 
 **`gamma` and `mu`** are ASSUMPTIONS, not file contents: a plotfile records neither.
 `gamma` (default 5/3) sets the derived pressure; `mu` (default 1.0 atomic mass units) is
 used only when `:temperature` has to be reconstructed from an energy density. Both are
-echoed in the summary and kept in [`amrex_provenance`](@ref).
+echoed in the summary and kept in [`amrex_provenance`](@ref). Derived temperature uses
+`info.constants.kB` / `amu` (after the metadata overlay).
 
 Feed the result to [`gethydro`](@ref) and [`getparticles`](@ref); `supports(info, …)` and
 [`amrex_extent`](@ref) tell you the rest.
@@ -334,40 +384,56 @@ function getinfo_quokka(output::Int, path::String; gamma::Real=5/3, mu::Real=1.0
                         unit_length::Union{Nothing,Real}=nothing,
                         unit_mass::Union{Nothing,Real}=nothing,
                         unit_time::Union{Nothing,Real}=nothing,
+                        unit_temperature::Union{Nothing,Real}=nothing,
                         verbose::Bool=true)
     plotdir = amrex_plotfile(output, path; prefix=prefix)
     pf = read_amrex_header(plotdir)
     _amrex_check_geometry(pf)
     meta = read_quokka_metadata(plotdir)
     units = get(meta, "units", nothing)
+    file_constants = get(meta, "constants", nothing)
 
-    L = unit_length === nothing ? _quokka_unit(units, "unit_length") : Float64(unit_length)
-    M = unit_mass   === nothing ? _quokka_unit(units, "unit_mass")   : Float64(unit_mass)
-    T = unit_time   === nothing ? _quokka_unit(units, "unit_time")   : Float64(unit_time)
+    L  = unit_length      === nothing ? _quokka_unit(units, "unit_length")      : Float64(unit_length)
+    M  = unit_mass        === nothing ? _quokka_unit(units, "unit_mass")        : Float64(unit_mass)
+    T  = unit_time        === nothing ? _quokka_unit(units, "unit_time")        : Float64(unit_time)
+    uT = unit_temperature === nothing ? _quokka_unit(units, "unit_temperature") : Float64(unit_temperature)
+
+    # Constants must be ready before the field spec: derived temperature uses kB / amu,
+    # and UnitSystem::CONSTANTS puts the only usable physics in metadata.yaml.
+    consts = createconstants()
+    _quokka_apply_constants!(consts, file_constants)
 
     info = InfoType()
     info.gamma = Float64(gamma)
     info.unit_l = L; info.unit_t = T; info.unit_m = M
     info.unit_d = M / L^3
     info.unit_v = L / T
-    spec = quokka_field_spec(pf.fields; gamma=gamma, mu=mu, unit_v=info.unit_v)
+    spec = quokka_field_spec(pf.fields; gamma=gamma, mu=mu, unit_v=info.unit_v,
+                             unit_temperature=uT, constants=consts)
     _amrex_fill_info!(info, pf, output, path, "Quokka", copy(spec.outputs))
     _amrex_finish_info!(info, pf, plotdir, spec,
         Dict{Symbol,Any}(:specbuilder => :quokka,
                          :mu => Float64(mu),
+                         :unit_temperature => uT,
                          :metadata => meta,
+                         :file_constants => file_constants,
                          :quokka_version => string(get(meta, "quokka_version", "")),
                          :radiation_groups => quokka_radiation_groups(pf.fields),
                          :scalars => quokka_scalars(pf.fields),
                          :particle_units => Dict{String,Any}(
                              pt => quokka_particle_units(plotdir, pt)
                              for pt in amrex_particle_types(plotdir))))
+    # createconstants! inside _amrex_finish_info! resets to defaults — re-apply the file.
+    _quokka_apply_constants!(info.constants, file_constants)
     if verbose
         _amrex_print_info(info, pf, spec)
         v = get(meta, "quokka_version", nothing)
         v === nothing || println("Quokka version: ", v,
             "   units: unit_length=", L, " cm, unit_mass=", M, " g, unit_time=", T, " s",
-            (L == 1 && M == 1 && T == 1) ? "  (⇒ code units are CGS)" : "")
+            ", unit_temperature=", uT, " K",
+            (L == 1 && M == 1 && T == 1 && uT == 1) ? "  (⇒ code units are CGS)" : "")
+        file_constants isa AbstractDict && !isempty(file_constants) &&
+            println("metadata constants applied: ", join(sort!(collect(keys(file_constants))), ", "))
         ng = quokka_radiation_groups(pf.fields); ns = quokka_scalars(pf.fields)
         (ng > 0 || ns > 0) && println("radiation groups: ", ng, "   passive scalars: ", ns)
         println("-------------------------------------------------------")

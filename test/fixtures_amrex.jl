@@ -16,6 +16,23 @@
 # a value against the position the reader claims for it.
 # ====================================================================================
 
+# Deliberately non-identity Quokka units so a dropped / inverted factor fails a test.
+# unit_length = 1 kpc, unit_mass = 1 M☉, unit_time ≈ 1 Myr, unit_temperature = 1e8 K.
+# k_B is the older CODATA spelling (≠ Mera's default 1.380649e-16) so an unread
+# constants: block is visible.
+const _QUOKKA_FIXTURE_METADATA = """
+quokka_version: 25.03
+units:
+  unit_length: 3.08567758128e21
+  unit_mass: 1.9891e33
+  unit_time: 3.15576e13
+  unit_temperature: 1.0e8
+constants:
+  k_B: 1.3806488e-16
+  G: 6.6743e-8
+  c: 2.99792458e10
+"""
+
 const _FAB_PREAMBLE = "FAB ((8, (64 11 52 0 1 12 0 1023)),(8, (8 7 6 5 4 3 2 1)))"
 
 _boxstr(lo, hi) = "((" * join(lo, ",") * ") (" * join(hi, ",") * ") (0,0,0))"

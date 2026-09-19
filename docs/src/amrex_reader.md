@@ -112,8 +112,11 @@ velocities, pressure and temperature are synthesised when the run does not store
 module, so most runs write none. Mera therefore resolves `:temperature` by a cascade, in this
 order, and records which branch it took:
 
-1. a stored `temperature` / `gasTemperature` component — taken as ground truth, in kelvin;
-2. else the stored internal energy density: `T = (γ−1)·e_int/ρ · μ·m_u/k_B`;
+1. a stored `temperature` / `gasTemperature` component — scaled by `unit_temperature` to
+   kelvin (`unit_temperature = 1` under CGS means the field is already kelvin; under
+   Quokka `UnitSystem::CUSTOM` the field is code units and the factor is required);
+2. else the stored internal energy density: `T = (γ−1)·e_int/ρ · μ·m_u/k_B`
+   (using `k_B` / `amu` from `info.constants`, after any Quokka `metadata.yaml` overlay);
 3. else the total energy density minus the kinetic term (and the magnetic term `B²/8π` when
    the run stores a field), then as (2).
 
@@ -152,14 +155,21 @@ A **bare AMReX plotfile records no units**, so a run is treated as dimensionless
 info = getinfo_amrex(42, "run/"; unit_length=3.086e21, unit_density=1.67e-24, unit_velocity=1e5)
 ```
 
-A **Quokka** run carries them in `metadata.yaml` (`unit_length` [cm], `unit_mass` [g],
-`unit_time` [s]), and Mera reads them. A dimensionless run writes `.nan` for all three, which
-is read as `1` — i.e. the data is taken as already CGS, which is what unit factors of 1 mean.
-The `unit_length` / `unit_mass` / `unit_time` keywords override the file.
+A **Quokka** run carries them in `metadata.yaml`: four unit factors (`unit_length` [cm],
+`unit_mass` [g], `unit_time` [s], `unit_temperature` [K]) plus a `constants:` block
+(`k_B`, `G`, `c`, and radiation constants such as `a_rad` / `c_hat` when present). Mera
+reads all four units and overlays the known constants onto `info.constants` before any
+temperature derivation. A dimensionless run (`UnitSystem::CONSTANTS`) writes `.nan` for
+all four units, which is read as `1` (code units); the physics then lives in `constants:`
+alone. Under `UnitSystem::CUSTOM`, a stored temperature field is in code units and is
+scaled by `unit_temperature` to kelvin; under CGS (`unit_* = 1`) the field is already
+kelvin. The `unit_length` / `unit_mass` / `unit_time` / `unit_temperature` keywords
+override the file.
 
 ```julia-repl
 julia> info = getinfo(145664, "run/");
-Quokka version: 25.03   units: unit_length=1.0 cm, unit_mass=1.0 g, unit_time=1.0 s  (⇒ code units are CGS)
+Quokka version: 25.03   units: unit_length=… cm, unit_mass=… g, unit_time=… s, unit_temperature=… K
+metadata constants applied: G, c, k_B
 ```
 
 Everything downstream (`:kpc`, `:Msol`, `:Myr`, `:g_cm3`, …) follows from these.

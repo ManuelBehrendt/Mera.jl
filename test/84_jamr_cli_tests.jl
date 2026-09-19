@@ -36,7 +36,7 @@ include(joinpath(@__DIR__, "..", "scripts", "jamr"))
                                  name == "x-GasMomentum"     ? (1.0 + x) * 10.0 :
                                  name == "y-GasMomentum"     ? (1.0 + x) * 20.0 :
                                  name == "z-GasMomentum"     ? (1.0 + x) * 30.0 : 3.0,
-                             metadata="quokka_version: 25.03\nunits:\n  unit_length: 1\n  unit_mass: 1\n  unit_time: 1\n")
+                             metadata=_QUOKKA_FIXTURE_METADATA)
     end
     plotdir = joinpath(run1, "plt00042")
 
@@ -76,8 +76,9 @@ include(joinpath(@__DIR__, "..", "scripts", "jamr"))
         # `scale.<unit>` is code→unit, so physical→box-fraction DIVIDES by it. Getting this
         # backwards is invisible until the selection comes back empty.
         @test JAMR.to_boxfrac(0.5, :standard, info) == 0.5
-        @test JAMR.to_boxfrac(info.boxlen, :cm, info) ≈ 1.0        # unit_l = 1 ⇒ code = cm
-        @test JAMR.to_boxfrac(1.0, :cm, info) ≈ 1.0 / info.boxlen
+        # physical length of the full box → box-fraction 1 (unit_l ≠ 1 in the fixture)
+        @test JAMR.to_boxfrac(info.boxlen * info.unit_l, :cm, info) ≈ 1.0
+        @test JAMR.to_boxfrac(info.unit_l, :cm, info) ≈ 1.0 / info.boxlen
     end
 
     @testset "field resolution follows the data" begin
@@ -113,8 +114,8 @@ include(joinpath(@__DIR__, "..", "scripts", "jamr"))
         @test w2.yrange ≈ [0.075, 0.175]
         @test w2.zrange ≈ [0.49, 0.51]
 
-        # a physical width lands in the right place (unit_l = 1 ⇒ code length is cm)
-        a3 = JAMR.parse_args(["slice", "--width", "$(info.boxlen * 0.2)_cm", plotdir])
+        # a physical width lands in the right place (physical cm → box fraction via unit_l)
+        a3 = JAMR.parse_args(["slice", "--width", "$(info.boxlen * info.unit_l * 0.2)_cm", plotdir])
         @test JAMR.window(info, a3).xrange ≈ [0.25 - 0.1, 0.25 + 0.1]
 
         # an explicit centre, and the clip back into the data extent
@@ -123,10 +124,11 @@ include(joinpath(@__DIR__, "..", "scripts", "jamr"))
         @test w4.xrange ≈ [0.0, 0.5] && w4.zrange ≈ [0.0, 1.0]
 
         # a centre WITH A UNIT is in the simulation's own coordinates, so it carries the
-        # domain_left_edge offset (x runs -1…3 here, so x = -1 is Mera's 0)
-        a4b = JAMR.parse_args(["slice", "--center", "-1,2,0_cm", "--width", "0.2", plotdir])
+        # domain_left_edge offset (x runs -1…3 in code units; physical cm = code × unit_l)
+        ul = info.unit_l
+        a4b = JAMR.parse_args(["slice", "--center", "$(-1*ul),$(2*ul),$(0*ul)_cm", "--width", "0.2", plotdir])
         @test JAMR.window(info, a4b).center ≈ [0.0, 0.0, 0.0]
-        @test JAMR.phys_to_boxfrac(1.0, :cm, info, 1) ≈ (1.0 - (-1.0)) / info.boxlen
+        @test JAMR.phys_to_boxfrac(1.0 * ul, :cm, info, 1) ≈ (1.0 - (-1.0)) / info.boxlen
         @test JAMR.phys_to_boxfrac(0.3, :standard, info, 1) == 0.3   # bare number: no offset
 
         # a frame entirely outside the data says so, instead of reaching Mera as xmin > xmax
@@ -134,7 +136,7 @@ include(joinpath(@__DIR__, "..", "scripts", "jamr"))
             JAMR.parse_args(["slice", "--center", "0.9,0.9,0.9", "--width", "0.001", plotdir]))
 
         # `--pos` is given in the SIMULATION's coordinates; Mera's origin is domain_left_edge
-        a5 = JAMR.parse_args(["slice", "--pos", "4.0_cm", plotdir])   # domain z: 0…8
+        a5 = JAMR.parse_args(["slice", "--pos", "$(4.0 * ul)_cm", plotdir])   # domain z: 0…8 code
         @test JAMR.slice_position(info, a5, JAMR.window(info, a5), :z) ≈ 4.0 / info.boxlen
         # with no --pos the cut is at the frame centre
         @test JAMR.slice_position(info, JAMR.parse_args(["slice", plotdir]), w, :z) ≈ 0.5
