@@ -102,6 +102,7 @@ if isempty(_focus)
         tinclude("80_getvar_overview_tests.jl")  # data-free: the getvar() list must match the code
         tinclude("81_type_hierarchy_tests.jl")  # data-free: the type diagram must match subtypes()
         tinclude("82_loadall_tests.jl")         # loadall must agree with getinfo + the getters
+        tinclude("85_gravity_units_tests.jl")   # the potential and the acceleration must agree: a = -grad(phi)
         tinclude("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
         tinclude("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
         tinclude("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities
