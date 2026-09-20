@@ -166,8 +166,12 @@ azimuthal velocity is taken per bin, and the returned closure evaluates that cur
 position and hands back the corresponding ordered velocity vector.
 
 ```julia
-f = rotation_frame(gas; center=:bc)
-sig = projection(gas, :σlos; vcenter=f, center=:bc, direction=:edgeon)
+f       = rotation_frame(gas; center=:bc)
+gas_rot = restframe(gas; vcenter=f, center=:bc)   # projection has no vcenter; apply it first
+# take the camera from the gas that still rotates, then reuse it: removing the rotation
+# drives the net L of `gas_rot` to nearly zero, so asking it for :edgeon points nowhere
+a = projection(gas,     :σlos, :km_s; center=:bc, direction=:edgeon)
+b = projection(gas_rot, :σlos, :km_s; center=:bc, los=a.los)
 ```
 
 Without it, an edge-on `:σlos` is dominated by ordered rotation along the sightline, because one
