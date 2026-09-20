@@ -65,6 +65,16 @@ MERA.jl provides powerful projection capabilities for analyzing hydrodynamical s
 - **Weighting Schemes**: Mass-weighted, volume-weighted, or custom weighting
 - **Coordinate Systems**: Native Cartesian or derived cylindrical/spherical coordinates
 
+### Related pages
+
+- For a viewing direction that is not a box axis, see
+  [Off-axis Projection](06_offaxis_Projection.md). The line-of-sight kinematics `:vlos` and
+  `:σlos` exist only on that path.
+- For how accurate these maps are, see [Off-axis validation](offaxis_validation.md). It measures
+  mass and momentum conservation, the variance decomposition and the convergence of the maps
+  against a sphere whose answers are known in closed form. Most of what it proves is not specific
+  to off-axis views, so it is the reference for the axis-aligned maps here too.
+
 ### Intensive vs. extensive quantities, what a projection *means*
 
 A line-of-sight projection reduces a 3-D field to a 2-D map, and **how** the cells along each
@@ -128,7 +138,7 @@ gas = gethydro(info, smallr=1e-11, lmax=12);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-09-14T11:30:42.584
+[Mera]: 2026-09-20T11:27:20.820
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -169,7 +179,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-09-14T11:30:44.322
+[Mera]: Get hydro data: 2026-09-20T11:27:22.501
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 domain:
@@ -181,7 +191,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:37 (18.25 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:36 (17.61 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 18966620 cells, 7 variables
@@ -191,7 +201,7 @@ Creating Table from 18966620 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 26.225 seconds
+✓ Table created in 23.764 seconds
 Memory used for data table :1.5544367535039783 GB
 -------------------------------------------------------
 ```
@@ -314,7 +324,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbo
 ```
 
 ```
-[Mera]: 2026-09-14T11:31:52.585
+[Mera]: 2026-09-20T11:28:26.594
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -351,7 +361,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:07.534
+[Mera]: 2026-09-20T11:28:40.668
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -382,7 +392,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:09.901
+[Mera]: 2026-09-20T11:28:43.004
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -409,7 +419,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:11.565
+[Mera]: 2026-09-20T11:28:44.597
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -440,7 +450,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:13.934
+[Mera]: 2026-09-20T11:28:46.839
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -482,7 +492,7 @@ proj1_x = projection(gas, [:sd],                # Single variable in array
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:15.559
+[Mera]: 2026-09-20T11:28:48.436
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -517,7 +527,7 @@ proj1_z = projection(gas, [:sd, :vx],           # Surface density + x-velocity
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:17.003
+[Mera]: 2026-09-20T11:28:49.836
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -551,7 +561,7 @@ proj1_z = projection(gas, [:sd, :vx], [:Msol_pc2, :km_s],  # Required positional
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:18.801
+[Mera]: 2026-09-20T11:28:51.488
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -585,7 +595,7 @@ projvel_z = projection(gas, [:vx, :vy, :vz],    # Velocity components
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:20.576
+[Mera]: 2026-09-20T11:28:52.992
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -625,6 +635,8 @@ propertynames(proj1_z)
 #### Projection Maps Dictionary
 
 The main results are stored in a dictionary structure where each key corresponds to a projected quantity:
+
+A pixel that no cell reaches holds `0.0`, not `NaN`. The maps start as zeros and only pixels that received weight are written.
 
 ```julia
 # Access the maps dictionary containing all projected quantities
@@ -685,7 +697,9 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 2 entries:
   :vx => :km_s
 ```
 
-Projections on a different grid size (see subject below):
+`maps_lmax` is a leftover field. Both projection engines create it empty and never write to it,
+so it always prints as an empty `SortedDict`. Everything you asked for is in `maps`, on the single
+grid set by `lmax`, `res` or `pxsize`.
 
 ```julia
 proj1_z.maps_lmax
@@ -763,6 +777,22 @@ proj1_z.ratio # the ratio between the two ranges
 
 ```
 4.994152046783626
+```
+
+#### One conservation check
+
+`:sd` and `:mass` are extensive: the deposit hands each cell out in shares that add to exactly
+one, so the pixels of a whole-box `:mass` map have to add up to the mass of the data. This is the
+cheapest way to confirm that a projection did what you think it did.
+
+```julia
+# The pixels of an extensive map add up to the mass they came from.
+mcheck = projection(gas, :mass, :Msol, verbose=false)
+println("map sum / msum = ", sum(mcheck.maps[:mass]) / msum(gas, :Msol))
+```
+
+```
+map sum / msum = 1.0000000000000002
 ```
 
 ## Visualization and Plotting
@@ -846,10 +876,10 @@ cb = colorbar(im,
              pad=0.2)
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_49_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_51_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x1553007c0>
+PyObject <matplotlib.colorbar.Colorbar object at 0x31595c760>
 ```
 
 ```julia
@@ -881,10 +911,10 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_51_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_53_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x155915f60>
+PyObject <matplotlib.colorbar.Colorbar object at 0x31c7c5f00>
 ```
 
 ### Where the map's axes are measured from: `data_center`
@@ -924,6 +954,8 @@ Derive kinematic properties from fundamental velocity fields:
 - Velocity dispersion: σₓ = √(⟨vₓ²⟩ - ⟨vₓ⟩²) following standard statistical definition
 - Unicode symbols supported: use `\sigma + tab` for **σ** in Julia
 
+**What a dispersion map measures.** Each pixel holds the spread about *that pixel's own* mean, not about any global mean. It therefore carries the velocity gradient down the column, so an ordered flow such as disc rotation raises σ wherever a column crosses it. How the total spread divides between the within-pixel part plotted here and the between-pixel part you see as structure in the mean-velocity map depends on the pixel size: coarser pixels move spread out of the map of means and into σ, finer pixels move it back. The sum of the two does not depend on the grid, which is the law of total variance; [Off-axis validation](offaxis_validation.md) measures both terms and their sum.
+
 ```julia
 # Project comprehensive kinematic quantities
 proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and dispersions
@@ -936,7 +968,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and 
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:49.603
+[Mera]: 2026-09-20T11:29:41.941
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1045,7 +1077,7 @@ imshow( permutedims(proj_z.maps[:σz]) , cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_61_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_63_1.png)
 
 #### Cylindrical Coordinate System
 
@@ -1071,7 +1103,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-09-14T11:32:58.013
+[Mera]: 2026-09-20T11:29:49.157
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1190,7 +1222,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_66_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_68_1.png)
 
 ### Performance Tips for Kinematic Analysis
 
@@ -1233,13 +1265,17 @@ Control projection grid resolution to balance computational efficiency with spat
 
 #### Refinement Level Control (`lmax`)
 
-The `lmax` parameter controls grid resolution through AMR level specification:
+`lmax` sets the pixel count of the output grid. The box is divided into 2^lmax pixels per
+dimension, so the pixel size is `boxlen / 2^lmax`. It is shorthand for `res=2^lmax`, and `pxsize`
+overrides both.
 
 **Key Features:**
-- **Default Behavior**: Uses maximum loaded refinement level for highest available resolution
+- **Default Behavior**: Uses the maximum loaded refinement level, so a pixel matches the finest loaded cell
 - **Coarser Grids**: Lower `lmax` values reduce computational cost and memory usage
-- **Independence**: Can exceed simulation's maximum level for interpolated higher resolution
-- **Grid Scaling**: Resolution = 2^lmax grid cells along each dimension
+- **No interpolation**: `lmax` may be set above the finest loaded level, but that adds no
+  information. Each cell is painted across the pixels its footprint covers, so a finer grid draws
+  the same cells with more, smaller pixels
+- **Grid Scaling**: Resolution = 2^lmax pixels along each dimension, counted across the whole box
 
 ```julia
 # Project on coarser grid (level 6) for faster computation
@@ -1252,7 +1288,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-09-14T11:33:12.988
+[Mera]: 2026-09-20T11:30:03.059
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1328,11 +1364,14 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_72_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_74_1.png)
 
 #### Setting the pixel size directly (`pxsize`)
 
-Fix the physical size of a map pixel, independent of the AMR levels present:
+Fix the physical size of a map pixel, independent of the AMR levels present. `pxsize` overrides
+both `lmax` and `res`. The related keyword `res` takes a plain pixel count for the whole box
+(`res = 2^lmax`); the examples here use `pxsize`, because the physical size is usually what you
+want to hold fixed.
 
 ```julia
 # 0.5 kpc pixels, the map size follows from the range you project
@@ -1345,7 +1384,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-09-14T11:33:22.913
+[Mera]: 2026-09-20T11:30:11.448
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1412,11 +1451,13 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_75_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_77_1.png)
 
-#### Physical Pixel Size Control (`pxsize`)
+#### The same request in another length unit (`pxsize`)
 
-Specify resolution through physical pixel dimensions for direct scale control:
+`pxsize` accepts any length unit, so the same pixel size can be written in pc. The pixel count is
+rounded up, so the grid uses the pixel closest to the request that is not larger than it. Read the
+size actually used from `proj.pixsize`.
 
 ```julia
 # Physical pixel size specification
@@ -1430,7 +1471,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-09-14T11:33:30.852
+[Mera]: 2026-09-20T11:30:18.210
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1454,11 +1495,11 @@ Processing mode: Variable-based parallel (4 threads)
    Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
    Processing levels 6 to 12
    🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4
-✅ Variable-based parallel processing completed in 3.397s
+✅ Variable-based parallel processing completed in 2.194s
    ⚡ No combining phase needed - direct variable assignment eliminates overhead!
    📊 Performance Metrics:
       ├─ Total operations: 241678294 (18590638 cells × 13 vars)
-      ├─ Processing rate: 71144435 cells/second
+      ├─ Processing rate: 110138033 cells/second
       ├─ Threads utilized: 4 / 4 available
       └─ Memory benefit: Direct allocation (no intermediate combining buffers)
 ```
@@ -1512,7 +1553,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_78_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_80_1.png)
 
 ## Thermal Properties Analysis
 
@@ -1542,7 +1583,7 @@ proj_x = projection(gas, :cs, :km_s,           # X-direction sound speed
 ```
 
 ```
-[Mera]: 2026-09-14T11:33:39.106
+[Mera]: 2026-09-20T11:30:25.024
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1557,7 +1598,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
-[Mera]: 2026-09-14T11:33:40.642
+[Mera]: 2026-09-20T11:30:26.412
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1590,7 +1631,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(c_s) \ [km \ s^{-1}]}",orientation="horizontal", pad=0.2);
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_82_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_84_1.png)
 
 #### Custom Adiabatic Index
 
@@ -1666,7 +1707,7 @@ proj_x = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-09-14T11:33:43.356
+[Mera]: 2026-09-20T11:30:28.975
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1683,7 +1724,7 @@ Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
-[Mera]: 2026-09-14T11:33:47.353
+[Mera]: 2026-09-20T11:30:32.882
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1718,7 +1759,7 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 tight_layout()
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_90_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_92_1.png)
 
 ## Weighting and Integration Schemes
 
@@ -1733,7 +1774,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-09-14T11:33:53.292
+[Mera]: 2026-09-20T11:30:38.899
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1762,7 +1803,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-09-14T11:34:33.729
+[Mera]: 2026-09-20T11:31:18.376
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1777,7 +1818,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:18
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
 ```
 
 ## Specialized Applications
@@ -1785,6 +1826,8 @@ Progress: 100%|█████████████████████�
 ### Ultra-Thin Slice Analysis
 
 Create quasi-2D cuts through 3D data using extremely narrow projection ranges:
+
+This is still a projection: every cell the thin slab touches is integrated through. If you want the values *at* a depth rather than through it, use `slice`, which returns a cutting plane and takes the same view keywords as `projection`. See [Covering grid and slices](covering_grid.md).
 
 ```julia
 # Ultra-thin slice: effectively 2D cut through 3D data
@@ -1796,7 +1839,7 @@ proj_y = projection(gas, [:sd, :v], [:Msol_pc2, :km_s],
 ```
 
 ```
-[Mera]: 2026-09-14T11:35:14.501
+[Mera]: 2026-09-20T11:31:58.647
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1828,7 +1871,7 @@ cb = colorbar(im, label=L"\mathrm{log10(v) \ [km \ s^{-1}]}");
 # Note: Ultra-thin slices provide all cells that intersect the 2D plane
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_97_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_99_1.png)
 
 ## Summary
 

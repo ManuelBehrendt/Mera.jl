@@ -67,7 +67,32 @@ MERA.jl provides comprehensive projection capabilities for particle-based simula
 - **Population Analysis**: Age-based selection and temporal evolution
 - **Projection Direction**: Control viewing angle (x, y, z directions)
 - **Grid Resolution**: Customize output resolution via `lmax`, `res`, or `pxsize`
-- **Weighting Schemes**: Mass-weighted projections, ...
+- **Weighting Schemes**: `:mass` (the default), `:volume`, `:sph` or `:voronoi`
+
+!!! warning "`:mass` on particles is a mean, not a sum"
+    A hydro cell has a volume, so `:mass` is extensive there and its pixels add up to the total
+    mass. A particle has no volume, so `projection(particles, :mass)` returns the **mass-weighted
+    mean particle mass** in each pixel. That map is worth having, it shows the particle mass
+    spectrum and tells you at a glance whether the particles are equal mass, but it is not
+    extensive, so summing it is not the total mass and the number you get drifts with the pixel
+    size. The conserving map is `:sd`:
+
+    ```julia
+    sum(m.maps[:sd]) * (m.pixsize * m.scale.pc)^2   # Msol, from :Msol_pc2
+    ```
+
+    Mera prints the same hint when you ask for `:mass`.
+
+### Related pages
+
+- For a viewing direction that is not a box axis, see
+  [Off-axis Projection](06_offaxis_Projection.md). The line-of-sight kinematics `:vlos` and
+  `:σlos` exist only on that path.
+- For how accurate these maps are, see [Off-axis validation](offaxis_validation.md). It measures
+  mass and momentum conservation, the variance decomposition and the convergence of the maps
+  against an object whose answers are known in closed form, particles included. Most of what it
+  proves is not specific to off-axis views, so it is the reference for the axis-aligned maps here
+  too.
 
 ## Environment Setup and Data Loading
 
@@ -100,7 +125,7 @@ particles = getparticles(info);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-08-31T13:48:25.452
+[Mera]: 2026-09-20T11:32:46.211
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -133,12 +158,13 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
+boundaries:       not periodic (&BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get particle data: 2026-08-31T13:48:30.325
+[Mera]: Get particle data: 2026-09-20T11:32:50.323
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
@@ -264,7 +290,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:40.118
+[Mera]: 2026-09-20T11:32:59.284
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -285,7 +311,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:40.861
+[Mera]: 2026-09-20T11:33:00.132
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -304,7 +330,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:40.999
+[Mera]: 2026-09-20T11:33:00.280
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -325,7 +351,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:41.616
+[Mera]: 2026-09-20T11:33:00.948
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -352,7 +378,7 @@ proj1_x = projection(particles, [:sd], units=[:Msol_pc2], lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:41.850
+[Mera]: 2026-09-20T11:33:01.145
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -377,7 +403,7 @@ proj1_z = projection(particles, [:sd, :vx], units=[:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:41.916
+[Mera]: 2026-09-20T11:33:01.158
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -402,7 +428,7 @@ proj1_z = projection(particles, [:sd, :vx], [:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:42.994
+[Mera]: 2026-09-20T11:33:02.018
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -426,7 +452,7 @@ projvel_z = projection(particles, [:vx, :vy, :vz], :km_s, lmax=9,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:43.030
+[Mera]: 2026-09-20T11:33:02.078
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -451,6 +477,19 @@ propertynames(projvel_z)
 ```
 
 The projected 2D maps are stored in a dictionary:
+
+Two things to know before you reduce one of these maps.
+
+**Empty pixels.** `:sd` is a deposited total divided by the pixel area, so a pixel with no
+particle holds `0.0`. A weighted-mean map such as `:v` or `:age` is one deposited grid divided by
+another, so an empty pixel is `0/0`, which is `NaN`. Filter with `isfinite` before you take a
+`sum` or a `mean` of a mean map. (Axis-aligned hydro maps differ here: they hold `0.0` in empty
+pixels.)
+
+**`maps[:mass]` is a mean.** Particles have no volume, so `:mass` is not extensive here. The map
+holds the mass-weighted mean particle mass per pixel, which is a mass spectrum and an equal-mass
+check, not a per-pixel total. For the mass per pixel use `:sd` and multiply by the pixel area:
+`sum(m.maps[:sd]) * (m.pixsize * m.scale.pc)^2`.
 
 ```julia
 # Access the maps dictionary containing projection data
@@ -569,6 +608,22 @@ projvel_z.ratio  # the ratio between the two ranges
 1.0
 ```
 
+#### One conservation check
+
+The deposit hands each particle out in shares that add to exactly one, so the `:sd` map times the
+pixel area has to give back the mass it came from. `:mass` cannot be used for this, see above.
+
+```julia
+# :sd is the conserving particle map: pixels x pixel area = mass.
+pcheck = projection(particles, :sd, :Msol_pc2, verbose=false)
+println("map total / msum = ",
+        sum(pcheck.maps[:sd]) * (pcheck.pixsize * pcheck.scale.pc)^2 / msum(particles, :Msol))
+```
+
+```
+map total / msum = 0.999999999999999
+```
+
 ## Plot Maps with PyPlot
 
 ```julia
@@ -611,7 +666,7 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_41_1.png)
+![](06_particles_Projection_files/06_particles_Projection_43_1.png)
 
 Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):
 
@@ -642,7 +697,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_44_1.png)
+![](06_particles_Projection_files/06_particles_Projection_46_1.png)
 
 Plot the axes of the map relative to the map-center (given by keyword: data_center):
 
@@ -673,7 +728,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_47_1.png)
+![](06_particles_Projection_files/06_particles_Projection_49_1.png)
 
 ## Projections of Derived Kinematic Data
 
@@ -693,7 +748,7 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin],
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:52.408
+[Mera]: 2026-09-20T11:33:13.046
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -798,7 +853,7 @@ imshow( (permutedims(proj_z.maps[:σz])  ), cmap=cmap2, origin="lower", extent=g
 colorbar();
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_56_1.png)
+![](06_particles_Projection_files/06_particles_Projection_58_1.png)
 
 #### Use quantities in cylindrical coordinates:
 #### Face-on disc (z-direction)
@@ -815,7 +870,7 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylin
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:54.808
+[Mera]: 2026-09-20T11:33:15.561
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -927,12 +982,16 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=gete
 colorbar();
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_61_1.png)
+![](06_particles_Projection_files/06_particles_Projection_63_1.png)
 
 ## Project on a Coarser Grid
 
 ### lmax
-The default is the projection on the maximum loaded grid level (always provided in the output). Choose a smaller/larger level with the keyword `lmax` (independend on the maximum level of the simulation) to project on a coarser/finer grid. By default, the data is assumed to be in the center of the simulation box.
+By default the map is projected on a grid of 2^lmax pixels per dimension, with `lmax` the maximum
+loaded level. Choose a smaller or larger level with the keyword `lmax` (independent of the maximum
+level of the simulation) to project on a coarser or finer grid. A larger `lmax` adds pixels, not
+information: nothing is interpolated. By default, the data is assumed to be in the center of the
+simulation box.
 
 ```julia
 # lmax=6: Uses AMR level 6 → 2^6 = 64x64 effective grid cells
@@ -945,7 +1004,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:57.055
+[Mera]: 2026-09-20T11:33:17.906
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -956,7 +1015,9 @@ Pixel size: 750.0 [pc]
 Simulation min.: 46.875 [pc]
 ```
 
-The projection onto the maximum loaded grid is always provided:
+`maps` holds the projection on the grid you asked for, and only that one. There is no second
+copy at the maximum loaded level. The `maps_lmax` field on the returned object is a leftover: it
+is created empty and never written to, so it always prints as an empty `SortedDict`.
 
 ```julia
 proj_z.maps
@@ -1061,10 +1122,13 @@ imshow( (permutedims(proj_z.maps[:σy] )), cmap=cmap2, origin="lower", extent=ge
 colorbar();
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_67_1.png)
+![](06_particles_Projection_files/06_particles_Projection_69_1.png)
 
-### res
-Choose the effective resolution (related to the full box) of the projected grid:
+### pxsize
+Fix the physical size of a map pixel. `pxsize` overrides `lmax` and `res`. The related keyword
+`res` takes a plain pixel count for the whole box (`res = 2^lmax`, which is what `lmax` sets
+above); the examples here use `pxsize`, because the physical size is usually what you want to hold
+fixed.
 
 ```julia
 # pxsize=[0.5, :kpc]: 0.5 kpc pixels (~96x96 over the 48 kpc box)
@@ -1077,7 +1141,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:58.458
+[Mera]: 2026-09-20T11:33:19.372
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1088,8 +1152,9 @@ Pixel size: 494.845 [pc]
 Simulation min.: 46.875 [pc]
 ```
 
-### pxsize
-Choose the pixel size in a physical unit, e.g. pixel-size=100 pc. The data is projected to a grid with a pixel-size that is closest to the given number, but not larger:
+### pxsize in another length unit
+The same request written in pc. The data is projected to a grid with a pixel size that is closest
+to the given number, but not larger. Read the size actually used from `proj.pixsize`.
 
 ```julia
 # pxsize=[100.,:pc]: Each pixel represents ~100 pc physical size
@@ -1102,7 +1167,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-08-31T13:48:58.611
+[Mera]: 2026-09-20T11:33:19.522
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1141,7 +1206,7 @@ cb = colorbar(im, label=L"\mathrm{log10(Birth) \ [Myr]}",orientation="horizontal
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_75_1.png)
+![](06_particles_Projection_files/06_particles_Projection_77_1.png)
 
 Project the average age of the particles to the grid. The age is taken relative to the loaded snapshot time by default.
 
@@ -1179,7 +1244,7 @@ cb = colorbar(im, label=L"\mathrm{log10(Age) \ [Myr]}",orientation="horizontal",
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_80_1.png)
+![](06_particles_Projection_files/06_particles_Projection_82_1.png)
 
 Project the average age of the particles relative to a given reference time:
 
@@ -1216,7 +1281,7 @@ cb = colorbar(im, label=L"\mathrm{Age \ [Myr]}",orientation="horizontal", pad=0.
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_85_1.png)
+![](06_particles_Projection_files/06_particles_Projection_87_1.png)
 
 ## Projection of Masked Data
 
@@ -1234,7 +1299,7 @@ proj_x = projection(particles, :age, :Myr, mask=mask,
 ```
 
 ```
-[Mera]: 2026-08-31T13:49:01.079
+[Mera]: 2026-09-20T11:33:22.071
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1243,7 +1308,7 @@ Effective resolution: 256^2
 Pixel size: 187.5 [pc]
 Simulation min.: 46.875 [pc]
 :mask provided by function
-[Mera]: 2026-08-31T13:49:01.690
+[Mera]: 2026-09-20T11:33:22.687
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1270,7 +1335,7 @@ cb = colorbar(im, label=L"\mathrm{log10(Age) \ [Myr]}",orientation="horizontal",
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_90_1.png)
+![](06_particles_Projection_files/06_particles_Projection_92_1.png)
 
 ## Summary
 
@@ -1283,8 +1348,12 @@ In this tutorial, you have learned to:
 - Access and analyze projection data arrays
 
 ### Particle Projection Capabilities
-- **Stellar Properties**: Mass, age, metallicity, birth time projections
+- **Stellar Properties**: age, metallicity and birth-time maps, plus `:sd` for the mass
+  surface density. `:mass` itself is a mean, not a sum, see the warning at the top of the page
 - **Kinematic Analysis**: Velocity component projections
 - **Population Studies**: Age gradients and stellar distribution analysis
 - **Multi-component**: Separate star and dark matter projections
-- **Custom Weighting**: Mass-weighted or number-weighted projections
+- **Weighting**: `weighting=:mass` (the default), `:volume`, `:sph` or `:voronoi`. On RAMSES
+  stars only `:mass` is useful: `:sph` and `:voronoi` need a volume column, and `:volume` is a
+  trap for point data. There is no `:number` weighting, and none is needed. When the particles
+  have equal mass, a mass-weighted map *is* a number-weighted map

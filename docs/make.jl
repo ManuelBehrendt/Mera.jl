@@ -166,12 +166,11 @@ makedocs(modules = [Mera],
                           "Auto-Frame (center & orient)" => "galaxyframe.md",
                           "Axis-aligned (x/y/z)" => Any[ "Hydro"     => "06_hydro_Projection.md",
                                                          "Particles" => "06_particles_Projection.md"],
-                          # ONE page. Six pages became three (the notebook duplicates), then three
-                          # became one: an expert-panel review found the guide re-taught what the
-                          # other two derived, so the material is now a single step-by-step
-                          # notebook with the pipeline detail in ?projection and the guarantees in
-                          # the test suite (Appendix B).
-                          # Two pages, on purpose. The tutorial teaches on a real galaxy; the
+                          # The tutorial is ONE page by design: six pages became three (the
+                          # notebook duplicates), then three became one, because a review found the
+                          # guide re-taught what the other two derived. Pipeline detail lives in
+                          # ?projection, the guarantees in the test suite (Appendix B).
+                          # Alongside it, a second page, on purpose. The tutorial teaches on a real galaxy; the
                           # validation page is data free and tests instead, scoring the projection
                           # against a sphere whose answers are known in closed form. Do not merge
                           # them: the first would lose its narrative, the second its independence.

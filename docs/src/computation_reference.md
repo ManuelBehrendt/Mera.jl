@@ -463,8 +463,14 @@ dispersion by adding the **variances**, because a line profile is a convolution:
 ```
 
 This is the width for a particle of the mean mass ``\mu m_H``. A line is broadened by the mass of
-the *emitting* species, so for a species of mass ``m_X`` scale it by ``\sqrt{\mu m_H/m_X}``: CO is
-28 times heavier than hydrogen and so 5.3 times narrower.
+the *emitting* species, so for a species of mass ``m_X`` scale it by ``\sqrt{\mu m_H/m_X}``.
+
+Watch which baseline you are scaling from, because two are in circulation and they differ by more
+than a factor of two. Plain `:T` bakes in ``\mu \approx 1.32``, so with that value CO, at 28 times
+the mass of hydrogen, comes out **4.6 times narrower**. Scaling instead from a single hydrogen atom
+(``\mu = 1``) gives ``\sqrt{28} = 5.3``, and from ionized gas (``\mu = 0.6``) gives 6.8. Only the
+first is consistent with the width Mera actually returns. State the ``\mu`` you used whenever you
+quote such a factor.
 
 ### Subtracting an ordered flow
 

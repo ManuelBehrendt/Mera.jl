@@ -75,9 +75,15 @@ The overlap stops being separable and becomes an integral over a piecewise-linea
 that is a different algorithm, the one `binning=:overlap`/`:exact` implement. It degenerates
 correctly to the axis-aligned case when the line of sight is parallel to a box axis.
 
+The hexagon is also what the choice of `binning` turns on, so
+[the off-axis page](06_offaxis_Projection.md) works through it in more detail and measures what
+each setting costs.
+
 The practical consequences:
 
-* the axis-aligned path is **faster**, and populates `maps_lmax`
+* the axis-aligned path does less work per cell, two 1-D clips rather than a polygon integral, so
+  it should be the cheaper of the two. No measurement is published here, so treat that as the
+  shape of the algorithm rather than a number
 * a few map-only quantities (`:σx`, `:σy`, `:σz` and the radius/angle family) exist only there, and
   an off-axis call asking for them is rejected with an error rather than a wrong answer
 * the off-axis path has `fov`/`aperture` framing, which the axis-aligned one does not need
