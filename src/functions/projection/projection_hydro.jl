@@ -2596,9 +2596,16 @@ end
 #  with tmin_k / tmax_k affine in the plane coords on each region where the entering face
 #  (argmax tmin) and exiting face (argmin tmax) are fixed.  The pixel∩footprint polygon is
 #  split along the kink lines (tmin_i = tmin_j, tmax_i = tmax_j) into convex pieces on which
-#  L is affine; on each piece ∫∫ L = area · L(centroid) is exact.  A final per-cell
-#  renormalisation makes the deposited shares a partition of unity (Σ f = 1) to machine
-#  precision, so totals are conserved exactly regardless of round-off.
+#  L is affine; on each piece ∫∫ L = area · L(centroid) is exact.  The shares are a partition
+#  of unity (Σ f = 1) by the analytic normalisation invT = 1/s³ when the footprint lies fully
+#  inside the grid, which is the normal case; only a footprint that runs off the grid takes the
+#  two-pass renormalisation over the in-grid pixels (see `inside` below).
+#
+#  Round-off note: Σ f − 1 does NOT grow with the number of pixels a cell covers (flat at a few
+#  eps from 4 to 26k pixels).  It grows with the cell's DISTANCE from the camera-plane origin,
+#  because the polygon clipping works in absolute coordinates and cancels.  Summed over a whole
+#  box this makes `:exact` slightly less bit-exact than `:overlap` (measured -225 eps against
+#  -0.5 eps on a 51.5M-cell snapshot), which is still 5e-14 and matters to no budget.
 #
 #  Degenerates correctly: ŵ ∥ a box axis ⇒ two axes become "walls" (|X_k| ≤ h) and the
 #  footprint is the axis-aligned square with L ≡ s ⇒ reproduces the exact area-overlap
