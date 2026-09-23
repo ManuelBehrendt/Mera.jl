@@ -799,8 +799,10 @@ px [kpc]  sum(:mass)/M    sum(:sd * A)/M
 !!! warning "`projection(part, :mass)` is not a per-pixel mass"
     Hydro has a `:mass` map. Particles do not. `:mass` falls through the generic branch, which
     returns the mass-weighted mean of whatever you asked for, so for `:mass` it returns the
-    mass-weighted mean particle mass in each pixel. Summing it gives a number that climbs toward
-    the true total as the pixels approach one particle each, and never means anything on the way.
+    mass-weighted mean particle mass in each pixel. Summing it gives a number that rises as the
+    pixels approach one particle each, but it is not converging on the total: with `:cic` it passes
+    straight through 1 and keeps going, reaching 1.514 on the AVALON stars, because a particle split
+    over four pixels makes all four report its full mass. It never means anything on the way.
     Measured on the AVALON star particles, `sum(:mass)/M` reads 0.0115, 0.0384, 0.121 and 0.487 at
     pixel sizes of 0.2, 0.1, 0.05 and 0.02 kpc, while `sum(:sd * A)/M` stays at 1 to round-off.
     The column printed above repeats that on this object. **For particles use `:sd` and multiply by
