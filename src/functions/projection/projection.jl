@@ -624,6 +624,29 @@ function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, cen
     aperture in (:circle, :square) ||
         throw(ArgumentError("aperture must be :circle or :square, got :$aperture"))
     cuw = fov_unit === :standard ? 1.0/dataobject.boxlen : getunit(dataobject.info, fov_unit)
+
+    # `fov=[wx, wy]` asks for a RECTANGULAR frame: two half-widths in the camera plane. An edge-on
+    # disc is a thin strip in a square frame, so most of the pixels are empty sky; independent
+    # half-widths spend them where the object is. A rectangle has no rotation-invariant circular
+    # reading, so it is only defined for `aperture=:square`, the aperture that crops to a frame.
+    if fov isa AbstractVector
+        length(fov) == 2 || throw(ArgumentError(
+            "fov must be a half-width (fov=16) or two half-widths (fov=[16, 4]), got $fov"))
+        aperture === :square || throw(ArgumentError(
+            "fov=[wx, wy] is a rectangular frame and needs aperture=:square. " *
+            "aperture=:circle selects a disc, which has one radius, not two."))
+        (fov[1] > 0 && fov[2] > 0) || throw(ArgumentError("both half-widths must be positive, got $fov"))
+        cap = 0.49/sqrt(2) * dataobject.boxlen
+        fx  = min(float(fov[1]) / cuw, cap)
+        fy  = min(float(fov[2]) / cuw, cap)
+        # the selection sphere has to enclose the rectangle at any roll, so its radius is the
+        # rectangle's own half-diagonal
+        rsel = hypot(fx, fy) * cuw
+        src  = subregion(dataobject, :sphere, radius=rsel, center=center,
+                         range_unit=fov_unit, verbose=false)
+        return src, [-rsel, rsel], [fx, fy], rsel
+    end
+
     fov_code = float(fov) / cuw
     fov_code = min(fov_code, (aperture === :square ? 0.49/sqrt(2) : 0.49) * dataobject.boxlen)
     rfov = fov_code * cuw
@@ -644,13 +667,20 @@ _fov_companion(obj, rsel, fov_unit, center) =
 # into a full rectangular frame with no circular aperture.
 function _rotseq_crop_square!(m, fov_code)
     A = first(values(m.maps)); nx, ny = size(A); px = m.pixsize
-    nt = clamp(round(Int, 2*fov_code/px), 1, min(nx, ny))
-    i0 = (nx - nt) ÷ 2 + 1; j0 = (ny - nt) ÷ 2 + 1
-    for k in collect(keys(m.maps)); m.maps[k] = m.maps[k][i0:i0+nt-1, j0:j0+nt-1]; end
-    cx = (m.extent[1]+m.extent[2])/2; cy = (m.extent[3]+m.extent[4])/2; h = nt*px/2
-    m.extent  = [cx-h, cx+h, cy-h, cy+h]
-    m.cextent = [-h, h, -h, h]
-    m.ratio   = 1.0
+    # one half-width crops to a centred square, two crop to a centred rectangle
+    fx, fy = fov_code isa AbstractVector ? (fov_code[1], fov_code[2]) : (fov_code, fov_code)
+    ntx = clamp(round(Int, 2*fx/px), 1, nx)
+    nty = clamp(round(Int, 2*fy/px), 1, ny)
+    if !(fov_code isa AbstractVector)      # the square case keeps its historical clamp
+        ntx = nty = clamp(round(Int, 2*fx/px), 1, min(nx, ny))
+    end
+    i0 = (nx - ntx) ÷ 2 + 1; j0 = (ny - nty) ÷ 2 + 1
+    for k in collect(keys(m.maps)); m.maps[k] = m.maps[k][i0:i0+ntx-1, j0:j0+nty-1]; end
+    cx = (m.extent[1]+m.extent[2])/2; cy = (m.extent[3]+m.extent[4])/2
+    hx = ntx*px/2; hy = nty*px/2
+    m.extent  = [cx-hx, cx+hx, cy-hy, cy+hy]
+    m.cextent = [-hx, hx, -hy, hy]
+    m.ratio   = hx / hy
     return m
 end
 

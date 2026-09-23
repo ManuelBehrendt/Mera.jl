@@ -76,6 +76,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -111,7 +114,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -149,6 +152,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -184,7 +190,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -222,6 +228,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -256,7 +265,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -296,6 +305,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -330,7 +342,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -875,6 +887,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         weighting::Array{<:Any,1}=[:mass, missing],
@@ -1062,12 +1077,19 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     # specifier is given (los/up/theta/phi or direction=:faceon/:edgeon).
     # ------------------------------------------------------------------
     if is_offaxis(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth, position_angle=position_angle, direction=direction)
+        # `depth` is a camera-space cut, so it only has a meaning on the off-axis path. On a box-axis
+        # view the line of sight IS a box axis and `zrange` already does this, exactly.
         return projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
                                   weighting, weight_scale, mode, ranges, center, range_unit,
                                   mask, los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, nmax, direction,
                                   boxlen, lmin, simlmax, isamr, scale, verbose, max_threads,
-                                  gravity_data)
+                                  gravity_data, depth, depth_unit, angmom_radius)
     end
+
+    depth === nothing || throw(ArgumentError(
+        "depth= is a camera-space cut and applies to off-axis views only. This call is axis-aligned " *
+        "(direction=:x/:y/:z with no los/inclination/azimuth), where the line of sight is a box axis: " *
+        "use zrange (or xrange/yrange for :x/:y) instead, which cuts exactly the same slab."))
 
     if verbose
         println("Selected var(s)=$(tuple(selected_vars...)) ")
@@ -1595,12 +1617,52 @@ end
 #       rotated footprint of the kept cells so every one lands on the grid.
 #  Conservative: the deposit preserves Σ value·weight to machine precision (subregions included).
 # =====================================================================================
+# Resolve a line-of-sight `depth` window to code units, measured along the camera's viewing
+# direction from `center`. Accepts a half-width (`depth=2`, symmetric) or an explicit window
+# (`depth=[-1, 3]`, which need not be symmetric: foreground and background can differ).
+# Angular momentum for `axis=:angmom` and the `:faceon`/`:edgeon` presets.
+#
+# By default this sums over EVERYTHING the object holds, which is right only when what you loaded
+# is what you want oriented. Load a whole box and the sum is dominated by the outer material with
+# the longest lever arm, so a "face-on galaxy" can come out tilted by the halo. `angmom_radius`
+# restricts the sum to a sphere about `center`, which is almost always what was meant.
+function _angmom_vector(dataobject, center, range_unit, angmom_radius; kwargs...)
+    src = dataobject
+    if angmom_radius !== nothing
+        r, u = angmom_radius isa AbstractVector ? (angmom_radius[1], Symbol(angmom_radius[2])) :
+                                                  (angmom_radius, range_unit)
+        src = subregion(dataobject, :sphere, radius=r, center=center, range_unit=u, verbose=false)
+        length(src.data) > 0 || throw(ArgumentError(
+            "angmom_radius=$angmom_radius selected no cells about center=$center: the sphere is " *
+            "empty, so no orientation can be computed from it."))
+    end
+    return [ sum(getvar(src, :lx; kwargs...)),
+             sum(getvar(src, :ly; kwargs...)),
+             sum(getvar(src, :lz; kwargs...)) ]
+end
+
+function _depth_window(depth, depth_unit::Symbol, info, boxlen)
+    cuw = depth_unit === :standard ? 1.0 / boxlen : getunit(info, depth_unit)
+    if depth isa Real
+        depth > 0 || throw(ArgumentError("depth must be positive when given as a half-width, got $depth"))
+        h = float(depth) / cuw
+        return (-h, h)
+    elseif depth isa AbstractVector && length(depth) == 2
+        lo, hi = float(depth[1]) / cuw, float(depth[2]) / cuw
+        lo < hi || throw(ArgumentError("depth=[lo,hi] needs lo < hi, got $depth"))
+        return (lo, hi)
+    end
+    throw(ArgumentError("depth must be a half-width (depth=2) or a window (depth=[-1,3]), got $depth"))
+end
+
 function projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
                             weighting, weight_scale, mode, ranges, center, range_unit,
                             mask, los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, nmax, direction,
                             boxlen, lmin, simlmax, isamr, scale, verbose,
                             max_threads=Threads.nthreads(),
-                            gravity_data::Union{GravDataType,Nothing}=nothing)
+                            gravity_data::Union{GravDataType,Nothing}=nothing,
+                            depth=nothing, depth_unit::Symbol=:standard,
+                            angmom_radius=nothing)
 
     rcheck     = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
@@ -1619,9 +1681,8 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # --- camera orientation (A1) ---------------------------------------------------
     Lvec = nothing
     if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
-        Lvec = [ sum(getvar(dataobject, :lx, center=center, center_unit=range_unit)),
-                 sum(getvar(dataobject, :ly, center=center, center_unit=range_unit)),
-                 sum(getvar(dataobject, :lz, center=center, center_unit=range_unit)) ]
+        Lvec = _angmom_vector(dataobject, center, range_unit, angmom_radius;
+                              center=center, center_unit=range_unit)
     end
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
                             inclination=inclination, azimuth=azimuth,
@@ -1675,6 +1736,19 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     full_x || (sel = sel .& (abs.(px) .<= (ranges[2]-ranges[1])*boxlen/2))
     full_y || (sel = sel .& (abs.(py) .<= (ranges[4]-ranges[3])*boxlen/2))
     full_z || (sel = sel .& (abs.(pz) .<= (ranges[6]-ranges[5])*boxlen/2))
+
+    # --- line-of-sight depth cut -----------------------------------------------------------------
+    # Every clip above is in WORLD coordinates, so none of them follows the camera: tilt the view and
+    # a `zrange` becomes a slab through the box, not through the image. `depth` is the one cut
+    # measured along the viewing direction itself, which is what a column density needs if it is to
+    # integrate the same distance everywhere in the frame. `z_cam` is that coordinate and is already
+    # computed above, so this is a selection and nothing more.
+    if depth !== nothing
+        dlo, dhi = _depth_window(depth, depth_unit, dataobject.info, boxlen)
+        sel = sel .& (z_cam .>= dlo) .& (z_cam .<= dhi)
+        verbose && println("depth cut: ", count(sel), " of ", ncells, " cells within [",
+                           round(dlo, digits=4), ", ", round(dhi, digits=4), "] code units along the line of sight")
+    end
 
     # --- camera-plane extent: auto-fit the rotated footprint of the SELECTED cells -------------
     # margin = 1 pixel + half the COARSEST selected cell's projected shadow, per camera axis, so a
@@ -1740,6 +1814,7 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
 
     pixel_area = pixsize^2
     imaps     = SortedDict()
+    count_map = nothing            # filled by the deposit when :ncell was asked for
     maps_unit = SortedDict()
     maps_weight = SortedDict()
     maps_mode = SortedDict()
@@ -1789,18 +1864,25 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
 
         grid    = zeros(Float64, nx, ny)
         wgrid   = zeros(Float64, nx, ny)
+        # :ncell asks how many cells fed each pixel. It is filled by the SAME deposit as the
+        # value, so it counts exactly what was deposited, and it is a separate grid that is only
+        # ever incremented, so it cannot disturb the value or the weight.
+        cgrid = (:ncell in selected_vars && ivar === first(selected_vars)) ?
+                zeros(Float64, nx, ny) : nothing
         if binning === :overlap
             deposit_rotated_cells_overlap!(grid, wgrid, xc, yc, csize, vsel, wts,
                                            cam_right, cam_up, grid_extent, grid_resolution;
-                                           nmax=nmax, max_threads=max_threads)
+                                           nmax=nmax, max_threads=max_threads, count_grid=cgrid)
         elseif binning === :exact
             deposit_rotated_cells_exact!(grid, wgrid, xc, yc, csize, vsel, wts,
                                          cam_right, cam_up, cam_w, grid_extent, grid_resolution;
-                                         max_threads=max_threads)
+                                         max_threads=max_threads, count_grid=cgrid)
         else
             deposit_rotated_cells_to_grid!(grid, wgrid, xc, yc, vsel, wts,
-                                           grid_extent, grid_resolution; binning=binning)
+                                           grid_extent, grid_resolution; binning=binning,
+                                           count_grid=cgrid)
         end
+        cgrid === nothing || (count_map = cgrid)
 
         if ivar === :sd
             m = grid ./ pixel_area
@@ -1822,6 +1904,9 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
         imaps[ivar]       = m .* selected_unit
         maps_unit[ivar]   = unit_name
+        # :ncell is carried through the pipeline like any variable so units and metadata are set
+        # the usual way, but the map itself is the counter the deposit filled, not a weighted mean.
+        ivar === :ncell && count_map !== nothing && (imaps[:ncell] = count_map)
         maps_weight[ivar] = w_meta
         maps_mode[ivar]   = mode_meta
     end
@@ -2392,7 +2477,8 @@ function deposit_rotated_cells_to_grid!(grid::AbstractMatrix{Float64},
                                         weights::AbstractVector{Float64},
                                         grid_extent::NTuple{4,Float64},
                                         grid_resolution::NTuple{2,Int};
-                                        binning::Symbol=:cic)
+                                        binning::Symbol=:cic,
+                                        count_grid::Union{Nothing,AbstractMatrix{Float64}}=nothing)
     nx::Int, ny::Int = grid_resolution
     x_min::Float64, x_max::Float64, y_min::Float64, y_max::Float64 = grid_extent
     inv_px::Float64 = nx / (x_max - x_min)
@@ -2406,6 +2492,7 @@ function deposit_rotated_cells_to_grid!(grid::AbstractMatrix{Float64},
             w::Float64 = weights[i]
             grid[ix, iy]        += values[i] * w
             weight_grid[ix, iy] += w
+            count_grid === nothing || (count_grid[ix, iy] += 1.0)
         end
         return nothing
     elseif binning != :cic
@@ -2428,6 +2515,12 @@ function deposit_rotated_cells_to_grid!(grid::AbstractMatrix{Float64},
         grid[ixr,iyl] += vw*wrl; weight_grid[ixr,iyl] += w*wrl
         grid[ixl,iyr] += vw*wlr; weight_grid[ixl,iyr] += w*wlr
         grid[ixr,iyr] += vw*wrr; weight_grid[ixr,iyr] += w*wrr
+        # one count per pixel the stencil actually touches, so a pixel fed by the tail of one
+        # cell's stencil is not mistaken for a well-sampled one
+        if count_grid !== nothing
+            wll > 0 && (count_grid[ixl,iyl] += 1.0); wrl > 0 && (count_grid[ixr,iyl] += 1.0)
+            wlr > 0 && (count_grid[ixl,iyr] += 1.0); wrr > 0 && (count_grid[ixr,iyr] += 1.0)
+        end
     end
     return nothing
 end
@@ -2484,7 +2577,8 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
         values::AbstractVector{Float64}, weights::AbstractVector{Float64},
         cam_right::AbstractVector{<:Real}, cam_up::AbstractVector{<:Real},
         grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int};
-        nmax::Int=64, max_threads::Int=Threads.nthreads())
+        nmax::Int=64, max_threads::Int=Threads.nthreads(),
+        count_grid::Union{Nothing,AbstractMatrix{Float64}}=nothing)
 
     nmax = max(nmax, 1)              # guard nmax<1: clamp(k,1,0)→0 would give ns=0 → all-zero map
     nx, ny = grid_resolution
@@ -2501,6 +2595,7 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
     nthreads = min(nthreads, n)
     gbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
     wbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
+    cbufs = count_grid === nothing ? nothing : [zeros(Float64, nx, ny) for _ in 1:nthreads]
 
     # contiguous cell chunks, one per thread (no shared writes)
     bounds = [floor(Int, (t-1)*n/nthreads) + 1 for t in 1:nthreads+1]
@@ -2508,7 +2603,7 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
 
     @sync for t in 1:nthreads
         Threads.@spawn begin
-            g = gbufs[t]; wg = wbufs[t]
+            g = gbufs[t]; wg = wbufs[t]; cg = cbufs === nothing ? nothing : cbufs[t]
             @inbounds for i in bounds[t]:(bounds[t+1]-1)
                 s = cellsize[i]
                 ns_full = ceil(Int, s * inv_px)
@@ -2551,6 +2646,7 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
                                         fyov <= 0.0 && continue
                                         f = fxov*fyov
                                         g[px,py]  += vw_i*f; wg[px,py] += w_i*f
+                                        cg === nothing || (cg[px,py] += 1.0)
                                     end
                                 end
                             else
@@ -2566,6 +2662,10 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
                                 g[ixr,iyl] += vw_i*wrl; wg[ixr,iyl] += w_i*wrl
                                 g[ixl,iyr] += vw_i*wlr; wg[ixl,iyr] += w_i*wlr
                                 g[ixr,iyr] += vw_i*wrr; wg[ixr,iyr] += w_i*wrr
+                                if cg !== nothing
+                                    wll > 0 && (cg[ixl,iyl] += 1.0); wrl > 0 && (cg[ixr,iyl] += 1.0)
+                                    wlr > 0 && (cg[ixl,iyr] += 1.0); wrr > 0 && (cg[ixr,iyr] += 1.0)
+                                end
                             end
                         end
                     end
@@ -2577,6 +2677,7 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
     @inbounds for t in 1:nthreads
         grid .+= gbufs[t]
         weight_grid .+= wbufs[t]
+        cbufs === nothing || (count_grid .+= cbufs[t])
     end
     return nothing
 end
@@ -2792,7 +2893,8 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
         cam_right::AbstractVector{<:Real}, cam_up::AbstractVector{<:Real},
         cam_w::AbstractVector{<:Real},
         grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int};
-        max_threads::Int=Threads.nthreads())
+        max_threads::Int=Threads.nthreads(),
+        count_grid::Union{Nothing,AbstractMatrix{Float64}}=nothing)
 
     nx, ny = grid_resolution
     x_min, x_max, y_min, y_max = grid_extent
@@ -2810,6 +2912,7 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
     nthreads = min(nthreads, n)
     gbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
     wbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
+    cbufs = count_grid === nothing ? nothing : [zeros(Float64, nx, ny) for _ in 1:nthreads]
     bounds = [floor(Int, (t-1)*n/nthreads) + 1 for t in 1:nthreads+1]
     bounds[end] = n + 1
 
@@ -2818,7 +2921,7 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
 
     @sync for t in 1:nthreads
         Threads.@spawn begin
-            g = gbufs[t]; wg = wbufs[t]
+            g = gbufs[t]; wg = wbufs[t]; cg = cbufs === nothing ? nothing : cbufs[t]
             # per-thread polygon work-pool + wall scratch (allocated once, reused per pixel)
             cap = 512
             PX = [Vector{Float64}(undef, 32) for _ in 1:cap]
@@ -2848,6 +2951,10 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
                     g[ixr,iyl]+=vw_i*wrl; wg[ixr,iyl]+=w_i*wrl
                     g[ixl,iyr]+=vw_i*wlr; wg[ixl,iyr]+=w_i*wlr
                     g[ixr,iyr]+=vw_i*wrr; wg[ixr,iyr]+=w_i*wrr
+                    if cg !== nothing
+                        wll > 0 && (cg[ixl,iyl] += 1.0); wrl > 0 && (cg[ixr,iyl] += 1.0)
+                        wlr > 0 && (cg[ixl,iyr] += 1.0); wrr > 0 && (cg[ixr,iyr] += 1.0)
+                    end
                     continue
                 end
 
@@ -2903,6 +3010,7 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
                             f = vol * invT
                             g[ix,iy]  += vw_i * f
                             wg[ix,iy] += w_i  * f
+                            cg === nothing || (cg[ix,iy] += 1.0)
                         end
                     end
                 end
@@ -2913,6 +3021,7 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
     @inbounds for t in 1:nthreads
         grid .+= gbufs[t]
         weight_grid .+= wbufs[t]
+        cbufs === nothing || (count_grid .+= cbufs[t])
     end
     return nothing
 end

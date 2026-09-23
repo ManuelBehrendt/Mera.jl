@@ -1558,9 +1558,17 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     pixel_vol_fac = (boxlen / res)^3 * res          # mirrors the axis density normalisation
     maps = SortedDict(); maps_unit = SortedDict(); maps_mode = SortedDict()
 
+    # `:npart` counts how many particles fed each pixel, filled by the SAME deposit as the value.
+    # For points this is the number that matters most: a pixel holding one star has no spread, so
+    # its sigma is exactly zero, and its "mean" is that one star (Chapter on stars).
+    npart_map = (:npart in selected_vars) ? zeros(Float64, nx, ny) : nothing
+    npart_filled = Ref(false)      # `deposit` runs once per variable; the count is wanted once
     deposit(vals, wts) = begin
         g = zeros(Float64, nx, ny); w = zeros(Float64, nx, ny)
-        deposit_rotated_cells_to_grid!(g, w, xc, yc, vals, wts, grid_extent, grid_resolution; binning=bin)
+        cg = (npart_map !== nothing && !npart_filled[]) ? npart_map : nothing
+        deposit_rotated_cells_to_grid!(g, w, xc, yc, vals, wts, grid_extent, grid_resolution;
+                                       binning=bin, count_grid=cg)
+        cg === nothing || (npart_filled[] = true)
         return g, w
     end
 
@@ -1627,6 +1635,11 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                 maps_unit[ivar] = un; maps_mode[ivar] = :voronoi
             end
         end
+        if npart_map !== nothing
+            maps[:npart] = npart_map
+            maps_unit[:npart] = :standard
+            maps_mode[:npart] = :sum
+        end
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         return PartMapsType(maps, maps_unit, SortedDict(), maps_mode, lmax, lmin, lmax, ref_time,
                             ranges, extent, copy(extent), ratio, res, pixsize, boxlen, scale,
@@ -1681,6 +1694,11 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     end
 
     ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
+    if npart_map !== nothing
+        maps[:npart] = npart_map
+        maps_unit[:npart] = :standard
+        maps_mode[:npart] = :sum
+    end
     return PartMapsType(maps, maps_unit, SortedDict(), maps_mode, lmax, lmin, lmax, ref_time,
                         ranges, extent, copy(extent), ratio, res, pixsize, boxlen, scale,
                         dataobject.info,
