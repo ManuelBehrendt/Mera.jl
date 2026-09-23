@@ -77,6 +77,11 @@ function get_data(dataobject::PartDataType,
             end
 
         # quantities that are derived from the variables in the data table
+        # One per particle. Its purpose is `projection(part, :npart)`, where the deposit counts how
+        # many particles fed each pixel: a pixel holding a single star has no spread at all, so its
+        # sigma is exactly zero and its mean is that one star.
+        elseif i == :npart
+            vars_dict[:npart] = fill(1.0, length(masked_data))
         elseif i == :vx2
             selected_unit = getunit(dataobject, :vx2, vars, units)
             vars_dict[:vx2] =  select(masked_data, :vx).^2 .* selected_unit.^2

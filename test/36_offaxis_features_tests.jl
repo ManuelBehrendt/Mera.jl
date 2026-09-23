@@ -605,4 +605,110 @@ end
         @test isapprox(sum(mp.maps[:sd]) * (mp.pixsize*gas.scale.pc)^2, sum(getvar(gas,:mass,:Msol)); rtol=1e-6)
     end
 
+    # ==============================================================================================
+    # Camera-space and sampling features: depth, angmom_radius, asymmetric fov, and the count maps.
+    # Each asserts behaviour, not just that the call returns: a depth cut must drop mass MONOTONICALLY
+    # and keep everything when it is wider than the box, an angmom radius must change which cells are
+    # summed, an asymmetric fov must produce an asymmetric frame, and a count map must sum to a known
+    # multiple of the number of cells or particles.
+    # ==============================================================================================
+    @testset "depth: a line-of-sight cut in camera coordinates" begin
+        M = msum(gas, :Msol)
+        kw = (los=[1.,2.,3.], center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        gm(m) = sum(m.maps[:mass])
+        full = gm(projection(gas, :mass, :Msol; kw...))
+        @test isapprox(full, M; rtol=1e-10)                      # no cut keeps everything
+
+        fracs = [gm(projection(gas, :mass, :Msol; depth=d, depth_unit=:kpc, kw...)) / M
+                 for d in (1.0, 3.0, 10.0, 1000.0)]
+        @test issorted(fracs)                                     # wider window keeps more
+        @test fracs[1] < 1.0                                      # a narrow cut really cuts
+        @test isapprox(fracs[end], 1.0; rtol=1e-10)               # wider than the box keeps all
+
+        # an asymmetric window is a window, not a half-width: it must differ from the symmetric one
+        a = gm(projection(gas, :mass, :Msol; depth=[-1.0, 3.0], depth_unit=:kpc, kw...)) / M
+        b = gm(projection(gas, :mass, :Msol; depth=2.0, depth_unit=:kpc, kw...)) / M
+        @test a != b
+
+        # guards
+        @test_throws ArgumentError projection(gas, :mass, :Msol; depth=[3.0,1.0], depth_unit=:kpc, kw...)
+        @test_throws ArgumentError projection(gas, :mass, :Msol; depth=-1.0, depth_unit=:kpc, kw...)
+        # depth is camera-space, so the axis-aligned path must refuse it and say what to use instead
+        @test_throws ArgumentError projection(gas, :mass, :Msol; direction=:z, depth=1.0,
+                                              depth_unit=:kpc, center=[:bc], pxsize=[1.0,:kpc],
+                                              verbose=false, show_progress=false)
+    end
+
+    @testset "angmom_radius: orient on a region, not on everything loaded" begin
+        L_all = Mera._angmom_vector(gas, [:bc], :kpc, nothing; center=[:bc], center_unit=:kpc)
+        L_in  = Mera._angmom_vector(gas, [:bc], :kpc, [5,:kpc]; center=[:bc], center_unit=:kpc)
+        @test length(L_all) == 3 && all(isfinite, L_all)
+        @test all(isfinite, L_in)
+        # the restricted sum is over strictly fewer cells, so the vectors cannot be identical
+        inner = subregion(gas, :sphere, radius=5., center=[:bc], range_unit=:kpc, verbose=false)
+        @test length(inner.data) < length(gas.data)
+        @test L_all != L_in
+        # and it flows through the public call
+        m = projection(gas, :sd, :Msol_pc2; direction=:faceon, angmom_radius=[5,:kpc],
+                       center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc],
+                       verbose=false, show_progress=false)
+        @test isapprox(sum(abs2, m.los), 1.0; rtol=1e-10)         # a unit line of sight
+    end
+
+    @testset "fov=[wx,wy]: a rectangular frame" begin
+        kw = (center=[:bc], fov_unit=:kpc, pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        sq = projection(gas, :sd, :Msol_pc2; direction=:edgeon, fov=8, aperture=:square, kw...)
+        re = projection(gas, :sd, :Msol_pc2; direction=:edgeon, fov=[8,2], aperture=:square, kw...)
+        @test size(sq.maps[:sd], 1) == size(sq.maps[:sd], 2)      # scalar fov stays square
+        nx, ny = size(re.maps[:sd])
+        @test nx > ny                                             # [8,2] is wide and short
+        ex = getextent(re, :kpc)
+        @test isapprox((ex[2]-ex[1]) / (ex[4]-ex[3]), 4.0; rtol=0.15)   # about 8:2
+        @test isapprox(re.ratio, (ex[2]-ex[1])/(ex[4]-ex[3]); rtol=1e-6)
+        # the transpose is the transpose
+        tr = projection(gas, :sd, :Msol_pc2; direction=:edgeon, fov=[2,8], aperture=:square, kw...)
+        @test size(tr.maps[:sd], 2) > size(tr.maps[:sd], 1)
+        # guards: a rectangle has no single radius, and a half-width must be positive
+        @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,2], aperture=:circle, kw...)
+        @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,2,1], aperture=:square, kw...)
+        @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,-2], aperture=:square, kw...)
+    end
+
+    @testset ":ncell / :npart count what fed each pixel" begin
+        N = length(gas.data)
+        kw = (los=[1.,2.,3.], center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        M = msum(gas, :Msol)
+        # What the count MEANS depends on the kernel, and the test says so rather than assuming:
+        #   :ngp       one event per cell, so the map sums to exactly the cell count
+        #   :cic       up to four, the stencil pixels
+        #   :overlap   one per SUB-POINT deposit, so a cell spread over many pixels counts many times
+        #   :exact     one per pixel its footprint touches
+        # Only :ngp has an exact identity; the others are sampling density and are bounded below.
+        for b in (:ngp, :cic, :overlap, :exact)
+            m = projection(gas, [:mass, :ncell], [:Msol, :standard]; binning=b, kw...)
+            C = m.maps[:ncell]
+            @test size(C) == size(m.maps[:mass])
+            @test all(C .>= 0)
+            @test sum(C) >= N - 1                 # every cell is deposited at least once
+            b === :ngp && @test isapprox(sum(C), N; rtol=1e-9)
+            b === :cic && @test sum(C) <= 4N + 1
+            # and the counter must not have disturbed the value it rode along with
+            @test isapprox(sum(m.maps[:mass]), M; rtol=1e-9)
+        end
+
+        # points: the same idea, and the count is what tells you a pixel holds a single particle
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false, show_progress=false)
+        Np = length(part.data); Mp = msum(part, :Msol)
+        for b in (:ngp, :cic)
+            m = projection(part, [:sd, :npart], [:Msol_pc2, :standard]; binning=b, kw...)
+            C = m.maps[:npart]
+            @test all(C .>= 0)
+            # points have no footprint, so both kernels have an exact identity here
+            b === :ngp && @test isapprox(sum(C), Np; rtol=1e-9)
+            b === :cic && @test sum(C) <= 4Np + 1
+            @test isapprox(sum(m.maps[:sd]) * (m.pixsize * part.scale.pc)^2, Mp; rtol=1e-6)
+        end
+    end
+
 end

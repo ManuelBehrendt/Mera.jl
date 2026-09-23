@@ -168,6 +168,11 @@ function get_data(  dataobject::HydroDataType,
         # missing level on AMR data still raises rather than being silently invented.
         elseif i == :level && !isamr
             vars_dict[:level] = fill(lmax, length(masked_data))
+        # One per cell. On its own it is just ones; its purpose is `projection(obj, :ncell)`, where
+        # the deposit counts how many cells fed each pixel. That count is what separates a pixel
+        # you can quote from one built out of a single cell.
+        elseif i == :ncell
+            vars_dict[:ncell] = fill(1.0, length(masked_data))
         elseif i == :cellsize
             selected_unit = getunit(dataobject, :cellsize, vars, units)
             if isamr
