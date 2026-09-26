@@ -657,6 +657,12 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
                                       # true cross-sections tile with no sub-pixel seam at level
                                       # boundaries, without re-introducing the oversized footprint.
     zbuf = fill(Inf, nx, ny); vbuf = fill(NaN, nx, ny)
+    # Per-pixel diagnostics. A slice is a nearest-cell painter, so "how many cells fed this
+    # pixel" is not a question it can answer: cells tile space, exactly one owns the plane point,
+    # and the count would read 1 everywhere it painted. What a slice CAN say is which pixels it
+    # reached at all, and how big the cell that won was, which is the effective resolution there.
+    # Comparing `cellsize` with `pixsize` tells you whether the grid is over- or under-sampled.
+    csbuf = fill(NaN, nx, ny)
     @inbounds for i in eachindex(xc)
         ht = 0.5*cs[i] + tol; zi = zc[i]; pX=pcx[i]; pY=pcy[i]; pZ=pcz[i]
         radx = ht*(abs(rx)+abs(ry)+abs(rz)); rady = ht*(abs(ux)+abs(uy)+abs(uz))
@@ -668,14 +674,16 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
                 Y = y0 + (iy-0.5)*pystep
                 (abs(X*rx + Y*ux + ox - pX) <= ht && abs(X*ry + Y*uy + oy - pY) <= ht &&
                  abs(X*rz + Y*uz + oz - pZ) <= ht) || continue
-                if zi < zbuf[ix,iy]; zbuf[ix,iy]=zi; vbuf[ix,iy]=vv[i]; end
+                if zi < zbuf[ix,iy]; zbuf[ix,iy]=zi; vbuf[ix,iy]=vv[i]; csbuf[ix,iy]=cs[i]; end
             end
         end
     end
     return (map = vbuf, x = collect(range(x0,x1,length=nx+1)), y = collect(range(y0,y1,length=ny+1)),
             extent = [x0,x1,y0,y1], los = collect(w), up = collect(uc), cam_right = collect(cr),
             center = _center_code(dataobject, center, range_unit), pixsize = pixsize,
-            range_unit = range_unit, scale = dataobject.scale)
+            range_unit = range_unit, scale = dataobject.scale,
+            # which pixels the plane actually reached, and the size of the cell that won each one
+            coverage = .!isnan.(vbuf), cellsize = csbuf, depth = zbuf)
 end
 
 

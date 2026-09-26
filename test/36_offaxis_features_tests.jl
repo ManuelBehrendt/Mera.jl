@@ -905,6 +905,38 @@ end
         end
     end
 
+    @testset "slice: what a depth-buffer painter can honestly report per pixel" begin
+        # A slice is NOT a deposit. Cells tile space, exactly one owns the point where the plane
+        # crosses, and that one cell wins the pixel. So a cell COUNT is not available here and
+        # would read 1 everywhere: asking for it would be asking the wrong question. What the
+        # algorithm does know is which pixels it reached and how big the winning cell was.
+        sl = slice(gas, :rho, :g_cm3; los=[1.,2,3], center=[:bc], pxsize=[1.0,:kpc], verbose=false)
+        @test size(sl.coverage) == size(sl.map)
+        @test size(sl.cellsize) == size(sl.map)
+        @test sl.coverage == .!isnan.(sl.map)              # painted exactly where there is a value
+        @test any(sl.coverage) && !all(sl.coverage)        # a tilted plane leaves corners empty
+        @test all(isnan, sl.cellsize[.!sl.coverage])       # no winner, no cell size
+        @test all(sl.cellsize[sl.coverage] .> 0)
+        @test all(isfinite, sl.depth[sl.coverage])
+
+        # the winning cell sizes must be real AMR cell sizes of this object
+        levels = sort(unique(getvar(gas, :cellsize)))
+        @test all(c -> any(isapprox(c, l; rtol=1e-9) for l in levels), unique(sl.cellsize[sl.coverage]))
+
+        # AND THE POINT OF IT: comparing cellsize with pixsize says whether the map is
+        # over-sampled. Shrink the pixel and the fraction of pixels finer than their own cell
+        # has to rise, because the cells do not get any smaller.
+        fine = Float64[]
+        for px in (2.0, 1.0, 0.25)
+            s2 = slice(gas, :rho, :g_cm3; los=[1.,2,3], center=[:bc], pxsize=[px,:kpc],
+                       verbose=false)
+            c = s2.cellsize[s2.coverage]
+            push!(fine, count(c .> px) / length(c))
+        end
+        @test fine[1] < fine[2] < fine[3]
+        @test fine[3] > 0.99            # at a quarter kpc every pixel is finer than its cell
+    end
+
     @testset "particles: mode=:sum gives the total in each pixel" begin
         dp = DATASETS[:spiral_ugrid]
         part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
