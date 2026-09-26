@@ -1682,20 +1682,8 @@ end
 # is what you want oriented. Load a whole box and the sum is dominated by the outer material with
 # the longest lever arm, so a "face-on galaxy" can come out tilted by the halo. `angmom_radius`
 # restricts the sum to a sphere about `center`, which is almost always what was meant.
-function _angmom_vector(dataobject, center, range_unit, angmom_radius; kwargs...)
-    src = dataobject
-    if angmom_radius !== nothing
-        r, u = angmom_radius isa AbstractVector ? (angmom_radius[1], Symbol(angmom_radius[2])) :
-                                                  (angmom_radius, range_unit)
-        src = subregion(dataobject, :sphere, radius=r, center=center, range_unit=u, verbose=false)
-        length(src.data) > 0 || throw(ArgumentError(
-            "angmom_radius=$angmom_radius selected no cells about center=$center: the sphere is " *
-            "empty, so no orientation can be computed from it."))
-    end
-    return [ sum(getvar(src, :lx; kwargs...)),
-             sum(getvar(src, :ly; kwargs...)),
-             sum(getvar(src, :lz; kwargs...)) ]
-end
+_angmom_vector(dataobject, center, range_unit, angmom_radius; kwargs...) =
+    angmom(dataobject; center=center, range_unit=range_unit, radius=angmom_radius, kwargs...)
 
 function _depth_window(depth, depth_unit::Symbol, info, boxlen)
     cuw = depth_unit === :standard ? 1.0 / boxlen : getunit(info, depth_unit)
@@ -1745,8 +1733,7 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # --- camera orientation (A1) ---------------------------------------------------
     Lvec = nothing
     if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
-        Lvec = _angmom_vector(dataobject, center, range_unit, angmom_radius;
-                              center=center, center_unit=range_unit)
+        Lvec = _angmom_vector(dataobject, center, range_unit, angmom_radius)
     end
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
                             inclination=inclination, azimuth=azimuth,

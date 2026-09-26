@@ -711,7 +711,7 @@ function _volume_setup(dataobject::HydroDataType, l::VolumeLook; direction=:z, l
         # missing velocity frame or centre are about physics, not about pointing a camera, so
         # they are silenced for this one call instead of appearing in every picture.
         Lvec = _quietly() do
-            [sum(getvar(dataobject, q, center=center, center_unit=range_unit)) for q in (:lx, :ly, :lz)]
+            angmom(dataobject; center=center, range_unit=range_unit)
         end
     end
     los, up, direction = _volume_view(direction, los, up, inclination, azimuth, axis)

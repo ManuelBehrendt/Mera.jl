@@ -590,9 +590,7 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
         mask=[false], verbose::Bool=true)
     info = dataobject.info; boxlen = dataobject.boxlen
     Lvec = (direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L) ?
-        [sum(getvar(dataobject,:lx,center=center,center_unit=range_unit)),
-         sum(getvar(dataobject,:ly,center=center,center_unit=range_unit)),
-         sum(getvar(dataobject,:lz,center=center,center_unit=range_unit))] : nothing
+        angmom(dataobject; center=center, range_unit=range_unit) : nothing
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
                             axis=axis, direction=direction, angle_unit=angle_unit, up=up, L=Lvec)
     roll = position_angle === nothing ? 0.0 : float(position_angle) * _angle_factor(angle_unit)

@@ -374,6 +374,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -411,7 +412,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
@@ -451,6 +452,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -488,7 +490,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
@@ -528,6 +530,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -565,7 +568,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
@@ -605,6 +608,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -642,7 +646,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
@@ -681,6 +685,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -718,7 +723,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
@@ -758,6 +763,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -823,6 +829,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                               pxsize=pxsize, mask=inner_mask, direction=direction, los=los, up=up,
                               theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
                               position_angle=position_angle, axis=axis, angle_unit=angle_unit,
+                              angmom_radius=angmom_radius,
                               binning=binning, weighting=weighting, nlos=nlos,
                               thickness=thickness, thickness_unit=thickness_unit,
                               offset=offset, offset_unit=offset_unit,
@@ -950,7 +957,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                             los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
                                             boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos, max_threads;
                                             thickness=thickness, thickness_unit=thickness_unit,
-                                            offset=offset, offset_unit=offset_unit)
+                                            offset=offset, offset_unit=offset_unit,
+                                            angmom_radius=angmom_radius)
     end
 
     # Camera-frame kinematics have no meaning without a camera: :vlos/:σlos are along the line
@@ -1449,7 +1457,8 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                                        los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
                                        boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing, max_threads=Threads.nthreads();
                                        thickness=nothing, thickness_unit=nothing,
-                                       offset=nothing, offset_unit=nothing)
+                                       offset=nothing, offset_unit=nothing,
+                                       angmom_radius=nothing)
 
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
@@ -1492,11 +1501,11 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
         # The camera must be set by the SAME particles that get drawn. `parttypes` and any user
         # mask are already folded into `mask` by the caller, so orienting on the unmasked object
         # would point `parttypes=[:dm], :faceon` at the stars as well as the dark matter.
-        lkw = length(mask) > 1 ? (; center=data_centerm, ref_time=ref_time, mask=collect(Bool.(mask))) :
-                                 (; center=data_centerm, ref_time=ref_time)
-        Lvec = [ sum(getvar(dataobject, :lx; lkw...)),
-                 sum(getvar(dataobject, :ly; lkw...)),
-                 sum(getvar(dataobject, :lz; lkw...)) ]
+        # `data_centerm` is already resolved to the box's fractional units, so the centre is read
+        # as :standard while a bare `angmom_radius` still means the projection's `range_unit`.
+        Lvec = angmom(dataobject; center=data_centerm, range_unit=:standard,
+                      radius=angmom_radius, radius_unit=range_unit, ref_time=ref_time,
+                      mask=(length(mask) > 1 ? collect(Bool.(mask)) : nothing))
     end
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
                             inclination=inclination, azimuth=azimuth,

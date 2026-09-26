@@ -81,6 +81,99 @@ function center_of(dataobject; method::Symbol=:com, unit::Symbol=:standard,
 end
 
 # Shared core for face_on / edge_on.
+# ====================================================================================
+#  angmom: the net angular-momentum vector
+# ====================================================================================
+
+"""
+    angmom(data; center=[:bc], range_unit=:standard, radius=nothing, mask=nothing, unit=:standard)
+    angmom([gas, stars, dm]; ...) -> Vector{Float64}
+
+Net angular momentum **L = Σ mᵢ rᵢ × vᵢ** about `center`, as a 3-vector.
+
+This is the vector behind `direction=:faceon`, `direction=:edgeon` and `axis=:angmom`. Those
+presets compute it from one object; calling `angmom` yourself lets you decide what defines the
+orientation, then hand the answer to any view:
+
+```julia
+L = angmom(gas; center=[:bc], radius=[10, :kpc])
+projection(gas, :sd; axis=L, inclination=60, center=[:bc])   # same camera for every dataset
+```
+
+# Several components at once
+A galaxy's plane is set by gas, stars and dark matter together, and each of the three has its own
+axis. Pass them as a vector and the momenta are added:
+
+```julia
+L = angmom([gas, stars, dm]; center=[:bc], radius=[20, :kpc])
+```
+
+The objects must share a snapshot; they need not share a resolution or a particle count. The sum
+is over mass, so a component contributes in proportion to how much of it there is: in most discs
+the dark matter dominates the total even though the gas defines the visible plane. Decide which
+tracer you mean, rather than combining out of habit.
+
+# Arguments
+- `center`, `range_unit`: the point L is measured about. **Change this and the vector changes**,
+  because r is measured from it.
+- `radius`: restrict the sum to a sphere about `center`, as `[10, :kpc]` or a bare number in
+  `range_unit` (or in `radius_unit`, when the centre is expressed in a different unit). Without it the sum runs over everything the object holds, where the outer
+  material has the longest lever arm and can tilt a "face-on galaxy" by the halo.
+- `mask`: a boolean per row, so the sum can be restricted to, say, cold gas or one particle
+  family (see [`getparticlemask`](@ref)).
+- `unit`: unit for the returned components. The direction does not depend on it, and only the
+  direction is used for orientation.
+
+# Velocity frame
+Velocities are taken as they are stored, in the box frame. For an object streaming through the
+box this changes |L|, and tilts it, because r × v picks up r × v_bulk. Measuring about the
+object's own centre of mass largely cancels it (Σ mᵢ rᵢ = 0 there), which is what
+[`face_on`](@ref) does with `center=:com`.
+
+See also [`face_on`](@ref), [`edge_on`](@ref), [`center_of`](@ref), [`projection`](@ref).
+"""
+function angmom(dataobject; center=[:bc], range_unit::Symbol=:standard, radius=nothing,
+                radius_unit::Symbol=:__same__, mask=nothing, unit::Symbol=:standard, kwargs...)
+    src = dataobject
+    if radius !== nothing
+        # `subregion` takes ONE unit for the centre and the radius, but a caller can legitimately
+        # give a fractional centre with a radius in kpc. Resolve both to the box's own fractional
+        # units first, so the two cannot be read against different scales.
+        rdefault = radius_unit === :__same__ ? range_unit : radius_unit
+        r, u = radius isa AbstractVector ? (radius[1], Symbol(radius[2])) : (radius, rdefault)
+        info  = dataobject.info
+        cfrac = collect(float.(center_in_standardnotation(info, collect(Any, center), range_unit)))
+        rfrac = u === :standard ? float(r) : float(r) / getunit(info, u) / dataobject.boxlen
+        src = subregion(dataobject, :sphere, radius=rfrac, center=cfrac,
+                        range_unit=:standard, verbose=false)
+        length(src.data) > 0 || throw(ArgumentError(
+            "angmom: radius=$radius selected no cells about center=$center, so there is " *
+            "nothing to measure. Check the centre, the radius and the unit."))
+        # a mask counts rows of the ORIGINAL object; the sphere has fewer, so filter first instead
+        mask === nothing || throw(ArgumentError(
+            "angmom: give either `radius` or `mask`, not both. A mask is one entry per row of " *
+            "the object you passed, and `radius` cuts a subregion with fewer rows. To combine " *
+            "them, filter first (filterdata / subregion) and call angmom on the result."))
+    end
+    # anything else (e.g. `ref_time` for particles) goes straight to getvar
+    kw = mask === nothing ? (; center=center, center_unit=range_unit, unit=unit, kwargs...) :
+                            (; center=center, center_unit=range_unit, unit=unit, mask=mask, kwargs...)
+    return [ sum(getvar(src, :lx; kw...)),
+             sum(getvar(src, :ly; kw...)),
+             sum(getvar(src, :lz; kw...)) ]
+end
+
+# Several components: add their momenta. Written as a plain sum so a caller can see that no
+# weighting beyond each component's own mass is applied.
+function angmom(objs::AbstractVector; kwargs...)
+    isempty(objs) && throw(ArgumentError("angmom: no objects given"))
+    L = zeros(Float64, 3)
+    for o in objs
+        L .+= angmom(o; kwargs...)
+    end
+    return L
+end
+
 function _galaxy_frame(dataobject; center=:com, aperture=nothing,
                        range_unit::Symbol=:standard, edge::Bool=false)
     cen = center isa Symbol ?
@@ -99,9 +192,7 @@ function _galaxy_frame(dataobject; center=:com, aperture=nothing,
     end
 
     # net angular momentum about `cen`; l = mass × specific h, so the sum is mass-weighted
-    L = [sum(getvar(region, :lx; center=cen, center_unit=range_unit)),
-         sum(getvar(region, :ly; center=cen, center_unit=range_unit)),
-         sum(getvar(region, :lz; center=cen, center_unit=range_unit))]
+    L = angmom(region; center=cen, range_unit=range_unit)
     n = _vnorm(L)
     n ≈ 0 && error("face_on/edge_on: net angular momentum ≈ 0 about the centre; " *
                    "no orientation is defined (use an `aperture` around the disk?).")

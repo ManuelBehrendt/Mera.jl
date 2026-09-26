@@ -143,6 +143,7 @@ export
     center_of,
     face_on,
     edge_on,
+    angmom,
     GalaxyFrame,
     gridoverlay,
     gridoverlay!,

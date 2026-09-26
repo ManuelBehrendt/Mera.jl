@@ -666,8 +666,8 @@ end
     end
 
     @testset "angmom_radius: orient on a region, not on everything loaded" begin
-        L_all = Mera._angmom_vector(gas, [:bc], :kpc, nothing; center=[:bc], center_unit=:kpc)
-        L_in  = Mera._angmom_vector(gas, [:bc], :kpc, [5,:kpc]; center=[:bc], center_unit=:kpc)
+        L_all = angmom(gas; center=[:bc], range_unit=:kpc)
+        L_in  = angmom(gas; center=[:bc], range_unit=:kpc, radius=[5,:kpc])
         @test length(L_all) == 3 && all(isfinite, L_all)
         @test all(isfinite, L_in)
         # the restricted sum is over strictly fewer cells, so the vectors cannot be identical
@@ -683,6 +683,63 @@ end
         # and it must be a DIFFERENT camera: asserting only that it is a unit vector passes for
         # any line of sight at all, including one where the keyword was ignored
         @test m.los != mall.los
+    end
+
+    @testset "angmom: one vector, any camera, several components" begin
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        unitv(v) = v ./ norm(v)
+        ang(a, b) = acosd(clamp(dot(unitv(a), unitv(b)), -1, 1))
+
+        L = angmom(gas; center=[:bc], range_unit=:kpc)
+        @test length(L) == 3 && all(isfinite, L) && norm(L) > 0
+
+        # `radius=` must select exactly what an explicit subregion selects, and nothing else.
+        # Asserting only "the vector changed" would pass for a radius read in the wrong unit.
+        for R in (5, 10, 20)
+            sub = subregion(gas, :sphere, radius=R, center=[:bc], range_unit=:kpc, verbose=false)
+            @test angmom(gas; center=[:bc], range_unit=:kpc, radius=[R,:kpc]) ≈
+                  angmom(sub; center=[:bc], range_unit=:kpc)
+        end
+        # a fractional centre with a radius in kpc must mean the same thing as a :bc centre
+        @test angmom(gas; center=[0.5,0.5,0.5], range_unit=:standard, radius=[10,:kpc]) ≈
+              angmom(gas; center=[:bc], range_unit=:kpc, radius=[10,:kpc])
+
+        # SEVERAL COMPONENTS: the joint vector is the sum of the parts, exactly
+        Lp = angmom(part; center=[:bc], range_unit=:kpc)
+        J  = angmom([gas, part]; center=[:bc], range_unit=:kpc)
+        @test J ≈ L .+ Lp
+        @test ang(L, J) > 0.1          # and it is a genuinely different axis, not a rounding
+        @test_throws ArgumentError angmom(Any[])
+
+        # a mask restricts what defines the axis
+        cold = getvar(gas, :T, :K) .< 1e4
+        @test ang(L, angmom(gas; center=[:bc], range_unit=:kpc, mask=cold)) > 0.1
+        # radius and mask together are refused rather than silently misapplied: the mask counts
+        # rows of the object passed in, the sphere has fewer
+        @test_throws ArgumentError angmom(gas; center=[:bc], range_unit=:kpc,
+                                          radius=[5,:kpc], mask=cold)
+        # NOTE a tiny radius does NOT raise: `subregion` keeps a cell whose boundary reaches the
+        # sphere, so the cell holding the centre is always caught. The empty-selection error is
+        # for a centre that misses the data, not for a small radius.
+        @test norm(angmom(gas; center=[:bc], range_unit=:kpc, radius=[1e-9,:kpc])) >= 0
+
+        # the refactor must not have moved any camera: :faceon is exactly angmom()
+        pkw = (center=[:bc], range_unit=:kpc, pxsize=[2.0,:kpc], verbose=false, show_progress=false)
+        @test ang(projection(gas, :sd, :Msol_pc2; direction=:faceon, pkw...).los, L) < 1e-8
+        @test ang(projection(part, :sd, :Msol_pc2; direction=:faceon, pkw...).los, Lp) < 1e-8
+
+        # and the vector drives any view, including one built from several components
+        m = projection(gas, :sd, :Msol_pc2; axis=J, inclination=0, pkw...)
+        @test ang(m.los, J) < 1e-8
+        @test sum(m.maps[:sd]) > 0
+
+        # particles gained angmom_radius, so both data types now offer it
+        pa = projection(part, :sd, :Msol_pc2; direction=:faceon, pkw...)
+        pb = projection(part, :sd, :Msol_pc2; direction=:faceon, angmom_radius=[5,:kpc], pkw...)
+        @test ang(pa.los, pb.los) > 1e-3
+        @test ang(pb.los, angmom(part; center=[:bc], range_unit=:kpc, radius=[5,:kpc])) < 1e-6
     end
 
     @testset "fov=[wx,wy]: a rectangular frame" begin
