@@ -113,9 +113,10 @@ at the frame boundary. `depth` is what makes the column the same length everywhe
 Use `split=true` when the edge matters: a small aperture, a thin slab, or **any time you stack
 slabs and expect them to re-sum**. With whole cells, a partition of one slab into pieces
 over-counts every cell a face crosses, and on a regular grid with a rational line of sight that is
-whole lattices of cells at once, not a rare tie. Measured on the tutorial galaxy: re-summing a
-partition inflates the total by 4 percent with whole cells and is exact with `split=true`. A 5 kpc
-circular aperture holds 7 percent too much mass with whole cells.
+whole lattices of cells at once, not a rare tie. Measured on Mera's test galaxy: re-summing a
+partition inflates the total by 4 percent with whole cells and is exact with `split=true`, and a
+5 kpc circular aperture holds 7 percent too much mass with whole cells. Chapter 5 of the
+[tutorial](06_offaxis_Projection.md) runs the same two checks on a 51.5 million cell snapshot.
 
 Particles are points and have no volume, so `split` does nothing for them.
 
