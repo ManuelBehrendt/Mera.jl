@@ -474,7 +474,7 @@ end
 if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
     @testset "Empty region: derived quantities stay empty" begin
         info = load_test_info(:spiral_clumps)
-        tiny = Sphere(1e-6, center=[:bc], range_unit=:standard)
+        tiny = sphere(1e-6, center=[:bc], range_unit=:standard)
 
         for loader in (gethydro, getgravity)
             d = loader(info, verbose=false, show_progress=false)
@@ -496,7 +496,7 @@ if haskey(DATASETS, :rt_stromgren) && isdir(DATASETS[:rt_stromgren].path)
         ds   = DATASETS[:rt_stromgren]
         info = getinfo(ds.output, ds.path, verbose=false)
         rt   = getrt(info, verbose=false, show_progress=false)
-        e    = subregion(rt, Sphere(1e-6, center=[:bc], range_unit=:standard), verbose=false)
+        e    = subregion(rt, sphere(1e-6, center=[:bc], range_unit=:standard), verbose=false)
         @test length(e.data) == 0
         @test isempty(getvar(e, :cellsize))
         @test sum(getvar(e, :volume)) == 0.0
@@ -515,7 +515,7 @@ if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
         info = load_test_info(:spiral_clumps)
         gas  = gethydro(info,   verbose=false, show_progress=false)
         grav = getgravity(info, verbose=false, show_progress=false)
-        R    = Sphere(0.2, center=[:bc], range_unit=:standard)
+        R    = sphere(0.2, center=[:bc], range_unit=:standard)
 
         # matching pair: works, and the boundary fraction is carried through
         gs, hs = subregion(grav, R, verbose=false), subregion(gas, R, verbose=false)
@@ -532,7 +532,7 @@ if haskey(DATASETS, :spiral_clumps) && isdir(DATASETS[:spiral_clumps].path)
         # equal-sized boxes the same cell count wherever they sit.
         gasu  = gethydro(info,   lmax=info.levelmin, verbose=false, show_progress=false)
         gravu = getgravity(info, lmax=info.levelmin, verbose=false, show_progress=false)
-        box(x) = Cuboid(xrange=[x, x+0.2], yrange=[-0.1, 0.1], zrange=[-0.1, 0.1],
+        box(x) = cuboid(xrange=[x, x+0.2], yrange=[-0.1, 0.1], zrange=[-0.1, 0.1],
                         range_unit=:standard)
         ga = subregion(gravu, box(-0.3), verbose=false)
         hb = subregion(gasu,  box( 0.1), verbose=false)

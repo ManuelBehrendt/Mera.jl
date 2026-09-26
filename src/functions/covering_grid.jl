@@ -342,7 +342,12 @@ integrated map). `slice_pos` is in `slice_unit` (`:standard` ⇒ a fraction of t
 or the output controls `res`/`pxsize`. The field is sampled on the camera plane through `center` for an
 arbitrary orientation (the same view keywords as [`projection`](@ref)), but as a **nearest-cell
 sample**, not an integral — resolution-dependent and not mass-conserving. Returns a `NamedTuple` with
-`.map`, `.extent` and the camera basis. Empty (NaN) pixels are expected where the plane carries no
+`.map`, `.extent` and the camera basis (`.los`, `.up`, `.cam_right`), plus three per-pixel
+diagnostics: `.coverage` (which pixels the plane reached), `.cellsize` (the size of the cell that
+won each pixel, so comparing it against `.pixsize` shows whether the map is over-sampled) and
+`.depth` (how far along the line of sight that cell sat). There is no cell count: a slice is a
+nearest-cell painter, exactly one cell owns each pixel, so a count would read 1 everywhere.
+Empty (NaN) pixels are expected where the plane carries no
 cell; pass `xrange`/`yrange` to fill the frame, or use [`projection`](@ref) for a conserved map. One
 variable at a time.
 

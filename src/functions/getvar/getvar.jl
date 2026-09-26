@@ -128,7 +128,7 @@ end
 # Centre reminder for frame-relative quantities
 #
 # `center` in `getvar` is the ORIGIN of the derived coordinate frame. It is a
-# DIFFERENT argument from the `center` that places a region (`Sphere(10; center=…)`),
+# DIFFERENT argument from the `center` that places a region (`sphere(10; center=…)`),
 # and it defaults to `[0.,0.,0.]` — the box CORNER.
 #
 # For absolute positions (`:x/:y/:z`) the corner is the right default: it returns
@@ -201,7 +201,7 @@ end
     measured: `:r_sphere`, `:r_cylinder`, `:ϕ`, the `v*_sphere`/`v*_cylinder`,
     `a*_sphere`/`a*_cylinder`, `mach_*` and angular-momentum families. It is a
     **different argument** from the `center` that places a region
-    (`Sphere(10; center=[:bc])`) and it defaults to `[0.,0.,0.]`, the box **corner**.
+    (`sphere(10; center=[:bc])`) and it defaults to `[0.,0.,0.]`, the box **corner**.
 
     For absolute positions (`:x`, `:y`, `:z`) the corner is the right default — those
     are the simulation's own coordinates. For the frame-relative quantities it is
@@ -217,7 +217,7 @@ end
     ```
 
 !!! note "`:mass` and `:volume` are boundary-aware on a split sub-region"
-    A sub-region built from a **value-type** region (`subregion(gas, Sphere(10))`, `split=true` by
+    A sub-region built from a **value-type** region (`subregion(gas, sphere(10))`, `split=true` by
     default) carries a per-cell `:fraction ∈ (0,1]` — how much of that cell lies inside the region.
     `getvar(:volume)` returns `fraction * cellsize^3` and `getvar(:mass)` returns
     `fraction * rho * volume`, so totals are the amount **inside the boundary** rather than the sum

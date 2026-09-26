@@ -145,7 +145,7 @@ composes with the `mask=` keyword that `getvar`, `projection`, `profile`, `phase
 the statistics already accept — and with value-space conditions, via `&`:
 
 ```julia
-inner = getmask(gas, Sphere(r200, center=halo_pos, range_unit=:kpc))
+inner = getmask(gas, sphere(r200, center=halo_pos, range_unit=:kpc))
 msum(gas, :Msol, mask=inner)
 profile(gas, :r_sphere, :T; mask = inner & getmask(gas, :T, >(1e4); unit=:K))
 ```

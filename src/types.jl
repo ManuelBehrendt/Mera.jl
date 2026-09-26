@@ -1134,9 +1134,9 @@ quantity onto the sky grid; provenance is preserved in the `.info` field.
 - `maps_unit::SortedDict{Symbol,Symbol}` — the physical unit of each map (e.g. `:Msol_pc2`,
   `:km_s`, `:standard` for code units), keyed by the same symbols as `maps`.
 - `maps_lmax::SortedDict` — per-map record of the grid level the deposit used.
-- `maps_mode::SortedDict{Symbol,Symbol}` — how each map was reduced: `:mass_weighted` or
-  `:volume_weighted` (particle projection has no `mode=:sum` path; `weighting` selects between
-  `:mass` and `:volume`).
+- `maps_mode::SortedDict{Symbol,Symbol}` — how each map was reduced: `:mass_weighted`,
+  `:volume_weighted`, `:sph`, `:voronoi`, or `:sum` when `mode=:sum` was given. `weighting`
+  picks the weight, `mode` picks a weighted mean against a per-pixel total.
 - `lmax_projected::Real` — the maximum grid level used.
 - `lmin::Int`, `lmax::Int` — the simulation's level range carried over for provenance.
 - `ref_time::Real` — the reference time (code units) used to convert birth times to ages for

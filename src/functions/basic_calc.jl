@@ -55,7 +55,7 @@ return Float64
 
 #### Sub-regions: the sum is boundary-aware
 `msum` sums `getvar(obj, :mass)`, which honours the per-cell `:fraction` attached by a
-**value-type** sub-region (`subregion(gas, Sphere(10))`, `split=true` by default): a boundary cell
+**value-type** sub-region (`subregion(gas, sphere(10))`, `split=true` by default): a boundary cell
 contributes `fraction * rho * volume`, i.e. only the part of it inside the region. So the result is
 the mass **inside the boundary**, and adjacent regions add up exactly. Interior cells carry
 `fraction = 1` and are unaffected.

@@ -1019,7 +1019,7 @@ end
 
         # --- fov: the map must equal the mass of the split sphere it selected ------------------
         for R in (5, 10, 20)
-            t = msum(subregion(gas, Sphere(float(R); center=[:bc], range_unit=:kpc);
+            t = msum(subregion(gas, sphere(float(R); center=[:bc], range_unit=:kpc);
                                split=true, verbose=false), :Msol)
             b = sum(projection(gas, :mass, :Msol; fov=R, fov_unit=:kpc, aperture=:circle,
                                split=true, kw...).maps[:mass])
@@ -1029,6 +1029,31 @@ end
                                kw...).maps[:mass])
             @test a > b
         end
+
+        # --- refine: the total must not move, only where the mass sits ----------------------
+        # `split` gets the number right with a staircase edge; `refine` subdivides the cells the
+        # sphere crosses so the edge sharpens. Refining resolves the boundary better, so the
+        # selected mass converges; it must converge to what the same refined subregion holds.
+        base = sum(projection(gas, :mass, :Msol; fov=5, fov_unit=:kpc, aperture=:circle,
+                              split=true, kw...).maps[:mass])
+        prev = base
+        for R in (1, 2)
+            got = sum(projection(gas, :mass, :Msol; fov=5, fov_unit=:kpc, aperture=:circle,
+                                 split=true, refine=R, kw...).maps[:mass])
+            truth = msum(subregion(gas, sphere(5.0; center=[:bc], range_unit=:kpc);
+                                   split=true, refine=R, verbose=false), :Msol)
+            @test isapprox(got, truth; rtol=1e-9)      # same answer as the explicit subregion
+            @test abs(got - base) / base < 0.01        # it converges, it does not jump
+            prev = got
+        end
+        # refine_to reaches the same place as the refine depth it implies
+        @test isapprox(sum(projection(gas, :mass, :Msol; fov=5, fov_unit=:kpc, aperture=:circle,
+                                      split=true, refine_to=[0.2,:kpc], kw...).maps[:mass]),
+                       prev; rtol=1e-6)
+        # and it is refused where it would mean nothing
+        @test_throws ArgumentError projection(gas, :mass, :Msol; fov=5, fov_unit=:kpc,
+                                              refine=2, kw...)                    # no split
+        @test_throws ArgumentError projection(gas, :mass, :Msol; split=true, refine=2, kw...)  # no fov
 
         # split must keep working alongside the other fov keywords
         cold = getvar(gas, :T, :K) .< 1e4

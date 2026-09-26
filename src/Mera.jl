@@ -305,12 +305,15 @@ export
     Satisfies,
     shellregion,
     AbstractRegion,
-    Sphere,
     @region,
-    Cylinder,
-    Cuboid,
-    SphericalShell,
-    CylindricalShell,
+# Region constructors are lowercase because Makie exports `Sphere` and `Cylinder` too, and a name
+# exported by two loaded packages binds to neither. The types keep their capitalized names and
+# are reachable as `Mera.Sphere` and so on; see region_algebra.jl.
+    sphere,
+    cylinder,
+    cuboid,
+    sphericalshell,
+    cylindricalshell,
 
 # miscellaneous
     viewmodule,

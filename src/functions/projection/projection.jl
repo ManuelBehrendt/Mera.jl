@@ -722,15 +722,15 @@ end
 # `split=true` uses the region algebra instead, which attaches a per-cell `:fraction` column;
 # `getvar(:mass)` and `getvar(:volume)` multiply by it, so a cell half inside the sphere carries
 # half its mass into the map and the rim stops being a half-cell staircase.
-_fov_sphere(obj, rsel, fov_unit, center, split) =
+_fov_sphere(obj, rsel, fov_unit, center, split; refine::Int=0, refine_to=nothing) =
     obj === nothing ? nothing :
-    split ? subregion(obj, Sphere(rsel; center=center, range_unit=fov_unit); split=true,
-                      verbose=false) :
+    split ? subregion(obj, sphere(rsel; center=center, range_unit=fov_unit); split=true,
+                      refine=refine, refine_to=refine_to, verbose=false) :
             subregion(obj, :sphere, radius=rsel, center=center, range_unit=fov_unit,
                       verbose=false)
 
 function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, center,
-                        split::Bool=false)
+                        split::Bool=false; refine::Int=0, refine_to=nothing)
     aperture in (:circle, :square) ||
         throw(ArgumentError("aperture must be :circle or :square, got :$aperture"))
     cuw = fov_unit === :standard ? 1.0/dataobject.boxlen : getunit(dataobject.info, fov_unit)
@@ -752,7 +752,8 @@ function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, cen
         # the selection sphere has to enclose the rectangle at any roll, so its radius is the
         # rectangle's own half-diagonal
         rsel = hypot(fx, fy) * cuw
-        src  = _fov_sphere(dataobject, rsel, fov_unit, center, split)
+        src  = _fov_sphere(dataobject, rsel, fov_unit, center, split;
+                           refine=refine, refine_to=refine_to)
         return src, _fov_window(dataobject, rsel, cuw, split), [fx, fy], rsel
     end
 
@@ -760,7 +761,8 @@ function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, cen
     fov_code = min(fov_code, (aperture === :square ? 0.49/sqrt(2) : 0.49) * dataobject.boxlen)
     rfov = fov_code * cuw
     rsel = aperture === :square ? rfov * sqrt(2) : rfov
-    src  = _fov_sphere(dataobject, rsel, fov_unit, center, split)
+    src  = _fov_sphere(dataobject, rsel, fov_unit, center, split;
+                       refine=refine, refine_to=refine_to)
     return src, _fov_window(dataobject, rsel, cuw, split), fov_code, rsel
 end
 
@@ -846,8 +848,8 @@ end
 # Apply the SAME sphere to a companion object (gravity data projected on the hydro grid). Both
 # carry the same cells in the same order, so selecting both keeps the two row-aligned — without
 # this the hydro object is cut and the companion is not, and the deposit indexes past its end.
-_fov_companion(obj, rsel, fov_unit, center, split::Bool=false) =
-    _fov_sphere(obj, rsel, fov_unit, center, split)
+_fov_companion(obj, rsel, fov_unit, center, split::Bool=false; refine::Int=0, refine_to=nothing) =
+    _fov_sphere(obj, rsel, fov_unit, center, split; refine=refine, refine_to=refine_to)
 
 # an IDENTICAL square window — used by aperture=:square to turn the larger √2·FOV sphere projection
 # into a full rectangular frame with no circular aperture.

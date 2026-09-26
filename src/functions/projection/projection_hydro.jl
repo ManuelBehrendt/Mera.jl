@@ -80,6 +80,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
                         split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -115,7 +117,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, refine=refine, refine_to=refine_to, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -157,6 +159,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
                         split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -192,7 +196,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, refine=refine, refine_to=refine_to, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -234,6 +238,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
                         split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -268,7 +274,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, refine=refine, refine_to=refine_to, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -312,6 +318,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
                         split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -346,7 +354,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, refine=refine, refine_to=refine_to, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -570,7 +578,10 @@ Which to reach for:
 - **`direction=:faceon`/`:edgeon`**: shortcuts for `inclination=0`/`90` with `axis=:angmom`.
 - **`los::Vector`**: explicit line-of-sight (viewing) direction, e.g. `los=[1,1,1]` (need not be normalized)
 - **`theta`, `phi`**: spherical angles about the box axes; `los=[sinθcosφ, sinθsinφ, cosθ]`.
-- **`up::Vector`**: optional camera up-vector (default: auto; the reference axis kept upright)
+- **`up::Vector`**: optional camera up-vector. With `inclination`/`azimuth` the default keeps
+  the reference axis upright. With `los`/`theta`/`phi` and no `up`, the hint is world **+z**,
+  falling back to **+y** when the line of sight is itself the z axis, so a box-axis `los`
+  reproduces the matching `direction=` preset.
 - **`angle_unit::Symbol`**: `:deg` (default) or `:rad`
 - **`binning::Symbol`**: how rotated cells are deposited onto the camera plane —
   - `:overlap` (default) — per-cell footprint supersampling (`ns = ceil(cellsize/pixel)` sub-points
@@ -850,6 +861,22 @@ Off-axis projections:
     It applies to off-axis views only. On a box-axis view the line of sight IS a box axis, so
     `zrange` already cuts exactly this slab, and `depth` raises there and says so.
 
+!!! note "Partial cells: `split`, `refine`, `refine_to`"
+    Every off-axis cut keeps a cell **whole** if its centre is inside and drops it whole
+    otherwise. `split=true` weights it instead by the fraction of its volume that really is
+    inside the `depth` slab or the `fov` sphere, which is what makes stacked slabs re-sum and a
+    small aperture hold the right mass.
+
+    `split` fixes the total; it does not move the mass. A half-in cell still deposits its
+    (reduced) share over its whole footprint, so the edge is still a staircase. `refine=N`
+    octree-subdivides the cells the `fov` **sphere** crosses, localising the boundary to
+    `cellsize/2^N` so the rendered edge sharpens; `refine_to=[length, unit]` subdivides until the
+    boundary cells reach a target size instead. Both need `fov` and `split=true`, and both
+    conserve: refining moves mass, it does not create any. Cost grows with the boundary area, at
+    most `8^N` per boundary cell.
+
+    For a region you select yourself, `subregion` takes the same `split`/`refine`/`refine_to`.
+
 !!! note "A rectangular frame: `fov=[wx, wy]`"
     `fov` is normally one half-width and the frame is square. Two half-widths give a rectangle,
     which is what an edge-on disc wants: in a square frame most of the pixels are empty sky.
@@ -936,6 +963,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
                         split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         weighting::Array{<:Any,1}=[:mass, missing],
@@ -979,6 +1008,13 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
         end
     end
 
+    # `refine`/`refine_to` subdivide the cells the SPHERE boundary crosses, so they only mean
+    # something when there is a sphere to cross and a fraction to refine.
+    (refine > 0 || refine_to !== nothing) && (fov === nothing || !split) && throw(ArgumentError(
+        "refine/refine_to subdivide the cells a `fov` sphere cuts through, so they need both " *
+        "`fov=` and `split=true`. Without them there is no boundary to resolve. (For a region " *
+        "you select yourself, pass refine= to `subregion` instead.)"))
+
     # Camera-plane field of view. `xrange`/`yrange`/`zrange` are WORLD-space bounds, so a cubic
     # window is not rotation-invariant: tilting grows the frame and the window's own faces appear
     # as straight edges across the image. `fov` asks for a fixed camera-plane window instead, via
@@ -987,8 +1023,10 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
         # a mask applies to the object the caller holds, so filter first and cut the sphere out of
         # the filtered data; passing it to the inner call instead gives it the wrong length
         premasked, inner_mask = _fov_premask(dataobject, mask)
-        src, win, fov_code, _rsel = _fov_selection(premasked, fov, fov_unit, aperture, center, split)
-        gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center, split)
+        src, win, fov_code, _rsel = _fov_selection(premasked, fov, fov_unit, aperture, center, split;
+                                                   refine=refine, refine_to=refine_to)
+        gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center, split;
+                              refine=refine, refine_to=refine_to)
         m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=inner_mask,
                        direction=direction, los=los, up=up, theta=theta, phi=phi,
                        inclination=inclination, azimuth=azimuth, position_angle=position_angle,
@@ -1002,6 +1040,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                        # inner call still needs has to be handed on. Forgetting one does not fail,
                        # it silently reverts to the default, which is worse.
                        depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius,
+                       # NOT refine/refine_to: `_fov_selection` has already applied them to
+                       # the sphere, and the inner call has no `fov` left for them to mean
+                       # anything against, so forwarding them would trip the guard below.
                        split=split)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         return m

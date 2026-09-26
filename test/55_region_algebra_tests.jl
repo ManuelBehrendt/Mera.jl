@@ -18,10 +18,10 @@ using IndexedTables   # used below; do not rely on another test file importing i
 
     vol(s) = sum(getvar(s, :volume, :kpc3))
     cases = (
-        ("sphere",  Sphere(R; range_unit=:kpc),                                (4/3)*pi*R^3,            0.02),
-        ("shell",   SphericalShell(0.15box, R; range_unit=:kpc),               (4/3)*pi*(R^3-(0.15box)^3), 0.02),
-        ("cylinder",Cylinder(R, 0.20box; range_unit=:kpc),                     pi*R^2*(2*0.20box),     0.02),
-        ("cuboid",  Cuboid(xrange=[-0.2box,0.2box], yrange=[-0.2box,0.2box], zrange=[-0.2box,0.2box], range_unit=:kpc),
+        ("sphere",  sphere(R; range_unit=:kpc),                                (4/3)*pi*R^3,            0.02),
+        ("shell",   sphericalshell(0.15box, R; range_unit=:kpc),               (4/3)*pi*(R^3-(0.15box)^3), 0.02),
+        ("cylinder",cylinder(R, 0.20box; range_unit=:kpc),                     pi*R^2*(2*0.20box),     0.02),
+        ("cuboid",  cuboid(xrange=[-0.2box,0.2box], yrange=[-0.2box,0.2box], zrange=[-0.2box,0.2box], range_unit=:kpc),
                     (0.4box)^3,  1e-4),
     )
 
@@ -38,8 +38,8 @@ using IndexedTables   # used below; do not rely on another test file importing i
     end
 
     @testset "centre test (split=false) vs split" begin
-        s = subregion(gas, Sphere(R; range_unit=:kpc); split=true,  verbose=false)
-        w = subregion(gas, Sphere(R; range_unit=:kpc); split=false, verbose=false)
+        s = subregion(gas, sphere(R; range_unit=:kpc); split=true,  verbose=false)
+        w = subregion(gas, sphere(R; range_unit=:kpc); split=false, verbose=false)
         # the centre test keeps whole cells, so its volume misses the analytic value by more
         # than the split does — but its SIGN is not guaranteed (kept straddlers over-count,
         # discarded ones under-count, and the two nearly cancel); assert only what holds:
@@ -50,7 +50,7 @@ using IndexedTables   # used below; do not rely on another test file importing i
     end
 
     @testset "getvar honours :fraction for :volume and :mass" begin
-        s  = subregion(gas, Sphere(R; range_unit=:kpc); split=true, verbose=false)
+        s  = subregion(gas, sphere(R; range_unit=:kpc); split=true, verbose=false)
         fr = Mera.select(s.data, :fraction)
         # :volume == cellsize³ · fraction  (cellsize itself is geometric, NOT weighted)
         @test getvar(s, :volume, :kpc3) ≈ getvar(s, :cellsize, :kpc).^3 .* fr
@@ -58,35 +58,35 @@ using IndexedTables   # used below; do not rely on another test file importing i
         @test getvar(s, :mass, :Msol) ≈ getvar(s, :rho, :Msol_pc3) .* getvar(s, :cellsize, :pc).^3 .* fr
         # the centre test carries whole-cell masses, so it disagrees with the split value
         # at the boundary-cell level (sign not guaranteed — see the centre-test testset)
-        w = subregion(gas, Sphere(R; range_unit=:kpc); split=false, verbose=false)
+        w = subregion(gas, sphere(R; range_unit=:kpc); split=false, verbose=false)
         @test !isapprox(msum(s, :Msol), msum(w, :Msol); rtol=1e-6)
         @test isapprox(msum(s, :Msol), msum(w, :Msol); rtol=5e-2)
     end
 
     @testset "inverse selects the complement (split volumes are partitioned exactly)" begin
-        s   = subregion(gas, Sphere(R; range_unit=:kpc); split=true, verbose=false)
-        inv = subregion(gas, Sphere(R; range_unit=:kpc); split=true, inverse=true, verbose=false)
+        s   = subregion(gas, sphere(R; range_unit=:kpc); split=true, verbose=false)
+        inv = subregion(gas, sphere(R; range_unit=:kpc); split=true, inverse=true, verbose=false)
         @test isapprox(vol(s) + vol(inv), Vbox; rtol=1e-6)      # region + complement = whole box
     end
 
     @testset "shell value types (spherical + cylindrical)" begin
         rin, rout = 0.12box, 0.28box
-        ss = subregion(gas, SphericalShell(rin, rout; range_unit=:kpc); verbose=false)
+        ss = subregion(gas, sphericalshell(rin, rout; range_unit=:kpc); verbose=false)
         @test isapprox(vol(ss), (4/3)*pi*(rout^3 - rin^3); rtol=0.02)
         # a cylindrical shell of half-height H
         H = 0.20box
-        cs = subregion(gas, CylindricalShell(rin, rout, H; range_unit=:kpc); verbose=false)
+        cs = subregion(gas, cylindricalshell(rin, rout, H; range_unit=:kpc); verbose=false)
         @test isapprox(vol(cs), pi*(rout^2 - rin^2)*(2H); rtol=0.02)
         # a tilted cylindrical shell has the same volume (orientation-invariant)
-        cst = subregion(gas, CylindricalShell(rin, rout, H; axis=[1.,1.,1.], range_unit=:kpc); verbose=false)
+        cst = subregion(gas, cylindricalshell(rin, rout, H; axis=[1.,1.,1.], range_unit=:kpc); verbose=false)
         @test isapprox(vol(cst), pi*(rout^2 - rin^2)*(2H); rtol=0.03)
         # the spherical shell equals a concentric Sphere-difference
-        @test isapprox(vol(ss), vol(subregion(gas, Sphere(rout; range_unit=:kpc) \ Sphere(rin; range_unit=:kpc); verbose=false)); rtol=1e-6)
+        @test isapprox(vol(ss), vol(subregion(gas, sphere(rout; range_unit=:kpc) \ sphere(rin; range_unit=:kpc); verbose=false)); rtol=1e-6)
     end
 
     @testset "boolean combinators (∩ ∪ \\ !)" begin
-        A = Sphere(R; range_unit=:kpc)
-        B = Cylinder(0.18box, 0.5box; range_unit=:kpc)
+        A = sphere(R; range_unit=:kpc)
+        B = cylinder(0.18box, 0.5box; range_unit=:kpc)
         # set identities hold on the sampled fractions
         @test isapprox(vol(subregion(gas, A ∪ B; verbose=false)),
                        vol(subregion(gas, A; verbose=false)) + vol(subregion(gas, B; verbose=false))
@@ -95,7 +95,7 @@ using IndexedTables   # used below; do not rely on another test file importing i
                        vol(subregion(gas, A; verbose=false)); rtol=2e-2)               # partition of A
         @test isapprox(vol(subregion(gas, !A; verbose=false)), Vbox - vol(subregion(gas, A; verbose=false)); rtol=1e-6)  # complement
         # a concentric difference reproduces the analytic spherical shell
-        diff = subregion(gas, Sphere(R; range_unit=:kpc) \ Sphere(0.15box; range_unit=:kpc); verbose=false)
+        diff = subregion(gas, sphere(R; range_unit=:kpc) \ sphere(0.15box; range_unit=:kpc); verbose=false)
         @test isapprox(vol(diff), (4/3)*pi*(R^3 - (0.15box)^3); rtol=0.02)
         # operator and explicit-constructor forms agree
         @test vol(subregion(gas, A ∩ B; verbose=false)) == vol(subregion(gas, Mera.RegionIntersection(A,B); verbose=false))
@@ -109,8 +109,8 @@ using IndexedTables   # used below; do not rely on another test file importing i
         for lmax in (4, 5, 6)
             g  = synthetic_clumps(background=:galaxy, lmax=lmax).gas
             bx = g.boxlen * g.scale.kpc; Rk = 0.30*bx
-            es = relerr(subregion(g, Sphere(Rk; range_unit=:kpc); split=true,  verbose=false), Rk)
-            ew = relerr(subregion(g, Sphere(Rk; range_unit=:kpc); split=false, verbose=false), Rk)
+            es = relerr(subregion(g, sphere(Rk; range_unit=:kpc); split=true,  verbose=false), Rk)
+            ew = relerr(subregion(g, sphere(Rk; range_unit=:kpc); split=false, verbose=false), Rk)
             @test es < 0.3*ew + 1e-6        # exact splitting is far more accurate than whole cells
             @test es < 0.01                 # and well under 1% even on a coarse grid
             push!(serr, es)
@@ -120,8 +120,8 @@ using IndexedTables   # used below; do not rely on another test file importing i
         # the nsub knob trades cost for accuracy: more sub-samples ⇒ smaller boundary error
         g  = synthetic_clumps(background=:galaxy, lmax=5).gas
         bx = g.boxlen * g.scale.kpc; Rk = 0.30*bx
-        e_coarse = relerr(subregion(g, Sphere(Rk; range_unit=:kpc); nsub=2, verbose=false), Rk)
-        e_fine   = relerr(subregion(g, Sphere(Rk; range_unit=:kpc); nsub=8, verbose=false), Rk)
+        e_coarse = relerr(subregion(g, sphere(Rk; range_unit=:kpc); nsub=2, verbose=false), Rk)
+        e_fine   = relerr(subregion(g, sphere(Rk; range_unit=:kpc); nsub=8, verbose=false), Rk)
         @test e_fine < e_coarse
     end
 
@@ -132,44 +132,44 @@ using IndexedTables   # used below; do not rely on another test file importing i
             p = projection(g, :sd, :Msol_pc2; res=128, center=[:bc], verbose=false, show_progress=false)
             (box*1000/128)^2 * sum(p.maps[:sd])          # Σ(Σ_d · pixarea) in Msol (box kpc → pc)
         end
-        sph = subregion(gas, Sphere(R; range_unit=:kpc); split=true,  verbose=false)
-        whl = subregion(gas, Sphere(R; range_unit=:kpc); split=false, verbose=false)
+        sph = subregion(gas, sphere(R; range_unit=:kpc); split=true,  verbose=false)
+        whl = subregion(gas, sphere(R; range_unit=:kpc); split=false, verbose=false)
         @test isapprox(pixmass(sph), msum(sph, :Msol); rtol=1e-3)   # map integrates to exact in-region mass
         @test isapprox(pixmass(whl), msum(whl, :Msol); rtol=1e-3)   # centre-test map carries ITS mass too
         # a composite region projects too (sphere with a cylinder drilled out)
-        comp = subregion(gas, Sphere(R; range_unit=:kpc) \ Cylinder(0.1box, 0.5box; range_unit=:kpc); verbose=false)
+        comp = subregion(gas, sphere(R; range_unit=:kpc) \ cylinder(0.1box, 0.5box; range_unit=:kpc); verbose=false)
         @test isapprox(pixmass(comp), msum(comp, :Msol); rtol=1e-3)
         @test pixmass(comp) < pixmass(sph)                          # the drilled hole removes mass
     end
 
     @testset "tilted cylinder: volume invariant under axis direction" begin
         Rc = 0.12*box; Hc = 0.18*box; Vc = pi*Rc^2*(2Hc)     # fits inside the box
-        v(ax) = vol(subregion(gas, Cylinder(Rc, Hc; axis=ax, range_unit=:kpc); verbose=false))
+        v(ax) = vol(subregion(gas, cylinder(Rc, Hc; axis=ax, range_unit=:kpc); verbose=false))
         for ax in ([0.,0.,1.], [1.,0.,0.], [0.,1.,0.], [1.,1.,1.], [1.,2.,3.])
             @test isapprox(v(ax), Vc; rtol=0.02)             # same volume for any orientation
         end
         # default axis == the classic z-aligned cylinder (backward compatible)
-        @test v([0.,0.,1.]) == vol(subregion(gas, Cylinder(Rc, Hc; range_unit=:kpc); verbose=false))
+        @test v([0.,0.,1.]) == vol(subregion(gas, cylinder(Rc, Hc; range_unit=:kpc); verbose=false))
         # geometry actually tilts: a thin disk flat in z spans little z; tilted into the x-axis it stands up
         thin = 0.03*box
         zext(g) = (z = getvar(g, :z, :kpc); maximum(z) - minimum(z))
-        flat = subregion(gas, Cylinder(0.2box, thin; axis=[0.,0.,1.], range_unit=:kpc); split=false, verbose=false)
-        vert = subregion(gas, Cylinder(0.2box, thin; axis=[1.,0.,0.], range_unit=:kpc); split=false, verbose=false)
+        flat = subregion(gas, cylinder(0.2box, thin; axis=[0.,0.,1.], range_unit=:kpc); split=false, verbose=false)
+        vert = subregion(gas, cylinder(0.2box, thin; axis=[1.,0.,0.], range_unit=:kpc); split=false, verbose=false)
         @test zext(flat) < zext(vert)
     end
 
     @testset "particles: point-membership region selection" begin
         part = F.particles
-        ball = subregion(part, Sphere(R; range_unit=:kpc); verbose=false)
+        ball = subregion(part, sphere(R; range_unit=:kpc); verbose=false)
         p = getvar(part, [:x,:y,:z], :kpc); bc = box/2
         manual = count(i -> (p[:x][i]-bc)^2 + (p[:y][i]-bc)^2 + (p[:z][i]-bc)^2 <= R^2, 1:length(part.data))
         @test ball isa Mera.PartDataType
         @test length(ball.data) == manual                       # exact membership, no fractional volume
         @test !in(:fraction, propertynames(Mera.columns(ball.data)))
-        inv = subregion(part, Sphere(R; range_unit=:kpc); inverse=true, verbose=false)
+        inv = subregion(part, sphere(R; range_unit=:kpc); inverse=true, verbose=false)
         @test length(ball.data) + length(inv.data) == length(part.data)   # region + complement = all
         # combinators work on particles too
-        comp = subregion(part, Sphere(R; range_unit=:kpc) \ Cylinder(0.1box, 0.5box; range_unit=:kpc); verbose=false)
+        comp = subregion(part, sphere(R; range_unit=:kpc) \ cylinder(0.1box, 0.5box; range_unit=:kpc); verbose=false)
         @test length(comp.data) <= length(ball.data)
     end
 
@@ -178,7 +178,7 @@ using IndexedTables   # used below; do not rely on another test file importing i
         gd.data = gas.data; gd.info = gas.info; gd.lmin = gas.lmin; gd.lmax = gas.lmax
         gd.boxlen = gas.boxlen; gd.ranges = gas.ranges; gd.selected_gravvars = [1]
         gd.used_descriptors = Dict(); gd.scale = gas.scale
-        gs = subregion(gd, Sphere(R; range_unit=:kpc); split=true, verbose=false)
+        gs = subregion(gd, sphere(R; range_unit=:kpc); split=true, verbose=false)
         @test gs isa Mera.GravDataType
         @test in(:fraction, propertynames(Mera.columns(gs.data)))
         @test isapprox(sum(getvar(gs, :volume, :kpc3)), (4/3)*pi*R^3; rtol=0.02)   # getvar :volume honours :fraction
@@ -239,7 +239,7 @@ using IndexedTables   # used below; do not rely on another test file importing i
         out = capture_stdout() do
             Mera._region_value_type_hint(:sphere; radius=10.0, center=[:bc], range_unit=:kpc)
         end
-        @test occursin("Sphere(10.0", out)                 # shows the equivalent value-type call
+        @test occursin("sphere(10.0", out)                 # shows the equivalent value-type call
         @test occursin("split=false", out)                 # and how to keep the classic behaviour
         out2 = capture_stdout() do                          # only once per session
             Mera._region_value_type_hint(:sphere; radius=10.0, center=[:bc], range_unit=:kpc)
@@ -252,7 +252,7 @@ using IndexedTables   # used below; do not rely on another test file importing i
         # Regression: subregion(:sphere/:cylinder; range_unit≠:standard) collapsed to 0 cells because
         # prepranges multiplied by selected_unit/boxlen instead of dividing by boxlen·selected_unit
         # (cuboids used the correct form, so the bug hid). A physical-unit selection must match the
-        # equivalent :standard one cell-for-cell. The value-type Sphere(...) path (above) was fine;
+        # equivalent :standard one cell-for-cell. The value-type sphere(...) path (above) was fine;
         # this guards the legacy symbol path.
         sph_std = subregion(gas, :sphere; center=[:bc], radius=0.3,      range_unit=:standard, verbose=false)
         sph_kpc = subregion(gas, :sphere; center=[:bc], radius=0.3box,   range_unit=:kpc,      verbose=false)
@@ -271,7 +271,7 @@ using IndexedTables   # used below; do not rely on another test file importing i
 
     @testset "geometric boundary refinement (refine=k)" begin
         R = 0.3box
-        reg = Sphere(R; center=[:bc], range_unit=:kpc)
+        reg = sphere(R; center=[:bc], range_unit=:kpc)
         s0 = subregion(gas, reg; verbose=false)                 # fraction-weighted, whole cells
         s2 = subregion(gas, reg; refine=2, verbose=false)       # boundary cells subdivided twice
 
@@ -332,16 +332,16 @@ using IndexedTables   # used below; do not rely on another test file importing i
         g2.lmax = 6
         @test sum(getvar(g2, :volume, :kpc3)) ≈ Vbox            # fixture still tiles the box
 
-        cub = Cuboid(xrange=[-0.2box, 0.2box], yrange=[-0.2box, 0.2box],
+        cub = cuboid(xrange=[-0.2box, 0.2box], yrange=[-0.2box, 0.2box],
                      zrange=[-0.2box, 0.2box], range_unit=:kpc)
         @test isapprox(vol(subregion(g2, cub; verbose=false)), (0.4box)^3; rtol=1e-10)
-        sph2 = Sphere(0.3box; range_unit=:kpc)
+        sph2 = sphere(0.3box; range_unit=:kpc)
         @test isapprox(vol(subregion(g2, sph2; nsub=16, verbose=false)),
                        (4/3)*pi*(0.3box)^3; rtol=5e-3)          # sampling-limited only
     end
 
     @testset "refine_to: subdivide the boundary to a target size" begin
-        reg = Sphere(R; center=[:bc], range_unit=:kpc)
+        reg = sphere(R; center=[:bc], range_unit=:kpc)
         tgt = box / 2^7                                    # two levels below the level-5 grid
         st = subregion(gas, reg; refine_to=[tgt, :kpc], verbose=false)
         s2 = subregion(gas, reg; refine=2, verbose=false)
@@ -359,17 +359,17 @@ using IndexedTables   # used below; do not rely on another test file importing i
 
     @testset "AABB pruning is invisible (off-centre / tilted / inverse)" begin
         # analytic fractions + off-centre box: any bbox error surfaces as a volume error
-        cub = Cuboid(xrange=[-0.15box, 0.05box], yrange=[-0.05box, 0.2box],
+        cub = cuboid(xrange=[-0.15box, 0.05box], yrange=[-0.05box, 0.2box],
                      zrange=[-0.1box, 0.1box], center=[0.3box, 0.6box, 0.5box], range_unit=:kpc)
         @test isapprox(vol(subregion(gas, cub; verbose=false)),
                        0.2box * 0.25box * 0.2box; rtol=1e-10)
         # tilted, off-centre shell: exercises the oriented-cylinder support-function box
-        tsh = CylindricalShell(0.08box, 0.2box, 0.1box; axis=[1., 2., 0.5],
+        tsh = cylindricalshell(0.08box, 0.2box, 0.1box; axis=[1., 2., 0.5],
                                center=[0.55box, 0.45box, 0.5box], range_unit=:kpc)
         @test isapprox(vol(subregion(gas, tsh; verbose=false)),
                        pi*((0.2box)^2 - (0.08box)^2)*(2*0.1box); rtol=0.03)
         # inverse of a small off-corner sphere: pruned-to-zero cells must flip to fraction 1
-        s_off = Sphere(0.08box; center=[0.25box, 0.25box, 0.7box], range_unit=:kpc)
+        s_off = sphere(0.08box; center=[0.25box, 0.25box, 0.7box], range_unit=:kpc)
         v_in  = vol(subregion(gas, s_off; verbose=false))
         v_out = vol(subregion(gas, s_off; inverse=true, verbose=false))
         @test isapprox(v_in + v_out, Vbox; rtol=1e-6)
@@ -377,13 +377,13 @@ using IndexedTables   # used below; do not rely on another test file importing i
     end
 
     @testset "@region block macro" begin
-        man = (Cylinder(0.3box, 0.1box; center=[:bc], range_unit=:kpc) ∪
-               Sphere(0.1box; center=[0.7box, 0.5box, 0.5box], range_unit=:kpc)) \
-              Sphere(0.05box; center=[:bc], range_unit=:kpc)
+        man = (cylinder(0.3box, 0.1box; center=[:bc], range_unit=:kpc) ∪
+               sphere(0.1box; center=[0.7box, 0.5box, 0.5box], range_unit=:kpc)) \
+              sphere(0.05box; center=[:bc], range_unit=:kpc)
         mac = @region unit=:kpc center=[:bc] begin
-            disc = Cylinder(0.3box, 0.1box)
-            blob = Sphere(0.1box; center=[0.7box, 0.5box, 0.5box])   # explicit center wins
-            hole = Sphere(0.05box)
+            disc = cylinder(0.3box, 0.1box)
+            blob = sphere(0.1box; center=[0.7box, 0.5box, 0.5box])   # explicit center wins
+            hole = sphere(0.05box)
             (disc ∪ blob) \ hole
         end
         a = subregion(gas, man; verbose=false)
@@ -393,10 +393,10 @@ using IndexedTables   # used below; do not rely on another test file importing i
         @test Mera.select(a.data, :fraction) == Mera.select(b.data, :fraction)
         # a block without options is plain let-sugar (constructor defaults apply)
         r0 = @region begin
-            Sphere(0.2box; range_unit=:kpc)
+            sphere(0.2box; range_unit=:kpc)
         end
         @test length(subregion(gas, r0; verbose=false).data) ==
-              length(subregion(gas, Sphere(0.2box; range_unit=:kpc); verbose=false).data)
-        @test_throws LoadError @eval @region wrong=1 begin; Sphere(1.) end
+              length(subregion(gas, sphere(0.2box; range_unit=:kpc); verbose=false).data)
+        @test_throws LoadError @eval @region wrong=1 begin; sphere(1.) end
     end
 end
