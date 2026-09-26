@@ -694,7 +694,35 @@ every orientation, so the frame is fixed.
 `aperture=:square` selects radius `√2·fov`, which encloses the ±`fov` square at any angle, and the
 caller crops to that square for a full rectangular frame.
 """
-function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, center)
+# The world window handed to the inner projection. It exists to place the frame pivot, not to
+# select: the sphere has already selected.
+#
+# With `split=true` it has to be PADDED. The region algebra leaves the object's recorded `ranges`
+# spanning the whole box, so the inner call sees a genuine tighter crop and re-clips on bare cell
+# centres. That throws away exactly the rim cells whose fractions `split` was computed for, and
+# the map came out about one percent light. One coarse cell of margin is enough, and it does not
+# enlarge the image, which is auto-fitted to the cells that survive.
+function _fov_window(dataobject, rsel, cuw, split::Bool)
+    split || return [-rsel, rsel]
+    pad = (dataobject.boxlen / 2^dataobject.lmin) * cuw
+    return [-(rsel + pad), rsel + pad]
+end
+
+# The sphere `fov` cuts out of the data.
+#
+# `split=false` uses the legacy symbol API: a cell whose volume reaches the sphere is kept WHOLE.
+# `split=true` uses the region algebra instead, which attaches a per-cell `:fraction` column;
+# `getvar(:mass)` and `getvar(:volume)` multiply by it, so a cell half inside the sphere carries
+# half its mass into the map and the rim stops being a half-cell staircase.
+_fov_sphere(obj, rsel, fov_unit, center, split) =
+    obj === nothing ? nothing :
+    split ? subregion(obj, Sphere(rsel; center=center, range_unit=fov_unit); split=true,
+                      verbose=false) :
+            subregion(obj, :sphere, radius=rsel, center=center, range_unit=fov_unit,
+                      verbose=false)
+
+function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, center,
+                        split::Bool=false)
     aperture in (:circle, :square) ||
         throw(ArgumentError("aperture must be :circle or :square, got :$aperture"))
     cuw = fov_unit === :standard ? 1.0/dataobject.boxlen : getunit(dataobject.info, fov_unit)
@@ -716,18 +744,16 @@ function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, cen
         # the selection sphere has to enclose the rectangle at any roll, so its radius is the
         # rectangle's own half-diagonal
         rsel = hypot(fx, fy) * cuw
-        src  = subregion(dataobject, :sphere, radius=rsel, center=center,
-                         range_unit=fov_unit, verbose=false)
-        return src, [-rsel, rsel], [fx, fy], rsel
+        src  = _fov_sphere(dataobject, rsel, fov_unit, center, split)
+        return src, _fov_window(dataobject, rsel, cuw, split), [fx, fy], rsel
     end
 
     fov_code = float(fov) / cuw
     fov_code = min(fov_code, (aperture === :square ? 0.49/sqrt(2) : 0.49) * dataobject.boxlen)
     rfov = fov_code * cuw
     rsel = aperture === :square ? rfov * sqrt(2) : rfov
-    src  = subregion(dataobject, :sphere, radius=rsel, center=center,
-                     range_unit=fov_unit, verbose=false)
-    return src, [-rsel, rsel], fov_code, rsel
+    src  = _fov_sphere(dataobject, rsel, fov_unit, center, split)
+    return src, _fov_window(dataobject, rsel, cuw, split), fov_code, rsel
 end
 
 """
@@ -754,12 +780,66 @@ function _fov_premask(dataobject, mask)
     return _copy_with_data(dataobject, newdata), [false]
 end
 
+"""
+    _slab_fractions(z_cam, csize, cam_w, lo, hi) -> Vector{Float64}
+
+Internal. What fraction of each cell's VOLUME lies inside the camera-space slab `[lo, hi]`.
+
+The `depth` cut is a plane pair in camera coordinates, and a cell is an axis-aligned cube in world
+coordinates, so the cut crosses cubes at an angle. A bare centre test keeps a cell that is 10
+percent inside exactly as fully as one that is entirely inside, which puts a half-cell step at
+each slab face. This returns the real fraction instead.
+
+Cells that lie wholly inside or wholly outside are settled by arithmetic: the cube's half-extent
+along the line of sight is `h·(|w₁|+|w₂|+|w₃|)`, so a centre further than that from both faces
+needs no sampling. Only the cells the faces actually cross are sub-sampled, on an `nsub³` grid
+of offsets, the same way `subregion(...; split=true)` samples a sphere.
+"""
+function _slab_fractions(z_cam::AbstractVector, csize::AbstractVector, cam_w, lo, hi;
+                         nsub::Int=8)
+    n = length(z_cam)
+    fr = Vector{Float64}(undef, n)
+    aw = abs(cam_w[1]) + abs(cam_w[2]) + abs(cam_w[3])
+    # offsets of the sub-sample grid, in units of the cell half-size
+    t = nsub == 1 ? [0.0] : collect(range(-1.0, 1.0, length=nsub) .* ((nsub - 1) / nsub))
+    inv = 1.0 / (nsub^3)
+    @inbounds for i in 1:n
+        h    = 0.5 * csize[i]
+        zc   = z_cam[i]
+        reach = h * aw                      # furthest a corner can sit from the centre along w
+        if zc + reach <= lo || zc - reach >= hi
+            fr[i] = 0.0                     # wholly outside
+        elseif zc - reach >= lo && zc + reach < hi
+            fr[i] = 1.0                     # wholly inside
+        else
+            # A sub-point landing exactly ON a face counts half to each side.
+            #
+            # Ties are not rare here and cannot be ignored. The sub-sample lattice is symmetric
+            # about the cell centre, so for a line of sight with equal components whole families
+            # of offsets cancel exactly: with w = [1,1,0] an eighth of the lattice lands on the
+            # mid-plane. Counting those on one side gave 0.4375 for a half-space that is exactly
+            # a half; counting them on both sides made stacked slabs double-count.
+            # Half to each side is the only rule that is both unbiased and exactly additive.
+            c2 = 0                              # twice the count, so halves stay integers
+            for a in t, b in t, cc in t
+                z = zc + h * (a * cam_w[1] + b * cam_w[2] + cc * cam_w[3])
+                if z > lo && z < hi
+                    c2 += 2
+                elseif z == lo || z == hi
+                    c2 += 1
+                end
+            end
+            fr[i] = 0.5 * c2 * inv
+        end
+    end
+    return fr
+end
+
 # Apply the SAME sphere to a companion object (gravity data projected on the hydro grid). Both
 # carry the same cells in the same order, so selecting both keeps the two row-aligned — without
 # this the hydro object is cut and the companion is not, and the deposit indexes past its end.
-_fov_companion(obj, rsel, fov_unit, center) =
-    obj === nothing ? nothing :
-    subregion(obj, :sphere, radius=rsel, center=center, range_unit=fov_unit, verbose=false)
+_fov_companion(obj, rsel, fov_unit, center, split::Bool=false) =
+    _fov_sphere(obj, rsel, fov_unit, center, split)
 
 # an IDENTICAL square window — used by aperture=:square to turn the larger √2·FOV sphere projection
 # into a full rectangular frame with no circular aperture.

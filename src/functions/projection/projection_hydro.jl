@@ -79,6 +79,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         depth=nothing,
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
+                        split::Bool=false,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -114,7 +115,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -155,6 +156,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         depth=nothing,
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
+                        split::Bool=false,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -190,7 +192,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -231,6 +233,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         depth=nothing,
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
+                        split::Bool=false,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -265,7 +268,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -308,6 +311,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         depth=nothing,
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
+                        split::Bool=false,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -342,7 +346,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -929,6 +933,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         depth=nothing,
                         depth_unit::Symbol=:standard,
                         angmom_radius=nothing,
+                        split::Bool=false,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         weighting::Array{<:Any,1}=[:mass, missing],
@@ -980,8 +985,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
         # a mask applies to the object the caller holds, so filter first and cut the sphere out of
         # the filtered data; passing it to the inner call instead gives it the wrong length
         premasked, inner_mask = _fov_premask(dataobject, mask)
-        src, win, fov_code, _rsel = _fov_selection(premasked, fov, fov_unit, aperture, center)
-        gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center)
+        src, win, fov_code, _rsel = _fov_selection(premasked, fov, fov_unit, aperture, center, split)
+        gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center, split)
         m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=inner_mask,
                        direction=direction, los=los, up=up, theta=theta, phi=phi,
                        inclination=inclination, azimuth=azimuth, position_angle=position_angle,
@@ -994,7 +999,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                        # `fov` re-enters this function on the selected sphere, so every keyword the
                        # inner call still needs has to be handed on. Forgetting one does not fail,
                        # it silently reverts to the default, which is worse.
-                       depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius)
+                       depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius,
+                       split=split)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         return m
     end
@@ -1120,7 +1126,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                   weighting, weight_scale, mode, ranges, center, range_unit,
                                   mask, los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, nmax, direction,
                                   boxlen, lmin, simlmax, isamr, scale, verbose, max_threads,
-                                  gravity_data, depth, depth_unit, angmom_radius)
+                                  gravity_data, depth, depth_unit, angmom_radius, split)
     end
 
     # Camera-frame kinematics have no meaning without a camera: :vlos/:σlos are along the line
@@ -1706,7 +1712,7 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
                             max_threads=Threads.nthreads(),
                             gravity_data::Union{GravDataType,Nothing}=nothing,
                             depth=nothing, depth_unit::Symbol=:standard,
-                            angmom_radius=nothing)
+                            angmom_radius=nothing, split::Bool=false)
 
     rcheck     = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
@@ -1792,6 +1798,7 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # measured along the viewing direction itself, which is what a column density needs if it is to
     # integrate the same distance everywhere in the frame. `z_cam` is that coordinate and is already
     # computed above, so this is a selection and nothing more.
+    depth_frac = nothing          # per-cell volume fraction inside the slab, when split=true
     if depth !== nothing
         dlo, dhi = _depth_window(depth, depth_unit, dataobject.info, boxlen)
         # `z_cam` is measured from the frame PIVOT, which is the centre of the requested ranges and
@@ -1800,10 +1807,22 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         # Without this a slab "about center" silently cuts through the box centre instead.
         ctr_code = _center_code(dataobject, center, range_unit)
         off = sum((ctr_code .- pivot .* boxlen) .* cam_w)
-        sel = sel .& (z_cam .>= dlo + off) .& (z_cam .<= dhi + off)
-        verbose && println("depth cut: ", count(sel), " of ", ncells, " cells within [",
-                           round(dlo + off, digits=4), ", ", round(dhi + off, digits=4),
-                           "] code units along the line of sight, about center")
+        if split
+            # weight each cell by the fraction of its volume inside the slab, so the cut does not
+            # step by half a cell at each face. Cells with no overlap fall out of `sel` as before.
+            df = _slab_fractions(z_cam, cellsize_all, cam_w, dlo + off, dhi + off)
+            depth_frac = df
+            sel = sel .& (df .> 0)
+            verbose && println("depth cut (split): ", count(sel), " of ", ncells,
+                               " cells touch [", round(dlo + off, digits=4), ", ",
+                               round(dhi + off, digits=4), "] code units along the line of sight; ",
+                               count(sel .& (df .< 1)), " of them only partly")
+        else
+            sel = sel .& (z_cam .>= dlo + off) .& (z_cam .<= dhi + off)
+            verbose && println("depth cut: ", count(sel), " of ", ncells, " cells within [",
+                               round(dlo + off, digits=4), ", ", round(dhi + off, digits=4),
+                               "] code units along the line of sight, about center")
+        end
     end
 
     # --- camera-plane extent: auto-fit the rotated footprint of the SELECTED cells -------------
@@ -1846,6 +1865,13 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         getvar(dataobject, weighting[1])
     wfull = wfull .* weight_scale
     wsel  = Float64.(wfull[sel])
+    # `split=true` scales every cell by the fraction of it inside the depth slab. Scaling the
+    # WEIGHT is what makes a half-in cell count half: an extensive map (:sd/:mass) deposits the
+    # value with unit weights, so its own vector is scaled below instead, and a weighted mean
+    # carries the fraction in both the numerator and the denominator, where it cancels for a
+    # fully-in cell and correctly reduces the pull of a partly-in one.
+    dfsel = depth_frac === nothing ? nothing : Float64.(depth_frac[sel])
+    dfsel === nothing || (wsel = wsel .* dfsel)
 
     # per-cell physical size (code units) for the footprint deposits — slice the sizes computed
     # above by the final selection (the world-space sub-box may have narrowed `sel`).
@@ -1930,7 +1956,10 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         vsel = Float64.(vals[sel])
 
         extensive_sum = (mode == :sum) && (ivar === :ekin || ivar === :etherm || ivar === :volume)
-        wts = (ivar === :sd || ivar === :mass || extensive_sum) ? ones(Float64, length(vsel)) : wsel
+        is_extensive  = ivar === :sd || ivar === :mass || extensive_sum
+        wts = is_extensive ? ones(Float64, length(vsel)) : wsel
+        # an extensive quantity rides in the VALUE, so the slab fraction scales that instead
+        is_extensive && dfsel !== nothing && (vsel = vsel .* dfsel)
 
         grid    = zeros(Float64, nx, ny)
         wgrid   = zeros(Float64, nx, ny)

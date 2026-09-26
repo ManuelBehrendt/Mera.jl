@@ -901,6 +901,78 @@ end
         end
     end
 
+    @testset "split=true: partial cells carry their fraction" begin
+        kw = (los=[1.,2,3], center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+
+        # --- the fraction kernel, against a case with an exact answer --------------------------
+        # Looking down z, a plane cutting a cube at height f leaves exactly f of its volume below.
+        for f in (0.0, 0.25, 0.5, 0.75, 1.0)
+            @test Mera._slab_fractions([0.0], [1.0], [0.,0,1], -10.0, -0.5 + f; nsub=64)[1] ≈ f atol=1e-9
+        end
+        # and it is a fraction for any tilt
+        for w in ([1.,0,0], [1.,1,0]./sqrt(2), [1.,2,3]./sqrt(14))
+            fr = Mera._slab_fractions([0.0, 0.0], [1.0, 1.0], w, -10.0, 0.0)
+            @test all(0 .<= fr .<= 1)
+            # exactly a half, for any tilt: a sub-point landing on the mid-plane counts half
+            # to each side, which is what keeps this unbiased AND the slabs additive
+            @test fr[1] ≈ 0.5 atol=1e-12
+        end
+
+        # --- depth: ADDITIVITY, the property a hard cut cannot have ---------------------------
+        # Cut one slab into N adjacent pieces and re-sum. Each cell must be counted once in
+        # total, no matter how many faces cross it.
+        #
+        # This is not a hypothetical: on a regular grid with a rational line of sight, whole
+        # lattices of cells land EXACTLY on a face, and a closed cell-centre test counts every
+        # one of them twice. On this galaxy that inflates the re-summed partition by 4 percent.
+        ref_split = sum(projection(gas, :mass, :Msol; depth=[-40.,40.], depth_unit=:kpc,
+                                   split=true, kw...).maps[:mass])
+        ref_hard  = sum(projection(gas, :mass, :Msol; depth=[-40.,40.], depth_unit=:kpc,
+                                   kw...).maps[:mass])
+        for N in (2, 3, 4, 8)
+            e = range(-40, 40, length=N+1)
+            tot_s = sum(sum(projection(gas, :mass, :Msol; depth=[e[i],e[i+1]], depth_unit=:kpc,
+                                       split=true, kw...).maps[:mass]) for i in 1:N)
+            @test isapprox(tot_s, ref_split; rtol=1e-9)        # exactly additive
+        end
+        e2 = range(-40, 40, length=3)
+        tot_h = sum(sum(projection(gas, :mass, :Msol; depth=[e2[i],e2[i+1]], depth_unit=:kpc,
+                                   kw...).maps[:mass]) for i in 1:2)
+        @test tot_h > ref_hard * 1.01          # the hard cut really does double-count the face
+
+        # a thin slab must hold less than a thick one, either way round
+        for sp in (false, true)
+            m = [sum(projection(gas, :mass, :Msol; depth=d, depth_unit=:kpc, split=sp,
+                                kw...).maps[:mass]) for d in (1, 4, 16)]
+            @test m[1] < m[2] < m[3]
+        end
+
+        # --- fov: the map must equal the mass of the split sphere it selected ------------------
+        for R in (5, 10, 20)
+            t = msum(subregion(gas, Sphere(float(R); center=[:bc], range_unit=:kpc);
+                               split=true, verbose=false), :Msol)
+            b = sum(projection(gas, :mass, :Msol; fov=R, fov_unit=:kpc, aperture=:circle,
+                               split=true, kw...).maps[:mass])
+            @test isapprox(b, t; rtol=1e-9)
+            # whole cells at the rim overstate it, and most at the smallest radius
+            a = sum(projection(gas, :mass, :Msol; fov=R, fov_unit=:kpc, aperture=:circle,
+                               kw...).maps[:mass])
+            @test a > b
+        end
+
+        # split must keep working alongside the other fov keywords
+        cold = getvar(gas, :T, :K) .< 1e4
+        for extra in ((; ), (; mask=cold), (; depth=4, depth_unit=:kpc), (; aperture=:square))
+            m = projection(gas, :mass, :Msol; fov=10, fov_unit=:kpc, split=true, extra..., kw...)
+            @test sum(m.maps[:mass]) > 0 && all(isfinite, m.maps[:mass])
+        end
+        # and default off, so nothing already measured moves
+        @test sum(projection(gas, :mass, :Msol; fov=10, fov_unit=:kpc, aperture=:circle,
+                             kw...).maps[:mass]) !=
+              sum(projection(gas, :mass, :Msol; fov=10, fov_unit=:kpc, aperture=:circle,
+                             split=true, kw...).maps[:mass])
+    end
+
     @testset "mask under fov: the two combine" begin
         kw = (los=[1.,2.,3.], center=[:bc], fov_unit=:kpc, pxsize=[1.0,:kpc],
               verbose=false, show_progress=false)
