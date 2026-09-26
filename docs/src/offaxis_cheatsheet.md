@@ -112,11 +112,21 @@ at the frame boundary. `depth` is what makes the column the same length everywhe
 
 Use `split=true` when the edge matters: a small aperture, a thin slab, or **any time you stack
 slabs and expect them to re-sum**. With whole cells, a partition of one slab into pieces
-over-counts every cell a face crosses, and on a regular grid with a rational line of sight that is
-whole lattices of cells at once, not a rare tie. Measured on Mera's test galaxy: re-summing a
-partition inflates the total by 4 percent with whole cells and is exact with `split=true`, and a
-5 kpc circular aperture holds 7 percent too much mass with whole cells. Chapter 5 of the
-[tutorial](06_offaxis_Projection.md) runs the same two checks on a 51.5 million cell snapshot.
+over-counts every cell a face crosses, and on a regular grid with a rational line of sight that
+can be whole lattices of cells at once rather than a rare tie.
+
+**`split=true` is exact; how wrong whole cells are depends entirely on your data.** Both checks
+below come out at 0.0 percent with `split=true`. Without it:
+
+| check | Mera's test galaxy | the tutorial's 51.5 M cell snapshot |
+|---|---|---|
+| re-summing a partitioned slab | +4 % | +0.006 % |
+| a small circular aperture | +7 % at 5 kpc | +0.45 % at 3 kpc |
+
+The two differ by three orders of magnitude, because the coarse test grid puts many cell centres
+exactly on a face while the refined snapshot puts almost none there, and because a 5 kpc aperture
+is a handful of coarse cells across but hundreds of fine ones. **Do not carry either number to
+your own run**: measure it, as Chapter 5 of the [tutorial](06_offaxis_Projection.md) does.
 
 Particles are points and have no volume, so `split` does nothing for them.
 
