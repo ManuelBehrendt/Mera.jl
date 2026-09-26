@@ -1719,7 +1719,8 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
 
     rcheck     = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
-    σcheck     = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σcheck     = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
+                  :σr_sphere, :σθ_sphere, :σϕ_sphere]
     for v in selected_vars
         if v in rcheck || v in anglecheck || v in σcheck
             error("projection: off-axis views (los/theta/phi/:faceon/:edgeon) do not yet " *
@@ -1766,21 +1767,19 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # --- selection mask: user mask ∧ the requested spatial sub-box (WORLD axes) ----
     # xrange/yrange/zrange select a world-space sub-box exactly like the axis-aligned path (and a
     # `subregion`'s ranges flow in identically). We clip on the WORLD coordinates (px,py,pz about the
-    # sub-box-centre pivot), NOT on the rotated camera coords — clipping a rotated camera coord against
-    # an axis-aligned half-extent drops in-box corner cells. A cell is kept when its FOOTPRINT overlaps
-    # the sub-box (centre within half-extent + half its own size), matching how `gethydro`/`subregion`
-    # select a subregion by cell-volume overlap; clipping on the bare cell centre instead drops the
-    # half-cell border layer and silently loses mass (≈0.4–0.9% for an off-axis subregion). With the
-    # half-cell margin, and the camera frame below auto-fitting the rotated footprint of the kept
-    # cells, every selected cell lands on the grid and the total is conserved to round-off.
-    # An axis needs no clip when the requested range already COVERS the data that was loaded
-    # (`dataobject.ranges`) — i.e. there is no *additional* crop beyond what `gethydro`/`subregion`
-    # already selected, so every loaded cell is wanted. Re-clipping the loaded subregion here on bare
-    # cell CENTRES would drop its half-cell overlap border and silently lose mass (≈0.4-0.9% off-axis);
-    # skipping the clip deposits all loaded cells, so the off-axis total conserves to round-off, like
-    # the full box. This matches the full-box case (`ranges == [0,1]³ == dataobject.ranges`) and the
-    # axis-aligned path, which never re-clips a loaded subregion. A genuine tighter crop (the requested
-    # range lies strictly inside the loaded data) still clips on the world coordinates exactly as before.
+    # sub-box-centre pivot), NOT on the rotated camera coords: clipping a rotated camera coord
+    # against an axis-aligned half-extent drops in-box corner cells.
+    #
+    # An axis needs no clip at all when the requested range already COVERS the loaded data
+    # (`dataobject.ranges`), because then every loaded cell is wanted and `gethydro`/`subregion`
+    # has already done the selection by cell-volume overlap. Re-clipping it here would drop the
+    # half-cell border layer that selection deliberately kept, losing about 0.4 to 0.9 percent of
+    # the mass off-axis. Skipping the clip deposits every loaded cell, so the total conserves to
+    # round-off, matching the full-box case and the axis-aligned path.
+    #
+    # A genuine tighter crop (the requested range lies strictly inside the loaded data) DOES clip,
+    # and it clips on the bare cell centre: a cell straddling the requested face is kept whole if
+    # its centre is inside and dropped whole if not. That is a hard cut, not a volume fraction.
     dr = dataobject.ranges
     tol = 1e-10
     full_x = ranges[1] <= dr[1] + tol && ranges[2] >= dr[2] - tol

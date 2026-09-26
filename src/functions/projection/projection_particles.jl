@@ -953,6 +953,14 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                             offset=offset, offset_unit=offset_unit)
     end
 
+    # :npart is filled by the off-axis deposit, which this path does not use. Here it is a column
+    # of ones going through the mass-weighted branch, so it came back as a map of ones that looks
+    # like a count. The hydro path already refuses :ncell for the same reason; do the same.
+    (:npart in selected_vars) && throw(ArgumentError(
+        ":npart counts what the OFF-AXIS deposit put in each pixel and is not available on the " *
+        "axis-aligned path. Give a view (los=, inclination=, azimuth=, or direction=:faceon/:edgeon) " *
+        "to get it."))
+
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
 
@@ -1464,9 +1472,14 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     # --- camera orientation (A1) ---
     Lvec = nothing
     if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
-        Lvec = [ sum(getvar(dataobject, :lx, center=data_centerm, ref_time=ref_time)),
-                 sum(getvar(dataobject, :ly, center=data_centerm, ref_time=ref_time)),
-                 sum(getvar(dataobject, :lz, center=data_centerm, ref_time=ref_time)) ]
+        # The camera must be set by the SAME particles that get drawn. `parttypes` and any user
+        # mask are already folded into `mask` by the caller, so orienting on the unmasked object
+        # would point `parttypes=[:dm], :faceon` at the stars as well as the dark matter.
+        lkw = length(mask) > 1 ? (; center=data_centerm, ref_time=ref_time, mask=collect(Bool.(mask))) :
+                                 (; center=data_centerm, ref_time=ref_time)
+        Lvec = [ sum(getvar(dataobject, :lx; lkw...)),
+                 sum(getvar(dataobject, :ly; lkw...)),
+                 sum(getvar(dataobject, :lz; lkw...)) ]
     end
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
                             inclination=inclination, azimuth=azimuth,

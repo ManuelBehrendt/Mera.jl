@@ -7,7 +7,9 @@
 
 # Data-free profile/phase unit tests (pure-function kernels — run even without simulation data):
 # binning input-validation guards and weighted-statistic oracles against hand-computed values.
-using JLD2   # used below; do not rely on another test file importing it
+using JLD2            # used below; do not rely on another test file importing it
+using LinearAlgebra   # cross/dot/norm in the camera-basis tests
+using Statistics      # mean, in the equal-count bin tests
 @testset "profile: binning guards + weighted-stat oracles (data-free)" begin
     # --- binning input validation (silent-mis-bin guards) ---
     @test_throws ArgumentError Mera._edges_by_step(10.0, 1.0, 1.0)               # reversed range (binsize)
@@ -700,6 +702,74 @@ end
         @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,2], aperture=:circle, kw...)
         @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,2,1], aperture=:square, kw...)
         @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,-2], aperture=:square, kw...)
+    end
+
+    @testset "a box-axis los reproduces the matching direction= preset" begin
+        # WHY: with no `up=`, the camera used to pick the world axis LEAST parallel to the line of
+        # sight, and ties broke to x. For los=[0,0,1] that gave right=[0,-1,0], an image rotated
+        # 90 degrees from direction=:z. The up hint is now world +z, falling back to +y when the
+        # line of sight is z itself, so the two agree.
+        r, u, w = Mera.build_camera_basis([0.,0,1])
+        @test r ≈ [1.,0,0] && u ≈ [0.,1,0] && w ≈ [0.,0,1]     # exactly direction=:z
+        r2, u2, _ = Mera.build_camera_basis([1.,0,0])
+        @test r2 ≈ [0.,1,0] && u2 ≈ [0.,0,1]                   # edge-on with z up
+        # an explicit up= must give the same thing, not something different
+        r3, u3, _ = Mera.build_camera_basis([0.,0,1], [0.,1,0])
+        @test r3 ≈ r && u3 ≈ u
+        # still orthonormal and right-handed for a general direction
+        for los in ([1.,2,3], [-3.,1,2], [0.,1,0])
+            a, b, c = Mera.build_camera_basis(los)
+            @test cross(a, b) ≈ c atol=1e-12
+            @test abs(dot(a,b)) < 1e-12 && isapprox(norm(a), 1; rtol=1e-12)
+        end
+
+        # and it holds for a real map: the image centroid must land in the same place either way
+        kw = (center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc], verbose=false, show_progress=false,
+              xrange=[-10,10], yrange=[-10,10], zrange=[-10,10])
+        function centroid(m)
+            M = m.maps[:mass]; ex = getextent(m, :kpc); nx, ny = size(M)
+            xs = range(ex[1], ex[2], length=nx+1)[1:end-1] .+ (ex[2]-ex[1])/(2nx)
+            ys = range(ex[3], ex[4], length=ny+1)[1:end-1] .+ (ex[4]-ex[3])/(2ny)
+            t = sum(M); (sum(M .* xs)/t, sum(M .* ys')/t)
+        end
+        half = gas.boxlen/2 * gas.info.scale.kpc          # axis-aligned extent is absolute
+        for (dir, losv) in ((:z, [0.,0,1]), (:x, [1.,0,0]))
+            ax = centroid(projection(gas, :mass, :Msol; direction=dir, kw...))
+            ob = centroid(projection(gas, :mass, :Msol; los=losv, kw...))
+            @test isapprox(ax[1] - half, ob[1]; atol=0.25)
+            @test isapprox(ax[2] - half, ob[2]; atol=0.25)
+        end
+    end
+
+    @testset "guards that used to fail silently or unhelpfully" begin
+        pkw = (center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        # :σr_sphere was missing from the off-axis guard list, so it died inside getvar with an
+        # unknown-variable error instead of the projection message that names the fix.
+        for v in (:σr_sphere, :σθ_sphere, :σϕ_sphere)
+            e = try projection(gas, [:sd, v]; los=[1.,2,3], pkw...); nothing catch err; err end
+            @test e !== nothing
+            @test occursin("off-axis", sprint(showerror, e))
+        end
+
+        # particles: :npart on the axis-aligned path returned a map of ones that looks like a count
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        @test_throws ArgumentError projection(part, [:sd, :npart]; direction=:z, pkw...)
+        @test sum(projection(part, [:sd, :npart]; los=[1.,2,3], pkw...).maps[:npart]) > 0
+
+        # parttypes must set the CAMERA too, not only what is drawn: orienting :faceon on the dark
+        # matter gave the stars+DM axis, so parttypes=[:dm] and [:stars] shared one camera.
+        dmsel = Mera._parttype_select(part, [:dm]); stsel = Mera._parttype_select(part, [:stars])
+        @test count(dmsel) > 0 && count(stsel) > 0
+        Ldm = projection(part, :sd, :Msol_pc2; parttypes=[:dm],    direction=:faceon, pkw...).los
+        Lst = projection(part, :sd, :Msol_pc2; parttypes=[:stars], direction=:faceon, pkw...).los
+        Lal = projection(part, :sd, :Msol_pc2; parttypes=[:all],   direction=:faceon, pkw...).los
+        @test Ldm != Lst                       # two components, two axes
+        @test Ldm != Lal
+        for L in (Ldm, Lst, Lal)
+            @test isapprox(sum(abs2, L), 1.0; rtol=1e-10)
+        end
     end
 
     @testset "mask under fov: the two combine" begin

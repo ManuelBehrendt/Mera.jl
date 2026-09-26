@@ -123,8 +123,13 @@ end
 
 const _WORLD_AXES = ([1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0])
 
-# Deterministic auto-up: the world axis least parallel to `w` (ties broken by axis order
-# x<y<z), Gram-Schmidt-orthogonalised against `w`.  Reproducible, never parallel to `w`.
+# Deterministic perpendicular reference: the world axis least parallel to `w` (ties broken by
+# axis order x<y<z), Gram-Schmidt-orthogonalised against `w`. Reproducible, never parallel to `w`.
+#
+# This is the reference for `inclination`/`azimuth` (it fixes where azimuth=0 points), NOT the
+# camera's up hint. The camera uses `_default_camera_up` below, which answers a different
+# question: which way is up in the IMAGE. Keeping them separate means changing the image
+# orientation cannot silently rotate the azimuth zero-point.
 function _auto_up(w::AbstractVector{<:Real})
     best = _WORLD_AXES[1]; bestdot = 2.0
     for ax in _WORLD_AXES
@@ -134,6 +139,19 @@ function _auto_up(w::AbstractVector{<:Real})
         end
     end
     u = best .- dot(best, w) .* w
+    return u ./ norm(u)
+end
+
+# Camera up hint when the caller gave no `up=`.
+#
+# Prefer world +z, so a view down a box axis reproduces the matching `direction=` preset:
+# `los=[0,0,1]` gives the same image orientation as `direction=:z`, and `los=[1,0,0]` the same as
+# an edge-on view with z up. When the line of sight IS the z axis there is no +z to project, so
+# fall back to +y, which is what `direction=:z` uses. Deterministic, never parallel to `w`.
+function _default_camera_up(w::AbstractVector{<:Real})
+    zax = _WORLD_AXES[3]
+    hint = abs(dot(zax, w)) > 1 - 1e-8 ? _WORLD_AXES[2] : zax   # los along z: use +y instead
+    u = hint .- dot(hint, w) .* w                               # Gram-Schmidt against the los
     return u ./ norm(u)
 end
 
@@ -147,16 +165,18 @@ Returns three unit 3-vectors `(right, up, w)` where `w = los/‖los‖` is the v
 direction, and `right`, `up` span the image plane (image x = `right`, image y = `up`).
 The basis is right-handed with `right × up = w`.
 
-If `up` is `nothing` — or (anti)parallel to `los` — a *deterministic* auto-up is chosen
-(the world axis least parallel to `los`), so the result is fully reproducible.
+If `up` is `nothing`, or (anti)parallel to `los`, the camera uses world +z as its up hint
+(falling back to +y when `los` is itself the z axis). That is deterministic, and it makes a view
+down a box axis reproduce the matching `direction=` preset: `los=[0,0,1]` gives the same image
+orientation as `direction=:z`.
 
 `roll` (radians) rotates the image plane *about the line of sight* — i.e. it sets the
 orientation of the image on the "sky" (the astronomical position angle / camera roll).
 It leaves `w` unchanged and rotates `(right, up)` together, so it composes with any way of
 choosing `los`.
 
-Convention check: `los=[0,0,1]`, `up=[0,1,0]` ⇒ `right=[1,0,0]`, `up=[0,1,0]`, matching
-the axis-aligned `direction=:z` mapping (image x→sim x, image y→sim y).
+Convention check: `los=[0,0,1]` ⇒ `right=[1,0,0]`, `up=[0,1,0]`, matching the axis-aligned
+`direction=:z` mapping (image x→sim x, image y→sim y), with or without an explicit `up=[0,1,0]`.
 """
 function build_camera_basis(los::AbstractVector{<:Real}, up=nothing; roll::Real=0.0)
     nlos = norm(los)
@@ -164,7 +184,7 @@ function build_camera_basis(los::AbstractVector{<:Real}, up=nothing; roll::Real=
     w = los ./ nlos
 
     if up === nothing
-        u_hint = _auto_up(w)
+        u_hint = _default_camera_up(w)
     else
         length(up) == 3 || throw(ArgumentError("up vector must have length 3"))
         u_hint = collect(float.(up))
@@ -173,7 +193,7 @@ function build_camera_basis(los::AbstractVector{<:Real}, up=nothing; roll::Real=
         u_hint ./= nu
         # fall back to auto-up if the hint is (anti)parallel to the line of sight
         if abs(dot(u_hint, w)) > 1 - 1e-8
-            u_hint = _auto_up(w)
+            u_hint = _default_camera_up(w)
         end
     end
 
