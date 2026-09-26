@@ -174,7 +174,8 @@ makedocs(modules = [Mera],
                           # validation page is data free and tests instead, scoring the projection
                           # against a sphere whose answers are known in closed form. Do not merge
                           # them: the first would lose its narrative, the second its independence.
-                          "Off-axis" => Any[ "Tutorial"              => "06_offaxis_Projection.md",
+                          "Off-axis" => Any[ "Cheatsheet"            => "offaxis_cheatsheet.md",
+                                             "Tutorial"              => "06_offaxis_Projection.md",
                                              "Validation (analytic)" => "offaxis_validation.md"],
                           # Both ways of making a volume rendering sit together: Mera's own
                           # renderer, and the VTK export for ParaView. They used to be one nav
