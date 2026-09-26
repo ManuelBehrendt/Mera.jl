@@ -815,9 +815,12 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     # is not rotation-invariant, so `fov` selects a SPHERE instead and the frame is fixed at every
     # viewing angle. Points carry no footprint, so only the framing differs here — not the deposit.
     if fov !== nothing
-        src, win, fov_code, _ = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        # a mask applies to the object the caller holds, so filter first and cut the sphere out of
+        # the filtered data; passing it to the inner call instead gives it the wrong length
+        premasked, inner_mask = _fov_premask(dataobject, mask)
+        src, win, fov_code, _ = _fov_selection(premasked, fov, fov_unit, aperture, center)
         m = create_projection(src, vars; parttypes=parttypes, units=units, lmax=lmax, res=res,
-                              pxsize=pxsize, mask=mask, direction=direction, los=los, up=up,
+                              pxsize=pxsize, mask=inner_mask, direction=direction, los=los, up=up,
                               theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
                               position_angle=position_angle, axis=axis, angle_unit=angle_unit,
                               binning=binning, weighting=weighting, nlos=nlos,

@@ -27,6 +27,7 @@ function projection()
     println(":x, :y, :z")
     println(":sd or :Σ or :surfacedensity")
     println(":mass, :cellsize, :freefall_time")
+    println(":ncell  (how many cells fed each pixel, off-axis)")
     println(":cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber")
     println(":t, :Temp, :Temperature with p/rho")
     println()
@@ -37,6 +38,7 @@ function projection()
     println()
     println("              -derived particle vars-")
     println(":age")
+    println(":npart  (how many particles fed each pixel, off-axis)")
     println()
     println("==============[gas or particles]:===============")
     println(":v, :ekin")
@@ -654,6 +656,30 @@ function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, cen
     src  = subregion(dataobject, :sphere, radius=rsel, center=center,
                      range_unit=fov_unit, verbose=false)
     return src, [-rsel, rsel], fov_code, rsel
+end
+
+"""
+    _fov_premask(dataobject, mask) -> (object, mask)
+
+Internal. Apply a boolean `mask` to the object BEFORE the `fov` sphere is cut out of it.
+
+A mask is one boolean per row of the object the caller holds, and the `fov` path projects a
+subregion of that object, so passing the mask on unchanged hands the inner call the wrong length.
+Cutting the mask to the selection instead is not reliable either: `subregion` keeps a cell whose
+volume overlaps the sphere at all, not merely one whose centre is inside, so no open-coded test
+reproduces its row set. Masking first sidesteps the question, because the sphere is then cut from
+data that is already filtered.
+"""
+function _fov_premask(dataobject, mask)
+    (mask === [false] || length(mask) <= 1) && return dataobject, mask
+    data = dataobject.data
+    length(mask) == length(data) || throw(ArgumentError(
+        "mask length $(length(mask)) does not match the object's $(length(data)) rows"))
+    m = collect(Bool.(mask))
+    cols = IndexedTables.columns(data)
+    newdata = IndexedTables.table(map(c -> c[m], cols);
+                                  pkey = collect(IndexedTables.pkeynames(data)))
+    return _copy_with_data(dataobject, newdata), [false]
 end
 
 # Apply the SAME sphere to a companion object (gravity data projected on the hydro grid). Both

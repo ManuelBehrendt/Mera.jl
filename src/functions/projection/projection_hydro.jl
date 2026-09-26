@@ -830,6 +830,45 @@ Off-axis projections:
         is deepest on axis and falls to **zero at the frame boundary** — for `:square` that is the
         four corners, which sit exactly on the sphere. On a 100 kpc box, `fov=15, :square` gives
         42.4 kpc of depth at the centre, 30.0 kpc at the middle of an edge and 0 at the corners.
+
+        `depth` fixes this when it matters: it cuts along the **line of sight** itself, so the
+        column integrates the same distance everywhere in the frame.
+
+!!! note "Camera-space depth: `depth` / `depth_unit`"
+    `depth=2, depth_unit=:kpc` keeps a slab of half-thickness 2 kpc about `center`, measured
+    **along the viewing direction**. `depth=[-2, 6]` is an explicit window, so the foreground and
+    the background need not match. Every other window (`xrange`/`yrange`/`zrange`) is world space
+    and therefore does not follow the camera; this one does, which is what an off-axis column
+    density needs if it is to mean a fixed depth.
+
+    It applies to off-axis views only. On a box-axis view the line of sight IS a box axis, so
+    `zrange` already cuts exactly this slab, and `depth` raises there and says so.
+
+!!! note "A rectangular frame: `fov=[wx, wy]`"
+    `fov` is normally one half-width and the frame is square. Two half-widths give a rectangle,
+    which is what an edge-on disc wants: in a square frame most of the pixels are empty sky.
+    Requires `aperture=:square`, because a rectangle has no single radius while `:circle` selects
+    a disc, which has one. A scalar `fov` behaves exactly as before.
+
+!!! note "Orienting on a region: `angmom_radius`"
+    `axis=:angmom` and the `direction=:faceon`/`:edgeon` presets compute the orientation from the
+    angular momentum of **everything you loaded**, about `center`. Load a whole box and the sum is
+    dominated by the material with the longest lever arm, which is usually not the disc you meant.
+    `angmom_radius=[10, :kpc]` restricts that sum to a sphere about `center`.
+
+    The vector is per object: gas and stars each have their own, so `:faceon` on one is a
+    different camera from `:faceon` on the other.
+
+!!! note "How well sampled is a pixel: `:ncell` and `:npart`"
+    Ask for `:ncell` (cells) or `:npart` (particles) alongside any other variable and the result
+    carries a map of what fed each pixel, filled by the same deposit as the value. The meaning
+    depends on the kernel: `:ngp` counts one per cell or particle, so the map sums to exactly how
+    many there were; `:cic` counts one per pixel of its 2x2 stencil; `:overlap` counts one per
+    sub-point and `:exact` one per pixel covered, so for those two it reads as sampling density
+    rather than an object tally.
+
+    The count is what separates a pixel you can quote from one built out of a single object: a
+    pixel holding one particle has no spread, so its dispersion is exactly zero.
         Harmless for an object centred in frame, but make `fov` comfortably larger than any
         diffuse column, profile or scale height you intend to measure.
 
@@ -938,9 +977,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     # as straight edges across the image. `fov` asks for a fixed camera-plane window instead, via
     # the rotation-invariant sphere selection `rotation_sequence` already uses.
     if fov !== nothing
-        src, win, fov_code, _rsel = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        # a mask applies to the object the caller holds, so filter first and cut the sphere out of
+        # the filtered data; passing it to the inner call instead gives it the wrong length
+        premasked, inner_mask = _fov_premask(dataobject, mask)
+        src, win, fov_code, _rsel = _fov_selection(premasked, fov, fov_unit, aperture, center)
         gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center)
-        m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=mask,
+        m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=inner_mask,
                        direction=direction, los=los, up=up, theta=theta, phi=phi,
                        inclination=inclination, azimuth=azimuth, position_angle=position_angle,
                        axis=axis, angle_unit=angle_unit, binning=binning, nmax=nmax,
@@ -948,7 +990,11 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                        center=center, range_unit=fov_unit, data_center=data_center,
                        data_center_unit=data_center_unit, verbose=verbose,
                        show_progress=show_progress, max_threads=max_threads,
-                       verbose_threads=verbose_threads, gravity_data=gsrc)
+                       verbose_threads=verbose_threads, gravity_data=gsrc,
+                       # `fov` re-enters this function on the selected sphere, so every keyword the
+                       # inner call still needs has to be handed on. Forgetting one does not fail,
+                       # it silently reverts to the default, which is worse.
+                       depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         return m
     end
@@ -1085,6 +1131,13 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                   boxlen, lmin, simlmax, isamr, scale, verbose, max_threads,
                                   gravity_data, depth, depth_unit, angmom_radius)
     end
+
+    # :ncell/:npart are filled by the off-axis deposit, which the axis-aligned path does not use.
+    # Returning a map of ones there would look like a count and be a mask, so refuse it instead.
+    (:ncell in selected_vars) && throw(ArgumentError(
+        ":ncell counts what the OFF-AXIS deposit put in each pixel and is not available on the " *
+        "axis-aligned path. Give a view (los=, inclination=, azimuth=, or direction=:faceon/:edgeon) " *
+        "to get it."))
 
     depth === nothing || throw(ArgumentError(
         "depth= is a camera-space cut and applies to off-axis views only. This call is axis-aligned " *
@@ -1745,9 +1798,16 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # computed above, so this is a selection and nothing more.
     if depth !== nothing
         dlo, dhi = _depth_window(depth, depth_unit, dataobject.info, boxlen)
-        sel = sel .& (z_cam .>= dlo) .& (z_cam .<= dhi)
+        # `z_cam` is measured from the frame PIVOT, which is the centre of the requested ranges and
+        # therefore the box centre when no window was given. The window the user asked for is about
+        # `center`, so shift it by however far `center` lies along the line of sight from the pivot.
+        # Without this a slab "about center" silently cuts through the box centre instead.
+        ctr_code = _center_code(dataobject, center, range_unit)
+        off = sum((ctr_code .- pivot .* boxlen) .* cam_w)
+        sel = sel .& (z_cam .>= dlo + off) .& (z_cam .<= dhi + off)
         verbose && println("depth cut: ", count(sel), " of ", ncells, " cells within [",
-                           round(dlo, digits=4), ", ", round(dhi, digits=4), "] code units along the line of sight")
+                           round(dlo + off, digits=4), ", ", round(dhi + off, digits=4),
+                           "] code units along the line of sight, about center")
     end
 
     # --- camera-plane extent: auto-fit the rotated footprint of the SELECTED cells -------------
@@ -1867,8 +1927,10 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         # :ncell asks how many cells fed each pixel. It is filled by the SAME deposit as the
         # value, so it counts exactly what was deposited, and it is a separate grid that is only
         # ever incremented, so it cannot disturb the value or the weight.
-        cgrid = (:ncell in selected_vars && ivar === first(selected_vars)) ?
-                zeros(Float64, nx, ny) : nothing
+        # allocate on the first variable that REACHES the deposit. `first(selected_vars)` was wrong:
+        # :vlos/:σlos are handled in their own branch above and never get here, so asking for
+        # [:vlos, :ncell] left the counter unallocated and :ncell came back as a ones-mask.
+        cgrid = (:ncell in selected_vars && count_map === nothing) ? zeros(Float64, nx, ny) : nothing
         if binning === :overlap
             deposit_rotated_cells_overlap!(grid, wgrid, xc, yc, csize, vsel, wts,
                                            cam_right, cam_up, grid_extent, grid_resolution;

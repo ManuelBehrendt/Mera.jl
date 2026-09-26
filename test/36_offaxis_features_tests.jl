@@ -630,6 +630,30 @@ end
         b = gm(projection(gas, :mass, :Msol; depth=2.0, depth_unit=:kpc, kw...)) / M
         @test a != b
 
+        # REGRESSION: `fov` re-enters projection on the selected sphere, and a keyword that is not
+        # handed on there is not rejected, it silently reverts to its default. `depth` and
+        # `angmom_radius` were both dropped that way once; a demo built on them measured nothing.
+        fkw = (los=[1.,2.,3.], center=[:bc], fov=8, fov_unit=:kpc, aperture=:circle,
+               pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        with_fov    = gm(projection(gas, :mass, :Msol; fkw...))
+        with_fov_d  = gm(projection(gas, :mass, :Msol; depth=1.0, depth_unit=:kpc, fkw...))
+        @test with_fov_d < with_fov                      # depth must still bite under fov
+
+        akw = (direction=:faceon, center=[:bc], range_unit=:kpc, fov=8, fov_unit=:kpc,
+               aperture=:circle, pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        @test projection(gas, :sd, :Msol_pc2; akw...).los !=
+              projection(gas, :sd, :Msol_pc2; angmom_radius=[2,:kpc], akw...).los
+
+        # the slab must follow `center`, not the frame pivot. With los=+z the camera depth IS world
+        # z, so moving the centre off the disc must empty the slab; it once did not, because the
+        # cut was measured from the pivot and a full box puts that at the box centre.
+        bc = gas.boxlen * gas.scale.kpc / 2
+        on  = gm(projection(gas, :mass, :Msol; los=[0.,0.,1.], center=[bc,bc,bc], range_unit=:kpc,
+                            depth=2, depth_unit=:kpc, pxsize=[2.0,:kpc], verbose=false, show_progress=false))
+        off = gm(projection(gas, :mass, :Msol; los=[0.,0.,1.], center=[bc,bc,bc+10], range_unit=:kpc,
+                            depth=2, depth_unit=:kpc, pxsize=[2.0,:kpc], verbose=false, show_progress=false))
+        @test off < on / 10                       # 10 kpc above the disc holds far less
+
         # guards
         @test_throws ArgumentError projection(gas, :mass, :Msol; depth=[3.0,1.0], depth_unit=:kpc, kw...)
         @test_throws ArgumentError projection(gas, :mass, :Msol; depth=-1.0, depth_unit=:kpc, kw...)
@@ -649,10 +673,14 @@ end
         @test length(inner.data) < length(gas.data)
         @test L_all != L_in
         # and it flows through the public call
-        m = projection(gas, :sd, :Msol_pc2; direction=:faceon, angmom_radius=[5,:kpc],
-                       center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc],
-                       verbose=false, show_progress=false)
+        pkw = (direction=:faceon, center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc],
+               verbose=false, show_progress=false)
+        m    = projection(gas, :sd, :Msol_pc2; angmom_radius=[5,:kpc], pkw...)
+        mall = projection(gas, :sd, :Msol_pc2; pkw...)
         @test isapprox(sum(abs2, m.los), 1.0; rtol=1e-10)         # a unit line of sight
+        # and it must be a DIFFERENT camera: asserting only that it is a unit vector passes for
+        # any line of sight at all, including one where the keyword was ignored
+        @test m.los != mall.los
     end
 
     @testset "fov=[wx,wy]: a rectangular frame" begin
@@ -672,6 +700,55 @@ end
         @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,2], aperture=:circle, kw...)
         @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,2,1], aperture=:square, kw...)
         @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,-2], aperture=:square, kw...)
+    end
+
+    @testset "mask under fov: the two combine" begin
+        kw = (los=[1.,2.,3.], center=[:bc], fov_unit=:kpc, pxsize=[1.0,:kpc],
+              verbose=false, show_progress=false)
+        cold = getvar(gas, :T, :K) .< 1e4
+        @test 0 < count(cold) < length(cold)        # a mask that actually removes something
+
+        # THE BUG: `fov` projects a subregion, so a mask cut for the full object has the wrong
+        # length inside. It used to stop with "array-mask length does not match".
+        full = projection(gas, :mass, :Msol; fov=8, aperture=:circle, kw...)
+        cut  = projection(gas, :mass, :Msol; fov=8, aperture=:circle, mask=cold, kw...)
+        # NOTE the frame is NOT the same: the off-axis camera extent auto-fits the cells that
+        # survive selection, so a mask shrinks it. That predates `fov` and holds without it too.
+        @test size(cut.maps[:mass]) != size(full.maps[:mass])
+        Mf, Mc = sum(full.maps[:mass]), sum(cut.maps[:mass])
+        @test Mc < Mf                                # the mask removed mass
+        @test Mc > 0                                 # but not all of it
+
+        # and it is the RIGHT mass. Independent oracle: filter the object through the public
+        # `filterdata` and project that, which must land on the same total as the mask keyword.
+        pre = filterdata(gas, Below(:T, 1e4; unit=:K))
+        @test length(pre.data) == count(cold)
+        ref = projection(pre, :mass, :Msol; fov=8, aperture=:circle, kw...)
+        @test isapprox(sum(ref.maps[:mass]), Mc; rtol=1e-9)
+
+        # a mask must not silently disappear when it rides along with the other fov keywords
+        rect = projection(gas, :mass, :Msol; fov=[8.,3.], aperture=:square, mask=cold, kw...)
+        @test sum(rect.maps[:mass]) < sum(projection(gas, :mass, :Msol; fov=[8.,3.],
+                                                     aperture=:square, kw...).maps[:mass])
+        deep = projection(gas, :mass, :Msol; fov=8, aperture=:circle, depth=2, depth_unit=:kpc,
+                          mask=cold, kw...)
+        @test sum(deep.maps[:mass]) < Mc             # depth still bites through the mask
+
+        # a wrong-length mask must still be refused rather than quietly truncated
+        @test_throws ArgumentError projection(gas, :mass, :Msol; fov=8, aperture=:circle,
+                                              mask=cold[1:end-1], kw...)
+
+        # points carry the same bug and the same fix
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        young = getvar(part, :age, :Myr) .< 100
+        if 0 < count(young) < length(young)
+            pfull = projection(part, :mass, :Msol; fov=8, aperture=:circle, kw...)
+            pcut  = projection(part, :mass, :Msol; fov=8, aperture=:circle, mask=young, kw...)
+            @test sum(pcut.maps[:mass]) < sum(pfull.maps[:mass])
+            @test sum(pcut.maps[:mass]) > 0
+        end
     end
 
     @testset ":ncell / :npart count what fed each pixel" begin
@@ -695,6 +772,18 @@ end
             # and the counter must not have disturbed the value it rode along with
             @test isapprox(sum(m.maps[:mass]), M; rtol=1e-9)
         end
+
+        # the counter belongs to the off-axis deposit. On the axis-aligned path there is none, and
+        # returning a map of ones would look like a count, so it must refuse instead.
+        @test_throws ArgumentError projection(gas, [:sd, :ncell]; direction=:z, center=[:bc],
+                                              pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+
+        # ORDERING: :vlos and :σlos are handled in their own branch and never reach the deposit,
+        # so allocating the counter on `first(selected_vars)` left it empty and :ncell came back a
+        # ones-mask. Asking for :ncell second, behind :vlos, must still give a real count.
+        mv = projection(gas, [:vlos, :ncell], [:km_s, :standard]; binning=:cic, kw...)
+        @test sum(mv.maps[:ncell]) > N          # a count, not a 0/1 mask
+        @test maximum(mv.maps[:ncell]) > 1
 
         # points: the same idea, and the count is what tells you a pixel holds a single particle
         dp = DATASETS[:spiral_ugrid]
