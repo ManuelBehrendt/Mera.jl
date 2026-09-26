@@ -123,6 +123,10 @@ Cell splitting for a **region** is separate and already existed:
 `subregion(gas, Sphere(10; center=[:bc], range_unit=:kpc); split=true)` attaches a `:fraction`
 column that `getvar(:mass)` and `getvar(:volume)` honour, and that flows into off-axis maps too.
 
+!!! warning "`Sphere` collides with Makie"
+    Makie exports a `Sphere` of its own, so with both loaded the bare name is ambiguous and binds
+    to neither. Write `Mera.Sphere` in any session that has a plotting backend.
+
 ## Choosing the axis from the data
 
 | | |
