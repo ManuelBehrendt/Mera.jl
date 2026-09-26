@@ -384,6 +384,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -419,7 +420,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -462,6 +463,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -497,7 +499,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -540,6 +542,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -575,7 +578,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -618,6 +621,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -653,7 +657,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -695,6 +699,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -730,7 +735,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -773,6 +778,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -830,7 +836,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                               theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
                               position_angle=position_angle, axis=axis, angle_unit=angle_unit,
                               angmom_radius=angmom_radius,
-                              binning=binning, weighting=weighting, nlos=nlos,
+                              binning=binning, weighting=weighting, mode=mode, nlos=nlos,
                               thickness=thickness, thickness_unit=thickness_unit,
                               offset=offset, offset_unit=offset_unit,
                               max_threads=max_threads, xrange=win, yrange=win,
@@ -907,15 +913,20 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     # conserving map for points is :sd. Say so once, rather than letting the user find out from a
     # broken budget.
     if :mass in selected_vars
-        hint(:particle_mass_not_extensive,
+        mode === :sum || hint(:particle_mass_not_extensive,
              "projection(particles, :mass) is a mean, not a sum.",
              "On cell data :mass is extensive and the map sums to the total mass.",
              "A particle has no volume, so this map holds the mass-weighted mean particle mass.",
-             "For the mass per pixel use :sd and multiply by the pixel area:",
+             "For the total mass in each pixel, ask for it:",
+             "    projection(part, :mass, :Msol; mode=:sum)      # sums to the total",
+             "or use :sd and multiply by the pixel area:",
              "    sum(p.maps[:sd]) * (p.pixsize * p.scale.pc)^2   # Msol, from :Msol_pc2";
              verbose=verbose)
     end
     weighting in (:mass, :volume, :sph, :voronoi) || throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default), :volume, :sph, or :voronoi."))
+    mode in (:standard, :sum) || throw(ArgumentError(
+        "projection (particles): mode must be :standard (weighted mean) or :sum (per-pixel " *
+        "total), got :$mode"))
     if weighting == :mass
         use_sd_map = Mera.checkformaps(selected_vars, ranglecheck)
         # only add :sd if there are also other variables than in ranglecheck
@@ -958,7 +969,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                             boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos, max_threads;
                                             thickness=thickness, thickness_unit=thickness_unit,
                                             offset=offset, offset_unit=offset_unit,
-                                            angmom_radius=angmom_radius)
+                                            angmom_radius=angmom_radius, mode=mode)
     end
 
     # Camera-frame kinematics have no meaning without a camera: :vlos/:σlos are along the line
@@ -1137,6 +1148,17 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         end
                         maps_unit[Symbol( string(i_var)  )] = unit_name
                         maps_mode[Symbol( string(i_var)  )] = :mass_weighted
+                    elseif mode === :sum
+                        # per-pixel TOTAL of the quantity itself, not a weighted mean. A particle
+                        # has no volume, so for :mass this is the mass in the pixel and the map
+                        # sums to the mass of everything projected.
+                        qv = getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)
+                        wv = length(mask) == 1 ? qv : qv .* select(filtered_data, :mask)
+                        h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), wv, newrange1, newrange2, closed; max_threads=max_threads)
+                        selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                        maps[Symbol(i_var)] = selected_unit != 1. ? h.weights .* selected_unit : h.weights
+                        maps_unit[Symbol( string(i_var) )] = unit_name
+                        maps_mode[Symbol( string(i_var) )] = :sum
                     else
                         if length(mask) == 1
                             h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass), newrange1, newrange2, closed; max_threads=max_threads)
@@ -1458,7 +1480,7 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                                        boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing, max_threads=Threads.nthreads();
                                        thickness=nothing, thickness_unit=nothing,
                                        offset=nothing, offset_unit=nothing,
-                                       angmom_radius=nothing)
+                                       angmom_radius=nothing, mode::Symbol=:standard)
 
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
@@ -1730,6 +1752,13 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                 g, _ = deposit(vals, ones_w)         # Σ value
                 m = g ./ pixel_vol_fac
                 mmode = :volume_weighted
+            elseif mode === :sum
+                # the per-pixel TOTAL of the quantity itself. A particle carries no volume, so
+                # only a sum over the particles in the pixel is meaningful: for :mass this is the
+                # mass in the pixel, and the map sums to the mass of everything projected.
+                g, _ = deposit(vals, ones_w)         # Σ value
+                m = g
+                mmode = :sum
             else
                 g, w = deposit(vals, massv)          # Σ value·mass  /  Σ mass
                 m = zeros(Float64, nx, ny)

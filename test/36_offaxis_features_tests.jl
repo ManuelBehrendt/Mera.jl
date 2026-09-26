@@ -10,6 +10,10 @@
 using JLD2            # used below; do not rely on another test file importing it
 using LinearAlgebra   # cross/dot/norm in the camera-basis tests
 using Statistics      # mean, in the equal-count bin tests
+
+# the mode metadata a projection records for one variable (field name is internal)
+maps_mode_of(m, v) = m.maps_mode[v]
+
 @testset "profile: binning guards + weighted-stat oracles (data-free)" begin
     # --- binning input validation (silent-mis-bin guards) ---
     @test_throws ArgumentError Mera._edges_by_step(10.0, 1.0, 1.0)               # reversed range (binsize)
@@ -899,6 +903,40 @@ end
         for L in (Ldm, Lst, Lal)
             @test isapprox(sum(abs2, L), 1.0; rtol=1e-10)
         end
+    end
+
+    @testset "particles: mode=:sum gives the total in each pixel" begin
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        Mtot = msum(part, :Msol)
+        kw = (center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+
+        # A particle has no volume, so projection(part, :mass) is the mass-weighted MEAN particle
+        # mass, not a total. There was no way to ask for the total; now there is.
+        for view in ((; direction=:z), (; los=[1.,2,3]))
+            mean_map = projection(part, :mass, :Msol; view..., kw...)
+            sum_map  = projection(part, :mass, :Msol; mode=:sum, view..., kw...)
+            @test maps_mode_of(sum_map, :mass) == :sum
+            @test sum(sum_map.maps[:mass]) > sum(filter(isfinite, mean_map.maps[:mass]))
+
+            # ORACLE: it must equal the route the hint used to send people down, :sd times the
+            # pixel area. Comparing to msum alone would hide a shared edge effect.
+            p = projection(part, :sd, :Msol_pc2; view..., kw...)
+            sd_mass = sum(p.maps[:sd]) * (p.pixsize * p.scale.pc)^2
+            @test isapprox(sum(sum_map.maps[:mass]), sd_mass; rtol=1e-9)
+            @test isapprox(sum(sum_map.maps[:mass]), Mtot; rtol=1e-3)
+        end
+
+        # off-axis it conserves exactly
+        om = projection(part, :mass, :Msol; mode=:sum, los=[1.,2,3], kw...)
+        @test isapprox(sum(om.maps[:mass]), Mtot; rtol=1e-9)
+
+        # the default is untouched, and a typo is refused rather than read as :standard
+        @test maps_mode_of(projection(part, :mass, :Msol; direction=:z, kw...), :mass) !=
+              :sum
+        @test_throws ArgumentError projection(part, :mass, :Msol; mode=:average,
+                                              direction=:z, kw...)
     end
 
     @testset "split=true: partial cells carry their fraction" begin
