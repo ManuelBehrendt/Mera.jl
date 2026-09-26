@@ -267,6 +267,8 @@ projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 mask=[false],
                 direction::Symbol=:z,
                 weighting::Symbol=:mass,
+                mode::Symbol=:standard,
+                angmom_radius=nothing,
                 xrange::Array{<:Any,1}=[missing, missing],
                 yrange::Array{<:Any,1}=[missing, missing],
                 zrange::Array{<:Any,1}=[missing, missing],
@@ -304,6 +306,16 @@ return PartMapsType
   (smear each cell over an M4 kernel sized from its `:volume`; mass-conserving; needs a `:volume` column),
   or `:voronoi` (nearest-generator: sample each LOS through the nearest cell — sharp, genuinely
   moving-mesh; intensive maps exact, surface density approximate)
+- **`mode`:** `:standard` (default) returns a weighted mean; `:sum` returns the per-pixel
+  **total**. This is how you get a real mass map from points: `projection(part, :mass, :Msol;
+  mode=:sum)` sums to the mass of everything projected. The default is a mean because a particle
+  has no volume to make `:mass` extensive, so the default map is the mass-weighted mean particle
+  mass, useful as a mass-spectrum and equal-mass check but not a budget.
+- **`angmom_radius`:** restrict the orientation sum behind `direction=:faceon`/`:edgeon` and
+  `axis=:angmom` to a sphere about `center`, e.g. `[10, :kpc]`. Without it the sum runs over
+  everything loaded, where the outer material has the longest lever arm. `mask` and `parttypes`
+  also narrow it, so `parttypes=[:dm], direction=:faceon` orients on the dark matter alone.
+  [`angmom`](@ref) returns the vector itself if you want to compute it once and reuse it.
 - **`nlos`:** number of samples along each line of sight, `:voronoi` only. By default Mera steps at
   the scale of the *cells* — `min(pixsize, ½·median(V)^⅓)`, capped at 4096 — because stepping at
   pixel scale walks over whole cells whenever cells are smaller than a pixel. Set it only to trade

@@ -67,7 +67,6 @@ MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera
 using Mera, CairoMakie
 # Makie also exports geometric names (Sphere, Cylinder, ...), state explicitly
 # that we mean Mera's region types:
-import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 CairoMakie.activate!()
 
 path = "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14"
@@ -94,7 +93,8 @@ println("clump masses   : ", round(minimum(getvar(clumps, :mass, :Msol)), sigdig
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[ Info: Mera v1.8.0
 clumps         : 644
 columns        : (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
 total clump mass: 1.3743e10 Msol
@@ -159,7 +159,7 @@ show_sd!(ax1, p_face; decorate=true)
 scatter!(ax1, cx, cy; markersize=msize(clumps), color=(:orangered, 0.75),
          strokewidth=0.3, strokecolor=:white)
 arc!(ax1, Point2f(0, 0), 10., 0, 2π; color=:cyan, linewidth=1.5, linestyle=:dash)
-text!(ax1, -15.2, 15.2; text="Sphere(10)", color=:cyan, fontsize=11,
+text!(ax1, -15.2, 15.2; text="sphere(10)", color=:cyan, fontsize=11,
       align=(:left, :top))
 limits!(ax1, -16, 16, -16, 16)
 
@@ -169,7 +169,7 @@ scatter!(ax2, cx, cz; markersize=msize(clumps), color=(:orangered, 0.75),
          strokewidth=0.3, strokecolor=:black)
 lines!(ax2, [-12., 12., 12., -12., -12.], [-2., -2., 2., 2., -2.];
        color=:royalblue, linewidth=1.5)
-text!(ax2, -11.5, 2.4; text="Cylinder(12, 2)", color=:royalblue, fontsize=11)
+text!(ax2, -11.5, 2.4; text="cylinder(12, 2)", color=:royalblue, fontsize=11)
 limits!(ax2, -16, 16, -8, 8)
 Colorbar(fig[1, 3]; colormap=:bone, colorrange=SDLIM, label="log₁₀ Σ_gas  [Msol pc⁻²]")
 fig
@@ -189,7 +189,7 @@ the region and keeps whole rows; there is no `:fraction`, no `split`, and a
 region together with its complement partitions the catalogue exactly.
 
 ```julia
-sph   = Sphere(10.)                     # center=[:bc], range_unit=:kpc by default
+sph   = sphere(10.)                     # center=[:bc], range_unit=:kpc by default
 c_in  = subregion(clumps, sph, verbose=false)
 c_out = subregion(clumps, sph, inverse=true, verbose=false)
 
@@ -254,7 +254,7 @@ println("effective radii : ", round(minimum(r_eff)*1e3, digits=1), " – ",
         round(maximum(r_eff)*1e3, digits=1), " pc   (median ",
         round(r_med*1e3, digits=1), " pc)")
 
-# the Sphere(10) of §2: how many clumps does that boundary actually cut?
+# the sphere(10) of §2: how many clumps does that boundary actually cut?
 R = 10.0
 straddling = count(abs.(d .- R) .< r_eff)
 peak  = sum(mass[d .< R])
@@ -376,12 +376,12 @@ to act on and are absent.
 
 ```julia
 gallery = [
-    ("Cuboid — a slab",            Cuboid(xrange=[-12, 12], yrange=[-12, 12], zrange=[-1, 1])),
-    ("Cylinder(8, 2)",             Cylinder(8., 2.)),
-    ("Sphere(6)",                  Sphere(6.)),
-    ("SphericalShell(6, 10)",      SphericalShell(6., 10.)),
-    ("CylindricalShell(6, 10, 2)", CylindricalShell(6., 10., 2.)),
-    ("Cylinder(8, 2) tilted 40°",  Cylinder(8., 2.; axis=[0, sind(40), cosd(40)])),
+    ("Cuboid — a slab",            cuboid(xrange=[-12, 12], yrange=[-12, 12], zrange=[-1, 1])),
+    ("cylinder(8, 2)",             cylinder(8., 2.)),
+    ("sphere(6)",                  sphere(6.)),
+    ("sphericalshell(6, 10)",      sphericalshell(6., 10.)),
+    ("cylindricalshell(6, 10, 2)", cylindricalshell(6., 10., 2.)),
+    ("cylinder(8, 2) tilted 40°",  cylinder(8., 2.; axis=[0, sind(40), cosd(40)])),
 ]
 for (name, reg) in gallery
     s = subregion(clumps, reg, verbose=false)
@@ -409,11 +409,11 @@ fig
 
 ```
 Cuboid — a slab               603    95.4 % of the clump mass
-Cylinder(8, 2)                352    57.9 % of the clump mass
-Sphere(6)                     249    37.8 % of the clump mass
-SphericalShell(6, 10)         151    32.3 % of the clump mass
-CylindricalShell(6, 10, 2)    151    32.3 % of the clump mass
-Cylinder(8, 2) tilted 40°     196    28.5 % of the clump mass
+cylinder(8, 2)                352    57.9 % of the clump mass
+sphere(6)                     249    37.8 % of the clump mass
+sphericalshell(6, 10)         151    32.3 % of the clump mass
+cylindricalshell(6, 10, 2)    151    32.3 % of the clump mass
+cylinder(8, 2) tilted 40°     196    28.5 % of the clump mass
 ```
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_17_4.png)
@@ -440,14 +440,14 @@ available if you prefer.)
 
 ```julia
 outer_disc = @region unit=:kpc center=[:bc] begin
-    disc = Cylinder(12, 2)
-    core = Cylinder(4, 2)
+    disc = cylinder(12, 2)
+    core = cylinder(4, 2)
     disc \ core             # the star-forming annulus, nucleus excluded
 end
 
 c_ring = subregion(clumps, outer_disc, verbose=false)
-c_disc = subregion(clumps, Cylinder(12., 2.), verbose=false)
-c_core = subregion(clumps, Cylinder(4., 2.), verbose=false)
+c_disc = subregion(clumps, cylinder(12., 2.), verbose=false)
+c_core = subregion(clumps, cylinder(4., 2.), verbose=false)
 
 println("disc slab            : ", rpad(length(c_disc.data), 7), round(msum(c_disc, :Msol), sigdigits=6), " Msol")
 println("  nucleus  r < 4     : ", rpad(length(c_core.data), 7), round(msum(c_core, :Msol), sigdigits=6))
@@ -489,7 +489,7 @@ want "the most massive tenth" of a catalogue whose mass scale you have not
 looked at yet.
 
 ```julia
-disc = subregion(clumps, Cylinder(12., 2.), verbose=false)
+disc = subregion(clumps, cylinder(12., 2.), verbose=false)
 
 solid   = filterdata(disc, Above(:relevance, 3.0), verbose=false)   # well-separated peaks
 massive = filterdata(disc, AbovePercentile(:mass, 90), verbose=false)  # top 10 % by mass
@@ -507,7 +507,7 @@ println("  both conditions       : ", rpad(length(both.data), 7),
 println()
 # order does not matter
 alt = subregion(filterdata(clumps, Above(:relevance, 3.0), verbose=false),
-                Cylinder(12., 2.), verbose=false)
+                cylinder(12., 2.), verbose=false)
 println("region∘filter == filter∘region : ", length(alt.data) == length(solid.data))
 ```
 
@@ -533,11 +533,11 @@ positions.
 
 | Value type | Classic call |
 |:--|:--|
-| `Cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(clumps, :cuboid; xrange=…, …)` |
-| `Sphere(R)` | `subregion(clumps, :sphere; radius=R)` |
-| `Cylinder(R, H)` | `subregion(clumps, :cylinder; radius=R, height=H)` (z-axis only) |
-| `SphericalShell(rin, rout)` | `shellregion(clumps, :sphere; radius=[rin, rout])` |
-| `CylindricalShell(rin, rout, H)` | `shellregion(clumps, :cylinder; radius=[rin, rout], height=H)` |
+| `cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(clumps, :cuboid; xrange=…, …)` |
+| `sphere(R)` | `subregion(clumps, :sphere; radius=R)` |
+| `cylinder(R, H)` | `subregion(clumps, :cylinder; radius=R, height=H)` (z-axis only) |
+| `sphericalshell(rin, rout)` | `shellregion(clumps, :sphere; radius=[rin, rout])` |
+| `cylindricalshell(rin, rout, H)` | `shellregion(clumps, :cylinder; radius=[rin, rout], height=H)` |
 
 Shared keywords: `center`, `range_unit`, `inverse=true`. As on the particle
 side, `cell` and `split` have no meaning for point-like rows, so the classic
@@ -551,7 +551,7 @@ setting plot limits.
 
 ```julia
 classic = subregion(clumps, :sphere; radius=10., center=[:bc], range_unit=:kpc, verbose=false)
-value_t = subregion(clumps, Sphere(10.), verbose=false)
+value_t = subregion(clumps, sphere(10.), verbose=false)
 
 println("classic :sphere   : ", rpad(length(classic.data), 7), round(msum(classic, :Msol), sigdigits=8))
 println("value-type Sphere : ", rpad(length(value_t.data), 7), round(msum(value_t, :Msol), sigdigits=8))

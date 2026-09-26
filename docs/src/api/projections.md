@@ -65,7 +65,13 @@ projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbo
 | `los`, `up`, `theta`, `phi`, `inclination`, `azimuth` | off-axis line of sight: see [Off-axis](offaxis.md) |
 | `weighting` | how intensive quantities are averaged (see the note below) |
 | `mode` | `:standard` normalises per area; `:sum` returns the raw weighted sum |
-| `mask` | a boolean array from [`getmask`](@ref), applied before projecting |
+| `mask` | a boolean array from [`getmask`](@ref), applied before projecting; combines with `fov` |
+| `fov`, `fov_unit`, `aperture` | a rotation-invariant camera-plane window; `fov=[wx,wy]` for a rectangle (needs `aperture=:square`) |
+| `depth`, `depth_unit` | a slab cut **along the line of sight**, off-axis only |
+| `split` | weight partial cells by the volume inside the `depth` slab or `fov` sphere, instead of a hard cell-centre cut |
+| `refine`, `refine_to` | subdivide the cells the `fov` sphere crosses so the edge sharpens; need `fov` and `split=true` |
+| `angmom_radius` | restrict the `:faceon`/`:edgeon`/`:angmom` orientation sum to a sphere; on grid **and** particle data |
+| `binning`, `nmax` | how a rotated cell is deposited: `:ngp`, `:cic`, `:overlap` (default), `:exact` |
 | `center`, `range_unit` | which part of the box to project, and in what units |
 | `data_center`, `data_center_unit` | origin the map axes and cylindrical/spherical quantities are measured from |
 | `xrange`, `yrange`, `zrange` | restrict the projected volume |
@@ -83,7 +89,7 @@ projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbo
 - Variable-based parallel processing (8+ threads)
 - Mass-weighted averaging for intensive quantities
 
-**Common variables**: `:rho`, `:T`, `:sd`, `:v`, `:p`, `:cs`, velocity dispersion (`:σx`, `:σy`, `:σz`)
+**Common variables**: `:rho`, `:T`, `:sd`, `:mass`, `:v`, `:p`, `:cs`, the box-frame velocity dispersions (`:σx`, `:σy`, `:σz`, `:σ`, and the cylindrical and spherical ones, all available on both paths), and off-axis only: `:vlos`/`:σlos`, `:vcamx`/`:σcamx`, `:vcamy`/`:σcamy`, `:ncell`
 
 **Tutorial**: [Hydro Projections](../06_hydro_Projection.md), complete examples and usage
 
@@ -107,8 +113,15 @@ projection(dataobject::PartDataType, vars::Array{Symbol,1}, unit::Symbol)
 **Key features**: 
 - Mass-weighted binning for discrete particles
 - [`getvar`](@ref) with `:age` returns stellar ages relative to the snapshot time
+- `mode=:sum` gives the per-pixel **total** instead of a weighted mean, which is how you get a
+  real mass map: `projection(part, :mass, :Msol; mode=:sum)`. The default `:standard` returns
+  the mass-weighted mean particle mass, because a particle has no volume to make `:mass`
+  extensive.
+- `parttypes=[:stars]` or `[:dm]` selects a family, and it sets the camera too, so
+  `parttypes=[:dm], direction=:faceon` orients on the dark matter alone
 
-**Common variables**: `:mass`, `:age`, `:sd`, `:v`, `:birth`, `:metal`, `:id`, `:family`
+**Common variables**: `:mass`, `:age`, `:sd`, `:v`, `:birth`, `:metal`, `:id`, `:family`, and
+off-axis `:vlos`/`:σlos`, `:vcamx`/`:σcamx`, `:vcamy`/`:σcamy`, `:npart`
 
 **Tutorial**: [Particle Projections](../06_particles_Projection.md), complete examples and usage
 

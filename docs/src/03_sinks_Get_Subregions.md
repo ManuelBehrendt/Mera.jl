@@ -25,8 +25,6 @@ this page can be checked by hand.
 
 ```julia
 using Mera, Printf
-# Makie also exports Sphere and Cylinder; say which ones we mean
-import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 path = "$MERA_EXAMPLES/RAMSES/sinks3d_multi"
@@ -56,7 +54,7 @@ end
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
 id     r_sphere   r_cyl(z)     z-offset       M [Msol]
 1          0.08       0.07          0.0        2698.33
 2         49.90      49.90          0.0        2366.31
@@ -223,21 +221,22 @@ is one sphere minus another, written that way.
 Sinks gained this in Mera 1.8; before that they were the one data type where the algebra stopped.
 Both forms select identically, so use whichever reads better.
 
-Import Mera's region types explicitly if you also have Makie loaded, since both export `Sphere` and
-`Cylinder`:
+The region constructors are lowercase, so `using Mera` is all you need and there is no
+clash with Makie's capitalized `Sphere`/`Cylinder`:
 
 ```julia
-import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
+sphere(10.)    cylinder(10., 2.)    cuboid(; xrange=..., yrange=..., zrange=...)
+sphericalshell(5., 10.)    cylindricalshell(5., 10., 2.)
 ```
 
 ```julia
-core  = Sphere(55.; center=[:bc], range_unit=:pc)
-outer = Sphere(75.; center=[:bc], range_unit=:pc)
-above = Cuboid(xrange=[-125., 125.], yrange=[-125., 125.], zrange=[20., 125.];
+core  = sphere(55.; center=[:bc], range_unit=:pc)
+outer = sphere(75.; center=[:bc], range_unit=:pc)
+above = cuboid(xrange=[-125., 125.], yrange=[-125., 125.], zrange=[20., 125.];
                center=[:bc], range_unit=:pc)
 
-println("Sphere(55)                    -> ", ids(subregion(sinks, core,  verbose=false)))
-println("Sphere(75) \\ Sphere(55)       -> ", ids(subregion(sinks, outer \ core, verbose=false)))
+println("sphere(55)                    -> ", ids(subregion(sinks, core,  verbose=false)))
+println("sphere(75) \\ sphere(55)       -> ", ids(subregion(sinks, outer \ core, verbose=false)))
 println("that shell, and z > 20 pc     -> ", ids(subregion(sinks, (outer \ core) ∩ above, verbose=false)))
 println("everything except the core    -> ", ids(subregion(sinks, !core, verbose=false)))
 println()
@@ -247,8 +246,8 @@ println("same answer as the symbol API : ",
 ```
 
 ```
-Sphere(55)                    -> [1, 2]
-Sphere(75) \ Sphere(55)       -> [3, 4, 6]
+sphere(55)                    -> [1, 2]
+sphere(75) \ sphere(55)       -> [3, 4, 6]
 that shell, and z > 20 pc     -> [4, 6]
 everything except the core    -> [3, 4, 5, 6]
 same answer as the symbol API : true

@@ -50,6 +50,8 @@ MERA organizes simulation data through a sophisticated type system that enables 
 - `msum(data, unit)` - Total mass calculation with automatic unit conversion
 - `center_of_mass(data, unit)` / `com(data, unit)` - Mass-weighted center calculation
 - `bulk_velocity(data, unit)` - Mass-weighted average velocity calculation
+- `angmom(data; center, range_unit, radius, mask)` returns the net angular-momentum vector;
+  `angmom([gas, stars, dm])` adds several components
 - `average_mweighted(data, var, unit)` - General mass-weighted averaging
 
 **Statistical Analysis Functions:**

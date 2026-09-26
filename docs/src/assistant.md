@@ -16,7 +16,8 @@ An assistant that has not been told about Mera will write Mera-shaped code that 
 worse, runs and returns a plausible number. The failures are specific and repeatable:
 
 - it invents a unit argument, or omits one and silently works in code units
-- it writes `Sphere(...)`, which collides with Makie's type of the same name
+- it writes `sphere(...)`; the exported constructors are lowercase (`sphere`, `cylinder`,
+  `cuboid`, `sphericalshell`, `cylindricalshell`), because Makie exports a `Sphere` too
 - it reaches for `getvar(gas, :sd)`, which does not exist, because surface density lives only in
   `projection`
 - it assumes a selection keeps whole cells, and so does not expect the boundary weighting

@@ -227,7 +227,7 @@ The usual rule looks at the centre of each cell and takes the whole cell or noth
 the part that is really inside:
 
 ```julia
-sph = subregion(gas, Sphere(10.))   # 10 kpc around the box centre
+sph = subregion(gas, sphere(10.))   # 10 kpc around the box centre
 msum(sph, :Msol)                    # the mass inside 10 kpc
 ```
 
@@ -248,7 +248,8 @@ soft. `subregion(..., refine_to=[0.05, :kpc])` subdivides the straddling cells u
 are no larger than that, and the rendered edge sharpens to the scale you set. It changes no total,
 because `:fraction` already made the totals exact; it is a rendering tool, not an accuracy one.
 
-Only the region values do this, `Sphere(10.)` and the other shapes. The `xrange`/`yrange`/`zrange`
+Only the region values do this, `sphere(10.)` and the other shapes, and `projection` with
+`split=true` on its `depth` or `fov` cut. The `xrange`/`yrange`/`zrange`
 options when loading, the older style with symbols, and `covering_grid` all count whole cells.
 Stars, dark matter and clumps are points, so there is nothing to split. See
 [Subregions](api/subregions.md).

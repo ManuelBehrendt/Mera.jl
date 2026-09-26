@@ -414,7 +414,7 @@ if isdir(tracer_run)
     println("filterdata(:family, ==(0))  : ",
             length(filterdata(tp, :family, ==(0.0), verbose=false).data), " rows")
     # type and place compose, like everything else on this page
-    core = subregion(tp, Sphere(0.15; range_unit=:standard), verbose=false)
+    core = subregion(tp, sphere(0.15; range_unit=:standard), verbose=false)
     println("tracers inside a sphere     : ", count(getparticlemask(core, :tracer, verbose=false)),
             " of ", length(core.data), " particles in the region")
     tp = nothing; core = nothing; GC.gc()
@@ -469,10 +469,6 @@ prj(d; kw...) = projection(d, :sd, :Msol_pc2; direction=:z, center=[:bc], range_
 ```
 
 ```
-[ Info: Mera v1.8.0
-```
-
-```
 prj (generic function with 1 method)
 ```
 
@@ -523,9 +519,7 @@ the answer. Here the disc is cut as an **exact split region** (boundary cells
 carry their `:fraction`) and then partitioned by temperature.
 
 ```julia
-import Mera: Cylinder     # Mera's region type (plotting packages export a Cylinder too)
-
-disc_reg = Cylinder(10., 2.; center=[:bc], range_unit=:kpc)   # radius, half-height [kpc]
+disc_reg = cylinder(10., 2.; center=[:bc], range_unit=:kpc)   # radius, half-height [kpc]
 disc = subregion(gas, disc_reg, verbose=false)                # split: rim cells carry :fraction
 
 cold_d = filterdata(disc, Below(:T, 1e3, unit=:K), verbose=false)
@@ -699,7 +693,7 @@ println("hand-built cylinder + density : ", length(filtered_db), " rows, ",
         round(sum(getvar(gas, :mass, :Msol, filtered_db=filtered_db)), sigdigits=6), " Msol")
 
 # the same thing as a region and a condition, units, exact boundary, and no geometry by hand
-reg = Cylinder(3., 2.; center=[:bc], range_unit=:kpc)
+reg = cylinder(3., 2.; center=[:bc], range_unit=:kpc)
 sel = filterdata(subregion(gas, reg, verbose=false), Above(:rho, 3, unit=:Msol_pc3), verbose=false)
 println("region × condition            : ", length(sel.data), " rows, ",
         round(msum(sel, :Msol), sigdigits=6), " Msol   (split boundary)")

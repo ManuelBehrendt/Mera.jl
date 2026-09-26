@@ -77,7 +77,6 @@ MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera
 using Mera, CairoMakie
 # Makie also exports geometric names (Sphere, Cylinder, ...), state explicitly
 # that we mean Mera's region types:
-import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 CairoMakie.activate!()
 
 info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14", verbose=false)
@@ -96,7 +95,7 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
 cells loaded : 18966620
 box size     : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
@@ -209,7 +208,7 @@ fig
 ## 2. Hello, Sub-Region
 
 One cut, end to end, before any subtlety. A value-type region is an ordinary
-Julia value, here `Sphere(10.)`, a sphere of radius 10 kpc. Its constructor
+Julia value, here `sphere(10.)`, a sphere of radius 10 kpc. Its constructor
 defaults do the right thing for this common case: `center=[:bc]` (the box
 centre) and `range_unit=:kpc`. Applying it with `subregion` returns a new
 object of the **same type as `gas`** (a `HydroDataType`), so everything that
@@ -221,7 +220,7 @@ the three treatments side by side, zoomed onto the coarse rim, where the
 difference between them is plain.
 
 ```julia
-hello = subregion(gas, Sphere(10.), verbose=false)   # center=[:bc], range_unit=:kpc are the defaults
+hello = subregion(gas, sphere(10.), verbose=false)   # center=[:bc], range_unit=:kpc are the defaults
 
 println("returned type       : ", typeof(hello).name.name, "  (same as gas — fully chainable)")
 println("cells selected      : ", length(hello.data), "  of ", length(gas.data))
@@ -231,7 +230,7 @@ ph = proj(hello; xrange=[-11, 11], yrange=[-11, 11], pxsize=[0.1, :kpc])
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(600, 470))
-ax  = Axis(fig[1, 1], title="first cut — Sphere(10), boundary cells split")
+ax  = Axis(fig[1, 1], title="first cut — sphere(10), boundary cells split")
 show_sd!(ax, ph, (-11, 11, -11, 11))
 arc!(ax, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1, linestyle=:dash)
 scalebar!(ax, -10, -10.3, 5)
@@ -253,7 +252,7 @@ sphere, the rendered gas ends on it because straddling cells contribute only
 their inside fraction.
 
 !!! tip "Try it"
-    Change the radius to `Sphere(5.)` and re-run the cell. The selected cell
+    Change the radius to `sphere(5.)` and re-run the cell. The selected cell
     count drops far more steeply than the radius, you are cutting into the
     refined, gas-rich disc, while the mass falls only moderately: most of this
     galaxy's gas lives well inside 10 kpc.
@@ -361,8 +360,8 @@ switches, see §12.)
 ```julia
 ctr = [13., :bc, :bc]   # x = 13 kpc; box centre in y and z
 
-sph        = subregion(gas, Sphere(10.; center=ctr, range_unit=:kpc), verbose=false)  # split
-sph_centre = subregion(gas, Sphere(10.; center=ctr, range_unit=:kpc);
+sph        = subregion(gas, sphere(10.; center=ctr, range_unit=:kpc), verbose=false)  # split
+sph_centre = subregion(gas, sphere(10.; center=ctr, range_unit=:kpc);
                        split=false, verbose=false)                    # centre-inside cells, whole
 
 # whole-cell mode = the split selection with its :fraction column removed:
@@ -410,7 +409,7 @@ raising `nsub`:
 
 ```julia
 v8    = sum(getvar(sph, :volume, :kpc3))
-sph32 = subregion(gas, Sphere(10.; center=ctr, range_unit=:kpc); nsub=32, verbose=false)
+sph32 = subregion(gas, sphere(10.; center=ctr, range_unit=:kpc); nsub=32, verbose=false)
 v32   = sum(getvar(sph32, :volume, :kpc3))
 v_ana = 4π/3 * 10.0^3
 sph32 = nothing
@@ -535,8 +534,8 @@ cell size at the boundary, not by the overall quality of the simulation:
 
 ```julia
 ctr_c = [:bc, :bc, 32.]                       # 8 kpc above the plane — coarse mesh
-sph_c  = subregion(gas, Sphere(1.5; center=ctr_c, range_unit=:kpc), verbose=false)
-sph_cc = subregion(gas, Sphere(1.5; center=ctr_c, range_unit=:kpc); split=false, verbose=false)
+sph_c  = subregion(gas, sphere(1.5; center=ctr_c, range_unit=:kpc), verbose=false)
+sph_cc = subregion(gas, sphere(1.5; center=ctr_c, range_unit=:kpc); split=false, verbose=false)
 cols_c = Tuple(filter(!=(:fraction), propertynames(Mera.columns(sph_c.data))))
 sph_cw = construct_datatype(Mera.select(sph_c.data, cols_c), sph_c)
 
@@ -571,7 +570,7 @@ tile the disc into the four zones of the dissection plan; this chapter cuts
 each structure, measures it, and uses each one to introduce one more piece of
 the machinery.
 
-**The disc.** A rotating disc calls for a cylinder: `Cylinder(12., 2.)`,
+**The disc.** A rotating disc calls for a cylinder: `cylinder(12., 2.)`,
 radius 12 kpc and **half-height** 2 kpc (the slab spans |z| ≤ 2 kpc), centred
 on the box. Note the convention once and for all: the second argument is
 always the half-height. We extract it twice, split and with `split=false`
@@ -579,7 +578,7 @@ always the half-height. We extract it twice, split and with `split=false`
 component:
 
 ```julia
-disc_region = Cylinder(12., 2.; center=[:bc], range_unit=:kpc)   # radius, half-height
+disc_region = cylinder(12., 2.; center=[:bc], range_unit=:kpc)   # radius, half-height
 
 disc       = subregion(gas, disc_region, verbose=false)                 # split boundary cells
 disc_whole = subregion(gas, disc_region; split=false, verbose=false)    # centre test
@@ -646,7 +645,7 @@ fig
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_27_1.png)
 
 **The nucleus zone, and every region's inverse.** The innermost budget zone
-is `Cylinder(4., 2.)`. Every region also defines its complement: with
+is `cylinder(4., 2.)`. Every region also defines its complement: with
 `inverse=true` the selection flips, and so do the fractions
 (`fraction → 1 − fraction`), so a boundary cell's material is shared between a
 region and its inverse with nothing counted twice and nothing lost. That makes
@@ -660,7 +659,7 @@ excavation, restrict the projection depth to the feature (here `zrange=[-2, 2]`,
 matching the slab). Both panels below state that in the title.
 
 ```julia
-nucleus_region = Cylinder(4., 2.; center=[:bc], range_unit=:kpc)
+nucleus_region = cylinder(4., 2.; center=[:bc], range_unit=:kpc)
 
 nucleus = subregion(gas, nucleus_region, verbose=false)
 anti    = subregion(gas, nucleus_region; inverse=true, verbose=false)
@@ -706,7 +705,7 @@ circle. That is the same footprint feathering §7 measures (and `refine`
 sharpens); the *integrals* above closed exactly regardless.
 
 **The star-forming ring.** Dense gas often organises into rings; ours sits
-between 6 and 10 kpc. `CylindricalShell(6., 10., 2.)` selects that annulus
+between 6 and 10 kpc. `cylindricalshell(6., 10., 2.)` selects that annulus
 within the ±2 kpc slab (inner radius first; both radii must be nonzero, the
 constructors guard against degenerate shells). A shell has *two* boundary
 surfaces, so the centre test now misjudges straddlers on *two* rims at once,
@@ -717,7 +716,7 @@ a second partition check and because a "disc with a gap" is a shape worth
 having in the toolbox:
 
 ```julia
-ring_region = CylindricalShell(6., 10., 2.; center=[:bc], range_unit=:kpc)
+ring_region = cylindricalshell(6., 10., 2.; center=[:bc], range_unit=:kpc)
 
 ring     = subregion(gas, ring_region, verbose=false)
 ring_ctr = subregion(gas, ring_region; split=false, verbose=false)
@@ -762,23 +761,23 @@ ring + inverse = box?  1.0
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_31_4.png)
 
 **The envelope, sharing a surface without double counting.** Outside the
-disc, a CGM-like envelope: `SphericalShell(10., 20.)`. Its inner surface is
+disc, a CGM-like envelope: `sphericalshell(10., 20.)`. Its inner surface is
 the *same* r = 10 kpc sphere we cut in §2 (`hello`), which lets us fire the
 partition claim as a number: shell and enclosed sphere share the boundary
 cells at r = 10 via complementary fractions, so their masses must sum to the
 mass of a plain 20 kpc sphere.
 
 ```julia
-env_region = SphericalShell(10., 20.; center=[:bc], range_unit=:kpc)
+env_region = sphericalshell(10., 20.; center=[:bc], range_unit=:kpc)
 
 env    = subregion(gas, env_region, verbose=false)
-sph20  = subregion(gas, Sphere(20.), verbose=false)
+sph20  = subregion(gas, sphere(20.), verbose=false)
 
 m_env, m_hello, m_20 = msum(env, :Msol), msum(hello, :Msol), msum(sph20, :Msol)
 println("envelope (10–20 kpc)      : ", round(m_env,   sigdigits=6), " Msol")
 println("enclosed sphere (< 10)    : ", round(m_hello, sigdigits=6), " Msol")
 println("sum                       : ", round(m_env + m_hello, sigdigits=8), " Msol")
-println("plain Sphere(20) directly : ", round(m_20,            sigdigits=8), " Msol")
+println("plain sphere(20) directly : ", round(m_20,            sigdigits=8), " Msol")
 sph20 = nothing
 
 pe1 = proj(env;   direction=:x, yrange=[-22, 22], zrange=[-22, 22], pxsize=[0.15, :kpc])
@@ -801,7 +800,7 @@ fig
 envelope (10–20 kpc)      : 1.18046e10 Msol
 enclosed sphere (< 10)    : 1.82103e10 Msol
 sum                       : 3.0014956e10 Msol
-plain Sphere(20) directly : 3.0014956e10 Msol
+plain sphere(20) directly : 3.0014956e10 Msol
 ```
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_33_3.png)
@@ -840,7 +839,7 @@ removes from the disc is not the full sphere mass but the mass of
 `disc ∩ sphere`. The algebra keeps that book for us:
 
 ```julia
-bulge_sphere = Sphere(4.; center=[:bc], range_unit=:kpc)
+bulge_sphere = sphere(4.; center=[:bc], range_unit=:kpc)
 
 clean_disc = subregion(gas, disc_region \ bulge_sphere, verbose=false)
 overlap    = subregion(gas, disc_region ∩ bulge_sphere, verbose=false)
@@ -892,9 +891,9 @@ drilled holes, in one expression, every piece with its own centre. The two
 holes look different for a real geometric reason, annotated in the figure:
 
 ```julia
-sculpture = (disc_region ∪ Sphere(5.; center=[33., :bc, :bc], range_unit=:kpc)) \
-            (Sphere(2.5; center=[18., :bc, :bc], range_unit=:kpc) ∪
-             Sphere(2.5; center=[30., :bc, :bc], range_unit=:kpc))
+sculpture = (disc_region ∪ sphere(5.; center=[33., :bc, :bc], range_unit=:kpc)) \
+            (sphere(2.5; center=[18., :bc, :bc], range_unit=:kpc) ∪
+             sphere(2.5; center=[30., :bc, :bc], range_unit=:kpc))
 
 carve = subregion(gas, sculpture, verbose=false)
 println("sculpture gas mass: ", round(msum(carve, :Msol), sigdigits=6), " Msol")
@@ -936,10 +935,10 @@ comes out is an ordinary region, identical to the operator form:
 
 ```julia
 sculpture2 = @region unit=:kpc center=[:bc] begin
-    disc      = Cylinder(12., 2.)
-    companion = Sphere(5.; center=[33., :bc, :bc])
-    holeL     = Sphere(2.5; center=[18., :bc, :bc])
-    holeR     = Sphere(2.5; center=[30., :bc, :bc])
+    disc      = cylinder(12., 2.)
+    companion = sphere(5.; center=[33., :bc, :bc])
+    holeL     = sphere(2.5; center=[18., :bc, :bc])
+    holeR     = sphere(2.5; center=[30., :bc, :bc])
     (disc ∪ companion) \ (holeL ∪ holeR)
 end
 
@@ -957,7 +956,7 @@ companion sphere B:
 
 ```julia
 A = disc_region
-B = Sphere(5.; center=[33., :bc, :bc], range_unit=:kpc)
+B = sphere(5.; center=[33., :bc, :bc], range_unit=:kpc)
 
 volk(r) = sum(getvar(subregion(gas, r, verbose=false), :volume, :kpc3))
 
@@ -973,8 +972,8 @@ vol(A ∪ B)                   = 2082.22 kpc³
 
 !!! tip "Try it"
     A cylindrical shell is itself expressible in the algebra:
-    `Cylinder(10., 2.) \ Cylinder(6., 2.)` describes the same annulus as
-    `CylindricalShell(6., 10., 2.)`. Extract both and compare `msum`, the
+    `cylinder(10., 2.) \ cylinder(6., 2.)` describes the same annulus as
+    `cylindricalshell(6., 10., 2.)`. Extract both and compare `msum`, the
     dedicated shell type computes its fractions in one pass, but the two
     volumes should agree to the sampling accuracy of §3.
 
@@ -990,16 +989,16 @@ share every boundary cell via complementary fractions, so the books must
 close.
 
 ```julia
-inner_zone = CylindricalShell(4., 6., 2.;  center=[:bc], range_unit=:kpc)
-rim_zone   = CylindricalShell(10., 12., 2.; center=[:bc], range_unit=:kpc)
+inner_zone = cylindricalshell(4., 6., 2.;  center=[:bc], range_unit=:kpc)
+rim_zone   = cylindricalshell(10., 12., 2.; center=[:bc], range_unit=:kpc)
 
 m_inner = msum(subregion(gas, inner_zone, verbose=false), :Msol)
 m_rim   = msum(subregion(gas, rim_zone,   verbose=false), :Msol)
 
-zones = [("nucleus — Cylinder(4, ±2 kpc)",             m_nuc),
-         ("inner   — CylindricalShell(4–6, ±2 kpc)",   m_inner),
-         ("ring    — CylindricalShell(6–10, ±2 kpc)",  m_ring),
-         ("rim     — CylindricalShell(10–12, ±2 kpc)", m_rim)]
+zones = [("nucleus — cylinder(4, ±2 kpc)",             m_nuc),
+         ("inner   — cylindricalshell(4–6, ±2 kpc)",   m_inner),
+         ("ring    — cylindricalshell(6–10, ±2 kpc)",  m_ring),
+         ("rim     — cylindricalshell(10–12, ±2 kpc)", m_rim)]
 
 println(rpad("disc zone", 44), "gas mass [Msol]")
 println("-"^60)
@@ -1016,10 +1015,10 @@ println(rpad("relative residual", 44), round(m_sum/m_disc - 1, sigdigits=2))
 ```
 disc zone                                   gas mass [Msol]
 ------------------------------------------------------------
-nucleus — Cylinder(4, ±2 kpc)               5.9373e9
-inner   — CylindricalShell(4–6, ±2 kpc)     3.9504e9
-ring    — CylindricalShell(6–10, ±2 kpc)    8.0322e9
-rim     — CylindricalShell(10–12, ±2 kpc)   4.9147e9
+nucleus — cylinder(4, ±2 kpc)               5.9373e9
+inner   — cylindricalshell(4–6, ±2 kpc)     3.9504e9
+ring    — cylindricalshell(6–10, ±2 kpc)    8.0322e9
+rim     — cylindricalshell(10–12, ±2 kpc)   4.9147e9
 ------------------------------------------------------------
 sum of the four zones                       2.2834625e10
 disc, measured directly (§4)                2.2834625e10
@@ -1184,7 +1183,7 @@ fig
 map mass removed by the display clip : 0.45 %  (cosmetic only — msum is untouched)
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_52_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_52_3.png)
 
 ## 8. Tilted Regions
 
@@ -1226,7 +1225,7 @@ fig
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_54_1.png)
 
-Now the extraction: `Cylinder(10., 1.; axis=[1., 0., 2.])`, a thin disc-like
+Now the extraction: `cylinder(10., 1.; axis=[1., 0., 2.])`, a thin disc-like
 slab tilted toward +x. Two checks that the tilt costs nothing: the volume
 against the analytic πR²·2h (orientation does not enter the truth), and two
 complementary views, along z the tilt reads only as a softened ellipse, along
@@ -1236,7 +1235,7 @@ rather than merely select along it, see the off-axis projection tutorials
 [Off-axis Projection](06_offaxis_Projection.md)).
 
 ```julia
-tilt_region = Cylinder(10., 1.; axis=[1., 0., 2.], center=[:bc], range_unit=:kpc)
+tilt_region = cylinder(10., 1.; axis=[1., 0., 2.], center=[:bc], range_unit=:kpc)
 tilted = subregion(gas, tilt_region, verbose=false)
 
 v_tilt = sum(getvar(tilted, :volume, :kpc3))
@@ -1283,16 +1282,16 @@ cylinder whose axis lies *in* the disc plane, plus the volume-invariance
 numbers for both:
 
 ```julia
-tshell_region = CylindricalShell(6., 10., 1.; axis=[1., 0., 2.], center=[:bc], range_unit=:kpc)
+tshell_region = cylindricalshell(6., 10., 1.; axis=[1., 0., 2.], center=[:bc], range_unit=:kpc)
 tshell = subregion(gas, tshell_region, verbose=false)
 v_ts   = sum(getvar(tshell, :volume, :kpc3))
-v_up   = sum(getvar(subregion(gas, CylindricalShell(6., 10., 1.; center=[:bc], range_unit=:kpc),
+v_up   = sum(getvar(subregion(gas, cylindricalshell(6., 10., 1.; center=[:bc], range_unit=:kpc),
                               verbose=false), :volume, :kpc3))
 println("tilted shell volume : ", round(v_ts, sigdigits=6), " kpc³   upright: ",
         round(v_up, sigdigits=6), " kpc³   analytic π(R²−r²)·2h = ",
         round(π*(100-36)*2, sigdigits=6), " kpc³")
 
-bar_region = Cylinder(4., 1.2; axis=[cosd(25.), sind(25.), 0.], center=[:bc], range_unit=:kpc)
+bar_region = cylinder(4., 1.2; axis=[cosd(25.), sind(25.), 0.], center=[:bc], range_unit=:kpc)
 bar = subregion(gas, bar_region, verbose=false)
 println("in-plane bar volume : ", round(sum(getvar(bar, :volume, :kpc3)), sigdigits=6),
         " kpc³   analytic πR²·2h = ", round(π*16*2.4, sigdigits=6), " kpc³")
@@ -1344,8 +1343,8 @@ chimney drilled vertically through, and the inclusion to exclusion identity that
 proves the algebra kept count:
 
 ```julia
-blister = Sphere(2.5; center=[30., :bc, 26.], range_unit=:kpc)   # resting on the +z face
-chimney = Cylinder(1.2, 5.; center=[19., :bc, :bc], range_unit=:kpc)
+blister = sphere(2.5; center=[30., :bc, 26.], range_unit=:kpc)   # resting on the +z face
+chimney = cylinder(1.2, 5.; center=[19., :bc, :bc], range_unit=:kpc)
 
 capstone = (disc_region ∪ blister) \ chimney
 cap = subregion(gas, capstone, verbose=false)
@@ -1374,7 +1373,7 @@ fig
 identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10   vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_61_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_61_4.png)
 
 The identity closes, and the edge-on view explains the face-on one: the
 blister only *adds* gas above the +z face (invisible face-on, where the disc
@@ -1384,14 +1383,14 @@ vertical flow channels), a **crescent** (two offset spheres, the classic
 shock-front / bow shape), both shown in the views that make them legible:
 
 ```julia
-chimneys_region = disc_region \ (Cylinder(1.0, 5.; center=[18., :bc, :bc], range_unit=:kpc) ∪
-                                 Cylinder(0.8, 5.; center=[26., 29., :bc], range_unit=:kpc) ∪
-                                 Cylinder(1.2, 5.; center=[30., 20., :bc], range_unit=:kpc))
+chimneys_region = disc_region \ (cylinder(1.0, 5.; center=[18., :bc, :bc], range_unit=:kpc) ∪
+                                 cylinder(0.8, 5.; center=[26., 29., :bc], range_unit=:kpc) ∪
+                                 cylinder(1.2, 5.; center=[30., 20., :bc], range_unit=:kpc))
 chim = subregion(gas, chimneys_region, verbose=false)
 
-crescent_region = (Sphere(5.; center=[28., :bc, :bc], range_unit=:kpc) \
-                   Sphere(4.5; center=[30.5, :bc, :bc], range_unit=:kpc)) ∩
-                  Cuboid(xrange=[-12, 12], yrange=[-12, 12], zrange=[-1.5, 1.5],
+crescent_region = (sphere(5.; center=[28., :bc, :bc], range_unit=:kpc) \
+                   sphere(4.5; center=[30.5, :bc, :bc], range_unit=:kpc)) ∩
+                  cuboid(xrange=[-12, 12], yrange=[-12, 12], zrange=[-1.5, 1.5],
                          center=[:bc], range_unit=:kpc)
 cres = subregion(gas, crescent_region, verbose=false)
 println("chimneys: ", round(msum(chim, :Msol), sigdigits=5), " Msol   crescent: ",
@@ -1451,7 +1450,7 @@ for (k, m) in sort(collect(bins); by=last, rev=true)
 end
 println("cluster sites [kpc, centre-relative]: ", [round.(s, digits=1) for s in sites])
 
-holes  = reduce(∪, [Sphere(1.3; center=[24. + s[1], 24. + s[2], :bc], range_unit=:kpc)
+holes  = reduce(∪, [sphere(1.3; center=[24. + s[1], 24. + s[2], :bc], range_unit=:kpc)
                     for s in sites])
 cheese = subregion(gas, disc_region \ holes, verbose=false)
 println("swiss-cheese disc: ", round(msum(cheese, :Msol), sigdigits=5), " Msol")
@@ -1487,11 +1486,11 @@ tilted cylinders stitched along a polyline, the shape you would use to follow
 an accretion stream or a spiral-arm segment:
 
 ```julia
-plate = Cuboid(xrange=[-7, 7], yrange=[-7, 7], zrange=[-1, 1], center=[:bc], range_unit=:kpc)
-bows_region = plate \ (Sphere(4.5; center=[17., 17., :bc], range_unit=:kpc) ∪
-                       Sphere(4.5; center=[31., 17., :bc], range_unit=:kpc) ∪
-                       Sphere(4.5; center=[17., 31., :bc], range_unit=:kpc) ∪
-                       Sphere(4.5; center=[31., 31., :bc], range_unit=:kpc))
+plate = cuboid(xrange=[-7, 7], yrange=[-7, 7], zrange=[-1, 1], center=[:bc], range_unit=:kpc)
+bows_region = plate \ (sphere(4.5; center=[17., 17., :bc], range_unit=:kpc) ∪
+                       sphere(4.5; center=[31., 17., :bc], range_unit=:kpc) ∪
+                       sphere(4.5; center=[17., 31., :bc], range_unit=:kpc) ∪
+                       sphere(4.5; center=[31., 31., :bc], range_unit=:kpc))
 bows = subregion(gas, bows_region, verbose=false)
 
 waypoints = [(-9., -4.), (-2., 2.), (7., 6.)]
@@ -1499,7 +1498,7 @@ segs = AbstractRegion[]
 for k in 1:length(waypoints)-1
     a = [waypoints[k]..., 0.]; b = [waypoints[k+1]..., 0.]
     d = b .- a; mid = (a .+ b) ./ 2 .+ 24.
-    push!(segs, Cylinder(1.2, sqrt(sum(abs2, d))/2 + 0.3; axis=d, center=mid, range_unit=:kpc))
+    push!(segs, cylinder(1.2, sqrt(sum(abs2, d))/2 + 0.3; axis=d, center=mid, range_unit=:kpc))
 end
 fil = subregion(gas, reduce(∪, segs), verbose=false)
 println("bows: ", round(msum(bows, :Msol), sigdigits=5), " Msol   filament tube: ",
@@ -1640,11 +1639,11 @@ scripts working unchanged.
 
 | Value type | Classic call |
 |:--|:--|
-| `Cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(gas, :cuboid; xrange=…, yrange=…, zrange=…)` |
-| `Sphere(R)` | `subregion(gas, :sphere; radius=R)` |
-| `Cylinder(R, H)` | `subregion(gas, :cylinder; radius=R, height=H)` (z-axis only) |
-| `SphericalShell(rin, rout)` | `shellregion(gas, :sphere; radius=[rin, rout])` |
-| `CylindricalShell(rin, rout, H)` | `shellregion(gas, :cylinder; radius=[rin, rout], height=H)` |
+| `cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(gas, :cuboid; xrange=…, yrange=…, zrange=…)` |
+| `sphere(R)` | `subregion(gas, :sphere; radius=R)` |
+| `cylinder(R, H)` | `subregion(gas, :cylinder; radius=R, height=H)` (z-axis only) |
+| `sphericalshell(rin, rout)` | `shellregion(gas, :sphere; radius=[rin, rout])` |
+| `cylindricalshell(rin, rout, H)` | `shellregion(gas, :cylinder; radius=[rin, rout], height=H)` |
 
 Shared keywords: `center`, `range_unit`, `inverse=true` for the complement,
 and `cell=true/false` for the whole-cell or centre-inside test, the same two

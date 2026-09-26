@@ -130,13 +130,41 @@ your own run**: measure it, as Chapter 5 of the [tutorial](06_offaxis_Projection
 
 Particles are points and have no volume, so `split` does nothing for them.
 
-Cell splitting for a **region** is separate and already existed:
-`subregion(gas, Sphere(10; center=[:bc], range_unit=:kpc); split=true)` attaches a `:fraction`
-column that `getvar(:mass)` and `getvar(:volume)` honour, and that flows into off-axis maps too.
+### Getting the mass right, and getting the edge sharp
 
-!!! warning "`Sphere` collides with Makie"
-    Makie exports a `Sphere` of its own, so with both loaded the bare name is ambiguous and binds
-    to neither. Write `Mera.Sphere` in any session that has a plotting backend.
+These are two different jobs and they need two different keywords.
+
+| | fixes | how |
+|---|---|---|
+| `split=true` | the **total** | a boundary cell contributes the fraction of its volume that is inside |
+| `refine=N` / `refine_to=[l,:unit]` | **where the edge appears** | the boundary cells are octree-subdivided, so the boundary localises to `cellsize/2^N` and the rendered edge gets sharper |
+
+`split` alone gives the right number with a staircase edge, because a half-in cell still deposits
+its (reduced) mass over its whole footprint. `refine` cuts that cell into children so the mass
+sits where it belongs. Both conserve: the total is unchanged by refining, it just moves.
+
+```julia
+projection(gas, :sd; fov=5, fov_unit=:kpc, split=true, refine=2, los=[1,2,3])
+```
+
+`refine` needs `fov` and `split=true`, because it subdivides the cells the **sphere** crosses; it
+raises otherwise. It does not apply to the `depth` slab, which is not a region.
+
+Cost grows with the boundary area, at most `8^N` per boundary cell, so `refine=2` is usually
+plenty and `refine_to` is the safer knob when the AMR level varies across the boundary.
+
+The same two keywords exist on [`subregion`](@ref) for a region you select yourself, and that
+`:fraction` column flows into off-axis maps too:
+
+```julia
+subregion(gas, sphere(10; center=[:bc], range_unit=:kpc); split=true, refine=2)
+```
+
+!!! note "The region constructors are lowercase"
+    `sphere`, `cylinder`, `cuboid`, `sphericalshell`, `cylindricalshell`. Makie exports a
+    `Sphere` and a `Cylinder` too, and a name exported by two loaded packages binds to neither,
+    so the capitalized types are no longer exported. They are still there as `Mera.Sphere` and
+    so on if you need to dispatch on one.
 
 ## Choosing the axis from the data
 

@@ -34,8 +34,8 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-09-13T10:48:43.279
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[Mera]: 2026-09-26T20:32:40.343
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -205,7 +205,7 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-09-13T10:48:46.678
+[Mera]: Get gravity data: 2026-09-26T20:32:43.571
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -215,19 +215,19 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
-   Compute threads: 4
-   GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (21.94 ms/it)
+   Compute threads: 8
+   GC threads: 8
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.77 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
-Creating Table from 28320979 cells with max 4 threads...
-   Threading: 4 threads for 8 columns
-   Max threads requested: 4
-   Available threads: 4
-   Using parallel processing with 4 threads
+Creating Table from 28320979 cells with max 8 threads...
+   Threading: 8 threads for 8 columns
+   Max threads requested: 8
+   Available threads: 8
+   Using parallel processing with 8 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 2.738 seconds
+✓ Table created in 3.39 seconds
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 ```
@@ -605,7 +605,7 @@ hydro object, so the boundary cells that count are the hydro ones:
 
 ```julia
 gas = gethydro(info, verbose=false, show_progress=false)   # loaded in the cell below too
-R   = Sphere(10.)
+R   = sphere(10.)
 gs  = subregion(grav, R)
 hs  = subregion(gas,  R)         # the same region, so the same boundary cells
 getvar(gs, hs, :total_binding_energy, :erg)

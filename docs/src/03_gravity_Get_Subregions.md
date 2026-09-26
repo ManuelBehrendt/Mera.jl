@@ -63,7 +63,6 @@ MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera
 using Mera, CairoMakie
 # Makie also exports geometric names (Sphere, Cylinder, ...), state explicitly
 # that we mean Mera's region types:
-import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 CairoMakie.activate!()
 
 path = "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14"
@@ -89,7 +88,7 @@ println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
 gravity cells  : 4879946   columns: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
 gas cells      : 4879946
 box            : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
@@ -100,8 +99,8 @@ box            : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 calls below are errors, not zeros:
 
 ```julia
-msum(subregion(grav, Sphere(10.)), :Msol)     # MethodError — no method for GravDataType
-getvar(subregion(grav, Sphere(10.)), :mass)   # "Variable :mass not found in gravity data"
+msum(subregion(grav, sphere(10.)), :Msol)     # MethodError — no method for GravDataType
+getvar(subregion(grav, sphere(10.)), :mass)   # "Variable :mass not found in gravity data"
 ```
 
 The second message suggests the way out: `getvar` accepts a `hydro_data=`
@@ -164,7 +163,7 @@ axf = Axis(fig[1, 1], title="face-on — |a| of the total potential",
            xlabel="x − x꜀ [kpc]", ylabel="y − y꜀ [kpc]")
 show_a!(axf, pa_face; decorate=true)
 arc!(axf, Point2f(0, 0), 10., 0, 2π; color=:cyan, linewidth=1.5, linestyle=:dash)
-text!(axf, 7.4, 7.4; text="Sphere(10)", color=:cyan, fontsize=11)
+text!(axf, 7.4, 7.4; text="sphere(10)", color=:cyan, fontsize=11)
 
 axe = Axis(fig[1, 2], title="edge-on — |a| stays high well off the plane",
            xlabel="y − y꜀ [kpc]", ylabel="z − z꜀ [kpc]")
@@ -199,7 +198,7 @@ $\tfrac{4}{3}\pi R^3$, no simulation required.
 
 ```julia
 R  = 10.0
-sph = Sphere(R)                       # center=[:bc], range_unit=:kpc are the defaults
+sph = sphere(R)                       # center=[:bc], range_unit=:kpc are the defaults
 
 g_split = subregion(grav, sph, verbose=false)                 # split=true (default)
 g_centre = subregion(grav, sph, split=false, verbose=false)   # centre-inside test
@@ -234,11 +233,11 @@ println("measured whole-cell excess            : ",
         round(V["whole cells (classic API)"] - V["split        (split=true)"], sigdigits=4), " kpc³")
 
 # a shell is a region like any other, and its volume is analytic too
-shell   = subregion(grav, SphericalShell(9., 11.), verbose=false)
+shell   = subregion(grav, sphericalshell(9., 11.), verbose=false)
 V_shell = sum(getvar(shell, :volume, :kpc3))
 V_shell_exact = 4/3 * π * (11.0^3 - 9.0^3)
 println()
-println("SphericalShell(9, 11) : ", rpad(round(V_shell, sigdigits=8), 14),
+println("sphericalshell(9, 11) : ", rpad(round(V_shell, sigdigits=8), 14),
         "analytic 4/3 π (R³ - r³) = ", rpad(round(V_shell_exact, sigdigits=8), 14),
         "dev = ", round(100*(V_shell/V_shell_exact - 1), sigdigits=3), " %")
 ```
@@ -253,6 +252,7 @@ their mean size, per cell        : 0.155 kpc
              ... per unit volume : 0.644 kpc  ← the coarse ones dominate
 volume they would add if counted whole : 471.8 kpc³
 measured whole-cell excess            : 504.2 kpc³
+sphericalshell(9, 11) : 2521.8884     analytic 4/3 π (R³ - r³) = 2521.6517     dev = 0.00939 %
 ```
 
 The split volume lands on the analytic sphere to about one part in $10^5$,
@@ -277,7 +277,7 @@ The lesson generalises: the error of a whole-cell cut is a property of the
 grid *where the boundary happens to fall*, not of the region's size. The same
 sphere centred somewhere fully refined would over-count far less.
 
-A shell behaves the same way. `SphericalShell(9, 11)` is a region like any
+A shell behaves the same way. `sphericalshell(9, 11)` is a region like any
 other, and the last lines of the cell check its split volume against the
 analytic $\frac{4}{3}\pi (R^3 - r^3)$.
 
@@ -350,7 +350,7 @@ Both default, and they default differently:
 
 | keyword | belongs to | default |
 |:--|:--|:--|
-| `center` in `Sphere(10.; center=[:bc])` | the **region**, where the shape sits | `[:bc]`, the box centre |
+| `center` in `sphere(10.; center=[:bc])` | the **region**, where the shape sits | `[:bc]`, the box centre |
 | `center` in `getvar(obj, :ar_sphere, center=[:bc])` | the **coordinate origin** for derived quantities | `[0., 0., 0.]`, the box **corner** |
 
 Leaving the second one out does not raise an error, the corner is a
@@ -405,16 +405,16 @@ about the disc *outside* the core rather than dominated by it.
 
 ```julia
 ring = @region unit=:kpc center=[:bc] begin
-    disc = Cylinder(12, 2)      # radius 12 kpc, half-height 2 kpc
-    core = Sphere(3)
+    disc = cylinder(12, 2)      # radius 12 kpc, half-height 2 kpc
+    core = sphere(3)
     disc \ core                 # set difference: the slab minus the nucleus
 end
 
 g_ring = subregion(grav, ring, verbose=false)
 
 # the same thing written with explicit constructors and operators
-ring_ops = setdiff(Cylinder(12., 2.; center=[:bc], range_unit=:kpc),
-                   Sphere(3.;        center=[:bc], range_unit=:kpc))
+ring_ops = setdiff(cylinder(12., 2.; center=[:bc], range_unit=:kpc),
+                   sphere(3.;        center=[:bc], range_unit=:kpc))
 g_ops = subregion(grav, ring_ops, verbose=false)
 
 V_ring = sum(getvar(g_ring, :volume, :kpc3))
@@ -479,7 +479,7 @@ show_a!(ax1, pa_face)
 limits!(ax1, -14, 14, -14, 14)
 scalebar!(ax1, -12, -12.5, 5)
 
-ax2 = Axis(fig[1, 2], title="Cylinder(12, 2) \\ Sphere(3) — split boundary",
+ax2 = Axis(fig[1, 2], title="cylinder(12, 2) \\ sphere(3) — split boundary",
            xlabel="x − x꜀ [kpc]")
 show_a!(ax2, p_ring)
 limits!(ax2, -14, 14, -14, 14)
@@ -516,11 +516,11 @@ so `getvar(:volume)` after a classic cut counts whole cells, always.
 
 | Value type | Classic call |
 |:--|:--|
-| `Cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(grav, :cuboid; xrange=…, …)` |
-| `Sphere(R)` | `subregion(grav, :sphere; radius=R)` |
-| `Cylinder(R, H)` | `subregion(grav, :cylinder; radius=R, height=H)` (z-axis only) |
-| `SphericalShell(rin, rout)` | `shellregion(grav, :sphere; radius=[rin, rout])` |
-| `CylindricalShell(rin, rout, H)` | `shellregion(grav, :cylinder; radius=[rin, rout], height=H)` |
+| `cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(grav, :cuboid; xrange=…, …)` |
+| `sphere(R)` | `subregion(grav, :sphere; radius=R)` |
+| `cylinder(R, H)` | `subregion(grav, :cylinder; radius=R, height=H)` (z-axis only) |
+| `sphericalshell(rin, rout)` | `shellregion(grav, :sphere; radius=[rin, rout])` |
+| `cylindricalshell(rin, rout, H)` | `shellregion(grav, :cylinder; radius=[rin, rout], height=H)` |
 
 Shared keywords: `center`, `range_unit`, `inverse=true` for the complement,
 `cell=true/false` for the boundary test.
@@ -534,7 +534,7 @@ shl_c = shellregion(grav, :sphere; radius=[10., 20.], center=[:bc], range_unit=:
 println("classic cuboid  : ", length(cub_c.data), " cells, V = ",
         round(sum(getvar(cub_c, :volume, :kpc3)), sigdigits=6), " kpc³ (whole cells)")
 println("classic shell   : ", length(shl_c.data), " cells")
-V_slab_split = sum(getvar(subregion(grav, Cuboid(xrange=[-12, 12], yrange=[-12, 12],
+V_slab_split = sum(getvar(subregion(grav, cuboid(xrange=[-12, 12], yrange=[-12, 12],
                                                  zrange=[-2, 2]), verbose=false),
                           :volume, :kpc3))
 println()
@@ -572,7 +572,7 @@ a region a few cells across, they are the whole story. When in doubt, measure
 both, it is one extra line.
 
 **Let the region be what the datasets share.** Gravity, hydro, and particles
-are separate objects with separate columns, but one `Sphere(r)` value applies
+are separate objects with separate columns, but one `sphere(r)` value applies
 to all three. That is what turns three separate files into one comparison
 rather than an apples-to-oranges table.
 

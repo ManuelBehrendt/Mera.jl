@@ -22,7 +22,7 @@ meaningful only for AMR cell data. Particles, clumps and sinks are points: they 
 the keyword is accepted and ignored.
 
 `:fraction` is the better answer for cell data: the region value form,
-`subregion(gas, Sphere(10.))`, gives each border cell the part of it that lies inside. The shape
+`subregion(gas, sphere(10.))`, gives each border cell the part of it that lies inside. The shape
 symbols shown here (`:sphere`, `:cylinder`, `:cuboid`) keep the whole-or-nothing rule. See
 **What the fraction is applied to** below.
 
@@ -40,7 +40,7 @@ that carries a density. Magnetic energy is `0.5·B²·V`, so it is scaled throug
 yourself and the fraction comes with it:
 
 ```julia
-s = subregion(rt, Sphere(10.))
+s = subregion(rt, sphere(10.))
 total_photons = sum(getvar(s, :Np_total) .* getvar(s, :volume))
 ```
 
@@ -51,7 +51,7 @@ total_photons = sum(getvar(s, :Np_total) .* getvar(s, :volume))
     object's. Cut both with the same region:
 
     ```julia
-    R  = Sphere(10.)
+    R  = sphere(10.)
     gs = subregion(grav, R)
     hs = subregion(gas,  R)        # same region, so the same boundary cells
     sum(getvar(gs, hs, :total_binding_energy))
@@ -90,7 +90,7 @@ total_photons = sum(getvar(s, :Np_total) .* getvar(s, :volume))
 ### Spherical Regions
 - **Solid**: `subregion(data, :sphere, ...)`
 - **Shell**: `shellregion(data, :sphere, ...)`
-- **Shape**: Sphere defined by radius
+- **Shape**: ball defined by radius
 - **Parameters**: `radius`, `center`
 - **Shell Parameters**: `radius=[inner, outer]` for hollow shells
 
@@ -134,7 +134,7 @@ shellregion(data, :sphere, radius=[8., 12.], range_unit=:kpc)
 - **`direction`**: Cylinder axis direction (`:x`, `:y`, `:z`)
 
 ### Spherical Parameters
-- **`radius`**: Sphere radius (solid) or `[inner, outer]` (shell)
+- **`radius`**: ball radius (solid) or `[inner, outer]` (shell)
 
 ## Composable regions with exact cell splitting
 
@@ -143,35 +143,35 @@ one sphere measured three ways, the mass ledger, and how exact "exact" is, see
 [Get Subregions](../03_hydro_Get_Subregions.md).*
 
 Alongside the symbol API (`subregion(data, :sphere; …)`), `subregion` accepts a **region value
-type** ([`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref), [`CylindricalShell`](@ref)). With
+type** ([`sphere`](@ref), [`cuboid`](@ref), [`cylinder`](@ref), [`sphericalshell`](@ref), [`cylindricalshell`](@ref)). With
 `split=true` (the default for this form), cells straddling the region boundary are **clipped
 exactly**: each kept cell carries a `:fraction ∈ (0,1]` equal to the volume fraction inside the
 region, and [`getvar`](@ref)`(:mass)` / `(:volume)` / [`msum`](@ref) report the **exact in-region
 totals**, a sphere of radius `R` returns `(4/3)πR³`, with no boundary over- or under-counting.
 
 ```julia
-gas_in = subregion(gas, Sphere(20.0; center=[:bc], range_unit=:kpc))   # split=true
+gas_in = subregion(gas, sphere(20.0; center=[:bc], range_unit=:kpc))   # split=true
 msum(gas_in, :Msol)        # exact enclosed mass (boundary cells weighted by their inside-fraction)
 
-subregion(gas, Cuboid(xrange=[-10,10], yrange=[-10,10], zrange=[-2,2], range_unit=:kpc))
-subregion(gas, SphericalShell(10.0, 20.0; range_unit=:kpc))
-subregion(gas, CylindricalShell(3.0, 8.0, 4.0; range_unit=:kpc))   # value-type analogue of shellregion(:cylinder)
-subregion(gas, Cylinder(15.0, 3.0; range_unit=:kpc); split=false)      # classic whole-cell selection
+subregion(gas, cuboid(xrange=[-10,10], yrange=[-10,10], zrange=[-2,2], range_unit=:kpc))
+subregion(gas, sphericalshell(10.0, 20.0; range_unit=:kpc))
+subregion(gas, cylindricalshell(3.0, 8.0, 4.0; range_unit=:kpc))   # value-type analogue of shellregion(:cylinder)
+subregion(gas, cylinder(15.0, 3.0; range_unit=:kpc); split=false)      # classic whole-cell selection
 ```
 
 `split=false` reproduces the classic centre-inside, whole-cell selection (no `:fraction`).
 `inverse=true` selects the complement. The region types ([`AbstractRegion`](@ref),
-[`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref),
-[`CylindricalShell`](@ref)) are listed in the [API reference](../api.md#Types).
+[`sphere`](@ref), [`cuboid`](@ref), [`cylinder`](@ref), [`sphericalshell`](@ref),
+[`cylindricalshell`](@ref)) are listed in the [API reference](../api.md#Types).
 
 The value-type form works on **all data types**: hydro, gravity and RT (AMR cells, with exact
 volume splitting and a `:fraction` column), and particles, where it is a point-membership test
 (particles are points, so `split`/`nsub` do not apply and no `:fraction` is attached).
 
 ```julia
-subregion(particles, Sphere(20.0; range_unit=:kpc))                    # stars/DM inside a ball
-subregion(particles, Sphere(20.0; range_unit=:kpc) \ Cylinder(5.0, 30.0; range_unit=:kpc))
-subregion(gravity,   Sphere(20.0; range_unit=:kpc))                    # exact-split gravity cells
+subregion(particles, sphere(20.0; range_unit=:kpc))                    # stars/DM inside a ball
+subregion(particles, sphere(20.0; range_unit=:kpc) \ cylinder(5.0, 30.0; range_unit=:kpc))
+subregion(gravity,   sphere(20.0; range_unit=:kpc))                    # exact-split gravity cells
 ```
 
 ### Boolean combinations
@@ -185,9 +185,9 @@ is never required: `A & B`, `A | B`, `intersect(A, B)`, `union(A, B)` and `setdi
 same operations spelled in ASCII.
 
 ```julia
-subregion(gas, Sphere(20.0; range_unit=:kpc) \ Cylinder(5.0, 30.0; range_unit=:kpc))  # ball, cylinder drilled out
-subregion(gas, Sphere(20.0; range_unit=:kpc) ∩ Cuboid(xrange=[-10,10], yrange=[-10,10], zrange=[-3,3], range_unit=:kpc))
-subregion(gas, !Sphere(20.0; range_unit=:kpc))                                        # everything outside the ball
+subregion(gas, sphere(20.0; range_unit=:kpc) \ cylinder(5.0, 30.0; range_unit=:kpc))  # ball, cylinder drilled out
+subregion(gas, sphere(20.0; range_unit=:kpc) ∩ cuboid(xrange=[-10,10], yrange=[-10,10], zrange=[-3,3], range_unit=:kpc))
+subregion(gas, !sphere(20.0; range_unit=:kpc))                                        # everything outside the ball
 ```
 
 ### Tilted cylinders, disks and shells (arbitrary axis)
@@ -208,12 +208,12 @@ to `axis`. Anything that yields a 3-vector will do, a hand-written direction, an
 field direction, or a measured angular momentum. A thin cylinder is a disk:
 
 ```julia
-subregion(gas, Cylinder(15.0, 1.0; axis=[1,0,2], range_unit=:kpc))   # a thin disk, tilted in the x-z plane
+subregion(gas, cylinder(15.0, 1.0; axis=[1,0,2], range_unit=:kpc))   # a thin disk, tilted in the x-z plane
 
 # A disk aligned with the galaxy's own spin. `face_on` measures the angular momentum
 # for you, and `.angmom` is the vector to hand to `axis`.
 spin = face_on(gas).angmom
-subregion(gas, Cylinder(15.0, 1.0; axis=spin, center=[:bc], range_unit=:kpc))
+subregion(gas, cylinder(15.0, 1.0; axis=spin, center=[:bc], range_unit=:kpc))
 ```
 
 ![Tilted disks](../assets/regions/tilted_disk.png)
@@ -224,10 +224,10 @@ tilts (foreshortened ellipses).*
 A shell tilts the same way, which is what you want for an annulus in the plane of an inclined disk:
 
 ```julia
-subregion(gas, CylindricalShell(5.0, 10.0, 4.0; axis=spin, center=[:bc], range_unit=:kpc))
+subregion(gas, cylindricalshell(5.0, 10.0, 4.0; axis=spin, center=[:bc], range_unit=:kpc))
 ```
 
-Two shapes need no `axis`. `Sphere` and `SphericalShell` are the same in every orientation, so
+Two shapes need no `axis`. `sphere` and `sphericalshell` are the same in every orientation, so
 tilting them would change nothing. `Cuboid` is **axis-aligned only**: its faces are always parallel
 to the box axes. That is deliberate rather than an oversight, because an axis-aligned box is the one
 shape whose inside-fraction is computed analytically, exact to machine precision, rather than by
@@ -257,15 +257,15 @@ weight from `getvar(:mass)`, which honours `:fraction`, so a projection of a spl
 anti-aliased edge instead of a blocky one), and a `:sd` map integrates to the exact enclosed mass.
 
 ```julia
-ball = subregion(gas, Sphere(20.0; range_unit=:kpc))                                  # split=true
+ball = subregion(gas, sphere(20.0; range_unit=:kpc))                                  # split=true
 projection(ball, :sd, :Msol_pc2; pxsize=[100., :pc])                                  # exact clipped Σ-map
-projection(subregion(gas, Sphere(20.0; range_unit=:kpc) \ Cylinder(5.0, 40.0; range_unit=:kpc)), :sd, :Msol_pc2)
+projection(subregion(gas, sphere(20.0; range_unit=:kpc) \ cylinder(5.0, 40.0; range_unit=:kpc)), :sd, :Msol_pc2)
 ```
 
 ![Projection of split regions](../assets/regions/region_projection.png)
 
 *Left → right: a sphere selected with whole cells (blocky edge), the same sphere with exact
-splitting (smooth edge), and a composite `Sphere \ Cylinder` (a ball with a cylindrical hole).*
+splitting (smooth edge), and a composite `sphere \ cylinder` (a ball with a cylindrical hole).*
 
 ## Additional Analysis Functions
 
@@ -291,4 +291,9 @@ All subregion functions support multiple data types through Julia's multiple dis
 subregion
 shellregion
 @region
+sphere
+cylinder
+cuboid
+sphericalshell
+cylindricalshell
 ```

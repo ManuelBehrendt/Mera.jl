@@ -62,7 +62,6 @@ MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera
 using Mera, CairoMakie
 # Makie also exports geometric names (Sphere, Cylinder, ...), state explicitly
 # that we mean Mera's region types:
-import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 CairoMakie.activate!()
 
 path = "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14"
@@ -91,7 +90,7 @@ println("box            : ", round(stars.boxlen * kpc, sigdigits=4), " kpc")
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
 particles      : 508939   columns: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)
 with birth = 0 : 0 (dark matter, if any)
 total mass     : 5.8044e9 Msol
@@ -158,14 +157,14 @@ axf = Axis(fig[1, 1], title="face-on — stellar surface density",
            xlabel="x − x꜀ [kpc]", ylabel="y − y꜀ [kpc]")
 show_sd!(axf, p_face; decorate=true)
 arc!(axf, Point2f(0, 0), 10., 0, 2π; color=:cyan, linewidth=1.5, linestyle=:dash)
-text!(axf, 7.4, 7.4; text="Sphere(10)", color=:cyan, fontsize=11)
+text!(axf, 7.4, 7.4; text="sphere(10)", color=:cyan, fontsize=11)
 
 axe = Axis(fig[1, 2], title="edge-on — a thin disc and a thicker envelope",
            xlabel="y − y꜀ [kpc]", ylabel="z − z꜀ [kpc]")
 show_sd!(axe, p_edge; decorate=true)
 lines!(axe, [-12., 12., 12., -12., -12.], [-2., -2., 2., 2., -2.];
        color=:cyan, linewidth=1.5)
-text!(axe, -11.5, 2.4; text="Cylinder(12, 2)", color=:cyan, fontsize=11)
+text!(axe, -11.5, 2.4; text="cylinder(12, 2)", color=:cyan, fontsize=11)
 sd_bar!(fig[1, 3])
 fig
 ```
@@ -182,14 +181,14 @@ Two consequences worth checking rather than assuming: a region and its
 complement partition the population exactly, and adjacent regions add.
 
 ```julia
-sph  = Sphere(10.)                       # center=[:bc], range_unit=:kpc by default
+sph  = sphere(10.)                       # center=[:bc], range_unit=:kpc by default
 s_in  = subregion(stars, sph, verbose=false)
 s_out = subregion(stars, sph, inverse=true, verbose=false)
 
 N, M = length(stars.data), msum(stars, :Msol)
 println("all particles      : ", rpad(N, 9), round(M, sigdigits=8), " Msol")
-println("inside  Sphere(10) : ", rpad(length(s_in.data), 9),  round(msum(s_in, :Msol),  sigdigits=8))
-println("outside Sphere(10) : ", rpad(length(s_out.data), 9), round(msum(s_out, :Msol), sigdigits=8))
+println("inside  sphere(10) : ", rpad(length(s_in.data), 9),  round(msum(s_in, :Msol),  sigdigits=8))
+println("outside sphere(10) : ", rpad(length(s_out.data), 9), round(msum(s_out, :Msol), sigdigits=8))
 println()
 println("count residual : ", length(s_in.data) + length(s_out.data) - N)
 println("mass  residual : ", (msum(s_in, :Msol) + msum(s_out, :Msol)) / M - 1,
@@ -198,8 +197,8 @@ println("mass  residual : ", (msum(s_in, :Msol) + msum(s_out, :Msol)) / M - 1,
 
 ```
 all particles      : 508939   5.804426e9 Msol
-inside  Sphere(10) : 419529   4.7852795e9
-outside Sphere(10) : 89410    1.0191465e9
+inside  sphere(10) : 419529   4.7852795e9
+outside sphere(10) : 89410    1.0191465e9
 count residual : 0
 mass  residual : 1.5543122344752192e-15   (floating-point summation only)
 ```
@@ -228,7 +227,7 @@ column, not the mass column.
 edges = collect(0.0:1.0:20.0)
 rows = NamedTuple[]
 for i in 1:length(edges)-1
-    reg = i == 1 ? Sphere(edges[2]) : SphericalShell(edges[i], edges[i+1])
+    reg = i == 1 ? sphere(edges[2]) : sphericalshell(edges[i], edges[i+1])
     sh = subregion(stars, reg, verbose=false)
     n  = length(sh.data)
     m  = n == 0 ? 0.0 : msum(sh, :Msol)
@@ -293,12 +292,12 @@ particles carry no volume, so on this page there is nothing to split.
 
 ```julia
 gallery = [
-    ("Cuboid — a slab",            Cuboid(xrange=[-12, 12], yrange=[-12, 12], zrange=[-1, 1])),
-    ("Cylinder(8, 2)",             Cylinder(8., 2.)),
-    ("Sphere(6)",                  Sphere(6.)),
-    ("SphericalShell(6, 10)",      SphericalShell(6., 10.)),
-    ("CylindricalShell(6, 10, 2)", CylindricalShell(6., 10., 2.)),
-    ("Cylinder(8, 2) tilted 40°",  Cylinder(8., 2.; axis=[sind(40), 0, cosd(40)])),
+    ("Cuboid — a slab",            cuboid(xrange=[-12, 12], yrange=[-12, 12], zrange=[-1, 1])),
+    ("cylinder(8, 2)",             cylinder(8., 2.)),
+    ("sphere(6)",                  sphere(6.)),
+    ("sphericalshell(6, 10)",      sphericalshell(6., 10.)),
+    ("cylindricalshell(6, 10, 2)", cylindricalshell(6., 10., 2.)),
+    ("cylinder(8, 2) tilted 40°",  cylinder(8., 2.; axis=[sind(40), 0, cosd(40)])),
 ]
 for (name, reg) in gallery
     s = subregion(stars, reg, verbose=false)
@@ -327,11 +326,11 @@ fig
 
 ```
 Cuboid — a slab               413099   81.2 % of the stellar mass
-Cylinder(8, 2)                358054   70.3 % of the stellar mass
-Sphere(6)                     268097   52.6 % of the stellar mass
-SphericalShell(6, 10)         151432   29.8 % of the stellar mass
-CylindricalShell(6, 10, 2)    145216   28.6 % of the stellar mass
-Cylinder(8, 2) tilted 40°     229964   45.2 % of the stellar mass
+cylinder(8, 2)                358054   70.3 % of the stellar mass
+sphere(6)                     268097   52.6 % of the stellar mass
+sphericalshell(6, 10)         151432   29.8 % of the stellar mass
+cylindricalshell(6, 10, 2)    145216   28.6 % of the stellar mass
+cylinder(8, 2) tilted 40°     229964   45.2 % of the stellar mass
 ```
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_14_5.png)
@@ -352,16 +351,16 @@ shared keywords out of a composite so the shapes stay readable.
 
 ```julia
 halo_no_disc = @region unit=:kpc center=[:bc] begin
-    inner = Sphere(15)
-    disc  = Cylinder(15, 2)
+    inner = sphere(15)
+    disc  = cylinder(15, 2)
     inner \ disc            # spheroid minus the disc slab: the "off-plane" stars
 end
 
 s_halo = subregion(stars, halo_no_disc, verbose=false)
-s_disc = subregion(stars, Cylinder(15., 2.), verbose=false)
-s_ball = subregion(stars, Sphere(15.), verbose=false)
+s_disc = subregion(stars, cylinder(15., 2.), verbose=false)
+s_ball = subregion(stars, sphere(15.), verbose=false)
 
-println("Sphere(15)                 : ", rpad(length(s_ball.data), 9),
+println("sphere(15)                 : ", rpad(length(s_ball.data), 9),
         round(msum(s_ball, :Msol), sigdigits=5), " Msol")
 println("  ∩ disc slab              : ", rpad(length(s_disc.data), 9),
         round(msum(s_disc, :Msol), sigdigits=5))
@@ -371,12 +370,12 @@ println()
 println("off-plane fraction of the inner stellar mass : ",
         round(100*msum(s_halo, :Msol)/msum(s_ball, :Msol), digits=1), " %")
 println("counts partition exactly : ",
-        length(s_halo.data) + length(subregion(s_ball, Cylinder(15., 2.), verbose=false).data)
+        length(s_halo.data) + length(subregion(s_ball, cylinder(15., 2.), verbose=false).data)
         == length(s_ball.data))
 ```
 
 ```
-Sphere(15)                 : 502097   5.7267e9 Msol
+sphere(15)                 : 502097   5.7267e9 Msol
   ∩ disc slab              : 489072   5.5788e9
   minus the slab (@region) : 13101    1.4881e8
 off-plane fraction of the inner stellar mass : 2.6 %
@@ -390,7 +389,7 @@ because fractions are complementary; here it holds because membership is a
 predicate. Either way, if it fails, the region is not describing what you
 think it describes.
 
-Note also that `subregion` chains, `subregion(s_ball, Cylinder(...))` narrows
+Note also that `subregion` chains, `subregion(s_ball, cylinder(...))` narrows
 an already-selected object, because the return value is a full particle object
 of the same type.
 
@@ -404,7 +403,7 @@ Stars carry a birth time, so "young" and "old" are one condition away. The
 same annulus, split by age, is two very different objects.
 
 ```julia
-annulus = CylindricalShell(4., 12., 2.)          # the star-forming disc, minus the nucleus
+annulus = cylindricalshell(4., 12., 2.)          # the star-forming disc, minus the nucleus
 
 ring   = subregion(stars, annulus, verbose=false)
 young  = filterdata(ring, Below(:age, 50, unit=:Myr), verbose=false)
@@ -450,7 +449,7 @@ compact public run below carries Monte-Carlo tracers, so the composition can be 
 tracer_run = "$MERA_EXAMPLES/RAMSES-PUBLIC/sedov3d_grav_part"
 if isdir(tracer_run)
     tp   = getparticles(getinfo(3, tracer_run, verbose=false), verbose=false, show_progress=false)
-    core = subregion(tp, Sphere(0.15; range_unit=:standard), verbose=false)
+    core = subregion(tp, sphere(0.15; range_unit=:standard), verbose=false)
 
     println("whole box   : ", length(tp.data),   " particles, families ",
             Int.(sort(unique(getvar(tp, :family)))))
@@ -481,11 +480,11 @@ quickest way to take an exploratory cut.
 
 | Value type | Classic call |
 |:--|:--|
-| `Cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(stars, :cuboid; xrange=…, …)` |
-| `Sphere(R)` | `subregion(stars, :sphere; radius=R)` |
-| `Cylinder(R, H)` | `subregion(stars, :cylinder; radius=R, height=H)` (z-axis only) |
-| `SphericalShell(rin, rout)` | `shellregion(stars, :sphere; radius=[rin, rout])` |
-| `CylindricalShell(rin, rout, H)` | `shellregion(stars, :cylinder; radius=[rin, rout], height=H)` |
+| `cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(stars, :cuboid; xrange=…, …)` |
+| `sphere(R)` | `subregion(stars, :sphere; radius=R)` |
+| `cylinder(R, H)` | `subregion(stars, :cylinder; radius=R, height=H)` (z-axis only) |
+| `sphericalshell(rin, rout)` | `shellregion(stars, :sphere; radius=[rin, rout])` |
+| `cylindricalshell(rin, rout, H)` | `shellregion(stars, :cylinder; radius=[rin, rout], height=H)` |
 
 Shared keywords: `center`, `range_unit`, `inverse=true`. The `cell` and
 `split` keywords of the grid interfaces have no meaning for points and are
@@ -494,7 +493,7 @@ exactly here, unlike on the hydro side.
 
 ```julia
 classic = subregion(stars, :sphere; radius=10., center=[:bc], range_unit=:kpc, verbose=false)
-value_t = subregion(stars, Sphere(10.), verbose=false)
+value_t = subregion(stars, sphere(10.), verbose=false)
 
 println("classic :sphere  : ", rpad(length(classic.data), 9), round(msum(classic, :Msol), sigdigits=8))
 println("value-type Sphere: ", rpad(length(value_t.data), 9), round(msum(value_t, :Msol), sigdigits=8))

@@ -125,7 +125,7 @@ has two separate `center` keywords that are easy to confuse.
 
 | | what it does | where it appears |
 |---|---|---|
-| **Region `center`** | *places a shape*: where the sphere sits, where the cylinder's axis runs | `Sphere(10; center=…)`, `subregion(gas, :sphere; center=…)`, `shellregion` |
+| **Region `center`** | *places a shape*: where the sphere sits, where the cylinder's axis runs | `sphere(10; center=…)`, `subregion(gas, :sphere; center=…)`, `shellregion` |
 | **`getvar` `center`** | *sets the coordinate origin* the derived quantity is measured about | `getvar(gas, :vϕ_cylinder; center=…)`, and `projection`, which passes its own `center` through to `getvar` |
 
 They are independent arguments, a region placed at one point can perfectly well be asked for
@@ -380,7 +380,7 @@ On a **subregion** this matters twice over, because the cell fraction that weigh
 comes from the hydro object. Cut both with the same region value:
 
 ```julia
-R  = Sphere(10.)
+R  = sphere(10.)
 getvar(subregion(gravity, R), subregion(hydro, R), :total_binding_energy, :erg)
 ```
 
@@ -635,7 +635,7 @@ M_\mathrm{total} = \sum_i m_i .
 
 !!! note "On a split sub-region, `mᵢ` is the mass *inside the region*"
     `msum` sums whatever `getvar(obj, :mass)` returns, and that is boundary-aware. A sub-region
-    built from a **value-type region** (`subregion(gas, Sphere(10))`, `split=true` by default)
+    built from a **value-type region** (`subregion(gas, sphere(10))`, `split=true` by default)
     carries a per-cell `:fraction ∈ (0,1]`, the volume fraction of that cell lying inside the
     region, and `getvar` applies it:
 

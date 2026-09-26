@@ -995,8 +995,8 @@ Reach for it when the edge is a real part of the measurement: a small aperture, 
 Particles are points with no volume, so `split` does nothing for them.
 
 This is the same idea the region algebra already offers, and that one flows into off-axis maps
-too: `subregion(gas, Sphere(10; center=[:bc], range_unit=:kpc); split=true)` attaches a
-`:fraction` column that `getvar(:mass)` and `getvar(:volume)` honour. Write `Mera.Sphere` if
+too: `subregion(gas, sphere(10; center=[:bc], range_unit=:kpc); split=true)` attaches a
+`:fraction` column that `getvar(:mass)` and `getvar(:volume)` honour. Write `sphere` if
 Makie is loaded, because it exports a `Sphere` of its own and the bare name then binds to
 neither.
 
@@ -1027,9 +1027,9 @@ end
 println("\nAPERTURE: does the map hold the mass of the sphere it selected?")
 println(rpad("  fov [kpc]", 12), rpad("whole cells", 16), rpad("split", 16), "true (msum)")
 for R in (3, 6, 12)
-    # `Mera.Sphere`, not `Sphere`: Makie exports a Sphere too, and with both loaded the
+    # `sphere`, not `Sphere`: Makie exports a Sphere too, and with both loaded the
     # bare name is ambiguous and binds to neither.
-    truth = msum(subregion(gas, Mera.Sphere(float(R); center=[:bc], range_unit=:kpc);
+    truth = msum(subregion(gas, sphere(float(R); center=[:bc], range_unit=:kpc);
                            split=true, verbose=false), :Msol)
     a = slabmass(projection(gas, :mass, :Msol; fov=R, fov_unit=:kpc, aperture=:circle, skw...))
     b = slabmass(projection(gas, :mass, :Msol; fov=R, fov_unit=:kpc, aperture=:circle,

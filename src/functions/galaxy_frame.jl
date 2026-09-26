@@ -126,8 +126,8 @@ tracer you mean, rather than combining out of habit.
 
 # Velocity frame
 Velocities are taken as they are stored, in the box frame. For an object streaming through the
-box this changes |L|, and tilts it, because r × v picks up r × v_bulk. Measuring about the
-object's own centre of mass largely cancels it (Σ mᵢ rᵢ = 0 there), which is what
+box this changes `|L|`, and tilts it, because `r × v` picks up `r × v_bulk`. Measuring about the
+object's own centre of mass largely cancels it (`Σ mᵢ rᵢ = 0` there), which is what
 [`face_on`](@ref) does with `center=:com`.
 
 See also [`face_on`](@ref), [`edge_on`](@ref), [`center_of`](@ref), [`projection`](@ref).

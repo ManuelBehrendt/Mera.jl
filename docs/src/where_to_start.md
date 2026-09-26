@@ -46,7 +46,7 @@ simulation. `getvar(gas, :T, :K)` is a statement about physics.
 
 | I want to … | start with | read |
 |:---|:---|:---|
-| a sphere, a box, a cylinder, a shell | `subregion` with `Mera.Sphere`, `Mera.Cuboid`, `Mera.Cylinder` | [Sub-regions](03_hydro_Get_Subregions.md) |
+| a sphere, a box, a cylinder, a shell | `subregion` with `sphere`, `cuboid`, `cylinder` | [Sub-regions](03_hydro_Get_Subregions.md) |
 | a ring, or one region minus another | `∩` `∪` `\` `!` between regions | [How it is measured](computation_reference.md) |
 | everything above 10⁴ K, or between two densities | `filterdata` with `Above`, `Below`, `InRange` | [Masking & Filtering](05_multi_Masking_Filtering.md) |
 | to keep the whole object but mark rows | `getmask`, then pass `mask=` | [Masking & Filtering](05_multi_Masking_Filtering.md) |

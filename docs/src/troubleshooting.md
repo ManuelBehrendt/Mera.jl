@@ -71,33 +71,31 @@ Pkg.add("CairoMakie")   # what most tutorial figures use
 Mera's Makie support is a package extension, it activates by itself once a backend is
 loaded, with nothing else to install.
 
-## `UndefVarError: Sphere not defined` (or `Cylinder`)
+## `UndefVarError: Sphere not defined`
 
-Both Mera and Makie export geometry types called `Sphere` and `Cylinder`. When both packages are
-loaded, the bare name is ambiguous and Julia refuses to guess:
-
-```julia
-using Mera, CairoMakie
-Sphere(10.)          # UndefVarError: `Sphere` not defined
-```
-
-Say which one you mean. Either qualify it:
-
-```julia
-subregion(gas, Mera.Sphere(10.; center=[:bc], range_unit=:kpc))
-```
-
-or import Mera's region types once at the top of the script, which is what the tutorial pages do:
+The region constructors are **lowercase**:
 
 ```julia
 using Mera, CairoMakie
-import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
-
-subregion(gas, Sphere(10.))        # unambiguous from here on
+subregion(gas, sphere(10.; center=[:bc], range_unit=:kpc))
 ```
 
-`Cuboid`, `SphericalShell` and `CylindricalShell` do not clash, so only `Sphere` and `Cylinder`
-actually need this; importing the set keeps the intent obvious.
+| shape | constructor |
+|---|---|
+| ball | `sphere(radius)` |
+| cylinder | `cylinder(radius, height)` |
+| box | `cuboid(; xrange, yrange, zrange)` |
+| spherical shell | `sphericalshell(r_in, r_out)` |
+| cylindrical shell | `cylindricalshell(r_in, r_out, height)` |
+
+They are lowercase because Makie exports a `Sphere` and a `Cylinder` of its own, and a name
+exported by two loaded packages binds to **neither**, so the capitalized spellings produced this
+very error in any plotting session. The types still exist for dispatch, as `Mera.Sphere`,
+`Mera.Cylinder` and so on; they are simply not exported.
+
+Older scripts that used the capitalized names, or an `import Mera: Sphere, ...` line, need the
+lowercase call instead. There is no deprecated alias, because keeping the old name exported
+would bring the clash back.
 
 ## `FieldError: type ScalesType003 has no field ...`
 

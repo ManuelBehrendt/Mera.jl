@@ -48,9 +48,9 @@ units; `viewfields(obj)` shows what an object holds.
 
 ## Regions are values
 
-    Mera.Sphere(r; center=[:bc], range_unit=:kpc)        # centre is ABSOLUTE, in range_unit
-    Mera.Cuboid(xrange=[a,b], yrange=[c,d], zrange=[e,f], center=[:bc], range_unit=:kpc)
-    Mera.Cylinder(radius, half_height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
+    sphere(r; center=[:bc], range_unit=:kpc)        # centre is ABSOLUTE, in range_unit
+    cuboid(xrange=[a,b], yrange=[c,d], zrange=[e,f], center=[:bc], range_unit=:kpc)
+    cylinder(radius, half_height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
 Combine them with `∩` `∪` `\` `!`, meaning intersection, union, difference and complement, then
 `subregion(obj, region)`. Every one has an ASCII spelling, so Unicode is never required:
@@ -103,8 +103,10 @@ These are mistakes an assistant makes confidently. Each was reproduced.
    `Above(:T, 1e4, unit=:K)` selected all 849332. The macro is fine for `:level` or for a
    threshold you already have in code units; for physics, name the unit with `Above`/`Below`.
    The macro also takes one comparison only; `&` `|` `!` need the predicate form.
-2. **`Sphere` collides with Makie.** With CairoMakie loaded, a bare `Sphere` is ambiguous and
-   raises `UndefVarError`. Write `Mera.Sphere`, and `Mera.Cylinder` for the same reason.
+2. **The region constructors are lowercase.** `sphere`, `cylinder`, `cuboid`,
+   `sphericalshell`, `cylindricalshell`. Capitalized `Sphere`/`Cylinder` are not exported,
+   because Makie exports those names too and a name exported by two loaded packages binds to
+   neither. The types are still reachable as `Mera.Sphere` for dispatch.
 3. **`projection` does honour cell fractions.** The word `fraction` does not appear in the
    projection source, which invites the wrong conclusion. It reaches mass through `getvar`, so a
    projected map totals exactly what `msum` reports.

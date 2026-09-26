@@ -111,9 +111,13 @@ projection(gas, :sd, inclination=90, axis=sep)      # look across the merger axi
 # 3. freeze the frame across a time series
 #    :angmom is recomputed per snapshot, so the disk can wobble between frames.
 #    Compute L once and reuse it as a fixed axis, and the movie stays steady.
-L0 = getvar(gas, [:lx, :ly, :lz], center=[:bc])
-Lfix = [sum(L0[:lx]), sum(L0[:ly]), sum(L0[:lz])]
+Lfix = angmom(gas; center=[:bc], range_unit=:kpc, radius=[20, :kpc])
 projection(gas, :sd, inclination=60, axis=Lfix)
+
+# 4. one axis for several components, so gas and stars share a camera
+Ljoint = angmom([gas, stars]; center=[:bc], range_unit=:kpc, radius=[20, :kpc])
+projection(gas,   :sd, inclination=60, axis=Ljoint)
+projection(stars, :sd, inclination=60, axis=Ljoint)
 ```
 
 The third case is the common one in practice. `axis=:angmom` is convenient, but it measures the

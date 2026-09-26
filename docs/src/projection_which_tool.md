@@ -12,7 +12,8 @@ Everything here works the same on hydro and, unless noted, on particles.
 | a map along a box axis | `projection(gas, :sd; direction=:z)`, see [Hydro](06_hydro_Projection.md) / [Particles](06_particles_Projection.md) |
 | a galaxy face-on or edge-on | `projection(gas, :sd; direction=:faceon)`, which derives the orientation from the data's own angular momentum. No preparation step needed |
 | any other viewing angle | `inclination`/`azimuth` about a reference `axis`, or an explicit `los=[x,y,z]`, see [Off-axis](06_offaxis_Projection.md) |
-| the disc's axis as a value I can reuse | [`face_on`](@ref) / [`edge_on`](@ref), which return a frame whose `los`/`up`/`center` splat into any later call |
+| the disc's axis as a bare 3-vector | [`angmom`](@ref)`(gas; center=[:bc], radius=[10,:kpc])`, and `angmom([gas, stars, dm])` to set it from several components at once |
+| the disc's axis as a ready-made frame | [`face_on`](@ref) / [`edge_on`](@ref), which return a frame whose `los`/`up`/`center` splat into any later call |
 | the same window at every angle | `fov`/`fov_unit` with `aperture=:circle|:square`. Without it an off-axis projection fits its window to the rotated data, so the object appears to zoom between angles |
 
 ## Selecting a region first
@@ -84,8 +85,14 @@ The practical consequences:
 * the axis-aligned path does less work per cell, two 1-D clips rather than a polygon integral, so
   it should be the cheaper of the two. No measurement is published here, so treat that as the
   shape of the algorithm rather than a number
-* a few map-only quantities (`:σx`, `:σy`, `:σz` and the radius/angle family) exist only there, and
-  an off-axis call asking for them is rejected with an error rather than a wrong answer
+* the radius and angle maps (`:r_cylinder`, `:r_sphere`, `:ϕ`) exist only there, because they
+  describe a pixel's own geometry and an off-axis pixel is a slanted column with no single
+  value; an off-axis call asking for one is rejected rather than answered wrongly. Velocity
+  dispersions are **not** in that group: the box-frame set (`:σx`, `:σy`, `:σz`, `:σ` and the
+  cylindrical and spherical ones) works on both paths
+* the off-axis path adds camera-frame kinematics the axis-aligned one cannot have: `:vlos` and
+  `:σlos` along the line of sight, `:vcamx`/`:σcamx` and `:vcamy`/`:σcamy` along the image axes,
+  and the `:ncell`/`:npart` counters
 * the off-axis path has `fov`/`aperture` framing, which the axis-aligned one does not need
 
 Particles need no such split: their deposition kernels are rotation-invariant, so the same code

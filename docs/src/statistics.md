@@ -36,8 +36,8 @@ gas  = gethydro(info, verbose=false);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-08-31T14:38:06.175
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[Mera]: 2026-09-26T20:38:07.236
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -70,12 +70,13 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
+boundaries:       not periodic (&BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:19 (30.01 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.40 ms/it)
 ✓ File processing complete! Combining results...
 ```
 
@@ -176,7 +177,7 @@ println("map N-PDF bins        : ", length(N.pdf))
 
 ```
 particle vx PDF bins  : 60
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.85 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.76 ms/it)
 ✓ File processing complete! Combining results...
 epot PDF bins         : 60
 Progress: 100%|█████████████████████████████████████████| Time: 0:00:01
@@ -224,7 +225,7 @@ println("bin width: ", round(log10(P.edges[2]/P.edges[1]), digits=3), " dex")
 ```
 above 1.0 cm^-3 : PDF 78.16 %   cells 79.28 %
 above 10.0 cm^-3 : PDF 25.59 %   cells 22.18 %
-bin width: 0.15 dex
+bin width: 0.152 dex
 ```
 
 The two do not agree exactly, and the reason is worth knowing rather than worrying about:
@@ -243,11 +244,9 @@ A PDF becomes an argument when you compare two of them. Any region works, and th
 [`subregion`](@ref) returns goes straight back into `pdf`.
 
 ```julia
-import Mera: Sphere
-
-inner = subregion(gas, Sphere(5.;  center=[:bc], range_unit=:kpc), verbose=false)
-outer = subregion(gas, Sphere(20.; center=[:bc], range_unit=:kpc) \
-                       Sphere(5.;  center=[:bc], range_unit=:kpc), verbose=false)
+inner = subregion(gas, sphere(5.;  center=[:bc], range_unit=:kpc), verbose=false)
+outer = subregion(gas, sphere(20.; center=[:bc], range_unit=:kpc) \
+                       sphere(5.;  center=[:bc], range_unit=:kpc), verbose=false)
 
 Pi = pdf(inner, :rho; unit=:nH, weight=:volume)
 Po = pdf(outer, :rho; unit=:nH, weight=:volume)
@@ -268,7 +267,7 @@ inner  r < 5 kpc : 3195277 cells
 outer 5 - 20 kpc : 20413408 cells
 ```
 
-![](statistics_files/statistics_12_2.png)
+![](statistics_files/statistics_12_3.png)
 
 The inner disc peaks about a decade and a half higher in density and carries a long tail to the
 star-forming end; the outer shell is the diffuse envelope. Same function, same units, same binning,
