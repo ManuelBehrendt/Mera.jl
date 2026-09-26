@@ -213,9 +213,14 @@ function _oadep_twolevel_box(sC)
         push!(x,0.5+(i+0.5)*sF); push!(y,(j+0.5)*sF); push!(z,(k+0.5)*sF); push!(s,sF); end
     x,y,z,s
 end
-function _oadep_column(sC, pixsize, los, binning; nmax=64)
+# `up` is pinned rather than left to the camera's default hint. What this file tests is the
+# DEPOSIT: that the two AMR levels register to the same pixel grid with no seam and no holes.
+# The roll of the image is not part of that, but the fixed interior crop below is sensitive to
+# it: a cube projects to a hexagon, so its bounding box has empty corners, and the same central
+# crop reaches into them at one roll and not at another. Pinning `up` keeps the subject in view.
+function _oadep_column(sC, pixsize, los, binning; nmax=64, up=[0.0,1.0,0.0])
     x,y,z,s = _oadep_twolevel_box(sC)
-    cr,uc,w = Mera.build_camera_basis(los)
+    cr,uc,w = Mera.build_camera_basis(los, up)
     xc = (x.-0.5).*cr[1] .+ (y.-0.5).*cr[2] .+ (z.-0.5).*cr[3]
     yc = (x.-0.5).*uc[1] .+ (y.-0.5).*uc[2] .+ (z.-0.5).*uc[3]
     mass = s.^3; wt = ones(length(s))
