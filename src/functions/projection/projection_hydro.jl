@@ -585,8 +585,10 @@ Which to reach for:
 - **`nmax::Int`**: `:overlap` supersampling cap (default `64`) — max sub-points per cube axis.
   Raise for fewer artifacts on very coarse cells (slower, ∝ `nmax³`), lower for speed.
 
-  All are mass-conserving. Off-axis currently supports the standard hydro/RT fields and
-  `:sd`/`:mass`; map-only variables (`:r_cylinder`, `:ϕ`, velocity dispersions) require an axis direction.
+  All are mass-conserving. Off-axis supports the standard hydro/RT fields, `:sd`/`:mass`, the
+  velocity dispersions (box frame and camera frame) and the `:ncell` counter. Only `:r_cylinder`,
+  `:r_sphere` and `:ϕ` still need an axis direction: they describe the pixel's own geometry, and
+  an off-axis pixel is a slanted column with no single value.
 
 #### Data Processing Options:
 - **`weighting::Array`**: Variable for weighting `[quantity, unit]` (default: `[:mass]`)
