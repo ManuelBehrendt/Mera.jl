@@ -953,6 +953,18 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                             offset=offset, offset_unit=offset_unit)
     end
 
+    # Camera-frame kinematics have no meaning without a camera: :vlos/:σlos are along the line
+    # of sight, :vcamx/:vcamy along the image axes. On the axis-aligned path there is no camera
+    # basis, and they used to fail with "not a column of this object", which does not say why.
+    for v in selected_vars
+        if v in _CAM_KINEMATICS
+            throw(ArgumentError(
+                ":$v is a CAMERA-frame quantity and needs an off-axis view (los=, inclination=, " *
+                "azimuth=, or direction=:faceon/:edgeon). Looking down a box axis, the line of " *
+                "sight IS that axis, so use :vz/:σz for direction=:z, :vx/:σx for :x, and so on."))
+        end
+    end
+
     # :npart is filled by the off-axis deposit, which this path does not use. Here it is a column
     # of ones going through the mass-weighted branch, so it came back as a map of ones that looks
     # like a count. The hydro path already refuses :ncell for the same reason; do the same.
@@ -1442,15 +1454,20 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
     rcheck = [:r_cylinder, :r_sphere]; anglecheck = [:ϕ]
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
-              :σr_sphere, :σθ_sphere, :σϕ_sphere]
-    rσanglecheck = [rcheck..., σcheck..., anglecheck...]
+    σcheck = _SIGMA_NAMES
+    # Radius and angle maps stay axis-only: they describe the pixel's own geometry, and an
+    # off-axis pixel is a slanted column with no single radius. Dispersions are different: each
+    # is built from two ordinary getvar fields that project like any other scalar.
     for v in selected_vars
-        if v in rσanglecheck
+        if v in rcheck || v in anglecheck
             error("projection: off-axis particle projection does not support the map-only " *
-                  "variable :$v (radius/angle/velocity-dispersion). Use an axis direction=:x/:y/:z.")
+                  "variable :$v: it is a property of the pixel's own geometry, and an off-axis " *
+                  "pixel is a slanted column with no single value. Use direction=:x/:y/:z.")
         end
     end
+    σ_want = [v for v in selected_vars if v in σcheck]
+    σ_deps = isempty(σ_want) ? Symbol[] : unique(vcat((_SIGMA_TO_V[v] for v in σ_want)...))
+    σ_raw  = Dict{Symbol,Matrix{Float64}}()
     # Points have no footprint, so the two footprint kernels have nothing to integrate over and
     # fall back to :cic. That is the right physics, but it used to happen silently: a caller asking
     # for :exact got :cic and was told nothing, while the tutorial listed all four as if they
@@ -1555,11 +1572,18 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     # Line-of-sight velocity for off-axis kinematics :vlos / :σlos (code units).
     # Negated for the same reason as in the hydro path: cam_w points toward the observer, while
     # observational work counts a positive radial velocity as RECEDING. See projection_hydro.jl.
-    vlossel = Float64[]
-    if (:vlos in selected_vars) || (:σlos in selected_vars)
+    # The two in-plane components come from the same construction, along image x (cam_right) and
+    # image y (cam_up). They carry no observational sign convention, so they are not negated.
+    camvel = Dict{Symbol,Vector{Float64}}()
+    if any(v -> v in selected_vars, _CAM_KINEMATICS)
         vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
-        vlossel = Float64.(-(vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+        proj(a) = Float64.((vx .* a[1] .+ vy .* a[2] .+ vz .* a[3])[sel])
+        ((:vlos  in selected_vars) || (:σlos  in selected_vars)) && (camvel[:los]  = -proj(cam_w))
+        ((:vcamx in selected_vars) || (:σcamx in selected_vars)) && (camvel[:camx] =  proj(cam_right))
+        ((:vcamy in selected_vars) || (:σcamy in selected_vars)) && (camvel[:camy] =  proj(cam_up))
     end
+    cam_axis_of = Dict(:vlos => :los, :σlos => :los, :vcamx => :camx,
+                       :σcamx => :camx, :vcamy => :camy, :σcamy => :camy)
     req_unit(iv) = (k = findfirst(==(iv), selected_vars);
                     (k !== nothing && length(units) >= k) ? units[k] : :standard)
 
@@ -1665,21 +1689,23 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
 
     for ivar in selected_vars
         # ---- off-axis line-of-sight kinematics (mass-weighted), stars/particles ----
-        if ivar === :vlos || ivar === :σlos
+        if ivar in _CAM_KINEMATICS
             usym   = req_unit(ivar)
             vscale = usym === :standard ? 1.0 : getunit(dataobject.info, usym)
-            g1, w1 = deposit(vlossel, massv)
-            nz = w1 .> 0; meanv = zeros(Float64, nx, ny); meanv[nz] = g1[nz] ./ w1[nz]
-            if ivar === :vlos
-                m = meanv .* vscale
+            vcomp  = camvel[cam_axis_of[ivar]]
+            g1, w1 = deposit(vcomp, massv)
+            if ivar === :vlos || ivar === :vcamx || ivar === :vcamy
+                m = _moments_mean(g1, w1) .* vscale
             else
-                g2, _ = deposit(vlossel .^ 2, massv)
-                meanv2 = zeros(Float64, nx, ny); meanv2[nz] = g2[nz] ./ w1[nz]
-                m = sqrt.(max.(meanv2 .- meanv .^ 2, 0.0)) .* vscale
+                g2, _ = deposit(vcomp .^ 2, massv)
+                m = _moments_dispersion(g1, g2, w1) .* vscale
             end
             maps[ivar] = m; maps_unit[ivar] = usym; maps_mode[ivar] = :mass_weighted
             continue
         end
+
+        # a dispersion is assembled after the loop from its two component maps
+        ivar in σcheck && continue
 
         if ivar in sd_names
             g, _ = deposit(ones_w, massv)            # Σ mass per pixel
@@ -1703,10 +1729,23 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                 mmode = :mass_weighted
             end
         end
+        # raw (code-unit) component mean, for the dispersions assembled below
+        ivar in σ_deps && (σ_raw[ivar] = copy(m))
+
         selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
         maps[ivar]      = selected_unit != 1.0 ? m .* selected_unit : m
         maps_unit[ivar] = unit_name
         maps_mode[ivar] = mmode
+    end
+
+    # ---- velocity dispersions in the BOX frame (see the hydro path for the reasoning) --------
+    for ivar in σ_want
+        c1, c2 = _SIGMA_TO_V[ivar]
+        (haskey(σ_raw, c1) && haskey(σ_raw, c2)) || continue
+        selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
+        maps[ivar]      = sqrt.(max.(σ_raw[c2] .- σ_raw[c1] .^ 2, 0.0)) .* selected_unit
+        maps_unit[ivar] = unit_name
+        maps_mode[ivar] = :mass_weighted
     end
 
     ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])

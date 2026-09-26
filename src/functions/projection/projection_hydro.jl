@@ -1095,17 +1095,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     density_names = [:density, :rho, :ρ]
     rcheck = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
-              :σr_sphere, :σθ_sphere, :σϕ_sphere]
-    σ_to_v = SortedDict(  :σx => [:vx, :vx2],
-            :σy => [:vy, :vy2],
-            :σz => [:vz, :vz2],
-            :σ  => [:v,  :v2],
-            :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
-            :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2],
-                          :σr_sphere   => [:vr_sphere,   :vr_sphere2],
-                          :σθ_sphere   => [:vθ_sphere,   :vθ_sphere2],
-                          :σϕ_sphere   => [:vϕ_sphere,   :vϕ_sphere2] )
+    σcheck = _SIGMA_NAMES
+    σ_to_v = _SIGMA_TO_V
 
     # checks to use maps instead of projections
     notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck, σcheck, σ_to_v)
@@ -1130,6 +1121,18 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                   mask, los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, nmax, direction,
                                   boxlen, lmin, simlmax, isamr, scale, verbose, max_threads,
                                   gravity_data, depth, depth_unit, angmom_radius)
+    end
+
+    # Camera-frame kinematics have no meaning without a camera: :vlos/:σlos are along the line
+    # of sight, :vcamx/:vcamy along the image axes. On the axis-aligned path there is no camera
+    # basis, and they used to fail with "not a column of this object", which does not say why.
+    for v in selected_vars
+        if v in _CAM_KINEMATICS
+            throw(ArgumentError(
+                ":$v is a CAMERA-frame quantity and needs an off-axis view (los=, inclination=, " *
+                "azimuth=, or direction=:faceon/:edgeon). Looking down a box axis, the line of " *
+                "sight IS that axis, so use :vz/:σz for direction=:z, :vx/:σx for :x, and so on."))
+        end
     end
 
     # :ncell/:npart are filled by the off-axis deposit, which the axis-aligned path does not use.
@@ -1719,15 +1722,22 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
 
     rcheck     = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
-    σcheck     = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
-                  :σr_sphere, :σθ_sphere, :σϕ_sphere]
+    σcheck     = _SIGMA_NAMES
+    # Radius and angle maps are still axis-only: they are geometry OF THE PIXEL, and an off-axis
+    # pixel is a slanted column with no single radius. Dispersions used to be refused here too,
+    # but they need nothing camera-specific: each is built from two ordinary getvar fields (v and
+    # v²) that project off-axis like any other scalar, so they run through the deposit below.
     for v in selected_vars
-        if v in rcheck || v in anglecheck || v in σcheck
-            error("projection: off-axis views (los/theta/phi/:faceon/:edgeon) do not yet " *
-                  "support the map-only variable :$v (radius/angle/velocity-dispersion maps). " *
+        if v in rcheck || v in anglecheck
+            error("projection: off-axis views (los/theta/phi/:faceon/:edgeon) do not " *
+                  "support the map-only variable :$v: it is a property of the pixel's own " *
+                  "geometry, and an off-axis pixel is a slanted column with no single value. " *
                   "Use an axis-aligned direction=:x/:y/:z for these.")
         end
     end
+    # which dispersions were asked for, and the component maps they are built from
+    σ_want = [v for v in selected_vars if v in σcheck]
+    σ_deps = isempty(σ_want) ? Symbol[] : unique(vcat((_SIGMA_TO_V[v] for v in σ_want)...))
     if !(binning in (:cic, :ngp, :overlap, :exact))
         throw(ArgumentError("binning must be :cic, :ngp (fast preview), :overlap (accurate) or :exact (analytic), got :$binning"))
     end
@@ -1862,17 +1872,27 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # RECEDING (redshifted), so we negate here and :vlos matches the convention of the papers it
     # will be compared against. Do not "simplify" this minus away: it inverts every rotation
     # curve. σlos is a width and is unaffected by the sign.
-    vlossel = Float64[]
-    if (:vlos in selected_vars) || (:σlos in selected_vars)
+    #
+    # The same construction gives the two IN-PLANE components, along image x (cam_right) and
+    # image y (cam_up). Those carry no sign convention from observation, so they are not negated.
+    camvel = Dict{Symbol,Vector{Float64}}()
+    if any(v -> v in selected_vars, _CAM_KINEMATICS)
         vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
-        vlossel = Float64.(-(vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+        proj(a) = Float64.((vx .* a[1] .+ vy .* a[2] .+ vz .* a[3])[sel])
+        ((:vlos  in selected_vars) || (:σlos  in selected_vars)) && (camvel[:los]  = -proj(cam_w))
+        ((:vcamx in selected_vars) || (:σcamx in selected_vars)) && (camvel[:camx] =  proj(cam_right))
+        ((:vcamy in selected_vars) || (:σcamy in selected_vars)) && (camvel[:camy] =  proj(cam_up))
     end
+    # which camera axis each name reads
+    cam_axis_of = Dict(:vlos => :los, :σlos => :los, :vcamx => :camx,
+                       :σcamx => :camx, :vcamy => :camy, :σcamy => :camy)
     # requested unit symbol for a variable (aligned with selected_vars; default :standard)
     req_unit(iv) = (k = findfirst(==(iv), selected_vars);
                     (k !== nothing && length(units) >= k) ? units[k] : :standard)
 
     pixel_area = pixsize^2
     imaps     = SortedDict()
+    σ_raw     = Dict{Symbol,Matrix{Float64}}()   # raw component means, for the dispersions below
     count_map = nothing            # filled by the deposit when :ncell was asked for
     maps_unit = SortedDict()
     maps_weight = SortedDict()
@@ -1890,24 +1910,28 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
 
     for ivar in selected_vars
         # ---- off-axis line-of-sight kinematics: mean velocity and dispersion ----
-        if ivar === :vlos || ivar === :σlos
+        if ivar in _CAM_KINEMATICS
             usym   = req_unit(ivar)
             vscale = usym === :standard ? 1.0 : getunit(dataobject.info, usym)
+            vcomp  = camvel[cam_axis_of[ivar]]
             g1 = zeros(Float64, nx, ny); w1 = zeros(Float64, nx, ny)
-            depo!(g1, w1, vlossel)                                   # Σ vlos·m , Σ m
-            nz = w1 .> 0; meanv = zeros(Float64, nx, ny); meanv[nz] = g1[nz] ./ w1[nz]
-            if ivar === :vlos
-                m = meanv .* vscale                                  # mass-weighted mean v_los
-            else                                                     # :σlos = √(⟨v²⟩ − ⟨v⟩²)
+            depo!(g1, w1, vcomp)                                     # Σ v·m , Σ m
+            if ivar === :vlos || ivar === :vcamx || ivar === :vcamy
+                m = _moments_mean(g1, w1) .* vscale                  # mass-weighted mean velocity
+            else                                                     # σ = √(⟨v²⟩ − ⟨v⟩²)
                 g2 = zeros(Float64, nx, ny); w2 = zeros(Float64, nx, ny)
-                depo!(g2, w2, vlossel .^ 2)
-                meanv2 = zeros(Float64, nx, ny); meanv2[nz] = g2[nz] ./ w2[nz]   # w2 ≡ w1; use w2 for clarity
-                m = sqrt.(max.(meanv2 .- meanv .^ 2, 0.0)) .* vscale
+                depo!(g2, w2, vcomp .^ 2)
+                m = _moments_dispersion(g1, g2, w1) .* vscale        # w2 ≡ w1, same deposit
             end
             imaps[ivar] = m; maps_unit[ivar] = usym
             maps_weight[ivar] = weighting; maps_mode[ivar] = :standard
             continue
         end
+
+        # a dispersion has no per-cell value of its own; it is assembled after the loop from the
+        # two component maps the expansion added to `selected_vars`. Skip it here so the generic
+        # branch below does not ask getvar for a field that does not exist.
+        ivar in σcheck && continue
 
         if ivar === :sd || ivar === :mass
             vals = getvar(dataobject, :mass, center=center, center_unit=range_unit)   # mass is hydro-only
@@ -1962,6 +1986,11 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
             w_meta, mode_meta = weighting, mode
         end
 
+        # keep the RAW weighted mean of a dispersion component. sigma is formed from <v> and
+        # <v^2> in code units and scaled once at the end, exactly as the axis-aligned path does;
+        # scaling each component first would square the unit factor on the second moment.
+        ivar in σ_deps && (σ_raw[ivar] = copy(m))
+
         selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
         imaps[ivar]       = m .* selected_unit
         maps_unit[ivar]   = unit_name
@@ -1970,6 +1999,24 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         ivar === :ncell && count_map !== nothing && (imaps[:ncell] = count_map)
         maps_weight[ivar] = w_meta
         maps_mode[ivar]   = mode_meta
+    end
+
+    # ---- velocity dispersions in the BOX frame -------------------------------------------------
+    # sigma = sqrt(<v^2> - <v>^2) per pixel, from the two component maps just projected. The
+    # components are box axes, so :sigmaz is the spread along the simulation z even when the
+    # camera looks down some other direction. For the spread along the LINE OF SIGHT, which is
+    # what a spectrum measures, use :sigmalos; for the two in-plane ones, :sigmacamx / :sigmacamy.
+    #
+    # `mode` is not consulted here. A dispersion is a width, so it is always built from weighted
+    # means; summing the two moments instead would not give a width of anything.
+    for ivar in σ_want
+        c1, c2 = _SIGMA_TO_V[ivar]
+        (haskey(σ_raw, c1) && haskey(σ_raw, c2)) || continue
+        selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
+        imaps[ivar]       = sqrt.(max.(σ_raw[c2] .- σ_raw[c1] .^ 2, 0.0)) .* selected_unit
+        maps_unit[ivar]   = unit_name
+        maps_weight[ivar] = weighting
+        maps_mode[ivar]   = :standard
     end
 
     ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])

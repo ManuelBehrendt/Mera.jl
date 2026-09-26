@@ -741,14 +741,86 @@ end
         end
     end
 
+    @testset "velocity dispersions off-axis: box frame and camera frame" begin
+        kw = (center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        BOX = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+        CAM = [:σlos, :σcamx, :σcamy]
+
+        # all of them produce a finite, non-negative map off-axis (they used to be refused)
+        for v in vcat(BOX, CAM)
+            m = projection(gas, v, :km_s; los=[1.,2,3], kw...)
+            M = m.maps[v]
+            @test all(isfinite, M) && all(M .>= 0)
+            @test any(M .> 0)
+        end
+
+        # THE ORACLE: the dispersion tensor's trace is rotation invariant, so the camera triple
+        # and the box triple must agree pixel by pixel. This is what proves the camera-frame
+        # components are really components of the same tensor and not a re-scaled copy.
+        # Pixels fed by a single cell have zero spread in exact arithmetic, so the ratio of two
+        # round-off values there is meaningless: :ncell is exactly how we exclude them.
+        for b in (:ngp, :cic, :overlap, :exact)
+            m = projection(gas, vcat(CAM, [:σx,:σy,:σz], [:ncell]), :km_s;
+                           los=[1.,2,3], binning=b, kw...)
+            cam = m.maps[:σcamx].^2 .+ m.maps[:σcamy].^2 .+ m.maps[:σlos].^2
+            box = m.maps[:σx].^2    .+ m.maps[:σy].^2    .+ m.maps[:σz].^2
+            ok  = (box .> 0) .& (m.maps[:ncell] .> 1)
+            @test count(ok) > 1000
+            @test median(abs.(cam[ok] .- box[ok]) ./ box[ok]) < 1e-12
+        end
+
+        # looking down z, the camera axes ARE the box axes, so the two must coincide exactly
+        m = projection(gas, vcat(CAM, [:σx,:σy,:σz]), :km_s; los=[0.,0,1], binning=:ngp, kw...)
+        for (c, b) in ((:σcamx,:σx), (:σcamy,:σy), (:σlos,:σz))
+            B = m.maps[b]; ok = B .> 0
+            @test maximum(abs.(m.maps[c][ok] .- B[ok]) ./ B[ok]) < 1e-12
+        end
+
+        # :σ is the spread of the SPEED, not the trace: sqrt(<|v|²>-<|v|>²) vs sqrt(<|v|²>-|<v>|²).
+        # They are different numbers and the page must not equate them.
+        m2 = projection(gas, [:σ, :σx, :σy, :σz], :km_s; los=[1.,2,3], binning=:ngp, kw...)
+        tr = sqrt.(m2.maps[:σx].^2 .+ m2.maps[:σy].^2 .+ m2.maps[:σz].^2)
+        ok = tr .> 0
+        @test median(m2.maps[:σ][ok] ./ tr[ok]) < 0.99      # strictly smaller, by Jensen
+
+        # camera-frame names are refused where there is no camera, with a message that says so
+        for v in (:vlos, :σlos, :vcamx, :σcamx, :vcamy, :σcamy)
+            e = try projection(gas, v, :km_s; direction=:z, center=[:bc], pxsize=[2.,:kpc],
+                               verbose=false, show_progress=false); nothing catch err; err end
+            @test e isa ArgumentError
+            @test occursin("CAMERA-frame", sprint(showerror, e))
+        end
+
+        # and the same for particles, including the trace identity
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        pm = projection(part, vcat(CAM, [:σx,:σy,:σz], [:npart]), :km_s; los=[1.,2,3], kw...)
+        pcam = pm.maps[:σcamx].^2 .+ pm.maps[:σcamy].^2 .+ pm.maps[:σlos].^2
+        pbox = pm.maps[:σx].^2    .+ pm.maps[:σy].^2    .+ pm.maps[:σz].^2
+        pok  = (pbox .> 0) .& (pm.maps[:npart] .> 1)
+        @test count(pok) > 100
+        @test median(abs.(pcam[pok] .- pbox[pok]) ./ pbox[pok]) < 1e-12
+        @test_throws ArgumentError projection(part, :σcamx, :km_s; direction=:z, center=[:bc],
+                                              pxsize=[2.,:kpc], verbose=false, show_progress=false)
+    end
+
     @testset "guards that used to fail silently or unhelpfully" begin
         pkw = (center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
-        # :σr_sphere was missing from the off-axis guard list, so it died inside getvar with an
-        # unknown-variable error instead of the projection message that names the fix.
+        # The three spherical sigmas were missing from the off-axis guard list, so they fell
+        # through to getvar and died with "not a column of this object". Now that dispersions
+        # run off-axis they must simply WORK, which is the stronger check: the drift that caused
+        # the bad error message is gone because all paths read one shared list of names.
+        @test Set(Mera._SIGMA_NAMES) == Set(keys(Mera._SIGMA_TO_V))
         for v in (:σr_sphere, :σθ_sphere, :σϕ_sphere)
+            m = projection(gas, [:sd, v], [:Msol_pc2, :km_s]; los=[1.,2,3], pkw...)
+            @test all(isfinite, m.maps[v]) && any(m.maps[v] .> 0)
+        end
+        # radius and angle maps are still refused, and say why
+        for v in (:r_cylinder, :r_sphere, :ϕ)
             e = try projection(gas, [:sd, v]; los=[1.,2,3], pkw...); nothing catch err; err end
             @test e !== nothing
-            @test occursin("off-axis", sprint(showerror, e))
+            @test occursin("slanted column", sprint(showerror, e))
         end
 
         # particles: :npart on the axis-aligned path returned a map of ones that looks like a count

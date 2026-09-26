@@ -70,7 +70,12 @@ function projection()
     println("     full column, and move it along the line of sight")
     println()
     println("  line-of-sight tools (same view kwargs):")
-    println("    :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)")
+    println("    :vlos  / :σlos                -> along the line of sight (what a spectrum measures)")
+    println("    :vcamx / :σcamx               -> along image x (cam_right)")
+    println("    :vcamy / :σcamy               -> along image y (cam_up)")
+    println("       camera-frame only: these need a view, and are refused on direction=:x/:y/:z")
+    println("       the box-frame σx, σy, σz, σ, σr_cylinder ... work off-axis too, but stay")
+    println("       box axes: σz is the simulation z even in a face-on view")
     println("    slice (off-axis kwargs)       -> cutting plane (offset= moves it) ;  profile / phase -> 1D/2D reductions")
     println("    rotation_sequence             -> shared-FOV angle sweep (orbit movies)")
     println("    savemap/loadmap (JLD2)        -> store/restore a projection result")
@@ -122,6 +127,55 @@ end
 # =====================================================================================
 
 const _WORLD_AXES = ([1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0])
+
+# ---------------------------------------------------------------------------------------------
+# Velocity dispersions: the one table of names, shared by every path.
+#
+# A dispersion map is not a field you can read off a cell. It is built from two projected maps,
+# the mean of v and the mean of v^2, and then sigma = sqrt(<v^2> - <v>^2) per pixel. So every
+# sigma has a pair of ordinary getvar fields behind it, and asking for the sigma silently asks
+# for both. These lists were written out four times across two files and had already drifted
+# (the hydro off-axis copy was missing the three spherical entries), so they live here now.
+const _SIGMA_TO_V = SortedDict(
+    :σx          => [:vx,          :vx2],
+    :σy          => [:vy,          :vy2],
+    :σz          => [:vz,          :vz2],
+    :σ           => [:v,           :v2],
+    :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
+    :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2],
+    :σr_sphere   => [:vr_sphere,   :vr_sphere2],
+    :σθ_sphere   => [:vθ_sphere,   :vθ_sphere2],
+    :σϕ_sphere   => [:vϕ_sphere,   :vϕ_sphere2] )
+
+const _SIGMA_NAMES = collect(keys(_SIGMA_TO_V))
+
+# Camera-frame kinematics. These are NOT getvar fields and never can be: the component depends on
+# where the camera is, so there is nothing to store per cell. They are built in the off-axis
+# deposit from the camera basis, which is why they exist off-axis only.
+#   :vlos / :σlos    along the line of sight   (cam_w)
+#   :vcamx / :σcamx  along image x             (cam_right)
+#   :vcamy / :σcamy  along image y             (cam_up)
+const _CAM_KINEMATICS = (:vlos, :σlos, :vcamx, :σcamx, :vcamy, :σcamy)
+
+# The mean and the width of the same weighted deposit.
+#   g1 = Σ w·v , g2 = Σ w·v² , w = Σ w
+# Written out four times before, with small differences each time (one site divided the second
+# moment by a second weight grid, one clamped with a comparison instead of `max`). One copy.
+function _moments_mean(g1, w)
+    m = zeros(Float64, size(g1))
+    nz = w .> 0
+    m[nz] = g1[nz] ./ w[nz]
+    return m
+end
+
+function _moments_dispersion(g1, g2, w)
+    meanv  = _moments_mean(g1, w)
+    meanv2 = _moments_mean(g2, w)
+    # clamp at zero: <v²> - <v>² is non-negative in exact arithmetic, but round-off can make a
+    # pixel fed by a single cell come out at -1e-19, and sqrt of that is a NaN in the map.
+    return sqrt.(max.(meanv2 .- meanv .^ 2, 0.0))
+end
+
 
 # Deterministic perpendicular reference: the world axis least parallel to `w` (ties broken by
 # axis order x<y<z), Gram-Schmidt-orthogonalised against `w`. Reproducible, never parallel to `w`.
