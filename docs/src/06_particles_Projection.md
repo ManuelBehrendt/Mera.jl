@@ -491,6 +491,11 @@ holds the mass-weighted mean particle mass per pixel, which is a mass spectrum a
 check, not a per-pixel total. For the mass per pixel use `:sd` and multiply by the pixel area:
 `sum(m.maps[:sd]) * (m.pixsize * m.scale.pc)^2`.
 
+**`mode=:sum` turns it into a total.** `projection(part, :mass, :Msol; mode=:sum)` returns the
+mass in each pixel instead of the mean particle mass, and the map then sums to the mass of
+everything projected. It agrees with `:sd` times the pixel area exactly, so either route is
+fine; the default stays `:standard` so nothing already measured moves.
+
 ```julia
 # Access the maps dictionary containing projection data
 projvel_z.maps  # NaN for empty regions

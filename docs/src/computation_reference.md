@@ -758,13 +758,24 @@ Conceptual guide and worked examples: [Profiles & Phase Diagrams](profiles_phase
 | Column mass `:mass` | ``\textstyle\sum m`` |
 | Weighted-mean map, `mode=:standard` (default) | ``\langle q\rangle = \big(\textstyle\sum q\,w\big)\big/\big(\textstyle\sum w\big)`` |
 | Column sum, `mode=:sum` | ``\textstyle\sum q`` (extensive; conserves the total) |
-| Velocity dispersion ``\;`` `:σx :σy :σz :σ :σr_cylinder :σϕ_cylinder` (axis-aligned), `:σlos` (off-axis) | ``\sigma = \sqrt{\max\!\big(\langle v^2\rangle - \langle v\rangle^2,\;0\big)}`` |
+| Velocity dispersion, **box frame** ``\;`` `:σx :σy :σz :σ :σr_cylinder :σϕ_cylinder :σr_sphere :σθ_sphere :σϕ_sphere` | ``\sigma = \sqrt{\max\!\big(\langle v^2\rangle - \langle v\rangle^2,\;0\big)}`` |
+| Velocity dispersion, **camera frame** ``\;`` `:σlos` `:σcamx` `:σcamy` (off-axis only) | the same formula, on ``v\cdot\hat{w}``, ``v\cdot\hat{r}``, ``v\cdot\hat{u}`` |
 
 The dispersion maps are built from two deposited maps, ``\langle v\rangle`` and ``\langle v^2\rangle``,
 so ``\sigma`` is the spread **about that pixel's own weighted-mean velocity**, the local
 line-of-sight (or component) dispersion, with the per-pixel mean (the bulk + rotation seen down that
-column) removed by construction; the ``\max(\cdot,0)`` guards round-off. The axis-aligned ``:σ*`` are
-map-only and need `direction=:x/:y/:z`; `:σlos` works for any off-axis line of sight.
+column) removed by construction; the ``\max(\cdot,0)`` guards round-off.
+
+Both frames work on an off-axis view. The **box-frame** set resolves the velocity along the
+simulation axes, so `:σz` is the spread along the box z whatever the camera is doing. The
+**camera-frame** set resolves it along the viewing direction and the two image axes, and exists
+only off-axis, because there is no camera basis on the axis-aligned path. The two describe one
+tensor in two frames, so their traces agree:
+``\sigma_{camx}^2 + \sigma_{camy}^2 + \sigma_{los}^2 = \sigma_x^2 + \sigma_y^2 + \sigma_z^2``
+per pixel.
+
+Note that `:σ` is the spread of the **speed**, ``\sqrt{\langle|v|^2\rangle - \langle|v|\rangle^2}``,
+which is not the tensor trace ``\langle|v|^2\rangle - |\langle v\rangle|^2`` and is smaller.
 
 ## Velocity dispersion: which σ am I getting?
 
