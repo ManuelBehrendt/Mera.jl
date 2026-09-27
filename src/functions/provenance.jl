@@ -29,7 +29,10 @@ function _mera_build()
     isempty(_MERA_BUILD[]) || return _MERA_BUILD[]
     out = try
         dir = pkgdir(@__MODULE__)
-        if dir !== nothing && isdir(joinpath(dir, ".git"))
+        # `ispath`, not `isdir`: in a git WORKTREE `.git` is a small file pointing at the main
+        # repository, not a directory. `isdir` missed it, so a worktree build was stamped with
+        # the plain release number, which is the exact mix-up this function exists to prevent.
+        if dir !== nothing && ispath(joinpath(dir, ".git"))
             rev    = readchomp(`git -C $dir rev-parse --short HEAD`)
             branch = readchomp(`git -C $dir rev-parse --abbrev-ref HEAD`)
             dirty  = isempty(readchomp(`git -C $dir status --porcelain`)) ? "" : " +uncommitted"

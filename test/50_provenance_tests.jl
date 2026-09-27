@@ -92,3 +92,20 @@ let cp = joinpath(SIMULATION_PATH, "RAMSES/yt_cosmo")
 end
 
 end
+
+@testset "mera_build names a development checkout, a git worktree included" begin
+    # In a git WORKTREE `.git` is a file, not a directory. The detection used `isdir`, so a
+    # worktree build was stamped with the plain release number: a result made on development
+    # code looked like one made on the release, which is what mera_build exists to prevent.
+    dir = pkgdir(Mera)
+    plain = get(ENV, "MERA_PROVENANCE_PLAIN", "") in ("1", "true")
+    if dir !== nothing && ispath(joinpath(dir, ".git")) && !plain
+        Mera._MERA_BUILD[] = ""                       # drop any cached answer
+        b = mera_build()
+        @test occursin("(dev ", b)                    # a checkout is never reported as the release
+        @test occursin(" @ ", b)                      # and it names the commit
+        isfile(joinpath(dir, ".git")) && @test occursin("(dev ", b)   # the worktree case itself
+    else
+        @test_skip "not running from a git checkout, or MERA_PROVENANCE_PLAIN is set"
+    end
+end
