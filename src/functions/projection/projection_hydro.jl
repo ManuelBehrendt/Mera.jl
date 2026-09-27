@@ -587,7 +587,9 @@ Which to reach for:
   components, and unlike `inclination`/`azimuth` it is measured from the box axes rather than from a
   reference axis you choose.
 
-- **`inclination`, `azimuth`** (user-oriented; `azimuth` alias `position_angle`): tilt the view
+- **`inclination`, `azimuth`** (user-oriented): tilt the view. `position_angle` is **not** an
+  alias of `azimuth`: `azimuth` turns the camera about the reference axis and changes the line
+  of sight, while `position_angle` rolls the finished image about it and leaves `m.los` alone
   away from a reference `axis` by `inclination` (0°⇒down the axis, 90°⇒⟂ to it) and rotate
   around it by `azimuth`.
 - **`axis`**: reference axis for inclination/azimuth. Default `:z` (box vertical — assumes
@@ -793,7 +795,9 @@ Returns `AMRMapsType` (alias: `HydroMapsType`) containing:
 - **`.pixsize`**: pixel size in **code length** units (× `proj.scale.<unit>` for physical)
 - **`.lmax_projected`**: Maximum AMR level included in projection
 - **`.ranges`**: normalized `[0,1]` coordinate ranges (this is the fractional field, unlike `.extent`)
-- **`.center`**: projection centre, in **code length** units
+- **`.center`**: projection centre as a **box fraction** (0 to 1), not a length. Off-axis it
+  records the resolved centre; on the axis-aligned path it comes back empty. A `slice`
+  result's `.center` is a different quantity with the same name, in code units
 
 ### Radiative transfer (RT) projections
 

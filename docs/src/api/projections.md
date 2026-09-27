@@ -56,15 +56,21 @@ projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbo
 
 ### Common keyword arguments
 
+These are the **grid** (hydro / gravity / RT) keywords. The particle projection differs: its
+`binning` default is `:cic`, its `weighting` is a bare `Symbol`, and it has no `nmax`, `depth`,
+`split`, `refine` or `refine_to` at all (passing one is a `MethodError`). It adds `parttypes`,
+`thickness`/`offset` and `nlos`. See the particle section below and the
+[off-axis cheatsheet](../offaxis_cheatsheet.md) for the full split.
+
 | Keyword | What it does |
 |---|---|
 | `pxsize=[value, :unit]` | physical size of a map pixel, the preferred way to set resolution |
 | `res` | grid cells per side instead of a physical pixel size |
-| `lmax` | cap the AMR level used; defaults to the object's own `lmax` |
+| `lmax` | sets the default resolution, `res = 2^lmax`. It does **not** coarsen the data: the deposit always runs over every level the object holds |
 | `direction` | `:x`, `:y`, `:z` (default `:z`), or `:faceon`/`:edgeon`, which derive the orientation from the data's own angular momentum |
 | `los`, `up`, `theta`, `phi`, `inclination`, `azimuth` | off-axis line of sight: see [Off-axis](offaxis.md) |
 | `weighting` | how intensive quantities are averaged (see the note below) |
-| `mode` | `:standard` normalises per area; `:sum` returns the raw weighted sum |
+| `mode` | `:standard` is a weighted **mean**, `Σ(q·w)/Σw`; `:sum` is the per-pixel total. Neither divides by area: only `:sd` does that, in both modes. `:sd` and `:mass` ignore `mode` entirely |
 | `mask` | a boolean array from [`getmask`](@ref), applied before projecting; combines with `fov` |
 | `fov`, `fov_unit`, `aperture` | a rotation-invariant camera-plane window; `fov=[wx,wy]` for a rectangle (needs `aperture=:square`) |
 | `depth`, `depth_unit` | a slab cut **along the line of sight**, off-axis only |
@@ -138,7 +144,7 @@ projection(hydro, [:T, :v], [:K, :km_s])     # Multi-variable
 particles = getparticles(info, ...)
 projection(particles, :age, :Myr)            # Stellar age
 projection(particles, :sd, :Msol_pc2)        # Stellar surface density
-projection(particles, :mass, :Msol)          # Mass distribution
+projection(particles, :mass, :Msol; mode=:sum)   # mass per pixel (the default is a MEAN)
 ```
 
 ## General Projection Types

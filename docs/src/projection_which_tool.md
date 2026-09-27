@@ -10,7 +10,7 @@ Everything here works the same on hydro and, unless noted, on particles.
 | I want | Use |
 |---|---|
 | a map along a box axis | `projection(gas, :sd; direction=:z)`, see [Hydro](06_hydro_Projection.md) / [Particles](06_particles_Projection.md) |
-| a galaxy face-on or edge-on | `projection(gas, :sd; direction=:faceon)`, which derives the orientation from the data's own angular momentum. No preparation step needed |
+| a galaxy face-on or edge-on | `projection(gas, :sd; direction=:faceon)`, which derives the orientation from the data's own angular momentum. Restrict that sum with `angmom_radius`, or a whole-box `L` can tilt a "face-on" disc by tens of degrees |
 | any other viewing angle | `inclination`/`azimuth` about a reference `axis`, or an explicit `los=[x,y,z]`, see [Off-axis](06_offaxis_Projection.md) |
 | the disc's axis as a bare 3-vector | [`angmom`](@ref)`(gas; center=[:bc], radius=[10,:kpc])`, and `angmom([gas, stars, dm])` to set it from several components at once |
 | the disc's axis as a ready-made frame | [`face_on`](@ref) / [`edge_on`](@ref), which return a frame whose `los`/`up`/`center` splat into any later call |
@@ -95,8 +95,10 @@ The practical consequences:
   and the `:ncell`/`:npart` counters
 * the off-axis path has `fov`/`aperture` framing, which the axis-aligned one does not need
 
-Particles need no such split: their deposition kernels are rotation-invariant, so the same code
-serves both.
+Particles have two paths as well, and they differ in more than speed: the axis-aligned one is a
+plain histogram (so `binning` is not read, and empty pixels are `NaN`), while the off-axis one
+deposits through the camera basis (empty pixels are `0.0`, `:overlap`/`:exact` fall back to
+`:cic`, and `:npart` exists only there).
 
 ## Where the detail lives
 

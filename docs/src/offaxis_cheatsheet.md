@@ -128,7 +128,9 @@ exactly on a face while the refined snapshot puts almost none there, and because
 is a handful of coarse cells across but hundreds of fine ones. **Do not carry either number to
 your own run**: measure it, as Chapter 5 of the [tutorial](06_offaxis_Projection.md) does.
 
-Particles are points and have no volume, so `split` does nothing for them.
+!!! warning "`split`, `depth`, `refine` and `nmax` are grid-only"
+    They are not keywords of the particle projection at all, so passing one is a
+    `MethodError`, not a no-op. A point has no volume to split and no footprint to refine.
 
 ### Getting the mass right, and getting the edge sharp
 
@@ -198,19 +200,27 @@ box, measuring about its own centre of mass largely cancels that.
 |---|---|---|
 | `:ngp` | the cell's centre picks one pixel | cheapest, blockiest |
 | `:cic` | bilinear over a 2x2 stencil | cheap |
-| `:overlap` (default) | splits the cell into `n³` sub-points, `n = ⌈cell/pixel⌉`, capped by `nmax=64` | accurate |
+| `:overlap` (**grid default**) | splits the cell into `n³` sub-points, `n = ⌈cell/pixel⌉`, capped by `nmax=64` | accurate |
 | `:exact` | analytic footprint | accurate, slowest |
 
 All four are partitions of unity, so all four conserve the total exactly. They differ in how the
 weight is spread, not in how much there is.
 
-Particles are points with no footprint, so `:overlap` and `:exact` fall back to `:cic` and say so.
+!!! warning "Two conditions, or the total is not the total"
+    Every share must land on the grid, which the auto-fitted frame guarantees, and nothing
+    may be cropped afterwards. `fov` with `aperture=:square` **does** crop, and how much it
+    removes depends on the viewing angle, so never read a total off such a map. Check it:
+    `sum(m.maps[:sd]) * (m.pixsize * m.scale.pc)^2` against `msum(obj, :Msol)`.
+
+**On particles the default is `:cic`,** not `:overlap`. Points have no footprint, so `:overlap`
+and `:exact` fall back to `:cic` and say so once. `nmax` does not exist there.
 
 ## Variables
 
 ### Available on any path
 
-Everything `getvar` can produce: `:sd`, `:mass`, `:rho`, `:T`, `:vx`, and so on.
+Almost everything `getvar` can produce: `:sd`, `:mass`, `:rho`, `:T`, `:vx`, the velocity
+dispersions, and so on. The three exceptions are listed under **Axis-aligned only** below.
 
 ### Off-axis only
 
@@ -291,7 +301,8 @@ cold = getvar(gas, :T, :K) .< 1e4
 projection(gas, :sd; los=[1,2,3], mask=cold, fov=16, fov_unit=:kpc)
 ```
 
-It composes with `fov`, `depth`, `split` and `parttypes`. On particles it also sets the camera,
+It composes with `fov` everywhere, with `depth` and `split` on grid data, and with
+`parttypes` on particles. On particles it also sets the camera,
 so `parttypes=[:dm], direction=:faceon` orients on the dark matter alone.
 
 For value-space selection, [`filterdata`](@ref) and [`getmask`](@ref) build masks from any getvar
@@ -311,7 +322,7 @@ sl = slice(gas, :rho, :g_cm3; los=[1,2,3], center=[:bc], pxsize=[0.5,:kpc])
 | `sl.map` | the value, `NaN` where the plane painted nothing |
 | `sl.coverage` | which pixels were painted |
 | `sl.cellsize` | the size of the cell that won each pixel |
-| `sl.depth` | how far along the view that cell sat |
+| `sl.depth` | how far along the view that cell sat (`Inf` where nothing was painted) |
 
 There is no cell count, because it would read 1 everywhere. `cellsize` against `pixsize` is the
 useful diagnostic: where the cell is larger than the pixel, the extra pixels carry no extra
@@ -322,7 +333,10 @@ information.
 | field | is |
 |---|---|
 | `m.maps[:var]` | the map |
-| `m.maps_unit`, `m.maps_mode`, `m.maps_weight` | what each map is in, and how it was made |
+| `m.maps_unit`, `m.maps_mode` | what each map is in, and how it was made |
+| `m.maps_weight` | **grid maps only**; particle maps have no such field |
+| `m.maps_lmax` | **always empty**, on every path. A leftover field, not a record |
+| `m.center` | a **box fraction**, not a length (a `slice` result's `.center` is code units) |
 | `m.los`, `m.up`, `m.cam_right` | the camera that made it |
 | `m.extent`, `getextent(m, :kpc)` | the frame, relative to the centre |
 | `m.pixsize`, `m.ratio`, `m.center` | pixel size, aspect, and the centre used |

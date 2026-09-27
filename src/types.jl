@@ -1051,8 +1051,8 @@ set to 0 for RT.
   `:volume` under `mode=:sum`) it is the per-pixel column/sum. Access as `proj.maps[:sd]`.
 - `maps_unit::SortedDict{Symbol,Symbol}` — the physical unit of each map (e.g. `:Msol_pc2`,
   `:g_cm3`, `:km_s`, `:standard` for code units), keyed by the same symbols as `maps`.
-- `maps_lmax::SortedDict` — per-map record of the AMR level a map was projected onto (relevant
-  when a coarser `lmax` than the simulation maximum was requested).
+- `maps_lmax::SortedDict` — **always empty.** A leftover field: both projection engines
+  create it and neither ever writes to it. Do not read a level from it.
 - `maps_weight::SortedDict{Symbol,Symbol}` — the weighting used per map: `:mass`, `:volume`, or
   `:nothing` for the extensive `:sum`/`:sd` accumulations that carry no weighting.
 - `maps_mode::SortedDict{Symbol,Symbol}` — how each map was reduced: `:mass_weighted`,
@@ -1133,7 +1133,8 @@ quantity onto the sky grid; provenance is preserved in the `.info` field.
   pixel area; intensive variables are mass- or volume-weighted averages per pixel.
 - `maps_unit::SortedDict{Symbol,Symbol}` — the physical unit of each map (e.g. `:Msol_pc2`,
   `:km_s`, `:standard` for code units), keyed by the same symbols as `maps`.
-- `maps_lmax::SortedDict` — per-map record of the grid level the deposit used.
+- `maps_lmax::SortedDict` — **always empty.** A leftover field that is created and never
+  written, on this path as on the grid one.
 - `maps_mode::SortedDict{Symbol,Symbol}` — how each map was reduced: `:mass_weighted`,
   `:volume_weighted`, `:sph`, `:voronoi`, or `:sum` when `mode=:sum` was given. `weighting`
   picks the weight, `mode` picks a weighted mean against a per-pixel total.

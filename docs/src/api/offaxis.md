@@ -154,10 +154,14 @@ The `direction` presets are shortcuts. These pairs give the same line of sight:
 | preset | angle form | is it the same view? |
 |---|---|---|
 | `direction=:z` | `inclination=0, axis=:z` | yes, identical |
-| `direction=:faceon` | `inclination=0, axis=:angmom` | yes, identical |
+| `direction=:faceon` | `inclination=0, axis=:angmom` | same line of sight, **different roll** |
 | `direction=:edgeon` | `inclination=90, axis=:angmom` | edge-on in both, but from a different side |
 
-The first two rows give exactly the same line of sight. The third does not. Every edge-on view is
+The first two rows give exactly the same line of sight. The second pair does not give the same
+IMAGE: a face-on view leaves the roll about the line of sight undetermined, and the two code
+paths break that tie differently, so one comes out rotated with respect to the other by an
+angle that depends on where the spin axis points. Compare `m.los`, not the pixels, and pin
+`up=` if you need two spellings to agree. The third row does not match at all. Every edge-on view is
 perpendicular to the spin axis, but there are many of them, one for each point around the disk.
 `:edgeon` picks one for you, and `inclination=90` lets you choose with `azimuth`. Use the preset
 when any edge-on view will do, and the angles when you need a particular one.
