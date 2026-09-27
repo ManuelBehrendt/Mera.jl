@@ -123,7 +123,7 @@ fig
 ```
 
 ```
-VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.3 %   (23.4 s)
+VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.4 %   (23.0 s)
 VolumeLook(:rho in :nH, log (-2.0, 2.0), :inferno, opacity (0.0, 1.0), exposure 2.5, τ=1 over 120.0 pc)
 ```
 
@@ -218,8 +218,8 @@ fig
 ```
 
 ```
-pixels of 240 pc: (137, 95), filled 14.8 %
-pixels of 30 pc: (1075, 742), filled 15.3 %
+pixels of 240 pc: (137, 95), filled 14.9 %
+pixels of 30 pc: (1075, 742), filled 15.4 %
 ```
 
 ![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_14_5.png)
@@ -587,14 +587,14 @@ fig
 ```
 
 ```
-pixel size 240 pc: (137, 95)  6.87 s
-pixel size 120 pc: (271, 187)  7.14 s
-pixel size 60 pc: (539, 372)  8.96 s
-pixel size 30 pc: (1075, 742)  13.19 s
-sphere of 4 kpc: 2427002 cells  0.76 s
-sphere of 8 kpc: 6626805 cells  2.5 s
-sphere of 16 kpc: 20737653 cells  7.27 s
-time ~ pixels^0.16   and   time ~ cells^1.05
+pixel size 240 pc: (137, 95)  7.18 s
+pixel size 120 pc: (271, 187)  7.34 s
+pixel size 60 pc: (539, 372)  9.18 s
+pixel size 30 pc: (1075, 742)  13.2 s
+sphere of 4 kpc: 2427002 cells  0.75 s
+sphere of 8 kpc: 6626805 cells  2.58 s
+sphere of 16 kpc: 20737653 cells  7.41 s
+time ~ pixels^0.15   and   time ~ cells^1.07
 ```
 
 ![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_32_15.png)

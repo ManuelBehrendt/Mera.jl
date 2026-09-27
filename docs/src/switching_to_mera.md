@@ -116,7 +116,6 @@ info = infodata(390, AVALON, verbose=false);                   # metadata only â
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Mera v1.8.0
 ```
 
 `info` already knows everything about the snapshot (levels, box size, which files exist,

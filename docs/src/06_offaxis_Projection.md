@@ -490,20 +490,18 @@ angle between the gas and star angular-momentum axes = 0.03°
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_13_9.png)
 
-`direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight**: the two `ŵ`
-vectors agree to the last bit. On this galaxy they also give the same image, `0.0°` between the
-up vectors and a map difference of exactly zero.
+`direction=:faceon` and `inclination=0, axis=:angmom` are the **same view**: the same line of
+sight to the last bit, the same up vector, and a map difference of exactly zero.
 
-**That second agreement is luck, not a guarantee.** A face-on view leaves the roll about `ŵ`
-undetermined, and the two spellings choose it by different rules. `:faceon` uses the camera's
-up hint, which is stable near the pole. The `inclination` path takes its reference from the
-world axis least parallel to the spin axis, and for an axis a fraction of a degree off z that
-choice flips between x and y depending on which way the axis leans. This galaxy's axis leans
-toward y and the two agree; the same tilt leaning toward x gives 90°.
+That is by design, not luck. A face-on view leaves the roll about `ŵ` free, so something has to
+choose it, and one rule does so for every way of pointing the camera: with no `up=`, image up is
+world `+z` seen across the line of sight, or `+y` when the line of sight is within 3 degrees of
+the z axis. `inclination`/`azimuth` measure from that same reference, so `inclination=0` is the
+face-on preset and `inclination=90` the edge-on one, and `face_on(gas)` splatted into
+`projection` gives the same camera again.
 
-The last printed line shows what is at stake: rolling one image by 90° moves the map by about
-195 M⊙/pc², the difference you would see on a galaxy that leans the other way. If two spellings
-must give the same image, pin `up=` on both.
+The last printed line shows why the rule matters: rolling the image by 90° moves the map by
+about 195 M⊙/pc². Two spellings that chose the roll differently would disagree by that much.
 
 The lesson generalises past this one preset: whenever a view leaves a degree of freedom free,
 compare the **camera vectors**, not the pixels. Two correct maps of the same scene can differ by a

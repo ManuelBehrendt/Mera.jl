@@ -42,7 +42,7 @@ println("cells loaded : ", length(gas.data))
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[Mera]: 2026-09-26T20:53:49.777
+[Mera]: 2026-09-27T14:21:02.335
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -81,7 +81,7 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-09-26T20:53:51.555
+[Mera]: Get hydro data: 2026-09-27T14:21:04.207
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -93,7 +93,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 8
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.36 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (28.01 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -103,7 +103,7 @@ Creating Table from 28320979 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 35.448 seconds
+✓ Table created in 42.615 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 cells loaded : 28320979
@@ -160,10 +160,10 @@ println("angmom : ", round.(fr.angmom, sigdigits=4))
 GalaxyFrame:
   center (standard) = [0.5, 0.5005, 0.5004]
   los  = [-0.0004, -0.0002, 1.0]
-  up   = [-1.0, 0.0, -0.0004]
+  up   = [-0.0, 1.0, 0.0002]
   |angmom| = 160.2
 los    : [-0.0004, -0.0002, 1.0]
-up     : [-1.0, 0.0, -0.0004]
+up     : [-0.0, 1.0, 0.0002]
 center : [0.50001, 0.50046, 0.50044]  [standard]
 angmom : [-0.06597, -0.03328, 160.2]
 ```
@@ -182,10 +182,10 @@ println("los_faceon · los_edgeon = ", round(sum(fr.los .* eo.los), digits=6))
 ```
 GalaxyFrame:
   center (standard) = [0.5, 0.5005, 0.5004]
-  los  = [-0.0, 1.0, 0.0002]
+  los  = [0.0, -1.0, -0.0002]
   up   = [-0.0004, -0.0002, 1.0]
   |angmom| = 160.2
-edge-on los : [-0.0, 1.0, 0.0002]
+edge-on los : [0.0, -1.0, -0.0002]
 edge-on up  : [-0.0004, -0.0002, 1.0]
 los_faceon · los_edgeon = -0.0
 ```
@@ -285,13 +285,14 @@ println("edge-on Sigma extrema : ", extrema(p_edge.maps[:sd]))
 fig = Figure(size=(900, 420))
 ax1 = Axis(fig[1,1]; title="face-on  Sigma [Msol/pc^2]", aspect=DataAspect()); hidedecorations!(ax1)
 ax2 = Axis(fig[1,2]; title="edge-on  Sigma [Msol/pc^2]", aspect=DataAspect()); hidedecorations!(ax2)
-heatmap!(ax1, log10.(p_face.maps[:sd]'); colormap=:inferno)
-heatmap!(ax2, log10.(p_edge.maps[:sd]'); colormap=:inferno)
+# no transpose: a map's first index is image x, which is what heatmap puts on x
+heatmap!(ax1, log10.(p_face.maps[:sd]); colormap=:inferno)
+heatmap!(ax2, log10.(p_edge.maps[:sd]); colormap=:inferno)
 fig
 ```
 
 ```
-[Mera]: 2026-09-26T20:55:20.363
+[Mera]: 2026-09-27T14:22:42.583
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -301,7 +302,7 @@ Selected var(s)=(:sd,)
 Weighting      = :mass
 Off-axis LOS   = [-0.0004, -0.0002, 1.0]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-[Mera]: 2026-09-26T20:55:32.410
+[Mera]: 2026-09-27T14:22:52.301
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -309,13 +310,13 @@ ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 Selected var(s)=(:sd,)
 Weighting      = :mass
-Off-axis LOS   = [-0.0, 1.0, 0.0002]  (binning=:overlap)
+Off-axis LOS   = [0.0, -1.0, -0.0002]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-face-on Sigma extrema : (0.0, 200.81405317206742)
-edge-on Sigma extrema : (0.0, 6539.3160386012305)
+face-on Sigma extrema : (0.0, 197.12448191215034)
+edge-on Sigma extrema : (0.0, 6535.0811176608195)
 ```
 
-![](galaxyframe_files/galaxyframe_14_9.png)
+![](galaxyframe_files/galaxyframe_14_8.png)
 
 ## Several galaxies, mergers, cosmological boxes
 
@@ -358,7 +359,7 @@ println("aperture-framed center [kpc] : ", round.(fr_ap.center, digits=4))
 GalaxyFrame:
   center (kpc) = [24.0003, 24.022, 24.0212]
   los  = [-0.0004, -0.0002, 1.0]
-  up   = [-1.0, 0.0, -0.0004]
+  up   = [-0.0, 1.0, 0.0002]
   |angmom| = 160.2
 aperture-framed center [kpc] : [24.0003, 24.022, 24.0212]
 ```
