@@ -477,7 +477,7 @@ maprow(sladder, :sd, ["stars, i = 0°", "stars, i = 30°", "stars, i = 60°", "s
 max |ŵ_faceon − ŵ_inc0|     = 0.0
 angle(û_faceon, û_inc0)     = 0.0°
 max |Σ_faceon − Σ_inc0|     = 0.0
-max |Σ_faceon − Σ_inc0,PA=-90| = 194.82991713523964
+max |Σ_faceon − Σ_inc0,PA=-90| = 194.82990158583357
 inclination + los         → ArgumentError
 direction=:faceon + axis  → ArgumentError
 ```
@@ -621,7 +621,7 @@ end
              These are WORLD-space bounds, so after rotation the full box depth folds into
              the image. Pass `zrange`, or `fov=<half-width>` for a fixed camera frame.
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-09-27T06:57:56.844
+[Mera]: 2026-09-27T14:54:33.039
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -847,10 +847,10 @@ maprow([p.map for p in panmaps], :sd,
 
 ```
 center                t [s]   extent [kpc]                  mass in frame [Msol]
-centre                5.7     [-10.2, 10.3, -10.3, 10.2]    5.453e9
-8 kpc along x         3.8     [-10.3, 10.3, -10.4, 10.3]    3.699e9
-8 kpc along y         3.7     [-10.3, 10.3, -10.4, 10.3]    3.692e9
-12 kpc out, corner    1.1     [-10.5, 10.5, -10.7, 10.5]    5.032e8
+centre                6.2     [-10.2, 10.3, -10.3, 10.2]    5.453e9
+8 kpc along x         3.4     [-10.3, 10.3, -10.4, 10.3]    3.699e9
+8 kpc along y         2.5     [-10.3, 10.3, -10.4, 10.3]    3.692e9
+12 kpc out, corner    1.0     [-10.5, 10.5, -10.7, 10.5]    5.032e8
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_26_2.png)
@@ -927,7 +927,7 @@ fov=[16,4]   frame (321, 80)    pixels 25680     extent [-16.0, 16.0, -4.0, 4.0]
 the rectangle uses 24.9 % of the square's pixels for the same disc
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_31_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_31_3.png)
 
 ## 4. Depth along the line of sight
 
@@ -1351,14 +1351,14 @@ level 10.0:  cell 0.0469  kpc  →  9.4 pixels per cell at pxsize = 0.005 kpc
 level 11.0:  cell 0.0234  kpc  →  4.7 pixels per cell at pxsize = 0.005 kpc
 level 12.0:  cell 0.0117  kpc  →  2.3 pixels per cell at pxsize = 0.005 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       39.0 %     1.477     0.4115
-cic       14.8 %     1.092     0.2638
-overlap   0.0 %      2.555     0.0131
-exact     0.0 %      9.683     0.0
+ngp       35.0 %     1.766     0.4154
+cic       12.8 %     1.082     0.267
+overlap   0.0 %      2.44      0.0128
+exact     0.0 %      9.126     0.0
 stars     empty px   time [s]  what it does
-ngp       53.3 %     0.01      whole star in the nearest pixel
-cic       17.1 %     0.02      bilinear over 2x2
-stars in this window: 153531
+ngp       53.0 %     0.02      whole star in the nearest pixel
+cic       17.0 %     0.02      bilinear over 2x2
+stars in this window: 154129
   binning=:overlap  returns the :cic map exactly: true
   binning=:exact    returns the :cic map exactly: true
 ```
@@ -1391,11 +1391,11 @@ end
 ```
 
 ```
-total flux  overlap/exact = 0.999995
+total flux  overlap/exact = 0.999959
 pixels                    count   median    p99       max  [dex]
-faint   (<0.1% of peak)   74819   0.00173   0.0179    0.0277
-mid     (0.1-10%)         238525  0.01616   0.0476    0.13302
-bright  (>10% of peak)    46656   0.02052   0.04878   0.07281
+faint   (<0.1% of peak)   65978   0.00171   0.01165   0.02181
+mid     (0.1-10%)         202946  0.01395   0.04642   0.14891
+bright  (>10% of peak)    91076   0.0202    0.04863   0.07943
 ```
 
 !!! warning "Do not carry these numbers to another simulation"
@@ -1868,14 +1868,14 @@ println("  gas median σ_LOS edge-on  = ", round(median(gσ), digits=1), " km/s 
 ```
 
 ```
-edge-on   max |v_LOS| = 218.1 km/s
+edge-on   max |v_LOS| = 211.7 km/s
 face-on   max |v_LOS| = 47.1 km/s
-median σ_LOS edge-on  = 20.3 km/s
-stars edge-on   max |v_LOS| = 257.3 km/s
+median σ_LOS edge-on  = 19.5 km/s
+stars edge-on   max |v_LOS| = 234.6 km/s
 stars face-on   max |v_LOS| = 20.6 km/s
-stars: pixels with σ > 0    = 1558 of 4675   (33.3 %)
-stars median σ_LOS edge-on  = 22.2 km/s   (over those pixels)
-  gas median σ_LOS edge-on  = 20.3 km/s   (same measure)
+stars: pixels with σ > 0    = 1568 of 4743   (33.1 %)
+stars median σ_LOS edge-on  = 22.0 km/s   (over those pixels)
+  gas median σ_LOS edge-on  = 19.5 km/s   (same measure)
 ```
 
 ```julia
@@ -1960,9 +1960,9 @@ end
 
 ```
 pxsize [kpc]   median σ_LOS    mean σ_LOS
-0.15           20.3            25.2
-0.6            20.7            26.0
-2.4            21.3            28.8
+0.15           19.5            24.2
+0.6            19.8            24.9
+2.4            20.9            28.0
 ```
 
 Now the result, and it is not the one the "width inside a pixel" picture suggests: **on this
@@ -2047,9 +2047,9 @@ println("\nnull test, disc face-on: σ_LOS ", round(median(good(fA.maps[:σlos])
 
 ```
 selection                 σ_LOS before  after     removed, variance  width ratio
-all gas                   20.4          63.1      -857.2 %           3.094
-disc, |z| < 2 kpc         54.4          47.4      24.0 %             0.872
-disc, nbins = 400         54.4          47.4      24.2 %             0.871
+all gas                   19.5          63.8      -967.9 %           3.268
+disc, |z| < 2 kpc         53.3          46.9      22.6 %             0.88
+disc, nbins = 400         53.3          46.9      22.6 %             0.88
 null test, disc face-on: σ_LOS 6.9 → 6.9 km/s
 ```
 
@@ -2142,9 +2142,9 @@ println("\na median over the whole box instead would read ",
 ```
 σ_thermal per cell : 0.28 .. 1662.53 km/s   (whole box, so the top end is halo gas)
 equals cs/√γ       : true
-σ_bulk  (disc, rotation removed)  = 47.41 km/s
+σ_bulk  (disc, rotation removed)  = 46.9 km/s
 σ_therm (disc, mass-weighted rms) = 8.19 km/s
-σ_total = √(σ_bulk² + σ_therm²)   = 48.11 km/s
+σ_total = √(σ_bulk² + σ_therm²)   = 47.61 km/s
 a median over the whole box instead would read 19.05 km/s
 ```
 
@@ -2341,7 +2341,7 @@ println("          epot over filled pixels ", round.(extrema(filled), sigdigits=
 ```
 
 ```
-stars   : frame (184, 12)   los = [1.0, 0.0, 0.0]
+stars   : frame (187, 12)   los = [-0.0, -1.0, 0.0]
 gravity : maps Any[:epot, :sd]
           epot over filled pixels (-0.9779, -0.1408)   (1206 of 75076 pixels empty)
 ```
@@ -2381,15 +2381,15 @@ end
 
 ```
 thickness [kpc]   total       fraction of the full column
-20.0              22448.7     0.9969
-5.0               15224.8     0.6761
-1.0               3936.59     0.1748
+20.0              22423.3     0.9958
+5.0               15065.9     0.6691
+1.0               3840.64     0.1706
 offset [kpc]      total in a 2 kpc slab
--6.0              695.187
--2.0              4639.88
-0.0               7390.16
-2.0               4737.18
-6.0               674.024
+-6.0              702.843
+-2.0              4582.48
+0.0               7313.68
+2.0               4662.8
+6.0               749.579
 ```
 
 The slab total rises with thickness, as it must. The offset sweep is more interesting: read the
@@ -2463,8 +2463,8 @@ fig
 ```
 
 ```
-gas   frame (321, 321)   stars (275, 17)   potential (321, 321)
-φ along the line of sight: (-3057.0, -815.7) km²/s²
+gas   frame (321, 321)   stars (279, 17)   potential (321, 321)
+φ along the line of sight: (-3053.0, -815.5) km²/s²
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_81_3.png)
@@ -2564,7 +2564,7 @@ particle binning=:overlap falls back to :cic : true
 particle binning=:exact   falls back to :cic : true
 weighting=:sph off-axis (needs :volume)      : ArgumentError
 weighting=:voronoi off-axis (needs :volume)  : ArgumentError
-fov on particles, aperture=:circle           : (93, 7)
+fov on particles, aperture=:circle           : (95, 7)
 fov on particles, aperture=:square           : (7, 7)   <- the width is gone
 same, for the gas that fills the sphere      : (101, 101)
 slice(part, …)                               : MethodError
@@ -2704,7 +2704,7 @@ fig
 
 ```
 face-on  frame   (141, 139) at  199.2 pc pixels,   empty 32.4 %
-edge-on  frame    (547, 32) at   49.9 pc pixels,   empty 70.8 %
+edge-on  frame    (555, 32) at   49.9 pc pixels,   empty 71.4 %
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_88_3.png)
@@ -2842,8 +2842,8 @@ fig
 
 ```
 median stellar age over filled pixels : 248.2 Myr
-max |v_LOS| edge-on                 : 259.7 km/s
-median σ_LOS edge-on                : 22.7 km/s
+max |v_LOS| edge-on                 : 243.5 km/s
+median σ_LOS edge-on                : 22.9 km/s
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_91_3.png)
@@ -3406,11 +3406,11 @@ println("stellar mass in frame over the orbit: ", round(100*(maximum(tot)-minimu
 ```
 
 ```
-wrote assets/offaxis/orbit_movie.gif  (120 frames, 13404.0 KB)
+wrote assets/offaxis/orbit_movie.gif  (120 frames, 13403.7 KB)
 map size: (321, 321)   every frame the same size: true
 star frame sizes over the orbit: 59 distinct  (the gas movie above has 1)
 wrote assets/offaxis/orbit_movie_stars.gif  (120 frames, 6791.9 KB)
-stellar mass in frame over the orbit: 3.55e-14 % peak-to-peak of the mean, and 100.0 % of the total stellar mass is inside the frame
+stellar mass in frame over the orbit: 2.37e-14 % peak-to-peak of the mean, and 100.0 % of the total stellar mass is inside the frame
 ```
 
 The same orbit, gas on the left and stars on the right. The camera is identical; only the data
@@ -3545,7 +3545,7 @@ los = [1, 1, 1]       54.7 deg      -2.0         -2.5
 los = [2, 3, 1]       74.5 deg      -0.5         -3.5
 los = [1, 1, 0]       90.0 deg      2.0          -3.0
 direction = :faceon   (from L)      1.0          -3.0
-direction = :edgeon   (from L)      1.0          -3.5
+direction = :edgeon   (from L)      -5.5         -3.0
 ```
 
 The camera is given as an explicit `los` vector rather than as `inclination, axis=:angmom`. Both are
@@ -3660,10 +3660,10 @@ end
 
 ```
 binning    time [s]   empty pixels   gas :mass err [eps]  stars :sd x area err [eps]
-ngp        5.1        35.3 %         -0.5                 37.0
-cic        5.3        30.5 %         -0.5                 -3.0
-overlap    6.1        28.7 %         1.0                  -   (falls back to :cic, a point has no footprint)
-exact      12.7       29.0 %         1.0                  -   (falls back to :cic, a point has no footprint)
+ngp        7.9        35.3 %         -0.5                 37.0
+cic        11.7       30.5 %         -0.5                 -3.0
+overlap    12.1       28.7 %         1.0                  -   (falls back to :cic, a point has no footprint)
+exact      16.2       29.0 %         1.0                  -   (falls back to :cic, a point has no footprint)
 ```
 
 The four kernels place mass very differently, which is the whole of Chapter 7, and the empty-pixel
@@ -3748,10 +3748,10 @@ println(rpad(":exact", 8), rpad("-", 10), rpad(round(ulp(sum(E) * acap, Mgas), d
 delivered pixel : 93.57 pc
 a level 6 cell wants ns = 9 sub-points per cube axis
 nmax    time [s]  total err [eps]  median    p99       max      empty px
-1       4.9       1.0              0.00541   0.28826   9.21     28.14 %
-4       5.4       1.0              0.00271   0.03309   8.0      28.47 %
-8       5.3       1.0              0.00231   0.01005   7.22     28.53 %
-64      4.9       1.0              0.00382   0.01799   4.44     28.66 %
+1       11.0      1.0              0.00541   0.28826   9.21     28.14 %
+4       11.8      1.0              0.00271   0.03309   8.0      28.47 %
+8       13.8      1.0              0.00231   0.01005   7.22     28.53 %
+64      13.7      1.0              0.00382   0.01799   4.44     28.66 %
 :exact  -         157.0            -         -         -        28.64 %
 ```
 
@@ -4030,31 +4030,31 @@ px [pc]   kernel    map          t [s]    gas mass [eps]  E_kin :sum [eps]  star
 400.0     ngp       (29, 36)     1.9      0.0             0.0               69.0
 400.0     cic       (29, 36)     1.1      3.0             3.0               -5.0
 400.0     overlap   (29, 36)     1.4      3.0             2.0               -
-400.0     exact     (29, 36)     0.8      3.0             2.0               -
-200.0     ngp       (57, 70)     1.0      1.0             1.0               -46.0
-200.0     cic       (57, 70)     0.8      1.0             2.0               -5.0
-200.0     overlap   (57, 70)     0.9      1.0             2.0               -
-200.0     exact     (57, 70)     0.7      1.0             2.0               -
-100.0     ngp       (111, 137)   0.8      1.0             0.0               -0.5
-100.0     cic       (111, 137)   1.0      0.0             2.0               -3.5
-100.0     overlap   (111, 137)   0.8      1.0             1.0               -
-100.0     exact     (111, 137)   2.5      1.0             1.0               -
-50.0      ngp       (220, 272)   0.8      1.0             0.0               -3.5
-50.0      cic       (220, 272)   0.8      1.0             1.0               -6.0
-50.0      overlap   (220, 272)   0.9      1.0             1.0               -
-50.0      exact     (220, 272)   11.6     8.0             9.0               -
-20.0      ngp       (546, 677)   0.9      1.0             2.0               -8.0
-20.0      cic       (546, 677)   1.0      1.0             2.0               -6.0
-20.0      overlap   (546, 677)   1.9      1.0             1.0               -
-20.0      exact     (546, 677)   26.0     -76.0           -85.0             -
-10.0      ngp       (1090, 1351) 0.8      1.0             -                 -6.5
+400.0     exact     (29, 36)     1.1      3.0             2.0               -
+200.0     ngp       (57, 70)     1.4      1.0             1.0               -46.0
+200.0     cic       (57, 70)     1.2      1.0             2.0               -5.0
+200.0     overlap   (57, 70)     1.2      1.0             2.0               -
+200.0     exact     (57, 70)     1.6      1.0             2.0               -
+100.0     ngp       (111, 137)   1.3      1.0             0.0               -0.5
+100.0     cic       (111, 137)   1.3      0.0             2.0               -3.5
+100.0     overlap   (111, 137)   1.2      1.0             1.0               -
+100.0     exact     (111, 137)   3.9      1.0             1.0               -
+50.0      ngp       (220, 272)   1.2      1.0             0.0               -3.5
+50.0      cic       (220, 272)   1.3      1.0             1.0               -6.0
+50.0      overlap   (220, 272)   1.3      1.0             1.0               -
+50.0      exact     (220, 272)   19.2     8.0             9.0               -
+20.0      ngp       (546, 677)   1.4      1.0             2.0               -8.0
+20.0      cic       (546, 677)   1.5      1.0             2.0               -6.0
+20.0      overlap   (546, 677)   2.1      1.0             1.0               -
+20.0      exact     (546, 677)   27.4     -76.0           -85.0             -
+10.0      ngp       (1090, 1351) 0.9      1.0             -                 -6.5
 10.0      cic       (1090, 1351) 1.0      1.0             -                 -5.0
-10.0      overlap   (1090, 1351) 8.2      1.0             -                 -
-10.0      exact     (1090, 1351) 67.3     -18908.5        -                 -
+10.0      overlap   (1090, 1351) 8.6      1.0             -                 -
+10.0      exact     (1090, 1351) 71.2     -18908.5        -                 -
 5.0       ngp       (2178, 2701) 1.1      1.0             -                 -5.0
-5.0       cic       (2178, 2701) 1.0      1.0             -                 -6.0
-5.0       overlap   (2178, 2701) 54.0     1.0             -                 -
-5.0       exact     (2178, 2701) 208.2    -18849.0        -                 -
+5.0       cic       (2178, 2701) 1.2      1.0             -                 -6.0
+5.0       overlap   (2178, 2701) 55.1     1.0             -                 -
+5.0       exact     (2178, 2701) 211.0    -18849.0        -                 -
 ```
 
 ```julia
@@ -4134,7 +4134,7 @@ tilt [deg]  ngp        cic        overlap    exact      stars :cic
 90.0        5.0        7.0        -1.0       -1.0       -3.5
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_130_10.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_130_12.png)
 
 **Read the first panel from left to right.** `:ngp`, `:cic` and `:overlap` hold one machine epsilon
 across the whole range, from four times coarser than this cutout's coarsest cell to twice finer
