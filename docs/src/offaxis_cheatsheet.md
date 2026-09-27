@@ -69,6 +69,17 @@ sight is itself the z axis. That is what makes a box-axis `los` reproduce the ma
 Pass `up=` yourself whenever the default is not what you want. `position_angle` then rolls the
 result about the line of sight without changing `m.los`.
 
+**One rule, every spelling.** The same up rule is the reference for `inclination`/`azimuth` and
+for `face_on`/`edge_on`, so these are identical views, not merely the same line of sight:
+
+| | is exactly |
+|---|---|
+| `direction=:faceon` | `inclination=0, axis=:angmom`, and a `face_on(obj)` frame splatted in |
+| `direction=:edgeon` | `inclination=90, azimuth=0, axis=:angmom`, and an `edge_on(obj)` frame |
+
+Near the pole the up rule uses `+y` inside a 3 degree cone, so a face-on galaxy whose spin axis
+wobbles by a hundredth of a degree keeps its roll, and a face-on time series does not spin.
+
 ## Framing
 
 | keyword | does |

@@ -154,17 +154,19 @@ The `direction` presets are shortcuts. These pairs give the same line of sight:
 | preset | angle form | is it the same view? |
 |---|---|---|
 | `direction=:z` | `inclination=0, axis=:z` | yes, identical |
-| `direction=:faceon` | `inclination=0, axis=:angmom` | same line of sight, **different roll** |
-| `direction=:edgeon` | `inclination=90, axis=:angmom` | edge-on in both, but from a different side |
+| `direction=:faceon` | `inclination=0, axis=:angmom` | yes, identical |
+| `direction=:edgeon` | `inclination=90, axis=:angmom` | yes, identical (it is `azimuth=0`) |
+| `face_on(obj)` / `edge_on(obj)`, splatted in | the two rows above | yes, identical |
 
-The first two rows give exactly the same line of sight. The second pair does not give the same
-IMAGE: a face-on view leaves the roll about the line of sight undetermined, and the two code
-paths break that tie differently, so one comes out rotated with respect to the other by an
-angle that depends on where the spin axis points. Compare `m.los`, not the pixels, and pin
-`up=` if you need two spellings to agree. The third row does not match at all. Every edge-on view is
-perpendicular to the spin axis, but there are many of them, one for each point around the disk.
-`:edgeon` picks one for you, and `inclination=90` lets you choose with `azimuth`. Use the preset
-when any edge-on view will do, and the angles when you need a particular one.
+All of these agree because one rule decides which way is up. With no `up=`, the image up is
+world `+z` seen across the line of sight, or `+y` when the line of sight is within 3 degrees of
+the z axis, where `+z` would give no usable direction. `inclination`/`azimuth` measure from the
+same reference, so `inclination=0` is the face-on preset and `inclination=90` the edge-on one.
+
+Every edge-on view is perpendicular to the spin axis, but there are many of them, one for each
+point around the disc. `:edgeon` is the one at `azimuth=0`; `inclination=90` with another
+`azimuth` walks you around the disc. Use the preset when any edge-on view will do, and the angles
+when you need a particular one.
 
 Give exactly one line-of-sight specifier: `los=`, or `inclination`/`azimuth`, or `direction=`.
 Passing two raises an error instead of quietly picking one.
