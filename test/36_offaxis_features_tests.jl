@@ -784,6 +784,25 @@ end
             @test abs(dot(a,b)) < 1e-12 && isapprox(norm(a), 1; rtol=1e-12)
         end
 
+        # NEAR THE POLE the +z hint is useless: its component perpendicular to the line of
+        # sight is almost nothing, and the DIRECTION of that remainder is set by wherever the
+        # small tilt happens to point. A face-on galaxy whose spin axis sits a hundredth of a
+        # degree off z would otherwise get a roll chosen by that hundredth of a degree, and the
+        # next snapshot, with the axis wobbled, a quite different one. Inside the cone the hint
+        # is +y, which is stable and is what direction=:z uses.
+        ups = [Mera.build_camera_basis(normalize([a, b, 1.0]))[2]
+               for (a, b) in ((5.2e-4, 0.0), (0.0, 5.2e-4), (-5.2e-4, 0.0), (0.0, -5.2e-4))]
+        for u in ups
+            @test u ≈ ups[1] atol=1e-3          # a wobbling axis must not spin the image
+            @test abs(dot(u, [0.,1,0])) > 0.999 # and it is the stable +y hint
+        end
+        # outside the cone the hint is +z again, so an inclined view keeps north up
+        for i in (10, 30, 60)
+            _, u, _ = Mera.build_camera_basis(normalize([sind(i), 0.0, cosd(i)]))
+            @test u[3] > 0                       # +z component survives
+            @test isapprox(u[3], sind(i); atol=1e-9)
+        end
+
         # and it holds for a real map: the image centroid must land in the same place either way
         kw = (center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc], verbose=false, show_progress=false,
               xrange=[-10,10], yrange=[-10,10], zrange=[-10,10])

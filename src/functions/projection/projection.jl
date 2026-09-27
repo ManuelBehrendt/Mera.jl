@@ -43,14 +43,15 @@ function projection()
     println("==============[gas or particles]:===============")
     println(":v, :ekin")
     println("squared => :vx2, :vy2, :vz2")
-    println("velocity dispersion => σx, σy, σz, σ")
+    println("velocity dispersion => :σx, :σy, :σz, :σ")
     println()
     println("related to a given center:")
     println("---------------------------")
     println(":vr_cylinder, vr_sphere (radial components)")
     println(":vϕ_cylinder, :vθ")
     println("squared => :vr_cylinder2, :vϕ_cylinder2")
-    println("velocity dispersion => σr_cylinder, σϕ_cylinder ")
+    println("velocity dispersion => :σr_cylinder, :σϕ_cylinder")
+    println("velocity dispersion => :σr_sphere, :σθ_sphere, :σϕ_sphere")
     #println(":l, :lx, :ly, :lz :lr, :lϕ, :lθ")
     println()
     println("2d maps (not projected) => :r_cylinder, :ϕ")
@@ -74,8 +75,9 @@ function projection()
     println("    :vcamx / :σcamx               -> along image x (cam_right)")
     println("    :vcamy / :σcamy               -> along image y (cam_up)")
     println("       camera-frame only: these need a view, and are refused on direction=:x/:y/:z")
-    println("       the box-frame σx, σy, σz, σ, σr_cylinder ... work off-axis too, but stay")
-    println("       box axes: σz is the simulation z even in a face-on view")
+    println("       the box-frame :σx, :σy, :σz, :σ and the cylindrical and spherical ones")
+    println("       work off-axis too, but stay BOX axes: :σz is the simulation z even")
+    println("       in a face-on view")
     println("    slice (off-axis kwargs)       -> cutting plane (offset= moves it) ;  profile / phase -> 1D/2D reductions")
     println("    rotation_sequence             -> shared-FOV angle sweep (orbit movies)")
     println("    savemap/loadmap (JLD2)        -> store/restore a projection result")
@@ -202,9 +204,19 @@ end
 # `los=[0,0,1]` gives the same image orientation as `direction=:z`, and `los=[1,0,0]` the same as
 # an edge-on view with z up. When the line of sight IS the z axis there is no +z to project, so
 # fall back to +y, which is what `direction=:z` uses. Deterministic, never parallel to `w`.
+# How close to the z axis the line of sight may come before +z stops being a usable hint.
+# cos(3 degrees): inside that cone the component of +z perpendicular to the line of sight is
+# shorter than 0.053, and its DIRECTION is then set by where the small tilt happens to point.
+const _UP_HINT_POLE_COS = cosd(3.0)
+
 function _default_camera_up(w::AbstractVector{<:Real})
     zax = _WORLD_AXES[3]
-    hint = abs(dot(zax, w)) > 1 - 1e-8 ? _WORLD_AXES[2] : zax   # los along z: use +y instead
+    # Near the pole, +z projected perpendicular to `w` is almost nothing, and the direction of
+    # that remainder is decided by the azimuth of the tilt. A galaxy whose spin axis sits 0.03
+    # degrees off z would get a roll chosen by that 0.03 degrees, and the next snapshot, with
+    # the axis wobbled slightly, would get a quite different one. So inside the cone use +y,
+    # which is stable and is what `direction=:z` uses.
+    hint = abs(dot(zax, w)) > _UP_HINT_POLE_COS ? _WORLD_AXES[2] : zax
     u = hint .- dot(hint, w) .* w                               # Gram-Schmidt against the los
     return u ./ norm(u)
 end
