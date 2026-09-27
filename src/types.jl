@@ -645,7 +645,11 @@ mutable struct GridInfoType
     ngrid_current::Int
     bound_key::Array{Float64,1}
     cpu_read::Array{Bool,1}
-    GridInfoType() = new()
+    # Every record of the amr_XXXXX.out00001 header under its RAMSES name (:t and :aexp at full
+    # precision, :dtold/:dtnew per level, :nstep, :einit, :mass_tot_0, …). Needed to write a
+    # restartable RAMSES output from Mera data. Empty for mera files saved before this field existed.
+    amr_header::Dict{Symbol,Any}
+    GridInfoType() = (g = new(); g.amr_header = Dict{Symbol,Any}(); g)
 end
 
 """
