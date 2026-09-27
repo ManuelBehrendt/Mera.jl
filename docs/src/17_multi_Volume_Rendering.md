@@ -11,7 +11,7 @@
     This page is also an executable **Jupyter notebook**: [open / download `17_multi_Volume_Rendering.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/17_multi_Volume_Rendering.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-A projection adds a quantity up along the line of sight. **Volume rendering** instead gives every
+A projection reduces a quantity along the line of sight: a sum for `:sd` and `:mass` (and for anything with `mode=:sum`), a weighted mean for everything else. **Volume rendering** instead gives every
 cell a **colour** and an **opacity** from its value, and lets the gas in front cover the gas
 behind it:
 
@@ -123,7 +123,7 @@ fig
 ```
 
 ```
-VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.3 %   (23.5 s)
+VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.3 %   (23.4 s)
 VolumeLook(:rho in :nH, log (-2.0, 2.0), :inferno, opacity (0.0, 1.0), exposure 2.5, τ=1 over 120.0 pc)
 ```
 
@@ -587,14 +587,14 @@ fig
 ```
 
 ```
-pixel size 240 pc: (137, 95)  7.41 s
-pixel size 120 pc: (271, 187)  7.37 s
-pixel size 60 pc: (539, 372)  9.4 s
-pixel size 30 pc: (1075, 742)  15.19 s
-sphere of 4 kpc: 2427002 cells  0.84 s
-sphere of 8 kpc: 6626805 cells  2.49 s
-sphere of 16 kpc: 20737653 cells  7.73 s
-time ~ pixels^0.17   and   time ~ cells^1.03
+pixel size 240 pc: (137, 95)  6.87 s
+pixel size 120 pc: (271, 187)  7.14 s
+pixel size 60 pc: (539, 372)  8.96 s
+pixel size 30 pc: (1075, 742)  13.19 s
+sphere of 4 kpc: 2427002 cells  0.76 s
+sphere of 8 kpc: 6626805 cells  2.5 s
+sphere of 16 kpc: 20737653 cells  7.27 s
+time ~ pixels^0.16   and   time ~ cells^1.05
 ```
 
 ![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_32_15.png)

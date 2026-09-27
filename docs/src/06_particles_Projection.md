@@ -124,8 +124,8 @@ particles = getparticles(info);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-09-20T11:32:46.211
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[Mera]: 2026-09-27T05:16:54.083
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -164,17 +164,17 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get particle data: 2026-09-20T11:32:50.323
-Using threaded processing with 4 threads
+[Mera]: Get particle data: 2026-09-27T05:16:57.952
+Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-Processing 640 CPU files using 4 threads
+Processing 640 CPU files using 8 threads
 Mode: Threaded processing
-Combining results from 4 thread(s)...
+Combining results from 8 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :38.428720474243164 MB
 -------------------------------------------------------
@@ -226,6 +226,7 @@ further possibilities: :rho, :density, :ρ
 :x, :y, :z
 :sd or :Σ or :surfacedensity
 :mass, :cellsize, :freefall_time
+:ncell  (how many cells fed each pixel, off-axis)
 :cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber
 :t, :Temp, :Temperature with p/rho
 ==================[particles]:==================
@@ -234,16 +235,18 @@ further possibilities: :rho, :density, :ρ
 :x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
               -derived particle vars-
 :age
+:npart  (how many particles fed each pixel, off-axis)
 ==============[gas or particles]:===============
 :v, :ekin
 squared => :vx2, :vy2, :vz2
-velocity dispersion => σx, σy, σz, σ
+velocity dispersion => :σx, :σy, :σz, :σ
 related to a given center:
 ---------------------------
 :vr_cylinder, vr_sphere (radial components)
 :vϕ_cylinder, :vθ
 squared => :vr_cylinder2, :vϕ_cylinder2
-velocity dispersion => σr_cylinder, σϕ_cylinder
+velocity dispersion => :σr_cylinder, :σϕ_cylinder
+velocity dispersion => :σr_sphere, :σθ_sphere, :σϕ_sphere
 2d maps (not projected) => :r_cylinder, :ϕ
 ==============[off-axis views]:==================
 project along ANY line of sight (degrees by default):
@@ -257,7 +260,13 @@ project along ANY line of sight (degrees by default):
   thickness=, offset= (particles): project a SLAB of finite depth instead of the
      full column, and move it along the line of sight
   line-of-sight tools (same view kwargs):
-    :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)
+    :vlos  / :σlos                -> along the line of sight (what a spectrum measures)
+    :vcamx / :σcamx               -> along image x (cam_right)
+    :vcamy / :σcamy               -> along image y (cam_up)
+       camera-frame only: these need a view, and are refused on direction=:x/:y/:z
+       the box-frame :σx, :σy, :σz, :σ and the cylindrical and spherical ones
+       work off-axis too, but stay BOX axes: :σz is the simulation z even
+       in a face-on view
     slice (off-axis kwargs)       -> cutting plane (offset= moves it) ;  profile / phase -> 1D/2D reductions
     rotation_sequence             -> shared-FOV angle sweep (orbit movies)
     savemap/loadmap (JLD2)        -> store/restore a projection result
@@ -290,7 +299,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-09-20T11:32:59.284
+[Mera]: 2026-09-27T05:17:07.390
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -311,7 +320,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:00.132
+[Mera]: 2026-09-27T05:17:08.171
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -330,7 +339,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:00.280
+[Mera]: 2026-09-27T05:17:08.306
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -351,7 +360,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:00.948
+[Mera]: 2026-09-27T05:17:08.965
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -378,7 +387,7 @@ proj1_x = projection(particles, [:sd], units=[:Msol_pc2], lmax=9,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:01.145
+[Mera]: 2026-09-27T05:17:09.114
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -403,7 +412,7 @@ proj1_z = projection(particles, [:sd, :vx], units=[:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:01.158
+[Mera]: 2026-09-27T05:17:09.169
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -428,7 +437,7 @@ proj1_z = projection(particles, [:sd, :vx], [:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:02.018
+[Mera]: 2026-09-27T05:17:09.972
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -452,7 +461,7 @@ projvel_z = projection(particles, [:vx, :vy, :vz], :km_s, lmax=9,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:02.078
+[Mera]: 2026-09-27T05:17:10.026
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -481,10 +490,13 @@ The projected 2D maps are stored in a dictionary:
 Two things to know before you reduce one of these maps.
 
 **Empty pixels.** `:sd` is a deposited total divided by the pixel area, so a pixel with no
-particle holds `0.0`. A weighted-mean map such as `:v` or `:age` is one deposited grid divided by
-another, so an empty pixel is `0/0`, which is `NaN`. Filter with `isfinite` before you take a
-`sum` or a `mean` of a mean map. (Axis-aligned hydro maps differ here: they hold `0.0` in empty
-pixels.)
+particle holds `0.0`. On the **axis-aligned** particle path a weighted-mean map such as `:v` or `:age` is one
+deposited grid divided by another, so an empty pixel is `0/0`, which is `NaN`. Filter with
+`isfinite` before you `sum` or `mean` such a map.
+
+The split is not hydro against particles, it is the axis-aligned particle path against
+everything else: off-axis particle maps, and hydro maps on both paths, write `0.0` in an empty
+pixel.
 
 **`maps[:mass]` is a mean.** Particles have no volume, so `:mass` is not extensive here. The map
 holds the mass-weighted mean particle mass per pixel, which is a mass spectrum and an equal-mass
@@ -753,7 +765,7 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin],
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:13.046
+[Mera]: 2026-09-27T05:17:20.889
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -764,7 +776,7 @@ Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 [Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
              Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             `vcenter=` the frame).
              (shown once per session; verbose(false) silences Mera's messages)
 Progress: 100%|█████████████████████████████████████████| Time: 0:00:01
 ```
@@ -875,7 +887,7 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylin
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:15.561
+[Mera]: 2026-09-27T05:17:23.340
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1009,7 +1021,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:17.906
+[Mera]: 2026-09-27T05:17:25.603
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1146,7 +1158,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:19.372
+[Mera]: 2026-09-27T05:17:27.084
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1172,7 +1184,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:19.522
+[Mera]: 2026-09-27T05:17:27.282
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1304,7 +1316,7 @@ proj_x = projection(particles, :age, :Myr, mask=mask,
 ```
 
 ```
-[Mera]: 2026-09-20T11:33:22.071
+[Mera]: 2026-09-27T05:17:29.912
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1313,7 +1325,7 @@ Effective resolution: 256^2
 Pixel size: 187.5 [pc]
 Simulation min.: 46.875 [pc]
 :mask provided by function
-[Mera]: 2026-09-20T11:33:22.687
+[Mera]: 2026-09-27T05:17:30.521
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]

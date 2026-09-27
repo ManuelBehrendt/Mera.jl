@@ -27,7 +27,7 @@ what changes when the camera leaves a box axis.
 camera, not to the data. Where the two genuinely differ, the page says so: a point has no
 footprint, so `:overlap` and `:exact` fall back to `:cic` (Chapter 7); no size, so there is no
 native resolution to stop at (Chapter 1); no volume, so `slice` refuses it (Chapter 12) and
-`split` does nothing for it (Chapter 5).
+`split` is not a keyword there at all (Chapter 5).
 
 | you set | keywords | chapter |
 |---|---|---|
@@ -271,7 +271,7 @@ maprow([hero_sfo, hero_seo], :sd, ["stars, direction=:faceon", "stars, direction
              `vcenter=` the frame).
              (shown once per session; verbose(false) silences Mera's messages)
 line of sight  ŵ = [0.0, 0.001, 1.0]
-image up       û = [-0.046, -0.999, 0.001]
+image up       û = [-0.0, 1.0, -0.001]
 projection centre (box fraction) = [0.5, 0.5, 0.5]
 frame: (321, 321)  and  (321, 321)
 ```
@@ -366,7 +366,7 @@ fig
 ```
 native pixel : 11.72 pc
 map          : (2731, 2731)
-stars in the frame : 627896   pixels : 5827396   occupied : 15.5 %
+stars in the frame : 627896   pixels : 5405625   occupied : 16.7 %
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_11_4.png)
@@ -475,9 +475,9 @@ maprow(sladder, :sd, ["stars, i = 0°", "stars, i = 30°", "stars, i = 60°", "s
 
 ```
 max |ŵ_faceon − ŵ_inc0|     = 0.0
-angle(û_faceon, û_inc0)     = 177.38°
-max |Σ_faceon − Σ_inc0|     = 189.4
-max |Σ_faceon − Σ_inc0,PA=-90| = 222.15281009788825
+angle(û_faceon, û_inc0)     = 0.0°
+max |Σ_faceon − Σ_inc0|     = 0.0
+max |Σ_faceon − Σ_inc0,PA=-90| = 194.82991713523964
 inclination + los         → ArgumentError
 direction=:faceon + axis  → ArgumentError
 ```
@@ -490,12 +490,20 @@ angle between the gas and star angular-momentum axes = 0.03°
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_13_9.png)
 
-`direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight**, the two `ŵ`
-vectors agree to the last bit, but they are *not* the same image. A face-on view leaves the roll
-about `ŵ` undetermined, and the two code paths break that tie differently: the `û` vectors come out
-exactly **90° apart**, which is why the naive map-to-map difference above is large rather than zero.
-`position_angle=-90` recovers `:faceon` to floating-point round-off; the residual printed above
-is summation order across threads, not a real difference.
+`direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight**: the two `ŵ`
+vectors agree to the last bit. On this galaxy they also give the same image, `0.0°` between the
+up vectors and a map difference of exactly zero.
+
+**That second agreement is luck, not a guarantee.** A face-on view leaves the roll about `ŵ`
+undetermined, and the two spellings choose it by different rules. `:faceon` uses the camera's
+up hint, which is stable near the pole. The `inclination` path takes its reference from the
+world axis least parallel to the spin axis, and for an axis a fraction of a degree off z that
+choice flips between x and y depending on which way the axis leans. This galaxy's axis leans
+toward y and the two agree; the same tilt leaning toward x gives 90°.
+
+The last printed line shows what is at stake: rolling one image by 90° moves the map by about
+195 M⊙/pc², the difference you would see on a galaxy that leans the other way. If two spellings
+must give the same image, pin `up=` on both.
 
 The lesson generalises past this one preset: whenever a view leaves a degree of freedom free,
 compare the **camera vectors**, not the pixels. Two correct maps of the same scene can differ by a
@@ -615,7 +623,7 @@ end
              These are WORLD-space bounds, so after rotation the full box depth folds into
              the image. Pass `zrange`, or `fov=<half-width>` for a fixed camera frame.
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-09-26T18:02:17.149
+[Mera]: 2026-09-27T06:57:56.844
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -841,10 +849,10 @@ maprow([p.map for p in panmaps], :sd,
 
 ```
 center                t [s]   extent [kpc]                  mass in frame [Msol]
-centre                5.6     [-10.2, 10.3, -10.3, 10.2]    5.453e9
-8 kpc along x         4.2     [-10.3, 10.3, -10.4, 10.3]    3.699e9
-8 kpc along y         3.1     [-10.3, 10.3, -10.4, 10.3]    3.692e9
-12 kpc out, corner    0.9     [-10.5, 10.5, -10.7, 10.5]    5.032e8
+centre                5.7     [-10.2, 10.3, -10.3, 10.2]    5.453e9
+8 kpc along x         3.8     [-10.3, 10.3, -10.4, 10.3]    3.699e9
+8 kpc along y         3.7     [-10.3, 10.3, -10.4, 10.3]    3.692e9
+12 kpc out, corner    1.1     [-10.5, 10.5, -10.7, 10.5]    5.032e8
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_26_2.png)
@@ -992,7 +1000,8 @@ by the fraction of its volume that is really inside.
 Reach for it when the edge is a real part of the measurement: a small aperture, a thin slab, or
 **any time you stack slabs and expect them to re-sum**.
 
-Particles are points with no volume, so `split` does nothing for them.
+`split` is grid only: it is not a keyword of the particle projection, so passing it is a
+`MethodError`. A point has no volume to split.
 
 This is the same idea the region algebra already offers, and that one flows into off-axis maps
 too: `subregion(gas, sphere(10; center=[:bc], range_unit=:kpc); split=true)` attaches a
@@ -1188,10 +1197,6 @@ maprow([g_joint, s_joint], :sd, ["gas, edge-on to the JOINT axis", "stars, the s
 ```
 
 ```
-[Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
-             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame).
-             (shown once per session; verbose(false) silences Mera's messages)
 component     |L| (code units)      axis
 gas           159.317               [3.0e-5, 0.00063, 1.0]
 stars         5.82406               [-0.00012, 0.00022, 1.0]
@@ -1203,7 +1208,7 @@ both maps on the joint axis: gas (164, 164)  stars (141, 9)   same camera: true
 the stellar frame is (141, 9) pixels: an edge-on stellar disc really is that thin at a 0.2 kpc pixel.
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_40_7.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_40_5.png)
 
 The angle between the gas and stellar axes is the number that decides whether this matters. A
 few arcminutes, as here, and any of the three axes gives the same picture. Degrees, which is what
@@ -1348,13 +1353,13 @@ level 10.0:  cell 0.0469  kpc  →  9.4 pixels per cell at pxsize = 0.005 kpc
 level 11.0:  cell 0.0234  kpc  →  4.7 pixels per cell at pxsize = 0.005 kpc
 level 12.0:  cell 0.0117  kpc  →  2.3 pixels per cell at pxsize = 0.005 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       39.0 %     1.341     0.4115
-cic       14.8 %     1.207     0.2638
-overlap   0.0 %      2.346     0.0131
-exact     0.0 %      8.898     0.0
+ngp       39.0 %     1.477     0.4115
+cic       14.8 %     1.092     0.2638
+overlap   0.0 %      2.555     0.0131
+exact     0.0 %      9.683     0.0
 stars     empty px   time [s]  what it does
 ngp       53.3 %     0.01      whole star in the nearest pixel
-cic       17.1 %     0.01      bilinear over 2x2
+cic       17.1 %     0.02      bilinear over 2x2
 stars in this window: 153531
   binning=:overlap  returns the :cic map exactly: true
   binning=:exact    returns the :cic map exactly: true
@@ -1866,10 +1871,10 @@ println("  gas median σ_LOS edge-on  = ", round(median(gσ), digits=1), " km/s 
 
 ```
 edge-on   max |v_LOS| = 218.1 km/s
-face-on   max |v_LOS| = 44.3 km/s
+face-on   max |v_LOS| = 47.1 km/s
 median σ_LOS edge-on  = 20.3 km/s
 stars edge-on   max |v_LOS| = 257.3 km/s
-stars face-on   max |v_LOS| = 18.6 km/s
+stars face-on   max |v_LOS| = 20.6 km/s
 stars: pixels with σ > 0    = 1558 of 4675   (33.3 %)
 stars median σ_LOS edge-on  = 22.2 km/s   (over those pixels)
   gas median σ_LOS edge-on  = 20.3 km/s   (same measure)
@@ -2047,7 +2052,7 @@ selection                 σ_LOS before  after     removed, variance  width rati
 all gas                   20.4          63.1      -857.2 %           3.094
 disc, |z| < 2 kpc         54.4          47.4      24.0 %             0.872
 disc, nbins = 400         54.4          47.4      24.2 %             0.871
-null test, disc face-on: σ_LOS 6.78 → 6.78 km/s
+null test, disc face-on: σ_LOS 6.9 → 6.9 km/s
 ```
 
 Read the three lines together: the first says the opposite of the other two, and that is the
@@ -2288,7 +2293,7 @@ T > 1e4 K       30442895      2.87379e8               (165, 166)
 the two parts add back to the whole: 100.0 %
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_74_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_74_3.png)
 
 The three frames are identical because `fov` pinned them, and the two parts add back to the
 whole because a mask only decides which cells are deposited, never how much of one.
@@ -2307,7 +2312,7 @@ The view keywords are the same everywhere. What differs is a short list of defau
 | `weighting` | Array, `[:mass, missing]` | Symbol: `:mass`, `:volume`, `:sph`, `:voronoi`. `:sph` and `:voronoi` need a smoothing length or a volume, which RAMSES stars lack, so both raise here |
 | `mode` | `:standard` / `:sum` | `:standard` / `:sum` |
 | `fov` / `aperture` | yes | yes, same sphere, but `:square` crops to the shorter side of the fitted frame and collapses a thin edge-on disc. Use `:circle` |
-| `split` | weights partial cells | no effect, a point has no volume |
+| `split`, `depth`, `refine`, `nmax` | grid only | **absent**: passing one is a `MethodError`, not a no-op |
 | `angmom_radius` | yes | yes |
 | `nmax`, `gravity_data` | yes | absent |
 | `data_center` | **silently ignored** off-axis | honoured |
@@ -2340,7 +2345,7 @@ println("          epot over filled pixels ", round.(extrema(filled), sigdigits=
 ```
 stars   : frame (184, 12)   los = [1.0, 0.0, 0.0]
 gravity : maps Any[:epot, :sd]
-          epot over filled pixels (-0.9788, -0.1273)   (8433 of 82369 pixels empty)
+          epot over filled pixels (-0.9779, -0.1408)   (1206 of 75076 pixels empty)
 ```
 
 ### A slab instead of a slice, for particles
@@ -2700,7 +2705,7 @@ fig
 ```
 
 ```
-face-on  frame   (146, 144) at  199.2 pc pixels,   empty 37.0 %
+face-on  frame   (141, 139) at  199.2 pc pixels,   empty 32.4 %
 edge-on  frame    (547, 32) at   49.9 pc pixels,   empty 70.8 %
 ```
 
@@ -2838,7 +2843,7 @@ fig
 ```
 
 ```
-median stellar age over filled pixels : 248.4 Myr
+median stellar age over filled pixels : 248.2 Myr
 max |v_LOS| edge-on                 : 259.7 km/s
 median σ_LOS edge-on                : 22.7 km/s
 ```
@@ -3197,9 +3202,9 @@ fig
 
 ```
 slab [kpc]      thickness   share of stellar mass   filled px
--0.05 … 0.05    100 pc      66.41 %                 12833
-0.05 … 0.1      50 pc       15.57 %                 9057
-0.1 … 0.2       100 pc      4.71 %                  7038
+-0.05 … 0.05    100 pc      66.41 %                 12853
+0.05 … 0.1      50 pc       15.57 %                 9063
+0.1 … 0.2       100 pc      4.71 %                  7023
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_106_3.png)
@@ -3541,7 +3546,7 @@ los = [2, 2, 3]       43.3 deg      -0.5         -3.0
 los = [1, 1, 1]       54.7 deg      -2.0         -2.5
 los = [2, 3, 1]       74.5 deg      -0.5         -3.5
 los = [1, 1, 0]       90.0 deg      2.0          -3.0
-direction = :faceon   (from L)      -0.5         -3.5
+direction = :faceon   (from L)      1.0          -3.0
 direction = :edgeon   (from L)      1.0          -3.5
 ```
 
@@ -3657,10 +3662,10 @@ end
 
 ```
 binning    time [s]   empty pixels   gas :mass err [eps]  stars :sd x area err [eps]
-ngp        4.4        35.3 %         -0.5                 37.0
-cic        3.7        30.5 %         -0.5                 -3.0
-overlap    3.4        28.7 %         1.0                  -   (falls back to :cic, a point has no footprint)
-exact      6.2        29.0 %         1.0                  -   (falls back to :cic, a point has no footprint)
+ngp        5.1        35.3 %         -0.5                 37.0
+cic        5.3        30.5 %         -0.5                 -3.0
+overlap    6.1        28.7 %         1.0                  -   (falls back to :cic, a point has no footprint)
+exact      12.7       29.0 %         1.0                  -   (falls back to :cic, a point has no footprint)
 ```
 
 The four kernels place mass very differently, which is the whole of Chapter 7, and the empty-pixel
@@ -3745,10 +3750,10 @@ println(rpad(":exact", 8), rpad("-", 10), rpad(round(ulp(sum(E) * acap, Mgas), d
 delivered pixel : 93.57 pc
 a level 6 cell wants ns = 9 sub-points per cube axis
 nmax    time [s]  total err [eps]  median    p99       max      empty px
-1       5.7       1.0              0.00541   0.28826   9.21     28.14 %
-4       7.1       1.0              0.00271   0.03309   8.0      28.47 %
-8       7.5       1.0              0.00231   0.01005   7.22     28.53 %
-64      6.7       1.0              0.00382   0.01799   4.44     28.66 %
+1       4.9       1.0              0.00541   0.28826   9.21     28.14 %
+4       5.4       1.0              0.00271   0.03309   8.0      28.47 %
+8       5.3       1.0              0.00231   0.01005   7.22     28.53 %
+64      4.9       1.0              0.00382   0.01799   4.44     28.66 %
 :exact  -         157.0            -         -         -        28.64 %
 ```
 
@@ -3826,9 +3831,10 @@ same deposit.
 
 **`mode=:sum` for the other extensive quantities.** `:ekin`, `:etherm` and `:volume` default to a
 weighted mean, like every other non-mass variable. `mode=:sum` gives them unity weights instead, so
-each pixel holds its column total and the map sums to the object's total. It is hydro only.
-Particles have no `mode` keyword at all, and an unsupported `weighting` on a particle projection now
-raises instead of returning a silent NaN map. And it is a **no-op on `:mass` and `:sd`**, which
+each pixel holds its column total and the map sums to the object's total. Those three are grid
+quantities, so that use of `mode` is grid only, but the keyword itself exists on both paths: on
+particles `mode=:sum` is what turns `:mass` from a mean into a per-pixel total. An unsupported
+`weighting` on a particle projection raises instead of returning a silent NaN map. And it is a **no-op on `:mass` and `:sd`**, which
 always get unity weights: hydro `:mass` is extensive off-axis by construction, so reaching for
 `mode=:sum` there changes nothing.
 
@@ -3878,8 +3884,8 @@ for (v, u) in ((:ekin, :erg), (:etherm, :erg), (:volume, :km3), (:mass, :Msol))
             rpad(r[1], 14), r[2], v === :mass ? "   <- no-op, both are unity weights" : "")
 end
 
-# THE SAME QUESTION FOR POINTS. Particles have no `mode` keyword at all, which is a fact about the
-# method and therefore checkable: passing one raises rather than being quietly ignored.
+# THE SAME QUESTION FOR POINTS. Particles DO take `mode`, and `mode=:sum` is what makes `:mass`
+# a per-pixel total there; check that rather than assume it.
 println()
 err = try
     projection(part, :sd, :Msol_pc2; los=VIEW, center=[:bc], mode=:sum,
@@ -4023,34 +4029,34 @@ cutout: 13426400 cells, 457371 stars
 finest cell = 11.72 pc;  the sweep crosses it
 MASS and QUANTITY conservation vs pixel size (cutout, los=VIEW)
 px [pc]   kernel    map          t [s]    gas mass [eps]  E_kin :sum [eps]  stars :sd [eps]
-400.0     ngp       (29, 36)     1.6      0.0             0.0               69.0
-400.0     cic       (29, 36)     1.0      3.0             3.0               -5.0
-400.0     overlap   (29, 36)     0.8      3.0             2.0               -
-400.0     exact     (29, 36)     0.9      3.0             2.0               -
-200.0     ngp       (57, 70)     0.8      1.0             1.0               -46.0
+400.0     ngp       (29, 36)     1.9      0.0             0.0               69.0
+400.0     cic       (29, 36)     1.1      3.0             3.0               -5.0
+400.0     overlap   (29, 36)     1.4      3.0             2.0               -
+400.0     exact     (29, 36)     0.8      3.0             2.0               -
+200.0     ngp       (57, 70)     1.0      1.0             1.0               -46.0
 200.0     cic       (57, 70)     0.8      1.0             2.0               -5.0
-200.0     overlap   (57, 70)     0.8      1.0             2.0               -
+200.0     overlap   (57, 70)     0.9      1.0             2.0               -
 200.0     exact     (57, 70)     0.7      1.0             2.0               -
-100.0     ngp       (111, 137)   1.0      1.0             0.0               -0.5
-100.0     cic       (111, 137)   0.8      0.0             2.0               -3.5
-100.0     overlap   (111, 137)   0.9      1.0             1.0               -
-100.0     exact     (111, 137)   2.4      1.0             1.0               -
+100.0     ngp       (111, 137)   0.8      1.0             0.0               -0.5
+100.0     cic       (111, 137)   1.0      0.0             2.0               -3.5
+100.0     overlap   (111, 137)   0.8      1.0             1.0               -
+100.0     exact     (111, 137)   2.5      1.0             1.0               -
 50.0      ngp       (220, 272)   0.8      1.0             0.0               -3.5
-50.0      cic       (220, 272)   0.9      1.0             1.0               -6.0
-50.0      overlap   (220, 272)   0.8      1.0             1.0               -
-50.0      exact     (220, 272)   11.4     8.0             9.0               -
-20.0      ngp       (546, 677)   0.8      1.0             2.0               -8.0
-20.0      cic       (546, 677)   0.8      1.0             2.0               -6.0
-20.0      overlap   (546, 677)   2.0      1.0             1.0               -
-20.0      exact     (546, 677)   25.9     -76.0           -85.0             -
-10.0      ngp       (1090, 1351) 1.2      1.0             -                 -6.5
-10.0      cic       (1090, 1351) 0.9      1.0             -                 -5.0
+50.0      cic       (220, 272)   0.8      1.0             1.0               -6.0
+50.0      overlap   (220, 272)   0.9      1.0             1.0               -
+50.0      exact     (220, 272)   11.6     8.0             9.0               -
+20.0      ngp       (546, 677)   0.9      1.0             2.0               -8.0
+20.0      cic       (546, 677)   1.0      1.0             2.0               -6.0
+20.0      overlap   (546, 677)   1.9      1.0             1.0               -
+20.0      exact     (546, 677)   26.0     -76.0           -85.0             -
+10.0      ngp       (1090, 1351) 0.8      1.0             -                 -6.5
+10.0      cic       (1090, 1351) 1.0      1.0             -                 -5.0
 10.0      overlap   (1090, 1351) 8.2      1.0             -                 -
-10.0      exact     (1090, 1351) 67.9     -18908.5        -                 -
-5.0       ngp       (2178, 2701) 0.9      1.0             -                 -5.0
+10.0      exact     (1090, 1351) 67.3     -18908.5        -                 -
+5.0       ngp       (2178, 2701) 1.1      1.0             -                 -5.0
 5.0       cic       (2178, 2701) 1.0      1.0             -                 -6.0
-5.0       overlap   (2178, 2701) 54.4     1.0             -                 -
-5.0       exact     (2178, 2701) 208.8    -18849.0        -                 -
+5.0       overlap   (2178, 2701) 54.0     1.0             -                 -
+5.0       exact     (2178, 2701) 208.2    -18849.0        -                 -
 ```
 
 ```julia
@@ -4130,7 +4136,7 @@ tilt [deg]  ngp        cic        overlap    exact      stars :cic
 90.0        5.0        7.0        -1.0       -1.0       -3.5
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_130_11.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_130_10.png)
 
 **Read the first panel from left to right.** `:ngp`, `:cic` and `:overlap` hold one machine epsilon
 across the whole range, from four times coarser than this cutout's coarsest cell to twice finer
