@@ -198,14 +198,13 @@ function _galaxy_frame(dataobject; center=:com, aperture=nothing,
                    "no orientation is defined (use an `aperture` around the disk?).")
     spin = L ./ n
 
-    # an in-plane unit vector (perpendicular to the spin axis), robust near the poles
-    seed = abs(spin[3]) < 0.9 ? [0.0, 0.0, 1.0] : [1.0, 0.0, 0.0]
-    inplane = _vunit(_vcross(spin, seed))
-
+    # The same rule `projection` uses, so a frame splatted into `projection` gives exactly the
+    # image `direction=:faceon` or `:edgeon` would. This used to pick its own in-plane reference,
+    # and a face_on frame came out rolled 90 degrees from `direction=:faceon`.
     if edge
-        los, up = inplane, spin                 # look in the plane; spin axis points up
+        los, up = -_inplane_basis(spin)[2], spin       # look in the plane; spin axis points up
     else
-        los, up = spin, _vunit(_vcross(spin, inplane))   # look along spin; up in-plane
+        los, up = spin, _default_camera_up(spin)       # look along spin; the camera's own up
     end
     return GalaxyFrame(cen, range_unit, los, up, L, dataobject.info)
 end

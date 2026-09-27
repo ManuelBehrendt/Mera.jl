@@ -9,6 +9,7 @@
 # binning input-validation guards and weighted-statistic oracles against hand-computed values.
 using JLD2            # used below; do not rely on another test file importing it
 using LinearAlgebra   # cross/dot/norm in the camera-basis tests
+using Random          # a fixed stream of random spin axes
 using Statistics      # mean, in the equal-count bin tests
 
 # the mode metadata a projection records for one variable (field name is internal)
@@ -883,6 +884,53 @@ end
         @test median(abs.(pcam[pok] .- pbox[pok]) ./ pbox[pok]) < 1e-12
         @test_throws ArgumentError projection(part, :σcamx, :km_s; direction=:z, center=[:bc],
                                               pxsize=[2.,:kpc], verbose=false, show_progress=false)
+    end
+
+    @testset "one rule for up: every spelling of face-on and edge-on agrees" begin
+        # Three pieces of code used to choose the roll of a view by three different rules: the
+        # camera's up hint, the `inclination`/`azimuth` reference, and `face_on`/`edge_on`. So
+        # `direction=:faceon`, `inclination=0, axis=:angmom` and `face_on` could each give a
+        # differently rolled image, and near the pole which way the spin axis leaned decided
+        # whether two of them agreed. There is now one rule, and these pin it.
+        R(; kw...) = Mera.resolve_los(; los=nothing, theta=nothing, phi=nothing, direction=:z,
+                                       inclination=nothing, azimuth=nothing, axis=nothing,
+                                       angle_unit=:deg, up=nothing, L=nothing, kw...)
+        cam(x) = Mera.build_camera_basis(x...)
+        rng = Random.MersenneTwister(7)
+        axes = [randn(rng, 3) for _ in 1:40]
+        append!(axes, [[a, b, 1.0] for (a, b) in ((3e-5, 6.3e-4), (6.3e-4, 3e-5), (-6e-4, 1e-4), (0.0, 0.0))])
+        for L in axes
+            f1, f2 = cam(R(direction=:faceon, L=L)), cam(R(inclination=0,  axis=:angmom, L=L))
+            e1, e2 = cam(R(direction=:edgeon, L=L)), cam(R(inclination=90, axis=:angmom, L=L))
+            @test all(isapprox.(f1, f2; atol=1e-9))      # :faceon IS inclination=0
+            @test all(isapprox.(e1, e2; atol=1e-9))      # :edgeon IS inclination=90
+        end
+
+        # near the pole the lean of the axis no longer decides the roll
+        ups = [cam(R(inclination=0, axis=:angmom, L=L))[2] for L in axes[end-3:end]]
+        @test all(u -> isapprox(u, ups[1]; atol=1e-3), ups)
+
+        # about the default box axis nothing moved: the documented convention holds
+        r0, u0, w0 = cam(R(inclination=0, axis=:z))
+        @test r0 ≈ [1., 0, 0] && u0 ≈ [0., 1, 0] && w0 ≈ [0., 0, 1]      # same as direction=:z
+        @test R(inclination=60, azimuth=0, axis=:z)[1] ≈ [0., -sind(60), cosd(60)]
+        for (th, ph) in ((30, 0), (60, 45), (80, 200))                  # azimuth = phi + 90
+            @test normalize(R(inclination=th, azimuth=ph + 90, axis=:z)[1]) ≈
+                  Mera._los_from_angles(th, ph, :deg)
+        end
+        # and about the box y axis z is now up, as for every other axis (it used to be -z)
+        @test cam(R(inclination=0, axis=:y))[2] ≈ [0., 0, 1]
+
+        # face_on / edge_on frames, splatted into projection, give the preset's camera exactly
+        kw = (center=[0.5,0.5,0.5], range_unit=:standard, pxsize=[2.,:kpc], verbose=false,
+              show_progress=false)
+        fr, er = face_on(gas; center=[0.5,0.5,0.5]), edge_on(gas; center=[0.5,0.5,0.5])
+        pf = projection(gas, :sd, :Msol_pc2; direction=:faceon, kw...)
+        pe = projection(gas, :sd, :Msol_pc2; direction=:edgeon, kw...)
+        @test fr.los ≈ pf.los atol=1e-9
+        @test fr.up  ≈ pf.up  atol=1e-9
+        @test er.los ≈ pe.los atol=1e-9
+        @test er.up  ≈ pe.up  atol=1e-9
     end
 
     @testset "guards that used to fail silently or unhelpfully" begin

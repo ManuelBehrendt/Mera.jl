@@ -179,26 +179,9 @@ function _moments_dispersion(g1, g2, w)
 end
 
 
-# Deterministic perpendicular reference: the world axis least parallel to `w` (ties broken by
-# axis order x<y<z), Gram-Schmidt-orthogonalised against `w`. Reproducible, never parallel to `w`.
-#
-# This is the reference for `inclination`/`azimuth` (it fixes where azimuth=0 points), NOT the
-# camera's up hint. The camera uses `_default_camera_up` below, which answers a different
-# question: which way is up in the IMAGE. Keeping them separate means changing the image
-# orientation cannot silently rotate the azimuth zero-point.
-function _auto_up(w::AbstractVector{<:Real})
-    best = _WORLD_AXES[1]; bestdot = 2.0
-    for ax in _WORLD_AXES
-        d = abs(dot(ax, w))
-        if d < bestdot - 1e-12     # strict, so ties keep the earlier (x<y<z) axis
-            bestdot = d; best = ax
-        end
-    end
-    u = best .- dot(best, w) .* w
-    return u ./ norm(u)
-end
-
-# Camera up hint when the caller gave no `up=`.
+# Camera up hint when the caller gave no `up=`. It is also the in-plane reference for
+# `inclination`/`azimuth` and for `:edgeon` (see `_inplane_basis`), so every way of pointing
+# the camera agrees on which way is up.
 #
 # Prefer world +z, so a view down a box axis reproduces the matching `direction=` preset:
 # `los=[0,0,1]` gives the same image orientation as `direction=:z`, and `los=[1,0,0]` the same as
@@ -311,7 +294,22 @@ function _resolve_axis(axis, L)
 end
 
 # deterministic orthonormal basis (e1,e2) spanning the plane ⟂ ahat
-_inplane_basis(ahat) = (e1 = _auto_up(ahat); (e1, cross(ahat, e1)))
+# The in-plane reference for `inclination`/`azimuth` about the axis `ahat`.
+#
+# e2 is the camera's own default up for a line of sight along `ahat`: world +z across the axis,
+# or +y within 3 degrees of the pole (`_default_camera_up`). Because the image up at inclination
+# 0 is +e2, this makes `inclination=0, axis=:angmom` the SAME image as `direction=:faceon`, for
+# every axis, by construction rather than by luck. About the box axes :z and :x it reproduces the
+# basis this function always returned, so `azimuth` about the default axis does not move.
+#
+# It replaces the world axis least parallel to `ahat`. Near the pole that choice flipped between
+# x and y on a sub-degree lean of the axis, so a face-on galaxy got its azimuth zero, and its
+# `inclination=0` roll, from which way its spin axis happened to lean.
+function _inplane_basis(ahat)
+    e2 = _default_camera_up(ahat)
+    e1 = cross(e2, ahat)               # unit: e2 and ahat are orthonormal
+    return e1, e2                      # right-handed, so cross(ahat, e1) == e2 as before
+end
 
 # Guard against ambiguous input: only ONE line-of-sight specifier may be given, so a
 # wrong-but-plausible figure can never be produced silently (a real risk for a science tool).
@@ -444,10 +442,12 @@ function resolve_los(; los=nothing, theta=nothing, phi=nothing,
         L === nothing && throw(ArgumentError(":edgeon needs the angular-momentum vector L"))
         nL = norm(L); nL > 0 || throw(ArgumentError("angular-momentum vector L is zero"))
         Lhat = collect(float.(L)) ./ nL
-        a = _auto_up(Lhat)                       # in-disk direction ⟂ L (deterministic)
-        losv = a .- dot(a, Lhat) .* Lhat
-        losv ./= norm(losv)
-        return losv, (up === nothing ? Lhat : up)   # up = spin axis ⇒ disk appears edge-on
+        # Exactly `inclination=90, azimuth=0` about the spin axis, whose line of sight is -e2 of
+        # the in-plane basis. Before, the side the disc was seen from came from the least-parallel
+        # world axis, so `:edgeon` and `inclination=90` looked at the disc from different sides,
+        # and near the pole the side flipped with a sub-degree lean of the spin axis.
+        losv = -_inplane_basis(Lhat)[2]
+        return losv, (up === nothing ? Lhat : up)   # up = spin axis, so the disc lies flat
     else
         throw(ArgumentError("unknown direction preset :$direction " *
             "(use :x/:y/:z/:faceon/:edgeon, or set the line of sight via `los=`, " *
