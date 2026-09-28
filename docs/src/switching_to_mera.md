@@ -195,14 +195,7 @@ hidedecorations!(ax)
 fig
 ```
 
-```
-[Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
-             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame).
-             (shown once per session; verbose(false) silences Mera's messages)
-```
-
-![](switching_to_mera_files/switching_to_mera_10_3.png)
+![](switching_to_mera_files/switching_to_mera_10_1.png)
 
 ```julia
 out = mktempdir()                                   # any existing folder

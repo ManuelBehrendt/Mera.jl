@@ -88,11 +88,6 @@ MERA.jl provides comprehensive projection capabilities for particle-based simula
 - For a viewing direction that is not a box axis, see
   [Off-axis Projection](06_offaxis_Projection.md). The line-of-sight kinematics `:vlos` and
   `:σlos` exist only on that path.
-- For how accurate these maps are, see [Off-axis validation](offaxis_validation.md). It measures
-  mass and momentum conservation, the variance decomposition and the convergence of the maps
-  against an object whose answers are known in closed form, particles included. Most of what it
-  proves is not specific to off-axis views, so it is the reference for the axis-aligned maps here
-  too.
 
 ## Environment Setup and Data Loading
 

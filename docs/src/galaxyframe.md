@@ -42,7 +42,7 @@ println("cells loaded : ", length(gas.data))
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[Mera]: 2026-09-27T14:21:02.335
+[Mera]: 2026-09-28T11:31:00.079
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -81,7 +81,7 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-09-27T14:21:04.207
+[Mera]: Get hydro data: 2026-09-28T11:31:01.885
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -93,7 +93,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 8
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (28.01 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.57 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -103,7 +103,7 @@ Creating Table from 28320979 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 42.615 seconds
+✓ Table created in 38.498 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 cells loaded : 28320979
@@ -153,10 +153,6 @@ println("angmom : ", round.(fr.angmom, sigdigits=4))
 ```
 
 ```
-[Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
-             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame).
-             (shown once per session; verbose(false) silences Mera's messages)
 GalaxyFrame:
   center (standard) = [0.5, 0.5005, 0.5004]
   los  = [-0.0004, -0.0002, 1.0]
@@ -292,7 +288,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-09-27T14:22:42.583
+[Mera]: 2026-09-28T11:32:31.320
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -302,7 +298,7 @@ Selected var(s)=(:sd,)
 Weighting      = :mass
 Off-axis LOS   = [-0.0004, -0.0002, 1.0]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-[Mera]: 2026-09-27T14:22:52.301
+[Mera]: 2026-09-28T11:32:40.274
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]

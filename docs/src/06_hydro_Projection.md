@@ -70,10 +70,6 @@ MERA.jl provides powerful projection capabilities for analyzing hydrodynamical s
 - For a viewing direction that is not a box axis, see
   [Off-axis Projection](06_offaxis_Projection.md). The line-of-sight kinematics `:vlos` and
   `:σlos` exist only on that path.
-- For how accurate these maps are, see [Off-axis validation](offaxis_validation.md). It measures
-  mass and momentum conservation, the variance decomposition and the convergence of the maps
-  against a sphere whose answers are known in closed form. Most of what it proves is not specific
-  to off-axis views, so it is the reference for the axis-aligned maps here too.
 
 ### Intensive vs. extensive quantities, what a projection *means*
 
@@ -964,7 +960,7 @@ Derive kinematic properties from fundamental velocity fields:
 - Velocity dispersion: σₓ = √(⟨vₓ²⟩ - ⟨vₓ⟩²) following standard statistical definition
 - Unicode symbols supported: use `\sigma + tab` for **σ** in Julia
 
-**What a dispersion map measures.** Each pixel holds the spread about *that pixel's own* mean, not about any global mean. It therefore carries the velocity gradient down the column, so an ordered flow such as disc rotation raises σ wherever a column crosses it. How the total spread divides between the within-pixel part plotted here and the between-pixel part you see as structure in the mean-velocity map depends on the pixel size: coarser pixels move spread out of the map of means and into σ, finer pixels move it back. The sum of the two does not depend on the grid, which is the law of total variance; [Off-axis validation](offaxis_validation.md) measures both terms and their sum.
+**What a dispersion map measures.** Each pixel holds the spread about *that pixel's own* mean, not about any global mean. It therefore carries the velocity gradient down the column, so an ordered flow such as disc rotation raises σ wherever a column crosses it. How the total spread divides between the within-pixel part plotted here and the between-pixel part you see as structure in the mean-velocity map depends on the pixel size: coarser pixels move spread out of the map of means and into σ, finer pixels move it back. The sum of the two does not depend on the grid, which is the law of total variance.
 
 ```julia
 # Project comprehensive kinematic quantities
