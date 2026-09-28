@@ -207,4 +207,38 @@ using Random
         d = vm .- vf
         @test isapprox(maximum(d) - minimum(d), 0.0; atol=1e-8)
     end
+
+    @testset "projection: a mask commutes with the fov sphere" begin
+        # `fov` first cuts the object to a sphere, so a mask built for the WHOLE object has to be
+        # cut the same way. Passed on unchanged it no longer lined up with the rows, and the length
+        # check rejected it whenever the sphere left anything out. The property: masking and then
+        # taking the sphere gives the same projected mass as taking the sphere and then masking.
+        rfov = 0.2                                     # box units; the box is [0,1]³, so it cuts
+        views = (("off-axis", (inclination=62.0, azimuth=35.0, axis=[0.0, 0.0, 1.0])),
+                 ("axis z",   (direction=:z,)))
+
+        g = _hydro(N)
+        m = rand(rng, N) .< 0.4
+        masked = Mera._copy_with_data(g, Mera._subset_table_keyed(g.data, m))
+        Mexp = sum(getvar(subregion(masked, :sphere, radius=rfov, center=[:bc], verbose=false), :mass))
+        @test Mexp > 0
+        for (name, kw) in views
+            pr = projection(g, :mass; fov=rfov, center=[:bc], res=64, mask=m, aperture=:circle,
+                            verbose=false, show_progress=false, kw...)
+            @test isapprox(sum(pr.maps[:mass]), Mexp; rtol=1e-10)
+        end
+
+        p = _part(N)
+        mp = rand(rng, N) .< 0.4
+        xs, ys, zs = (collect(select(p.data, c)) for c in (:x, :y, :z))
+        insph = sqrt.((xs .- 0.5).^2 .+ (ys .- 0.5).^2 .+ (zs .- 0.5).^2) .<= rfov
+        Mpexp = sum(collect(select(p.data, :mass))[mp .& insph])
+        # off-axis only: the axis-aligned particle path has its own window-edge behaviour
+        pr = projection(p, :sd; fov=rfov, center=[:bc], res=64, mask=mp, aperture=:circle,
+                        verbose=false, show_progress=false, views[1][2]...)
+        @test isapprox(sum(v for v in pr.maps[:sd] if isfinite(v)) * pr.pixsize^2, Mpexp; rtol=1e-10)
+        # the axis-aligned path must at least accept the mask now instead of throwing
+        @test projection(p, :sd; fov=rfov, center=[:bc], res=64, mask=mp, aperture=:circle,
+                         verbose=false, show_progress=false, views[2][2]...) isa Mera.PartMapsType
+    end
 end

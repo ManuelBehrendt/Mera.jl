@@ -941,6 +941,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     if fov !== nothing
         src, win, fov_code, _rsel = _fov_selection(dataobject, fov, fov_unit, aperture, center)
         gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center)
+        mask = _fov_mask(dataobject, mask, _rsel, fov_unit, center)
         # the frame half-width in code units, so the inner call can hold the frame fixed
         fov_half = _rsel / (fov_unit === :standard ? 1.0 / dataobject.boxlen :
                                                      getunit(dataobject.info, fov_unit))

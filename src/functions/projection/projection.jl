@@ -664,6 +664,20 @@ _fov_companion(obj, rsel, fov_unit, center) =
     obj === nothing ? nothing :
     subregion(obj, :sphere, radius=rsel, center=center, range_unit=fov_unit, verbose=false)
 
+# Cut a row `mask` with the SAME sphere. The mask is built for the whole object, but the fov sphere
+# keeps only some rows, so passed on unchanged it no longer lines up with them and the length check
+# rejects it whenever the sphere leaves anything out. Each row is tagged with its index, the same
+# sphere selection runs, and the surviving indices pick the mask entries that still apply.
+function _fov_mask(dataobject, mask, rsel, fov_unit, center)
+    length(mask) > 1 || return mask
+    n = length(dataobject.data)
+    length(mask) == n || error("[Mera] ", now(), " : array-mask length: $(length(mask)) ",
+                               "does not match with data-table length: $n")
+    tagged = _copy_with_data(dataobject, pushcol(dataobject.data, :_fov_row, collect(1:n)))
+    sub = subregion(tagged, :sphere, radius=rsel, center=center, range_unit=fov_unit, verbose=false)
+    return collect(Bool, mask)[select(sub.data, :_fov_row)]
+end
+
 # an IDENTICAL square window — used by aperture=:square to turn the larger √2·FOV sphere projection
 # into a full rectangular frame with no circular aperture.
 function _rotseq_crop_square!(m, fov_code)

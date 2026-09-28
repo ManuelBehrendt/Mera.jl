@@ -817,6 +817,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     # viewing angle. Points carry no footprint, so only the framing differs here — not the deposit.
     if fov !== nothing
         src, win, fov_code, rsel = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        mask = _fov_mask(dataobject, mask, rsel, fov_unit, center)
         # the frame half-width in code units, so the inner call can hold the frame fixed
         fov_half = rsel / (fov_unit === :standard ? 1.0 / dataobject.boxlen :
                                                     getunit(dataobject.info, fov_unit))
