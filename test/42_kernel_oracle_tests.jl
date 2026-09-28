@@ -192,6 +192,38 @@ using Statistics, LinearAlgebra, Random
             @test sum(wg) ≈ Σw rtol=1e-10                          # off-axis conservation
         end
     end
+
+    @testset "off-axis deposit is independent of the thread count" begin
+        # The threaded deposits split the cells over threads and add the partial grids at the end,
+        # so a threaded map may differ from the serial one only by summation order: round-off, not
+        # content. CI runs with 4 threads, so this compares 1 thread against 2 and 4 there.
+        nx = ny = 64; ext = (-1.0, 1.0, -1.0, 1.0)
+        rng = MersenneTwister(11); n = 4_000
+        x3 = rand(rng, n) .- 0.5; y3 = rand(rng, n) .- 0.5; z3 = rand(rng, n) .- 0.5
+        cs = rand(rng, [0.01, 0.02, 0.04], n)                  # three AMR levels
+        vals = randn(rng, n); wts = rand(rng, n) .+ 0.1
+        r, u, w = Mera.build_camera_basis([0.4, -0.3, 1.0])
+        xcam = x3 .* r[1] .+ y3 .* r[2] .+ z3 .* r[3]
+        ycam = x3 .* u[1] .+ y3 .* u[2] .+ z3 .* u[3]
+        function dep(kernel, nt)
+            g = zeros(nx, ny); wg = zeros(nx, ny)
+            if kernel === :exact
+                Mera.deposit_rotated_cells_exact!(g, wg, xcam, ycam, cs, vals, wts, r, u, w, ext, (nx, ny); max_threads=nt)
+            else
+                Mera.deposit_rotated_cells_overlap!(g, wg, xcam, ycam, cs, vals, wts, r, u, ext, (nx, ny); max_threads=nt)
+            end
+            return g, wg
+        end
+        for kernel in (:exact, :overlap)
+            g1, w1 = dep(kernel, 1)
+            for nt in unique([2, 4, Threads.nthreads()])
+                gn, wn = dep(kernel, nt)
+                @test maximum(abs.(gn .- g1)) <= 1e-12 * maximum(abs.(g1))
+                @test maximum(abs.(wn .- w1)) <= 1e-12 * maximum(abs.(w1))
+                @test sum(wn) ≈ sum(wts) rtol=1e-12
+            end
+        end
+    end
 end
 
 # ------------------------------------------------------------------------------------------
