@@ -910,8 +910,9 @@ Off-axis projections:
 
 !!! note "Orienting on a region: `angmom_radius`"
     `axis=:angmom` and the `direction=:faceon`/`:edgeon` presets compute the orientation from the
-    angular momentum of **the object you pass**, about `center`, after `mask`. The frame keywords
-    (`fov`, `depth`, `xrange`/`yrange`/`zrange`) do not narrow it. Load a whole box and the sum is
+    angular momentum of **the data that gets drawn**, about `center`: the object you pass, after
+    `mask`, and inside the `fov` sphere when `fov` is given. `depth` and
+    `xrange`/`yrange`/`zrange` do not narrow it. Load a whole box and the sum is
     dominated by the material with the longest lever arm, which is usually not the disc you meant.
     `angmom_radius=[10, :kpc]` restricts that sum to a sphere about `center`. For an axis from
     other data (all components, or a selection you do not want to draw), compute it with

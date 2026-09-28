@@ -125,8 +125,8 @@ and a timestamp. Print it into your log, or save it beside the figure. Together 
 `provenance` describes the snapshot and the build, not the view. A projection map carries its view
 itself: `m.los`, `m.up`, `m.center`, `m.pixsize` and `m.extent`, and [`savemap`](@ref) keeps them
 together with the provenance. One thing is not recorded: `direction=:faceon`, `:edgeon` and
-`axis=:angmom` compute the axis from the data you loaded, so a different load gives a different
-camera. For a result you want to repeat, store the vector ([`angmom`](@ref), or `m.los` and `m.up`)
+`axis=:angmom` compute the axis from the data that gets drawn (what you loaded, the `mask`, the
+`fov` sphere), so a different load or selection gives a different camera. For a result you want to repeat, store the vector ([`angmom`](@ref), or `m.los` and `m.up`)
 and pass it back in. The [off-axis cheatsheet](offaxis_cheatsheet.md#Reproducing-a-map) shows the
 call.
 

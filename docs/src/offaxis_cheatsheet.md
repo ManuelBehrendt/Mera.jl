@@ -101,7 +101,9 @@ wobbles by a hundredth of a degree keeps its roll, and a face-on time series doe
 | `res=` or `pxsize=[v,:unit]` | how fine the pixels are. Prefer `pxsize` |
 
 Without `fov`, an off-axis frame auto-fits the data it was given, so an object appears to zoom as
-you rotate. `fov` is what stops that.
+you rotate. `fov` is what stops that: the frame is then fixed by `fov` alone, symmetric about
+`center` and the same at every angle, whether the data fills it or not. That holds for sparse data
+too, such as a star disc, a masked selection or a thin `depth` slab.
 
 `fov` caps at `0.49·boxlen` for `:circle` and `0.49/√2·boxlen` for `:square`.
 
@@ -199,11 +201,13 @@ subregion(gas, sphere(10; center=[:bc], range_unit=:kpc); split=true, refine=2)
 | [`face_on`](@ref) / [`edge_on`](@ref) | a frame whose `los`/`up`/`center` splat into any call |
 
 **What the presets measure.** `direction=:faceon`, `:edgeon` and `axis=:angmom` compute the axis
-from **the object you pass to `projection`**, after its `mask`, and nothing else. The frame
-keywords (`fov`, `depth`, `xrange`/`yrange`/`zrange`) do not narrow it: a 16 kpc `fov` on a whole
-box still orients on the whole box. Without `angmom_radius` the sum runs over every cell or
+from **the data that gets drawn**: the object you pass, after its `mask` (and `parttypes`), and
+inside the `fov` sphere if you give `fov` (radius `fov`, or `√2·fov` for `aperture=:square`).
+`xrange`/`yrange`/`zrange` and `depth` do not narrow it; `depth` cannot, because it is measured
+along the axis being computed. Without `fov` or `angmom_radius` the sum runs over every cell or
 particle in the object, where the outer material has the longest lever arm and can tilt a
-"face-on galaxy" by the halo.
+"face-on galaxy" by the halo. On particles that includes the dark matter, which usually dominates:
+pass `parttypes=[:stars]` or a mask to orient on the stars.
 
 To orient on something other than what you draw, such as all components together, a selection
 you do not want in the picture, or a fixed axis for a time series, compute the vector yourself and
@@ -399,7 +403,7 @@ the Mera build (path, output, time, levels, version and commit). The camera is o
 both, so a map reloaded with [`loadmap`](@ref) still says where it came from and how it was made.
 
 The one input that is not on the map is the data behind a `:faceon`, `:edgeon` or `axis=:angmom`
-view. That axis depends on what you loaded, the `mask` and `angmom_radius`. To repeat a view
+view. That axis depends on what you loaded, the `mask`, `fov` and `angmom_radius`. To repeat a view
 exactly, reuse the recorded vectors instead of the preset:
 
 ```julia

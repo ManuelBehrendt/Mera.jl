@@ -112,10 +112,16 @@ These are mistakes an assistant makes confidently. Each was reproduced.
    projected map totals exactly what `msum` reports.
 4. **`extent` is absolute, `cextent` is measured from `center`.** `cextent` is symmetric only when
    the centre sits in the middle of the window. Plot with `cextent` when the axis is centred.
-5. **`aperture=:square` crops to the shorter side** of the map. For a subject much wider than it is
-   tall, that throws the width away. `:circle` lets `fov` frame as intended.
+5. **`fov` fixes the frame; `aperture=:square` then crops it.** The frame is ±`fov` about `center`
+   at every angle, also for sparse data such as a star disc. The square keeps only what lies
+   inside it, so never read a total off a `:square` map: use `:circle`, or no `fov`.
 6. **`@where` and `@apply` act on the raw table** (`gas.data`), not on the Mera object.
-7. **`refine` does not improve accuracy.** It is tempting to reach for it to make a mass "more
+7. **On particles, `:mass` is a mean and the face-on axis includes the dark matter.** A particle
+   has no volume, so `projection(part, :mass)` is the mass-weighted mean particle mass per pixel;
+   use `mode=:sum`, or `:sd` times the pixel area, for a total. `direction=:faceon` and
+   `axis=:angmom` sum over every particle drawn, so the halo usually sets the axis: pass
+   `parttypes=[:stars]` or a mask, or compute `L = angmom(...)` and pass `axis=L`.
+8. **`refine` does not improve accuracy.** It is tempting to reach for it to make a mass "more
    exact". The integrals were already exact through `:fraction`, and a straddling cell's children
    inherit its piecewise-constant values, so their fraction-weighted volumes telescope back to the
    parent's. Refining changes what a boundary looks like, not what it weighs.
