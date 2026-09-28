@@ -158,17 +158,14 @@ const _CENTER_RELATIVE_VARS = Set{Symbol}([
     :r_sphere_periodic, :r_cylinder_periodic,
 ])
 
-"""
-    _map_col(f, table) -> Vector{Float64}
-
-`map` over a data table, returning a typed empty vector when the table has no rows.
-
-A region can legitimately select nothing: a sphere smaller than one cell, or a cut that misses
-the data. Mapping over the empty table then leaves the element type unknown, and the table
-machinery cannot build a result from it, which surfaces as an error naming internal fields
-instead of the empty selection that caused it. Every column here is a Float64, so say so.
-"""
-@inline _map_col(f, table) = isempty(table) ? Float64[] : map(f, table)
+# Cell size from the level column, in whole-column form. The row-wise version it replaces built
+# a NamedTuple per row and called a closure over `selected_unit`, a variable the getvar loop
+# reassigns, so Julia boxed it and dispatched dynamically on every row: about a minute for 51
+# million cells. Same arithmetic in the same order, so the values are bit-identical. An empty
+# selection (a sphere smaller than one cell, a cut that misses the data) gives a typed empty
+# vector rather than an error about internal fields.
+_cellsize_col(boxlen, level, unit) =
+    Float64[boxlen / 2^l * unit for l in level]
 
 function _center_hint(vars, center)
     # Cheap guard first: in the common (correct) case an origin was given, and this returns
