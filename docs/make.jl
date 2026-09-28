@@ -186,6 +186,7 @@ makedocs(modules = [Mera],
                       "Data" => Any[
                           "MERA-Files"          => Any[ "Mera-Files" => "07_multi_Mera_Files.md",
                                                         "Converter"  => "07_1_multi_Mera_Files_Converter.md"],
+                          "RAMSES restart, any CPUs" => "07_2_multi_RAMSES_Restart.md",
                           "Export/Import (ASCII, binary)" => "examples/ExportImportData.md"],
 
                       # Grouped by what the reader is trying to do, not by how advanced it is.
@@ -238,6 +239,7 @@ makedocs(modules = [Mera],
                           "Projections"         => "api/projections.md",
                           "Off-axis Projection" => "api/offaxis.md",
                           "Mera-Files"          => "api/mera_files.md",
+                          "Writing RAMSES"      => "api/ramses_writer.md",
                           "Volume Rendering"    => "api/volume_rendering.md",
                           "Multi-Threading"     => "api/multithreading.md",
                           "Cosmology"           => "api/cosmology.md",

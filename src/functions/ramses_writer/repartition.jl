@@ -1,5 +1,5 @@
 # ============================================================================
-#  repartition.jl — the user-facing entry point
+#  repartition.jl: the user-facing entry point
 # ============================================================================
 
 """
@@ -81,8 +81,8 @@ restarted with `mpirun -np ncpu` (namelist `nrestart` = the output number).
 
 The domain decomposition is a Hilbert-curve split with equal numbers of
 cells per rank. Every rank's file holds exactly the octree RAMSES would hold
-in memory for that decomposition — its own grids plus the ghost and boundary
-grids — so the run continues as if it had always used `ncpu` ranks.
+in memory for that decomposition (its own grids plus the ghost and boundary
+grids), so the run continues as if it had always used `ncpu` ranks.
 
 Returns a [`RepartitionReport`](@ref).
 

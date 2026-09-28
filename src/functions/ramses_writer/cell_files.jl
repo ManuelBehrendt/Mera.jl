@@ -1,5 +1,5 @@
 # ============================================================================
-#  cell_files.jl — hydro_, grav_ and rt_ files ("per-cell" files)
+#  cell_files.jl: hydro_, grav_ and rt_ files ("per-cell" files)
 #
 #  All three share one layout (hydro/output_hydro.f90, poisson/output_poisson.f90,
 #  rt/rt_output_hydro.f90):
@@ -13,7 +13,7 @@
 #
 #  Converting means: copy the header (with the new ncpu) and, for every list of
 #  the new amr file, gather each grid's values from the old file of the rank
-#  that owned it. Values are copied bit for bit — no unit or variable
+#  that owned it. Values are copied bit for bit: no unit or variable
 #  conversion is ever needed.
 #
 #  The old files are memory-mapped, so even a large output is never loaded
@@ -118,8 +118,8 @@ end
 
 For each level, the source of every grid of the new rank in the order the
 new amr file lists them (CPU lists, then boundary lists). Interior grids come
-from their old owner; boundary grids from any old rank that held them, or —
-if no old rank had that boundary grid — from the interior grid its reference
+from their old owner; boundary grids from any old rank that held them, or,
+if no old rank had that boundary grid, from the interior grid its reference
 chain points to (RAMSES recomputes boundary values before using them).
 """
 function grid_sources(t::GlobalTree, lt::LocalTree, ncpu_old::Integer)

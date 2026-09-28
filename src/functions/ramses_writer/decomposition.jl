@@ -1,5 +1,5 @@
 # ============================================================================
-#  decomposition.jl — split the Hilbert curve into `ncpu` new domains
+#  decomposition.jl: split the Hilbert curve into `ncpu` new domains
 #
 #  RAMSES assigns every cell to a CPU by the Hilbert key of its centre:
 #  domain d owns the keys bound_key(d-1) ≤ key < bound_key(d), and with
@@ -82,7 +82,7 @@ cpu_of_key(key, bound_key, ncpu) = mod(domain_of_key(key, bound_key) - 1, ncpu) 
 
 New domain walls that give every domain (almost) the same load. The load is
 one unit per cell (all levels, i.e. proportional to grid memory) plus one per
-entry of `extra_keys` — the Hilbert keys of the particles — so particle-heavy
+entry of `extra_keys` (the Hilbert keys of the particles), so particle-heavy
 regions get smaller domains, as with RAMSES's own load balancer. RAMSES
 re-balances with its own cost function at its next `load_balance` anyway
 (namelist `nremap`).

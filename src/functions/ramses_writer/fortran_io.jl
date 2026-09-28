@@ -1,5 +1,5 @@
 # ============================================================================
-#  fortran_io.jl — minimal reader/writer for Fortran "unformatted sequential"
+#  fortran_io.jl: minimal reader/writer for Fortran "unformatted sequential"
 #  files, the binary format of every RAMSES output file (amr_, hydro_, part_,
 #  grav_, rt_, sink_ ...).
 #

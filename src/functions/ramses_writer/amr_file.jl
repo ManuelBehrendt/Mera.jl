@@ -1,5 +1,5 @@
 # ============================================================================
-#  amr_file.jl — read and write ONE RAMSES `amr_XXXXX.outYYYYY` file.
+#  amr_file.jl: read and write ONE RAMSES `amr_XXXXX.outYYYYY` file.
 #
 #  The record sequence mirrors `backup_amr` (amr/output_amr.f90) and
 #  `init_amr` (amr/init_amr.f90) of RAMSES exactly. Every CPU file holds a copy

@@ -29,7 +29,7 @@ end
 
 The amr-header fields needed for a restart: from the Mera object (`:mera`),
 else from the original simulation if it still exists (`:simulation`), else
-reconstructed from the info (`:approximate` — time steps unknown).
+reconstructed from the info (`:approximate`: time steps unknown).
 """
 function amr_header_of(info)
     h = info.grid_info.amr_header
@@ -151,7 +151,7 @@ end
 
 "Print a completeness report."
 function show_completeness(ok, rep)
-    println(ok ? "COMPLETE — can be written as a RAMSES restart" : "NOT complete — a restart would lose data")
+    println(ok ? "COMPLETE: can be written as a RAMSES restart" : "NOT complete: a restart would lose data")
     for (k, v) in rep
         println("   ", rpad(k, 18), v)
     end

@@ -1,5 +1,5 @@
 # ============================================================================
-#  write_ramses.jl — write a complete RAMSES output from leaf data
+#  write_ramses.jl: write a complete RAMSES output from leaf data
 #
 #  Same pipeline as `repartition` (decomposition, local trees, amr files),
 #  but cell values come from memory (from_leaves.jl), particles from a table,

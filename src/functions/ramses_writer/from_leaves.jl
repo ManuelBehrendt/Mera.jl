@@ -1,12 +1,12 @@
 # ============================================================================
-#  from_leaves.jl — a RAMSES output from LEAF cells (e.g. data held by Mera)
+#  from_leaves.jl: a RAMSES output from LEAF cells (e.g. data held by Mera)
 #
 #  Analysis tools such as Mera keep only the leaf cells of the octree (the
 #  cells that are not refined further). RAMSES also stores every refined
 #  ("parent") cell. This file rebuilds everything else from the leaves:
 #
-#    * the octree — every leaf implies all its ancestor grids;
-#    * parent-cell values — the average of the 8 children in conserved
+#    * the octree: every leaf implies all its ancestor grids;
+#    * parent-cell values: the average of the 8 children in conserved
 #      variables, bottom-up, which is what RAMSES's upload_fine does;
 #    * a synthetic amr header from the stored header fields.
 #
@@ -225,7 +225,7 @@ end
 
 Values of every cell of every grid (`vals[l][grid, ind, ivar]`): leaves from
 `leaves`, refined cells by averaging their children (bottom-up). Errors if a
-cell is neither a leaf nor refined — the leaf set does not cover the tree.
+cell is neither a leaf nor refined: the leaf set does not cover the tree.
 """
 function cell_values(t::GlobalTree, leaves::LeafCells, r::Restriction)
     nv = size(leaves.values, 2)
@@ -378,7 +378,7 @@ octree filling the physical box (coarse cells `cmin..cmax`):
 * **unique**      no cell appears twice;
 * **no overlap**  no leaf lies inside another leaf;
 * **coverage**    Σ 8^(Lmax−level) over the leaves equals the box volume in units
-                  of the finest cell — exact integer arithmetic, no round-off;
+                  of the finest cell, in exact integer arithmetic, no round-off;
 * **closed octs** every sibling of every leaf is a leaf or has leaves below it
                   (RAMSES stores whole octs; an oct with a hole cannot be written);
 * **levels**      every leaf at level ≥ levelmin.

@@ -1,5 +1,5 @@
 # ============================================================================
-#  namelist.jl — tiny reader for Fortran namelists (namelist.txt of an output)
+#  namelist.jl: tiny reader for Fortran namelists (namelist.txt of an output)
 #
 #  Only what the converter needs: find a `&GROUP ... /` block and return its
 #  `key = value, value, ...` entries as strings. Handles `!` comments,

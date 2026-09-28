@@ -1,5 +1,5 @@
 # ============================================================================
-#  hilbert.jl — the Peano–Hilbert keys RAMSES uses for its domain decomposition
+#  hilbert.jl: the Peano-Hilbert keys RAMSES uses for its domain decomposition
 #
 #  A line-by-line port of `hilbert3d` (amr/hilbert.f90), `cmp_ordering` and
 #  `cmp_minmaxorder` (amr/load_balance.f90). The keys are accumulated in
@@ -58,7 +58,7 @@ end
 """
     hilbert_bit_length(ncode) -> Int
 
-RAMSES's loop `do bit_length=1,32; ncode=ncode/2; if(ncode<=1) exit` — i.e.
+RAMSES's loop `do bit_length=1,32; ncode=ncode/2; if(ncode<=1) exit`, i.e.
 the number of bits needed for `ncode` cells per dimension.
 """
 function hilbert_bit_length(ncode::Integer)
@@ -76,7 +76,7 @@ end
     point_key(x, scale, nx, nlevelmax) -> Float64
 
 Hilbert key of a point at the finest ordering resolution `2^(nlevelmax+1)` per
-coarse cell — RAMSES's `cmp_ordering`, which decides which CPU owns a cell or a
+coarse cell, as RAMSES's `cmp_ordering`, which decides which CPU owns a cell or a
 particle. `x` is in *user units* (`[0, boxlen]`) and `scale = boxlen/nx`. The
 floating-point operations are the same as in RAMSES (`int(x*bscale)` with
 `bscale = 2^(nlevelmax+1)/scale`), so points on cell walls round identically.
@@ -93,7 +93,7 @@ end
     cell_key_range(x, level, scale, nx, nlevelmax) -> (kmin, kmax)
 
 Range of finest-resolution Hilbert keys covered by the whole cell of `level`
-whose centre is `x` (user units) — RAMSES's `cmp_minmaxorder`. A cell
+whose centre is `x` (user units), as RAMSES's `cmp_minmaxorder`. A cell
 intersects domain `d` iff `kmax > bound_key(d-1) && kmin < bound_key(d)`.
 """
 function cell_key_range(x::NTuple{3,Float64}, level::Integer, scale::Float64, nx::Integer, nlevelmax::Integer)

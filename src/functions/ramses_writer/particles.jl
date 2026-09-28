@@ -1,11 +1,11 @@
 # ============================================================================
-#  particles.jl — part_XXXXX.outYYYYY files
+#  particles.jl: part_XXXXX.outYYYYY files
 #
 #  Layout (pm/output_part.f90):
 #     record  ncpu                      Int32
 #     record  ndim                      Int32
 #     record  npart                     Int32   (particles in this file)
-#     record  localseed(4) [,tracer_seed(4)]    Int32 — per-rank random state
+#     record  localseed(4) [,tracer_seed(4)]    Int32, per-rank random state
 #     record  nstar_tot                 Int32   (global)
 #     record  mstar_tot                 Float64 (per-rank partial sum)
 #     record  mstar_lost                Float64 (per-rank partial sum)
@@ -16,7 +16,7 @@
 #  RAMSES does not check on restart which rank a particle is in, but the
 #  natural and safe choice is the rank owning the finest grid that contains
 #  the particle. Fields are copied byte for byte, so we never need to know
-#  their types — only positions (the first ndim Float64 records) are decoded.
+#  their types: only positions (the first ndim Float64 records) are decoded.
 # ============================================================================
 
 part_filename(dir, iout, icpu) = joinpath(dir, "part_$(lpad(iout, 5, '0')).out$(lpad(icpu, 5, '0'))")
@@ -191,7 +191,7 @@ end
     leaf_cell_pointer(t, lt, x, ngridmax) -> Int32
 
 RAMSES memory index (`ncoarse + (ind-1)*ngridmax + igrid`) of the leaf cell
-containing position `x` on the rank described by `lt` — the `partp` value
+containing position `x` on the rank described by `lt`: the `partp` value
 RAMSES stores for a Monte-Carlo gas tracer (the cell it sits in). The index is
 rank-specific, so it is recomputed for every new rank instead of copied.
 """

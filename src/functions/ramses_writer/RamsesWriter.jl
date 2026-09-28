@@ -1,12 +1,8 @@
-"""
-    Mera.RamsesWriter
-
-Internal module: reads and writes RAMSES binary outputs, so an output can be rewritten for any
-number of MPI ranks ([`repartition`](@ref)) or written from Mera data ([`writeramses`](@ref)).
-Plain Julia on the standard library. The public entry points live in `Mera`; this module keeps
-the file-format machinery, whose generic names (`read_amr_file`, `GlobalTree`, …) would
-otherwise collide with Mera's own.
-"""
+# Mera.RamsesWriter (internal): reads and writes RAMSES binary outputs, so an output can be
+# rewritten for any number of MPI ranks (`repartition`) or written from Mera data
+# (`writeramses`). Plain Julia on the standard library. The public entry points live in Mera; this
+# module keeps the file-format machinery, whose generic names (`read_amr_file`, `GlobalTree`, …)
+# would otherwise collide with Mera's own.
 module RamsesWriter
 
 using Printf

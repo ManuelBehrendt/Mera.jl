@@ -1,5 +1,5 @@
 # ============================================================================
-#  boundaries.jl — RAMSES "simple" physical boundaries (outflow / reflexive /
+#  boundaries.jl: RAMSES "simple" physical boundaries (outflow / reflexive /
 #  imposed), used e.g. by isolated galaxy runs with nx = ny = nz = 3.
 #
 #  Around the physical box RAMSES adds layers of boundary coarse cells. Grids
@@ -90,7 +90,7 @@ end
     coarse_box(n, g) -> (cmin, cmax)
 
 First and last coarse index of the physical box in each direction for a coarse
-grid of `n` cells (boundary layers included), from `&BOUNDARY_PARAMS` — the
+grid of `n` cells (boundary layers included), from `&BOUNDARY_PARAMS`: the
 rule of hydro/read_hydro_params.f90: a boundary on the lower side shifts the
 box up by one coarse cell.
 """

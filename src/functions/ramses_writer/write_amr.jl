@@ -1,5 +1,5 @@
 # ============================================================================
-#  write_amr.jl — turn a LocalTree into the content of one amr_ file
+#  write_amr.jl: turn a LocalTree into the content of one amr_ file
 #
 #  RAMSES stores its octree with integer "pointers" into its own memory:
 #

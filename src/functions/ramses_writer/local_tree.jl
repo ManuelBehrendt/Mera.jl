@@ -1,5 +1,5 @@
 # ============================================================================
-#  local_tree.jl — which grids does rank k hold, and how are they stored?
+#  local_tree.jl: which grids does rank k hold, and how are they stored?
 #
 #  On restart, `init_amr` copies each rank's file straight into memory, so the
 #  file for new rank k must contain exactly the local octree RAMSES itself
@@ -54,7 +54,7 @@ ngrid_current(lt::LocalTree) = sum(length, lt.grids) + sum(length, lt.bgrids)
     neighbour_cell(t, level, ig, ind, dir) -> (grid_coord, ind) or nothing
 
 The face neighbour of cell `ind` of the grid with coordinates `ig` at `level`
-in direction `dir ∈ 1:6` (-x,+x,-y,+y,-z,+z — RAMSES's nbor order). Periodic
+in direction `dir ∈ 1:6` (-x,+x,-y,+y,-z,+z, RAMSES's nbor order). Periodic
 directions wrap around; in directions with physical boundaries a neighbour
 outside the box returns `nothing` (it would be a boundary cell, which never
 counts as authorized). The returned grid may or may not exist.
@@ -89,7 +89,7 @@ wrap_full(t::GlobalTree, level, c, d) = mod(c, t.geom.n[d] * 2^level)
 Level-1 grids in boundary coarse cells. RAMSES authorizes every coarse cell on
 every rank, so they exist everywhere; from RAMSES files we take the ones the
 old files hold, from leaf data (no boundary grids stored) every boundary
-coarse cell gets one — its reference cell in the box is refined whenever
+coarse cell gets one: its reference cell in the box is refined whenever
 levelmin > 1.
 """
 function level1_boundary_grids(t::GlobalTree)
@@ -236,7 +236,7 @@ Boundary grids of level l+1 on this rank (init_boundary_fine + make_boundary_fla
    face neighbours (interior or boundary, on this rank) are authorized;
 2. refinement: a boundary cell copies the refinement of its reference cell,
    found by stepping from its grid towards the box (`inbor`) and picking cell
-   `ind_ref[ind]` — repeated through boundary grids until an interior cell;
+   `ind_ref[ind]`, repeated through boundary grids until an interior cell;
 3. authorized and refined boundary cells get a child boundary grid.
 """
 function select_boundary_children!(bselected, t::GlobalTree, l, loc, slot, flag2)

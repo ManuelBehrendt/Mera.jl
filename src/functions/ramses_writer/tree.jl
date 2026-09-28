@@ -1,5 +1,5 @@
 # ============================================================================
-#  tree.jl — the *global* octree of a RAMSES output
+#  tree.jl: the *global* octree of a RAMSES output
 #
 #  RAMSES scatters its octree over `ncpu` files. Every file holds the grids the
 #  rank owns plus ghost ("virtual") copies of neighbouring grids. To repartition
@@ -123,7 +123,7 @@ amr_filename(dir, iout, icpu) = joinpath(dir, "amr_$(lpad(iout, 5, '0')).out$(lp
     read_global_tree(dir, iout) -> GlobalTree
 
 Reads all `amr_XXXXX.outYYYYY` files of `output_XXXXX` and keeps every grid
-exactly once — from the file of the rank that owns it (list `ibound == icpu`).
+exactly once, from the file of the rank that owns it (list `ibound == icpu`).
 """
 function read_global_tree(dir::AbstractString, iout::Integer; verbose::Bool=true,
                           namelist::AbstractString=joinpath(dir, "namelist.txt"))

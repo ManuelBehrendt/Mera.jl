@@ -1,5 +1,5 @@
 # ============================================================================
-#  text_files.jl — info_XXXXX.txt and the files that are simply copied
+#  text_files.jl: info_XXXXX.txt and the files that are simply copied
 # ============================================================================
 
 """
@@ -52,7 +52,7 @@ end
     is_global_file(name) -> Bool
 
 True for files RAMSES writes once per output (not per CPU). They do not depend
-on ncpu and are copied unchanged — except `info_XXXXX.txt`, which is
+on ncpu and are copied unchanged, except `info_XXXXX.txt`, which is
 regenerated.
 """
 function is_global_file(name::AbstractString)

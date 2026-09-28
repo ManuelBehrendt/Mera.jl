@@ -1,5 +1,5 @@
 # ============================================================================
-#  compare.jl — check two outputs describe the same simulation state
+#  compare.jl: check two outputs describe the same simulation state
 #
 #  Useful to verify a conversion (original vs. converted output) and to compare
 #  runs continued with different ncpu. The comparison is independent of the
@@ -10,18 +10,18 @@
 """
     CompareResult
 
-`same_tree` — both outputs contain exactly the same grids.
-`maxdiff[kind][ivar]` — largest difference `|a-b|` of each variable over all
+`same_tree`: both outputs contain exactly the same grids.
+`maxdiff[kind][ivar]`: largest difference `|a-b|` of each variable over all
 cells (leaf and refined) of the file kind (`"hydro"`, `"grav"`, `"rt"`),
 divided by the variable's largest magnitude `max(|a|,|b|)`, but by at least
 1e-3 × the largest magnitude of any variable of that kind. The floor keeps
 variables that are zero everywhere (v_z in a 1-D tube, say) from turning
 round-off noise into a "100 %" difference.
-`nparticles` — particle counts of both outputs, `families_a/b` per family;
-`particle_maxdiff` — largest position difference (in units of boxlen) and
+`nparticles`: particle counts of both outputs, `families_a/b` per family;
+`particle_maxdiff`: largest position difference (in units of boxlen) and
 velocity difference (relative to the largest speed) of the `nmatched`
 deterministic particles (DM, stars, …) matched by identity;
-`particle_ids_match` — both outputs hold exactly the same such identities.
+`particle_ids_match`: both outputs hold exactly the same such identities.
 """
 struct CompareResult
     same_tree::Bool
@@ -66,7 +66,7 @@ end
     particle_table(dir, iout) -> (Dict(id => (x, y, z, vx, vy, vz)), family_counts)
 
 Positions and velocities of the particles that follow deterministic
-trajectories — dark matter, stars and other massive particles — keyed by
+trajectories (dark matter, stars and other massive particles), keyed by
 identity. Two kinds are only counted, not matched: Monte-Carlo tracers
 (family ≤ 0), whose moves are random and use per-rank random seeds, and sink
 "cloud" particles (family 3), which RAMSES rebuilds at every restart.
@@ -106,7 +106,7 @@ end
 
 Compares two RAMSES outputs of the same simulation time, possibly written
 with different numbers of CPUs. With `leaves_only=true` refined cells are
-skipped and only the leaf cells — the data analysis tools see — are compared.
+skipped and only the leaf cells, which analysis tools see, are compared.
 """
 function compare_outputs(dir_a::AbstractString, dir_b::AbstractString; leaves_only::Bool=false)
     ia, ib = output_number(dir_a), output_number(dir_b)
