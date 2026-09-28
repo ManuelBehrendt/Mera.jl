@@ -1035,6 +1035,13 @@ end
                                 pxsize=[0.2,:kpc], mask=fstars)
         @test length(Set(size(m.maps[:sd]) for m in seq)) == 1
         @test size(seq[1].maps[:sd]) == first(sizes)
+        # a mask must not move the frame either, also for :circle, where a grid frame keeps a
+        # margin for its cells: masked and unmasked maps have to share one pixel grid
+        dense = getvar(fgas, :rho) .> median(getvar(fgas, :rho))
+        ci_all  = projection(fgas, :sd, :Msol_pc2; aperture=:circle, fkw...)
+        ci_mask = projection(fgas, :sd, :Msol_pc2; aperture=:circle, mask=dense, fkw...)
+        @test size(ci_all.maps[:sd]) == size(ci_mask.maps[:sd])
+        @test ci_all.extent == ci_mask.extent
         # a sparse GAS selection had the same flaw: a thin depth slab still gets the whole window
         slab = projection(fgas, :sd, :Msol_pc2; aperture=:square, depth=0.5, depth_unit=:kpc, fkw...)
         @test size(slab.maps[:sd]) == size(sq_gas.maps[:sd])
@@ -1213,9 +1220,10 @@ end
         # length inside. It used to stop with "array-mask length does not match".
         full = projection(gas, :mass, :Msol; fov=8, aperture=:circle, kw...)
         cut  = projection(gas, :mass, :Msol; fov=8, aperture=:circle, mask=cold, kw...)
-        # NOTE the frame is NOT the same: the off-axis camera extent auto-fits the cells that
-        # survive selection, so a mask shrinks it. That predates `fov` and holds without it too.
-        @test size(cut.maps[:mass]) != size(full.maps[:mass])
+        # `fov` fixes the frame, so the mask does not change it: the two maps share one pixel
+        # grid and can be compared pixel by pixel. (Without `fov` a mask still shrinks the frame.)
+        @test size(cut.maps[:mass]) == size(full.maps[:mass])
+        @test cut.extent == full.extent
         Mf, Mc = sum(full.maps[:mass]), sum(cut.maps[:mass])
         @test Mc < Mf                                # the mask removed mass
         @test Mc > 0                                 # but not all of it

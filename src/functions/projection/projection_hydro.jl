@@ -1062,7 +1062,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                               refine=refine, refine_to=refine_to)
         # the frame half-width in code units, so the inner call can hold the frame fixed
         fov_half = _rsel / (fov_unit === :standard ? 1.0 / dataobject.boxlen :
-                                                     getunit(dataobject.info, fov_unit))
+                                                     getunit(dataobject.info, fov_unit)) +
+                   _fov_margin(dataobject, src, premasked !== dataobject, _rsel, fov_unit, center)
         m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=inner_mask,
                        direction=direction, los=los, up=up, theta=theta, phi=phi,
                        inclination=inclination, azimuth=azimuth, position_angle=position_angle,
@@ -1928,10 +1929,9 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         # `fov` fixes the frame: symmetric about `center` and the same at every angle, whatever
         # the selection fills. Fitting it to the data instead made a sparse selection (a mask, a
         # depth slab, a thin disc) come back smaller and off-centre, and the square crop then cut
-        # into it. The margin is the coarsest cell's worst-case reach, and the frame never shrinks
-        # below the data, so every deposit still lands on the grid.
-        smax = any(sel) ? maximum(@view cellsize_all[sel]) : 0.0
-        hw = fov_half + pixsize + smax * sqrt(3)
+        # into it. `fov_half` already carries the object's cell margin (`_fov_margin`), and the
+        # frame never shrinks below the data, so every deposit still lands on the grid.
+        hw = fov_half + pixsize
         hx = max(hw, -x0, x1); hy = max(hw, -y0, y1)
         x0, x1, y0, y1 = -hx, hx, -hy, hy
     end

@@ -857,6 +857,21 @@ function _slab_fractions(z_cam::AbstractVector, csize::AbstractVector, cam_w, lo
     return fr
 end
 
+# The margin a grid frame keeps beyond `fov`: the coarsest cell inside the sphere, at its worst-case
+# reach (a cell reaching the sphere, plus its projected shadow). It is taken from the UNMASKED
+# sphere, so a mask does not change the frame and masked and unmasked maps share one pixel grid.
+# `sphere_src` is that sphere when it has already been cut; with a mask it is cut here once more.
+# Points have no size and need none.
+function _fov_margin(obj, sphere_src, masked::Bool, rsel, fov_unit, center)
+    obj isa PartDataType && return 0.0
+    s = masked ? subregion(obj, :sphere, radius=rsel, center=center, range_unit=fov_unit,
+                           verbose=false) : sphere_src
+    isempty(s.data) && return 0.0
+    # a uniform grid carries no level column: every cell is at lmax
+    lcoarse = :level in propertynames(s.data.columns) ? minimum(select(s.data, :level)) : s.lmax
+    return s.boxlen / 2.0^lcoarse * sqrt(3)
+end
+
 # Apply the SAME sphere to a companion object (gravity data projected on the hydro grid). Both
 # carry the same cells in the same order, so selecting both keeps the two row-aligned — without
 # this the hydro object is cut and the companion is not, and the deposit indexes past its end.
@@ -987,6 +1002,7 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
     # on unchanged stopped every frame with a length mismatch.
     base, inner_mask = _fov_premask(dataobject, get(kwargs, :mask, [false]))
     src = subregion(base, :sphere, radius=rsel, center=center, range_unit=fov_unit, verbose=false)
+    margin = _fov_margin(dataobject, src, base !== dataobject, rsel, fov_unit, center)
     # Two ways to use the threads. By default each frame's `projection` multithreads internally and
     # the frames run one after another. With `parallel_frames=true` the FRAMES run concurrently
     # (`Threads.@threads`) and each projection is single-threaded — this fills all cores when there
@@ -1013,7 +1029,8 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
         # does not fill the sphere (stars, a mask) gives the same frame at every angle. Only the
         # hydro/RT and particle engines take it; other data types frame as before.
         m = src isa Union{HydroDataType, RtDataType} ?
-                projection(src, [var]; units=[unit], common..., _fov_half=rsel / cuw) :
+                projection(src, [var]; units=[unit], common...,
+                           _fov_half=rsel / cuw + margin) :
             src isa PartDataType ?
                 create_projection(src, [var]; units=[unit], common..., _fov_half=rsel / cuw) :
                 projection(src, var, unit; common...)
