@@ -776,9 +776,16 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
                sweep === :inclination    ? (inclination=a, axis=axis) :
                                            (inclination=inclination, axis=axis, position_angle=a)
         szkw = pxsize === nothing ? (res=res,) : (pxsize=pxsize,)   # prefer physical pxsize
-        m = projection(src, var, unit; center=center, range_unit=fov_unit,
-                       xrange=win, yrange=win, zrange=win, verbose=false, show_progress=false,
-                       mtkw..., szkw..., view..., kw...)
+        common = (; center=center, range_unit=fov_unit, xrange=win, yrange=win, zrange=win,
+                  verbose=false, show_progress=false, mtkw..., szkw..., view..., kw...)
+        # Hold the frame at the sphere's size, as `projection(...; fov)` does, so a selection that
+        # does not fill the sphere (stars, a mask) gives the same frame at every angle. Only the
+        # hydro/RT and particle engines take it; other data types frame as before.
+        m = src isa Union{HydroDataType, RtDataType} ?
+                projection(src, [var]; units=[unit], common..., _fov_half=rsel / cuw) :
+            src isa PartDataType ?
+                create_projection(src, [var]; units=[unit], common..., _fov_half=rsel / cuw) :
+                projection(src, var, unit; common...)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         maps[k] = m
     end

@@ -674,6 +674,52 @@ end
         @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,-2], aperture=:square, kw...)
     end
 
+    @testset "fov fixes the frame, whatever the selection fills" begin
+        # `fov` promises a fixed camera-plane window. The frame used to be fitted to the data
+        # that survived the sphere, so a star disc that does not fill it came back smaller than
+        # the window and off-centre, and aperture=:square then cropped stars away (reported:
+        # ±7 kpc of stars at fov=12, gas correctly ±12). The frame is now built from `fov`.
+        dp    = DATASETS[:spiral_ugrid]
+        finfo = getinfo(dp.output, dp.path, verbose=false)
+        fgas  = gethydro(finfo, verbose=false, show_progress=false)
+        fpart = getparticles(finfo, verbose=false, show_progress=false)
+        fkw = (los=[1.,2,3], center=[:bc], range_unit=:kpc, fov=12, fov_unit=:kpc,
+               pxsize=[0.2,:kpc], verbose=false, show_progress=false)
+        starmass(m) = sum(m.maps[:sd]) * (m.pixsize * m.scale.pc)^2
+
+        sq_gas  = projection(fgas,  :sd, :Msol_pc2; aperture=:square, fkw...)
+        sq_star = projection(fpart, :sd, :Msol_pc2; aperture=:square, parttypes=[:stars], fkw...)
+        for m in (sq_gas, sq_star)
+            e = getextent(m, :kpc)
+            @test all(isapprox.(abs.(e), 12; atol=0.2))          # ±fov on both axes
+            @test isapprox(e[1] + e[2], 0; atol=1e-9)            # centred on `center`
+            @test isapprox(e[3] + e[4], 0; atol=1e-9)
+        end
+        @test size(sq_gas.maps[:sd]) == size(sq_star.maps[:sd])  # one window, one pixel grid
+
+        # nothing of this disc lies outside the square, so the square keeps what the circle keeps
+        ci_star = projection(fpart, :sd, :Msol_pc2; aperture=:circle, parttypes=[:stars], fkw...)
+        @test isapprox(starmass(sq_star), starmass(ci_star); rtol=1e-12)
+
+        # the same frame at every viewing angle, for points as for cells
+        sizes = Set(size(projection(fpart, :sd, :Msol_pc2; inclination=55, azimuth=az, axis=:z,
+                                    aperture=:circle, parttypes=[:stars], center=[:bc],
+                                    range_unit=:kpc, fov=12, fov_unit=:kpc, pxsize=[0.2,:kpc],
+                                    verbose=false, show_progress=false).maps[:sd]) for az in 0:60:300)
+        @test length(sizes) == 1
+        # and rotation_sequence, which cuts its own sphere, holds the star frame too
+        seq = rotation_sequence(fpart, :sd, :Msol_pc2; angles=0:60:300, inclination=55, axis=:z,
+                                center=[:bc], fov=12, fov_unit=:kpc, aperture=:circle,
+                                pxsize=[0.2,:kpc], parttypes=[:stars])
+        @test length(Set(size(m.maps[:sd]) for m in seq)) == 1
+        @test size(seq[1].maps[:sd]) == first(sizes)
+        # a sparse GAS selection had the same flaw: a thin depth slab still gets the whole window
+        slab = projection(fgas, :sd, :Msol_pc2; los=[1.,2,3], center=[:bc], range_unit=:kpc,
+                          fov=12, fov_unit=:kpc, aperture=:square, depth=0.5, depth_unit=:kpc,
+                          pxsize=[0.2,:kpc], verbose=false, show_progress=false)
+        @test size(slab.maps[:sd]) == size(sq_gas.maps[:sd])
+    end
+
     @testset ":ncell / :npart count what fed each pixel" begin
         N = length(gas.data)
         kw = (los=[1.,2.,3.], center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)

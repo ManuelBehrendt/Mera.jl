@@ -776,6 +776,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             range_unit::Symbol=:standard,
                             data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
+                            _fov_half=nothing,       # internal: fixed frame half-width from `fov`
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
                             show_progress::Bool=true,
@@ -815,7 +816,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     # is not rotation-invariant, so `fov` selects a SPHERE instead and the frame is fixed at every
     # viewing angle. Points carry no footprint, so only the framing differs here — not the deposit.
     if fov !== nothing
-        src, win, fov_code, _ = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        src, win, fov_code, rsel = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        # the frame half-width in code units, so the inner call can hold the frame fixed
+        fov_half = rsel / (fov_unit === :standard ? 1.0 / dataobject.boxlen :
+                                                    getunit(dataobject.info, fov_unit))
         m = create_projection(src, vars; parttypes=parttypes, units=units, lmax=lmax, res=res,
                               pxsize=pxsize, mask=mask, direction=direction, los=los, up=up,
                               theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
@@ -826,7 +830,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                               max_threads=max_threads, xrange=win, yrange=win,
                               zrange=win, center=center, range_unit=fov_unit,
                               data_center=data_center, data_center_unit=data_center_unit,
-                              ref_time=ref_time, verbose=verbose, show_progress=show_progress)
+                              ref_time=ref_time, verbose=verbose, show_progress=show_progress,
+                              _fov_half=fov_half)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         return m
     end
@@ -932,7 +937,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                             los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
                                             boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos, max_threads;
                                             thickness=thickness, thickness_unit=thickness_unit,
-                                            offset=offset, offset_unit=offset_unit)
+                                            offset=offset, offset_unit=offset_unit,
+                                            fov_half=_fov_half)
     end
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
@@ -1411,7 +1417,7 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                                        los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
                                        boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing, max_threads=Threads.nthreads();
                                        thickness=nothing, thickness_unit=nothing,
-                                       offset=nothing, offset_unit=nothing)
+                                       offset=nothing, offset_unit=nothing, fov_half=nothing)
 
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
@@ -1511,8 +1517,19 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
         half = boxlen / 2
         x0, x1, y0, y1 = -half, half, -half, half
     end
-    nx = max(1, round(Int, (x1 - x0) / pixsize))
-    ny = max(1, round(Int, (y1 - y0) / pixsize))
+    if fov_half !== nothing
+        # `fov` fixes the frame: symmetric about `center` and the same at every angle. Fitted to
+        # the particles instead, a disc that does not fill the sphere came back smaller than the
+        # window and off-centre, and the square crop then cut stars away. Never smaller than the
+        # data, so every particle still lands on the grid.
+        hw = fov_half + pixsize
+        hx = max(hw, -x0, x1); hy = max(hw, -y0, y1)
+        nx = max(1, ceil(Int, 2hx / pixsize)); ny = max(1, ceil(Int, 2hy / pixsize))
+        x0 = -nx * pixsize / 2; y0 = -ny * pixsize / 2
+    else
+        nx = max(1, round(Int, (x1 - x0) / pixsize))
+        ny = max(1, round(Int, (y1 - y0) / pixsize))
+    end
     x1 = x0 + nx * pixsize; y1 = y0 + ny * pixsize
     grid_extent = (x0, x1, y0, y1); grid_resolution = (nx, ny)
     extent = [x0, x1, y0, y1]

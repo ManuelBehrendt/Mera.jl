@@ -2107,7 +2107,9 @@ end
             @test_throws ArgumentError rotation_sequence(hydro, :mass; angles=[0], aperture=:hex)
             # fov omitted → auto-fit the galaxy (mass-enclosed radius), not blown out to the full box
             au = rotation_sequence(hydro, :mass, :Msol; sweep=:azimuth, angles=[0,90], res=48)
-            @test (au[1].extent[2]-au[1].extent[1]) < 0.9*hydro.boxlen
+            # the frame is the 99 % radius plus a margin for the coarsest cell's reach, so it stays
+            # well inside the box instead of spanning it
+            @test (au[1].extent[2]-au[1].extent[1]) < hydro.boxlen
             @test all(m -> all(isfinite, m.maps[:mass]) && sum(m.maps[:mass]) > 0, au)
             # parallel_frames (frame-level threading) gives identical frames to round-off
             sp = rotation_sequence(hydro, :mass, :Msol; sweep=:azimuth, angles=[0,90,180,270],
