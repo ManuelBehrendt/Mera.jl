@@ -5,9 +5,12 @@ Everything an off-axis projection can do, on one page. Each row links to the sec
 
 Works the same on hydro and on particles unless a row says otherwise.
 
-## Am I off-axis at all?
+**A word used everywhere below: `los`, the line of sight.** It is the direction the camera looks
+along, from you through the object. A projection adds up everything along that direction, so each
+pixel is the total (or average) of one straight column through the data. "Off-axis" means the
+line of sight is not one of the box axes x, y or z.
 
-This catches more people than anything else on the page.
+## Am I off-axis at all?
 
 | call | path |
 |---|---|
@@ -20,7 +23,7 @@ confusing error. Check `m.los`: if it is empty, the camera was never built.
 
 ## Pointing the camera
 
-Give **exactly one** line-of-sight specifier. Two is an error, not a silent winner.
+Give **exactly one** line-of-sight specifier. If you give two, Mera raises an error.
 
 | keyword | means |
 |---|---|
@@ -57,14 +60,20 @@ already use `L`.
 with `cam_right × up = los`.
 
 Without `up=`, the camera uses world **+z** as its up hint, falling back to +y when the line of
-sight is itself the z axis. That is what makes a box-axis `los` reproduce the matching preset:
+sight is itself the z axis. Along the six box directions this gives:
 
-| `los` | image x | image y | same as |
+| `los` | image x | image y | compared with the axis-aligned map |
 |---|---|---|---|
-| `[0,0,1]` | `+x` | `+y` | `direction=:z` |
-| `[1,0,0]` | `+y` | `+z` | an edge-on view with z up |
-| `[0,1,0]` | `-x` | `+z` | |
-| `[0,0,-1]` | `-x` | `+y` | looking the other way |
+| `[0,0,1]` | `+x` | `+y` | the same orientation as `direction=:z` |
+| `[0,0,-1]` | `-x` | `+y` | `direction=:z` mirrored left to right: seen from the other side |
+| `[1,0,0]` | `+y` | `+z` | the same orientation as `direction=:x` |
+| `[-1,0,0]` | `-y` | `+z` | `direction=:x` mirrored |
+| `[0,-1,0]` | `+x` | `+z` | the same orientation as `direction=:y` |
+| `[0,1,0]` | `-x` | `+z` | `direction=:y` mirrored |
+| `[1,1,1]` | `(-x+y)/√2` | `(-x-y+2z)/√6` | no counterpart. Up is +z as seen across the line of sight |
+
+"The same orientation" means the image axes agree. The pixel grids still differ slightly, because
+the two paths place pixel edges differently, so do not subtract one map from the other.
 
 Pass `up=` yourself whenever the default is not what you want. `position_angle` then rolls the
 result about the line of sight without changing `m.los`.
@@ -186,11 +195,24 @@ subregion(gas, sphere(10; center=[:bc], range_unit=:kpc); split=true, refine=2)
 | `angmom_radius=[10,:kpc]` | restrict the orientation sum to a sphere about `center` |
 | [`angmom`](@ref)`(gas; center=[:bc], radius=[10,:kpc])` | the vector itself, to reuse |
 | `angmom([gas, stars, dm]; ...)` | one axis from several components, momenta added |
-| `angmom(gas; mask=cold)` | orient on part of the data |
+| `angmom(gas; mask=cold)` | orient on part of the data (combines with `radius`) |
 | [`face_on`](@ref) / [`edge_on`](@ref) | a frame whose `los`/`up`/`center` splat into any call |
 
-Without `angmom_radius` the sum runs over everything you loaded, where the outer material has the
-longest lever arm and can tilt a "face-on galaxy" by the halo.
+**What the presets measure.** `direction=:faceon`, `:edgeon` and `axis=:angmom` compute the axis
+from **the object you pass to `projection`**, after its `mask`, and nothing else. The frame
+keywords (`fov`, `depth`, `xrange`/`yrange`/`zrange`) do not narrow it: a 16 kpc `fov` on a whole
+box still orients on the whole box. Without `angmom_radius` the sum runs over every cell or
+particle in the object, where the outer material has the longest lever arm and can tilt a
+"face-on galaxy" by the halo.
+
+To orient on something other than what you draw, such as all components together, a selection
+you do not want in the picture, or a fixed axis for a time series, compute the vector yourself and
+pass it in. `projection` then uses it as given:
+
+```julia
+L = angmom([gas, stars, dm]; center=[:bc], range_unit=:kpc, radius=[15, :kpc])
+projection(gas, :sd; axis=L, inclination=0, center=[:bc], range_unit=:kpc, mask=cold)
+```
 
 **The vector is per object.** Gas and stars each have their own, so `:faceon` on one is a
 different camera from `:faceon` on the other. To compare them, compute one vector and pass it to
@@ -203,7 +225,8 @@ projection(stars, :sd; axis=L, inclination=0, center=[:bc], range_unit=:kpc)
 ```
 
 The orientation is measured in the **box** velocity frame. For an object streaming through the
-box, measuring about its own centre of mass largely cancels that.
+box, measuring about its own centre of mass largely cancels that, and `angmom(...; vcenter=:auto)`
+removes the bulk motion outright.
 
 ## How a cell lands on the pixels
 
@@ -214,8 +237,13 @@ box, measuring about its own centre of mass largely cancels that.
 | `:overlap` (**grid default**) | splits the cell into `n³` sub-points, `n = ⌈cell/pixel⌉`, capped by `nmax=64` | accurate |
 | `:exact` | analytic footprint | accurate, slowest |
 
-All four are partitions of unity, so all four conserve the total exactly. They differ in how the
-weight is spread, not in how much there is.
+Each kernel hands out the whole of every cell: the shares it gives to the pixels add up to one.
+So all four keep the map total equal to the object's total, to rounding error. In tests the
+difference is a few units of the last digit (`eps`), and at most about one part in 10¹² for
+`:exact` with pixels much finer than the cells. The kernels differ in **where** the mass goes, not
+in how much there is. This holds for extensive maps, the ones that add up: `:mass` and `:sd` on
+cells, `:sd` times the pixel area on particles, and anything with `mode=:sum`. A mean such as `:T`
+does not sum to anything.
 
 !!! warning "Two conditions, or the total is not the total"
     Every share must land on the grid, which the auto-fitted frame guarantees, and nothing
@@ -293,7 +321,7 @@ zero, and a mean that is just that one object.
 | keyword | values |
 |---|---|
 | `weighting=` (hydro) | `[:mass, unit]` (default), `[:volume, unit]`, or any getvar quantity |
-| `weighting=` (particles) | `:mass` (default), `:volume`, `:sph`, `:voronoi` |
+| `weighting=` (particles) | `:mass` (default), `:volume`, `:sph`, `:voronoi` (see the note below) |
 | `mode=` | `:standard`, a weighted mean, or `:sum`, a per-pixel total |
 
 `:sd` and `:mass` on hydro are always summed; `mode` changes the other variables.
@@ -302,6 +330,13 @@ On particles `projection(part, :mass)` is the mass-weighted **mean particle mass
 particle has no volume. For the mass in each pixel use `mode=:sum`, or `:sd` times the pixel area.
 
 Dispersions are always built from weighted means, whatever `mode` says: a width is not a sum.
+
+!!! note "`:sph` and `:voronoi` need a size for each particle"
+    `:sph` spreads each particle over a kernel set by its smoothing length, and `:voronoi` gives
+    each pixel to the nearest particle, sized by its volume. Both need a `:volume` column or a
+    smoothing length. RAMSES star and dark matter particles have neither, so on RAMSES data these
+    two raise an error and `:mass` is the choice. They exist for moving-mesh and SPH gas (AREPO,
+    GADGET), whose readers live on the `multicode` branch, where they are also illustrated.
 
 ## Masking
 
@@ -313,8 +348,9 @@ projection(gas, :sd; los=[1,2,3], mask=cold, fov=16, fov_unit=:kpc)
 ```
 
 It composes with `fov` everywhere, with `depth` and `split` on grid data, and with
-`parttypes` on particles. On particles it also sets the camera,
-so `parttypes=[:dm], direction=:faceon` orients on the dark matter alone.
+`parttypes` on particles. It also sets the camera for `:faceon`, `:edgeon` and `axis=:angmom`:
+`mask=cold` orients on the cold gas, and `parttypes=[:dm], direction=:faceon` on the dark matter
+alone. Pass `axis=L` if the axis should come from other data.
 
 For value-space selection, [`filterdata`](@ref) and [`getmask`](@ref) build masks from any getvar
 quantity.
@@ -355,12 +391,39 @@ information.
 Off-axis, `getextent` is measured from the frame centre. On the axis-aligned path it is absolute
 box coordinates.
 
+## Reproducing a map
+
+A map carries what you need to make it again. [`provenance`](@ref)`(m)` records the snapshot and
+the Mera build (path, output, time, levels, version and commit). The camera is on the map itself:
+`m.los`, `m.up`, `m.cam_right`, `m.center`, `m.pixsize` and `m.extent`. [`savemap`](@ref) stores
+both, so a map reloaded with [`loadmap`](@ref) still says where it came from and how it was made.
+
+The one input that is not on the map is the data behind a `:faceon`, `:edgeon` or `axis=:angmom`
+view. That axis depends on what you loaded, the `mask` and `angmom_radius`. To repeat a view
+exactly, reuse the recorded vectors instead of the preset:
+
+```julia
+projection(gas2, :sd; los=m.los, up=m.up, center=[:bc], range_unit=:kpc, fov=16, fov_unit=:kpc)
+```
+
+For a time series, compute the axis once with [`angmom`](@ref) and pass it to every snapshot. See
+also [Reproducibility](reproducibility.md).
+
 ## Things that will surprise you
 
-- A **mask resizes the frame**, because the extent auto-fits the surviving cells. Pin it with `fov`.
-- **`fov` alone gives uneven depth.** Add `depth` if the column length has to mean something.
-- **`:σz` stays the box z** on a face-on view. You probably want `:σlos`.
-- **`:σ` is not the tensor trace.**
-- **Stacked hard slabs do not re-sum.** Use `split=true`.
-- **Gas and stars have different `:faceon` cameras.** Compute one `angmom` and share it.
-- **`direction=:x/:y/:z` is not off-axis**, so the camera-only variables are refused there.
+- **A mask changes the picture size.** Without `fov`, the frame is fitted around the data that is
+  left after the mask. Two maps with different masks then have different pixel grids. Give `fov`
+  to fix the frame.
+- **`fov` alone does not give equal depth.** `fov` selects a sphere, so a ray through the centre of
+  the frame is long and a ray near the edge is short. Add `depth` if every pixel should look
+  through the same thickness.
+- **`:σz` is always the simulation's z direction,** also in a face-on view. The spread you would
+  measure with a telescope is `:σlos`.
+- **`:σ` is not the total spread.** It is the spread of the speed. For the total, add the three
+  components: `σx² + σy² + σz²`.
+- **Thin slabs with whole cells do not add up** to the thick slab they were cut from, because a
+  cell on a boundary is counted in both. Use `split=true`.
+- **Gas and stars give different `:faceon` views,** because each rotates about its own axis.
+  Compute one axis with `angmom` and pass it to both.
+- **`direction=:x`, `:y` and `:z` are not off-axis.** The camera-only variables such as `:vlos`
+  are refused there. Use `los=[0,0,1]` to get the camera path along a box axis.
