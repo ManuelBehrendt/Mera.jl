@@ -972,10 +972,12 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     finished = zeros(Float64, res,res)
     rl = data_centerm .* dataobject.boxlen
 
+    # Bin edges are the pixel edges r-1 … r-1 of the window, the same interval `extent` reports,
+    # one full pixel per bin. Starting at r1 instead left the first row and column unbinned.
     if direction == :z
         # range on maximum used grid
-        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ res .* dataobject.boxlen
-        newrange2 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ res .* dataobject.boxlen
+        newrange1 = range(r1-1, stop=r2-1, length=(r2-r1)+1) ./ res .* dataobject.boxlen
+        newrange2 = range(r3-1, stop=r4-1, length=(r4-r3)+1) ./ res .* dataobject.boxlen
 
         var_a = :x
         var_b = :y
@@ -988,8 +990,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     elseif direction == :y
         # range on maximum used grid
-        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ res .* dataobject.boxlen
-        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ res .* dataobject.boxlen
+        newrange1 = range(r1-1, stop=r2-1, length=(r2-r1)+1) ./ res .* dataobject.boxlen
+        newrange2 = range(r5-1, stop=r6-1, length=(r6-r5)+1) ./ res .* dataobject.boxlen
 
         var_a = :x
         var_b = :z
@@ -1001,8 +1003,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     elseif direction == :x
         # range on maximum used grid
-        newrange1 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ res .* dataobject.boxlen
-        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ res .* dataobject.boxlen
+        newrange1 = range(r3-1, stop=r4-1, length=(r4-r3)+1) ./ res .* dataobject.boxlen
+        newrange2 = range(r5-1, stop=r6-1, length=(r6-r5)+1) ./ res .* dataobject.boxlen
         var_a = :y
         var_b = :z
         extent=[r3-1,r4-1,r5-1,r6-1] .* dataobject.boxlen ./ res

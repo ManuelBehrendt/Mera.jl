@@ -233,12 +233,28 @@ using Random
         xs, ys, zs = (collect(select(p.data, c)) for c in (:x, :y, :z))
         insph = sqrt.((xs .- 0.5).^2 .+ (ys .- 0.5).^2 .+ (zs .- 0.5).^2) .<= rfov
         Mpexp = sum(collect(select(p.data, :mass))[mp .& insph])
-        # off-axis only: the axis-aligned particle path has its own window-edge behaviour
-        pr = projection(p, :sd; fov=rfov, center=[:bc], res=64, mask=mp, aperture=:circle,
-                        verbose=false, show_progress=false, views[1][2]...)
-        @test isapprox(sum(v for v in pr.maps[:sd] if isfinite(v)) * pr.pixsize^2, Mpexp; rtol=1e-10)
-        # the axis-aligned path must at least accept the mask now instead of throwing
-        @test projection(p, :sd; fov=rfov, center=[:bc], res=64, mask=mp, aperture=:circle,
-                         verbose=false, show_progress=false, views[2][2]...) isa Mera.PartMapsType
+        for (name, kw) in views
+            pr = projection(p, :sd; fov=rfov, center=[:bc], res=64, mask=mp, aperture=:circle,
+                            verbose=false, show_progress=false, kw...)
+            @test isapprox(sum(v for v in pr.maps[:sd] if isfinite(v)) * pr.pixsize^2, Mpexp; rtol=1e-10)
+        end
+    end
+
+    @testset "particle projection: a window keeps exactly the particles inside it" begin
+        # The axis-aligned histogram edges started one pixel late (at r1 instead of r1-1) while
+        # the map extent started at r1-1, so the first row and column of the window were never
+        # binned: about 4 % of the mass inside a 48-pixel window was lost, silently.
+        p = _part(N)
+        xs, ys, zs = (collect(select(p.data, c)) for c in (:x, :y, :z))
+        ms = collect(select(p.data, :mass))
+        h = 0.17                                       # box units about the centre, cuts the box
+        inbox = (abs.(xs .- 0.5) .<= h) .& (abs.(ys .- 0.5) .<= h) .& (abs.(zs .- 0.5) .<= h)
+        for dir in (:x, :y, :z)
+            pr = projection(p, :sd; xrange=[-h, h], yrange=[-h, h], zrange=[-h, h], center=[:bc],
+                            res=100, direction=dir, verbose=false, show_progress=false)
+            @test isapprox(sum(v for v in pr.maps[:sd] if isfinite(v)) * pr.pixsize^2,
+                           sum(ms[inbox]); rtol=1e-10)
+            @test (pr.extent[2] - pr.extent[1]) / size(pr.maps[:sd], 1) ≈ pr.pixsize
+        end
     end
 end
