@@ -131,4 +131,57 @@ end
         # one header + one separator + one row per registered reader
         @test count(==('\n'), m) == 2 + length(Mera._READERS)
     end
+
+    @testset "an external reader runs the whole analysis (docs: Adding a Reader)" begin
+        # The toy reader from docs/src/adding_a_reader.md, registered from outside the package.
+        # The claim on that page is that the analysis layer does not care which code wrote the data;
+        # this checks it end to end: routing, units, projections on and off axis, and regions.
+        function getinfo_toy(output::Int, path::String; verbose=true, kwargs...)
+            info = InfoType()
+            info.simcode = "TOYEXT"; info.output = output; info.path = path; info.ndim = 3
+            info.levelmin = 3; info.levelmax = 3; info.boxlen = 10.0
+            info.time = 0.0; info.aexp = 1.0; info.H0 = 0.0; info.omega_m = 0.0; info.omega_l = 0.0
+            info.unit_l = 3.086e21; info.unit_d = 1.67e-24; info.unit_t = 3.156e13   # kpc, m_p, Myr
+            info.gamma = 5/3; info.hydro = true; info.nvarh = 1; info.variable_list = [:rho]
+            info.descriptor = DescriptorType()
+            createconstants!(info); createscales!(info)
+            return info
+        end
+        function gethydro_toy(info::InfoType; kwargs...)
+            n = 2^info.levelmin
+            lv, cx, cy, cz, rho = Int[], Int[], Int[], Int[], Float64[]
+            for i in 1:n, j in 1:n, k in 1:n
+                push!(lv, info.levelmin); push!(cx, i); push!(cy, j); push!(cz, k); push!(rho, 1.0)
+            end
+            d = HydroDataType()
+            d.data = Mera.IndexedTables.table((level=lv, cx=cx, cy=cy, cz=cz, rho=rho);
+                                              pkey=[:level, :cx, :cy, :cz])
+            d.info = info; d.lmin = info.levelmin; d.lmax = info.levelmax; d.boxlen = info.boxlen
+            d.ranges = [0.,1.,0.,1.,0.,1.]; d.selected_hydrovars = [1]
+            d.used_descriptors = Dict(); d.smallr = 0.0; d.smallc = 0.0; d.scale = info.scale
+            return d
+        end
+        try
+            register_reader!(:toyext; simcodes = ["TOYEXT"], name = "Toy (external package)",
+                             info = getinfo_toy, hydro = gethydro_toy)
+            info = getinfo_toy(1, "/nowhere"; verbose=false)
+            gas  = gethydro(info)                                   # routed through the registry
+            @test length(gas.data) == 512
+            # a 10 kpc box at one proton per cm³, computed by hand from the CGS units above
+            Mbox = 1.67e-24 * (10 * 3.086e21)^3 / info.constants.Msol
+            @test isapprox(msum(gas, :Msol), Mbox; rtol=1e-10)
+            @test capabilities(info) == [:info, :hydro]
+            @test !supports(info, :gravity)
+            for kw in ((direction=:z,), (inclination=40.0, azimuth=20.0, axis=[0.0, 0.0, 1.0]))
+                pr = projection(gas, :mass, :Msol; verbose=false, show_progress=false, kw...)
+                @test isapprox(sum(pr.maps[:mass]), Mbox; rtol=1e-10)
+            end
+            # a uniform medium: the enclosed mass of a sphere is its volume fraction of the box
+            sub = subregion(gas, sphere(3.0; range_unit=:kpc); verbose=false)   # 3 of 10 kpc
+            @test isapprox(msum(sub, :Msol) / Mbox, 4π/3 * 0.3^3; rtol=0.02)
+        finally
+            Mera.unregister_reader!(:toyext)
+        end
+        @test !haskey(Mera._READERS, :toyext)
+    end
 end

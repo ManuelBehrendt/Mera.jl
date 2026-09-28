@@ -204,11 +204,45 @@ function readamrfile1!(dataobject::InfoType)
         dataobject.grid_info.ngridmax  = read(f, Int32)
         dataobject.grid_info.nboundary = read(f, Int32)
         dataobject.grid_info.ngrid_current = read(f, Int32)
-        #info.boxlen = read(f, Float64)
+        dataobject.grid_info.amr_header = read_amr_header_rest(f, dataobject.grid_info.nlevelmax)
         close(f)
     end
     return dataobject
 
+end
+
+"""
+    read_amr_header_rest(f, nlevelmax) -> Dict{Symbol,Any}
+
+The rest of the amr_XXXXX.out00001 header after `ngrid_current`, in the record order of
+RAMSES's backup_amr (amr/output_amr.f90): time and time steps, step counters, energy
+bookkeeping, cosmology. Kept under the RAMSES variable names so a restartable output can be
+written from Mera data. Returns an empty Dict (with a warning) if the header does not have
+the expected layout, so `getinfo` never fails because of it.
+"""
+function read_amr_header_rest(f, nlevelmax::Integer)
+    h = Dict{Symbol,Any}()
+    try
+        h[:boxlen] = read(f, Float64)
+        noutput, h[:iout], h[:ifout] = read(f, Int32, Int32, Int32)
+        h[:noutput] = noutput
+        h[:tout] = read(f, (Float64, noutput))
+        h[:aout] = read(f, (Float64, noutput))
+        h[:t] = read(f, Float64)
+        h[:dtold] = read(f, (Float64, nlevelmax))
+        h[:dtnew] = read(f, (Float64, nlevelmax))
+        h[:nstep], h[:nstep_coarse] = read(f, Int32, Int32)
+        h[:einit], h[:mass_tot_0], h[:rho_tot] = read(f, Float64, Float64, Float64)
+        h[:omega_m], h[:omega_l], h[:omega_k], h[:omega_b], h[:h0], h[:aexp_ini], h[:boxlen_ini] =
+            read(f, Float64, Float64, Float64, Float64, Float64, Float64, Float64)
+        h[:aexp], h[:hexp], h[:aexp_old], h[:epot_tot_int], h[:epot_tot_old] =
+            read(f, Float64, Float64, Float64, Float64, Float64)
+        h[:mass_sph] = read(f, Float64)
+    catch err
+        @warn "[Mera]: amr header has an unexpected layout; restart fields not stored" exception = err
+        empty!(h)
+    end
+    return h
 end
 
 # Map a RAMSES hydro_file_descriptor variable name to Mera's canonical symbol.

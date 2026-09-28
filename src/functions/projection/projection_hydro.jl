@@ -1055,7 +1055,10 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
         premasked, inner_mask = _fov_premask(dataobject, mask)
         src, win, fov_code, _rsel = _fov_selection(premasked, fov, fov_unit, aperture, center, split;
                                                    refine=refine, refine_to=refine_to)
-        gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center, split;
+        # the gravity object is row-aligned with the hydro one, so it takes the same mask first;
+        # cut from the unmasked object instead, the two spheres would not share their rows
+        gpre = gravity_data === nothing ? nothing : first(_fov_premask(gravity_data, mask))
+        gsrc = _fov_companion(gpre, _rsel, fov_unit, center, split;
                               refine=refine, refine_to=refine_to)
         # the frame half-width in code units, so the inner call can hold the frame fixed
         fov_half = _rsel / (fov_unit === :standard ? 1.0 / dataobject.boxlen :
