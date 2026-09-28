@@ -688,6 +688,12 @@ end
         # and it must be a DIFFERENT camera: asserting only that it is a unit vector passes for
         # any line of sight at all, including one where the keyword was ignored
         @test m.los != mall.los
+        # a mask decides the axis too, as on particles: the camera follows the cells drawn
+        hot  = getvar(gas, :T, :K) .> 1e4
+        mhot = projection(gas, :sd, :Msol_pc2; mask=hot, pkw...)
+        Lhot = angmom(gas; center=[:bc], range_unit=:kpc, mask=hot)
+        @test mhot.los ≈ Lhot ./ norm(Lhot)
+        @test mhot.los != mall.los
     end
 
     @testset "angmom: one vector, any camera, several components" begin
@@ -718,13 +724,26 @@ end
         @test ang(L, J) > 0.1          # and it is a genuinely different axis, not a rounding
         @test_throws ArgumentError angmom(Any[])
 
+        # VELOCITY FRAME: `vcenter` reaches getvar, a zero boost is the box frame, and the quiet
+        # default leaves the session's verbose setting as it found it
+        @test angmom(gas; center=[:bc], range_unit=:kpc, vcenter=[0., 0., 0.]) ≈ L
+        La = angmom(gas; center=[:bc], range_unit=:kpc, vcenter=:auto)
+        @test La ≈ [sum(getvar(gas, c; center=[:bc], center_unit=:kpc, vcenter=:auto))
+                    for c in (:lx, :ly, :lz)]
+        vm = Mera.verbose_mode
+        angmom(gas; center=[:bc], range_unit=:kpc)
+        @test Mera.verbose_mode === vm
+
         # a mask restricts what defines the axis
         cold = getvar(gas, :T, :K) .< 1e4
         @test ang(L, angmom(gas; center=[:bc], range_unit=:kpc, mask=cold)) > 0.1
-        # radius and mask together are refused rather than silently misapplied: the mask counts
-        # rows of the object passed in, the sphere has fewer
+        # radius and mask together: the mask counts rows of the object passed in, the sphere has
+        # fewer, so it must mean "mask first, then the sphere", exactly as a filtered object would
+        coldobj = filterdata(gas, :T, x -> x < 1e4; unit=:K, verbose=false)
+        @test angmom(gas; center=[:bc], range_unit=:kpc, radius=[5,:kpc], mask=cold) ≈
+              angmom(coldobj; center=[:bc], range_unit=:kpc, radius=[5,:kpc])
         @test_throws ArgumentError angmom(gas; center=[:bc], range_unit=:kpc,
-                                          radius=[5,:kpc], mask=cold)
+                                          radius=[5,:kpc], mask=cold[1:end-1])
         # NOTE a tiny radius does NOT raise: `subregion` keeps a cell whose boundary reaches the
         # sphere, so the cell holding the centre is always caught. The empty-selection error is
         # for a centre that misses the data, not for a small radius.

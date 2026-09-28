@@ -910,9 +910,12 @@ Off-axis projections:
 
 !!! note "Orienting on a region: `angmom_radius`"
     `axis=:angmom` and the `direction=:faceon`/`:edgeon` presets compute the orientation from the
-    angular momentum of **everything you loaded**, about `center`. Load a whole box and the sum is
+    angular momentum of **the object you pass**, about `center`, after `mask`. The frame keywords
+    (`fov`, `depth`, `xrange`/`yrange`/`zrange`) do not narrow it. Load a whole box and the sum is
     dominated by the material with the longest lever arm, which is usually not the disc you meant.
-    `angmom_radius=[10, :kpc]` restricts that sum to a sphere about `center`.
+    `angmom_radius=[10, :kpc]` restricts that sum to a sphere about `center`. For an axis from
+    other data (all components, or a selection you do not want to draw), compute it with
+    [`angmom`](@ref) and pass it as `axis=L`.
 
     The vector is per object: gas and stars each have their own, so `:faceon` on one is a
     different camera from `:faceon` on the other.
@@ -1807,7 +1810,11 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # --- camera orientation (A1) ---------------------------------------------------
     Lvec = nothing
     if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
-        Lvec = _angmom_vector(dataobject, center, range_unit, angmom_radius)
+        # Orient on the cells that get drawn, as the particle path does: a `mask` of cold gas
+        # gives the cold gas's own axis, not the axis of everything loaded.
+        Lvec = length(mask) > 1 ?
+            _angmom_vector(dataobject, center, range_unit, angmom_radius; mask=collect(Bool.(mask))) :
+            _angmom_vector(dataobject, center, range_unit, angmom_radius)
     end
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
                             inclination=inclination, azimuth=azimuth,

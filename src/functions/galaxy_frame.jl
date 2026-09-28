@@ -86,7 +86,8 @@ end
 # ====================================================================================
 
 """
-    angmom(data; center=[:bc], range_unit=:standard, radius=nothing, mask=nothing, unit=:standard)
+    angmom(data; center=[:bc], range_unit=:standard, radius=nothing, mask=nothing, unit=:standard,
+           vcenter=nothing)
     angmom([gas, stars, dm]; ...) -> Vector{Float64}
 
 Net angular momentum **L = Σ mᵢ rᵢ × vᵢ** about `center`, as a 3-vector.
@@ -120,21 +121,38 @@ tracer you mean, rather than combining out of habit.
   `range_unit` (or in `radius_unit`, when the centre is expressed in a different unit). Without it the sum runs over everything the object holds, where the outer
   material has the longest lever arm and can tilt a "face-on galaxy" by the halo.
 - `mask`: a boolean per row, so the sum can be restricted to, say, cold gas or one particle
-  family (see [`getparticlemask`](@ref)).
+  family (see [`getparticlemask`](@ref)). It combines with `radius`: cold gas inside 10 kpc.
 - `unit`: unit for the returned components. The direction does not depend on it, and only the
   direction is used for orientation.
 
+- `vcenter`: the velocity frame, as in [`getvar`](@ref): `:auto` for the object's own bulk
+  velocity, or a vector `[vx, vy, vz]` in the velocity unit you pass (e.g. `vunit=:km_s`).
+
 # Velocity frame
-Velocities are taken as they are stored, in the box frame. For an object streaming through the
-box this changes `|L|`, and tilts it, because `r × v` picks up `r × v_bulk`. Measuring about the
-object's own centre of mass largely cancels it (`Σ mᵢ rᵢ = 0` there), which is what
-[`face_on`](@ref) does with `center=:com`.
+By default velocities are taken as they are stored, in the box frame, and no hint is printed
+about it. For an object streaming through the box this changes `|L|`, and tilts it, because
+`r × v` picks up `r × v_bulk`. Measuring about the object's own centre of mass largely cancels it
+(`Σ mᵢ rᵢ = 0` there), which is what [`face_on`](@ref) does with `center=:com`. To remove the bulk
+motion outright, pass `vcenter`. With several components, give one explicit vector rather than
+`:auto`, so that all of them are measured in the same frame.
 
 See also [`face_on`](@ref), [`edge_on`](@ref), [`center_of`](@ref), [`projection`](@ref).
 """
 function angmom(dataobject; center=[:bc], range_unit::Symbol=:standard, radius=nothing,
-                radius_unit::Symbol=:__same__, mask=nothing, unit::Symbol=:standard, kwargs...)
+                radius_unit::Symbol=:__same__, mask=nothing, unit::Symbol=:standard,
+                vcenter=nothing, kwargs...)
     src = dataobject
+    if radius !== nothing && mask !== nothing
+        # A mask counts rows of the object passed in, and the sphere below has fewer rows. So
+        # apply the mask first, as its own object, and cut the sphere from that.
+        length(mask) == length(dataobject.data) || throw(ArgumentError(
+            "angmom: mask has $(length(mask)) entries but the object has " *
+            "$(length(dataobject.data)) rows; a mask needs one entry per row."))
+        cols = IndexedTables.columns(dataobject.data)
+        src  = _copy_with_data(dataobject, IndexedTables.table(map(col -> col[mask], cols);
+                               pkey=collect(IndexedTables.pkeynames(dataobject.data))))
+        mask = nothing
+    end
     if radius !== nothing
         # `subregion` takes ONE unit for the centre and the radius, but a caller can legitimately
         # give a fractional centre with a radius in kpc. Resolve both to the box's own fractional
@@ -144,23 +162,23 @@ function angmom(dataobject; center=[:bc], range_unit::Symbol=:standard, radius=n
         info  = dataobject.info
         cfrac = collect(float.(center_in_standardnotation(info, collect(Any, center), range_unit)))
         rfrac = u === :standard ? float(r) : float(r) / getunit(info, u) / dataobject.boxlen
-        src = subregion(dataobject, :sphere, radius=rfrac, center=cfrac,
+        src = subregion(src, :sphere, radius=rfrac, center=cfrac,
                         range_unit=:standard, verbose=false)
         length(src.data) > 0 || throw(ArgumentError(
             "angmom: radius=$radius selected no cells about center=$center, so there is " *
             "nothing to measure. Check the centre, the radius and the unit."))
-        # a mask counts rows of the ORIGINAL object; the sphere has fewer, so filter first instead
-        mask === nothing || throw(ArgumentError(
-            "angmom: give either `radius` or `mask`, not both. A mask is one entry per row of " *
-            "the object you passed, and `radius` cuts a subregion with fewer rows. To combine " *
-            "them, filter first (filterdata / subregion) and call angmom on the result."))
     end
     # anything else (e.g. `ref_time` for particles) goes straight to getvar
-    kw = mask === nothing ? (; center=center, center_unit=range_unit, unit=unit, kwargs...) :
-                            (; center=center, center_unit=range_unit, unit=unit, mask=mask, kwargs...)
-    return [ sum(getvar(src, :lx; kw...)),
-             sum(getvar(src, :ly; kw...)),
-             sum(getvar(src, :lz; kw...)) ]
+    kw = (; center=center, center_unit=range_unit, unit=unit, kwargs...)
+    mask    === nothing || (kw = (; kw..., mask=mask))
+    vcenter === nothing || (kw = (; kw..., vcenter=vcenter))
+    L() = [ sum(getvar(src, :lx; kw...)),
+            sum(getvar(src, :ly; kw...)),
+            sum(getvar(src, :lz; kw...)) ]
+    # The box frame is this function's documented default, so getvar's hint about a missing
+    # `vcenter` would only repeat the docstring, and it would also appear inside every
+    # `direction=:faceon` projection. Keep it out.
+    return vcenter === nothing ? _quietly(L) : L()
 end
 
 # Several components: add their momenta. Written as a plain sum so a caller can see that no
