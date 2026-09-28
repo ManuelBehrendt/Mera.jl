@@ -995,6 +995,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
+                        _fov_half=nothing,       # internal: fixed frame half-width from `fov`
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
@@ -1055,6 +1056,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                    refine=refine, refine_to=refine_to)
         gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center, split;
                               refine=refine, refine_to=refine_to)
+        # the frame half-width in code units, so the inner call can hold the frame fixed
+        fov_half = _rsel / (fov_unit === :standard ? 1.0 / dataobject.boxlen :
+                                                     getunit(dataobject.info, fov_unit))
         m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=inner_mask,
                        direction=direction, los=los, up=up, theta=theta, phi=phi,
                        inclination=inclination, azimuth=azimuth, position_angle=position_angle,
@@ -1071,7 +1075,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                        # NOT refine/refine_to: `_fov_selection` has already applied them to
                        # the sphere, and the inner call has no `fov` left for them to mean
                        # anything against, so forwarding them would trip the guard below.
-                       split=split)
+                       split=split, _fov_half=fov_half)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         return m
     end
@@ -1197,7 +1201,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                   weighting, weight_scale, mode, ranges, center, range_unit,
                                   mask, los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, nmax, direction,
                                   boxlen, lmin, simlmax, isamr, scale, verbose, max_threads,
-                                  gravity_data, depth, depth_unit, angmom_radius, split)
+                                  gravity_data, depth, depth_unit, angmom_radius, split, _fov_half)
     end
 
     # Camera-frame kinematics have no meaning without a camera: :vlos/:σlos are along the line
@@ -1783,7 +1787,7 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
                             max_threads=Threads.nthreads(),
                             gravity_data::Union{GravDataType,Nothing}=nothing,
                             depth=nothing, depth_unit::Symbol=:standard,
-                            angmom_radius=nothing, split::Bool=false)
+                            angmom_radius=nothing, split::Bool=false, fov_half=nothing)
 
     rcheck     = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
@@ -1916,8 +1920,23 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         half = boxlen / 2
         x0, x1, y0, y1 = -half, half, -half, half
     end
+    if fov_half !== nothing
+        # `fov` fixes the frame: symmetric about `center` and the same at every angle, whatever
+        # the selection fills. Fitting it to the data instead made a sparse selection (a mask, a
+        # depth slab, a thin disc) come back smaller and off-centre, and the square crop then cut
+        # into it. The margin is the coarsest cell's worst-case reach, and the frame never shrinks
+        # below the data, so every deposit still lands on the grid.
+        smax = any(sel) ? maximum(@view cellsize_all[sel]) : 0.0
+        hw = fov_half + pixsize + smax * sqrt(3)
+        hx = max(hw, -x0, x1); hy = max(hw, -y0, y1)
+        x0, x1, y0, y1 = -hx, hx, -hy, hy
+    end
     nx = max(1, round(Int, (x1 - x0) / pixsize))
     ny = max(1, round(Int, (y1 - y0) / pixsize))
+    if fov_half !== nothing                      # keep the centre on `center` after snapping
+        nx = max(1, ceil(Int, (x1 - x0) / pixsize)); ny = max(1, ceil(Int, (y1 - y0) / pixsize))
+        x0 = -nx * pixsize / 2; y0 = -ny * pixsize / 2
+    end
     x1 = x0 + nx * pixsize; y1 = y0 + ny * pixsize                # snap extent to pixel grid
     grid_extent = (x0, x1, y0, y1)
     grid_resolution = (nx, ny)

@@ -982,7 +982,11 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
     #                                aperture and no data dropped inside it.
     rsel = aperture === :square ? rfov * sqrt(2) : rfov
     win  = [-rsel, rsel]
-    src = subregion(dataobject, :sphere, radius=rsel, center=center, range_unit=fov_unit, verbose=false)
+    # A `mask` is one entry per row of the object passed in, and the sphere has fewer rows. Apply it
+    # first and cut the sphere from what is left, as `projection(...; fov)` does; handing the mask
+    # on unchanged stopped every frame with a length mismatch.
+    base, inner_mask = _fov_premask(dataobject, get(kwargs, :mask, [false]))
+    src = subregion(base, :sphere, radius=rsel, center=center, range_unit=fov_unit, verbose=false)
     # Two ways to use the threads. By default each frame's `projection` multithreads internally and
     # the frames run one after another. With `parallel_frames=true` the FRAMES run concurrently
     # (`Threads.@threads`) and each projection is single-threaded — this fills all cores when there
@@ -994,7 +998,8 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
     # every data type; for non-hydro, parallel_frames still parallelises over the frames.
     mt = parallel_frames ? 1 : Threads.nthreads()
     mtkw = src isa HydroDataType ? (; max_threads = mt) : (;)
-    kw = Base.structdiff((; kwargs...), (; max_threads = 0))
+    kw = Base.structdiff((; kwargs...), (; max_threads = 0, mask = 0))
+    haskey(kwargs, :mask) && (kw = (; kw..., mask = inner_mask))
     maps = Vector{Any}(undef, length(angles))
     frame!(k) = begin
         a = angles[k]
@@ -1002,9 +1007,16 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
                sweep === :inclination    ? (inclination=a, axis=axis) :
                                            (inclination=inclination, axis=axis, position_angle=a)
         szkw = pxsize === nothing ? (res=res,) : (pxsize=pxsize,)   # prefer physical pxsize
-        m = projection(src, var, unit; center=center, range_unit=fov_unit,
-                       xrange=win, yrange=win, zrange=win, verbose=false, show_progress=false,
-                       mtkw..., szkw..., view..., kw...)
+        common = (; center=center, range_unit=fov_unit, xrange=win, yrange=win, zrange=win,
+                  verbose=false, show_progress=false, mtkw..., szkw..., view..., kw...)
+        # Hold the frame at the sphere's size, as `projection(...; fov)` does, so a selection that
+        # does not fill the sphere (stars, a mask) gives the same frame at every angle. Only the
+        # hydro/RT and particle engines take it; other data types frame as before.
+        m = src isa Union{HydroDataType, RtDataType} ?
+                projection(src, [var]; units=[unit], common..., _fov_half=rsel / cuw) :
+            src isa PartDataType ?
+                create_projection(src, [var]; units=[unit], common..., _fov_half=rsel / cuw) :
+                projection(src, var, unit; common...)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         maps[k] = m
     end

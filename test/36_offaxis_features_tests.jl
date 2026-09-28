@@ -991,6 +991,55 @@ end
         end
     end
 
+    @testset "fov fixes the frame, whatever the selection fills" begin
+        # `fov` promises a fixed camera-plane window. The frame used to be fitted to the data
+        # that survived the sphere, so a star disc that does not fill it came back smaller than
+        # the window and off-centre, and aperture=:square then cropped stars away (reported:
+        # ±7 kpc of stars at fov=12, gas correctly ±12). The frame is now built from `fov`.
+        dp   = DATASETS[:spiral_ugrid]
+        finfo = getinfo(dp.output, dp.path, verbose=false)
+        fgas  = gethydro(finfo, verbose=false, show_progress=false)
+        fpart = getparticles(finfo, verbose=false, show_progress=false)
+        fstars = getparticlemask(fpart, :stars; verbose=false)
+        fkw = (los=[1.,2,3], center=[:bc], range_unit=:kpc, fov=12, fov_unit=:kpc,
+               pxsize=[0.2,:kpc], verbose=false, show_progress=false)
+        starmass(m) = sum(m.maps[:sd]) * (m.pixsize * m.scale.pc)^2
+
+        sq_gas  = projection(fgas,  :sd, :Msol_pc2; aperture=:square, fkw...)
+        sq_star = projection(fpart, :sd, :Msol_pc2; aperture=:square, mask=fstars, fkw...)
+        for m in (sq_gas, sq_star)
+            e = getextent(m, :kpc)
+            @test all(isapprox.(abs.(e), 12; atol=0.2))          # ±fov on both axes
+            @test isapprox(e[1] + e[2], 0; atol=1e-9)            # centred on `center`
+            @test isapprox(e[3] + e[4], 0; atol=1e-9)
+        end
+        @test size(sq_gas.maps[:sd]) == size(sq_star.maps[:sd])  # one window, one pixel grid
+
+        # nothing of this disc lies outside the square, so the square keeps what the circle keeps
+        ci_star = projection(fpart, :sd, :Msol_pc2; aperture=:circle, mask=fstars, fkw...)
+        @test isapprox(starmass(sq_star), starmass(ci_star); rtol=1e-12)
+        # and the circle frame keeps every selected star: the total is the sphere's total
+        insph = subregion(fpart, :sphere, radius=12., center=[:bc], range_unit=:kpc, verbose=false)
+        smask = getparticlemask(insph, :stars; verbose=false)
+        @test isapprox(starmass(ci_star), sum(getvar(insph, :mass, :Msol)[smask]); rtol=1e-10)
+
+        # the same frame at every viewing angle, for points as for cells
+        sizes = Set(size(projection(fpart, :sd, :Msol_pc2; inclination=55, azimuth=az, axis=:z,
+                                    aperture=:circle, mask=fstars, center=[:bc], range_unit=:kpc,
+                                    fov=12, fov_unit=:kpc, pxsize=[0.2,:kpc], verbose=false,
+                                    show_progress=false).maps[:sd]) for az in 0:60:300)
+        @test length(sizes) == 1
+        # and rotation_sequence, which cuts its own sphere, holds the star frame too
+        seq = rotation_sequence(fpart, :sd, :Msol_pc2; angles=0:60:300, inclination=55, axis=:z,
+                                center=[:bc], fov=12, fov_unit=:kpc, aperture=:circle,
+                                pxsize=[0.2,:kpc], mask=fstars)
+        @test length(Set(size(m.maps[:sd]) for m in seq)) == 1
+        @test size(seq[1].maps[:sd]) == first(sizes)
+        # a sparse GAS selection had the same flaw: a thin depth slab still gets the whole window
+        slab = projection(fgas, :sd, :Msol_pc2; aperture=:square, depth=0.5, depth_unit=:kpc, fkw...)
+        @test size(slab.maps[:sd]) == size(sq_gas.maps[:sd])
+    end
+
     @testset "slice: what a depth-buffer painter can honestly report per pixel" begin
         # A slice is NOT a deposit. Cells tile space, exactly one owns the point where the plane
         # crosses, and that one cell wins the pixel. So a cell COUNT is not available here and
