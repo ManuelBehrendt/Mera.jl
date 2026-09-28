@@ -139,9 +139,9 @@ function get_data(dataobject::RtDataType,
         elseif i == :cellsize
             selected_unit = getunit(dataobject, :cellsize, vars, units)
             if isamr
-                vars_dict[:cellsize] =  _map_col(row-> dataobject.boxlen / 2^row.level * selected_unit , masked_data)
+                vars_dict[:cellsize] =  _cellsize_col(dataobject.boxlen, select(masked_data, :level), selected_unit)
             else # if uniform grid
-                vars_dict[:cellsize] =  _map_col(row-> dataobject.boxlen / 2^lmax * selected_unit , masked_data)
+                vars_dict[:cellsize] =  fill(dataobject.boxlen / 2^lmax * selected_unit, length(masked_data))
             end
         elseif i == :volume
             selected_unit = getunit(dataobject, :volume, vars, units)
