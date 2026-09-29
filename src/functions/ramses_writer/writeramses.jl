@@ -18,6 +18,38 @@ function _nml_group(info, group)
                                        for (k, v) in g)
 end
 
+"""
+    _boundary_group(info) -> Dict
+
+`&BOUNDARY_PARAMS` of the run. When Mera's copy of the namelist lacks it (older RAMSES versions
+leave namelist.txt empty) but the output has walls and still exists, the walls are taken from its
+amr files and checked there (as `repartition` does), and returned in namelist form.
+"""
+function _boundary_group(info)
+    g = _nml_group(info, "&BOUNDARY_PARAMS")
+    isempty(g) || return g
+    d = _original_dir(info)
+    d === nothing && return g
+    h, _ = _RW.read_amr_file(_RW.amr_filename(d, info.output, 1))
+    h.nboundary == 0 && return g
+    t = _RW.read_global_tree(d, info.output; verbose=false, namelist="")
+    cmin, cmax = t.geom.cmin, t.geom.cmax
+    nb = length(t.boundaries)
+    rel = [Int[] for _ in 1:6]; types = Int[]
+    for b in t.boundaries
+        dir = b.btype % 10; dn = (dir + 1) ÷ 2; side = isodd(dir) ? -1 : 1
+        for k in 1:3
+            lo, hi = k == dn ? (side, side) : (b.lo[k] - cmin[k], b.hi[k] - cmax[k])
+            push!(rel[2k-1], lo); push!(rel[2k], hi)
+        end
+        push!(types, b.btype ÷ 10 + 1)                        # 1 reflexive, 2 outflow, 3 imposed
+    end
+    names = ("ibound_min", "ibound_max", "jbound_min", "jbound_max", "kbound_min", "kbound_max")
+    out = Dict{String,Vector{String}}("nboundary" => [string(nb)], "bound_type" => string.(types))
+    for (k, n) in enumerate(names); out[n] = string.(rel[k]); end
+    return out
+end
+
 "`&REFINE_PARAMS interpol_var` of the run (RAMSES's default 0 when it is not set)."
 function _interpol_var(info)
     v = get(_nml_group(info, "&REFINE_PARAMS"), "interpol_var", String[])
@@ -60,6 +92,19 @@ function amr_header_of(info)
 end
 
 "Leaf cells of a Mera table in the converter's absolute cell coordinates."
+# RAMSES names of the hydro variables, in file order. Taken from the descriptor when the output has
+# one; otherwise from Mera's layout (older MHD outputs have no descriptor, and Mera places the B
+# faces from nvarh), so the writer knows which slot is the pressure and which are the faces.
+const _RAMSES_HYDRO_NAME = Dict(:rho => "density", :vx => "velocity_x", :vy => "velocity_y",
+    :vz => "velocity_z", :p => "pressure",
+    (Symbol("b", c, "_", s) => "B_$(c)_$(s)" for c in ("x", "y", "z") for s in ("left", "right"))...)
+
+function _hydro_names(info)
+    d = info.descriptor
+    d.hydrofile && length(d.hydro) == info.nvarh && return String.(d.hydro)
+    return [get(_RAMSES_HYDRO_NAME, v, String(v)) for v in info.variable_list]
+end
+
 function _leafcells(obj, names::Vector{String}, valcols::Vector{Symbol}, cmin)
     c = columns(obj.data)
     n = length(c.cx)
@@ -70,10 +115,11 @@ function _leafcells(obj, names::Vector{String}, valcols::Vector{Symbol}, cmin)
     return _RW.LeafCells(lev, cells, vals, names)
 end
 
-"Mera column of each RAMSES particle field (descriptor name)."
+"Mera column of each RAMSES particle field (descriptor name); other fields keep their descriptor name."
 const _PARTCOL = Dict("position_x" => :x, "position_y" => :y, "position_z" => :z, "velocity_x" => :vx,
     "velocity_y" => :vy, "velocity_z" => :vz, "mass" => :mass, "identity" => :id, "levelp" => :level,
     "family" => :family, "tag" => :tag, "birth_time" => :birth, "metallicity" => :metals, "partp" => :partp)
+_partcol(name::AbstractString) = get(_PARTCOL, name, Symbol(name))
 
 # ----------------------------------------------------------------------------
 #  Completeness
@@ -101,7 +147,7 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
     check("hydro region", gas.ranges == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], "ranges $(gas.ranges)")
     check("no clamping", gas.smallr == 0 && gas.smallc == 0, "smallr $(gas.smallr), smallc $(gas.smallc)")
     n = (info.grid_info.nx, info.grid_info.ny, info.grid_info.nz)
-    cmin, cmax = _RW.coarse_box(n, _nml_group(info, "&BOUNDARY_PARAMS"))
+    cmin, cmax = _RW.coarse_box(n, _boundary_group(info))
     leaves = _leafcells(gas, String[], Symbol[], cmin)            # positions only: works for any selection
     for (name, (pass, detail)) in _RW.leaf_coverage(leaves, cmin, cmax, info.levelmin)
         check(name, pass, detail)
@@ -124,12 +170,14 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
     if info.particles
         if particles === nothing
             check("particles", false, "the simulation has particles, none given")
+        elseif info.descriptor.pversion <= 0 || isempty(info.descriptor.ptypes)
+            check("particle format", false, "legacy particle files without part_file_descriptor.txt: " *
+                  "writeramses cannot write that format; use repartition on the original files")
         else
             pc = columns(particles.data)
             # partp of gas tracers is a memory index the writer recomputes; tracers attached to
             # stars or other particles (family < 0) need the stored host identity, which Mera lacks
-            need = [_PARTCOL[String(d)] for d in info.descriptor.particles
-                    if haskey(_PARTCOL, String(d)) && String(d) != "partp"]
+            need = [_partcol(String(d)) for d in info.descriptor.particles if String(d) != "partp"]
             if "partp" in String.(info.descriptor.particles) && !hasproperty(pc, :partp)
                 hosted = count(f -> f < 0, pc.family)
                 check("tracer hosts", hosted == 0, hosted == 0 ?
@@ -144,16 +192,43 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
                        sum((getfield(pi, f) for f in (:Ndm, :Nstars, :Ncloud, :Ndebris, :Nother, :Nundefined,
                             :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer));
                            init=0)
-            check("particle count", np == expected, "$np particles, header_*.txt lists $expected")
+            if expected == 0 && np > 0
+                # older outputs have no header_*.txt; the count cannot be checked, the region can
+                check("particle count", true, "$np particles (not checkable: the output has no header_*.txt)")
+            else
+                check("particle count", np == expected, "$np particles, header_*.txt lists $expected")
+            end
             check("particle region", particles.ranges == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], "ranges $(particles.ranges)")
         end
     end
     if info.sinks
-        check("sinks", sinks !== nothing, sinks === nothing ? "the simulation has sinks, none given" :
-              "$(length(columns(sinks.data)[1])) sinks")
+        if sinks === nothing
+            check("sinks", false, "the simulation has sinks, none given")
+        else
+            ncol = length(propertynames(columns(sinks.data)))
+            units = get(sinks.used_descriptors, :units, nothing)
+            check("sinks", true, "$(length(columns(sinks.data)[1])) sinks")
+            check("sink region", sinks.ranges == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], "ranges $(sinks.ranges)")
+            units === nothing ||
+                check("sink columns", ncol == length(units), "$ncol of the $(length(units)) columns in the file")
+        end
+    end
+    # modules whose restart files Mera does not hold: fine while the original output exists
+    orig = _original_dir(info)
+    for (flag, what, files) in (("stellar", "stellar objects", "stellar_*.csv"),
+                                ("make_mergertree", "merger tree", "progenitor files"),
+                                ("turb", "turbulence driving", "turb_*.dat"))
+        _nml_true(info, "&RUN_PARAMS", flag) || continue
+        check(what, orig !== nothing, orig === nothing ?
+              "the run has $flag=.true. and needs its $files, which Mera does not hold; the simulation is gone" :
+              "$files copied from the original output")
     end
     return ok, rep
 end
+
+"True if `key` is set to .true. in namelist group `group`."
+_nml_true(info, group, key) = any(v -> lowercase(strip(v)) in (".true.", "t", ".t.", "true"),
+                                  get(_nml_group(info, group), key, String[]))
 
 "Print a completeness report."
 function show_completeness(ok, rep)
@@ -187,6 +262,12 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
         force || error("[Mera]: the data is not complete; a RAMSES restart would lose information (see report).")
     end
     header, hsource = amr_header_of(info)
+    if hsource == :approximate && iscosmological(info) && !force
+        error("[Mera]: this mera file predates grid_info.amr_header, the simulation is gone, and the run is " *
+              "cosmological: aexp_ini, hexp, boxlen_ini and mass_sph cannot be reconstructed, and RAMSES " *
+              "builds its expansion history from them. Use upgrade_merafile while the simulation exists, " *
+              "or pass force=true to write anyway.")
+    end
     if hsource == :approximate
         @warn "[Mera]: this mera file predates grid_info.amr_header and the simulation is gone: the time steps " *
               "(dtold/dtnew) are unknown. Hydro runs restart normally; with gravity the first steps deviate, " *
@@ -197,12 +278,12 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
         @warn "[Mera]: this data carries no namelist (the RAMSES output had no namelist.txt). " *
               "writeramses assumes RAMSES's default interpol_var=0. If the run used interpol_var=1 or 2, " *
               "refined cells are rebuilt with the wrong energy rule and a restart deviates at about 1e-4. " *
-              "(A run with physical boundaries is refused: without the namelist its box is unknown.)"
+              "Walls, if any, are read from the original output; without it such a run is refused."
     end
     n = (info.grid_info.nx, info.grid_info.ny, info.grid_info.nz)
-    bgroup = _nml_group(info, "&BOUNDARY_PARAMS")
+    bgroup = _boundary_group(info)
     cmin, _ = _RW.coarse_box(n, bgroup)
-    hydro_leaves = _leafcells(hydro, String.(info.descriptor.hydro), info.variable_list, cmin)
+    hydro_leaves = _leafcells(hydro, _hydro_names(info), info.variable_list, cmin)
     grav_leaves = info.gravity && gravity !== nothing ?
         _leafcells(gravity, String.(info.gravity_variable_list), info.gravity_variable_list, cmin) : nothing
     rt_leaves, rt_header = nothing, Vector{UInt8}[]
@@ -223,7 +304,7 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
             if nm == "partp" && !hasproperty(pc, :partp)
                 push!(cols, zeros(Int32, length(pc.x)))      # gas tracers: filled per rank by the writer
             else
-                push!(cols, getproperty(pc, _PARTCOL[nm]))
+                push!(cols, getproperty(pc, _partcol(nm)))
             end
         end
         pt = _RW.ParticleTable(names, types, cols)
@@ -235,7 +316,11 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
     if info.sinks && sinks !== nothing
         sc = columns(sinks.data)
         cols = AbstractVector[getproperty(sc, k) for k in propertynames(sc)]
-        hdr_lines = length(cols) == 23 ? _RW.SINK_CSV_HEADER : [" # " * join(string.(propertynames(sc)), ",")]
+        # RAMSES skips two comment lines before the rows: the names, and the units Mera kept
+        units = get(sinks.used_descriptors, :units, nothing)
+        hdr_lines = length(cols) == 23 && units === nothing ? _RW.SINK_CSV_HEADER :
+                    [" # " * join(string.(propertynames(sc)), ","),
+                     " # " * (units === nothing ? join(fill("1", length(cols)), ",") : join(string.(units), ","))]
         sinkdata = (cols, hdr_lines)
     end
     inp = _RW.LeafInput(output=info.output, header=header, n=n, nlevelmax=info.levelmax, levelmin=info.levelmin,

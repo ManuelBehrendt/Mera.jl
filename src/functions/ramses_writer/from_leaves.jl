@@ -180,7 +180,11 @@ averages *conserved* quantities; the files store primitive ones for hydro
 struct Restriction
     to_cons::Function
     to_prim::Function
+    # variables averaged over 4 children instead of 8: MHD face fields, each over the children on
+    # its own face (RAMSES mhd/interpol_hydro.f90, upl), as (variable index, child indices)
+    faces::Vector{Tuple{Int,Vector{Int}}}
 end
+Restriction(to_cons, to_prim) = Restriction(to_cons, to_prim, Tuple{Int,Vector{Int}}[])
 
 "No conversion: average the stored values directly (gravity, RT, conservative hydro files)."
 const PLAIN = Restriction(identity, identity)
@@ -211,7 +215,9 @@ function hydro_restriction(names::Vector{String}, gamma::Float64; interpol_var::
     mhd = !any(isnothing, ibl) && !any(isnothing, ibr)
     isc = [i for (i, n) in enumerate(names) if i > ip && n != "equilibrium_density" && n != "equilibrium_pressure"]
     emag(q) = mhd ? 0.125 * sum((q[ibl[k]] + q[ibr[k]])^2 for k in 1:3) : 0.0
-    internal = !mhd && interpol_var in (1, 2)      # the energy slot then carries internal energy
+    # the energy slot carries internal energy where RAMSES averages it: hydro for interpol_var 1
+    # and 2, MHD for interpol_var 1 only (the two upl routines differ there)
+    internal = mhd ? interpol_var == 1 : interpol_var in (1, 2)
     function to_cons(q)
         c = copy(q); ρ = q[1]
         for k in 1:3; c[iv[k]] = ρ * q[iv[k]]; end
@@ -228,7 +234,16 @@ function hydro_restriction(names::Vector{String}, gamma::Float64; interpol_var::
         for i in isc; q[i] = c[i] / ρ; end
         return q
     end
-    return Restriction(to_cons, to_prim)
+    # a parent's left face is the left face of its 4 children on that side, the right face likewise
+    # (children are numbered 1 + ix + 2iy + 4iz, as RAMSES's hhh)
+    faces = Tuple{Int,Vector{Int}}[]
+    if mhd
+        side(d, hi) = [k for k in 1:8 if ((k - 1) >> (d - 1)) & 1 == hi]
+        for d in 1:3
+            push!(faces, (ibl[d], side(d, 0)), (ibr[d], side(d, 1)))
+        end
+    end
+    return Restriction(to_cons, to_prim, faces)
 end
 
 """
@@ -248,11 +263,12 @@ function cell_values(t::GlobalTree, leaves::LeafCells, r::Restriction)
     for l in nlevels(t)-1:-1:1, (g, ig) in enumerate(t.levels[l].ig), ind in 1:8
         child = find_grid(t, l + 1, child_coord(ig, ind))
         child == 0 && continue
-        acc = zeros(nv)
-        for k in 1:8
-            acc .+= r.to_cons(vals[l+1][child, k, :])
+        kids = [r.to_cons(vals[l+1][child, k, :]) for k in 1:8]
+        acc = sum(kids) ./ 8
+        for (iv, ks) in r.faces
+            acc[iv] = sum(kids[k][iv] for k in ks) / length(ks)
         end
-        vals[l][g, ind, :] .= r.to_prim(acc ./ 8)
+        vals[l][g, ind, :] .= r.to_prim(acc)
     end
     for l in 1:nlevels(t)
         any(isnan, vals[l]) && error("Level $l has cells that are neither leaves nor refined: the leaf data is incomplete.")

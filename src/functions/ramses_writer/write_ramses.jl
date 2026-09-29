@@ -34,7 +34,8 @@ function write_sink_csv(path, columns::Vector{<:AbstractVector}, header_lines::V
             for c in columns[2:end-1]
                 push!(parts, fortran_ES(Float64(c[i])))
             end
-            push!(parts, lpad(Int(columns[end][i]), 10))
+            last = columns[end][i]           # the level in current RAMSES; older files end in a real
+            push!(parts, isinteger(last) ? lpad(Int(last), 10) : fortran_ES(Float64(last)))
             println(io, join(parts, ","))
         end
     end
@@ -112,12 +113,13 @@ end
 "Bytes of column `c` element `i` for descriptor type `t`."
 function _encode!(buf, q, c::AbstractVector, i, t::Char)
     x = t == 'd' ? Float64(c[i]) : t == 'i' ? Int32(c[i]) : t == 'q' ? Int64(c[i]) :
-        t == 'b' ? Int8(c[i]) : t == 'f' ? Float32(c[i]) : error("particle type '$t'")
+        t == 'b' ? Int8(c[i]) : t == 'h' ? Int16(c[i]) : t == 'f' ? Float32(c[i]) :
+        error("particle field type '$t' is not supported")
     bytes = reinterpret(UInt8, [x])
     copyto!(buf, q, bytes, 1, length(bytes))
     return q + length(bytes)
 end
-_typesize(t::Char) = t == 'd' || t == 'q' ? 8 : t == 'i' || t == 'f' ? 4 : 1
+_typesize(t::Char) = t == 'd' || t == 'q' ? 8 : t == 'i' || t == 'f' ? 4 : t == 'h' ? 2 : 1
 
 """
     write_particles_table(outdir, iout, t, dec, pt; nstar_tot, nsink) -> counts
@@ -190,6 +192,10 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
     dst = joinpath(outpath, "output_" * lpad(iout, 5, '0'))
     if isdir(dst)
         overwrite || error("$dst exists; pass overwrite=true to replace it.")
+        # never delete the simulation the data came from: it is also where files Mera does not
+        # hold (stellar csv, info_rt, ...) are copied from
+        copy_from !== nothing && isdir(copy_from) && realpath(dst) == realpath(copy_from) &&
+            error("Refusing to overwrite the original output $dst; choose another outpath.")
         rm(dst; recursive=true)
     end
     mkpath(dst)
@@ -215,7 +221,14 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
     end
     if inp.rt !== nothing
         isempty(inp.rt_header) && error("RT data needs the rt_ header records (rt_header).")
-        push!(sets, MemoryCellSet("rt", inp.rt_header, length(inp.rt.names), cell_values(t, inp.rt, PLAIN)))
+        rv = cell_values(t, inp.rt, PLAIN)
+        # RAMSES writes a photon density as rt_c(level) × Np (rt/rt_output_hydro.f90), and rt_c is
+        # zero below levelmin, so those are zeros there; the fluxes are written as they are, averages
+        # of the children like every refined cell. Each group is a density and then its 3 fluxes.
+        for l in 1:min(inp.levelmin - 1, length(rv)), v in 1:4:size(rv[l], 3)
+            rv[l][:, :, v] .= 0.0
+        end
+        push!(sets, MemoryCellSet("rt", inp.rt_header, length(inp.rt.names), rv))
     end
 
     setnames = Vector{String}[inp.hydro.names]
@@ -278,7 +291,7 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
     own = [Int(sum(lts[k].numbl[k, :])) for k in 1:ncpu]
     report = RepartitionReport(isnothing(copy_from) ? "leaf data" : "leaf data ($copy_from)", dst, 0, ncpu,
                                nlocal, own, npart, maximum(nlocal) + 1, isempty(npart) ? 0 : maximum(npart),
-                               length(readdir(dst)), time() - t0)
+                               length(readdir(dst)), time() - t0, overload)
     verbose && println(report)
     return report
 end
