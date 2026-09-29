@@ -109,9 +109,9 @@ Between them: both the multi-file (ncpu=8) and single-file (ncpu=1) reader paths
 grids, three `nvarh` layouts (5 / 8 / 11), every data type Mera reads, and both the legacy and
 modern on-disk formats.
 
-The last three are on the maintainer's drive and in `package_fixtures.sh`, but not yet in the
-`testdata-v1` release; they join `fetch_fixtures.sh` when the release is updated. Their tests skip
-when the fixtures are absent.
+The last three are prepared for the `testdata-v2` release (on the maintainer's drive and in
+`package_fixtures.sh`); they join `fetch_fixtures.sh` once v2 is published. Until then their tests
+skip when the fixtures are absent.
 
 ## Attribution
 
@@ -127,13 +127,14 @@ Packaging writes a `SOURCE.txt` into each fixture directory first: the Mera repo
 namelist the data came from, and the RAMSES attribution. It is written at packaging time rather
 than by hand, so a regenerated fixture cannot ship without it.
 
-The generated fixtures are published as **assets on the `testdata-v1` release**, not committed to
-this repository: Mera is registered, so tree contents ship in every `Pkg.add("Mera")` tarball and
+The generated fixtures are published as **assets on a `testdata-vN` release**, not committed to
+this repository (`testdata-v1`: eleven simulations, for Mera 1.8; `testdata-v2`: the same eleven
+plus `sedov3d_bisection`, `dm_gas3d_bisection` and `sedov3d_iogroups`): Mera is registered, so tree contents ship in every `Pkg.add("Mera")` tarball and
 persist in git history.
 
 | script | what it does |
 |---|---|
-| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `READMEs.tar.gz` (282 MB total) |
+| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `READMEs.tar.gz` (295 MB total) |
 | `fetch_fixtures.sh [--small\|--all\|<names>]` | finds them on disk, or downloads them |
 | `check_release_staging.sh` | **run this after editing anything in `RAMSES-PUBLIC`** — reports whether the staged archives and the committed manifest still describe the current data |
 
@@ -141,12 +142,18 @@ To publish a new set:
 
 ```bash
 testdata/package_fixtures.sh /path/to/staging
-gh release create testdata-v1 --title 'Test fixtures v1' --notes-file testdata/RELEASE_NOTES.md
-gh release upload testdata-v1 /path/to/staging/*.tar.gz
+gh release create testdata-v2 --title 'Test fixtures v2' --notes-file testdata/RELEASE_NOTES.md
+gh release upload testdata-v2 /path/to/staging/*.tar.gz
 ```
 
-Bump the tag (`testdata-v2`, via `FIXTURE_TAG`) when a fixture changes, so an older checkout keeps
-resolving the assets published on the release.
+Bump the tag when the set changes, and leave the old release in place, so an older checkout keeps
+resolving the assets it was tested with. Only after the new release is online, switch to it in one
+commit (before that, CI would try to download assets that do not exist yet):
+
+- `testdata/fetch_fixtures.sh`: the default `TAG`, and the new names in `ALL` and `SMALL`;
+- `src/functions/download_testdata.jl`: `TESTDATA_TAG`, `TESTDATA_FIXTURES` and its docstring table;
+- the download sizes in `CONTRIBUTING.md`, `test/README.md` and `fetch_fixtures.sh` (`--small`
+  becomes 130 MB, everything 295 MB for v2), and the tag in `.github/workflows/fixtures.yml`.
 
 `.github/workflows/fixtures.yml` runs the data-backed tier on this: the `--small` set on every
 push, and the full set including the 165 MB Bondi fixture nightly.

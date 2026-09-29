@@ -1,9 +1,13 @@
-! sedov3d_bisection.nml — Mera test fixture: the AMR Sedov run on 4 ranks with ordering='bisection'
+! sedov3d_bisection.nml, a Mera test fixture: the AMR Sedov run on 4 ranks with ordering='bisection'
 !
 ! RAMSES cuts the box recursively instead of the Hilbert curve; the amr files store the bisection tree
 ! and the info files each rank's box. Tests that the RAMSES writer rebuilds RAMSES's own bisection files
 ! and repartitions them, and that Mera reads bisection outputs. Run:
 !     mpirun -np 4 ramses3d sedov3d_bisection.nml > run.log
+!
+! The Sedov configuration below is sedov3d_amr.nml. Its own header says "EXACTLY ONE thing is
+! changed"; here these differ from it: ordering='bisection' and nremap=2 (load balancing, so
+! the tree is not uniform) in &RUN_PARAMS, run on 4 ranks.
 !
 ! sedov3d_amr.nml — Mera test fixture: 3-D Sedov–Taylor blast wave on an AMR grid
 !
@@ -55,7 +59,7 @@ ordering='bisection'
 hydro=.true.
 ncontrol=1
 nrestart=0
-nremap=2   ! CHANGED for RamsesConverter testruns: was 0 -> enables Hilbert load balancing (non-uniform bound_key)
+nremap=2   ! was 0 in sedov3d_amr.nml: load balancing, so the domains are not uniform
 nsubcycle=10*2
 verbose=.false.
 /

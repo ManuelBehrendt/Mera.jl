@@ -1,11 +1,11 @@
-! dm_gas3d_bisection.nml — Mera test fixture: gas, self-gravity and 30,000 dark-matter particles
+! dm_gas3d_bisection.nml, a Mera test fixture: gas, self-gravity and 30,000 dark-matter particles
 ! on 4 ranks with ordering='bisection'. Only output_00004 is kept (13 MB each); rerun for the others:
 !     mpirun -np 4 ramses3d dm_gas3d_bisection.nml > run.log      (reads the particles from ic_part/)
 !
-! dm_gas3d.nml — RamsesConverter test run: gas + collisionless DARK MATTER particles + self-gravity + AMR
-! NEW namelist (not derived from Mera.jl). Periodic box, boxlen=1, G=1 code units.
-!   DM : equilibrium Plummer sphere, N=30000, M=1, a=0.05, truncated at r=0.4, from ascii file ./ic_part
-!        (generate with: python3 ../tools/make_plummer.py ic_part 30000 1.0 0.05 0.4 12345)
+! Written for these tests, not derived from a RAMSES configuration: gas + collisionless dark matter
+! + self-gravity + AMR. Periodic box, boxlen=1, G=1 code units.
+!   DM : equilibrium Plummer sphere, N=30000, M=1, a=0.05, truncated at r=0.4, in the ascii file
+!        ic_part (included; 7 columns x y z vx vy vz m, seed 12345)
 !        filetype='ascii' + initfile(1)='.'  -> pm/init_part.f90::load_ascii; all particles family 1 (DM),
 !        positions in ic_part are relative to the box centre.
 !   gas: uniform d=0.1, p=0.01 (gas mass 0.1), no tracers.

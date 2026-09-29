@@ -1,4 +1,4 @@
-! sedov3d_iogroups.nml — Mera test fixture: the AMR Sedov run on 4 ranks, written in IO groups of 2
+! sedov3d_iogroups.nml, a Mera test fixture: the AMR Sedov run on 4 ranks, written in IO groups of 2
 !
 ! Every 2 ranks write into one folder output_NNNNN/group_GGGGG, the files written once per output go to
 ! group_00001. In RAMSES 2026.05 IOGROUPSIZEREP is not a namelist parameter: it is set in
@@ -6,6 +6,10 @@
 ! group_00001 of a new output, so the other group folders must exist before it writes:
 !     for o in 1 2 3; do mkdir -p output_0000$o/group_00001 output_0000$o/group_00002; done
 !     mpirun -np 4 ramses3d sedov3d_iogroups.nml > run.log
+!
+! The Sedov configuration below is sedov3d_amr.nml. Its own header says "EXACTLY ONE thing is
+! changed"; here these differ from it: nremap=2 and three outputs (&OUTPUT_PARAMS), run on
+! 4 ranks by a RAMSES built with IOGROUPSIZEREP=2.
 !
 ! sedov3d_amr.nml — Mera test fixture: 3-D Sedov–Taylor blast wave on an AMR grid
 !
@@ -56,7 +60,7 @@
 hydro=.true.
 ncontrol=1
 nrestart=0
-nremap=2   ! CHANGED for RamsesConverter testruns: was 0 -> enables Hilbert load balancing (non-uniform bound_key)
+nremap=2   ! was 0 in sedov3d_amr.nml: load balancing, so the domains are not uniform
 nsubcycle=10*2
 verbose=.false.
 /

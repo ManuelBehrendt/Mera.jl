@@ -59,9 +59,13 @@ this table is a summary rather than the authority.
 | `stromgren3d.nml` | `namelist/stromgren.nml` | the classic Strömgren-sphere problem (Iliev et al. Test 1) |
 | `mhdtube3d.nml` | `namelist/tube_mhd.nml` | a 1-D MHD shock tube, run here in 3-D |
 | `legacy_particles3d.nml` | no upstream original | built against the **`stable_17_09`** branch purely to emit the legacy `pversion = 0` particle header |
+| `sedov3d_bisection.nml` | the same Sedov configuration | run with `ordering='bisection'` and load balancing, so RAMSES writes its bisection tree |
+| `sedov3d_iogroups.nml` | the same Sedov configuration | run by a RAMSES whose `amr/amr_parameters.f90` sets `IOGROUPSIZEREP=2`, the only change to RAMSES's source, so the files land in IO-group folders |
 
 `clumps3d.nml` is not derived from upstream. RAMSES ships no self-contained 3-D clump-finder test,
-so it was written from scratch and is entirely ours.
+so it was written from scratch and is entirely ours. The same holds for `dm_gas3d_bisection.nml`
+(gas, self-gravity and a Plummer sphere of dark-matter particles under bisection ordering) and its
+particle file `ic_part`.
 
 ## Simulation output
 

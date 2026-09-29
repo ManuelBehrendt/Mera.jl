@@ -1,22 +1,24 @@
-# Mera.jl public test simulations, v1
+# Mera.jl public test simulations, v2
 
 Small RAMSES simulation outputs you can download and analyse with
 [Mera.jl](https://github.com/ManuelBehrendt/Mera.jl). They are the same simulations Mera's own test
 suite runs against, so every one has a known answer to check against.
 
-Total 282 MB across 12 archives (11 simulations plus the documentation set).
+Total 295 MB across 15 archives (14 simulations plus the documentation set).
 Each unpacks to a single directory.
 
-Validated against **Mera 1.8**. The tag is versioned independently of the package: the data
-changes only when a simulation is regenerated, so `testdata-v1` stays valid across Mera
-releases and becomes `testdata-v2` only if a fixture actually changes.
+v2 adds three simulations and changes none: `sedov3d_bisection`, `dm_gas3d_bisection` and
+`sedov3d_iogroups`, RAMSES's own outputs in its bisection ordering and in IO-group folders, for
+Mera's `repartition` and `writeramses`. The other eleven are the same data as in `testdata-v1`,
+which stays in place unchanged for Mera 1.8. The tag is versioned independently of the package:
+it changes only when the set of simulations changes.
 
 ## Getting them
 
 ```bash
 git clone https://github.com/ManuelBehrendt/Mera.jl && cd Mera.jl
-./testdata/fetch_fixtures.sh --small     # 117 MB, everything except the Bondi run
-./testdata/fetch_fixtures.sh             # everything, 282 MB
+./testdata/fetch_fixtures.sh --small     # 130 MB, everything except the Bondi run
+./testdata/fetch_fixtures.sh             # everything, 295 MB
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
@@ -69,6 +71,9 @@ oracle**, meaning something theory fixes independently of Mera.
 | `stromgren3d` | RAMSES-RT ionisation | I-front follows `r_S (1 - e^(-t/t_rec))^(1/3)` |
 | `sinks3d` | the sink catalogue | one sink, mass grows between snapshots |
 | `legacy_particles3d` | the legacy `pversion=0` particle header | the ascii input file is the oracle |
+| `sedov3d_bisection` | `ordering='bisection'`, ncpu=4 | every rank's file rebuilt exactly from the stored tree |
+| `dm_gas3d_bisection` | bisection with self-gravity and 30 000 dark-matter particles | as above; the particle count is the input file's |
+| `sedov3d_iogroups` | files in IO-group folders (`IOGROUPSIZEREP=2`) | every rank's file rebuilt exactly from the stored walls |
 
 ## RAMSES's own test configurations
 

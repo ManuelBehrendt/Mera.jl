@@ -91,5 +91,7 @@ echo ">>> Total: $(find "$OUTDIR" -name '*.tar.gz' -exec stat -f '%z' {} \; \
     | awk '{s+=$1} END {printf "%.0f MB (what a full download costs)", s/1048576}')"
 echo
 echo "Next:"
-echo "  gh release create testdata-v1 --title 'Test fixtures v1' --notes-file testdata/RELEASE_NOTES.md"
-echo "  gh release upload testdata-v1 $OUTDIR/*.tar.gz"
+TAG="${FIXTURE_TAG:-testdata-v2}"
+echo "  gh release create $TAG --title 'Test fixtures ${TAG#testdata-}' --notes-file testdata/RELEASE_NOTES.md"
+echo "  gh release upload $TAG $OUTDIR/*.tar.gz"
+echo "then set $TAG as the default in testdata/fetch_fixtures.sh and add new names to its lists."
