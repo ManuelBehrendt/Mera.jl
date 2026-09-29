@@ -364,6 +364,51 @@ end
     end
     end
 
+    # RAMSES's own outputs in the other layouts: bisection ordering and IO groups. Every rank's file
+    # is rebuilt from the output's own tree or walls, and the values survive a repartition.
+    PUBLIC_AVAILABLE && @testset "$key (RAMSES's own layout)" for key in (:sedov3d_bisection, :dm_gas3d_bisection, :sedov3d_iogroups)
+        fx = PUBLIC_FIXTURES[key]
+        isdir(fx.path) || continue
+        o = fx.output; q = (verbose=false, show_progress=false); tmp = mktempdir()
+        dir = joinpath(fx.path, "output_" * lpad(o, 5, '0'))
+        t = RW.read_global_tree(dir, o; verbose=false)
+        @test strip(t.header.ordering) == (key === :sedov3d_iogroups ? "hilbert" : "bisection")
+        @test RW.groupsize_of(dir) == (key === :sedov3d_iogroups ? 2 : 0)
+        dec = RW.own_decomposition(t)
+        lts = [RW.build_local_tree(t, dec, k; nexpand_bound=RW.detect_nexpand_bound(dir)) for k in 1:fx.ncpu]
+        nt  = RW.global_numbtot([lt.numbl for lt in lts], t.header.nlevelmax)
+        umt = maximum(RW.ngrid_current, lts)
+        for k in 1:fx.ncpu
+            g = tempname()
+            RW.write_amr_file(g, RW.amr_file_content(t, dec, lts[k], Int(t.header.ngridmax), nt, umt)...)
+            @test _rw_canonical_amr(RW.amr_filename(dir, o, k)) == _rw_canonical_amr(g)
+            h1, h2 = RW.read_amr_file(RW.amr_filename(dir, o, k))[1], RW.read_amr_file(g)[1]
+            @test h1.bisection_records == h2.bisection_records && h1.bound_key == h2.bound_key
+            rm(g)
+        end
+        # to 3 ranks, plain, own ordering: every value kept, and Mera reads it
+        RW.repartition(dir, 3; outpath=tmp, verbose=false)
+        c = RW.compare_outputs(dir, joinpath(tmp, "output_" * lpad(o, 5, '0')))
+        @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff)) && c.particle_maxdiff == (0.0, 0.0)
+        i3 = getinfo(o, tmp, verbose=false)
+        @test i3.ncpu == 3
+        if key !== :sedov3d_iogroups
+            # Mera reads RAMSES's bisection output itself, and writes it back from its data
+            info = getinfo(o, fx.path, verbose=false)
+            gas = gethydro(info; q...)
+            @test msum(gas) ≈ msum(gethydro(i3; q...)) rtol=1e-14
+            grav = info.gravity ? getgravity(info; parents=true, q...) : nothing
+            part = info.particles ? getparticles(info; q...) : nothing
+            info.particles && @test length(part.data) == fx.oracle.npart
+            writeramses(3; hydro=gas, gravity=grav, particles=part, outpath=joinpath(tmp, "w"), verbose=false)
+            @test strip(RW.read_amr_file(RW.amr_filename(joinpath(tmp, "w", "output_" * lpad(o, 5, '0')), o, 1))[1].ordering) == "bisection"
+            c = compareramses(o, fx.path, joinpath(tmp, "w"))
+            @test c.same_tree && maximum(c.maxdiff["hydro"]) < 1e-13 && c.particle_maxdiff == (0.0, 0.0)
+            haskey(c.maxdiff, "grav") && @test all(iszero, c.maxdiff["grav"])
+        end
+        rm(tmp; recursive=true)
+    end
+
     # Three community samples, run when present:
     # * an MHD tube on an AMR grid with outflow walls and neither a hydro descriptor nor a
     #   namelist.txt: the walls, the ghost width and the variable layout are all inferred;

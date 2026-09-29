@@ -101,10 +101,17 @@ table exactly.
 | `sinks3d` | `namelists/sinks3d.nml` | sink catalogue (`sink_NNNNN.csv`); accretion between snapshots; mera-file round trip |
 | `sedov3d_amr_mera` | `make_mera_files.jl` | mera-file (JLD2) round trip; no RAMSES run needed |
 | `timeseries_sedov3d` | `namelists/sedov3d.nml` | the original multi-snapshot fixture |
+| `sedov3d_bisection` | `namelists/sedov3d_bisection.nml` | `ordering='bisection'`, ncpu=4: RAMSES's own bisection files, rebuilt and repartitioned |
+| `dm_gas3d_bisection` | `namelists/dm_gas3d_bisection.nml` + `ic_part/` | bisection with self-gravity and 30 000 dark-matter particles; output 4 only |
+| `sedov3d_iogroups` | `namelists/sedov3d_iogroups.nml` | files in IO-group folders (`IOGROUPSIZEREP=2`, set at compile time in RAMSES 2026.05) |
 
 Between them: both the multi-file (ncpu=8) and single-file (ncpu=1) reader paths, AMR and uniform
 grids, three `nvarh` layouts (5 / 8 / 11), every data type Mera reads, and both the legacy and
 modern on-disk formats.
+
+The last three are on the maintainer's drive and in `package_fixtures.sh`, but not yet in the
+`testdata-v1` release; they join `fetch_fixtures.sh` when the release is updated. Their tests skip
+when the fixtures are absent.
 
 ## Attribution
 
