@@ -92,10 +92,17 @@ coincides with a key exactly as it would in RAMSES.
 """
 function balanced_bound_key(t::GlobalTree, ncpu::Integer; overload::Integer=1,
                             extra_keys::Vector{Float64}=Float64[])
-    keys = copy(extra_keys)
-    sizehint!(keys, length(extra_keys) + 8 * sum(ngrids, t.levels))
-    for l in 1:nlevels(t), i in 1:ngrids(t.levels[l]), ind in 1:8
-        push!(keys, key_of(t, cell_center(t, l, i, ind)))
+    # one key per cell of every level, computed on all threads into fixed slots
+    offs = cumsum([0; [8 * ngrids(lv) for lv in t.levels]])
+    keys = Vector{Float64}(undef, length(extra_keys) + offs[end])
+    keys[1:length(extra_keys)] .= extra_keys
+    base = length(extra_keys)
+    for l in 1:nlevels(t)
+        Threads.@threads for i in 1:ngrids(t.levels[l])
+            for ind in 1:8
+                @inbounds keys[base + offs[l] + 8(i - 1) + ind] = key_of(t, cell_center(t, l, i, ind))
+            end
+        end
     end
     sort!(keys)
     ndomain = ncpu * overload

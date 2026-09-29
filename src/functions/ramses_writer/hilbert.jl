@@ -29,28 +29,24 @@ Hilbert key of the integer cell coordinates `(ix, iy, iz)` on a grid of
 `2^bit_length` cells per dimension, exactly as RAMSES computes it.
 """
 function hilbert3d(ix::Integer, iy::Integer, iz::Integer, bit_length::Integer)
-    # interleave the bits: bit 3i+2 <- x, 3i+1 <- y, 3i <- z
-    bits = falses(3bit_length)
-    for i in 0:bit_length-1
-        bits[3i+3] = (ix >> i) & 1 == 1
-        bits[3i+2] = (iy >> i) & 1 == 1
-        bits[3i+1] = (iz >> i) & 1 == 1
-    end
-    # walk the state diagram from the most significant digit down
+    # Walk the state diagram from the most significant digit down, writing each Hilbert digit
+    # into the same bit positions RAMSES uses (bit 3i+2 <- x, 3i+1 <- y, 3i <- z). A UInt128
+    # holds up to 42 levels of bits, so nothing is allocated per call.
+    bit_length <= 42 || throw(ArgumentError("hilbert3d: at most 42 bits per dimension, got $bit_length"))
+    h = UInt128(0)
     cstate = 0
     for i in bit_length-1:-1:0
-        sdigit = 4bits[3i+3] + 2bits[3i+2] + bits[3i+1]
-        nstate = HILBERT_STATE[sdigit+1, 1, cstate+1]
-        hdigit = HILBERT_STATE[sdigit+1, 2, cstate+1]
-        bits[3i+3] = (hdigit >> 2) & 1 == 1
-        bits[3i+2] = (hdigit >> 1) & 1 == 1
-        bits[3i+1] = hdigit & 1 == 1
+        sdigit = 4 * ((ix >> i) & 1) + 2 * ((iy >> i) & 1) + ((iz >> i) & 1)
+        @inbounds nstate = HILBERT_STATE[sdigit+1, 1, cstate+1]
+        @inbounds hdigit = HILBERT_STATE[sdigit+1, 2, cstate+1]
+        h |= UInt128(hdigit) << (3i)
         cstate = nstate
     end
-    # key as a double, summed from the least significant bit like RAMSES
+    # the key as a double, summed from the least significant bit like RAMSES, so the rounding of
+    # keys wider than 53 bits is the same
     order = 0.0
     for i in 0:3bit_length-1
-        order += Float64(bits[i+1]) * 2.0^i
+        (h >> i) & 1 == 1 && (order += 2.0^i)
     end
     return order
 end
