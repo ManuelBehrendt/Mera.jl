@@ -244,14 +244,20 @@ end
 
 """
     writeramses(ncpu; hydro, gravity=nothing, rt=nothing, particles=nothing, sinks=nothing,
-                outpath, overwrite=false, verbose=true) -> RepartitionReport
+                outpath, overwrite=false, verbose=true, force=false) -> RepartitionReport
 
 Write a restartable RAMSES output with `ncpu` files from Mera data (loaded with
 `gethydro`/`getgravity`/`getrt`/`getparticles`/`getsinks`, or from mera files
 with `loaddata`). The data must be complete ([`restart_completeness`](@ref)).
-Refined cells are rebuilt from the leaves. Files that leaf data cannot carry
-(`info_rt`, `stellar_*.csv`, …) are copied from the original output if it
-still exists.
+Refined cells are rebuilt from the leaves, with RAMSES's own averaging rules.
+Files that leaf data cannot carry (`info_rt`, `stellar_*.csv`, …) are copied
+from the original output if it still exists.
+
+Refused: incomplete data, particle files older than `part_file_descriptor.txt`
+(use [`repartition`](@ref) on the original files), writing into the output the
+data came from, and a cosmological run from an old mera file whose simulation
+is gone. `force=true` writes the last one anyway, and also incomplete data;
+such an output is for inspection, not for a faithful restart.
 """
 function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particles=nothing, sinks=nothing,
                      outpath::AbstractString, overwrite::Bool=false, verbose::Bool=true, force::Bool=false)
