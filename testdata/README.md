@@ -148,10 +148,12 @@ gh release upload testdata-v2 /path/to/staging/*.tar.gz
 
 Bump the tag when the set changes, and leave the old release in place, so an older checkout keeps
 resolving the assets it was tested with. Only after the new release is online, switch to it in one
-commit (before that, CI would try to download assets that do not exist yet):
+commit (before that, `fetch_fixtures.sh` and `download_testdata()` would ask for assets that do not
+exist yet):
 
 - `testdata/fetch_fixtures.sh`: the default `TAG`, and the new names in `ALL` and `SMALL`;
-- `src/functions/download_testdata.jl`: `TESTDATA_TAG`, `TESTDATA_FIXTURES` and its docstring table;
+- `src/functions/download_testdata.jl`: `TESTDATA_TAG`, `TESTDATA_FIXTURES` and its docstring table,
+  and the catalogue size in `test/78_download_testdata_tests.jl`;
 - the download sizes in `CONTRIBUTING.md`, `test/README.md` and `fetch_fixtures.sh` (`--small`
   becomes 130 MB, everything 295 MB for v2), and the tag in `.github/workflows/fixtures.yml`.
 
