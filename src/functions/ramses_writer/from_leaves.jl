@@ -73,6 +73,7 @@ Base.@kwdef struct LeafInput
     nstar_tot::Int = 0
     nsink::Int = 0
     legacy_particles::Bool = false       # particle files without part_file_descriptor.txt (before 2018)
+    gravity_parents::Union{Nothing,LeafCells} = nothing   # stored values of refined cells, if kept
     interpol_var::Int = 0                # &REFINE_PARAMS interpol_var: how RAMSES restricts energy
 end
 
@@ -245,6 +246,30 @@ function hydro_restriction(names::Vector{String}, gamma::Float64; interpol_var::
         end
     end
     return Restriction(to_cons, to_prim, faces)
+end
+
+"""
+    stored_parents(dir, iout, kind) -> LeafCells
+
+Every refined cell of an output with the values stored for it in the files of `kind` (`"grav"`).
+RAMSES computes the gravity of a refined cell on its own level (a Poisson solve and its force),
+not as the average of its children, and its next solve starts from those potentials; a restart
+that should continue to round-off needs them as they were.
+"""
+function stored_parents(dir, iout, kind::AbstractString)
+    t = read_global_tree(dir, iout; verbose=false)
+    cs = open_cell_files(dir, kind, iout, Int(t.header.ncpu), Int(t.header.nlevelmax), length(t.boundaries))
+    cs === nothing && error("no $kind files in $dir")
+    level = Int[]; cells = NTuple{3,Int}[]; rows = Vector{Float64}[]
+    for l in 1:nlevels(t)-1, (g, ig) in enumerate(t.levels[l].ig), ind in 1:8
+        is_refined(t, l, ig, ind) || continue
+        cpu, pos = t.src_cpu[l][g], t.src_pos[l][g]
+        push!(level, l)
+        push!(cells, Tuple(Int.(child_coord(ig, ind))))
+        push!(rows, [cell_value(cs, cpu, l, cpu, pos, ind, v) for v in 1:cs.nvar])
+    end
+    vals = isempty(rows) ? zeros(0, cs.nvar) : permutedims(reduce(hcat, rows))
+    return LeafCells(level, cells, vals, String[])
 end
 
 """

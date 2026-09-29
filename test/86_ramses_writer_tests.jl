@@ -222,7 +222,9 @@ end
 
         @testset "Mera data, through a mera file, back to RAMSES" begin
             gas  = gethydro(info; q...)
-            grav = info.gravity   ? getgravity(info; q...)   : nothing
+            # parents=true keeps the stored gravity of the refined cells: RAMSES computes it on
+            # each level, not as an average, and its next Poisson solve starts from it
+            grav = info.gravity   ? getgravity(info; parents=true, q...) : nothing
             part = info.particles ? getparticles(info; q...) : nothing
             ok, _ = restart_completeness(gas; gravity=grav, particles=part)
             @test ok
@@ -248,6 +250,17 @@ end
             # cent. The MHD upl sets a parent's face field from the 4 children on that face.
             call = compareramses(o, fx.path, joinpath(tmp, "w3"))
             @test maximum(call.maxdiff["hydro"]) < 1e-13
+            if grav !== nothing
+                # the stored gravity parents survive the mera file and are written as they were
+                @test haskey(grav2.used_descriptors, :parents)
+                @test all(iszero, call.maxdiff["grav"])
+                # without them the parents are averages: leaves exact, refined cells not
+                w0 = writeramses(3; hydro=gas2, gravity=getgravity(info; q...), particles=part2,
+                                 outpath=joinpath(tmp, "w3_noparents"), verbose=false)
+                c0 = compareramses(o, fx.path, joinpath(tmp, "w3_noparents"))
+                @test maximum(c0.maxdiff["grav"]) > 0
+                @test all(iszero, compareramses(o, fx.path, joinpath(tmp, "w3_noparents"); leaves_only=true).maxdiff["grav"])
+            end
         end
 
         @testset "old mera files and missing namelists warn" begin

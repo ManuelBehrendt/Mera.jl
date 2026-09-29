@@ -11,7 +11,8 @@ function getgravity(dataobject::InfoType, var::Symbol;
                    verbose::Bool=true,
                    show_progress::Bool=true,
                    myargs::ArgumentsType=ArgumentsType(),
-                   max_threads::Int=Threads.nthreads())
+                   max_threads::Int=Threads.nthreads(),
+                   parents::Bool=false)
 
     return getgravity(dataobject, vars=[var],
                      lmax=lmax,
@@ -21,7 +22,8 @@ function getgravity(dataobject::InfoType, var::Symbol;
                      verbose=verbose,
                      show_progress=show_progress,
                      myargs=myargs,
-                     max_threads=max_threads)
+                     max_threads=max_threads,
+                     parents=parents)
 end
 
 function getgravity(dataobject::InfoType, vars::Array{Symbol,1};
@@ -35,7 +37,8 @@ function getgravity(dataobject::InfoType, vars::Array{Symbol,1};
                    verbose::Bool=true,
                    show_progress::Bool=true,
                    myargs::ArgumentsType=ArgumentsType(),
-                   max_threads::Int=Threads.nthreads())
+                   max_threads::Int=Threads.nthreads(),
+                   parents::Bool=false)
 
     return getgravity(dataobject,
                      vars=vars,
@@ -46,7 +49,8 @@ function getgravity(dataobject::InfoType, vars::Array{Symbol,1};
                      verbose=verbose,
                      show_progress=show_progress,
                      myargs=myargs,
-                     max_threads=max_threads)
+                     max_threads=max_threads,
+                     parents=parents)
 end
 
 """
@@ -93,6 +97,10 @@ Arguments
     - show_progress: show a progress bar during reading
     - myargs: ArgumentsType struct to override lmax, ranges, center, range_unit, verbose, show_progress
     - max_threads: cap threads used for table creation and column extraction (≤ available threads)
+    - parents: also keep the stored values of the refined (parent) cells, which RAMSES computes on
+      their own level, not as averages; kept in `used_descriptors[:parents]` and saved in mera
+      files. Only needed to write a restart with [`writeramses`](@ref) that continues to round-off.
+      Needs the whole box, all levels and all variables.
 
 Defined methods
 - getgravity(dataobject::InfoType; ...)               # no vars → all variables loaded
@@ -133,7 +141,8 @@ function getgravity(dataobject::InfoType;
                    verbose::Bool=true,
                    show_progress::Bool=true,
                    myargs::ArgumentsType=ArgumentsType(),
-                   max_threads::Int=Threads.nthreads())
+                   max_threads::Int=Threads.nthreads(),
+                   parents::Bool=false)
 
     # Multi-code: fail fast when the data comes from a reader without a gravity frontend.
     _require_capability(dataobject, :gravity, "getgravity")
@@ -240,6 +249,8 @@ function getgravity(dataobject::InfoType;
     end
     gravitydata.used_descriptors = used_descriptors
     gravitydata.scale = dataobject.scale
+    # the stored values of the refined cells too, for writeramses (see its docstring)
+    parents && _attach_gravity_parents!(gravitydata; verbose)
     return gravitydata
 end
 

@@ -212,6 +212,15 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
         gv = cell_values(t, inp.gravity, PLAIN)
         # RAMSES never solves for gravity below levelmin and keeps zeros there
         for l in 1:min(inp.levelmin - 1, length(gv)); gv[l] .= 0.0; end
+        if inp.gravity_parents !== nothing
+            # the refined cells as RAMSES stored them, not rebuilt from their children
+            p = inp.gravity_parents
+            for (i, (l, c)) in enumerate(zip(p.level, p.cells))
+                g = get(t.levels[l].lookup, Coord(c .>> 1), Int32(0))
+                g == 0 && error("a stored gravity parent at level $l is not in the octree of the leaf data")
+                gv[l][g, cell_index((c .& 1)...), :] .= view(p.values, i, :)
+            end
+        end
         push!(sets, MemoryCellSet("grav", cell_header("grav", length(inp.gravity.names), L, nbnd, inp.gamma),
                                   length(inp.gravity.names), gv))
     end

@@ -158,6 +158,39 @@ function _particle_layout(info, pc)
     return names, types, true
 end
 
+"""
+    _attach_gravity_parents!(grav; verbose=true)
+
+Reads the stored gravity values of every refined cell from the original output and keeps them in
+`grav.used_descriptors[:parents]` (Mera cell coordinates, like the leaves), so they travel into a
+mera file. `writeramses` then writes them instead of averages of the children.
+"""
+function _attach_gravity_parents!(grav; verbose::Bool=true)
+    info = grav.info
+    d = _original_dir(info)
+    d === nothing && error("[Mera]: parents=true reads the refined cells from the simulation, which is not found at $(info.path)")
+    (grav.ranges == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0] && grav.lmax == info.levelmax &&
+     grav.selected_gravvars == collect(1:length(info.gravity_variable_list))) ||
+        error("[Mera]: parents=true needs the whole box, all levels and all gravity variables")
+    p = _RW.stored_parents(d, info.output, "grav")
+    cmin, _ = _RW.coarse_box((info.grid_info.nx, info.grid_info.ny, info.grid_info.nz), _boundary_group(info))
+    rel(k) = Int32[c[k] - cmin[k] * 2^l + 1 for (l, c) in zip(p.level, p.cells)]
+    grav.used_descriptors[:parents] = (level=Int8.(p.level), cx=rel(1), cy=rel(2), cz=rel(3),
+                                       values=p.values, vars=copy(info.gravity_variable_list))
+    verbose && println("[Mera]: kept the stored gravity of $(length(p.level)) refined cells")
+    return grav
+end
+
+"The stored gravity parents of a Mera object as leaf cells for the writer, or nothing."
+function _gravity_parents(grav, cmin)
+    grav === nothing && return nothing
+    p = get(grav.used_descriptors, :parents, nothing)
+    p === nothing && return nothing
+    cells = [((p.cx[i] - 1) + cmin[1] * 2^p.level[i], (p.cy[i] - 1) + cmin[2] * 2^p.level[i],
+              (p.cz[i] - 1) + cmin[3] * 2^p.level[i]) for i in eachindex(p.level)]
+    return _RW.LeafCells(Int.(p.level), cells, p.values, String.(p.vars))
+end
+
 # ----------------------------------------------------------------------------
 #  Completeness
 # ----------------------------------------------------------------------------
@@ -203,6 +236,12 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
         lc = _leafcells(obj, String.(vars), vars, cmin)
         check("$name cells", Set(zip(lc.level, lc.cells)) == hydro_cells, "$(length(lc.level)) cells, same as hydro")
         check("$name finite", all(isfinite, lc.values), "")
+        if name == "gravity" && info.levelmax > info.levelmin
+            # not a failure either way: without them a restart continues within the Poisson tolerance
+            np_ = haskey(obj.used_descriptors, :parents) ? length(obj.used_descriptors[:parents].level) : 0
+            check("gravity parents", true, np_ > 0 ? "$np_ refined cells as stored (restart to round-off)" :
+                  "rebuilt from the children (restart within the Poisson tolerance; getgravity(...; parents=true) keeps them)")
+        end
     end
     if info.particles
         if particles === nothing
@@ -381,13 +420,13 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
         units = get(sinks.used_descriptors, :units, nothing)
         hdr_lines = length(cols) == 23 && units === nothing ? _RW.SINK_CSV_HEADER :
                     [" # " * join(string.(propertynames(sc)), ","),
-                     " # " * (units === nothing ? join(fill("1", length(cols)), ",") : join(string.(units), ","))]
+                     " # " * join((units === nothing ? "1" : get(units, k, "1") for k in propertynames(sc)), ",")]
         sinkdata = (cols, hdr_lines)
     end
     inp = _RW.LeafInput(output=info.output, header=header, n=n, nlevelmax=info.levelmax, levelmin=info.levelmin,
                        boxlen=Float64(get(header, :boxlen, info.boxlen)), ngridmax=info.grid_info.ngridmax,
                        gamma=info.gamma, boundary_group=bgroup, hydro=hydro_leaves, gravity=grav_leaves,
-                       rt=rt_leaves, rt_header=rt_header, particles=pt, nstar_tot=nstar_tot, legacy_particles=legacy_particles,
+                       rt=rt_leaves, rt_header=rt_header, gravity_parents=_gravity_parents(gravity, cmin), particles=pt, nstar_tot=nstar_tot, legacy_particles=legacy_particles,
                        nsink=sinkdata === nothing ? 0 : length(sinkdata[1][1]),
                        interpol_var=interpol_var)
     meta = Dict{Symbol,Any}(:levelmin => info.levelmin, :levelmax => info.levelmax,
@@ -409,18 +448,19 @@ end
 
 """
     upgrade_merafile(output, path; datatypes=[:hydro, :gravity, :particles, :rt, :clumps, :sinks],
-                     simulation=nothing, verbose=true)
+                     simulation=nothing, parents=true, verbose=true)
 
 Brings a mera file saved by an older Mera up to date: fills
 `grid_info.amr_header` from the original simulation (`simulation` = its
 directory, default the path recorded in the file) and saves every data type
-of the file again. Old files load fine without this; the upgrade makes them
-self-contained, e.g. for writing a RAMSES restart after the simulation is
-deleted.
+of the file again. With `parents=true` complete gravity data also gets the
+stored values of its refined cells (see `getgravity(...; parents=true)`).
+Old files load fine without this; the upgrade makes them self-contained,
+e.g. for writing a RAMSES restart after the simulation is deleted.
 """
 function upgrade_merafile(output::Integer, path::AbstractString;
                           datatypes=[:hydro, :gravity, :particles, :rt, :clumps, :sinks],
-                          simulation=nothing, verbose::Bool=true)
+                          simulation=nothing, parents::Bool=true, verbose::Bool=true)
     # load everything first: the same file is written again below
     objs = Pair{Symbol,Any}[]
     for dt in datatypes
@@ -439,6 +479,10 @@ function upgrade_merafile(output::Integer, path::AbstractString;
             h, src = amr_header_of(info)
             src == :approximate && error("[Mera]: original simulation not found at $(info.path); pass simulation=…")
             info.grid_info.amr_header = h
+        end
+        if dt == :gravity && parents && !haskey(obj.used_descriptors, :parents) &&
+           obj.ranges == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0] && obj.lmax == info.levelmax
+            _attach_gravity_parents!(obj; verbose)
         end
     end
     # write to a temporary directory, then replace the file: an interrupted upgrade never
