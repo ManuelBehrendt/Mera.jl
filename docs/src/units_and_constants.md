@@ -567,6 +567,7 @@ println("- Proton mass: $(consts.mp) g")
 
 # Practical example: Calculate Jeans length scale
 # Jeans length = sqrt(π * k_B * T / (G * μ * m_H * ρ))
+# (the isothermal Jeans length; for every cell at once use getvar(gas, :jeanslength_iso, :pc))
 println("\n=== Example: Jeans length calculation components ===")
 println("✓ Gravitational constant G = $(consts.G)")
 println("✓ Boltzmann constant k_B = $(consts.kB)")

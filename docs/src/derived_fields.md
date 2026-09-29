@@ -92,7 +92,11 @@ A few derived quantities carry physical assumptions worth stating explicitly:
 
 - **Jeans length** `:jeanslength` uses the standard form ``λ_J = c_s\,\sqrt{\dfrac{3π}{32\,G\,ρ}}`` (and
   `:jeansmass`/`:jeansnumber` follow from it). This is one of several Jeans-length conventions in the
-  literature; factors of order unity differ between them.
+  literature; factors of order unity differ between them. The classical ``λ_J = \sqrt{π c^2/(Gρ)}`` is
+  available with the isothermal (`:jeanslength_iso`, ``c^2=P/ρ``) or adiabatic (`:jeanslength_ad`,
+  ``c^2=γP/ρ``) sound speed. The matching cells-per-Jeans-length are `:jeansnumber_iso`/`:jeansnumber_ad`,
+  and `:jeansnumber_truelove` gives Truelove et al.'s (1997) ``J = Δx/λ_{J,\mathrm{iso}}``. The `_iso`
+  variants are what RAMSES `jeans_refine` uses.
 - **Magnetosonic Mach numbers** `:mach_alfven`, `:mach_fast`, `:mach_slow` require the magnetic-field
   components `:bx,:by,:bz` (an MHD run) and error otherwise. The B field is taken in **RAMSES code
   units** and converted to Gaussian-CGS internally (Alfvén speed ``v_A = B/\sqrt{4πρ}``); fast/slow use
