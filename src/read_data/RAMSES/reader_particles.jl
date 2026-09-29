@@ -133,6 +133,10 @@ function getparticledata( dataobject::InfoType,
 
     # ===== BUILD FINAL LIST OF CPU FILES TO READ =====
     # Collect all unique CPU files that contain data in our regions of interest
+    # ordering='bisection' has no Hilbert walls to select files by: read every file
+    if any(isnan, dataobject.grid_info.bound_key)
+        cpu_min .= 1; cpu_max .= dataobject.ncpu
+    end
     cpu_read = copy(dataobject.grid_info.cpu_read)  # Copy CPU read status array
     cpu_list = zeros(Int32, dataobject.ncpu)        # Initialize CPU list
     ncpu_read=Int32(0)                              # Counter for CPUs to read
@@ -301,6 +305,10 @@ function getparticledata_parallel( dataobject::InfoType,
     end
 
     # ===== BUILD CPU READ LIST =====
+    # ordering='bisection' has no Hilbert walls to select files by: read every file
+    if any(isnan, dataobject.grid_info.bound_key)
+        cpu_min .= 1; cpu_max .= dataobject.ncpu
+    end
     cpu_read = copy(dataobject.grid_info.cpu_read)
     cpu_list = zeros(Int32, dataobject.ncpu)
     ncpu_read=Int32(0)

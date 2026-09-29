@@ -153,10 +153,15 @@ function readinfofile!(dataobject::InfoType)
       error("[Mera]: Program only works with 3D data!")
     end
 
-    dataobject.grid_info.bound_key[1]   = parse( Float64, split(lines[22])[2] )
-    for i = 1:ncpu
-      #println( parse( Float64, split(lines[21+i])[1] ), " ", parse( Float64, split(lines[21+i])[2] ), " ",  parse( Float64, split(lines[21+i])[3] ) )
-      dataobject.grid_info.bound_key[i+1] = parse( Float64, split(lines[21+i])[3] )
+    if occursin(r"(?i)bisection", lines[20])
+      # ordering='bisection': the file lists each rank's box instead of Hilbert walls. NaN walls
+      # tell the readers to read every file (they select files by Hilbert keys otherwise).
+      fill!(dataobject.grid_info.bound_key, NaN)
+    else
+      dataobject.grid_info.bound_key[1]   = parse( Float64, split(lines[22])[2] )
+      for i = 1:ncpu
+        dataobject.grid_info.bound_key[i+1] = parse( Float64, split(lines[21+i])[3] )
+      end
     end
     close(f)
 
