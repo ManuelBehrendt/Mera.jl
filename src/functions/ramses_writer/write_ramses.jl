@@ -208,6 +208,8 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
                               length(inp.hydro.names), hv))
     if inp.gravity !== nothing
         gv = cell_values(t, inp.gravity, PLAIN)
+        # RAMSES never solves for gravity below levelmin and keeps zeros there
+        for l in 1:min(inp.levelmin - 1, length(gv)); gv[l] .= 0.0; end
         push!(sets, MemoryCellSet("grav", cell_header("grav", length(inp.gravity.names), L, nbnd, inp.gamma),
                                   length(inp.gravity.names), gv))
     end
