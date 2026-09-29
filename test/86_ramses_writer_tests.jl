@@ -199,6 +199,14 @@ end
             @test c.same_tree
             @test all(v -> all(iszero, v), values(c.maxdiff))
             @test c.nparticles[1] == c.nparticles[2] && c.particle_maxdiff == (0.0, 0.0)
+            # and the REFINED cells too: RAMSES averages internal energy for interpol_var 1 and 2
+            # (hydro/interpol_hydro.f90, upl), so the rebuilt parents must equal the stored ones.
+            # Averaging total energy instead left their pressure wrong by up to 4 per cent, which
+            # a restart then carried into the leaves at the 1e-4 level.
+            if key in (:sedov3d_amr, :sedov3d_grav_part)          # both run with interpol_var=2
+                call = compareramses(o, fx.path, joinpath(tmp, "w3"))
+                @test maximum(call.maxdiff["hydro"]) < 1e-13
+            end
         end
 
         @testset "incomplete data is refused" begin

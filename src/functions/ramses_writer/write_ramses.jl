@@ -203,7 +203,7 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
     verbose && println("[2/5] parent cells from their children (hydro$(inp.gravity === nothing ? "" : ", gravity")$(inp.rt === nothing ? "" : ", RT"))")
     sets = MemoryCellSet[]
     L = nlevels(t)
-    hv = cell_values(t, inp.hydro, hydro_restriction(inp.hydro.names, inp.gamma))
+    hv = cell_values(t, inp.hydro, hydro_restriction(inp.hydro.names, inp.gamma; interpol_var=inp.interpol_var))
     push!(sets, MemoryCellSet("hydro", cell_header("hydro", length(inp.hydro.names), L, nbnd, inp.gamma),
                               length(inp.hydro.names), hv))
     if inp.gravity !== nothing

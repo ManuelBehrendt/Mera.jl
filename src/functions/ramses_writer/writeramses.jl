@@ -18,6 +18,12 @@ function _nml_group(info, group)
                                        for (k, v) in g)
 end
 
+"`&REFINE_PARAMS interpol_var` of the run (RAMSES's default 0 when it is not set)."
+function _interpol_var(info)
+    v = get(_nml_group(info, "&REFINE_PARAMS"), "interpol_var", String[])
+    return isempty(v) ? 0 : something(tryparse(Int, first(v)), 0)
+end
+
 "The original RAMSES output directory of a Mera object, if it still exists."
 function _original_dir(info)
     d = joinpath(info.path, "output_" * lpad(info.output, 5, '0'))
@@ -229,7 +235,8 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
                        boxlen=Float64(get(header, :boxlen, info.boxlen)), ngridmax=info.grid_info.ngridmax,
                        gamma=info.gamma, boundary_group=bgroup, hydro=hydro_leaves, gravity=grav_leaves,
                        rt=rt_leaves, rt_header=rt_header, particles=pt, nstar_tot=nstar_tot,
-                       nsink=sinkdata === nothing ? 0 : length(sinkdata[1][1]))
+                       nsink=sinkdata === nothing ? 0 : length(sinkdata[1][1]),
+                       interpol_var=_interpol_var(info))
     meta = Dict{Symbol,Any}(:levelmin => info.levelmin, :levelmax => info.levelmax,
         :nstep_coarse => info.grid_info.nstep_coarse, :boxlen => info.boxlen, :time => header[:t],
         :aexp => header[:aexp], :H0 => info.H0, :omega_m => info.omega_m, :omega_l => info.omega_l,

@@ -6,8 +6,8 @@
 #  ("parent") cell. This file rebuilds everything else from the leaves:
 #
 #    * the octree: every leaf implies all its ancestor grids;
-#    * parent-cell values: the average of the 8 children in conserved
-#      variables, bottom-up, which is what RAMSES's upload_fine does;
+#    * parent-cell values: the average of the 8 children, bottom-up, exactly as
+#      RAMSES's upload_fine does it (total or internal energy, see interpol_var);
 #    * a synthetic amr header from the stored header fields.
 #
 #  The result is an ordinary GlobalTree plus in-memory cell values, so the
@@ -72,6 +72,7 @@ Base.@kwdef struct LeafInput
     particles::Union{Nothing,ParticleTable} = nothing
     nstar_tot::Int = 0
     nsink::Int = 0
+    interpol_var::Int = 0                # &REFINE_PARAMS interpol_var: how RAMSES restricts energy
 end
 
 # ----------------------------------------------------------------------------
@@ -185,15 +186,22 @@ end
 const PLAIN = Restriction(identity, identity)
 
 """
-    hydro_restriction(names, gamma) -> Restriction
+    hydro_restriction(names, gamma; interpol_var=0) -> Restriction
 
 Conversions of hydro/output_hydro.f90 ↔ hydro/init_hydro.f90, driven by the
-descriptor names: velocities ↔ momenta, pressure ↔ total energy (including
-kinetic and, for MHD, magnetic energy), mass fractions ↔ densities.
-Non-thermal pressures are proportional to their energies, so they are
-averaged as they are. Files written with `write_conservative` need nothing.
+descriptor names: velocities ↔ momenta, pressure ↔ energy, mass fractions ↔
+densities. Non-thermal pressures are proportional to their energies, so they
+are averaged as they are. Files written with `write_conservative` need nothing.
+
+The energy follows RAMSES's `upl` (hydro/interpol_hydro.f90). With
+`interpol_var=0` it averages the total energy. With `interpol_var=1` or `2` it
+averages the INTERNAL energy of the children and adds the parent's own kinetic
+energy, so the parent's thermal pressure is the average of the children's.
+Averaging the total energy there instead leaves the parent too hot by the
+kinetic energy of the velocity differences inside it, which RAMSES then uses in
+the first steps after a restart. MHD has its own upload and keeps the total energy.
 """
-function hydro_restriction(names::Vector{String}, gamma::Float64)
+function hydro_restriction(names::Vector{String}, gamma::Float64; interpol_var::Integer=0)
     any(n -> startswith(n, "momentum") || n == "total_energy", names) && return PLAIN
     iv = [findfirst(==("velocity_$c"), names) for c in ("x", "y", "z")]
     ip = findfirst(==("pressure"), names)
@@ -203,17 +211,20 @@ function hydro_restriction(names::Vector{String}, gamma::Float64)
     mhd = !any(isnothing, ibl) && !any(isnothing, ibr)
     isc = [i for (i, n) in enumerate(names) if i > ip && n != "equilibrium_density" && n != "equilibrium_pressure"]
     emag(q) = mhd ? 0.125 * sum((q[ibl[k]] + q[ibr[k]])^2 for k in 1:3) : 0.0
+    internal = !mhd && interpol_var in (1, 2)      # the energy slot then carries internal energy
     function to_cons(q)
         c = copy(q); ρ = q[1]
         for k in 1:3; c[iv[k]] = ρ * q[iv[k]]; end
-        c[ip] = q[ip] / (gamma - 1) + 0.5ρ * sum(q[iv[k]]^2 for k in 1:3) + emag(q)
+        c[ip] = internal ? q[ip] / (gamma - 1) :
+                q[ip] / (gamma - 1) + 0.5ρ * sum(q[iv[k]]^2 for k in 1:3) + emag(q)
         for i in isc; c[i] = ρ * q[i]; end
         return c
     end
     function to_prim(c)
         q = copy(c); ρ = c[1]
         for k in 1:3; q[iv[k]] = c[iv[k]] / ρ; end
-        q[ip] = (gamma - 1) * (c[ip] - 0.5 * sum(c[iv[k]]^2 for k in 1:3) / ρ - emag(c))
+        q[ip] = internal ? (gamma - 1) * c[ip] :
+                (gamma - 1) * (c[ip] - 0.5 * sum(c[iv[k]]^2 for k in 1:3) / ρ - emag(c))
         for i in isc; q[i] = c[i] / ρ; end
         return q
     end
