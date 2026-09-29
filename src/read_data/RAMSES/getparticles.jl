@@ -538,7 +538,7 @@ end
 # This function creates appropriate column names for the particle data table
 # Names depend on particle format version, whether CPU info is included, and grid type
 # Resolve the database column name for a particle variable at read-index `i`.
-# Legacy (pversion 0) outputs are purely positional. Descriptor (pversion > 0)
+# Legacy (pversion 0) outputs are positional; getinfo names the field after the birth time :metals. Descriptor (pversion > 0)
 # outputs carry their variable names in part_file_descriptor.txt, which getinfo
 # reconstructs into `particles_variable_list`; custom fields beyond metallicity
 # (read-index > 8) therefore keep their real descriptor name instead of falling
@@ -551,7 +551,7 @@ function _particle_varname(pversion::Real, pvarlist::Vector{Symbol}, i::Integer)
         i == 3 && return :vz
         i == 4 && return :mass
         i == 5 && return :birth
-        i  > 5 && return Symbol("var$i")
+        i  > 5 && return (i <= length(pvarlist)) ? pvarlist[i] : Symbol("var$i")   # :metals, then :varN
     else               # descriptor (v1) layout
         i == 1 && return :vx
         i == 2 && return :vy

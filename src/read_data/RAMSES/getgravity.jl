@@ -191,7 +191,8 @@ function getgravity(dataobject::InfoType;
     # DATA PROCESSING AND TABLE CREATION
     # ═══════════════════════════════════════════════════════════════════════════
 
-    names_constr = preptablenames_gravity(length(dataobject.gravity_variable_list), nvarg_list, used_descriptors, read_cpu, isamr)
+    names_constr = preptablenames_gravity(length(dataobject.gravity_variable_list), nvarg_list, used_descriptors, read_cpu, isamr;
+                                          glist=dataobject.gravity_variable_list)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # OPTIMIZED TABLE CREATION WITH THREAD CONTROL
@@ -246,7 +247,8 @@ end
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-function preptablenames_gravity(nvarg::Int, nvarg_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, isamr::Bool)
+function preptablenames_gravity(nvarg::Int, nvarg_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, isamr::Bool;
+                                glist::Vector{Symbol}=[:epot, :ax, :ay, :az])
     
     # BUILD BASE COLUMN NAMES (position and metadata)
     if read_cpu
@@ -267,17 +269,8 @@ function preptablenames_gravity(nvarg::Int, nvarg_list::Array{Int, 1}, used_desc
     for i=1:nvarg
         if in(i, nvarg_list)
             if length(used_descriptors) == 0 || !haskey(used_descriptors, i)
-                var_name = if i == 1
-                    :epot
-                elseif i == 2
-                    :ax
-                elseif i == 3
-                    :ay
-                elseif i == 4
-                    :az
-                else
-                    Symbol("grav$i")
-                end
+                # older outputs hold the forces only: glist is then [:ax, :ay, :az]
+                var_name = i <= length(glist) ? glist[i] : Symbol("grav$i")
                 push!(names_constr, var_name)
             else
                 push!(names_constr, used_descriptors[i])

@@ -504,10 +504,16 @@ function readpart_chunk(dataobject::InfoType, Nvarp::Int, nvarp_corr::Array{Int,
 
                 # ===== READ ADDITIONAL VARIABLES =====
                 # Read any extra variables beyond the standard set
-                if Nvarp>7
-                    for iN = 8:Nvarp
+                # legacy files keep them after the birth time (index 5), new ones after family, tag, birth
+                first_extra = dataobject.descriptor.pversion == 0 ? 6 : 8
+                # over all fields of the file, not the Nvarp selected: a selection of only
+                # [:metals] has Nvarp == 1 but must still reach index 6 (legacy) or 8
+                if length(nvarp_corr) >= first_extra
+                    for iN = first_extra:length(nvarp_corr)
                         if nvarp_corr[iN] != 0
                             vars_1D_buffer[nvarp_corr[iN], 1:npart2] = read(f_part, (Float64, npart2) )
+                        else
+                            skiplines(f_part, 1)
                         end
                     end
                 end
@@ -764,10 +770,16 @@ function readpart(dataobject::InfoType;
 
                 # ===== READ ADDITIONAL VARIABLES =====
                 # Read extra variables beyond standard set
-                if Nvarp>7
-                    for iN = 8:Nvarp
+                # legacy files keep them after the birth time (index 5), new ones after family, tag, birth
+                first_extra = dataobject.descriptor.pversion == 0 ? 6 : 8
+                # over all fields of the file, not the Nvarp selected: a selection of only
+                # [:metals] has Nvarp == 1 but must still reach index 6 (legacy) or 8
+                if length(nvarp_corr) >= first_extra
+                    for iN = first_extra:length(nvarp_corr)
                         if nvarp_corr[iN] != 0
                             vars_1D_buffer[nvarp_corr[iN], 1:npart2] = read(f_part, (Float64, npart2) )
+                        else
+                            skiplines(f_part, 1)
                         end
                     end
                 end
