@@ -357,6 +357,12 @@ export
     clear_mera_cache!,
 # volume rendering
     export_vtk,
+    # writing RAMSES outputs: any number of CPUs, from RAMSES files or from Mera data
+    repartition,
+    compareramses,
+    writeramses,
+    restart_completeness,
+    upgrade_merafile,
 
 # macro MacroTools
     @filter, @apply, @where,
@@ -542,6 +548,11 @@ include("functions/movie.jl")
 # Volume Rendering
 include("functions/data/export_hydro_to_vtk.jl")
 include("functions/data/export_particles_to_vtk.jl")
+
+# writing RAMSES outputs (repartition, writeramses): the format machinery is its own module
+include("functions/ramses_writer/RamsesWriter.jl")
+include("functions/ramses_writer/ramses_api.jl")
+include("functions/ramses_writer/writeramses.jl")
 
 # MacroTools
 include("macros/filter_data.jl")

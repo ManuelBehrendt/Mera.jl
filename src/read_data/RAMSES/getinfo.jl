@@ -153,10 +153,15 @@ function readinfofile!(dataobject::InfoType)
       error("[Mera]: Program only works with 3D data!")
     end
 
-    dataobject.grid_info.bound_key[1]   = parse( Float64, split(lines[22])[2] )
-    for i = 1:ncpu
-      #println( parse( Float64, split(lines[21+i])[1] ), " ", parse( Float64, split(lines[21+i])[2] ), " ",  parse( Float64, split(lines[21+i])[3] ) )
-      dataobject.grid_info.bound_key[i+1] = parse( Float64, split(lines[21+i])[3] )
+    if occursin(r"(?i)bisection", lines[20])
+      # ordering='bisection': the file lists each rank's box instead of Hilbert walls. NaN walls
+      # tell the readers to read every file (they select files by Hilbert keys otherwise).
+      fill!(dataobject.grid_info.bound_key, NaN)
+    else
+      dataobject.grid_info.bound_key[1]   = parse( Float64, split(lines[22])[2] )
+      for i = 1:ncpu
+        dataobject.grid_info.bound_key[i+1] = parse( Float64, split(lines[21+i])[3] )
+      end
     end
     close(f)
 
@@ -278,6 +283,25 @@ function _mhd_nodescriptor_varlist(nvarh::Integer)
         push!(vl, Symbol("var$i"))
     end
     return vl
+end
+
+# Number of Float64 fields after the birth time in a LEGACY particle file (no descriptor): RAMSES
+# wrote x, y, z, vx, vy, vz, mass, id, level, then with stars the birth time and, with metals, the
+# metallicity. Counted from the record structure of the first file; 0 when unsure.
+function _legacy_particle_extras(path::AbstractString)
+    isfile(path) || return 0
+    lens = Int[]; nstar = 0; npart = 0
+    open(path) do io
+        while !eof(io)
+            n = Int(read(io, Int32))
+            length(lens) == 2 && (npart = Int(read(io, Int32)); skip(io, n - 4); read(io, Int32); push!(lens, n); continue)
+            length(lens) == 4 && (nstar = Int(read(io, Int32)); skip(io, n - 4); read(io, Int32); push!(lens, n); continue)
+            skip(io, n); read(io, Int32); push!(lens, n)
+        end
+    end
+    nextra = length(lens) - 18                 # 8 header records, 9 fixed fields, the birth time
+    (nstar > 0 && nextra > 0 && all(==(8npart), lens[19:end])) || return 0
+    return nextra
 end
 
 function readhydrofile1!(dataobject::InfoType)
@@ -537,6 +561,32 @@ function readrtfile1!(dataobject::InfoType)
     return dataobject
 end
 
+# Fields per cell in a grav file: after the 4 header records come, per level and list, a level
+# record, a grid-count record n and, if n > 0, 2^ndim × nvar records of n values. Count the value
+# records of the first non-empty block (they end where the next 4-byte level record starts).
+function _grav_fields_per_cell(path::AbstractString)
+    open(path) do io
+        lens = Int[]
+        for _ in 1:4
+            n = read(io, Int32); skip(io, n + 4)
+        end
+        while !eof(io)
+            n = read(io, Int32); skip(io, 4 + 4)                       # level record
+            m = read(io, Int32); ngrid = read(io, Int32); skip(io, 4)  # grid-count record
+            (n == 4 && m == 4) || return nothing
+            ngrid == 0 && continue
+            nrec = 0
+            while !eof(io)
+                len = read(io, Int32)
+                len == 4 && break                                # the next level record (values are 8n bytes)
+                skip(io, len + 4); nrec += 1
+            end
+            return nrec ÷ 8                                      # 3-D: 8 cells per grid
+        end
+        return nothing
+    end
+end
+
 function isgravityfile1!(dataobject::InfoType)
     grav_files = false
     # grav file of first cpu
@@ -544,11 +594,18 @@ function isgravityfile1!(dataobject::InfoType)
         grav_files = true
     end
 
+    # potential and forces, or in older RAMSES versions the forces only; the header's field count
+    # is not reliable (some versions write ndim and still store the potential), so count them
+    gvars = [:epot, :ax, :ay, :az]
+    if grav_files
+        nvar = _grav_fields_per_cell(dataobject.fnames.gravity * "out00001")
+        nvar == dataobject.ndim && (gvars = [:ax, :ay, :az][1:nvar])
+    end
     dataobject.gravity                  = grav_files
-    dataobject.gravity_variable_list    = [:epot,:ax,:ay,:az]
+    dataobject.gravity_variable_list    = gvars
 
     # descriptor
-    dataobject.descriptor.gravity       = [:epot,:ax,:ay,:az]
+    dataobject.descriptor.gravity       = copy(gvars)
     dataobject.descriptor.usegravity    = false
     dataobject.descriptor.gravityfile   = false
 
@@ -752,6 +809,12 @@ function readparticlesfile1!(dataobject::InfoType)
     dataobject.nvarp = 5
     if version <= 0
         dataobject.particles_variable_list=[:vx, :vy, :vz, :mass, :birth]
+        # legacy files write the metallicity (and any further field) after the birth time
+        nextra = part_files ? _legacy_particle_extras(dataobject.fnames.particles * "out00001") : 0
+        for k in 1:nextra
+            push!(dataobject.particles_variable_list, k == 1 ? :metals : Symbol("var$(5 + k)"))
+        end
+        dataobject.nvarp = length(dataobject.particles_variable_list)
     else
 
         if in(:metallicity, variable_descriptor_list)

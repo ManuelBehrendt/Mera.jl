@@ -11,7 +11,8 @@ function getgravity(dataobject::InfoType, var::Symbol;
                    verbose::Bool=true,
                    show_progress::Bool=true,
                    myargs::ArgumentsType=ArgumentsType(),
-                   max_threads::Int=Threads.nthreads())
+                   max_threads::Int=Threads.nthreads(),
+                   parents::Bool=false)
 
     return getgravity(dataobject, vars=[var],
                      lmax=lmax,
@@ -21,7 +22,8 @@ function getgravity(dataobject::InfoType, var::Symbol;
                      verbose=verbose,
                      show_progress=show_progress,
                      myargs=myargs,
-                     max_threads=max_threads)
+                     max_threads=max_threads,
+                     parents=parents)
 end
 
 function getgravity(dataobject::InfoType, vars::Array{Symbol,1};
@@ -35,7 +37,8 @@ function getgravity(dataobject::InfoType, vars::Array{Symbol,1};
                    verbose::Bool=true,
                    show_progress::Bool=true,
                    myargs::ArgumentsType=ArgumentsType(),
-                   max_threads::Int=Threads.nthreads())
+                   max_threads::Int=Threads.nthreads(),
+                   parents::Bool=false)
 
     return getgravity(dataobject,
                      vars=vars,
@@ -46,7 +49,8 @@ function getgravity(dataobject::InfoType, vars::Array{Symbol,1};
                      verbose=verbose,
                      show_progress=show_progress,
                      myargs=myargs,
-                     max_threads=max_threads)
+                     max_threads=max_threads,
+                     parents=parents)
 end
 
 """
@@ -93,6 +97,10 @@ Arguments
     - show_progress: show a progress bar during reading
     - myargs: ArgumentsType struct to override lmax, ranges, center, range_unit, verbose, show_progress
     - max_threads: cap threads used for table creation and column extraction (≤ available threads)
+    - parents: also keep the stored values of the refined (parent) cells, which RAMSES computes on
+      their own level, not as averages; kept in `used_descriptors[:parents]` and saved in mera
+      files. Only needed to write a restart with [`writeramses`](@ref) that continues to round-off.
+      Needs the whole box, all levels and all variables.
 
 Defined methods
 - getgravity(dataobject::InfoType; ...)               # no vars → all variables loaded
@@ -133,7 +141,8 @@ function getgravity(dataobject::InfoType;
                    verbose::Bool=true,
                    show_progress::Bool=true,
                    myargs::ArgumentsType=ArgumentsType(),
-                   max_threads::Int=Threads.nthreads())
+                   max_threads::Int=Threads.nthreads(),
+                   parents::Bool=false)
 
     # Multi-code: fail fast when the data comes from a reader without a gravity frontend.
     _require_capability(dataobject, :gravity, "getgravity")
@@ -191,7 +200,8 @@ function getgravity(dataobject::InfoType;
     # DATA PROCESSING AND TABLE CREATION
     # ═══════════════════════════════════════════════════════════════════════════
 
-    names_constr = preptablenames_gravity(length(dataobject.gravity_variable_list), nvarg_list, used_descriptors, read_cpu, isamr)
+    names_constr = preptablenames_gravity(length(dataobject.gravity_variable_list), nvarg_list, used_descriptors, read_cpu, isamr;
+                                          glist=dataobject.gravity_variable_list)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # OPTIMIZED TABLE CREATION WITH THREAD CONTROL
@@ -239,6 +249,8 @@ function getgravity(dataobject::InfoType;
     end
     gravitydata.used_descriptors = used_descriptors
     gravitydata.scale = dataobject.scale
+    # the stored values of the refined cells too, for writeramses (see its docstring)
+    parents && _attach_gravity_parents!(gravitydata; verbose)
     return gravitydata
 end
 
@@ -246,7 +258,8 @@ end
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-function preptablenames_gravity(nvarg::Int, nvarg_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, isamr::Bool)
+function preptablenames_gravity(nvarg::Int, nvarg_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, isamr::Bool;
+                                glist::Vector{Symbol}=[:epot, :ax, :ay, :az])
     
     # BUILD BASE COLUMN NAMES (position and metadata)
     if read_cpu
@@ -267,17 +280,8 @@ function preptablenames_gravity(nvarg::Int, nvarg_list::Array{Int, 1}, used_desc
     for i=1:nvarg
         if in(i, nvarg_list)
             if length(used_descriptors) == 0 || !haskey(used_descriptors, i)
-                var_name = if i == 1
-                    :epot
-                elseif i == 2
-                    :ax
-                elseif i == 3
-                    :ay
-                elseif i == 4
-                    :az
-                else
-                    Symbol("grav$i")
-                end
+                # older outputs hold the forces only: glist is then [:ax, :ay, :az]
+                var_name = i <= length(glist) ? glist[i] : Symbol("grav$i")
                 push!(names_constr, var_name)
             else
                 push!(names_constr, used_descriptors[i])

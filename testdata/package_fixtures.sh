@@ -25,6 +25,7 @@ mkdir -p "$OUTDIR"
 FIXTURES=(
     sedov3d_amr sedov3d_amr_mera sedov3d_grav_part mhdtube3d clumps3d stromgren3d
     sinks3d legacy_particles3d ramses_abc_flow ramses_rt_dirac ramses_smbh_bondi
+    sedov3d_bisection dm_gas3d_bisection sedov3d_iogroups
 )
 
 # Report the FILE SIZE, which is what a download costs. `du` counts allocated blocks and

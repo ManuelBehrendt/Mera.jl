@@ -124,6 +124,10 @@ function getrtdata(dataobject::InfoType,
     end
 
     # Build list of CPU files that need to be read (only those containing relevant data)
+    # ordering='bisection' has no Hilbert walls to select files by: read every file
+    if any(isnan, dataobject.grid_info.bound_key)
+        cpu_min .= 1; cpu_max .= dataobject.ncpu
+    end
     cpu_read = copy(dataobject.grid_info.cpu_read)
     cpu_list = zeros(Int32, dataobject.ncpu)
     ncpu_read = Int32(0)
@@ -272,7 +276,8 @@ function getrtdata(dataobject::InfoType,
                     local_ngridfile[(dataobject.ncpu+1):(dataobject.ncpu+overview.nboundary),1:dataobject.grid_info.nlevelmax] = local_ngridbound
                 end
 
-                skiplines(f_amr, 6)  # Skip remaining AMR header
+                # free memory, ordering, domain walls (one record, or five for the bisection tree), coarse maps
+                skiplines(f_amr, any(isnan, dataobject.grid_info.bound_key) ? 10 : 6)
 
                 # ═══════════════════════════════════════════════════════════════
                 # SUBSECTION 7B: OPEN HYDRO DATA FILE
