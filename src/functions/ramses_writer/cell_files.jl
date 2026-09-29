@@ -47,6 +47,22 @@ const CELL_HEADER_RECORDS = Dict("hydro" => 6, "grav" => 4, "rt" => 6)
 "Byte position just after the record starting at `p` (skips marker, payload, marker)."
 _skip(d, p) = p + 8 + _i32(d, p)
 
+# Offsets of every (level, list) block of one cell file, starting at byte `p` after the header,
+# for `nvar` Float64 records per cell. `nothing` unless the blocks read the file exactly to its end.
+function _cell_blocks(d, p, nlevelmax, nlists, ndim, nvar)
+    b = Matrix{Tuple{Int,Int}}(undef, nlevelmax, nlists)
+    for l in 1:nlevelmax, ib in 1:nlists
+        p + 8 <= length(d) && _i32(d, p + 4) == l || return nothing
+        p = _skip(d, p)
+        ncache = Int(_i32(d, p + 4))
+        p = _skip(d, p)
+        b[l, ib] = (ncache, p)
+        ncache > 0 && (p += 2^ndim * nvar * (8ncache + 8))
+        p <= length(d) + 1 || return nothing
+    end
+    return p == length(d) + 1 ? b : nothing
+end
+
 """
     open_cell_files(dir, kind, iout, ncpu, nlevelmax, nboundary) -> CellFileSet or nothing
 
@@ -71,19 +87,17 @@ function open_cell_files(dir, kind, iout, ncpu, nlevelmax, nboundary, ndim=3)
         end
         if icpu == 1
             nvar = Int(reinterpret(Int32, header[2])[1])
-            # legacy gravity files store ndim but hold phi + ndim forces
-            kind == "grav" && nvar == ndim && (nvar = ndim + 1)
+            # A gravity file whose header says ndim can hold phi + ndim forces (RAMSES versions
+            # that wrote ndim there) or the ndim forces only (older versions, no phi). Take the
+            # layout that reads the file exactly to its end.
+            if kind == "grav" && nvar == ndim
+                nvar = _cell_blocks(d, p, nlevelmax, ncpu + nboundary, ndim, ndim + 1) !== nothing ?
+                       ndim + 1 : ndim
+            end
         end
-        b = Matrix{Tuple{Int,Int}}(undef, nlevelmax, ncpu + nboundary)
-        for l in 1:nlevelmax, ib in 1:ncpu+nboundary
-            _i32(d, p + 4) == l || error("$(kind) file $icpu: expected level $l at byte $p")
-            p = _skip(d, p)
-            ncache = Int(_i32(d, p + 4))
-            p = _skip(d, p)
-            b[l, ib] = (ncache, p)
-            ncache > 0 && (p += 2^ndim * nvar * (8ncache + 8))
-        end
-        p == length(d) + 1 || @warn "$(kind) file $icpu: $(length(d) + 1 - p) unread bytes"
+        r = _cell_blocks(d, p, nlevelmax, ncpu + nboundary, ndim, nvar)
+        r === nothing && error("$(kind) file $icpu: the level records do not match $nvar variables per cell")
+        b = r
         push!(data, d)
         push!(blocks, b)
     end

@@ -21,6 +21,7 @@ struct RepartitionReport
     npart_max::Int
     files_written::Int
     seconds::Float64
+    overload::Int                  # the restart namelist must use the same overload
 end
 
 function Base.show(io::IO, r::RepartitionReport)
@@ -32,7 +33,8 @@ function Base.show(io::IO, r::RepartitionReport)
     isempty(r.npart_per_rank) ||
         println(io, "  particles per rank      : min $(minimum(r.npart_per_rank)), max $(maximum(r.npart_per_rank))")
     println(io, "  restart namelist needs  : ngridmax ≥ $(r.ngridmax_needed)",
-            isempty(r.npart_per_rank) ? "" : ", npartmax ≥ $(r.npart_max)")
+            isempty(r.npart_per_rank) ? "" : ", npartmax ≥ $(r.npart_max)",
+            r.overload > 1 ? ", overload = $(r.overload)" : "")
     print(io,   "  $(r.files_written) files written in $(round(r.seconds; digits=1)) s")
 end
 
@@ -57,6 +59,21 @@ function detect_nexpand_bound(dir::AbstractString)
     mk = joinpath(dir, "makefile.txt")
     isfile(mk) && occursin(r"^\s*SOLVER\s*=\s*mhd"mi, read(mk, String)) && return 2
     return 1
+end
+
+"""
+    auto_nexpand_bound(t, dir, iout) -> Int
+
+The ghost width: from the descriptor or makefile when they say MHD, else by which of 1 and 2
+reproduces rank 1's file (an MHD output without descriptors would otherwise get 1).
+"""
+function auto_nexpand_bound(t, dir, iout)
+    d = detect_nexpand_bound(dir)
+    (d == 2 || isfile(joinpath(dir, "hydro_file_descriptor.txt")) || isfile(joinpath(dir, "makefile.txt"))) && return d
+    for nexp in (1, 2)
+        rank1_reproduced(t, dir, iout, nexp) && return nexp
+    end
+    error("Neither ghost width 1 nor 2 reproduces rank 1's amr file; pass nexpand_bound=... .")
 end
 
 """
@@ -108,6 +125,15 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
     dst = joinpath(outpath, basename(src))
     ncpu >= 1 || error("ncpu must be ≥ 1")
     isdir(joinpath(src, "group_00001")) && error("IOGROUPSIZEREP (group_ folders) is not supported yet.")
+    # per-rank files this code does not convert: merger trees written per rank would keep the old
+    # rank numbering, so refuse; anything else is named, because it is not carried over
+    perrank = filter(f -> occursin(r"\.(out|txt|csv|dat)\d{5}$", f), readdir(src))
+    any(f -> startswith(f, "progenitor") || endswith(split(f, '.')[1], "tree"), perrank) &&
+        error("Per-rank merger-tree files (MTREE_INDIVIDUAL_FILES) are not supported: they would keep " *
+              "the old rank numbering.")
+    known = r"^(amr|hydro|grav|rt|part|clump|halo)_\d{5}\."
+    unknown = unique(first(split(f, '.')) for f in perrank if !occursin(known, f))
+    isempty(unknown) || @warn "Per-rank files not converted and not copied: $(join(unknown, ", "))"
     if isdir(dst)
         overwrite || error("$dst exists; pass overwrite=true to replace it.")
         realpath(dst) == realpath(src) && error("Refusing to overwrite the input output.")
@@ -119,7 +145,7 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
     verbose && println("[1/5] reading the octree of $(basename(src))")
     t = read_global_tree(src, iout; verbose, namelist)
     ncpu_old = Int(t.header.ncpu)
-    nexp = nexpand_bound === :auto ? detect_nexpand_bound(src) : Int(nexpand_bound)
+    nexp = nexpand_bound === :auto ? auto_nexpand_bound(t, src, iout) : Int(nexpand_bound)
     verbose && println("      $(sum(ngrids, t.levels)) grids on $(nlevels(t)) levels, ncpu = $ncpu_old, ",
                        isempty(t.boundaries) ? "periodic box" : "$(length(t.boundaries)) physical boundaries",
                        ", nexpand_bound = $nexp")
@@ -166,7 +192,7 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
     own = [Int(sum(lts[k].numbl[k, :])) for k in 1:ncpu]
     report = RepartitionReport(src, dst, ncpu_old, ncpu, nlocal, own, npart,
                                maximum(nlocal) + 1, isempty(npart) ? 0 : maximum(npart),
-                               length(readdir(dst)), time() - t0)
+                               length(readdir(dst)), time() - t0, overload)
     verbose && println(report)
     return report
 end

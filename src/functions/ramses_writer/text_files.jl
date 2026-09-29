@@ -56,7 +56,7 @@ on ncpu and are copied unchanged, except `info_XXXXX.txt`, which is
 regenerated.
 """
 function is_global_file(name::AbstractString)
-    occursin(r"\.(out|txt|csv)\d{5}$", name) && return false   # per-rank files
+    occursin(r"\.(out|txt|csv|dat)\d{5}$", name) && return false   # per-rank files
     occursin(r"^info_\d{5}\.txt$", name) && return false       # regenerated
     return true
 end

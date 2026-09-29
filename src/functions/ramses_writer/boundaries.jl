@@ -119,3 +119,77 @@ end
 
 "Coarse cell (0-based i,j,k) containing grid `ig` of `level`."
 coarse_cell_of(ig::Coord, level) = ntuple(d -> Int(ig[d]) >> (level - 1), 3)
+
+"""
+    infer_boundaries(dir, iout, nboundary, geom) -> Vector{Boundary}
+
+Wall regions of an output whose namelist does not describe them: the extent of each region is the
+set of coarse cells its level-1 boundary grids occupy (every rank holds them), and its direction is
+the side of the box it lies on. The wall TYPE is not in the files; outflow is assumed here and
+checked by [`settle_boundary_types!`](@ref).
+"""
+function infer_boundaries(dir, iout, nboundary::Int, geom::Geometry)
+    ncpu = Int(read_amr_file(amr_filename(dir, iout, 1))[1].ncpu)
+    lo = [fill(typemax(Int), 3) for _ in 1:nboundary]; hi = [fill(typemin(Int), 3) for _ in 1:nboundary]
+    for icpu in 1:ncpu
+        _, lists = read_amr_file(amr_filename(dir, iout, icpu))
+        for ib in 1:nboundary, i in 1:ngrids(lists[1][ncpu+ib])
+            c = grid_coord(view(lists[1][ncpu+ib].xg, i, :), 1)
+            lo[ib] .= min.(lo[ib], Int.(Tuple(c))); hi[ib] .= max.(hi[ib], Int.(Tuple(c)))
+        end
+        all(ib -> lo[ib][1] != typemax(Int), 1:nboundary) && break
+    end
+    out = Boundary[]
+    for ib in 1:nboundary
+        lo[ib][1] == typemax(Int) && error("Wall region $ib has no level-1 grids in any amr file; " *
+                                           "pass the run's namelist with `namelist=...`.")
+        d = findfirst(k -> hi[ib][k] < geom.cmin[k] || lo[ib][k] > geom.cmax[k], 1:3)
+        d === nothing && error("Wall region $ib overlaps the box; pass the run's namelist with `namelist=...`.")
+        dir = 2(d - 1) + (hi[ib][d] < geom.cmin[d] ? 1 : 2)
+        push!(out, Boundary(Tuple(lo[ib]), Tuple(hi[ib]), 10 + dir))        # outflow, checked later
+    end
+    return out
+end
+
+"""
+    rank1_reproduced(t, dir, iout, nexpand_bound) -> Bool
+
+Does the local tree rebuilt for rank 1 with RAMSES's own decomposition hold exactly the grids of
+rank 1's file, list by list (own, ghost and boundary grids)? This is how settings the files do not
+record (wall types, the MHD ghost width) are chosen: by what reproduces RAMSES.
+"""
+function rank1_reproduced(t, dir, iout, nexp::Integer; dec=decompose(t, Int(t.header.ncpu); bound_key=copy(t.header.bound_key)))
+    ncpu = Int(t.header.ncpu); nb = length(t.boundaries); L = nlevels(t)
+    _, lists = read_amr_file(amr_filename(dir, iout, 1))
+    lt = build_local_tree(t, dec, 1; nexpand_bound=nexp)
+    for l in 1:L
+        own = Set(t.levels[l].ig[g] for g in lt.grids[l])
+        file = Set(grid_coord(view(lists[l][ib].xg, i, :), l) for ib in 1:ncpu for i in 1:ngrids(lists[l][ib]))
+        own == file || return false
+        for ib in 1:nb
+            fb = Set(grid_coord(view(lists[l][ncpu+ib].xg, i, :), l) for i in 1:ngrids(lists[l][ncpu+ib]))
+            ob = Set(lt.bgrids[l][k] for k in eachindex(lt.bgrids[l]) if lt.bregion[l][k] == ib)
+            fb == ob || return false
+        end
+    end
+    return true
+end
+
+"""
+    settle_boundary_types!(t, dir, iout) -> nexpand_bound
+
+The wall type decides which interior cell a boundary grid copies its refinement from (mirrored for
+reflexive walls, nearest for outflow and imposed ones), so a wrong guess changes the boundary grids.
+Keep the wall types, and the ghost width, that reproduce rank 1's file, or stop.
+"""
+function settle_boundary_types!(t, dir, iout)
+    dec = decompose(t, Int(t.header.ncpu); bound_key=copy(t.header.bound_key))
+    for nexp in unique([detect_nexpand_bound(dir), 1, 2]), base in (10, 0)     # outflow, then reflexive
+        for ib in eachindex(t.boundaries)
+            b = t.boundaries[ib]; t.boundaries[ib] = Boundary(b.lo, b.hi, base + b.btype % 10)
+        end
+        rank1_reproduced(t, dir, iout, nexp; dec) && return nexp
+    end
+    error("The wall regions taken from the amr files do not reproduce RAMSES's boundary grids with " *
+          "outflow or reflexive walls; pass the run's namelist with `namelist=...`.")
+end

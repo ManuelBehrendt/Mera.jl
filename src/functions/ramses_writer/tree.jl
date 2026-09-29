@@ -141,11 +141,17 @@ function read_global_tree(dir::AbstractString, iout::Integer; verbose::Bool=true
     flag1_coarse = copy(hdr1.flag1_coarse)
     geom = Geometry(hdr1)
     boundaries = Boundary[]
+    inferred = false
     if hdr1.nboundary > 0
-        boundaries = read_boundaries(namelist, geom)
-        length(boundaries) == hdr1.nboundary || error(
-            "Output has nboundary = $(hdr1.nboundary) but $(namelist) describes $(length(boundaries)) " *
-            "boundaries; pass the run's namelist with `namelist=...`.")
+        boundaries = isfile(namelist) ? read_boundaries(namelist, geom) : Boundary[]
+        if length(boundaries) != hdr1.nboundary
+            # Older RAMSES versions leave namelist.txt empty. The regions are then taken from the
+            # boundary grids the files themselves hold, and checked below.
+            boundaries = infer_boundaries(dir, iout, Int(hdr1.nboundary), geom)
+            inferred = true
+            verbose && println("  no &BOUNDARY_PARAMS in $(basename(namelist)): ",
+                               "$(length(boundaries)) wall regions taken from the amr files")
+        end
     end
     bnd_src = [Dict{Coord,NTuple{3,Int32}}() for _ in 1:L]
 
@@ -189,6 +195,7 @@ function read_global_tree(dir::AbstractString, iout::Integer; verbose::Bool=true
     end
     tree = GlobalTree(hdr1, geom, levels, flag1_coarse, src_cpu, src_pos, boundaries, bnd_src)
     check_tree(tree)
+    inferred && settle_boundary_types!(tree, dir, iout)
     return tree
 end
 
