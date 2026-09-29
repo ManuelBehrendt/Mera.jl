@@ -254,12 +254,24 @@ the cell mass:
 | Jeans length `:jeanslength` | ``\lambda_J = c_s\,\sqrt{\dfrac{3\pi}{32\,G\,\rho}}`` |
 | Jeans mass `:jeansmass` | ``M_J = \dfrac{4\pi}{3}\,\Big(\dfrac{\lambda_J}{2}\Big)^3\,\rho`` |
 | Jeans number `:jeansnumber` | ``N_J = \lambda_J/\Delta x`` |
+| Isothermal Jeans length `:jeanslength_iso` | ``\lambda_{J,\mathrm{iso}} = \sqrt{\dfrac{\pi\,c_\mathrm{iso}^2}{G\,\rho}}``, ``c_\mathrm{iso}^2 = P/\rho`` |
+| Adiabatic Jeans length `:jeanslength_ad` | ``\lambda_{J,\mathrm{ad}} = \sqrt{\dfrac{\pi\,\gamma P/\rho}{G\,\rho}} = \sqrt{\gamma}\,\lambda_{J,\mathrm{iso}}`` |
+| Cells per Jeans length `:jeansnumber_iso`, `:jeansnumber_ad` | ``N_J = \lambda_{J,\mathrm{iso}}/\Delta x``, ``\lambda_{J,\mathrm{ad}}/\Delta x`` |
+| Truelove Jeans number `:jeansnumber_truelove` | ``J = \Delta x/\lambda_{J,\mathrm{iso}}`` (Truelove et al. 1997: ``J \le 1/4``) |
 | Free-fall time `:freefall_time` | ``t_\mathrm{ff} = \sqrt{\dfrac{3\pi}{32\,G\,\rho}}`` (any time unit: `getvar(gas,:freefall_time,:Myr)`) |
 | Local virial parameter `:virial_parameter_local` | ``\alpha_\mathrm{vir} = \dfrac{5\,c_s^2\,\Delta x}{G\,m}`` |
 
 !!! note "Jeans convention"
     ``\lambda_J`` is one of several Jeans-length conventions in the literature; factors of order
     unity differ between them. `:jeansmass` and `:jeansnumber` are derived from this ``\lambda_J``.
+    It equals the sound-crossing distance in one free-fall time and is ``\sqrt{3\gamma/32}``
+    (≈ 0.40 for ``\gamma = 5/3``) times ``\lambda_{J,\mathrm{iso}}``.
+    For refinement studies use `:jeanslength_iso` / `:jeansnumber_iso`, which match the
+    RAMSES `jeans_refine` criterion (refine where ``N_J\,\Delta x \ge \lambda_{J,\mathrm{iso}}``),
+    and `:jeansnumber_truelove`, which is the *inverse* quantity ``J = 1/N_J``.
+    In a cosmological run RAMSES evaluates the same ``\lambda_{J,\mathrm{iso}}`` in its code units, with
+    ``G`` fixed by its cosmological unit system; Mera uses the physical ``G``. The two differ by a
+    constant factor close to one (1.0014 on the `yt_cosmo` test run), the same for every cell.
     The local virial parameter uses ``R\approx\Delta x`` (a cell-scale stability estimate).
 
 !!! tip "Star-formation efficiency"

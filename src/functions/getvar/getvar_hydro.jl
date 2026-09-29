@@ -204,6 +204,31 @@ function get_data(  dataobject::HydroDataType,
             selected_unit = getunit(dataobject, :jeansnumber, vars, units)
             vars_dict[:jeansnumber] = getvar(filtered_dataobject, :jeanslength, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion) ./ selected_unit
 
+        # Further Jeans-length conventions (see docs "Jeans & collapse"). All use the classical
+        # λ_J = sqrt(π c² / (G ρ)) and differ only in the sound speed c:
+        #   _iso : c² = P/ρ   (isothermal; Truelove+1997, RAMSES `jeans_refine`, Federrath+2011)
+        #   _ad  : c² = γP/ρ  (adiabatic)
+        # Mera's :cs is adiabatic, so c_iso = c_s/√γ. Computed in CGS, returned in code length
+        # units (as :jeanslength) before `selected_unit` converts.
+        elseif i == :jeanslength_iso || i == :jeanslength_ad
+            selected_unit = getunit(dataobject, i, vars, units)
+            gamma_fac = i == :jeanslength_iso ? 1.0 / dataobject.info.gamma : 1.0
+            vars_dict[i] = sqrt.( pi .* gamma_fac .* getvar(filtered_dataobject, :cs, unit=:cm_s, mask=use_mask_in_recursion).^2 ./
+                                  (dataobject.info.constants.G .* getvar(filtered_dataobject, :rho, unit=:g_cm3, mask=use_mask_in_recursion)) ) ./
+                           dataobject.info.scale.cm .* selected_unit
+
+        # Cells per Jeans length, N_J = λ_J/Δx (the quantity RAMSES `jeans_refine` sets).
+        elseif i == :jeansnumber_iso || i == :jeansnumber_ad
+            selected_unit = getunit(dataobject, i, vars, units)
+            lvar = i == :jeansnumber_iso ? :jeanslength_iso : :jeanslength_ad
+            vars_dict[i] = getvar(filtered_dataobject, lvar, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion) ./ selected_unit
+
+        # Truelove et al. (1997) Jeans number J = Δx/λ_J (isothermal λ_J); their criterion is J ≤ 1/4.
+        # Note this is the INVERSE of :jeansnumber / :jeansnumber_iso.
+        elseif i == :jeansnumber_truelove
+            selected_unit = getunit(dataobject, :jeansnumber_truelove, vars, units)
+            vars_dict[:jeansnumber_truelove] = getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :jeanslength_iso, mask=use_mask_in_recursion) ./ selected_unit
+
         elseif i == :jeansmass
             selected_unit = getunit(dataobject, :jeansmass, vars, units)
             # Jeans mass: M_J = (4π/3)(λ_J/2)³ρ
