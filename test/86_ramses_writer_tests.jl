@@ -14,7 +14,7 @@
 # Whether RAMSES then CONTINUES the run needs a RAMSES build and is shown in the documentation,
 # not here. The data-free part runs everywhere; the rest needs the public fixtures.
 
-using Test, Mera
+using Test, Mera, Random
 const RW = Mera.RamsesWriter
 
 # Every grid identified by (level, list, integer coordinates) and every pointer (father,
@@ -47,6 +47,24 @@ function _rw_canonical_amr(path)
     out[:coarse] = Set([(Tuple(gridc.(h.son_coarse)), Tuple(h.cpu_map_coarse))])
     out[:counts] = Set([(h.numbl, h.numbb, h.numbtot)])
     return out
+end
+
+# The straightforward bit-array form of RAMSES's hilbert3d, kept as a reference for the
+# allocation-free one in the package.
+function _rw_hilbert_ref(ix, iy, iz, bit_length)
+    bits = falses(3bit_length)
+    for i in 0:bit_length-1
+        bits[3i+3] = (ix >> i) & 1 == 1; bits[3i+2] = (iy >> i) & 1 == 1; bits[3i+1] = (iz >> i) & 1 == 1
+    end
+    cstate = 0
+    for i in bit_length-1:-1:0
+        sdigit = 4bits[3i+3] + 2bits[3i+2] + bits[3i+1]
+        nstate = RW.HILBERT_STATE[sdigit+1, 1, cstate+1]
+        hdigit = RW.HILBERT_STATE[sdigit+1, 2, cstate+1]
+        bits[3i+3] = (hdigit >> 2) & 1 == 1; bits[3i+2] = (hdigit >> 1) & 1 == 1; bits[3i+1] = hdigit & 1 == 1
+        cstate = nstate
+    end
+    return sum(Float64(bits[i+1]) * 2.0^i for i in 0:3bit_length-1)
 end
 
 @testset verbose=true "writing RAMSES outputs" begin
@@ -92,6 +110,15 @@ end
             @test kmin <= k < kmax
         end
         @test RW.domain_of_key(5.0, [0.0, 5.0, 5.0, 10.0]) == 3     # an empty domain is skipped, as in RAMSES
+        # deep keys (wider than the 53 bits of a double) round exactly as the reference does
+        rng = Random.MersenneTwister(1)
+        for bits in (10, 19, 25)
+            @test all(1:2000) do _
+                i, j, k = rand(rng, 0:2^bits-1, 3)
+                RW.hilbert3d(i, j, k, bits) === _rw_hilbert_ref(i, j, k, bits)
+            end
+        end
+        @test (@allocated RW.hilbert3d(5, 9, 17, 25)) == 0
     end
 
     @testset "text formats (data-free)" begin
@@ -169,12 +196,28 @@ end
             @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
         end
 
+        @testset "walls without a namelist" begin
+            # older RAMSES versions leave namelist.txt empty: the walls are read from the boundary
+            # grids of the amr files, and their types chosen by which reproduce rank 1's file
+            t  = RW.read_global_tree(dir, o; verbose=false)
+            ti = RW.read_global_tree(dir, o; verbose=false, namelist="")
+            @test ti.boundaries == t.boundaries
+            @test ti.geom == t.geom
+        end
+
         @testset "guards" begin
             @test_throws ErrorException repartition(o, fx.path, 3; outpath=joinpath(tmp, "n3"), verbose=false)
             @test repartition(o, fx.path, 3; outpath=joinpath(tmp, "n3"), overwrite=true,
                               verbose=false).ncpu_new == 3
             @test_throws ArgumentError repartition(o + 100, fx.path, 3; outpath=tmp, verbose=false)
             @test repartition(info, 2; outpath=joinpath(tmp, "via_info"), verbose=false).ncpu_new == 2
+            # writing over the output the data came from would delete it: refused, even with overwrite
+            own = joinpath(tmp, "own"); mkpath(own); cp(dir, joinpath(own, basename(dir)))
+            io = getinfo(o, own, verbose=false)
+            @test_throws ErrorException writeramses(info.ncpu; hydro=gethydro(io; q...), gravity=
+                io.gravity ? getgravity(io; q...) : nothing, particles=io.particles ? getparticles(io; q...) : nothing,
+                outpath=own, overwrite=true, verbose=false)
+            @test isfile(RW.amr_filename(joinpath(own, basename(dir)), o, 1))
         end
 
         @testset "Mera data, through a mera file, back to RAMSES" begin
@@ -199,14 +242,12 @@ end
             @test c.same_tree
             @test all(v -> all(iszero, v), values(c.maxdiff))
             @test c.nparticles[1] == c.nparticles[2] && c.particle_maxdiff == (0.0, 0.0)
-            # and the REFINED cells too: RAMSES averages internal energy for interpol_var 1 and 2
-            # (hydro/interpol_hydro.f90, upl), so the rebuilt parents must equal the stored ones.
-            # Averaging total energy instead left their pressure wrong by up to 4 per cent, which
-            # a restart then carried into the leaves at the 1e-4 level.
-            if key in (:sedov3d_amr, :sedov3d_grav_part)          # both run with interpol_var=2
-                call = compareramses(o, fx.path, joinpath(tmp, "w3"))
-                @test maximum(call.maxdiff["hydro"]) < 1e-13
-            end
+            # and the REFINED cells too: the rebuilt parents must equal the stored ones. RAMSES
+            # averages internal energy for interpol_var 1 and 2 (hydro/interpol_hydro.f90, upl);
+            # averaging total energy instead left the sedov parents' pressure wrong by up to 4 per
+            # cent. The MHD upl sets a parent's face field from the 4 children on that face.
+            call = compareramses(o, fx.path, joinpath(tmp, "w3"))
+            @test maximum(call.maxdiff["hydro"]) < 1e-13
         end
 
         @testset "old mera files and missing namelists warn" begin
@@ -218,13 +259,16 @@ end
                 @test_logs (:warn, r"predates grid_info.amr_header") match_mode=:any writeramses(
                     3; hydro=gas, outpath=joinpath(tmp, "old"), verbose=false)
                 @test isdir(joinpath(tmp, "old", "output_" * lpad(o, 5, '0')))
-                # no namelist: the energy rule cannot be known, so it says so; with physical boundaries
-                # the box itself is unknown and the data is refused
+                # no namelist: the energy rule cannot be known, so it says so. Walls are then taken
+                # from the original amr files; once those are gone too, the box is unknown: refused.
                 empty!(gas.info.namelist_content)
-                if isempty(RW.read_namelist_group(joinpath(dir, "namelist.txt"), "BOUNDARY_PARAMS"))
-                    @test_logs (:warn, r"no namelist") match_mode=:any writeramses(
-                        3; hydro=gas, outpath=joinpath(tmp, "nonml"), verbose=false)
-                else
+                gas.info.path = fx.path
+                @test_logs (:warn, r"no namelist") match_mode=:any writeramses(
+                    3; hydro=gas, outpath=joinpath(tmp, "nonml"), verbose=false)
+                c = compareramses(o, fx.path, joinpath(tmp, "nonml"); leaves_only=true)
+                @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
+                if !isempty(RW.read_namelist_group(joinpath(dir, "namelist.txt"), "BOUNDARY_PARAMS"))
+                    gas.info.path = "/nowhere/gone"
                     @test !first(restart_completeness(gas))
                 end
             end
@@ -250,5 +294,30 @@ end
 
         rm(tmp; recursive=true)
     end
+    end
+
+    # Two community samples, run when present: an MHD tube on an AMR grid with outflow walls and
+    # neither a hydro descriptor nor a namelist.txt (the walls, the ghost width and the variable
+    # layout are all inferred), and a RAMSES-RT run (photon densities are written as rt_c × Np,
+    # and rt_c is zero below levelmin, while the fluxes there are averages of the children).
+    for key in (:ramses_mhd_amr, :rt_stromgren)
+        (@isdefined(DATASETS) && haskey(DATASETS, key) && isdir(DATASETS[key].path)) || continue
+        @testset "$key" begin
+            ds = DATASETS[key]; o = ds.output; q = (verbose=false, show_progress=false)
+            info = getinfo(o, ds.path, verbose=false); tmp = mktempdir()
+            rep = repartition(o, ds.path, 3; outpath=joinpath(tmp, "r3"), verbose=false)
+            c = compareramses(o, ds.path, joinpath(tmp, "r3"))
+            @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
+            gas = gethydro(info; q...); rt = info.rt ? getrt(info; q...) : nothing
+            @test first(restart_completeness(gas; rt=rt))
+            Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+                writeramses(3; hydro=gas, rt=rt, outpath=joinpath(tmp, "w3"), verbose=false)
+            end
+            c = compareramses(o, ds.path, joinpath(tmp, "w3"))
+            @test c.same_tree
+            @test maximum(c.maxdiff["hydro"]) < 1e-13
+            haskey(c.maxdiff, "rt") && @test all(iszero, c.maxdiff["rt"])
+            rm(tmp; recursive=true)
+        end
     end
 end
