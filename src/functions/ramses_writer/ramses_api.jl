@@ -11,8 +11,8 @@ function _ramses_output_dir(output::Integer, path::AbstractString)
 end
 
 """
-    repartition(output, path, ncpu; outpath, overload=1, balance_particles=true,
-                ngridmax=:auto, nexpand_bound=:auto, overwrite=false, verbose=true)
+    repartition(output, path, ncpu; outpath, ordering=:auto, iogroupsize=0, overload=1,
+                balance_particles=true, ngridmax=:auto, nexpand_bound=:auto, overwrite=false, verbose=true)
     repartition(info::InfoType, ncpu; outpath, ...)
 
 Rewrite a RAMSES output for `ncpu` MPI ranks, so the simulation can be restarted with
@@ -36,9 +36,15 @@ What is done, in order:
 Returns a report with the grid and particle counts per rank. Its `ngridmax_needed` and
 `npart_max` are the minimum `ngridmax`/`npartmax` for the restart namelist.
 
-Supported: 3-D outputs with `ordering='hilbert'`, periodic or simple physical boundaries,
-hydro, MHD, RT, gravity, particles, sinks and clumps. Not yet: `ordering='bisection'`, IO
-groups, `QUADHILBERT`, 1-D and 2-D runs.
+`ordering` is the domain decomposition of the new files: `:auto` keeps the output's own,
+`:hilbert` or `:bisection` converts (the restart namelist must then name it). `iogroupsize = n`
+writes the files of every n ranks into one `group_GGGGG` folder, as RAMSES with
+`IOGROUPSIZEREP = n`; outputs in group folders are read either way.
+
+Supported: 3-D outputs with `ordering='hilbert'` or `'bisection'`, plain or in IO groups,
+periodic or simple physical boundaries (also without a namelist), hydro, MHD, RT, gravity (also
+the older forces-only files), particles (also the legacy format), sinks and clumps. Not
+supported: `QUADHILBERT` builds, and 1-D or 2-D runs (Mera is 3-D).
 
 ```julia
 r = repartition(6, "/sims/run_8cpu", 3; outpath="/sims/run_3cpu")
