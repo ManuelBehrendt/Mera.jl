@@ -65,7 +65,6 @@ println("dm_gas: ncpu = ", getinfo(4, DMGAS, verbose=false).ncpu, ", particles: 
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Mera v1.8.0
 sedov:  ncpu = 4, levels 4 to 7, 10000 grids max per rank
 dm_gas: ncpu = 4, particles: 30000
 ```
@@ -285,9 +284,27 @@ fig
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_11_1.png)
 
-White: the level is not refined there. The ghost layer is one cell wide around the domain (two
-for MHD, whose solver reaches further); RAMSES needs it filled at the restart, so the new files
-must carry it.
+White: the level is not refined there.
+
+### Ghost zones and box boundaries
+
+The hydro solver updates a cell from its neighbours, so at the border of its domain a rank needs
+cells it does not own. RAMSES keeps copies of them, the **ghost grids**, and the files store them.
+`repartition` builds them with RAMSES's own rules (`authorize_fine`, `refine_fine`,
+`make_boundary_flag`), level by level:
+
+| a rank holds | why |
+|---|---|
+| every level-1 grid | RAMSES keeps the whole coarse level on every rank |
+| the grids it owns (their parent cell is on its stretch of the Hilbert curve) | its own work |
+| every grid within one cell of its own cells (two for MHD) | the solver's stencil reaches that far across the border |
+| the children of those grids, level by level | a ghost region is refined as its owner is |
+| boundary grids beyond physical walls | the stencil at a wall reads cells outside the box |
+
+**A periodic box** is the default, when the namelist has no `&BOUNDARY_PARAMS`. The box then wraps
+around: the cells at x = 0 border the cells at x = 1, and the ghost layer continues across the face.
+The figure above shows it. In the level-4 panel, rank 2 owns cells at x < 0.5, and the orange strip
+at the right edge, x > 0.875, is ghost: those cells are its neighbours across the periodic face.
 
 ## 3. `repartition`: what it does, step by step
 
@@ -298,6 +315,74 @@ must carry it.
 | 3 | each new rank's octree | own grids + ghost grids + boundary grids, with every pointer | RAMSES reads this, and nothing else, into memory |
 | 4 | the cell files | `hydro_*`, `grav_*`, `rt_*`: values copied bit for bit into the new grid order | no value is recomputed, so nothing can change |
 | 5 | particles and text files | each particle to the rank owning the finest cell around it; clump rows re-dealt; `info_*.txt` gets the new `ncpu` and domain table; files that do not depend on `ncpu` are copied | the rest of the output, consistent with the new split |
+
+**Physical walls** (outflow, reflexive, imposed) are set in `&BOUNDARY_PARAMS`. RAMSES then
+makes the coarse grid larger than the box by one layer of coarse cells per wall, and each rank also
+holds **boundary grids** just outside the walls. They copy the refinement of the cell inside the
+wall, and their values are set by `make_boundary_hydro`: the value of that inside cell, with the
+normal velocity flipped at a reflexive wall and inflow suppressed at an outflow wall.
+
+The Sedov run below has outflow walls on all six faces: its coarse grid is 3 × 3 × 3 cells and
+the box is the central one. Split over 3 ranks, each rank holds a third of the box, a ghost layer,
+and a layer of boundary grids along the walls it touches:
+
+```julia
+OUTFLOW = joinpath(RUNS, "sedov3d_outflow_ncpu4")                 # 4 CPUs, outflow on all faces
+to = RW.read_global_tree(joinpath(OUTFLOW, "output_00004"), 4; verbose=false)
+println("coarse grid ", to.geom.n, ", box = coarse cells ", to.geom.cmin, " to ", to.geom.cmax,
+        ", ", length(to.boundaries), " walls: ",
+        join(unique(("reflexive", "outflow", "imposed")[b.btype ÷ 10 + 1] for b in to.boundaries), ", "))
+deco = RW.decompose(to, 3)
+lto  = [RW.build_local_tree(to, deco, k) for k in 1:3]
+println(rpad("rank", 6), rpad("own grids", 11), rpad("ghost grids", 13), "boundary grids")
+for k in 1:3
+    own = sum(lto[k].numbl[k, :])
+    println(rpad(k, 6), rpad(own, 11), rpad(sum(lto[k].numbl) - own, 13), sum(lto[k].numbb))
+end
+```
+
+```
+coarse grid (3, 3, 3), box = coarse cells (1, 1, 1) to (1, 1, 1), 6 walls: outflow
+rank  own grids  ghost grids  boundary grids
+1     32539      2998         3246
+2     32538      3190         3194
+3     32540      2997         3246
+```
+
+```julia
+# Rank 2's grids around the box, in a slice through the box centre, levels 2 to 4. Coordinates in
+# coarse cells: the box is the square from 1 to 2.
+k, zc = 2, 1.5
+lt2 = lto[k]; held = [Set(lt2.grids[l]) for l in eachindex(lt2.grids)]
+bnd = [Set(lt2.bgrids[l]) for l in eachindex(lt2.bgrids)]
+m = 280; X = range(0.8, 2.2; length=m)
+fig = Figure(size=(1050, 390))
+for (col, l) in enumerate((2, 3, 4))
+    img = fill(NaN, m, m)
+    for (i, x) in enumerate(X), (j, y) in enumerate(X)
+        ig = RW.Coord((floor(Int, x * 2^(l - 1)), floor(Int, y * 2^(l - 1)), floor(Int, zc * 2^(l - 1))))
+        if ig in bnd[l]
+            img[i, j] = 3.0
+        else
+            g = RW.find_grid(to, l, ig); g == 0 && continue
+            img[i, j] = g in held[l] ? (RW.grid_owner(to, deco, l, g) == k ? 1.0 : 2.0) : 0.0
+        end
+    end
+    ax = Axis(fig[1, col]; aspect=DataAspect(), title="level $l grids on rank $k of 3",
+              xlabel="x (coarse cells)", ylabel = col == 1 ? "y (coarse cells)" : "")
+    heatmap!(ax, X, X, img; colormap=cgrad(["#e4e3dd", CPU_COLORS[1], CPU_COLORS[2], CPU_COLORS[3]];
+             categorical=true), colorrange=(-0.5, 3.5))
+    lines!(ax, [1, 2, 2, 1, 1], [1, 1, 2, 2, 1]; color=:black, linewidth=1.5)       # the walls
+end
+Legend(fig[1, 4], [PolyElement(color=c) for c in (CPU_COLORS[1], CPU_COLORS[2], CPU_COLORS[3], "#e4e3dd")],
+       ["own grids", "ghost grids", "boundary grids\n(outside the walls)", "not on this rank"]; framevisible=false)
+fig
+```
+
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_15_1.png)
+
+The black square is the box. Outside it, only the layer of boundary grids next to the walls
+exists, and rank 2 holds it where its own and ghost cells reach the walls. White: not refined.
 
 ```julia
 rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
@@ -314,11 +399,11 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_1i6wns/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_GXzBkD/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
-  14 files written in 0.7 s
+  14 files written in 1.1 s
 ```
 
 The report's last numbers go into the restart namelist: each rank must be allowed at least
@@ -383,6 +468,37 @@ rank  grids   grids   fathers  neighbours  children  owners
 2     468     yes     yes      yes         yes       yes
 3     752     yes     yes      yes         yes       yes
 4     705     yes     yes      yes         yes       yes
+```
+
+The same check on the run with outflow walls: here the files also hold the boundary grids and
+their pointers, and they must match as well.
+
+```julia
+srco = joinpath(OUTFLOW, "output_00004")
+dec4o = RW.decompose(to, 4; bound_key=copy(to.header.bound_key))
+lto4  = [RW.build_local_tree(to, dec4o, k; nexpand_bound=RW.detect_nexpand_bound(srco)) for k in 1:4]
+nto   = RW.global_numbtot([l.numbl for l in lto4], to.header.nlevelmax)
+umto  = maximum(RW.ngrid_current, lto4)
+println(rpad("rank", 6), rpad("grids", 8), rpad("boundary", 10), rpad("grids", 8), rpad("fathers", 9),
+        rpad("neighbours", 12), rpad("children", 10), "owners")
+for k in 1:4
+    tmp = tempname()
+    RW.write_amr_file(tmp, RW.amr_file_content(to, dec4o, lto4[k], Int(to.header.ngridmax), nto, umto)...)
+    a, b = canonical_amr(RW.amr_filename(srco, 4, k)), canonical_amr(tmp)
+    nb = count(key -> key[2] > 4, a[:grids])                   # lists beyond the 4 CPU lists: walls
+    println(rpad(k, 6), rpad(length(a[:grids]), 8), rpad(nb, 10), rpad(ok_mark(a[:grids] == b[:grids]), 8),
+            rpad(ok_mark(a[:father] == b[:father]), 9), rpad(ok_mark(a[:nbor] == b[:nbor]), 12),
+            rpad(ok_mark(a[:son] == b[:son]), 10), ok_mark(a[:cpu_map] == b[:cpu_map]))
+    rm(tmp)
+end
+```
+
+```
+rank  grids   boundary  grids   fathers  neighbours  children  owners
+1     29097   2490      yes     yes      yes         yes       yes
+2     29097   2490      yes     yes      yes         yes       yes
+3     29097   2490      yes     yes      yes         yes       yes
+4     29027   2450      yes     yes      yes         yes       yes
 ```
 
 Every rank's tree is rebuilt exactly. The same check passes for every run of the test suite, a
@@ -563,7 +679,7 @@ Colorbar(fig[1, 5], hm; label="log₁₀ |Δρ|/ρ", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_24_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_30_1.png)
 
 The two runs agree to machine precision everywhere: RAMSES cannot tell the converted output from
 its own. Particles are the stricter test, because gravity couples every particle to the whole mass
@@ -815,7 +931,7 @@ fig
 median |Δρ|/ρ in this slice: 5.6e-09,  largest: 9.0e-05
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_38_2.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_44_2.png)
 
 The octree is the same, and the differences are small but above round-off: the gas differs by at
 most `5e-5`, only in the refined region around the centre (figure), and the potential by `3e-6`.
@@ -920,12 +1036,64 @@ case where only Mera data is left.
 
 ## 9. Mera files written before 1.8.0
 
-The per-level time steps are needed for runs with gravity or particles (without them the first
-steps deviate by about 3 %). Mera stores them in `info.grid_info.amr_header` since 1.8.0.
-`writeramses` takes them from the mera file, else from the original simulation if it still exists
-at the recorded path, else it writes the files and warns. [`upgrade_merafile`](@ref) adds them to an
-old file while its simulation still exists, and saves it again through a temporary file, so an
-interrupted upgrade never damages the original:
+Mera stores the amr header (exact time, per-level time steps, step counters) in
+`info.grid_info.amr_header` since 1.8.0. For an older file, `writeramses` reads it from the original
+simulation if that still exists at the recorded path, and the result is the same as from a new
+file. If the simulation is gone, it writes the files anyway and warns: the per-level time steps are
+then unknown, and RAMSES needs them to advance gravity and particles. What that costs, measured
+here by removing the header and the simulation path from freshly loaded data:
+
+```julia
+oldruns = [("sedov3d_amr_lb_ncpu4", 6), ("clumps3d_ncpu4", 3), ("sedov3d_grav_part_ncpu4", 6), ("dm_gas3d_ncpu4", 4)]
+println(rpad("run", 26), rpad("", 30), rpad("octree", 8), rpad("hydro", 9), rpad("grav", 9), "particles |Δx|")
+for (run, o) in oldruns, oldfile in (false, true)
+    ri = getinfo(o, joinpath(RUNS, run), verbose=false)
+    d  = (hydro     = gethydro(ri; q...),
+          gravity   = ri.gravity   ? getgravity(ri; q...)   : nothing,
+          particles = ri.particles ? getparticles(ri; q...) : nothing)
+    if oldfile                                  # as a file saved before 1.8.0, simulation deleted
+        for obj in values(d)
+            obj === nothing && continue
+            obj.info = deepcopy(obj.info)
+            empty!(obj.info.grid_info.amr_header); obj.info.path = "/nowhere"
+        end
+    end
+    dir = joinpath(WORK, "oldfile_" * run * (oldfile ? "_old" : "_new"))
+    # the old-file case warns (text above); keep the table readable
+    w = Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+        writeramses(3; d..., outpath=dir, verbose=false)
+    end
+    nmlf = only(filter(endswith(".nml"), readdir(joinpath(RUNS, run))))
+    restart_namelist(joinpath(RUNS, run, nmlf), joinpath(dir, nmlf);
+                     ngridmax=max(20_000, round(Int, 1.3 * w.ngridmax_needed)),
+                     npartmax=isempty(w.npart_per_rank) ? 0 : max(200_000, 3 * w.npart_max))
+    run_ramses(dir, nmlf, o, 3) || (println(rpad(run, 26), "RAMSES FAILED"); continue)
+    c = compareramses(o + 1, joinpath(RUNS, run * "_restart"), dir; leaves_only=true)
+    println(rpad(run, 26), rpad(oldfile ? "old file, simulation gone" : "with header", 30),
+            rpad(c.same_tree ? "same" : "DIFF", 8), rpad(@sprintf("%.0e", maximum(c.maxdiff["hydro"])), 9),
+            rpad(haskey(c.maxdiff, "grav") ? @sprintf("%.0e", maximum(c.maxdiff["grav"])) : "–", 9),
+            c.nmatched > 0 ? @sprintf("%.0e", c.particle_maxdiff[1]) : "–")
+end
+```
+
+```
+run                                                     octree  hydro    grav     particles |Δx|
+sedov3d_amr_lb_ncpu4      with header                   same    8e-16    –        –
+sedov3d_amr_lb_ncpu4      old file, simulation gone     same    8e-16    –        –
+clumps3d_ncpu4            with header                   same    2e-15    8e-15    –
+clumps3d_ncpu4            old file, simulation gone     same    2e-16    8e-15    –
+sedov3d_grav_part_ncpu4   with header                   same    3e-07    3e-08    –
+sedov3d_grav_part_ncpu4   old file, simulation gone     same    2e-06    7e-07    –
+dm_gas3d_ncpu4            with header                   same    5e-05    3e-06    2e-06
+dm_gas3d_ncpu4            old file, simulation gone     DIFF    3e-02    4e-02    1e-03
+```
+
+Hydro runs, and gravity without many particles, restart as well without the header. A run with
+many particles does not: the first particle step uses the wrong time step, the octree changes and
+the state deviates by a few per cent. Such a file is only safe after `upgrade_merafile`.
+
+`upgrade_merafile` adds the header to an old file while its simulation still exists, and saves it
+again through a temporary file, so an interrupted upgrade never damages the original:
 
 ```julia
 upgrade_merafile(250, "/merafiles")                               # simulation at the recorded path
