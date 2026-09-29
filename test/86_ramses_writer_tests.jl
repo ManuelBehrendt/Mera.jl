@@ -259,16 +259,20 @@ end
                 @test_logs (:warn, r"predates grid_info.amr_header") match_mode=:any writeramses(
                     3; hydro=gas, outpath=joinpath(tmp, "old"), verbose=false)
                 @test isdir(joinpath(tmp, "old", "output_" * lpad(o, 5, '0')))
-                # no namelist: the energy rule cannot be known, so it says so. Walls are then taken
-                # from the original amr files; once those are gone too, the box is unknown: refused.
+                # no namelist: the walls and the energy rule of the parents (interpol_var) are then
+                # read from the original output, so even the parents come out right ...
                 empty!(gas.info.namelist_content)
                 gas.info.path = fx.path
-                @test_logs (:warn, r"no namelist") match_mode=:any writeramses(
-                    3; hydro=gas, outpath=joinpath(tmp, "nonml"), verbose=false)
-                c = compareramses(o, fx.path, joinpath(tmp, "nonml"); leaves_only=true)
-                @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
-                if !isempty(RW.read_namelist_group(joinpath(dir, "namelist.txt"), "BOUNDARY_PARAMS"))
-                    gas.info.path = "/nowhere/gone"
+                writeramses(3; hydro=gas, outpath=joinpath(tmp, "nonml"), verbose=false)
+                c = compareramses(o, fx.path, joinpath(tmp, "nonml"))
+                @test c.same_tree && maximum(c.maxdiff["hydro"]) < 1e-13
+                # ... and once the output is gone too, the rule is unknown (a warning) and a box
+                # with walls is unknown (refused)
+                gas.info.path = "/nowhere/gone"
+                if isempty(RW.read_namelist_group(joinpath(dir, "namelist.txt"), "BOUNDARY_PARAMS"))
+                    @test_logs (:warn, r"no namelist") match_mode=:any writeramses(
+                        3; hydro=gas, outpath=joinpath(tmp, "nonml"), overwrite=true, verbose=false)
+                else
                     @test !first(restart_completeness(gas))
                 end
             end
@@ -296,27 +300,46 @@ end
     end
     end
 
-    # Two community samples, run when present: an MHD tube on an AMR grid with outflow walls and
-    # neither a hydro descriptor nor a namelist.txt (the walls, the ghost width and the variable
-    # layout are all inferred), and a RAMSES-RT run (photon densities are written as rt_c × Np,
-    # and rt_c is zero below levelmin, while the fluxes there are averages of the children).
-    for key in (:ramses_mhd_amr, :rt_stromgren)
+    # Three community samples, run when present:
+    # * an MHD tube on an AMR grid with outflow walls and neither a hydro descriptor nor a
+    #   namelist.txt: the walls, the ghost width and the variable layout are all inferred;
+    # * a RAMSES-RT run: photon densities are written as rt_c × Np, and rt_c is zero below
+    #   levelmin, while the fluxes there are averages of the children;
+    # * a cosmological run from an older RAMSES: legacy particle files (no descriptor, stars
+    #   numbered apart from dark matter, metallicity after the birth time), gravity files with the
+    #   forces only, and no namelist, so interpol_var is read from the stored parents.
+    for key in (:ramses_mhd_amr, :rt_stromgren, :yt_cosmo)
         (@isdefined(DATASETS) && haskey(DATASETS, key) && isdir(DATASETS[key].path)) || continue
         @testset "$key" begin
             ds = DATASETS[key]; o = ds.output; q = (verbose=false, show_progress=false)
             info = getinfo(o, ds.path, verbose=false); tmp = mktempdir()
-            rep = repartition(o, ds.path, 3; outpath=joinpath(tmp, "r3"), verbose=false)
+            repartition(o, ds.path, 3; outpath=joinpath(tmp, "r3"), verbose=false)
             c = compareramses(o, ds.path, joinpath(tmp, "r3"))
-            @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
-            gas = gethydro(info; q...); rt = info.rt ? getrt(info; q...) : nothing
-            @test first(restart_completeness(gas; rt=rt))
+            @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff)) && c.particle_maxdiff == (0.0, 0.0)
+            gas  = gethydro(info; q...)
+            rt   = info.rt        ? getrt(info; q...)        : nothing
+            grav = info.gravity   ? getgravity(info; q...)   : nothing
+            part = info.particles ? getparticles(info; q...) : nothing
+            @test first(restart_completeness(gas; rt, gravity=grav, particles=part))
             Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
-                writeramses(3; hydro=gas, rt=rt, outpath=joinpath(tmp, "w3"), verbose=false)
+                writeramses(3; hydro=gas, rt, gravity=grav, particles=part, outpath=joinpath(tmp, "w3"), verbose=false)
             end
             c = compareramses(o, ds.path, joinpath(tmp, "w3"))
             @test c.same_tree
             @test maximum(c.maxdiff["hydro"]) < 1e-13
             haskey(c.maxdiff, "rt") && @test all(iszero, c.maxdiff["rt"])
+            if key == :yt_cosmo
+                @test info.gravity_variable_list == [:ax, :ay, :az]
+                @test :metals in propertynames(columns(part.data))
+                @test c.nparticles[1] == c.nparticles[2] && c.particle_ids_match && c.particle_maxdiff == (0.0, 0.0)
+                cl = compareramses(o, ds.path, joinpath(tmp, "w3"); leaves_only=true)
+                @test all(iszero, cl.maxdiff["grav"])
+                # Mera reads the written legacy files back to the same particles
+                p2 = getparticles(getinfo(o, joinpath(tmp, "w3"), verbose=false); q...)
+                a, b = columns(part.data), columns(p2.data)
+                pa, pb = sortperm(collect(zip(a.id, a.birth, a.x))), sortperm(collect(zip(b.id, b.birth, b.x)))
+                @test all(getproperty(a, k)[pa] == getproperty(b, k)[pb] for k in propertynames(a))
+            end
             rm(tmp; recursive=true)
         end
     end
