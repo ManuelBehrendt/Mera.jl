@@ -189,8 +189,15 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
     header, hsource = amr_header_of(info)
     if hsource == :approximate
         @warn "[Mera]: this mera file predates grid_info.amr_header and the simulation is gone: the time steps " *
-              "(dtold/dtnew) are unknown. Hydro runs restart normally; with gravity or particles the first " *
-              "steps deviate (see documentation). Use upgrade_merafile while the simulation still exists."
+              "(dtold/dtnew) are unknown. Hydro runs restart normally; with gravity the first steps deviate, " *
+              "and with many particles strongly (a few per cent and a changed octree in our tests). " *
+              "Use upgrade_merafile while the simulation still exists."
+    end
+    if isempty(info.namelist_content)
+        @warn "[Mera]: this data carries no namelist (the RAMSES output had no namelist.txt). " *
+              "writeramses assumes RAMSES's default interpol_var=0. If the run used interpol_var=1 or 2, " *
+              "refined cells are rebuilt with the wrong energy rule and a restart deviates at about 1e-4. " *
+              "(A run with physical boundaries is refused: without the namelist its box is unknown.)"
     end
     n = (info.grid_info.nx, info.grid_info.ny, info.grid_info.nz)
     bgroup = _nml_group(info, "&BOUNDARY_PARAMS")

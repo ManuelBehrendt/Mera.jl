@@ -209,6 +209,27 @@ end
             end
         end
 
+        @testset "old mera files and missing namelists warn" begin
+            if !info.gravity && !info.particles
+                gas = gethydro(info; q...)
+                gas.info = deepcopy(gas.info)          # the objects share one InfoType; keep `info` intact
+                # a file saved before the header existed, whose simulation is gone: written, with a warning
+                empty!(gas.info.grid_info.amr_header); gas.info.path = "/nowhere/gone"
+                @test_logs (:warn, r"predates grid_info.amr_header") match_mode=:any writeramses(
+                    3; hydro=gas, outpath=joinpath(tmp, "old"), verbose=false)
+                @test isdir(joinpath(tmp, "old", "output_" * lpad(o, 5, '0')))
+                # no namelist: the energy rule cannot be known, so it says so; with physical boundaries
+                # the box itself is unknown and the data is refused
+                empty!(gas.info.namelist_content)
+                if isempty(RW.read_namelist_group(joinpath(dir, "namelist.txt"), "BOUNDARY_PARAMS"))
+                    @test_logs (:warn, r"no namelist") match_mode=:any writeramses(
+                        3; hydro=gas, outpath=joinpath(tmp, "nonml"), verbose=false)
+                else
+                    @test !first(restart_completeness(gas))
+                end
+            end
+        end
+
         @testset "incomplete data is refused" begin
             gas  = gethydro(info; q...)
             grav = info.gravity   ? getgravity(info; q...)   : nothing
