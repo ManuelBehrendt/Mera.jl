@@ -72,6 +72,7 @@ Base.@kwdef struct LeafInput
     particles::Union{Nothing,ParticleTable} = nothing
     nstar_tot::Int = 0
     nsink::Int = 0
+    legacy_particles::Bool = false       # particle files without part_file_descriptor.txt (before 2018)
     interpol_var::Int = 0                # &REFINE_PARAMS interpol_var: how RAMSES restricts energy
 end
 
@@ -247,6 +248,61 @@ function hydro_restriction(names::Vector{String}, gamma::Float64; interpol_var::
 end
 
 """
+    restrict(r, kids) -> Vector{Float64}
+
+The parent of 8 children (`kids[k]`, k = 1 + ix + 2iy + 4iz), as RAMSES's upload builds it:
+conserved quantities averaged over the 8, MHD face fields over the 4 on their face.
+"""
+function restrict(r::Restriction, kids::AbstractVector)
+    c = [r.to_cons(k) for k in kids]
+    acc = sum(c) ./ 8
+    for (iv, ks) in r.faces
+        acc[iv] = sum(c[k][iv] for k in ks) / length(ks)
+    end
+    return r.to_prim(acc)
+end
+
+"""
+    infer_interpol_var(dir, iout, leaves, gamma; nsample=2000) -> (interpol_var, error)
+
+The energy rule of RAMSES's upload (`&REFINE_PARAMS interpol_var`) when no namelist says it:
+parents rebuilt from their 8 leaf children with rule 0 (total energy) and rule 1 (internal energy)
+are compared with the parents stored in the output, and the rule that reproduces them wins.
+Rule 2 gives the same parents as rule 1 for hydro and as rule 0 for MHD, so these two suffice.
+`error` is the largest difference of the winner, relative to each variable's largest value.
+"""
+function infer_interpol_var(dir, iout, leaves::LeafCells, gamma::Float64; nsample::Integer=2000)
+    t = read_global_tree(dir, iout; verbose=false, namelist="")
+    cs = open_cell_files(dir, "hydro", iout, Int(t.header.ncpu), Int(t.header.nlevelmax), length(t.boundaries))
+    row = Dict((l, c) => i for (i, (l, c)) in enumerate(zip(leaves.level, leaves.cells)))
+    kids_of(l, p) = [get(row, (l + 1, (2p[1] + ix, 2p[2] + iy, 2p[3] + iz)), 0) for iz in 0:1 for iy in 0:1 for ix in 0:1]
+    samples = Tuple{Vector{Int},Vector{Float64}}[]
+    seen = Set{Tuple{Int,NTuple{3,Int}}}()
+    for (l1, c) in zip(leaves.level, leaves.cells)
+        l = l1 - 1; p = c .>> 1
+        (l < 1 || (l, p) in seen) && continue
+        push!(seen, (l, p))
+        kids = kids_of(l, p)
+        all(>(0), kids) || continue
+        g = get(t.levels[l].lookup, Coord(p .>> 1), Int32(0))
+        g == 0 && continue
+        cpu, pos = t.src_cpu[l][g], t.src_pos[l][g]
+        stored = [cell_value(cs, cpu, l, cpu, pos, cell_index((p .& 1)...), v) for v in 1:cs.nvar]
+        push!(samples, (kids, stored))
+        length(samples) >= nsample && break
+    end
+    isempty(samples) && return (0, 0.0)
+    scale = [max(maximum(abs(s[2][v]) for s in samples), floatmin()) for v in 1:cs.nvar]
+    errs = map((0, 1)) do rule
+        r = hydro_restriction(leaves.names, gamma; interpol_var=rule)
+        maximum(maximum(abs.(restrict(r, [leaves.values[k, :] for k in kids]) .- stored) ./ scale)
+                for (kids, stored) in samples)
+    end
+    best = argmin(errs)
+    return (best - 1, errs[best])
+end
+
+"""
     cell_values(t, leaves, restriction) -> Vector{Array{Float64,3}}
 
 Values of every cell of every grid (`vals[l][grid, ind, ivar]`): leaves from
@@ -263,12 +319,7 @@ function cell_values(t::GlobalTree, leaves::LeafCells, r::Restriction)
     for l in nlevels(t)-1:-1:1, (g, ig) in enumerate(t.levels[l].ig), ind in 1:8
         child = find_grid(t, l + 1, child_coord(ig, ind))
         child == 0 && continue
-        kids = [r.to_cons(vals[l+1][child, k, :]) for k in 1:8]
-        acc = sum(kids) ./ 8
-        for (iv, ks) in r.faces
-            acc[iv] = sum(kids[k][iv] for k in ks) / length(ks)
-        end
-        vals[l][g, ind, :] .= r.to_prim(acc)
+        vals[l][g, ind, :] .= restrict(r, [vals[l+1][child, k, :] for k in 1:8])
     end
     for l in 1:nlevels(t)
         any(isnan, vals[l]) && error("Level $l has cells that are neither leaves nor refined: the leaf data is incomplete.")

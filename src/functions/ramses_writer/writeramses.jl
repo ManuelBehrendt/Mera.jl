@@ -121,6 +121,43 @@ const _PARTCOL = Dict("position_x" => :x, "position_y" => :y, "position_z" => :z
     "family" => :family, "tag" => :tag, "birth_time" => :birth, "metallicity" => :metals, "partp" => :partp)
 _partcol(name::AbstractString) = get(_PARTCOL, name, Symbol(name))
 
+"Number of records in a Fortran file (a particle file: 8 header records, then one per field)."
+function _nrecords(path)
+    n = 0
+    open(path) do io
+        while !eof(io)
+            len = read(io, Int32); skip(io, len); read(io, Int32); n += 1
+        end
+    end
+    return n
+end
+
+"""
+    _particle_layout(info, pc) -> (names, types, legacy)
+
+The particle fields of the files, in order, with their descriptor names and types. Legacy files
+(RAMSES before 2018, no part_file_descriptor.txt) hold x, y, z, vx, vy, vz, mass, id (Int32) and
+level (Int32), then with stars the birth time and the fields after it (metallicity), all Float64.
+"""
+function _particle_layout(info, pc)
+    if info.descriptor.pversion > 0 && !isempty(info.descriptor.ptypes)
+        return String.(info.descriptor.particles), [only(string(t)) for t in info.descriptor.ptypes], false
+    end
+    names = ["position_x", "position_y", "position_z", "velocity_x", "velocity_y", "velocity_z",
+             "mass", "identity", "levelp"]
+    types = [fill('d', 7); 'i'; 'i']
+    extra = info.particles_variable_list[5:end]            # :birth, then :metals, :var7, ...
+    d = _original_dir(info)
+    # the birth time is in the files when the run had stars, even before the first one formed
+    birth = d !== nothing ? _nrecords(_RW.part_filename(d, info.output, 1)) > 17 :
+            length(extra) > 1 || (hasproperty(pc, :birth) && any(!=(0), pc.birth))
+    birth || (extra = Symbol[])
+    for v in extra
+        push!(names, v == :birth ? "birth_time" : v == :metals ? "metallicity" : String(v)); push!(types, 'd')
+    end
+    return names, types, true
+end
+
 # ----------------------------------------------------------------------------
 #  Completeness
 # ----------------------------------------------------------------------------
@@ -170,15 +207,19 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
     if info.particles
         if particles === nothing
             check("particles", false, "the simulation has particles, none given")
-        elseif info.descriptor.pversion <= 0 || isempty(info.descriptor.ptypes)
-            check("particle format", false, "legacy particle files without part_file_descriptor.txt: " *
-                  "writeramses cannot write that format; use repartition on the original files")
         else
             pc = columns(particles.data)
+            names, _, legacy = _particle_layout(info, pc)
+            d = _original_dir(info)
+            if legacy && d !== nothing
+                nfile = _nrecords(_RW.part_filename(d, info.output, 1)) - 8
+                check("particle layout", nfile == length(names),
+                      "legacy format: the files hold $nfile fields, the Mera data gives $(length(names))")
+            end
             # partp of gas tracers is a memory index the writer recomputes; tracers attached to
             # stars or other particles (family < 0) need the stored host identity, which Mera lacks
-            need = [_partcol(String(d)) for d in info.descriptor.particles if String(d) != "partp"]
-            if "partp" in String.(info.descriptor.particles) && !hasproperty(pc, :partp)
+            need = [_partcol(nm) for nm in names if nm != "partp"]
+            if "partp" in names && !hasproperty(pc, :partp)
                 hosted = count(f -> f < 0, pc.family)
                 check("tracer hosts", hosted == 0, hosted == 0 ?
                       "gas tracers only: their partp (cell index) is recomputed" :
@@ -280,16 +321,30 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
               "and with many particles strongly (a few per cent and a changed octree in our tests). " *
               "Use upgrade_merafile while the simulation still exists."
     end
-    if isempty(info.namelist_content)
-        @warn "[Mera]: this data carries no namelist (the RAMSES output had no namelist.txt). " *
-              "writeramses assumes RAMSES's default interpol_var=0. If the run used interpol_var=1 or 2, " *
-              "refined cells are rebuilt with the wrong energy rule and a restart deviates at about 1e-4. " *
-              "Walls, if any, are read from the original output; without it such a run is refused."
-    end
     n = (info.grid_info.nx, info.grid_info.ny, info.grid_info.nz)
     bgroup = _boundary_group(info)
     cmin, _ = _RW.coarse_box(n, bgroup)
     hydro_leaves = _leafcells(hydro, _hydro_names(info), info.variable_list, cmin)
+    interpol_var = _interpol_var(info)
+    if isempty(info.namelist_content)
+        # no namelist: the energy rule of the parents is unknown. While the output exists, its
+        # stored parents tell; otherwise RAMSES's default is assumed.
+        d = _original_dir(info)
+        err = Inf
+        if d !== nothing && info.levelmax > info.levelmin
+            interpol_var, err = _RW.infer_interpol_var(d, info.output, hydro_leaves, Float64(info.gamma))
+        end
+        if err < 1e-10
+            verbose && println("[Mera]: no namelist; interpol_var=$interpol_var taken from the stored parent cells")
+        else
+            interpol_var = 0
+            @warn "[Mera]: this data carries no namelist (the RAMSES output had no namelist.txt) and the " *
+                  "stored parent cells could not be checked. writeramses assumes RAMSES's default " *
+                  "interpol_var=0. If the run used interpol_var=1 or 2, refined cells are rebuilt with the " *
+                  "wrong energy rule and a restart deviates at about 1e-4. Walls, if any, are read from the " *
+                  "original output; without it such a run is refused."
+        end
+    end
     grav_leaves = info.gravity && gravity !== nothing ?
         _leafcells(gravity, String.(info.gravity_variable_list), info.gravity_variable_list, cmin) : nothing
     rt_leaves, rt_header = nothing, Vector{UInt8}[]
@@ -300,11 +355,10 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
                      _RW._rec(Int32(info.levelmax)), _RW._rec(Int32(get(bgroup, "nboundary", ["0"])[1] |> x -> parse(Int, x))),
                      _RW._rec(info.gamma)]
     end
-    pt, nstar_tot = nothing, 0
+    pt, nstar_tot, legacy_particles = nothing, 0, false
     if info.particles && particles !== nothing
         pc = columns(particles.data)
-        names = String.(info.descriptor.particles)
-        types = [only(string(t)) for t in info.descriptor.ptypes]
+        names, types, legacy_particles = _particle_layout(info, pc)
         cols = AbstractVector[]
         for nm in names
             if nm == "partp" && !hasproperty(pc, :partp)
@@ -316,6 +370,7 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
         pt = _RW.ParticleTable(names, types, cols)
         d = _original_dir(info)
         nstar_tot = d !== nothing ? Int(_RW.open_part_file(_RW.part_filename(d, info.output, 1)).nstar_tot) :
+                    legacy_particles ? count(!=(0), pc.birth) :
                     maximum((pc.id[i] for i in eachindex(pc.id) if pc.family[i] == 2); init=0)
     end
     sinkdata = nothing
@@ -332,9 +387,9 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
     inp = _RW.LeafInput(output=info.output, header=header, n=n, nlevelmax=info.levelmax, levelmin=info.levelmin,
                        boxlen=Float64(get(header, :boxlen, info.boxlen)), ngridmax=info.grid_info.ngridmax,
                        gamma=info.gamma, boundary_group=bgroup, hydro=hydro_leaves, gravity=grav_leaves,
-                       rt=rt_leaves, rt_header=rt_header, particles=pt, nstar_tot=nstar_tot,
+                       rt=rt_leaves, rt_header=rt_header, particles=pt, nstar_tot=nstar_tot, legacy_particles=legacy_particles,
                        nsink=sinkdata === nothing ? 0 : length(sinkdata[1][1]),
-                       interpol_var=_interpol_var(info))
+                       interpol_var=interpol_var)
     meta = Dict{Symbol,Any}(:levelmin => info.levelmin, :levelmax => info.levelmax,
         :nstep_coarse => info.grid_info.nstep_coarse, :boxlen => info.boxlen, :time => header[:t],
         :aexp => header[:aexp], :H0 => info.H0, :omega_m => info.omega_m, :omega_l => info.omega_l,

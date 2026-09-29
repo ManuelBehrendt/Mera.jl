@@ -63,19 +63,24 @@ function particle_fields(dir)
 end
 
 """
-    particle_table(dir, iout) -> (Dict(id => (x, y, z, vx, vy, vz)), family_counts)
+    particle_table(dir, iout) -> (Dict((id, star) => (x, y, z, vx, vy, vz)), family_counts)
 
 Positions and velocities of the particles that follow deterministic
 trajectories (dark matter, stars and other massive particles), keyed by
 identity. Two kinds are only counted, not matched: Monte-Carlo tracers
 (family ≤ 0), whose moves are random and use per-rank random seeds, and sink
 "cloud" particles (family 3), which RAMSES rebuilds at every restart.
+Legacy files (no descriptor) number stars apart from dark matter, so there a
+star is told apart by its nonzero birth time (the field after the level).
+Particles whose identity is not unique (legacy young stars with id -1) are
+counted and left out of the matching too.
 """
 function particle_table(dir, iout)
     names = particle_fields(dir)
     jid = something(findfirst(==("identity"), names), 8)
     jfam = findfirst(==("family"), names)
-    out = Dict{Int64,NTuple{6,Float64}}()
+    out = Dict{Tuple{Int64,Bool},NTuple{6,Float64}}()
+    repeated = Set{Tuple{Int64,Bool}}()
     fams = Dict{Int,Int}()
     k = 1
     while isfile(part_filename(dir, iout, k))
@@ -87,10 +92,15 @@ function particle_table(dir, iout)
             (fam <= 0 || fam == 3) && continue
             id = idsize == 8 ? unsafe_load(Ptr{Int64}(pointer(f.data, f.field_offset[jid] + 8(i - 1)))) :
                                Int64(_i32(f.data, f.field_offset[jid] + 4(i - 1)))
-            out[id] = ntuple(j -> _f64(f.data, f.field_offset[j] + 8(i - 1)), 6)
+            star = jfam === nothing && length(f.field_offset) >= 10 && f.field_size[10] == 8 &&
+                   _f64(f.data, f.field_offset[10] + 8(i - 1)) != 0
+            key = (id, star)
+            haskey(out, key) && push!(repeated, key)
+            out[key] = ntuple(j -> _f64(f.data, f.field_offset[j] + 8(i - 1)), 6)
         end
         k += 1
     end
+    foreach(key -> delete!(out, key), repeated)
     return out, fams
 end
 

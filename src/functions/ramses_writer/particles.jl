@@ -92,6 +92,23 @@ function particle_owner(t::GlobalTree, dec::Decomposition, x::NTuple{3,Float64})
 end
 
 """
+    rank_members(dest, ncpu) -> Vector{Vector{Int}}
+
+Indices of the particles going to each rank, in their original order: one counting pass instead
+of one scan per rank, which cost ncpu × N on outputs with hundreds of ranks.
+"""
+function rank_members(dest::AbstractVector{<:Integer}, ncpu::Integer)
+    counts = zeros(Int, ncpu)
+    for r in dest; counts[r] += 1; end
+    members = [Vector{Int}(undef, c) for c in counts]
+    fill!(counts, 0)
+    for (i, r) in enumerate(dest)
+        members[r][counts[r] += 1] = i
+    end
+    return members
+end
+
+"""
     particle_keys(dir, iout, t) -> Vector{Float64}
 
 Hilbert keys of all particles of an output (used to balance the new domains).
@@ -135,10 +152,11 @@ function convert_particles(dir, iout, outdir, t::GlobalTree, dec::Decomposition;
             dest[k][i] = particle_owner(t, dec, part_position(f, i))
         end
     end
-    counts = zeros(Int, dec.ncpu)
-    for dk in dest, r in dk
-        counts[r] += 1
-    end
+    # the particles of each new rank as (old file, index) pairs, in file order
+    fileof = reduce(vcat, [fill(Int32(k), f.npart) for (k, f) in enumerate(files)]; init=Int32[])
+    indexin = reduce(vcat, [Int32.(1:f.npart) for f in files]; init=Int32[])
+    members = rank_members(reduce(vcat, dest; init=Int32[]), dec.ncpu)
+    counts = length.(members)
 
     # 2. global header values
     nstar_tot = files[1].nstar_tot
@@ -155,7 +173,7 @@ function convert_particles(dir, iout, outdir, t::GlobalTree, dec::Decomposition;
     (jpartp > 0 && fsize[jpartp] != 4) && (jpartp = 0)
 
     # 3. one new file per rank: gather each field's bytes from the old files
-    for r in 1:dec.ncpu
+    Threads.@threads for r in 1:dec.ncpu
         FortranWriter(part_filename(outdir, iout, r)) do w
             write_record(w, Int32(dec.ncpu))
             write_record(w, Int32(3))
@@ -168,8 +186,8 @@ function convert_particles(dir, iout, outdir, t::GlobalTree, dec::Decomposition;
             for j in 1:nfield
                 buf = Vector{UInt8}(undef, counts[r] * fsize[j])
                 q = 1
-                for (k, f) in enumerate(files), i in 1:f.npart
-                    dest[k][i] == r || continue
+                for m in members[r]
+                    k, i = fileof[m], indexin[m]; f = files[k]
                     if j == jpartp && lts !== nothing && Int8(f.data[f.field_offset[jfam]+i-1] % Int8) == 0
                         # gas tracer: its partp is a memory index on the rank, recompute it for rank r
                         p = leaf_cell_pointer(t, lts[r], part_position(f, i), ngridmax)

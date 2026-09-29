@@ -110,16 +110,16 @@ function write_header_file(path, families::AbstractVector, names::Vector{String}
     end
 end
 
-"Bytes of column `c` element `i` for descriptor type `t`."
-function _encode!(buf, q, c::AbstractVector, i, t::Char)
-    x = t == 'd' ? Float64(c[i]) : t == 'i' ? Int32(c[i]) : t == 'q' ? Int64(c[i]) :
-        t == 'b' ? Int8(c[i]) : t == 'h' ? Int16(c[i]) : t == 'f' ? Float32(c[i]) :
-        error("particle field type '$t' is not supported")
-    bytes = reinterpret(UInt8, [x])
-    copyto!(buf, q, bytes, 1, length(bytes))
-    return q + length(bytes)
+"Julia type of a particle field of descriptor type `t` (pm/output_part.f90)."
+function _fieldtype(t::Char)
+    t == 'd' && return Float64
+    t == 'f' && return Float32
+    t == 'q' && return Int64
+    t == 'i' && return Int32
+    t == 'h' && return Int16
+    t == 'b' && return Int8
+    error("particle field type '$t' is not supported")
 end
-_typesize(t::Char) = t == 'd' || t == 'q' ? 8 : t == 'i' || t == 'f' ? 4 : t == 'h' ? 2 : 1
 
 """
     write_particles_table(outdir, iout, t, dec, pt; nstar_tot, nsink) -> counts
@@ -136,15 +136,16 @@ function write_particles_table(outdir, iout, t::GlobalTree, dec::Decomposition, 
     Threads.@threads for i in 1:n
         dest[i] = particle_owner(t, dec, (Float64(x[i]), Float64(y[i]), Float64(z[i])))
     end
-    counts = [count(==(r), dest) for r in 1:dec.ncpu]
+    members = rank_members(dest, dec.ncpu)
     jfam = findfirst(==("family"), pt.names)
     jm = findfirst(==("mass"), pt.names)
     mstar = (jfam === nothing || jm === nothing) ? 0.0 :
             sum(Float64(pt.columns[jm][i]) for i in 1:n if pt.columns[jfam][i] == 2; init=0.0)
     seed_len = "partp" in pt.names ? 8 : 4                   # tracer_seed follows localseed with MC tracers
     jp = findfirst(==("partp"), pt.names)
-    for r in 1:dec.ncpu
-        idx = findall(==(r), dest)
+    types = map(_fieldtype, pt.types)
+    Threads.@threads for r in 1:dec.ncpu
+        idx = members[r]
         if jp !== nothing && lts !== nothing && jfam !== nothing
             # gas tracers: partp = memory index of the cell they sit in, on THIS rank
             for i in idx
@@ -158,17 +159,12 @@ function write_particles_table(outdir, iout, t::GlobalTree, dec::Decomposition, 
             write_record(w, Int32(nstar_tot))
             write_record(w, r == 1 ? mstar : 0.0); write_record(w, 0.0)
             write_record(w, Int32(nsink))
-            for (c, tp) in zip(pt.columns, pt.types)
-                buf = Vector{UInt8}(undef, length(idx) * _typesize(tp))
-                q = 1
-                for i in idx
-                    q = _encode!(buf, q, c, i, tp)
-                end
-                write_record(w, buf)
+            for (c, T) in zip(pt.columns, types)
+                write_record(w, T[c[i] for i in idx])
             end
         end
     end
-    return counts
+    return length.(members)
 end
 
 """
@@ -271,10 +267,13 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
         pt = inp.particles
         npart = write_particles_table(dst, iout, t, dec, pt; nstar_tot=inp.nstar_tot, nsink=inp.nsink,
                                       lts=lts, ngridmax=gmax)
-        write_descriptor(joinpath(dst, "part_file_descriptor.txt"), pt.names, pt.types)
-        jfam = findfirst(==("family"), pt.names)
-        write_header_file(joinpath(dst, "header_$(lpad(iout, 5, '0')).txt"),
-                          jfam === nothing ? fill(1, length(pt.columns[1])) : pt.columns[jfam], pt.names)
+        # legacy files have neither: the reader knows their layout (a header, if any, is copied)
+        if !inp.legacy_particles
+            write_descriptor(joinpath(dst, "part_file_descriptor.txt"), pt.names, pt.types)
+            jfam = findfirst(==("family"), pt.names)
+            write_header_file(joinpath(dst, "header_$(lpad(iout, 5, '0')).txt"),
+                              jfam === nothing ? fill(1, length(pt.columns[1])) : pt.columns[jfam], pt.names)
+        end
     end
     sinks === nothing || write_sink_csv(joinpath(dst, "sink_$(lpad(iout, 5, '0')).csv"), sinks...)
     write_descriptor(joinpath(dst, "hydro_file_descriptor.txt"), inp.hydro.names, fill('d', length(inp.hydro.names)))
