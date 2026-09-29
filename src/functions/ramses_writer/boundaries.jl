@@ -158,7 +158,7 @@ Does the local tree rebuilt for rank 1 with RAMSES's own decomposition hold exac
 rank 1's file, list by list (own, ghost and boundary grids)? This is how settings the files do not
 record (wall types, the MHD ghost width) are chosen: by what reproduces RAMSES.
 """
-function rank1_reproduced(t, dir, iout, nexp::Integer; dec=decompose(t, Int(t.header.ncpu); bound_key=copy(t.header.bound_key)))
+function rank1_reproduced(t, dir, iout, nexp::Integer; dec=own_decomposition(t))
     ncpu = Int(t.header.ncpu); nb = length(t.boundaries); L = nlevels(t)
     _, lists = read_amr_file(amr_filename(dir, iout, 1))
     lt = build_local_tree(t, dec, 1; nexpand_bound=nexp)
@@ -183,7 +183,7 @@ reflexive walls, nearest for outflow and imposed ones), so a wrong guess changes
 Keep the wall types, and the ghost width, that reproduce rank 1's file, or stop.
 """
 function settle_boundary_types!(t, dir, iout)
-    dec = decompose(t, Int(t.header.ncpu); bound_key=copy(t.header.bound_key))
+    dec = own_decomposition(t)
     for nexp in unique([detect_nexpand_bound(dir), 1, 2]), base in (10, 0)     # outflow, then reflexive
         for ib in eachindex(t.boundaries)
             b = t.boundaries[ib]; t.boundaries[ib] = Boundary(b.lo, b.hi, base + b.btype % 10)

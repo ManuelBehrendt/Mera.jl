@@ -81,11 +81,7 @@ function write_info_new(path, dec::Decomposition, m::Dict{Symbol,Any})
             println(io, lab, E(m[k]))
         end
         println(io)
-        println(io, rpad("ordering type=hilbert", 94))
-        println(io, "   DOMAIN   ind_min                 ind_max")
-        for idom in 1:length(dec.bound_key)-1
-            println(io, @sprintf("%8d", idom), " ", E(dec.bound_key[idom]), " ", E(dec.bound_key[idom+1]))
-        end
+        foreach(l -> println(io, l), info_ordering_lines(dec))
     end
 end
 
@@ -182,7 +178,8 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
                       sinks=nothing, copy_from::Union{Nothing,AbstractString}=nothing,
                       namelist_text::AbstractString="", overload::Integer=1,
                       nexpand_bound::Union{Integer,Symbol}=:auto, ngridmax::Union{Integer,Symbol}=:auto,
-                      overwrite::Bool=false, verbose::Bool=true, iogroupsize::Integer=0)
+                      overwrite::Bool=false, verbose::Bool=true, iogroupsize::Integer=0,
+                      ordering::Symbol=:hilbert)
     t0 = time()
     iout = inp.output
     dst = joinpath(outpath, "output_" * lpad(iout, 5, '0'))
@@ -242,17 +239,16 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
     inp.rt === nothing || push!(setnames, inp.rt.names)
     no_inflow = lowercase(get(inp.boundary_group, "no_inflow", [".false."])[1]) in (".true.", "t", "true", ".t.")
 
-    verbose && println("[3/5] Hilbert decomposition and local octrees for $ncpu ranks")
-    pkeys = Float64[]
+    verbose && println("[3/5] $ordering decomposition and local octrees for $ncpu ranks")
+    points = NTuple{3,Float64}[]
     if inp.particles !== nothing
         g = t.geom
         for i in eachindex(inp.particles.columns[1])
             x = ntuple(d -> Float64(inp.particles.columns[d][i]), 3)
-            x = ntuple(d -> g.periodic[d] ? mod(x[d], t.header.boxlen) : x[d], 3)
-            push!(pkeys, key_of(t, x))
+            push!(points, ntuple(d -> g.periodic[d] ? mod(x[d], t.header.boxlen) : x[d], 3))
         end
     end
-    dec = decompose(t, ncpu; overload, extra_keys=pkeys)
+    dec = new_decomposition(t, ncpu; ordering, overload, points)
     lts = Vector{LocalTree}(undef, ncpu)
     Threads.@threads for k in 1:ncpu
         lts[k] = build_local_tree(t, dec, k; nexpand_bound=nexp)

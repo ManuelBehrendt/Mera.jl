@@ -32,12 +32,8 @@ function write_info_file(src::AbstractString, dst::AbstractString, dec::Decompos
     for l in lines
         if startswith(l, "ncpu")
             push!(out, @sprintf("ncpu        =%11d", dec.ncpu))
-        elseif occursin("DOMAIN", l) && occursin("ind_min", l)
-            push!(out, l)
-            for idom in 1:length(dec.bound_key)-1
-                push!(out, @sprintf("%8d", idom) * " " * fortran_E(dec.bound_key[idom]) * " " *
-                           fortran_E(dec.bound_key[idom+1]))
-            end
+        elseif startswith(l, "ordering type=")
+            append!(out, info_ordering_lines(dec))
             break                                  # the table is the end of the file
         else
             push!(out, l)
@@ -59,6 +55,30 @@ function is_global_file(name::AbstractString)
     occursin(r"\.(out|txt|csv|dat)\d{5}$", name) && return false   # per-rank files
     occursin(r"^info_\d{5}\.txt$", name) && return false       # regenerated
     return true
+end
+
+"""
+    info_ordering_lines(dec) -> Vector{String}
+
+The end of `info_XXXXX.txt` (amr/output_amr.f90): the ordering, then the Hilbert domain table
+(`(I8,1X,E23.15,1X,E23.15)`), or for bisection each rank's box and load, one value per line.
+"""
+function info_ordering_lines(dec::Decomposition)
+    out = ["ordering type=" * rpad(ordering_name(dec), 80)]
+    if dec.bisection === nothing
+        push!(out, "   DOMAIN   ind_min                 ind_max")
+        for idom in 1:length(dec.bound_key)-1
+            push!(out, @sprintf("%8d", idom) * " " * fortran_E(dec.bound_key[idom]) * " " *
+                       fortran_E(dec.bound_key[idom+1]))
+        end
+    else
+        b = dec.bisection
+        for k in 1:dec.ncpu
+            foreach(x -> push!(out, fortran_E(x)), (b.boxmin[k, :]..., b.boxmax[k, :]...))
+            push!(out, fortran_E(b.load[k]))
+        end
+    end
+    return out
 end
 
 """

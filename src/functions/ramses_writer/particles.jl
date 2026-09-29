@@ -81,7 +81,7 @@ function particle_owner(t::GlobalTree, dec::Decomposition, x::NTuple{3,Float64})
     end
     ig = Coord(ntuple(d -> floor(Int32, xc[d]), 3))
     gpos = find_grid(t, 1, ig)
-    gpos == 0 && return cpu_of_key(key_of(t, x), dec.bound_key, dec.ncpu)   # outside the tree
+    gpos == 0 && return owner_of_point(t, dec, x)                          # outside the tree
     l = 1
     while l < nlevels(t)
         cell = ntuple(d -> floor(Int, xc[d] * 2.0^l), 3)                  # cell coords at level l
@@ -110,25 +110,24 @@ function rank_members(dest::AbstractVector{<:Integer}, ncpu::Integer)
 end
 
 """
-    particle_keys(dir, iout, t) -> Vector{Float64}
+    particle_positions(dir, iout, t) -> Vector{NTuple{3,Float64}}
 
-Hilbert keys of all particles of an output (used to balance the new domains).
+Positions of all particles of an output, wrapped into the box in periodic directions as RAMSES
+does (used to balance the new domains).
 """
-function particle_keys(dir, iout, t::GlobalTree)
-    keys = Float64[]
+function particle_positions(dir, iout, t::GlobalTree)
+    pos = NTuple{3,Float64}[]
     k = 1
     g = t.geom
     while isfile(part_filename(dir, iout, k))
         f = open_part_file(part_filename(dir, iout, k))
         for i in 1:f.npart
             x = part_position(f, i)
-            # wrap into the box in periodic directions, as RAMSES does
-            x = ntuple(d -> g.periodic[d] ? mod(x[d], t.header.boxlen) : x[d], 3)
-            push!(keys, key_of(t, x))
+            push!(pos, ntuple(d -> g.periodic[d] ? mod(x[d], t.header.boxlen) : x[d], 3))
         end
         k += 1
     end
-    return keys
+    return pos
 end
 
 """

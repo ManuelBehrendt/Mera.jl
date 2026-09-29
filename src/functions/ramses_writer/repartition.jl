@@ -125,6 +125,7 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
                      namelist::AbstractString=joinpath(global_dir(output_dir), "namelist.txt"),
                      balance_particles::Bool=true,
                      iogroupsize::Integer=0,
+                     ordering::Symbol=:auto,
                      overwrite::Bool=false,
                      verbose::Bool=true)
     t0 = time()
@@ -158,9 +159,11 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
     verbose && println("      $(sum(ngrids, t.levels)) grids on $(nlevels(t)) levels, ncpu = $ncpu_old, ",
                        isempty(t.boundaries) ? "periodic box" : "$(length(t.boundaries)) physical boundaries",
                        ", nexpand_bound = $nexp")
-    verbose && println("[2/5] Hilbert decomposition for $ncpu ranks")
-    pkeys = balance_particles ? particle_keys(src, iout, t) : Float64[]
-    dec = decompose(t, ncpu; overload, extra_keys=pkeys)
+    # RAMSES restarts only with the ordering of its namelist, which the files must match
+    ord = ordering === :auto ? Symbol(strip(t.header.ordering)) : ordering
+    verbose && println("[2/5] $ord decomposition for $ncpu ranks")
+    points = balance_particles ? particle_positions(src, iout, t) : NTuple{3,Float64}[]
+    dec = new_decomposition(t, ncpu; ordering=ord, overload, points)
 
     # 2. every rank's local tree -----------------------------------------------
     verbose && println("[3/5] building the local octree of every rank")

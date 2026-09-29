@@ -110,8 +110,10 @@ function build_local_tree(t::GlobalTree, dec::Decomposition, k::Integer; nexpand
     nbnd = length(t.boundaries)
     nx, lmax = t.geom.nx_loc, t.header.nlevelmax
     scale = box_scale(t)
-    # this rank's key intervals (one per overload sub-domain)
-    walls = [(dec.bound_key[k+(s-1)*ncpu], dec.bound_key[k+1+(s-1)*ncpu]) for s in 1:dec.overload]
+    # this rank's key intervals (one per overload sub-domain), or its box under bisection
+    b = dec.bisection
+    walls = b === nothing ? [(dec.bound_key[k+(s-1)*ncpu], dec.bound_key[k+1+(s-1)*ncpu]) for s in 1:dec.overload] :
+            Tuple{Float64,Float64}[]
 
     selected = [Int32[] for _ in 1:L]
     selected[1] = collect(Int32, 1:ngrids(t.levels[1]))     # level 1: everywhere
@@ -132,8 +134,12 @@ function build_local_tree(t::GlobalTree, dec::Decomposition, k::Integer; nexpand
             if owned[s]
                 flag2[s, ind] = true
             else
-                kmin, kmax = cell_key_range(cell_center(t, l, g, ind), l, scale, nx, lmax)
-                flag2[s, ind] = any(w -> kmax > w[1] && kmin < w[2], walls)
+                if b === nothing
+                    kmin, kmax = cell_key_range(cell_center(t, l, g, ind), l, scale, nx, lmax)
+                    flag2[s, ind] = any(w -> kmax > w[1] && kmin < w[2], walls)
+                else
+                    flag2[s, ind] = cell_overlaps_box(b, k, cell_center(t, l, g, ind), 0.5^l * scale)
+                end
             end
         end
 

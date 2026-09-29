@@ -160,8 +160,8 @@ function read_global_tree(dir::AbstractString, iout::Integer; verbose::Bool=true
     hdr1, _ = read_amr_file(amr_filename(dir, iout, 1))
     ncpu, L = Int(hdr1.ncpu), Int(hdr1.nlevelmax)
     hdr1.ndim == 3 || error("Only 3-D outputs are supported (ndim = $(hdr1.ndim)).")
-    strip(hdr1.ordering) == "hilbert" ||
-        error("Only ordering='hilbert' is supported (found '$(strip(hdr1.ordering))').")
+    strip(hdr1.ordering) in ("hilbert", "bisection") ||
+        error("Only ordering='hilbert' or 'bisection' is supported (found '$(strip(hdr1.ordering))').")
 
     ig      = [Coord[] for _ in 1:L]
     xg      = [Vector{Float64}[] for _ in 1:L]

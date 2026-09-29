@@ -12,7 +12,8 @@
     Decomposition
 
 A domain decomposition: `bound_key[1:ndomain+1]` holds RAMSES's
-`bound_key(0:ndomain)`; `cpu_map[l]` is the owner of every cell (ngrid × 8)
+`bound_key(0:ndomain)` (Hilbert ordering), or `bisection` the tree of
+ordering='bisection'; `cpu_map[l]` is the owner of every cell (ngrid × 8)
 at level `l`; `cpu_map_coarse` the owner of every coarse cell.
 """
 struct Decomposition
@@ -21,6 +22,27 @@ struct Decomposition
     bound_key::Vector{Float64}
     cpu_map::Vector{Matrix{Int32}}
     cpu_map_coarse::Vector{Int32}
+    bisection::Union{Nothing,BisectionTree}
+end
+Decomposition(ncpu, overload, bk, cpu_map, cmc) = Decomposition(ncpu, overload, bk, cpu_map, cmc, nothing)
+
+"RAMSES's ordering name of a decomposition, as the files spell it."
+ordering_name(dec::Decomposition) = dec.bisection === nothing ? "hilbert" : "bisection"
+
+"Rank owning the point `x` (user units) under a decomposition."
+owner_of_point(t::GlobalTree, dec::Decomposition, x) =
+    dec.bisection === nothing ? cpu_of_key(key_of(t, x), dec.bound_key, dec.ncpu) : bisection_cpu(dec.bisection, x)
+
+"""
+    own_decomposition(t) -> Decomposition
+
+The decomposition an output was written with: its domain walls (Hilbert) or its tree (bisection).
+"""
+function own_decomposition(t::GlobalTree)
+    ncpu = Int(t.header.ncpu)
+    strip(t.header.ordering) == "bisection" ?
+        decompose(t, ncpu; bisection=bisection_from_records(t.header.bisection_records, ncpu)) :
+        decompose(t, ncpu; bound_key=copy(t.header.bound_key))
 end
 
 # Geometry helpers ------------------------------------------------------------
@@ -126,7 +148,9 @@ ones (`extra_keys`: particle keys that count towards the load, see
 """
 function decompose(t::GlobalTree, ncpu::Integer; overload::Integer=1,
                    bound_key::Union{Nothing,Vector{Float64}}=nothing,
-                   extra_keys::Vector{Float64}=Float64[])
+                   extra_keys::Vector{Float64}=Float64[],
+                   bisection::Union{Nothing,BisectionTree}=nothing)
+    bisection === nothing || return _decompose_bisection(t, ncpu, bisection)
     bk = bound_key === nothing ? balanced_bound_key(t, ncpu; overload, extra_keys) : bound_key
     length(bk) == ncpu * overload + 1 || error("bound_key must have ncpu*overload+1 entries")
     cpu_map = Matrix{Int32}[]
@@ -145,6 +169,42 @@ function decompose(t::GlobalTree, ncpu::Integer; overload::Integer=1,
     cmc = Int32[inside_box(t, c) ? cpu_of_key(key_of(t, coarse_center(t, c)), bk, ncpu) : 0
                 for c in 1:ncoarse]
     return Decomposition(ncpu, overload, bk, cpu_map, cmc)
+end
+
+"""
+    new_decomposition(t, ncpu; ordering=:hilbert, overload=1, points=[]) -> Decomposition
+
+Balanced domains for `ncpu` ranks in RAMSES's `ordering` (`:hilbert` or `:bisection`), each
+cell and each of `points` (particle positions) counting one unit of load.
+"""
+function new_decomposition(t::GlobalTree, ncpu::Integer; ordering::Symbol=:hilbert, overload::Integer=1,
+                           points::Vector{NTuple{3,Float64}}=NTuple{3,Float64}[])
+    if ordering === :bisection
+        overload == 1 || error("overload > 1 is used with the Hilbert ordering only")
+        return decompose(t, ncpu; bisection=balanced_bisection(t, ncpu; extra_points=points))
+    end
+    ordering === :hilbert || error("ordering must be :hilbert or :bisection, not :$ordering")
+    keys = Vector{Float64}(undef, length(points))
+    Threads.@threads for i in eachindex(points)
+        keys[i] = key_of(t, points[i])
+    end
+    return decompose(t, ncpu; overload, extra_keys=keys)
+end
+
+function _decompose_bisection(t::GlobalTree, ncpu::Integer, b::BisectionTree)
+    cpu_map = Matrix{Int32}[]
+    for l in 1:nlevels(t)
+        n = ngrids(t.levels[l])
+        m = zeros(Int32, n, 8)
+        Threads.@threads for i in 1:n
+            for ind in 1:8
+                m[i, ind] = bisection_cpu(b, cell_center(t, l, i, ind))
+            end
+        end
+        push!(cpu_map, m)
+    end
+    cmc = Int32[inside_box(t, c) ? bisection_cpu(b, coarse_center(t, c)) : 0 for c in 1:length(t.flag1_coarse)]
+    return Decomposition(ncpu, 1, Float64[], cpu_map, cmc, b)
 end
 
 """

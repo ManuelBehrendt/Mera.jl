@@ -125,7 +125,9 @@ function amr_file_content(t::GlobalTree, dec::Decomposition, lt::LocalTree, ngri
     hdr.numbtot = numbtot
     hdr.headb, hdr.tailb, hdr.numbb = headb, tailb, copy(lt.numbb)
     hdr.free_mem = Int32[N + 1, ngridmax, ngridmax - N, N, used_mem_tot]
+    hdr.ordering = rpad(ordering_name(dec), 128)
     hdr.bound_key = dec.bound_key
+    hdr.bisection_records = dec.bisection === nothing ? Vector{UInt8}[] : bisection_records(dec.bisection)
     hdr.son_coarse = son_coarse
     hdr.flag1_coarse = Int32[s > 0 ? 1 : 0 for s in son_coarse]
     hdr.cpu_map_coarse = dec.cpu_map_coarse

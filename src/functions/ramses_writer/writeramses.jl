@@ -50,6 +50,21 @@ function _boundary_group(info)
     return out
 end
 
+"""
+    _ordering(info) -> Symbol
+
+RAMSES's domain ordering of the run: from the namelist (`&RUN_PARAMS ordering`), else from the
+original output, else RAMSES's default `:hilbert`. A restart needs the files in the ordering its
+namelist names.
+"""
+function _ordering(info)
+    v = get(_nml_group(info, "&RUN_PARAMS"), "ordering", String[])
+    isempty(v) || return Symbol(strip(first(v), ['\'', '"', ' ']))
+    d = _original_dir(info)
+    d === nothing && return :hilbert
+    return Symbol(strip(_RW.read_amr_file(_RW.amr_filename(d, info.output, 1))[1].ordering))
+end
+
 "`&REFINE_PARAMS interpol_var` of the run (RAMSES's default 0 when it is not set)."
 function _interpol_var(info)
     v = get(_nml_group(info, "&REFINE_PARAMS"), "interpol_var", String[])
@@ -324,7 +339,8 @@ end
 
 """
     writeramses(ncpu; hydro, gravity=nothing, rt=nothing, particles=nothing, sinks=nothing,
-                outpath, overwrite=false, verbose=true, force=false, iogroupsize=0) -> RepartitionReport
+                outpath, overwrite=false, verbose=true, force=false, iogroupsize=0,
+                ordering=:auto) -> RepartitionReport
 
 Write a restartable RAMSES output with `ncpu` files from Mera data (loaded with
 `gethydro`/`getgravity`/`getrt`/`getparticles`/`getsinks`, or from mera files
@@ -340,11 +356,13 @@ is gone. `force=true` writes the last one anyway, and also incomplete data;
 such an output is for inspection, not for a faithful restart.
 
 `iogroupsize = n > 0` writes the files of every n ranks into one `group_GGGGG` folder, as RAMSES
-does with `IOGROUPSIZEREP = n`; the restart namelist must then set the same value.
+does with `IOGROUPSIZEREP = n`; RAMSES must then run with the same value. `ordering` is the domain
+decomposition, `:hilbert` or `:bisection`; `:auto` takes the run's own (its namelist, or the
+original output), which the restart namelist names.
 """
 function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particles=nothing, sinks=nothing,
                      outpath::AbstractString, overwrite::Bool=false, verbose::Bool=true, force::Bool=false,
-                     iogroupsize::Integer=0)
+                     iogroupsize::Integer=0, ordering::Symbol=:auto)
     info = hydro.info
     ok, rep = restart_completeness(hydro; gravity, rt, particles, sinks)
     if !ok
@@ -441,7 +459,8 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
     nml = join(("$grp\n" * join(("$k=$v" for (k, v) in g), "\n") * "\n/\n"
                 for (grp, g) in info.namelist_content if startswith(string(grp), "&")), "\n")
     report = _RW.write_ramses(inp, ncpu; outpath, meta, sinks=sinkdata, copy_from=_original_dir(info),
-                             namelist_text=nml, overwrite, verbose, iogroupsize)
+                             namelist_text=nml, overwrite, verbose, iogroupsize,
+                             ordering=ordering === :auto ? _ordering(info) : ordering)
     verbose && println("amr header from: ", hsource)
     return report
 end

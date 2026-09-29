@@ -110,6 +110,13 @@ end
             @test kmin <= k < kmax
         end
         @test RW.domain_of_key(5.0, [0.0, 5.0, 5.0, 10.0]) == 3     # an empty domain is skipped, as in RAMSES
+        # bisection trees have RAMSES's size, and survive the amr-file records
+        @test [RW.nbinodes(n) for n in (1, 2, 3, 4, 5, 8, 9)] == [1, 3, 7, 7, 15, 15, 31]
+        bt = RW.BisectionTree([0.5, 0.25, 0.0], Int32[2 3; 0 0; 0 0], Int32[0, 1, 2],
+                              [0 0 0; 0.5 0 0.0], [0.5 1 1; 1 1 1.0], zeros(2))
+        rt = RW.bisection_from_records(RW.bisection_records(bt), 2)
+        @test rt.wall == bt.wall && rt.next == bt.next && rt.indx == bt.indx && rt.boxmax == bt.boxmax
+        @test RW.bisection_cpu(bt, (0.5, 0.9, 0.9)) == 1 && RW.bisection_cpu(bt, (0.51, 0.1, 0.1)) == 2
         # deep keys (wider than the 53 bits of a double) round exactly as the reference does
         rng = Random.MersenneTwister(1)
         for bits in (10, 19, 25)
@@ -193,6 +200,31 @@ end
         @testset "round trip to 3 ranks and back" begin
             repartition(o, joinpath(tmp, "n3"), info.ncpu; outpath=joinpath(tmp, "back"), verbose=false)
             c = compareramses(o, fx.path, joinpath(tmp, "back"))
+            @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
+        end
+
+        @testset "ordering='bisection'" begin
+            # the box cut recursively instead of the Hilbert curve (amr/bisection.f90)
+            out = joinpath(tmp, "bisec")
+            repartition(o, fx.path, 5; outpath=out, ordering=:bisection, verbose=false)
+            b = joinpath(out, "output_" * lpad(o, 5, '0'))
+            t = RW.read_global_tree(b, o; verbose=false)
+            @test strip(t.header.ordering) == "bisection"
+            c = compareramses(o, fx.path, out)
+            @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff)) && c.particle_maxdiff == (0.0, 0.0)
+            # every rank's file is what the stored tree gives: the owners, the ghost cells (a cell
+            # touching the rank's box, closed bounds) and the tree records
+            dec = RW.own_decomposition(t)
+            @test all(RW.bisection_cpu(dec.bisection, x) == k for k in 1:5
+                      for x in (0.5 .* (dec.bisection.boxmin[k, :] .+ dec.bisection.boxmax[k, :]),))
+            @test RW.rank1_reproduced(t, b, o, RW.detect_nexpand_bound(b); dec)
+            # Mera reads a bisection output (every file, as there are no Hilbert walls)
+            ib = getinfo(o, out, verbose=false)
+            @test all(isnan, ib.grid_info.bound_key)
+            @test msum(gethydro(ib; q...)) ≈ msum(gethydro(info; q...)) rtol=1e-14
+            # and back to Hilbert
+            repartition(o, out, info.ncpu; outpath=joinpath(tmp, "bisec_back"), ordering=:hilbert, verbose=false)
+            c = compareramses(o, fx.path, joinpath(tmp, "bisec_back"))
             @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
         end
 
