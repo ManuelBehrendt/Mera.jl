@@ -19,8 +19,9 @@ the output. Mera can rewrite an output for any other number, in two ways:
 | the RAMSES output | [`repartition`](@ref) | every value bit-identical; RAMSES continues the run to round-off |
 | only Mera data or a mera file | [`writeramses`](@ref) | leaves bit-identical; refined cells rebuilt from them; RAMSES continues the run, physically consistent |
 
-This page shows what each step does and why, and then checks the result three ways: against
-RAMSES's own files, value by value, and by letting RAMSES continue the run. Every number and
+This page shows what each step does and why, and then checks the result four ways: against
+RAMSES's own files, value by value, by RAMSES reading the files without taking a step, and by
+letting RAMSES continue the run. Every number and
 figure below is computed on this page, and RAMSES itself runs from it.
 
 Supported: 3-D runs with `ordering='hilbert'`, periodic or simple physical boundaries
@@ -33,6 +34,9 @@ sink clouds), sinks and clumps. Not yet: `ordering='bisection'`, IO groups
 # Point these at your own runs and build, or set the environment variables.
 RUNS   = get(ENV, "MERA_RAMSESRUNS", "/Volumes/FASTStorage/projects/RamsesConverter/testruns")
 RAMSES = get(ENV, "MERA_RAMSES_BIN", "/Volumes/FASTStorage/projects/RamsesConverter/build/hydro/bin/ramses3d")
+# the same RAMSES with ONE line disabled, so it can write its memory right after reading (section 6)
+RAMSES_READBACK = get(ENV, "MERA_RAMSES_READBACK_BIN",
+                      "/Volumes/FASTStorage/projects/RamsesConverter/build/readback-hydro/bin/ramses3d")
 MPIRUN = get(ENV, "MERA_MPIRUN", "/opt/local/bin/mpirun")
 # the validation tables of the full test suite (section 6), produced by the same code
 SUITE  = get(ENV, "MERA_RAMSESSUITE", "/Volumes/FASTStorage/projects/RamsesConverter/e2e/results")
@@ -68,26 +72,31 @@ dm_gas: ncpu = 4, particles: 30000
 ```julia
 # ── tools used below, no new Mera concepts ──
 # Run RAMSES in `dir` from output `n` on `ncpu` ranks; true if it finished normally.
-function run_ramses(dir, nml, n, ncpu)
+function run_ramses(dir, nml, n, ncpu; bin=RAMSES)
     log = joinpath(dir, "run.log")
-    ok = success(pipeline(Cmd(`$MPIRUN -np $ncpu $RAMSES $nml $n`; dir=dir); stdout=log, stderr=log))
+    ok = success(pipeline(Cmd(`$MPIRUN -np $ncpu $bin $nml $n`; dir=dir); stdout=log, stderr=log))
     return ok && occursin("Run completed", read(log, String))
 end
 
 # A restart namelist: the run's own, with the memory per rank set to what the new ranks need.
-function restart_namelist(src, dst; ngridmax, npartmax=0)
+function restart_namelist(src, dst; ngridmax, npartmax=0, run_extra="", output_extra="")
     txt = read(src, String)
-    txt = replace(txt, r"^\s*(ngridmax|ngridtot|npartmax|nparttot)\s*=.*$"mi => "")
+    txt = replace(txt, r"^\s*(ngridmax|ngridtot|npartmax|nparttot|nstepmax|foutput)\s*=.*$"mi => "")
     txt = replace(txt, r"^&AMR_PARAMS\s*$"mi =>
                   "&AMR_PARAMS\nngridmax=$ngridmax" * (npartmax > 0 ? "\nnpartmax=$npartmax" : ""))
+    isempty(run_extra)    || (txt = replace(txt, r"^&RUN_PARAMS\s*$"mi => "&RUN_PARAMS\n$run_extra"))
+    isempty(output_extra) || (txt = replace(txt, r"^&OUTPUT_PARAMS\s*$"mi => "&OUTPUT_PARAMS\n$output_extra"))
     write(dst, txt)
 end
 
-# The value of the finest (leaf) cell under each pixel of an n×n slice at height z (box units).
-function slice_map(t, z, n, value)
+# The value of the finest (leaf) cell under each pixel of an n×n slice. The slice is the plane
+# perpendicular to box axis `axis` (1 = x, 2 = y, 3 = z) at `pos` (box units); the default is the
+# x-y plane at height z = pos.
+function slice_map(t, pos, n, value; axis=3)
     img = fill(NaN, n, n)
     for i in 1:n, j in 1:n
-        x = ((i - 0.5) / n, (j - 0.5) / n, z)
+        u, v = (i - 0.5) / n, (j - 0.5) / n
+        x = axis == 3 ? (u, v, pos) : axis == 2 ? (u, pos, v) : (pos, u, v)
         g = RW.find_grid(t, 1, RW.Coord((0, 0, 0))); l = 1
         while true
             c = ntuple(d -> floor(Int, x[d] * 2^l), 3)
@@ -118,7 +127,19 @@ function label_ranks!(ax, img, n)
               fontsize=15, font=:bold, strokecolor=:black, strokewidth=1.5)
     end
 end
-ok_mark(b) = b ? "yes" : "NO";
+ok_mark(b) = b ? "yes" : "NO"
+
+# Every leaf cell: level, grid, cell index, centre (box units) and size.
+function leaf_cells(t)
+    out = NamedTuple[]
+    for l in 1:RW.nlevels(t), (g, ig) in enumerate(t.levels[l].ig), ind in 1:8
+        RW.is_refined(t, l, ig, ind) && continue
+        o = RW.cell_offset(ind)
+        c = (2ig[1] + o[1], 2ig[2] + o[2], 2ig[3] + o[3])
+        push!(out, (l=l, g=g, ind=ind, x=(c .+ 0.5) ./ 2^l, dx=1 / 2^l))
+    end
+    out
+end;
 ```
 
 ## 1. Why this is needed
@@ -153,27 +174,90 @@ what each rank holds in memory: its own grids, the ghost grids and the boundary 
 pointers (father, neighbours, children).
 
 Changing the number of ranks therefore changes every file: the curve is cut differently, other
-cells become ghosts, and every pointer changes. The left panel is the decomposition RAMSES itself
-wrote; the other two are the ones `repartition` computes for 3 and 7 ranks.
+cells become ghosts, and every pointer changes.
+
+The figures use the Sedov blast, which sits in the corner at the origin of a periodic box.
+Domains are 3-D, so one slice is not enough: the first figure cuts all three box planes through
+the blast (x-y, x-z and y-z, each just inside the box face at 0.03). The top row is the
+decomposition RAMSES wrote on 4 CPUs; the other rows are what `repartition` computes for 3 and
+7 CPUs. The blast has the finest cells, so the domains there are small: a domain holds a share of
+the cells, not of the volume.
 
 ```julia
 t = RW.read_global_tree(joinpath(SEDOV, "output_00006"), 6; verbose=false)
-n, z = 256, 0.03                     # a slice just above the blast, which sits at the origin
-fig = Figure(size=(1050, 390))
-for (col, ncpu) in enumerate((4, 3, 7))
-    # ncpu = 4 with RAMSES's own curve cuts (bound_key from the files): what RAMSES wrote
-    dec = ncpu == 4 ? RW.decompose(t, 4; bound_key=copy(t.header.bound_key)) : RW.decompose(t, ncpu)
-    img = slice_map(t, z, n, (l, g, ind) -> Float64(dec.cpu_map[l][g, ind]))
-    ax = Axis(fig[1, col]; aspect=DataAspect(), xlabel="x / boxlen", ylabel=col == 1 ? "y / boxlen" : "",
-              title = ncpu == 4 ? "as written: 4 CPUs (RAMSES)" : "repartition: $ncpu CPUs")
+n, z = 256, 0.03                 # 0.03: just inside the box faces that meet at the blast
+decs = [(4, "as written: 4 CPUs (RAMSES)", RW.decompose(t, 4; bound_key=copy(t.header.bound_key))),
+        (3, "repartition: 3 CPUs",         RW.decompose(t, 3)),
+        (7, "repartition: 7 CPUs",         RW.decompose(t, 7))]
+planes = [(3, "x-y plane (z = 0.03)", "x", "y"), (2, "x-z plane (y = 0.03)", "x", "z"),
+          (1, "y-z plane (x = 0.03)", "y", "z")]
+fig = Figure(size=(1000, 1000))
+for (row, (ncpu, name, dec)) in enumerate(decs), (col, (axis, pname, xl, yl)) in enumerate(planes)
+    img = slice_map(t, z, n, (l, g, ind) -> Float64(dec.cpu_map[l][g, ind]); axis=axis)
+    ax = Axis(fig[row, col]; aspect=DataAspect(), title = row == 1 ? pname : "",
+              xlabel = row == 3 ? "$xl / boxlen" : "", ylabel = "$yl / boxlen",
+              xticklabelsvisible = row == 3)
     heatmap!(ax, range(0, 1; length=n), range(0, 1; length=n), img;
              colormap=cgrad(CPU_COLORS[1:ncpu]; categorical=true), colorrange=(0.5, ncpu + 0.5))
     label_ranks!(ax, img, n)
+    col == 1 && Label(fig[row, 0], name; rotation=π/2, font=:bold, tellheight=false)
 end
 fig
 ```
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_7_1.png)
+
+```julia
+# The load behind those shapes: cells owned per rank, counted on every level (the unit RAMSES and
+# repartition balance), and each rank's share of the box VOLUME, measured on its leaf cells.
+leaves = leaf_cells(t)
+fig = Figure(size=(1000, 330))
+for (col, (ncpu, name, dec)) in enumerate(decs)
+    cells  = [sum(count(==(k), dec.cpu_map[l]) for l in 1:RW.nlevels(t)) for k in 1:ncpu]
+    volume = [sum(c.dx^3 for c in leaves if dec.cpu_map[c.l][c.g, c.ind] == k; init=0.0) for k in 1:ncpu]
+    ax = Axis(fig[1, col]; title=name, xlabel="rank", ylabel = col == 1 ? "share of the total" : "",
+              xticks=1:ncpu, limits=(nothing, (0, 1)))
+    barplot!(ax, (1:ncpu) .- 0.2, cells ./ sum(cells); width=0.38, color=CPU_COLORS[1:ncpu])
+    barplot!(ax, (1:ncpu) .+ 0.2, volume; width=0.38, color=(:gray, 0.45))
+    @printf("%-28s cells per rank %s   (max/min %.3f)\n", name, string(cells), maximum(cells) / minimum(cells))
+end
+Legend(fig[1, 4], [PolyElement(color=CPU_COLORS[1]), PolyElement(color=(:gray, 0.45))],
+       ["cells (the load)", "volume"]; framevisible=false)
+fig
+```
+
+```
+as written: 4 CPUs (RAMSES)  cells per rank [1050, 1056, 2621, 3353]   (max/min 3.193)
+repartition: 3 CPUs          cells per rank [2693, 2693, 2694]   (max/min 1.000)
+repartition: 7 CPUs          cells per rank [1154, 1154, 1154, 1155, 1154, 1154, 1155]   (max/min 1.001)
+```
+
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_8_3.png)
+
+Coloured bars: after `repartition` every rank holds the same number of cells, to within one. The
+split RAMSES wrote is uneven (1,050 to 3,353 cells): RAMSES balances with its own cost function
+and only every `nremap` steps, and it will rebalance the converted run the same way at its next
+load-balance step. Grey bars: the volume each rank covers is very different, because a rank near
+the blast owns small cells.
+
+The same split in 3-D, one rank per panel, for 3 CPUs (each cube is a leaf cell, drawn at its
+size). Rank 3 is the half with x > 0.5, rank 2 most of the other half, and rank 1 a small block at
+the origin: it holds the fine cells of the blast, a third of all cells in about 5 % of the volume:
+
+```julia
+dec3 = decs[2][3]
+fig = Figure(size=(1050, 380))
+for k in 1:3
+    mine = [c for c in leaves if dec3.cpu_map[c.l][c.g, c.ind] == k]
+    ax = Axis3(fig[1, k]; aspect=:data, title="rank $k of 3: $(length(mine)) leaf cells",
+               xlabel="x", ylabel="y", zlabel="z", limits=(0, 1, 0, 1, 0, 1), azimuth=0.8π)
+    meshscatter!(ax, [Point3f(c.x...) for c in mine]; marker=Rect3f(Vec3f(-0.5), Vec3f(1)),
+                 markersize=[Vec3f(0.92 * c.dx) for c in mine], color=CPU_COLORS[k])
+end
+fig
+```
+
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_10_1.png)
 
 ```julia
 # What rank 2 of 3 keeps in memory, level by level: its own grids and the ghost layer around them.
@@ -198,7 +282,7 @@ Legend(fig[1, 4], [PolyElement(color=c) for c in (CPU_COLORS[1], CPU_COLORS[2], 
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_8_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_11_1.png)
 
 White: the level is not refined there. The ghost layer is one cell wide around the domain (two
 for MHD, whose solver reaches further); RAMSES needs it filled at the restart, so the new files
@@ -229,7 +313,7 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_iBMuXo/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Xlv54X/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
@@ -342,12 +426,104 @@ dm_gas 4 → 7          yes          0.0e+00        30000, 0.0e+00
 
 All differences are exactly zero: the values are copied, never recomputed.
 
-## 6. Check 3: RAMSES continues the run
+## 6. Check 3: RAMSES reads the files exactly
 
-The decisive test. The converted 3-CPU output is restarted with RAMSES on 3 ranks, and the next
-output is compared with the one RAMSES writes when it restarts the original on 4 ranks. RAMSES
-runs on different rank counts are not bit-identical in general: sums are taken in a different
-order, so round-off differs. That round-off level, about `1e-15`, is the target.
+Identical files are necessary but not enough: RAMSES rebuilds ghost zones and communication
+tables when it reads them, and a wrong pointer or flag would only show up there. So RAMSES reads
+the converted files and writes its memory out again **before taking any step**. The same is done
+with the original files on the original 4 ranks, and the two dumps are compared.
+
+RAMSES has no switch for this: after a restart it refuses to write an output before its first step
+(one test in `amr/output_amr.f90`). The dumps here come from a copy of RAMSES built with only that
+line disabled, started with `nstepmax` one step ahead and `foutput=1`, so it writes at the start of
+its first step, before any hydro, gravity or particle update.
+
+```julia
+# nstep_coarse of the restart output: nstepmax one ahead makes RAMSES stop after that dump
+nstep = Int(RW.read_amr_file(RW.amr_filename(joinpath(SEDOV, "output_00006"), 6, 1))[1].nstep_coarse)
+function readback_dump(src_run, ncpu, name; ngridmax=20_000)
+    d = mkpath(joinpath(WORK, name))
+    isdir(joinpath(d, "output_00006")) || cp(joinpath(src_run, "output_00006"), joinpath(d, "output_00006"))
+    restart_namelist(joinpath(SEDOV, "sedov3d_amr_lb.nml"), joinpath(d, "run.nml"); ngridmax=ngridmax,
+                     run_extra="nstepmax=$(nstep + 1)", output_extra="foutput=1")
+    ok = run_ramses(d, "run.nml", 6, ncpu; bin=RAMSES_READBACK)
+    return ok ? joinpath(d, "output_00007") : nothing
+end
+ref = readback_dump(SEDOV, 4, "readback_original_4cpu")                    # original files, 4 ranks
+println(rpad("ranks", 8), rpad("same time", 11), rpad("same octree", 13), "every value identical")
+for ncpu in (1, 3, 7, 8)
+    conv = joinpath(WORK, "readback_conv_$(ncpu)cpu")
+    r = repartition(6, SEDOV, ncpu; outpath=conv, overwrite=true, verbose=false)
+    dump = readback_dump(conv, ncpu, "readback_conv_$(ncpu)cpu"; ngridmax=max(20_000, 2 * r.ngridmax_needed))
+    same_time = readlines(joinpath(ref, "info_00007.txt"))[[6, 9]] == readlines(joinpath(dump, "info_00007.txt"))[[6, 9]]   # nstep_coarse, time
+    c = compareramses(7, dirname(ref), dirname(dump))
+    println(rpad(ncpu, 8), rpad(ok_mark(same_time), 11), rpad(ok_mark(c.same_tree), 13),
+            ok_mark(all(v -> all(iszero, v), values(c.maxdiff))))
+end
+```
+
+```
+ranks   same time  same octree  every value identical
+1       yes        yes          yes
+3       yes        yes          yes
+7       yes        yes          yes
+8       yes        yes          yes
+```
+
+RAMSES holds exactly the same state after reading the converted files as after reading its own,
+bit for bit, for every rank count. The suite ran the same test on all 13 kinds of run, with
+particles, sinks, MHD and radiative transfer, on 1 to 8 ranks (the particle records and the sink
+table compared byte for byte as well):
+
+```julia
+# the suite's result file: one header line, then one run per line
+function readsuite(file)
+    lines = readlines(joinpath(SUITE, file))
+    hdr = split(lines[1], ',')
+    parsecell(s) = (s = strip(s, '"'); s == "true" ? true : s == "false" ? false :
+                    something(tryparse(Float64, s), s))
+    [Dict(zip(hdr, parsecell.(split(l, ',')))) for l in lines[2:end]]
+end
+fmt(x) = x isa Number && !isnan(x) ? @sprintf("%.0e", x) : "–"
+rb = readsuite("readback.csv")
+println(rpad("run", 26), "ranks 1 to 8: bit-identical dump")
+for run in unique(r["run"] for r in rb)
+    rs = [r for r in rb if r["run"] == run]
+    println(rpad(run, 26), join((r["bit_identical"] ? "✔" : "✘" for r in sort(rs; by=r -> r["ncpu"])), " "))
+end
+println("\n", count(r -> r["bit_identical"], rb), " of ", length(rb), " dumps bit-identical")
+```
+
+```
+run                       ranks 1 to 8: bit-identical dump
+sedov3d_amr_lb_ncpu4      ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+sedov3d_amr_lb_ncpu8      ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+sedov3d_amr_ncpu1         ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+sedov3d_amr_ncpu3         ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+sedov3d_uniform_ncpu4     ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+sedov3d_outflow_ncpu4     ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+dm_gas3d_ncpu4            ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+sedov3d_grav_part_ncpu4   ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+starform3d_ncpu4          ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+sinks3d_ncpu4             ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+clumps3d_ncpu4            ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+mhdtube3d_ncpu4           ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+stromgren3d_ncpu4         ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
+104 of 104 dumps bit-identical
+```
+
+## 7. Check 4: RAMSES continues the run
+
+Now RAMSES runs. Two runs start from the same output 6: RAMSES's own restart on the original
+4 ranks, and the converted files on 3 ranks. Both advance over the **same interval**, from output 6
+at t = 7.72e-3 to output 7 at t = 9.91e-3 (13 time steps), and are compared at output 7. This is
+not a later time against the initial condition: it is the same evolution computed twice. If
+anything RAMSES read were wrong, the two evolutions would drift apart.
+
+They cannot be expected to agree bit for bit, and this is RAMSES, not the files: sums over ranks
+(the time step, the gravity solver) are added in a different order on a different number of
+ranks, and RAMSES converts velocity to momentum and back when it reads and writes. The last check
+of this section measures that floor on RAMSES alone.
 
 ```julia
 # the converted output, in its own run directory, with a namelist sized for 3 ranks
@@ -386,7 +562,7 @@ Colorbar(fig[1, 5], hm; label="log₁₀ |Δρ|/ρ", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_17_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_24_1.png)
 
 The two runs agree to machine precision everywhere: RAMSES cannot tell the converted output from
 its own. Particles are the stricter test, because gravity couples every particle to the whole mass
@@ -411,20 +587,35 @@ same octree: true,  particles matched by identity: 30000
 largest difference: hydro 8.5e-15, gravity 1.2e-14, particle position 5.6e-16 boxlen
 ```
 
+**What RAMSES itself gives.** The same comparison without Mera in between: the Sedov run computed
+by RAMSES from the start on 4 and on 8 CPUs, and a run restarted on its own 4 CPUs against the same
+run without interruption.
+
+```julia
+floorcmp = [("RAMSES from t = 0 on 4 vs 8 CPUs, output 7",
+          compareramses(7, SEDOV, joinpath(RUNS, "sedov3d_amr_lb_ncpu8"))),
+         ("RAMSES uninterrupted vs restarted, both on 4 CPUs",
+          compareramses(7, SEDOV, joinpath(RUNS, "sedov3d_amr_lb_ncpu4_restart"))),
+         ("converted to 3 CPUs, restarted, vs RAMSES restart on 4",
+          compareramses(7, joinpath(RUNS, "sedov3d_amr_lb_ncpu4_restart"), run3))]
+println(rpad("comparison", 58), rpad("octree", 8), "largest hydro difference")
+for (name, c) in floorcmp
+    println(rpad(name, 58), rpad(c.same_tree ? "same" : "DIFF", 8), @sprintf("%.1e", maximum(c.maxdiff["hydro"])))
+end
+```
+
+```
+comparison                                                octree  largest hydro difference
+RAMSES from t = 0 on 4 vs 8 CPUs, output 7                same    1.5e-15
+RAMSES uninterrupted vs restarted, both on 4 CPUs         same    1.1e-15
+converted to 3 CPUs, restarted, vs RAMSES restart on 4    same    7.6e-16
+```
+
 The full test suite ran the same check on every kind of run Mera reads. The table is the suite's
 own result file; the "reference" is either RAMSES's restart on the original rank count or the
 original uninterrupted run.
 
 ```julia
-# the suite's result file: one header line, then one run per line
-function readsuite(file)
-    lines = readlines(joinpath(SUITE, file))
-    hdr = split(lines[1], ',')
-    parsecell(s) = (s = strip(s, '"'); s == "true" ? true : s == "false" ? false :
-                    something(tryparse(Float64, s), s))
-    [Dict(zip(hdr, parsecell.(split(l, ',')))) for l in lines[2:end]]
-end
-fmt(x) = x isa Number && !isnan(x) ? @sprintf("%.0e", x) : "–"
 println(rpad("run", 28), rpad("CPUs", 8), rpad("octree", 8), rpad("hydro", 8), rpad("grav", 8),
         rpad("rt", 8), "particles |Δx|")
 for r in readsuite("restart.csv")
@@ -460,9 +651,11 @@ stromgren3d_ncpu4           4 → 6   same    0e+00   –       0e+00   0e+00
 Every run continues with the same octree and round-off differences. Two things continue only
 statistically, by design: **stochastic star formation** and **Monte-Carlo tracers** draw random
 numbers from seeds that depend on the rank count, exactly as when RAMSES itself changes the
-number of ranks between runs.
+number of ranks between runs. That row of the table (`starform3d`) is a different random
+realization, not an error; only a change inside RAMSES, seeding per cell or per particle instead
+of per rank, could make it repeat exactly.
 
-## 7. From Mera data and mera files: `writeramses`
+## 8. From Mera data and mera files: `writeramses`
 
 Mera keeps the **leaf cells** (the finest cell at each place) with all their variables, plus the
 particles and sinks. A restart needs more: the whole octree, the values of the refined (parent)
@@ -617,7 +810,7 @@ fig
 median |Δρ|/ρ in this slice: 6.1e-09,  largest: 9.1e-05
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_29_2.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_38_2.png)
 
 The octree is the same and the differences are small, but larger than round-off. The figure shows
 where they sit: only in the refined region around the centre, where parent cells were rebuilt,
@@ -668,7 +861,7 @@ stromgren3d_ncpu4           same    0e+00    –        0e+00    –
 When the RAMSES files still exist, `repartition` is the exact route. `writeramses` is for the
 case where only Mera data is left.
 
-## 8. Mera files written before 1.8.0
+## 9. Mera files written before 1.8.0
 
 The per-level time steps are needed for runs with gravity or particles (without them the first
 steps deviate by about 3 %). Mera stores them in `info.grid_info.amr_header` since 1.8.0.
@@ -682,7 +875,7 @@ upgrade_merafile(250, "/merafiles")                               # simulation a
 upgrade_merafile(250, "/merafiles"; simulation="/new/place/sim")  # simulation moved
 ```
 
-## 9. In short
+## 10. In short
 
 - `repartition(output, path, ncpu; outpath)` rewrites a RAMSES output for any number of ranks.
   Values bit-identical; RAMSES continues to round-off.
