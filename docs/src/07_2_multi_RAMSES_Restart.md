@@ -306,6 +306,12 @@ around: the cells at x = 0 border the cells at x = 1, and the ghost layer contin
 The figure above shows it. In the level-4 panel, rank 2 owns cells at x < 0.5, and the orange strip
 at the right edge, x > 0.875, is ghost: those cells are its neighbours across the periodic face.
 
+**Walls without a namelist.** Older RAMSES versions leave `namelist.txt` empty, so an output can
+have walls that no text file describes. The amr files still hold the boundary grids beyond each
+wall. `repartition` and `writeramses` read the walls from them, and choose the wall type (outflow
+or reflexive) and the ghost width (one or two cells) by which choice rebuilds rank 1's file exactly.
+If none does, they stop and ask for the namelist.
+
 ## 3. `repartition`: what it does, step by step
 
 | step | what | how | why |
@@ -1027,7 +1033,12 @@ starform3d_ncpu4          hydro + gravity + particles         same    5e-02    8
 | stochastic star formation | statistical | random seeds depend on the rank count |
 
 The MHD and radiative-transfer builds of RAMSES are not on this machine, so those two runs are not
-in the table; in the converter's suite both restarted from Mera data to round-off. A restart from
+in the table; in the converter's suite both restarted from Mera data to round-off. Their written
+files match RAMSES's in every cell, parents included (tested on an MHD run on an AMR grid and on a
+radiative-transfer run). Two rules make that so. An MHD parent takes each face field from the four
+children on that face. A photon density is written as the speed of light times the density, and
+RAMSES sets that speed to zero below `levelmin`, so those parents are zero; their fluxes are
+averages, like every other parent. A restart from
 Mera data of a run with gravity could reach round-off only if mera files also kept the coarse
 potentials.
 
@@ -1108,5 +1119,8 @@ upgrade_merafile(250, "/merafiles"; simulation="/new/place/sim")  # simulation m
   data, also from a mera file. Leaves bit-identical; hydro runs restart to round-off, runs with
   gravity within RAMSES's Poisson tolerance.
 - `restart_completeness` proves the data is complete; `compareramses` checks any two outputs.
+- `writeramses` refuses incomplete data, particle files from before `part_file_descriptor.txt`
+  (use `repartition` on the original files), and a cosmological run from an old mera file whose
+  simulation is gone (its expansion history is unknown; `force=true` writes it anyway).
 - Set `ngridmax` and `npartmax` in the restart namelist from the report, and start RAMSES with
   `mpirun -np ncpu ramses3d run.nml output`.
