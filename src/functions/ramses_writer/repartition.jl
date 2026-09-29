@@ -22,6 +22,7 @@ struct RepartitionReport
     files_written::Int
     seconds::Float64
     overload::Int                  # the restart namelist must use the same overload
+    iogroupsize::Int               # ... and IOGROUPSIZEREP, when the files are in group folders
 end
 
 function Base.show(io::IO, r::RepartitionReport)
@@ -34,7 +35,12 @@ function Base.show(io::IO, r::RepartitionReport)
         println(io, "  particles per rank      : min $(minimum(r.npart_per_rank)), max $(maximum(r.npart_per_rank))")
     println(io, "  restart namelist needs  : ngridmax ≥ $(r.ngridmax_needed)",
             isempty(r.npart_per_rank) ? "" : ", npartmax ≥ $(r.npart_max)",
-            r.overload > 1 ? ", overload = $(r.overload)" : "")
+            r.overload > 1 ? ", overload = $(r.overload)" : "",
+            r.iogroupsize > 0 ? ", IOGROUPSIZEREP = $(r.iogroupsize)" : "")
+    # the per-rank random state cannot be carried to another rank count: RAMSES seeds anew
+    isempty(r.npart_per_rank) ||
+        println(io, "  random numbers          : re-seeded by RAMSES; star formation, feedback and MC tracers",
+                " follow other random draws than an uninterrupted run")
     print(io,   "  $(r.files_written) files written in $(round(r.seconds; digits=1)) s")
 end
 
@@ -54,9 +60,9 @@ MHD outputs are recognised by the face-centred B fields in the hydro
 descriptor or by SOLVER=mhd in makefile.txt.
 """
 function detect_nexpand_bound(dir::AbstractString)
-    desc = joinpath(dir, "hydro_file_descriptor.txt")
+    desc = joinpath(global_dir(dir), "hydro_file_descriptor.txt")
     isfile(desc) && occursin(r"B_x_left|B_left_x"i, read(desc, String)) && return 2
-    mk = joinpath(dir, "makefile.txt")
+    mk = joinpath(global_dir(dir), "makefile.txt")
     isfile(mk) && occursin(r"^\s*SOLVER\s*=\s*mhd"mi, read(mk, String)) && return 2
     return 1
 end
@@ -69,7 +75,8 @@ reproduces rank 1's file (an MHD output without descriptors would otherwise get 
 """
 function auto_nexpand_bound(t, dir, iout)
     d = detect_nexpand_bound(dir)
-    (d == 2 || isfile(joinpath(dir, "hydro_file_descriptor.txt")) || isfile(joinpath(dir, "makefile.txt"))) && return d
+    g = global_dir(dir)
+    (d == 2 || isfile(joinpath(g, "hydro_file_descriptor.txt")) || isfile(joinpath(g, "makefile.txt"))) && return d
     for nexp in (1, 2)
         rank1_reproduced(t, dir, iout, nexp) && return nexp
     end
@@ -115,8 +122,9 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
                      overload::Integer=1,
                      nexpand_bound::Union{Integer,Symbol}=:auto,
                      ngridmax::Union{Integer,Symbol}=:auto,
-                     namelist::AbstractString=joinpath(output_dir, "namelist.txt"),
+                     namelist::AbstractString=joinpath(global_dir(output_dir), "namelist.txt"),
                      balance_particles::Bool=true,
+                     iogroupsize::Integer=0,
                      overwrite::Bool=false,
                      verbose::Bool=true)
     t0 = time()
@@ -124,10 +132,10 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
     iout = output_number(src)
     dst = joinpath(outpath, basename(src))
     ncpu >= 1 || error("ncpu must be ≥ 1")
-    isdir(joinpath(src, "group_00001")) && error("IOGROUPSIZEREP (group_ folders) is not supported yet.")
+    iogroupsize >= 0 || error("iogroupsize must be ≥ 0")
     # per-rank files this code does not convert: merger trees written per rank would keep the old
     # rank numbering, so refuse; anything else is named, because it is not carried over
-    perrank = filter(f -> occursin(r"\.(out|txt|csv|dat)\d{5}$", f), readdir(src))
+    perrank = [f for d in rank_dirs(src) for f in readdir(d) if occursin(r"\.(out|txt|csv|dat)\d{5}$", f)]
     any(f -> startswith(f, "progenitor") || endswith(split(f, '.')[1], "tree"), perrank) &&
         error("Per-rank merger-tree files (MTREE_INDIVIDUAL_FILES) are not supported: they would keep " *
               "the old rank numbering.")
@@ -140,6 +148,7 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
         rm(dst; recursive=true)
     end
     mkpath(dst)
+    gdst = make_group_dirs(dst, ncpu, iogroupsize)
 
     # 1. the global octree and the new decomposition --------------------------
     verbose && println("[1/5] reading the octree of $(basename(src))")
@@ -170,29 +179,55 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
                                    for kind in ("hydro", "grav", "rt")])
     Threads.@threads for k in 1:ncpu
         hdr, lists = amr_file_content(t, dec, lts[k], gmax, numbtot, maximum(nlocal))
-        write_amr_file(amr_filename(dst, iout, k), hdr, lists)
+        write_amr_file(amr_filename(dst, iout, k, iogroupsize), hdr, lists)
         sources = grid_sources(t, lts[k], ncpu_old)
         for cs in cellsets
-            write_cell_file(cell_filename(dst, cs.kind, iout, k), cs, lts[k], sources, ncpu, nbnd)
+            write_cell_file(cell_filename(dst, cs.kind, iout, k, iogroupsize), cs, lts[k], sources, ncpu, nbnd)
         end
     end
 
     # 4. particles, clumps, text files ------------------------------------------
     verbose && println("[5/5] particles, clump tables and text files")
-    npart = convert_particles(src, iout, dst, t, dec; verbose, lts, ngridmax=gmax)
+    npart = convert_particles(src, iout, dst, t, dec; verbose, lts, ngridmax=gmax, gs=iogroupsize)
     for kind in ("clump", "halo")
-        convert_clump_files(src, iout, dst, t, dec, kind)
+        convert_clump_files(src, iout, dst, t, dec, kind; gs=iogroupsize)
     end
-    write_info_file(joinpath(src, "info_$(lpad(iout, 5, '0')).txt"),
-                    joinpath(dst, "info_$(lpad(iout, 5, '0')).txt"), dec)
-    for f in readdir(src)
-        is_global_file(f) && isfile(joinpath(src, f)) && cp(joinpath(src, f), joinpath(dst, f))
+    gsrc = global_dir(src)
+    write_info_file(joinpath(gsrc, "info_$(lpad(iout, 5, '0')).txt"),
+                    joinpath(gdst, "info_$(lpad(iout, 5, '0')).txt"), dec)
+    for f in readdir(gsrc)
+        is_global_file(f) && isfile(joinpath(gsrc, f)) && cp(joinpath(gsrc, f), joinpath(gdst, f))
     end
+    info_on_top(dst, iout, iogroupsize)
 
     own = [Int(sum(lts[k].numbl[k, :])) for k in 1:ncpu]
     report = RepartitionReport(src, dst, ncpu_old, ncpu, nlocal, own, npart,
                                maximum(nlocal) + 1, isempty(npart) ? 0 : maximum(npart),
-                               length(readdir(dst)), time() - t0, overload)
+                               nfiles(dst), time() - t0, overload, iogroupsize)
     verbose && println(report)
     return report
 end
+
+"""
+    make_group_dirs(dst, ncpu, gs) -> folder for the files written once per output
+
+Creates the `group_GGGGG` folders of an output with `gs` ranks per IO group (none for gs = 0).
+RAMSES reads such an output only when its namelist sets the same `IOGROUPSIZEREP`.
+"""
+function make_group_dirs(dst, ncpu, gs)
+    gs == 0 && return dst
+    foreach(k -> mkpath(rank_dir(dst, k, gs)), 1:gs:ncpu)
+    return joinpath(dst, "group_00001")
+end
+
+"""
+    info_on_top(dst, iout, gs)
+
+RAMSES looks for `output_N/info_N.txt` before a restart (amr/read_params.f90) even with IO groups,
+where it writes the file into `group_00001`; a copy on top lets it find the output.
+"""
+info_on_top(dst, iout, gs) = gs > 0 &&
+    cp(joinpath(dst, "group_00001", "info_$(lpad(iout, 5, '0')).txt"), joinpath(dst, "info_$(lpad(iout, 5, '0')).txt"))
+
+"Number of files in an output, group folders included."
+nfiles(dir) = sum(length(fs) for (_, _, fs) in walkdir(dir); init=0)

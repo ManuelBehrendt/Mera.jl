@@ -117,7 +117,37 @@ child_coord(ig::Coord, ind::Integer) =
 "True if cell `ind` of grid `ig` at `level` is refined (its child grid exists)."
 is_refined(t::GlobalTree, level, ig::Coord, ind) = find_grid(t, level + 1, child_coord(ig, ind)) != 0
 
-amr_filename(dir, iout, icpu) = joinpath(dir, "amr_$(lpad(iout, 5, '0')).out$(lpad(icpu, 5, '0'))")
+# ----------------------------------------------------------------------------
+#  Where the files are: plain, or in IO groups (RAMSES IOGROUPSIZEREP)
+# ----------------------------------------------------------------------------
+
+"""
+    groupsize_of(dir) -> Int
+
+A run with `IOGROUPSIZEREP = n` writes the files of rank r into `group_GGGGG/`, G = (r-1)÷n + 1
+(amr/output_amr.f90), and the files written once per output into `group_00001/`, the folder of
+rank 1. Returns n, the number of ranks per folder, or 0 for a plain output.
+"""
+function groupsize_of(dir)
+    g1 = joinpath(dir, "group_00001")
+    isdir(g1) || return 0
+    n = count(f -> occursin(r"^amr_\d{5}\.out\d{5}$", f), readdir(g1))
+    n > 0 || error("$g1 holds no amr files")
+    return n
+end
+
+"Folder of rank `icpu`'s files in an output with `gs` ranks per IO group (0: no groups)."
+rank_dir(dir, icpu, gs=groupsize_of(dir)) = gs == 0 ? dir : joinpath(dir, "group_" * lpad((icpu - 1) ÷ gs + 1, 5, '0'))
+
+"Folder of the files written once per output (info, header, descriptors, namelist, sinks)."
+global_dir(dir) = isdir(joinpath(dir, "group_00001")) ? joinpath(dir, "group_00001") : dir
+
+"Every folder of an output that holds rank files."
+rank_dirs(dir) = groupsize_of(dir) == 0 ? [dir] :
+    [joinpath(dir, d) for d in sort(readdir(dir)) if occursin(r"^group_\d{5}$", d)]
+
+amr_filename(dir, iout, icpu, gs=groupsize_of(dir)) =
+    joinpath(rank_dir(dir, icpu, gs), "amr_$(lpad(iout, 5, '0')).out$(lpad(icpu, 5, '0'))")
 
 """
     read_global_tree(dir, iout) -> GlobalTree
@@ -126,7 +156,7 @@ Reads all `amr_XXXXX.outYYYYY` files of `output_XXXXX` and keeps every grid
 exactly once, from the file of the rank that owns it (list `ibound == icpu`).
 """
 function read_global_tree(dir::AbstractString, iout::Integer; verbose::Bool=true,
-                          namelist::AbstractString=joinpath(dir, "namelist.txt"))
+                          namelist::AbstractString=joinpath(global_dir(dir), "namelist.txt"))
     hdr1, _ = read_amr_file(amr_filename(dir, iout, 1))
     ncpu, L = Int(hdr1.ncpu), Int(hdr1.nlevelmax)
     hdr1.ndim == 3 || error("Only 3-D outputs are supported (ndim = $(hdr1.ndim)).")

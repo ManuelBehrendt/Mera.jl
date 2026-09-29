@@ -324,7 +324,7 @@ end
 
 """
     writeramses(ncpu; hydro, gravity=nothing, rt=nothing, particles=nothing, sinks=nothing,
-                outpath, overwrite=false, verbose=true, force=false) -> RepartitionReport
+                outpath, overwrite=false, verbose=true, force=false, iogroupsize=0) -> RepartitionReport
 
 Write a restartable RAMSES output with `ncpu` files from Mera data (loaded with
 `gethydro`/`getgravity`/`getrt`/`getparticles`/`getsinks`, or from mera files
@@ -338,9 +338,13 @@ Refused: incomplete data, particle files older than `part_file_descriptor.txt`
 data came from, and a cosmological run from an old mera file whose simulation
 is gone. `force=true` writes the last one anyway, and also incomplete data;
 such an output is for inspection, not for a faithful restart.
+
+`iogroupsize = n > 0` writes the files of every n ranks into one `group_GGGGG` folder, as RAMSES
+does with `IOGROUPSIZEREP = n`; the restart namelist must then set the same value.
 """
 function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particles=nothing, sinks=nothing,
-                     outpath::AbstractString, overwrite::Bool=false, verbose::Bool=true, force::Bool=false)
+                     outpath::AbstractString, overwrite::Bool=false, verbose::Bool=true, force::Bool=false,
+                     iogroupsize::Integer=0)
     info = hydro.info
     ok, rep = restart_completeness(hydro; gravity, rt, particles, sinks)
     if !ok
@@ -437,7 +441,7 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
     nml = join(("$grp\n" * join(("$k=$v" for (k, v) in g), "\n") * "\n/\n"
                 for (grp, g) in info.namelist_content if startswith(string(grp), "&")), "\n")
     report = _RW.write_ramses(inp, ncpu; outpath, meta, sinks=sinkdata, copy_from=_original_dir(info),
-                             namelist_text=nml, overwrite, verbose)
+                             namelist_text=nml, overwrite, verbose, iogroupsize)
     verbose && println("amr header from: ", hsource)
     return report
 end

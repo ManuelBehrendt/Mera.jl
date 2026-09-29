@@ -19,7 +19,8 @@
 #  their types: only positions (the first ndim Float64 records) are decoded.
 # ============================================================================
 
-part_filename(dir, iout, icpu) = joinpath(dir, "part_$(lpad(iout, 5, '0')).out$(lpad(icpu, 5, '0'))")
+part_filename(dir, iout, icpu, gs=groupsize_of(dir)) =
+    joinpath(rank_dir(dir, icpu, gs), "part_$(lpad(iout, 5, '0')).out$(lpad(icpu, 5, '0'))")
 
 """
     PartFile
@@ -136,7 +137,7 @@ end
 Writes the new part files and returns the number of particles per new rank.
 """
 function convert_particles(dir, iout, outdir, t::GlobalTree, dec::Decomposition; verbose=true,
-                           lts=nothing, ngridmax::Integer=0)
+                           lts=nothing, ngridmax::Integer=0, gs::Integer=0)
     ncpu_old = Int(t.header.ncpu)
     isfile(part_filename(dir, iout, 1)) || return Int[]
     files = [open_part_file(part_filename(dir, iout, k)) for k in 1:ncpu_old]
@@ -166,15 +167,16 @@ function convert_particles(dir, iout, outdir, t::GlobalTree, dec::Decomposition;
     seed_len = files[1].seed_len
 
     # MC gas tracers carry a rank-specific cell index (partp), recomputed below
-    names = [strip(split(l, ',')[2]) for l in (isfile(joinpath(dir, "part_file_descriptor.txt")) ?
-             readlines(joinpath(dir, "part_file_descriptor.txt")) : String[]) if !startswith(l, "#") && count(',', l) >= 2]
+    desc = joinpath(global_dir(dir), "part_file_descriptor.txt")
+    names = [strip(split(l, ',')[2]) for l in (isfile(desc) ? readlines(desc) : String[])
+             if !startswith(l, "#") && count(',', l) >= 2]
     jpartp = something(findfirst(==("partp"), names), 0)
     jfam = something(findfirst(==("family"), names), 0)
     (jpartp > 0 && fsize[jpartp] != 4) && (jpartp = 0)
 
     # 3. one new file per rank: gather each field's bytes from the old files
     Threads.@threads for r in 1:dec.ncpu
-        FortranWriter(part_filename(outdir, iout, r)) do w
+        FortranWriter(part_filename(outdir, iout, r, gs)) do w
             write_record(w, Int32(dec.ncpu))
             write_record(w, Int32(3))
             write_record(w, Int32(counts[r]))

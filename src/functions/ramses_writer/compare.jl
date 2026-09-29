@@ -57,7 +57,7 @@ end
 Field names from `part_file_descriptor.txt` (empty if the file is missing).
 """
 function particle_fields(dir)
-    f = joinpath(dir, "part_file_descriptor.txt")
+    f = joinpath(global_dir(dir), "part_file_descriptor.txt")
     isfile(f) || return String[]
     return [strip(split(l, ',')[2]) for l in readlines(f) if !startswith(l, "#") && count(',', l) >= 2]
 end
@@ -106,7 +106,7 @@ end
 
 "Rows of `sink_XXXXX.csv` as vectors of numbers (empty if there is no sink file)."
 function sink_rows(dir, iout)
-    f = joinpath(dir, "sink_$(lpad(iout, 5, '0')).csv")
+    f = joinpath(global_dir(dir), "sink_$(lpad(iout, 5, '0')).csv")
     isfile(f) || return Vector{Float64}[]
     return [parse.(Float64, split(l, ',')) for l in readlines(f) if !startswith(strip(l), "#") && !isempty(strip(l))]
 end

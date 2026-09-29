@@ -196,6 +196,25 @@ end
             @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
         end
 
+        @testset "IO groups (IOGROUPSIZEREP)" begin
+            # every 2 ranks in one group_GGGGG folder, the files written once in group_00001 and
+            # the info file also on top, where RAMSES looks for it before a restart
+            out = joinpath(tmp, "grouped")
+            rep = repartition(o, fx.path, 5; outpath=out, iogroupsize=2, verbose=false)
+            g = joinpath(out, "output_" * lpad(o, 5, '0'))
+            @test rep.iogroupsize == 2
+            @test filter(startswith("group_"), readdir(g)) == ["group_00001", "group_00002", "group_00003"]
+            @test isfile(RW.amr_filename(g, o, 5)) && dirname(RW.amr_filename(g, o, 5)) == joinpath(g, "group_00003")
+            @test isfile(joinpath(g, "info_" * lpad(o, 5, '0') * ".txt"))
+            c = compareramses(o, fx.path, out)
+            @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff)) && c.particle_maxdiff == (0.0, 0.0)
+            # a grouped output is read like any other, here back to a plain one Mera can read
+            RW.repartition(g, info.ncpu; outpath=joinpath(tmp, "ungrouped"), verbose=false)
+            c = compareramses(o, fx.path, joinpath(tmp, "ungrouped"))
+            @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
+            @test getinfo(o, joinpath(tmp, "ungrouped"), verbose=false).ncpu == info.ncpu
+        end
+
         @testset "walls without a namelist" begin
             # older RAMSES versions leave namelist.txt empty: the walls are read from the boundary
             # grids of the amr files, and their types chosen by which reproduce rank 1's file

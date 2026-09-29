@@ -129,7 +129,7 @@ finest grid containing it; `localseed = -1` (RAMSES re-seeds); `mstar_tot` is
 the mass in stars, put on rank 1.
 """
 function write_particles_table(outdir, iout, t::GlobalTree, dec::Decomposition, pt::ParticleTable;
-                               nstar_tot::Integer, nsink::Integer, lts=nothing, ngridmax::Integer=0)
+                               nstar_tot::Integer, nsink::Integer, lts=nothing, ngridmax::Integer=0, gs::Integer=0)
     n = length(pt.columns[1])
     dest = Vector{Int32}(undef, n)
     x, y, z = pt.columns[1], pt.columns[2], pt.columns[3]
@@ -153,7 +153,7 @@ function write_particles_table(outdir, iout, t::GlobalTree, dec::Decomposition, 
                 pt.columns[jp][i] = leaf_cell_pointer(t, lts[r], (Float64(x[i]), Float64(y[i]), Float64(z[i])), ngridmax)
             end
         end
-        FortranWriter(part_filename(outdir, iout, r)) do w
+        FortranWriter(part_filename(outdir, iout, r, gs)) do w
             write_record(w, Int32(dec.ncpu)); write_record(w, Int32(3)); write_record(w, Int32(length(idx)))
             write_record(w, fill(Int32(-1), seed_len))
             write_record(w, Int32(nstar_tot))
@@ -182,7 +182,7 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
                       sinks=nothing, copy_from::Union{Nothing,AbstractString}=nothing,
                       namelist_text::AbstractString="", overload::Integer=1,
                       nexpand_bound::Union{Integer,Symbol}=:auto, ngridmax::Union{Integer,Symbol}=:auto,
-                      overwrite::Bool=false, verbose::Bool=true)
+                      overwrite::Bool=false, verbose::Bool=true, iogroupsize::Integer=0)
     t0 = time()
     iout = inp.output
     dst = joinpath(outpath, "output_" * lpad(iout, 5, '0'))
@@ -195,6 +195,7 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
         rm(dst; recursive=true)
     end
     mkpath(dst)
+    gdst = make_group_dirs(dst, ncpu, iogroupsize)
 
     verbose && println("[1/5] octree from $(length(inp.hydro.level)) leaf cells")
     t = tree_from_leaves(inp)
@@ -263,10 +264,10 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
     verbose && println("[4/5] writing amr / hydro$(inp.gravity === nothing ? "" : " / grav")$(inp.rt === nothing ? "" : " / rt") files")
     Threads.@threads for k in 1:ncpu
         hdr, lists = amr_file_content(t, dec, lts[k], gmax, numbtot, maximum(nlocal))
-        write_amr_file(amr_filename(dst, iout, k), hdr, lists)
+        write_amr_file(amr_filename(dst, iout, k, iogroupsize), hdr, lists)
         src = memory_sources(t, lts[k]; no_inflow)
         for (cs, names) in zip(sets, setnames)
-            write_cell_file(cell_filename(dst, cs.kind, iout, k), cs, lts[k], src, ncpu, nbnd, names)
+            write_cell_file(cell_filename(dst, cs.kind, iout, k, iogroupsize), cs, lts[k], src, ncpu, nbnd, names)
         end
     end
 
@@ -275,31 +276,32 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
     if inp.particles !== nothing
         pt = inp.particles
         npart = write_particles_table(dst, iout, t, dec, pt; nstar_tot=inp.nstar_tot, nsink=inp.nsink,
-                                      lts=lts, ngridmax=gmax)
+                                      lts=lts, ngridmax=gmax, gs=iogroupsize)
         # legacy files have neither: the reader knows their layout (a header, if any, is copied)
         if !inp.legacy_particles
-            write_descriptor(joinpath(dst, "part_file_descriptor.txt"), pt.names, pt.types)
+            write_descriptor(joinpath(gdst, "part_file_descriptor.txt"), pt.names, pt.types)
             jfam = findfirst(==("family"), pt.names)
-            write_header_file(joinpath(dst, "header_$(lpad(iout, 5, '0')).txt"),
+            write_header_file(joinpath(gdst, "header_$(lpad(iout, 5, '0')).txt"),
                               jfam === nothing ? fill(1, length(pt.columns[1])) : pt.columns[jfam], pt.names)
         end
     end
-    sinks === nothing || write_sink_csv(joinpath(dst, "sink_$(lpad(iout, 5, '0')).csv"), sinks...)
-    write_descriptor(joinpath(dst, "hydro_file_descriptor.txt"), inp.hydro.names, fill('d', length(inp.hydro.names)))
-    write_info_new(joinpath(dst, "info_$(lpad(iout, 5, '0')).txt"), dec, merge(meta, Dict{Symbol,Any}(:ngridmax => gmax)))
-    isempty(namelist_text) || write(joinpath(dst, "namelist.txt"), namelist_text)
+    sinks === nothing || write_sink_csv(joinpath(gdst, "sink_$(lpad(iout, 5, '0')).csv"), sinks...)
+    write_descriptor(joinpath(gdst, "hydro_file_descriptor.txt"), inp.hydro.names, fill('d', length(inp.hydro.names)))
+    write_info_new(joinpath(gdst, "info_$(lpad(iout, 5, '0')).txt"), dec, merge(meta, Dict{Symbol,Any}(:ngridmax => gmax)))
+    isempty(namelist_text) || write(joinpath(gdst, "namelist.txt"), namelist_text)
+    info_on_top(dst, iout, iogroupsize)
     copied = String[]
     if copy_from !== nothing && isdir(copy_from)
         for f in readdir(copy_from)
             is_global_file(f) || continue
-            isfile(joinpath(dst, f)) && continue          # what we generated wins
-            cp(joinpath(copy_from, f), joinpath(dst, f)); push!(copied, f)
+            isfile(joinpath(gdst, f)) && continue         # what we generated wins
+            cp(joinpath(copy_from, f), joinpath(gdst, f)); push!(copied, f)
         end
     end
     own = [Int(sum(lts[k].numbl[k, :])) for k in 1:ncpu]
     report = RepartitionReport(isnothing(copy_from) ? "leaf data" : "leaf data ($copy_from)", dst, 0, ncpu,
                                nlocal, own, npart, maximum(nlocal) + 1, isempty(npart) ? 0 : maximum(npart),
-                               length(readdir(dst)), time() - t0, overload)
+                               nfiles(dst), time() - t0, overload, iogroupsize)
     verbose && println(report)
     return report
 end

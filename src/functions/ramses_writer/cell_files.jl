@@ -35,7 +35,8 @@ struct CellFileSet
     blocks::Vector{Matrix{Tuple{Int,Int}}}
 end
 
-cell_filename(dir, kind, iout, icpu) = joinpath(dir, "$(kind)_$(lpad(iout, 5, '0')).out$(lpad(icpu, 5, '0'))")
+cell_filename(dir, kind, iout, icpu, gs=groupsize_of(dir)) =
+    joinpath(rank_dir(dir, icpu, gs), "$(kind)_$(lpad(iout, 5, '0')).out$(lpad(icpu, 5, '0'))")
 
 "Number of header records of each per-cell file kind."
 const CELL_HEADER_RECORDS = Dict("hydro" => 6, "grav" => 4, "rt" => 6)

@@ -69,14 +69,14 @@ diagnostics, not restart data. We keep them usable by re-dealing their rows
 to the new ranks by the position of the clump peak (columns `peak_x/y/z`).
 Tables without those columns go to rank 1.
 """
-function convert_clump_files(dir, iout, outdir, t::GlobalTree, dec::Decomposition, kind::String)
+function convert_clump_files(dir, iout, outdir, t::GlobalTree, dec::Decomposition, kind::String; gs::Integer=0)
     stem = "$(kind)_$(lpad(iout, 5, '0')).txt"
-    files = filter(f -> startswith(f, stem), readdir(dir))
+    files = [joinpath(d, f) for d in rank_dirs(dir) for f in readdir(d) if startswith(f, stem)]
     isempty(files) && return 0
     header = ""
     rows = String[]
-    for f in sort(files)
-        ls = readlines(joinpath(dir, f))
+    for f in sort(files; by=basename)
+        ls = readlines(f)
         isempty(ls) && continue
         header = ls[1]
         append!(rows, filter(!isempty ∘ strip, ls[2:end]))
@@ -94,7 +94,7 @@ function convert_clump_files(dir, iout, outdir, t::GlobalTree, dec::Decompositio
         push!(per_rank[rank], r)
     end
     for k in 1:dec.ncpu
-        open(joinpath(outdir, stem * lpad(k, 5, '0')), "w") do io
+        open(joinpath(rank_dir(outdir, k, gs), stem * lpad(k, 5, '0')), "w") do io
             println(io, header)
             foreach(l -> println(io, l), per_rank[k])
         end
