@@ -67,8 +67,11 @@ function amr_file_content(t::GlobalTree, dec::Decomposition, lt::LocalTree, ngri
         # (list id, grid coordinates, global position or 0 for boundary grids)
         entries = vcat([(Int(o), t.levels[l].ig[g], g) for (g, o) in zip(lt.grids[l], lt.owner[l])],
                        [(ncpu + Int(r), b, Int32(0)) for (b, r) in zip(lt.bgrids[l], lt.bregion[l])])
+        # entries by list, in order (one pass, not one scan per list)
+        bylist = [Int[] for _ in 1:ncpu+nbnd]
+        foreach(((i, e),) -> push!(bylist[e[1]], i), enumerate(entries))
         for ib in 1:ncpu+nbnd
-            sel = [e for e in entries if e[1] == ib]
+            sel = entries[bylist[ib]]
             n = length(sel)
             g = GridList(Vector{Int32}(undef, n), zeros(Int32, n), zeros(Int32, n), zeros(n, 3),
                          zeros(Int32, n), zeros(Int32, n, 6), zeros(Int32, n, 8),
