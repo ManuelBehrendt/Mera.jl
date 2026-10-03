@@ -4,7 +4,7 @@ Small RAMSES simulation outputs you can download and analyse with
 [Mera.jl](https://github.com/ManuelBehrendt/Mera.jl). They are the same simulations Mera's own test
 suite runs against, so every one has a known answer to check against.
 
-Total 295 MB across 15 archives (14 simulations plus the documentation set).
+Total 312 MB across 16 archives (15 simulations plus the documentation set).
 Each unpacks to a single directory.
 
 v2 adds four simulations and changes none: `sedov3d_bisection`, `dm_gas3d_bisection` and
@@ -18,8 +18,8 @@ it changes only when the set of simulations changes.
 
 ```bash
 git clone https://github.com/ManuelBehrendt/Mera.jl && cd Mera.jl
-./testdata/fetch_fixtures.sh --small     # 130 MB, everything except the Bondi run
-./testdata/fetch_fixtures.sh             # everything, 295 MB
+./testdata/fetch_fixtures.sh --small     # 147 MB, everything except the Bondi run
+./testdata/fetch_fixtures.sh             # everything, 312 MB
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 

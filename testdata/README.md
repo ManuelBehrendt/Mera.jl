@@ -135,7 +135,7 @@ persist in git history.
 
 | script | what it does |
 |---|---|
-| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `READMEs.tar.gz` (295 MB total) |
+| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `READMEs.tar.gz` (312 MB total) |
 | `fetch_fixtures.sh [--small\|--all\|<names>]` | finds them on disk, or downloads them |
 | `check_release_staging.sh` | **run this after editing anything in `RAMSES-PUBLIC`** — reports whether the staged archives and the committed manifest still describe the current data |
 
@@ -156,7 +156,7 @@ exist yet):
 - `src/functions/download_testdata.jl`: `TESTDATA_TAG`, `TESTDATA_FIXTURES` and its docstring table,
   and the catalogue size in `test/78_download_testdata_tests.jl`;
 - the download sizes in `CONTRIBUTING.md`, `test/README.md` and `fetch_fixtures.sh` (`--small`
-  becomes 130 MB, everything 295 MB for v2), and the tag in `.github/workflows/fixtures.yml`.
+  becomes 147 MB, everything 312 MB for v2), and the tag in `.github/workflows/fixtures.yml`.
 
 `.github/workflows/fixtures.yml` runs the data-backed tier on this: the `--small` set on every
 push, and the full set including the 165 MB Bondi fixture nightly.
