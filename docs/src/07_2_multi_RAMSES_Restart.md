@@ -17,17 +17,19 @@ the output. Mera can rewrite an output for any other number, in two ways:
 | you have | use | result |
 |---|---|---|
 | the RAMSES output | [`repartition`](@ref) | every value bit-identical; RAMSES continues the run to round-off |
-| only Mera data or a mera file | [`writeramses`](@ref) | leaves bit-identical, refined cells rebuilt as RAMSES does; RAMSES continues hydro runs to round-off, runs with gravity within its solver tolerance |
+| only Mera data or a mera file | [`writeramses`](@ref) | leaves bit-identical, refined cells as RAMSES builds them; RAMSES continues the run to round-off |
 
 This page shows what each step does and why, and then checks the result four ways: against
 RAMSES's own files, value by value, by RAMSES reading the files without taking a step, and by
 letting RAMSES continue the run. Every number and
 figure below is computed on this page, and RAMSES itself runs from it.
 
-Supported: 3-D runs with `ordering='hilbert'`, periodic or simple physical boundaries
-(outflow, reflexive, imposed), hydro, MHD, RT, gravity, particles (dark matter, stars, tracers,
-sink clouds), sinks and clumps. Not yet: `ordering='bisection'`, IO groups
-(`IOGROUPSIZEREP`), `QUADHILBERT`, 1-D and 2-D runs.
+Supported: 3-D runs on uniform or AMR grids, cosmological or not, with `ordering='hilbert'`
+(RAMSES's default) or `'bisection'`, files plain or in IO groups (`IOGROUPSIZEREP`), periodic or
+simple physical boundaries (outflow, reflexive, imposed), and hydro, MHD, RT, gravity, particles
+(dark matter, stars, tracers, sink clouds, also the legacy format), sinks and clumps. Section 11
+runs every public test simulation through every route. Not supported: the orderings `'planar'`
+and `'angular'` (Mera does not read them) and `QUADHILBERT` builds; Mera is 3-D only.
 
 ```julia
 # Two RAMSES test runs, both written on 4 CPUs, and the RAMSES build that made them.
@@ -406,11 +408,11 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_N5aOQM/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_vcobOi/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
-  14 files written in 1.1 s
+  14 files written in 0.9 s
 ```
 
 The report's last numbers go into the restart namelist: each rank must be allowed at least
@@ -974,62 +976,125 @@ RAMSES's to `1e-16` (the mera-file cell above). Averaging the total energy inste
 parent too hot by the kinetic energy of the velocity differences inside it; that alone cost `2e-4`
 after a restart of the AMR Sedov run.
 
-Every run this RAMSES build can restart, from Mera data, on 3 ranks, against RAMSES's own restart
-(leaf cells, one output later):
+Every kind of run, from a mera file, written in both orderings and restarted by RAMSES (with
+its MHD and RT builds where needed), against RAMSES's own restart on the original ranks (leaf
+cells, one output later). The gravity is loaded with `parents=true`.
 
 ```julia
-mruns = [("sedov3d_amr_lb_ncpu4", 6), ("sedov3d_uniform_ncpu4", 5), ("sedov3d_outflow_ncpu4", 4),
-         ("sedov3d_grav_part_ncpu4", 6), ("dm_gas3d_ncpu4", 4), ("sinks3d_ncpu4", 4),
-         ("clumps3d_ncpu4", 3), ("starform3d_ncpu4", 4)]
-println(rpad("run", 26), rpad("physics", 36), rpad("octree", 8), rpad("hydro", 9), rpad("grav", 9), "particles |Δx|")
-for (run, o) in mruns
-    ri = getinfo(o, joinpath(RUNS, run), verbose=false)
-    d  = (hydro     = gethydro(ri; q...),
-          gravity   = ri.gravity   ? getgravity(ri; parents=true, q...) : nothing,
-          particles = ri.particles ? getparticles(ri; q...) : nothing,
-          sinks     = ri.sinks     ? getsinks(ri; verbose=false) : nothing)
-    dir = joinpath(WORK, "mera_restart_" * run)
-    w   = writeramses(3; d..., outpath=dir, verbose=false)
-    nmlf = only(filter(endswith(".nml"), readdir(joinpath(RUNS, run))))
-    restart_namelist(joinpath(RUNS, run, nmlf), joinpath(dir, nmlf);
-                     ngridmax=max(20_000, round(Int, 1.3 * w.ngridmax_needed)),
-                     npartmax=isempty(w.npart_per_rank) ? 0 : max(200_000, 3 * w.npart_max))
-    run_ramses(dir, nmlf, o, 3) || (println(rpad(run, 26), "RAMSES FAILED"); continue)
-    c = compareramses(o + 1, joinpath(RUNS, run * "_restart"), dir; leaves_only=true)
-    phys = join(filter(!isempty, ["hydro", ri.gravity ? "gravity" : "", ri.particles ? "particles" : "",
-                                  ri.sinks ? "sinks" : ""]), " + ")
-    println(rpad(run, 26), rpad(phys, 36), rpad(c.same_tree ? "same" : "DIFF", 8),
-            rpad(@sprintf("%.0e", maximum(c.maxdiff["hydro"])), 9),
-            rpad(haskey(c.maxdiff, "grav") ? @sprintf("%.0e", maximum(c.maxdiff["grav"])) : "–", 9),
-            c.nmatched > 0 ? @sprintf("%.0e", c.particle_maxdiff[1]) : "–")
+RAMSES_MHD = get(ENV, "MERA_RAMSES_MHD_BIN", "/Volumes/FASTStorage/projects/RamsesConverter/build/mhd/bin/ramses3d_mhd")
+RAMSES_RT  = get(ENV, "MERA_RAMSES_RT_BIN",  "/Volumes/FASTStorage/projects/RamsesConverter/build/rt/bin/ramses3d_rt")
+# (run, restart output, RAMSES's own restart, build, what it covers)
+mruns = [("sedov3d_amr_lb_ncpu4", 6, "sedov3d_amr_lb_ncpu4_restart", RAMSES, "AMR hydro"),
+         ("sedov3d_uniform_ncpu4", 5, "sedov3d_uniform_ncpu4_restart", RAMSES, "uniform grid"),
+         ("sedov3d_outflow_ncpu4", 4, "sedov3d_outflow_ncpu4_restart", RAMSES, "outflow walls"),
+         ("sedov3d_grav_part_ncpu4", 6, "sedov3d_grav_part_ncpu4_restart", RAMSES, "gravity, tracer particles"),
+         ("dm_gas3d_ncpu4", 4, "dm_gas3d_ncpu4_restart", RAMSES, "gravity, dark matter"),
+         ("sinks3d_ncpu4", 4, "sinks3d_ncpu4_restart", RAMSES, "sinks, gravity, particles"),
+         ("clumps3d_ncpu4", 3, "clumps3d_ncpu4_restart", RAMSES, "clumps, gravity"),
+         ("mhdtube3d_ncpu4", 5, "mhdtube3d_ncpu4_restart", RAMSES_MHD, "MHD, outflow walls"),
+         ("stromgren3d_ncpu4", 6, "stromgren3d_ncpu4_restart", RAMSES_RT, "radiative transfer, walls"),
+         ("cosmo3d_ncpu8", 3, "cosmo3d_ncpu8_restart2", RAMSES, "cosmological: gas, DM, gravity"),
+         ("starform3d_ncpu4", 4, "starform3d_ncpu4_restart", RAMSES, "stochastic star formation")]
+restarts = NamedTuple[]
+println(rpad("run", 24), rpad("covers", 32), rpad("ordering", 11), rpad("ranks", 6), rpad("octree", 8), rpad("hydro", 8), rpad("grav", 8), rpad("rt", 8), "particles")
+for (run, o, ref, bin, what) in mruns
+    src = joinpath(RUNS, run); ri = getinfo(o, src, verbose=false)
+    d = (hydro     = gethydro(ri; q...),
+         gravity   = ri.gravity   ? getgravity(ri; parents=true, q...) : nothing,
+         rt        = ri.rt        ? getrt(ri; q...) : nothing,
+         particles = ri.particles ? getparticles(ri; q...) : nothing,
+         sinks     = ri.sinks     ? getsinks(ri; verbose=false) : nothing)
+    mf = mkpath(joinpath(WORK, "merafile_" * run)); mode = :write          # through a mera file
+    for obj in values(d)
+        obj === nothing && continue
+        savedata(obj, mf, mode; verbose=false); mode = :append
+    end
+    L = NamedTuple{keys(d)}(Tuple(obj === nothing ? nothing : loaddata(o, mf, k; verbose=false) for (k, obj) in pairs(d)))
+    nmlf = only(filter(endswith(".nml"), readdir(joinpath(RUNS, ref))))
+    # the cosmological reference stops two coarse steps after the restart and writes after each
+    steps = occursin("cosmo", run) ? "nstepmax=$(ri.grid_info.nstep_coarse + 2)" : ""
+    for (ord, n) in (("hilbert", 3), ("bisection", 5))
+        dir = joinpath(WORK, "mera_restart_$(run)_$ord")
+        w = Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+            writeramses(n; L..., outpath=dir, ordering=Symbol(ord), overwrite=true, verbose=false)
+        end
+        restart_namelist(joinpath(RUNS, ref, nmlf), joinpath(dir, nmlf);
+                         ngridmax=max(20_000, round(Int, 1.3 * w.ngridmax_needed)),
+                         npartmax=isempty(w.npart_per_rank) ? 0 : max(200_000, 3 * w.npart_max),
+                         run_extra=join(filter(!isempty, [ord == "bisection" ? "ordering='bisection'" : "", steps]), "\n"),
+                         output_extra=isempty(steps) ? "" : "foutput=1")
+        isdir(joinpath(src, "ic")) && !ispath(joinpath(dir, "ic")) && symlink(realpath(joinpath(src, "ic")), joinpath(dir, "ic"))
+        run_ramses(dir, nmlf, o, n; bin=bin) || (println(rpad(run, 24), "RAMSES FAILED"); continue)
+        c = compareramses(o + 1, joinpath(RUNS, ref), dir; leaves_only=true)
+        f(k) = haskey(c.maxdiff, k) ? maximum(c.maxdiff[k]) : NaN
+        push!(restarts, (run=run, what=what, ordering=ord, ranks=n, same=c.same_tree, hydro=f("hydro"), grav=f("grav"),
+                         rt=f("rt"), part=c.nmatched > 0 ? c.particle_maxdiff[1] : NaN))
+        r = restarts[end]; s(x) = isnan(x) ? "–" : @sprintf("%.0e", x)
+        println(rpad(run, 24), rpad(what, 32), rpad(ord, 11), rpad(n, 6), rpad(r.same ? "same" : "DIFF", 8),
+                rpad(s(r.hydro), 8), rpad(s(r.grav), 8), rpad(s(r.rt), 8), s(r.part))
+    end
 end
 ```
 
 ```
-run                       physics                             octree  hydro    grav     particles |Δx|
-sedov3d_amr_lb_ncpu4      hydro                               same    8e-16    –        –
-sedov3d_uniform_ncpu4     hydro                               same    5e-16    –        –
-sedov3d_outflow_ncpu4     hydro                               same    7e-15    –        –
-sedov3d_grav_part_ncpu4   hydro + gravity + particles         same    2e-15    1e-12    –
-dm_gas3d_ncpu4            hydro + gravity + particles         same    7e-15    8e-15    6e-16
-sinks3d_ncpu4             hydro + gravity + particles + sinks same    2e-15    2e-12    –
-clumps3d_ncpu4            hydro + gravity                     same    2e-15    8e-15    –
-starform3d_ncpu4          hydro + gravity + particles         same    5e-02    8e-03    1e-01
+run                     covers                          ordering   ranks octree  hydro   grav    rt      particles
+sedov3d_amr_lb_ncpu4    AMR hydro                       hilbert    3     same    8e-16   –       –       –
+sedov3d_amr_lb_ncpu4    AMR hydro                       bisection  5     same    1e-15   –       –       –
+sedov3d_uniform_ncpu4   uniform grid                    hilbert    3     same    5e-16   –       –       –
+sedov3d_uniform_ncpu4   uniform grid                    bisection  5     same    0e+00   –       –       –
+sedov3d_outflow_ncpu4   outflow walls                   hilbert    3     same    7e-15   –       –       –
+sedov3d_outflow_ncpu4   outflow walls                   bisection  5     same    5e-15   –       –       –
+sedov3d_grav_part_ncpu4 gravity, tracer particles       hilbert    3     same    2e-15   1e-12   –       –
+sedov3d_grav_part_ncpu4 gravity, tracer particles       bisection  5     same    2e-15   7e-14   –       –
+dm_gas3d_ncpu4          gravity, dark matter            hilbert    3     same    7e-15   8e-15   –       6e-16
+dm_gas3d_ncpu4          gravity, dark matter            bisection  5     same    8e-15   7e-15   –       6e-16
+sinks3d_ncpu4           sinks, gravity, particles       hilbert    3     same    2e-15   2e-12   –       –
+sinks3d_ncpu4           sinks, gravity, particles       bisection  5     same    2e-15   2e-11   –       –
+clumps3d_ncpu4          clumps, gravity                 hilbert    3     same    2e-15   8e-15   –       –
+clumps3d_ncpu4          clumps, gravity                 bisection  5     same    2e-15   7e-15   –       –
+mhdtube3d_ncpu4         MHD, outflow walls              hilbert    3     same    7e-16   –       –       –
+mhdtube3d_ncpu4         MHD, outflow walls              bisection  5     same    0e+00   –       –       –
+stromgren3d_ncpu4       radiative transfer, walls       hilbert    3     same    0e+00   –       0e+00   –
+stromgren3d_ncpu4       radiative transfer, walls       bisection  5     same    0e+00   –       0e+00   –
+cosmo3d_ncpu8           cosmological: gas, DM, gravity  hilbert    3     same    8e-16   6e-12   –       1e-16
+cosmo3d_ncpu8           cosmological: gas, DM, gravity  bisection  5     same    4e-16   1e-14   –       1e-16
+starform3d_ncpu4        stochastic star formation       hilbert    3     same    5e-02   8e-03   –       1e-01
+starform3d_ncpu4        stochastic star formation       bisection  5     same    4e-02   8e-03   –       1e-01
 ```
+
+```julia
+# The same table as a picture: the largest difference of each restart (hydro, gravity, RT and
+# particle positions together), on the scale from round-off to the stochastic run.
+labs = unique([(r.run, r.what) for r in restarts])
+pick(run, ord) = only(r for r in restarts if r.run == run && r.ordering == ord)
+V = [maximum(filter(!isnan, [r.hydro, r.grav, r.rt, r.part])) for r in (pick(run, ord) for (run, _) in labs, ord in ("hilbert", "bisection"))]
+fig = Figure(size=(760, 40 + 34 * length(labs)))
+ax = Axis(fig[1, 1]; xticks=(1:2, ["Hilbert, 3 ranks", "bisection, 5 ranks"]), yticks=(1:length(labs), [w for (_, w) in labs]),
+          yreversed=true, title="RAMSES restarts from a mera file: largest difference one output later")
+hm = heatmap!(ax, 1:2, 1:length(labs), permutedims(log10.(max.(V, 1e-17))); colormap=blues, colorrange=(-17, -1))
+for i in eachindex(labs), j in 1:2
+    text!(ax, j, i; text=@sprintf("%.0e", V[i, j]), align=(:center, :center), fontsize=13,
+          color=V[i, j] > 1e-6 ? :white : :black)
+end
+Colorbar(fig[1, 2], hm; label="log₁₀ largest relative difference", width=10)
+fig
+```
+
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_48_1.png)
 
 | run type | difference after one output | why |
 |---|---|---|
-| hydro only (AMR, uniform, physical boundaries) | round-off | the rebuilt parents are RAMSES's own |
-| with self-gravity and particles | round-off (gravity `1e-12` or better) | the gravity parents are kept as stored (`parents=true`) |
+| hydro on AMR or uniform grids, with physical walls | round-off | the rebuilt parents are RAMSES's own |
+| with self-gravity, particles, sinks or clumps | round-off (gravity `1e-11` or better) | the gravity parents are kept as stored (`parents=true`) |
+| MHD and radiative transfer | round-off | the MHD and RT rules below |
+| cosmological (gas, dark matter, gravity, AMR) | round-off | the exact amr header carries the expansion factor and its time steps |
 | stochastic star formation | statistical | random seeds depend on the rank count |
 
-The MHD and radiative-transfer builds of RAMSES are not on this machine, so those two runs are not
-in the table; in the converter's suite both restarted from Mera data to round-off. Their written
-files match RAMSES's in every cell, parents included (tested on an MHD run on an AMR grid and on a
-radiative-transfer run). Two rules make that so. An MHD parent takes each face field from the four
-children on that face. A photon density is written as the speed of light times the density, and
-RAMSES sets that speed to zero below `levelmin`, so those parents are zero; their fluxes are
-averages, like every other parent.
+Hilbert and bisection give the same result: the ordering only decides which rank holds which
+cell. Two rules make the MHD and RT parents RAMSES's own. An MHD parent takes each face field from
+the four children on that face. A photon density is written as the speed of light times the
+density, and RAMSES sets that speed to zero below `levelmin`, so those parents are zero; their
+fluxes are averages, like every other parent.
 
 When the RAMSES files still exist, `repartition` is the exact route. `writeramses` is for the
 case where only Mera data is left.
@@ -1229,14 +1294,118 @@ octree same; all cells, largest difference: hydro 6e-17, gravity 0e+00; particle
 Every cell, refined ones included, and every particle equal the original. Legacy stars are
 numbered apart from dark matter, so `compareramses` matches them by identity and kind.
 
-## 11. In short
+## 11. Every kind of run, every route
+
+The public test simulations of Mera cover every kind of data, and each goes through every route:
+`repartition` of RAMSES's files to Hilbert ordering on 3 ranks, to bisection on 5 ranks and to IO
+groups, and the same three from its Mera data saved as a mera file and loaded back. The table
+gives the largest difference from the original output, relative to each variable's largest value,
+over every variable, particle and sink. The test suite runs the same matrix
+(`test/86_ramses_writer_tests.jl`), and also rebuilds every rank's file of each simulation exactly
+as RAMSES wrote it.
+
+On an AMR run every cell is compared, refined ones included: RAMSES averages the refined cells,
+also below `levelmin`. On a uniform grid RAMSES never updates the cells below `levelmin` (its main
+loop does so only when `levelmin < levelmax`), so they keep their initial values and only the
+leaves carry the solution; there the leaves are compared, and the uniform-grid restarts above show
+that nothing else matters. Outputs in IO groups are first repartitioned to plain files, because
+Mera's readers expect those.
+
+```julia
+PUBLIC = joinpath(get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests"), "RAMSES-PUBLIC")
+sims = [("sedov3d_amr", 7, "AMR hydro, periodic"), ("sedov3d_grav_part", 7, "gravity, tracer particles"),
+        ("mhdtube3d", 6, "MHD, outflow walls"), ("clumps3d", 4, "clumps, gravity"),
+        ("stromgren3d", 7, "RT, uniform grid, walls"), ("sinks3d", 2, "sinks, gravity, particles"),
+        ("ramses_abc_flow", 2, "MHD, uniform grid"), ("ramses_rt_dirac", 2, "RT and MHD, AMR"),
+        ("legacy_particles3d", 3, "legacy particles, one rank"), ("cosmo3d", 3, "cosmological, gas and DM"),
+        ("sedov3d_bisection", 6, "RAMSES bisection output"), ("dm_gas3d_bisection", 4, "bisection, gravity, DM"),
+        ("sedov3d_iogroups", 3, "RAMSES IO-group output")]
+routes = [("Hilbert", 3, (ordering=:hilbert,)), ("bisection", 5, (ordering=:bisection,)),
+          ("IO groups", 3, (ordering=:hilbert, iogroupsize=2))]
+worst(c) = c.same_tree ? maximum(vcat([maximum(v) for v in values(c.maxdiff)], collect(c.particle_maxdiff), c.sink_maxdiff)) : Inf
+M = fill(NaN, length(sims), 2length(routes))
+for (i, (name, o, _)) in enumerate(sims)
+    src = joinpath(PUBLIC, name); dir = joinpath(src, "output_" * lpad(o, 5, '0'))
+    for (j, (lab, n, kw)) in enumerate(routes)                       # RAMSES files to RAMSES files
+        out = joinpath(WORK, "matrix", name, "repartition " * lab)
+        repartition(o, src, n; outpath=out, overwrite=true, verbose=false, kw...)
+        M[i, j] = worst(compareramses(o, src, out))
+    end
+    mpath = src                                                       # Mera's readers need plain files
+    if RW.groupsize_of(dir) > 0
+        mpath = joinpath(WORK, "matrix", name, "plain"); RW.repartition(dir, 4; outpath=mpath, overwrite=true, verbose=false)
+    end
+    mi = getinfo(o, mpath, verbose=false); uniform = mi.levelmin == mi.levelmax
+    d = (hydro = gethydro(mi; q...), gravity = mi.gravity ? getgravity(mi; parents=true, q...) : nothing,
+         rt = mi.rt ? getrt(mi; q...) : nothing, particles = mi.particles ? getparticles(mi; q...) : nothing,
+         sinks = mi.sinks ? getsinks(mi; verbose=false) : nothing)
+    mf = mkpath(joinpath(WORK, "matrix", name, "merafile")); mode = :write
+    for obj in values(d)
+        obj === nothing && continue
+        savedata(obj, mf, mode; verbose=false); mode = :append
+    end
+    L = NamedTuple{keys(d)}(Tuple(obj === nothing ? nothing : loaddata(o, mf, k; verbose=false) for (k, obj) in pairs(d)))
+    for (j, (lab, n, kw)) in enumerate(routes)                       # mera file to RAMSES files
+        out = joinpath(WORK, "matrix", name, "mera file " * lab)
+        Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+            writeramses(n; L..., outpath=out, overwrite=true, verbose=false, kw...)
+        end
+        M[i, length(routes) + j] = worst(compareramses(o, src, out; leaves_only=uniform))
+    end
+end
+cols = ["repartition: " .* first.(routes); "mera file: " .* first.(routes)]
+cell(x) = rpad(x == 0 ? "0" : @sprintf("%.0e", x), 11)
+println(rpad("", 50), rpad("RAMSES files to RAMSES files", 33), "| mera file to RAMSES files")
+println(rpad("simulation", 22), rpad("covers", 28), join(rpad(r[1], 11) for r in routes), "| ", join(rpad(r[1], 11) for r in routes))
+for (i, (name, _, what)) in enumerate(sims)
+    println(rpad(name, 22), rpad(what, 28), join(cell(x) for x in M[i, 1:3]), "| ", join(cell(x) for x in M[i, 4:6]))
+end
+```
+
+```
+                                                  RAMSES files to RAMSES files     | mera file to RAMSES files
+simulation            covers                      Hilbert    bisection  IO groups  | Hilbert    bisection  IO groups
+sedov3d_amr           AMR hydro, periodic         0          0          0          | 6e-16      6e-16      6e-16
+sedov3d_grav_part     gravity, tracer particles   0          0          0          | 4e-16      4e-16      4e-16
+mhdtube3d             MHD, outflow walls          0          0          0          | 4e-16      4e-16      4e-16
+clumps3d              clumps, gravity             0          0          0          | 4e-16      4e-16      4e-16
+stromgren3d           RT, uniform grid, walls     0          0          0          | 0          0          0
+sinks3d               sinks, gravity, particles   0          0          0          | 8e-16      8e-16      8e-16
+ramses_abc_flow       MHD, uniform grid           0          0          0          | 0          0          0
+ramses_rt_dirac       RT and MHD, AMR             0          0          0          | 3e-16      3e-16      3e-16
+legacy_particles3d    legacy particles, one rank  0          0          0          | 0          0          0
+cosmo3d               cosmological, gas and DM    0          0          0          | 1e-16      1e-16      1e-16
+sedov3d_bisection     RAMSES bisection output     0          0          0          | 3e-16      3e-16      3e-16
+dm_gas3d_bisection    bisection, gravity, DM      0          0          0          | 4e-16      4e-16      4e-16
+sedov3d_iogroups      RAMSES IO-group output      0          0          0          | 4e-16      4e-16      4e-16
+```
+
+```julia
+# The matrix as a picture: zero means bit-identical (values copied); the rest is round-off from
+# averaging the refined cells.
+fig = Figure(size=(900, 60 + 34 * length(sims)))
+ax = Axis(fig[1, 1]; xticks=(1:6, replace.(cols, ": " => "\n")), yticks=(1:length(sims), [s[1] * "  (" * s[3] * ")" for s in sims]),
+          yreversed=true, title="Every public test simulation, every route: largest difference from the original")
+hm = heatmap!(ax, 1:6, 1:length(sims), permutedims(log10.(max.(M, 1e-18))); colormap=blues, colorrange=(-18, -12))
+for i in eachindex(sims), j in 1:6
+    text!(ax, j, i; text=M[i, j] == 0 ? "0" : @sprintf("%.0e", M[i, j]), align=(:center, :center), fontsize=12)
+end
+vlines!(ax, [3.5]; color=:black, linewidth=1)
+Colorbar(fig[1, 2], hm; label="log₁₀ largest difference (0 shown at the bottom)", width=10)
+fig
+```
+
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_62_1.png)
+
+## 12. In short
 
 - `repartition(output, path, ncpu; outpath)` rewrites a RAMSES output for any number of ranks,
-  in Hilbert or bisection ordering, plain or in IO groups. Values bit-identical; RAMSES continues
-  to round-off.
-- `writeramses(ncpu; hydro, gravity, particles, sinks, outpath)` writes one from complete Mera
-  data, also from a mera file. Leaves bit-identical, refined cells as RAMSES builds them; with the
-  gravity loaded as `getgravity(info; parents=true)` every run continues to round-off.
+  in Hilbert or bisection ordering, plain or in IO groups, uniform or AMR, cosmological or not.
+  Values bit-identical; RAMSES continues to round-off.
+- `writeramses(ncpu; hydro, gravity, rt, particles, sinks, outpath)` writes one from complete Mera
+  data, also from a mera file, in either ordering. Leaves bit-identical, refined cells as RAMSES
+  builds them; with the gravity loaded as `getgravity(info; parents=true)` every kind of run, MHD,
+  RT and cosmological runs included, continues to round-off.
 - `restart_completeness` proves the data is complete; `compareramses` checks any two outputs.
 - `writeramses` refuses incomplete data and a cosmological run from an old mera file whose
   simulation is gone (its expansion history is unknown; `force=true` writes it anyway).
