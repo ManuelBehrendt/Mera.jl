@@ -104,12 +104,13 @@ table exactly.
 | `sedov3d_bisection` | `namelists/sedov3d_bisection.nml` | `ordering='bisection'`, ncpu=4: RAMSES's own bisection files, rebuilt and repartitioned |
 | `dm_gas3d_bisection` | `namelists/dm_gas3d_bisection.nml` + `ic_part/` | bisection with self-gravity and 30 000 dark-matter particles; output 4 only |
 | `sedov3d_iogroups` | `namelists/sedov3d_iogroups.nml` | files in IO-group folders (`IOGROUPSIZEREP=2`, set at compile time in RAMSES 2026.05) |
+| `cosmo3d` | `namelists/cosmo3d.nml` + `make_cosmo3d_ic.py` | cosmological: gas, dark matter, gravity, AMR; RAMSES's own initial conditions averaged to 32³ |
 
 Between them: both the multi-file (ncpu=8) and single-file (ncpu=1) reader paths, AMR and uniform
 grids, three `nvarh` layouts (5 / 8 / 11), every data type Mera reads, and both the legacy and
 modern on-disk formats.
 
-The last three are prepared for the `testdata-v2` release (on the maintainer's drive and in
+The last four are prepared for the `testdata-v2` release (on the maintainer's drive and in
 `package_fixtures.sh`); they join `fetch_fixtures.sh` once v2 is published. Until then their tests
 skip when the fixtures are absent.
 
@@ -129,7 +130,7 @@ than by hand, so a regenerated fixture cannot ship without it.
 
 The generated fixtures are published as **assets on a `testdata-vN` release**, not committed to
 this repository (`testdata-v1`: eleven simulations, for Mera 1.8; `testdata-v2`: the same eleven
-plus `sedov3d_bisection`, `dm_gas3d_bisection` and `sedov3d_iogroups`): Mera is registered, so tree contents ship in every `Pkg.add("Mera")` tarball and
+plus `sedov3d_bisection`, `dm_gas3d_bisection`, `sedov3d_iogroups` and `cosmo3d`): Mera is registered, so tree contents ship in every `Pkg.add("Mera")` tarball and
 persist in git history.
 
 | script | what it does |
