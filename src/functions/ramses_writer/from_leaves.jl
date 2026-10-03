@@ -210,7 +210,7 @@ the first steps after a restart. MHD has its own upload and keeps the total ener
 function hydro_restriction(names::Vector{String}, gamma::Float64; interpol_var::Integer=0)
     any(n -> startswith(n, "momentum") || n == "total_energy", names) && return PLAIN
     iv = [findfirst(==("velocity_$c"), names) for c in ("x", "y", "z")]
-    ip = findfirst(==("pressure"), names)
+    ip = findfirst(in(("pressure", "thermal_pressure")), names)    # older RAMSES says thermal_pressure
     (any(isnothing, iv) || ip === nothing) && error("Unrecognised hydro variables: $names")
     ibl = [findfirst(==("B_$(c)_left"), names) for c in ("x", "y", "z")]
     ibr = [findfirst(==("B_$(c)_right"), names) for c in ("x", "y", "z")]

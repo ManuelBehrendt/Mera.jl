@@ -147,13 +147,13 @@ function readinfofile!(dataobject::InfoType)
     unit_v    = unit_l / unit_t
     unit_m    = unit_d * unit_l^3
 
-    hilbert_ordering = occursin(r"(?i)hilbert", lines[20])
+    ordering = _ramses_ordering(lines[20])
 
     if  ndim != 3
       error("[Mera]: Program only works with 3D data!")
     end
 
-    if occursin(r"(?i)bisection", lines[20])
+    if ordering === :bisection
       # ordering='bisection': the file lists each rank's box instead of Hilbert walls. NaN walls
       # tell the readers to read every file (they select files by Hilbert keys otherwise).
       fill!(dataobject.grid_info.bound_key, NaN)
@@ -302,6 +302,19 @@ function _legacy_particle_extras(path::AbstractString)
     nextra = length(lens) - 18                 # 8 header records, 9 fixed fields, the birth time
     (nstar > 0 && nextra > 0 && all(==(8npart), lens[19:end])) || return 0
     return nextra
+end
+
+# The domain ordering named in the info file. Mera reads 'hilbert' (RAMSES's default) and
+# 'bisection' outputs. 'planar' and 'angular' store their domain walls in other units, and Mera's
+# readers would pick the wrong files, so they are refused with a clear message instead.
+function _ramses_ordering(line::AbstractString)
+    m = match(r"ordering type\s*=\s*(\w+)", line)
+    m === nothing && return :hilbert                     # very old info files name no ordering
+    o = Symbol(lowercase(m.captures[1]))
+    o in (:hilbert, :bisection) ||
+        error("[Mera]: this output was written with ordering='$o'. Mera reads outputs written " *
+              "with ordering='hilbert' (RAMSES's default) or 'bisection'.")
+    return o
 end
 
 function readhydrofile1!(dataobject::InfoType)

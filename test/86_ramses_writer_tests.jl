@@ -364,6 +364,104 @@ end
     end
     end
 
+    # Every kind of run through every route. For each public simulation: RAMSES's own rank files
+    # are rebuilt from its own decomposition; it is repartitioned to Hilbert (3 ranks), bisection
+    # (5 ranks) and IO groups; and its Mera data, saved as a mera file and loaded back, is written
+    # in the same three ways. On an AMR run every cell must match, because RAMSES averages the
+    # refined cells, below levelmin too. On a uniform grid RAMSES never updates the cells below
+    # levelmin (adaptive_loop.f90 uploads them only when levelmin < levelmax), so they keep their
+    # initial values and only the leaves carry the solution; there the leaves are compared.
+    PUBLIC_AVAILABLE && @testset verbose=true "every kind of run, every route" begin
+        matrix = [(:sedov3d_amr, 0), (:sedov3d_grav_part, 0), (:mhdtube3d, 0), (:clumps3d, 0), (:stromgren3d, 0),
+                  (:sinks3d, 0), (:ramses_abc_flow, 0), (:ramses_rt_dirac, 0), (:legacy_particles3d, 0),
+                  (:cosmo3d, 1), (:cosmo3d, 3), (:sedov3d_bisection, 0), (:dm_gas3d_bisection, 0), (:sedov3d_iogroups, 0)]
+        routes = (("Hilbert", 3, (ordering=:hilbert,)), ("bisection", 5, (ordering=:bisection,)),
+                  ("IO groups", 3, (ordering=:hilbert, iogroupsize=2)))
+        allzero(c) = all(v -> all(iszero, v), values(c.maxdiff))
+        ordering_of(out, o) = strip(RW.read_amr_file(RW.amr_filename(joinpath(out, "output_" * lpad(o, 5, '0')), o, 1))[1].ordering)
+        covered = Set{Symbol}(); ran = 0
+        for (key, oo) in matrix
+            fx = PUBLIC_FIXTURES[key]
+            isdir(fx.path) || continue
+            o = oo > 0 ? oo : haskey(fx, :output) ? fx.output : lastout(fx.path)
+            ran += 1
+            @testset "$key, output $o" begin
+                q = (verbose=false, show_progress=false); tmp = mktempdir()
+                dir = joinpath(fx.path, "output_" * lpad(o, 5, '0'))
+                # RAMSES's own rank files, from the output's own walls or tree
+                t = RW.read_global_tree(dir, o; verbose=false)
+                ncpu = Int(t.header.ncpu)
+                dec = RW.own_decomposition(t)
+                lts = [RW.build_local_tree(t, dec, k; nexpand_bound=RW.auto_nexpand_bound(t, dir, o)) for k in 1:ncpu]
+                nt = RW.global_numbtot([lt.numbl for lt in lts], t.header.nlevelmax); umt = maximum(RW.ngrid_current, lts)
+                @test all(1:ncpu) do k
+                    g = tempname()
+                    RW.write_amr_file(g, RW.amr_file_content(t, dec, lts[k], Int(t.header.ngridmax), nt, umt)...)
+                    same = _rw_canonical_amr(RW.amr_filename(dir, o, k)) == _rw_canonical_amr(g); rm(g); same
+                end
+                # RAMSES files to RAMSES files
+                for (lab, n, kw) in routes
+                    out = joinpath(tmp, "repartition " * lab)
+                    repartition(o, fx.path, n; outpath=out, verbose=false, kw...)
+                    c = compareramses(o, fx.path, out)
+                    @test ordering_of(out, o) == string(kw.ordering)
+                    @test c.same_tree && allzero(c) && c.particle_maxdiff == (0.0, 0.0) && c.sink_maxdiff == 0
+                end
+                # Mera data, through a mera file, to RAMSES files. Mera's readers need a plain output,
+                # so an output in IO-group folders is first repartitioned to one (same ranks)
+                mpath = fx.path
+                if RW.groupsize_of(dir) > 0
+                    mpath = joinpath(tmp, "plain"); RW.repartition(dir, ncpu; outpath=mpath, verbose=false)
+                end
+                info = getinfo(o, mpath, verbose=false)
+                uniform = info.levelmin == info.levelmax
+                d = (hydro = gethydro(info; q...),
+                     gravity = info.gravity ? getgravity(info; parents=true, q...) : nothing,
+                     rt = info.rt ? getrt(info; q...) : nothing,
+                     particles = info.particles ? getparticles(info; q...) : nothing,
+                     sinks = info.sinks ? getsinks(info; verbose=false) : nothing)
+                @test first(restart_completeness(d.hydro; gravity=d.gravity, rt=d.rt, particles=d.particles, sinks=d.sinks))
+                mf = mkpath(joinpath(tmp, "merafile")); mode = :write
+                for obj in values(d)
+                    obj === nothing && continue
+                    savedata(obj, mf, mode; verbose=false); mode = :append
+                end
+                L = NamedTuple{keys(d)}(Tuple(obj === nothing ? nothing : loaddata(o, mf, k; verbose=false) for (k, obj) in pairs(d)))
+                info.gravity && @test haskey(L.gravity.used_descriptors, :parents)
+                for (lab, n, kw) in routes
+                    out = joinpath(tmp, "mera file " * lab)
+                    Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+                        writeramses(n; L..., outpath=out, verbose=false, kw...)
+                    end
+                    c = compareramses(o, fx.path, out; leaves_only=uniform)
+                    @test ordering_of(out, o) == string(kw.ordering)
+                    @test c.same_tree
+                    @test maximum(c.maxdiff["hydro"]) < 1e-13
+                    haskey(c.maxdiff, "grav") && @test all(iszero, c.maxdiff["grav"])
+                    # RT refined cells are averages too (round-off); gravity ones are stored, so exact
+                    haskey(c.maxdiff, "rt") && @test maximum(c.maxdiff["rt"]) < 1e-13
+                    @test c.nparticles[1] == c.nparticles[2] && c.particle_maxdiff == (0.0, 0.0) && c.sink_maxdiff == 0
+                end
+                # what this simulation adds to the coverage
+                push!(covered, :hydro, uniform ? :uniform : :amr, strip(t.header.ordering) == "bisection" ? :bisection : :hilbert)
+                RW.groupsize_of(dir) > 0 && push!(covered, :iogroups)
+                info.gravity && push!(covered, :gravity)
+                info.rt && push!(covered, :rt)
+                :bx_left in info.variable_list && push!(covered, :mhd)
+                info.particles && push!(covered, info.descriptor.pversion > 0 ? :particles : :legacy_particles)
+                info.sinks && push!(covered, :sinks)
+                info.clumps && push!(covered, :clumps)
+                isempty(t.boundaries) || push!(covered, :walls)
+                Mera.iscosmological(info) && push!(covered, :cosmological)
+                rm(tmp; recursive=true)
+            end
+        end
+        if ran == length(matrix)
+            @test covered ⊇ Set([:hydro, :amr, :uniform, :hilbert, :bisection, :iogroups, :gravity, :rt, :mhd,
+                                 :particles, :legacy_particles, :sinks, :clumps, :walls, :cosmological])
+        end
+    end
+
     # RAMSES's own outputs in the other layouts: bisection ordering and IO groups. Every rank's file
     # is rebuilt from the output's own tree or walls, and the values survive a repartition.
     PUBLIC_AVAILABLE && @testset "$key (RAMSES's own layout)" for key in (:sedov3d_bisection, :dm_gas3d_bisection, :sedov3d_iogroups)

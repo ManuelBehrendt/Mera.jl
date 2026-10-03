@@ -330,6 +330,13 @@ const PUBLIC_FIXTURES = Dict(
         oracle = (iogroupsize = 2,),
         note = "files in output_NNNNN/group_GGGGG; Mera's readers need a plain output (repartition first)",
     ),
+    :cosmo3d => (
+        path = joinpath(PUBLIC_PATH, "cosmo3d"),
+        ramses_version = "2026.05",            # initial conditions from RAMSES's tests/poisson/cosmo
+        outputs = 2, boxlen = 1.0, ncpu = 8, output = 3,
+        oracle = (npart = 32768, aexp_output3 = 0.1004),
+        note = "cosmological: gas + dark matter + self-gravity + AMR (levels 5 to 8); outputs 1 and 3 only",
+    ),
     :legacy_particles3d => (
         path = joinpath(PUBLIC_PATH, "legacy_particles3d"),
         ramses_version = "stable_17_09",       # NOT 2026.05 — see testdata/namelists/

@@ -1,0 +1,55 @@
+! cosmo3d.nml, a Mera test fixture: a small cosmological run with gas, dark matter, self-gravity
+! and AMR, on 8 ranks.
+!
+! Initial conditions: RAMSES's own test tests/poisson/cosmo (cosmo_128, from ramses.cnrs.fr),
+! averaged over 4^3 blocks to 32^3 (box 1.25 Mpc, a_start = 0.0066, Omega_m = 0.3175,
+! Omega_L = 0.6825, H0 = 67.11). The gas starts from ic_deltab and the dark-matter velocities.
+! Adiabatic gas (no cooling, no star formation), so a restart is deterministic. The averaged
+! initial conditions are in ic/. Only outputs 1 (a = 0.0066, still uniform) and 3 (a = 0.1,
+! refined to level 8) are kept; rerun for the others:
+!     mpirun -np 8 ramses3d cosmo3d.nml > run.log
+
+&RUN_PARAMS
+cosmo=.true.
+pic=.true.
+poisson=.true.
+hydro=.true.
+nremap=2
+nsubcycle=1,1,2,2
+ncontrol=1
+verbose=.false.
+/
+
+&OUTPUT_PARAMS
+aout=0.05,0.1,0.2
+/
+
+&INIT_PARAMS
+filetype='grafic'
+initfile(1)='ic'
+/
+
+&AMR_PARAMS
+levelmin=5
+levelmax=8
+ngridmax=100000
+npartmax=100000
+nexpand=1
+/
+
+&REFINE_PARAMS
+m_refine=8.,8.,8.,8.
+interpol_var=1
+interpol_type=0
+/
+
+&HYDRO_PARAMS
+gamma=1.6666667
+courant_factor=0.8
+slope_type=1
+pressure_fix=.true.
+/
+
+&POISSON_PARAMS
+epsilon=1d-4
+/

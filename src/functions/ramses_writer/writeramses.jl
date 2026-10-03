@@ -279,7 +279,8 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
                       "gas tracers only: their partp (cell index) is recomputed" :
                       "$hosted tracers attached to stars/particles; their host id (partp) is not in the Mera data")
             end
-            missing_ = [v for v in need if !hasproperty(pc, v)]
+            # Mera leaves out :level on a uniform grid, where every particle sits at levelmin
+            missing_ = [v for v in need if !hasproperty(pc, v) && !(v === :level && _uniform(info))]
             check("particle fields", isempty(missing_), isempty(missing_) ? "all $(length(need))" : "missing $missing_")
             np = length(pc.x)
             pi = info.part_info
@@ -320,6 +321,9 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
     end
     return ok, rep
 end
+
+"A uniform grid: the run never refines beyond levelmin, so Mera stores no :level column."
+_uniform(info) = info.levelmin == info.levelmax
 
 "True if `key` is set to .true. in namelist group `group`."
 _nml_true(info, group, key) = any(v -> lowercase(strip(v)) in (".true.", "t", ".t.", "true"),
@@ -425,7 +429,9 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
             if nm == "partp" && !hasproperty(pc, :partp)
                 push!(cols, zeros(Int32, length(pc.x)))      # gas tracers: filled per rank by the writer
             else
-                push!(cols, getproperty(pc, _partcol(nm)))
+                col = _partcol(nm)
+                push!(cols, col === :level && !hasproperty(pc, :level) && _uniform(info) ?
+                            fill(Int32(info.levelmin), length(pc.x)) : getproperty(pc, col))
             end
         end
         pt = _RW.ParticleTable(names, types, cols)
