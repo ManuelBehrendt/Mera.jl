@@ -67,6 +67,39 @@ function _rw_hilbert_ref(ix, iy, iz, bit_length)
     return sum(Float64(bits[i+1]) * 2.0^i for i in 0:3bit_length-1)
 end
 
+# The plain form of the bisection walls, all cell centres in one list split recursively, kept as a
+# reference for the package's form, which never stores them.
+function _rw_bisection_ref(t, ncpu; extra_points=NTuple{3,Float64}[])
+    scale = RW.box_scale(t)
+    res = scale / 2.0^(t.header.nlevelmax + 1)
+    pts = copy(extra_points)
+    for l in 1:RW.nlevels(t), i in 1:RW.ngrids(t.levels[l]), ind in 1:8
+        push!(pts, RW.cell_center(t, l, i, ind))
+    end
+    n = RW.nbinodes(ncpu)
+    wall = zeros(n); next = zeros(Int32, n, 2); indx = zeros(Int32, n)
+    boxmin = zeros(ncpu, 3); boxmax = zeros(ncpu, 3); load = zeros(ncpu)
+    todo = [(1, 1, 1, ncpu, (zeros(3), fill(scale, 3)), collect(1:length(pts)))]
+    while !isempty(todo)
+        node, dir, r1, r2, (bmin, bmax), idx = popfirst!(todo)
+        if r1 == r2
+            indx[node] = r1; boxmin[r1, :] .= bmin; boxmax[r1, :] .= bmax; load[r1] = length(idx)
+            continue
+        end
+        n1 = (r2 - r1 + 1) ÷ 2
+        c = sort!([pts[i][dir] for i in idx])
+        k = isempty(c) ? 0 : clamp(round(Int, n1 / (r2 - r1 + 1) * length(c)), 1, length(c))
+        ck = isempty(c) ? nothing : (c[k], k < length(c) ? c[k+1] : nothing)
+        w = RW._bisection_wall(ck, bmin[dir], bmax[dir], res)
+        wall[node] = w; next[node, :] .= (2node, 2node + 1)
+        lmax = copy(bmax); lmax[dir] = w; rmin = copy(bmin); rmin[dir] = w
+        nd = dir == 3 ? 1 : dir + 1
+        push!(todo, (2node, nd, r1, r1 + n1 - 1, (copy(bmin), lmax), [i for i in idx if !(pts[i][dir] > w)]))
+        push!(todo, (2node + 1, nd, r1 + n1, r2, (rmin, copy(bmax)), [i for i in idx if pts[i][dir] > w]))
+    end
+    return RW.BisectionTree(wall, next, indx, boxmin, boxmax, load)
+end
+
 @testset verbose=true "writing RAMSES outputs" begin
 
     @testset "Fortran records (data-free)" begin
@@ -358,6 +391,13 @@ end
                                        for i in 1:RW.ngrids(t.levels[l]) for ind in 1:8]))
                 rk = [1; rand(MersenneTwister(1), 1:length(allk), 60); length(allk)]
                 @test RW.ranked_keys(t, pk, rk) == allk[rk]
+                # the bisection walls, placed without storing the cells, are the walls of the plain form
+                pp = RW.particle_positions(dir, o, t)
+                @test all((1, 5, 7)) do n
+                    b, r = RW.balanced_bisection(t, n; extra_points=pp), _rw_bisection_ref(t, n; extra_points=pp)
+                    b.wall == r.wall && b.next == r.next && b.indx == r.indx && b.boxmin == r.boxmin &&
+                        b.boxmax == r.boxmax && b.load == r.load
+                end
                 # the blocks of the per-cell files, located from the list sizes of the amr headers,
                 # are the ones found by walking every list record of the files
                 for kind in ("hydro", "grav", "rt")
