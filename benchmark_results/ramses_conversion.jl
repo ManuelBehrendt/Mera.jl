@@ -41,6 +41,16 @@ const PROJECT = dirname(Base.active_project())
 gb(bytes) = bytes / 2^30
 dirsize(d) = sum((filesize(joinpath(r, f)) for (r, _, fs) in walkdir(d) for f in fs); init=0)
 outdir(path, o) = joinpath(path, "output_" * lpad(o, 5, '0'))
+# removing a large folder can fail once on macOS when the indexer touches it meanwhile; retry
+function cleanup(d)
+    for attempt in 1:5
+        try
+            rm(d; recursive=true, force=true); return
+        catch e
+            attempt == 5 && rethrow(); sleep(2)
+        end
+    end
+end
 
 """
 Runs `code` in a fresh Julia process and returns (values the child printed as `RESULT key=value`,
@@ -123,7 +133,7 @@ if isdir(cosmo)
         record("ranks", "cosmo3d", outdir(up, o), n, 8, "repartition back", r, p; check=compare_step(cosmo, o, back))
         r, p = writeramses_step(cosmo, o, n, mera)
         record("ranks", "cosmo3d", outdir(cosmo, o), 8, n, "writeramses (Mera data)", r, p; check=compare_step(cosmo, o, mera))
-        rm(w; recursive=true)
+        cleanup(w)
     end
 else
     println("no public test simulations at $PUBLIC: many-rank case skipped")
@@ -143,14 +153,14 @@ for (path, o, n, also_write) in LARGE
     r, p = repartition_step(path, o, n, out)
     ncpu_old = parse(Int, match(r"ncpu\s*=\s*(\d+)", read(joinpath(src, "info_" * lpad(o, 5, '0') * ".txt"), String))[1])
     record("grids", basename(normpath(path)), src, ncpu_old, n, "repartition", r, p; check=compare_step(path, o, out))
-    rm(out; recursive=true)
+    cleanup(out)
     if also_write
         out = joinpath(w, "writeramses")
         r, p = writeramses_step(path, o, n, out)
         record("grids", basename(normpath(path)), src, ncpu_old, n, "writeramses (Mera data)", r, p; check=compare_step(path, o, out))
-        rm(out; recursive=true)
+        cleanup(out)
     end
-    rm(w; recursive=true)
+    cleanup(w)
 end
 
 # results ------------------------------------------------------------------------------------------
