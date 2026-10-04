@@ -371,9 +371,9 @@ end
 ```
 coarse grid (3, 3, 3), box = coarse cells (1, 1, 1) to (1, 1, 1), 6 walls: outflow
 rank  own grids  ghost grids  boundary grids
-1     32539      2998         3246
-2     32538      3190         3194
-3     32540      2997         3246
+1     23470      2479         2362
+2     24870      2775         2605
+3     49277      2504         4640
 ```
 
 ```julia
@@ -417,7 +417,6 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 
 ```
 [1/5] reading the octree of output_00006
-  reading amr file 1 / 4
   reading amr file 4 / 4
       1010 grids on 7 levels, ncpu = 4, periodic box, nexpand_bound = 1
 [2/5] hilbert decomposition for 3 ranks
@@ -426,7 +425,7 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_L3EAMz/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_MAbJiR/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
@@ -529,7 +528,7 @@ rank  grids   boundary  grids   fathers  neighbours  children  owners
 ```
 
 Every rank's tree is rebuilt exactly. The same check passes for every run of the test suite, a
-16-level cosmological run on 16 CPUs and a galaxy simulation on 640 CPUs (53 s, 2.2 GB RAM). The
+16-level cosmological run on 16 CPUs and a galaxy simulation on 640 CPUs (section 13 gives time and memory for large outputs). The
 new decompositions are made by the same code, so they are what RAMSES itself would write with that
 number of ranks.
 
@@ -1059,7 +1058,7 @@ sedov3d_amr_lb_ncpu4    AMR hydro                       hilbert    3     same   
 sedov3d_amr_lb_ncpu4    AMR hydro                       bisection  5     same    1e-15   –       –       –
 sedov3d_uniform_ncpu4   uniform grid                    hilbert    3     same    5e-16   –       –       –
 sedov3d_uniform_ncpu4   uniform grid                    bisection  5     same    0e+00   –       –       –
-sedov3d_outflow_ncpu4   outflow walls                   hilbert    3     same    7e-15   –       –       –
+sedov3d_outflow_ncpu4   outflow walls                   hilbert    3     same    8e-15   –       –       –
 sedov3d_outflow_ncpu4   outflow walls                   bisection  5     same    5e-15   –       –       –
 sedov3d_grav_part_ncpu4 gravity, tracer particles       hilbert    3     same    2e-15   1e-12   –       –
 sedov3d_grav_part_ncpu4 gravity, tracer particles       bisection  5     same    2e-15   7e-14   –       –
@@ -1542,7 +1541,151 @@ fig
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_65_1.png)
 
-## 12. In short
+## 12. When results differ, and by how much
+
+Every route on this page either copies values or computes them the way RAMSES does. So a
+difference can come from only a few places. This table collects them, with the largest value
+measured on this page:
+
+| where | largest difference | why |
+|---|---|---|
+| `repartition`: every cell, particle and sink | 0 | values are copied byte for byte (sections 5 and 11) |
+| `writeramses`: leaf cells, particles, sinks | 0 | copied (sections 8 and 11) |
+| `writeramses`: refined hydro, MHD and RT cells | `1e-15` of the averaged values | rebuilt with RAMSES's own rules; only the order of the additions differs (section 11) |
+| RAMSES continuing from converted files | `1e-15` (hydro) to `2e-11` (gravity) | sums over ranks are added in another order on another number of ranks, and the gravity solver stops once it meets its tolerance, so it ends at a slightly different, equally valid answer (sections 7 and 8) |
+| stochastic star formation, Monte-Carlo tracers | statistical | random seeds depend on the rank count, as when RAMSES itself changes it (section 7) |
+
+Two cases give larger differences. Both depend on how the data was loaded, and both are avoided:
+
+| case | difference | how to avoid it |
+|---|---|---|
+| gravity loaded without `parents=true` | gas `5e-5`, potential `3e-6` | `getgravity(info; parents=true)` (section 8) |
+| mera file from before 1.8.0 whose simulation is gone | up to a few per cent in a run with many particles | `upgrade_merafile` while the simulation still exists (section 9) |
+
+**Is that small enough?** The yardstick is RAMSES itself. When RAMSES restarts its own output on its
+own ranks, the run does not continue bit for bit either. The next cell measures this over the same
+interval as the restarts in section 8 (RAMSES's restart against the run that never stopped, one
+output later), and puts it next to the restart from a mera file:
+
+```julia
+# What RAMSES gives by itself: its own restart on the original ranks against the run that never
+# stopped, one output after the restart (leaf cells, every variable, particle positions). The
+# cosmological reference of section 8 stops after one coarse step, so here its other restart is
+# used, which runs to the next output at a = 0.2: a longer interval.
+alone = Dict{String,Float64}()
+for (run, o, ref, _, _) in mruns
+    ref1 = occursin("cosmo", run) ? "cosmo3d_ncpu8_restart" : ref
+    c = compareramses(o + 1, joinpath(RUNS, run), joinpath(RUNS, ref1); leaves_only=true)
+    v = [maximum(x) for x in values(c.maxdiff)]
+    c.nmatched > 0 && push!(v, c.particle_maxdiff[1])
+    alone[run] = maximum(v)
+end
+println(rpad("run", 24), rpad("covers", 32), rpad("from a mera file", 18), "RAMSES restarting itself")
+for (run, _, _, _, what) in mruns
+    m = maximum(maximum(filter(!isnan, [r.hydro, r.grav, r.rt, r.part])) for r in restarts if r.run == run)
+    println(rpad(run, 24), rpad(what, 32), rpad(@sprintf("%.0e", m), 18), @sprintf("%.0e", alone[run]),
+            occursin("cosmo", run) ? "   (to a = 0.2)" : "")
+end
+```
+
+```
+run                     covers                          from a mera file  RAMSES restarting itself
+sedov3d_amr_lb_ncpu4    AMR hydro                       1e-15             1e-15
+sedov3d_uniform_ncpu4   uniform grid                    5e-16             9e-16
+sedov3d_outflow_ncpu4   outflow walls                   8e-15             7e-15
+sedov3d_grav_part_ncpu4 gravity, tracer particles       1e-12             6e-14
+dm_gas3d_ncpu4          gravity, dark matter            8e-15             8e-15
+sinks3d_ncpu4           sinks, gravity, particles       2e-11             2e-15
+clumps3d_ncpu4          clumps, gravity                 8e-15             0e+00
+mhdtube3d_ncpu4         MHD, outflow walls              7e-16             3e-15
+stromgren3d_ncpu4       radiative transfer, walls       0e+00             1e-15
+cosmo3d_ncpu8           cosmological: gas, DM, gravity  6e-12             9e-14   (to a = 0.2)
+starform3d_ncpu4        stochastic star formation       1e-01             6e-15
+```
+
+Hydro, MHD and RT runs continue from the converted files as closely as RAMSES continues from its
+own files: about `1e-15`, the precision of the numbers themselves.
+
+Runs with gravity differ more after a change of rank count, up to `2e-11`, while RAMSES restarting
+on its own ranks stays near `1e-14`. This comes from RAMSES, not from the files. Section 6 showed
+that RAMSES holds the same state, bit for bit, after reading the converted files as after reading
+its own. What changes is the number of ranks, and with it the order in which the gravity solver adds
+its sums. The solver stops once its error is below `epsilon` (`1e-4` in these namelists), so a
+different rounding can stop it at a slightly different answer. `2e-11` is seven orders of magnitude
+below that tolerance.
+
+The star-formation run shows the same thing more plainly. On its own ranks RAMSES draws the same
+random numbers again (`1e-15`); on other ranks it draws other ones, and stars form in other cells.
+
+So every difference on this page is zero, round-off, or what RAMSES itself does when the number of
+ranks changes. None comes from the conversion.
+
+## 13. Large outputs: time and memory
+
+`repartition` keeps the octree in memory, once, and the local tree of each new rank while it writes
+that rank's files. It never loads the values. The old hydro, gravity and RT files are mapped into
+memory, so the operating system reads each block from disk when a new file needs it, in large
+reads, and can drop it again at any time. So the memory grows with the number of grids, not with
+the size of the output.
+
+Two things make an output large, and each costs in its own way:
+
+- **many grids**: the octree takes about 110 bytes per grid, and the other tables about as much again;
+- **many ranks**: every amr, hydro and gravity file holds a few small records for every list of every
+  rank, so with thousands of ranks the files are mostly such records. `repartition` reads the list
+  sizes from the amr files and never reads the records themselves.
+
+The table comes from `benchmark_results/ramses_conversion.jl` in the Mera repository, run on this
+laptop (8 threads, 32 GB RAM, the data on an external USB disk). The first rows take the public
+cosmological run to thousands of ranks and back; the others are large production runs. Each step ran
+in its own process. "Peak memory" is the largest memory the process used (macOS's peak memory
+footprint), without the file pages the system can drop. "Identical" means every cell, particle and
+sink is bit for bit the same as in the original output; from Mera data the refined cells are
+rebuilt, so their round-off is listed instead.
+
+```julia
+# the benchmark's result file, read like the suite's (an absolute path passes through joinpath)
+bench = readsuite(joinpath(pkgdir(Mera), "benchmark_results", "ramses_conversion_result", "results.csv"))
+println(rpad("output", 22), rpad("size", 9), rpad("grids", 11), rpad("ranks", 13), rpad("route", 25),
+        rpad("time", 9), rpad("peak memory", 13), "identical")
+gbtext(gb) = gb < 1 ? @sprintf("%.0f MB", 1024gb) : @sprintf("%.1f GB", gb)
+for r in sort(bench; by=r -> r["case"] == "ranks" ? 0 : 1, alg=Base.Sort.DEFAULT_STABLE)
+    g = r["grids"]
+    grids = !(g isa Number) ? "–" : g >= 1e6 ? @sprintf("%.1fM", g / 1e6) : @sprintf("%.0fk", g / 1e3)
+    same  = r["identical"] === true ? "yes" : @sprintf("refined cells %.0e", r["maxdiff"])
+    println(rpad(r["output"], 22), rpad(gbtext(r["input_gb"]), 9), rpad(grids, 11),
+            rpad("$(Int(r["ncpu_from"])) → $(Int(r["ncpu_to"]))", 13), rpad(r["route"], 25),
+            rpad(@sprintf("%.0f s", r["seconds"]), 9), rpad(@sprintf("%.1f GB", r["peak_gb"]), 13), same)
+end
+```
+
+```
+output                size     grids      ranks        route                    time     peak memory  identical
+cosmo3d               20 MB    11k        8 → 1024     repartition              11 s     1.0 GB       yes
+cosmo3d               737 MB   11k        1024 → 8     repartition back         7 s      0.9 GB       yes
+cosmo3d               20 MB    11k        8 → 1024     writeramses (Mera data)  10 s     1.2 GB       refined cells 1e-16
+cosmo3d               20 MB    11k        8 → 4096     repartition              118 s    1.3 GB       yes
+cosmo3d               8.5 GB   11k        4096 → 8     repartition back         15 s     1.4 GB       yes
+cosmo3d               20 MB    11k        8 → 4096     writeramses (Mera data)  161 s    1.4 GB       refined cells 1e-16
+mw_L10                5.7 GB   4.0M       640 → 64     repartition              63 s     2.0 GB       yes
+manu_sim_sf_L14       14.1 GB  7.2M       2048 → 256   repartition              150 s    2.6 GB       yes
+L13_SN5_CD_only       54.2 GB  25.1M      5120 → 512   repartition              806 s    7.9 GB       yes
+```
+
+- **Every value is kept**, also on the way to 4096 ranks and back, and on the 54 GB output.
+- **Memory grows with the grids**: 2.0 GB for 4 million grids, 2.6 GB for 7 million, 7.9 GB for
+  25 million, so about 0.3 GB per million grids plus 0.5 GB for Julia and Mera. The 54 GB output is
+  larger than the 32 GB of memory of this laptop; it does not need to fit.
+- **Time is set by the disk.** The 54 GB output is read and 27 GB are written in 13 minutes, about
+  100 MB/s together on this USB disk. A faster disk gives a faster conversion.
+- **Many ranks cost disk space, not memory.** At 4096 ranks the 20 MB of the cosmological run
+  become an 8.5 GB output, because RAMSES's format has those small records for every list of every
+  rank. Most of the 118 s go to writing them; reading the output back takes 15 s.
+- **`writeramses` needs the data in memory.** It starts from Mera data, which holds every leaf cell,
+  and rebuilds the refined cells from them, so its memory grows with the data, like loading it with
+  Mera. For a large run whose RAMSES files still exist, `repartition` is the route that streams.
+
+## 14. In short
 
 - `repartition(output, path, ncpu; outpath)` rewrites a RAMSES output for any number of ranks,
   in Hilbert or bisection ordering, plain or in IO groups, uniform or AMR, cosmological or not.
@@ -1554,5 +1697,7 @@ fig
 - `restart_completeness` proves the data is complete; `compareramses` checks any two outputs.
 - `writeramses` refuses incomplete data and a cosmological run from an old mera file whose
   simulation is gone (its expansion history is unknown; `force=true` writes it anyway).
+- Large outputs: `repartition` keeps the octree in memory and streams the values, about 0.3 GB per
+  million grids; a 54 GB output with 25 million grids converts on a laptop (section 13).
 - Set `ngridmax` and `npartmax` in the restart namelist from the report, and start RAMSES with
   `mpirun -np ncpu ramses3d run.nml output`.
