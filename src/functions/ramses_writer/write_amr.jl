@@ -144,9 +144,12 @@ RAMSES's `numbtot(1:10, level)`: total, minimum, maximum and mean number of
 grids per rank at each level (rows 5–10 unused). `numbl_all[k]` is the
 `numbl` matrix of rank k; only its own list `numbl[k, :]` counts.
 """
-function global_numbtot(numbl_all::Vector{Matrix{Int32}}, nlevelmax::Integer)
-    ncpu = length(numbl_all)
-    own = [numbl_all[k][k, l] for k in 1:ncpu, l in 1:nlevelmax]
+global_numbtot(numbl_all::Vector{Matrix{Int32}}, nlevelmax::Integer) =
+    global_numbtot(Int32[numbl_all[k][k, l] for k in 1:length(numbl_all), l in 1:nlevelmax])
+
+# from the grids each rank owns on each level (ncpu × nlevelmax)
+function global_numbtot(own::Matrix{Int32})
+    ncpu, nlevelmax = size(own)
     nt = zeros(Int32, 10, nlevelmax)
     for l in 1:nlevelmax
         nt[1, l] = sum(own[:, l])

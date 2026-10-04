@@ -165,15 +165,12 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
     points = balance_particles ? particle_positions(src, iout, t) : NTuple{3,Float64}[]
     dec = new_decomposition(t, ncpu; ordering=ord, overload, points)
 
-    # 2. every rank's local tree -----------------------------------------------
+    # 2. the size of every rank's local tree ------------------------------------
     verbose && println("[3/5] building the local octree of every rank")
-    lts = Vector{LocalTree}(undef, ncpu)
-    Threads.@threads for k in 1:ncpu
-        lts[k] = build_local_tree(t, dec, k; nexpand_bound=nexp)
-    end
-    nlocal = [ngrid_current(lt) for lt in lts]
+    local_tree(k) = build_local_tree(t, dec, k; nexpand_bound=nexp)
+    nlocal, owned = rank_sizes(t, dec; nexpand_bound=nexp)
     gmax = ngridmax === :auto ? max(Int(t.header.ngridmax), maximum(nlocal) + 1) : Int(ngridmax)
-    numbtot = global_numbtot([lt.numbl for lt in lts], t.header.nlevelmax)
+    numbtot = global_numbtot(owned)
 
     # 3. amr + per-cell files ---------------------------------------------------
     verbose && println("[4/5] writing amr / hydro / grav / rt files")
@@ -181,17 +178,18 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
     cellsets = filter(!isnothing, [open_cell_files(src, kind, iout, ncpu_old, t.header.nlevelmax, nbnd; lists=t.lists)
                                    for kind in ("hydro", "grav", "rt")])
     Threads.@threads for k in 1:ncpu
-        hdr, lists = amr_file_content(t, dec, lts[k], gmax, numbtot, maximum(nlocal))
+        lt = local_tree(k)
+        hdr, lists = amr_file_content(t, dec, lt, gmax, numbtot, maximum(nlocal))
         write_amr_file(amr_filename(dst, iout, k, iogroupsize), hdr, lists)
-        sources = grid_sources(t, lts[k], ncpu_old)
+        sources = grid_sources(t, lt, ncpu_old)
         for cs in cellsets
-            write_cell_file(cell_filename(dst, cs.kind, iout, k, iogroupsize), cs, lts[k], sources, ncpu, nbnd)
+            write_cell_file(cell_filename(dst, cs.kind, iout, k, iogroupsize), cs, lt, sources, ncpu, nbnd)
         end
     end
 
     # 4. particles, clumps, text files ------------------------------------------
     verbose && println("[5/5] particles, clump tables and text files")
-    npart = convert_particles(src, iout, dst, t, dec; verbose, lts, ngridmax=gmax, gs=iogroupsize)
+    npart = convert_particles(src, iout, dst, t, dec; verbose, local_tree, ngridmax=gmax, gs=iogroupsize)
     for kind in ("clump", "halo")
         convert_clump_files(src, iout, dst, t, dec, kind; gs=iogroupsize)
     end
@@ -203,7 +201,7 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
     end
     info_on_top(dst, iout, iogroupsize)
 
-    own = [Int(sum(lts[k].numbl[k, :])) for k in 1:ncpu]
+    own = [Int(sum(view(owned, k, :))) for k in 1:ncpu]
     report = RepartitionReport(src, dst, ncpu_old, ncpu, nlocal, own, npart,
                                maximum(nlocal) + 1, isempty(npart) ? 0 : maximum(npart),
                                nfiles(dst), time() - t0, overload, iogroupsize)

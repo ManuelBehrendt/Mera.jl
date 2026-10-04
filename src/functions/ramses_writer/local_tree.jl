@@ -210,6 +210,26 @@ function build_local_tree(t::GlobalTree, dec::Decomposition, k::Integer; nexpand
 end
 
 """
+    rank_sizes(t, dec; nexpand_bound) -> (nlocal, own)
+
+The grids each rank holds (`nlocal`) and owns on each level (`own`, ncpu × nlevelmax), which the
+amr headers of all ranks need before any file is written. Each local tree is built and dropped at
+once: all of them together take a quarter as much memory again as the global tree, so the writers
+build each rank's tree a second time when they write its files.
+"""
+function rank_sizes(t::GlobalTree, dec::Decomposition; nexpand_bound::Integer=1)
+    ncpu, L = dec.ncpu, Int(t.header.nlevelmax)
+    nlocal = zeros(Int, ncpu)
+    own = zeros(Int32, ncpu, L)
+    Threads.@threads for k in 1:ncpu
+        lt = build_local_tree(t, dec, k; nexpand_bound)
+        nlocal[k] = ngrid_current(lt)
+        own[k, :] .= view(lt.numbl, k, :)
+    end
+    return nlocal, own
+end
+
+"""
     boundary_reference_refined(t, l, b, ind, r, is_local_interior, is_local_boundary) -> Bool
 
 RAMSES's `make_boundary_flag`: cell `ind` of boundary grid `b` (level `l`,

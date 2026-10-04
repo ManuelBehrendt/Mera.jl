@@ -139,7 +139,7 @@ end
 Writes the new part files and returns the number of particles per new rank.
 """
 function convert_particles(dir, iout, outdir, t::GlobalTree, dec::Decomposition; verbose=true,
-                           lts=nothing, ngridmax::Integer=0, gs::Integer=0)
+                           local_tree=nothing, ngridmax::Integer=0, gs::Integer=0)
     ncpu_old = Int(t.header.ncpu)
     isfile(part_filename(dir, iout, 1)) || return Int[]
     files = [open_part_file(part_filename(dir, iout, k)) for k in 1:ncpu_old]
@@ -178,6 +178,8 @@ function convert_particles(dir, iout, outdir, t::GlobalTree, dec::Decomposition;
 
     # 3. one new file per rank: gather each field's bytes from the old files
     Threads.@threads for r in 1:dec.ncpu
+        # the rank's local tree, built only when one of its particles is a gas tracer
+        lt = nothing
         FortranWriter(part_filename(outdir, iout, r, gs)) do w
             write_record(w, Int32(dec.ncpu))
             write_record(w, Int32(3))
@@ -192,9 +194,10 @@ function convert_particles(dir, iout, outdir, t::GlobalTree, dec::Decomposition;
                 q = 1
                 for m in members[r]
                     k, i = fileof[m], indexin[m]; f = files[k]
-                    if j == jpartp && lts !== nothing && Int8(f.data[f.field_offset[jfam]+i-1] % Int8) == 0
+                    if j == jpartp && local_tree !== nothing && Int8(f.data[f.field_offset[jfam]+i-1] % Int8) == 0
                         # gas tracer: its partp is a memory index on the rank, recompute it for rank r
-                        p = leaf_cell_pointer(t, lts[r], part_position(f, i), ngridmax)
+                        lt === nothing && (lt = local_tree(r))
+                        p = leaf_cell_pointer(t, lt, part_position(f, i), ngridmax)
                         copyto!(buf, q, reinterpret(UInt8, [p]), 1, 4)
                     else
                         copyto!(buf, q, f.data, f.field_offset[j] + fsize[j] * (i - 1), fsize[j])

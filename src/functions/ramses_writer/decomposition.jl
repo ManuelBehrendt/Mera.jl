@@ -114,30 +114,82 @@ coincides with a key exactly as it would in RAMSES.
 """
 function balanced_bound_key(t::GlobalTree, ncpu::Integer; overload::Integer=1,
                             extra_keys::Vector{Float64}=Float64[])
-    # one key per cell of every level, computed on all threads into fixed slots
-    offs = cumsum([0; [8 * ngrids(lv) for lv in t.levels]])
-    keys = Vector{Float64}(undef, length(extra_keys) + offs[end])
-    keys[1:length(extra_keys)] .= extra_keys
-    base = length(extra_keys)
-    for l in 1:nlevels(t)
-        Threads.@threads for i in 1:ngrids(t.levels[l])
-            for ind in 1:8
-                @inbounds keys[base + offs[l] + 8(i - 1) + ind] = key_of(t, cell_center(t, l, i, ind))
-            end
-        end
-    end
-    # in place: the default radix sort would take a second array as large as `keys`
-    sort!(keys; alg=QuickSort)
     ndomain = ncpu * overload
-    N = length(keys)
+    N = length(extra_keys) + 8 * sum(ngrids, t.levels; init=0)
+    # wall d sits at the key of sorted rank n_d + 1, n_d = the load of domains 1..d
+    ranks = [div(d * N, ndomain) + 1 for d in 1:ndomain-1]
     bk = zeros(Float64, ndomain + 1)
-    for d in 1:ndomain-1
-        n = div(d * N, ndomain)              # load in domains 1..d
-        bk[d+1] = n < N ? keys[n+1] : keys[end]
-    end
+    bk[2:ndomain] .= ranked_keys(t, extra_keys, min.(ranks, N))
     bk[end] = max_key(t)
     # equal keys can make two walls coincide; RAMSES copes with empty domains
     return bk
+end
+
+"""
+    ranked_keys(t, extra_keys, ranks) -> Vector{Float64}
+
+The keys at the given positions (sorted ranks) among the keys of every cell of the tree and of
+`extra_keys`, as a full sort would give them, without holding all keys at once (8 per grid, so
+1.6 GB for 25 million grids). The keys are counted in value buckets (an order-preserving map),
+and only the buckets that hold a wanted position are collected and sorted.
+"""
+function ranked_keys(t::GlobalTree, extra_keys::Vector{Float64}, ranks::Vector{Int})
+    isempty(ranks) && return Float64[]
+    nb = 1 << 20
+    s = nb / max_key(t)
+    bucket(k) = clamp(unsafe_trunc(Int, k * s) + 1, 1, nb)
+    chunks = collect(Iterators.partition(1:sum(ngrids, t.levels; init=0), 1 << 16))
+    # every cell key, visited chunk by chunk on all threads: f(key) for each
+    function each_key(f, ci)
+        g = first(chunks[ci]) - 1
+        for l in 1:nlevels(t)
+            n = ngrids(t.levels[l])
+            for i in max(1, first(chunks[ci]) - g):min(n, last(chunks[ci]) - g), ind in 1:8
+                f(key_of(t, cell_center(t, l, i, ind)))
+            end
+            g += n
+        end
+    end
+    # 1. how many keys fall in each bucket: one histogram per task over a share of the chunks
+    groups = collect(Iterators.partition(eachindex(chunks), max(1, cld(length(chunks), Threads.nthreads()))))
+    tasks = map(groups) do grp
+        Threads.@spawn begin
+            h = zeros(Int, nb)
+            for ci in grp
+                each_key(k -> (h[bucket(k)] += 1), ci)
+            end
+            h
+        end
+    end
+    total = sum(fetch, tasks)
+    for k in extra_keys
+        total[bucket(k)] += 1
+    end
+    # 2. the bucket of each wanted rank, and the rank inside it
+    before = cumsum(total) .- total
+    want = Dict{Int,Vector{Float64}}()
+    where_ = map(ranks) do r
+        b = searchsortedlast(before, r - 1)          # last bucket with fewer than r keys before it
+        want[b] = Float64[]
+        (b, r - before[b])
+    end
+    # 3. collect the keys of those buckets and sort each
+    lk = ReentrantLock()
+    Threads.@threads for ci in eachindex(chunks)
+        found = Dict{Int,Vector{Float64}}()
+        each_key(ci) do k
+            b = bucket(k)
+            haskey(want, b) && push!(get!(found, b, Float64[]), k)
+        end
+        lock(lk) do
+            for (b, v) in found; append!(want[b], v); end
+        end
+    end
+    for k in extra_keys
+        b = bucket(k); haskey(want, b) && push!(want[b], k)
+    end
+    foreach(sort!, values(want))
+    return [want[b][r] for (b, r) in where_]
 end
 
 """

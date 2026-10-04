@@ -125,7 +125,7 @@ finest grid containing it; `localseed = -1` (RAMSES re-seeds); `mstar_tot` is
 the mass in stars, put on rank 1.
 """
 function write_particles_table(outdir, iout, t::GlobalTree, dec::Decomposition, pt::ParticleTable;
-                               nstar_tot::Integer, nsink::Integer, lts=nothing, ngridmax::Integer=0, gs::Integer=0)
+                               nstar_tot::Integer, nsink::Integer, local_tree=nothing, ngridmax::Integer=0, gs::Integer=0)
     n = length(pt.columns[1])
     dest = Vector{Int32}(undef, n)
     x, y, z = pt.columns[1], pt.columns[2], pt.columns[3]
@@ -142,11 +142,12 @@ function write_particles_table(outdir, iout, t::GlobalTree, dec::Decomposition, 
     types = map(_fieldtype, pt.types)
     Threads.@threads for r in 1:dec.ncpu
         idx = members[r]
-        if jp !== nothing && lts !== nothing && jfam !== nothing
+        if jp !== nothing && local_tree !== nothing && jfam !== nothing && any(i -> pt.columns[jfam][i] == 0, idx)
             # gas tracers: partp = memory index of the cell they sit in, on THIS rank
+            lt = local_tree(r)
             for i in idx
                 pt.columns[jfam][i] == 0 || continue
-                pt.columns[jp][i] = leaf_cell_pointer(t, lts[r], (Float64(x[i]), Float64(y[i]), Float64(z[i])), ngridmax)
+                pt.columns[jp][i] = leaf_cell_pointer(t, lt, (Float64(x[i]), Float64(y[i]), Float64(z[i])), ngridmax)
             end
         end
         FortranWriter(part_filename(outdir, iout, r, gs)) do w
@@ -249,21 +250,19 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
         end
     end
     dec = new_decomposition(t, ncpu; ordering, overload, points)
-    lts = Vector{LocalTree}(undef, ncpu)
-    Threads.@threads for k in 1:ncpu
-        lts[k] = build_local_tree(t, dec, k; nexpand_bound=nexp)
-    end
-    nlocal = [ngrid_current(lt) for lt in lts]
+    local_tree(k) = build_local_tree(t, dec, k; nexpand_bound=nexp)
+    nlocal, owned = rank_sizes(t, dec; nexpand_bound=nexp)
     gmax = ngridmax === :auto ? max(inp.ngridmax, maximum(nlocal) + 1) : Int(ngridmax)
-    numbtot = global_numbtot([lt.numbl for lt in lts], t.header.nlevelmax)
+    numbtot = global_numbtot(owned)
 
     verbose && println("[4/5] writing amr / hydro$(inp.gravity === nothing ? "" : " / grav")$(inp.rt === nothing ? "" : " / rt") files")
     Threads.@threads for k in 1:ncpu
-        hdr, lists = amr_file_content(t, dec, lts[k], gmax, numbtot, maximum(nlocal))
+        lt = local_tree(k)
+        hdr, lists = amr_file_content(t, dec, lt, gmax, numbtot, maximum(nlocal))
         write_amr_file(amr_filename(dst, iout, k, iogroupsize), hdr, lists)
-        src = memory_sources(t, lts[k]; no_inflow)
+        src = memory_sources(t, lt; no_inflow)
         for (cs, names) in zip(sets, setnames)
-            write_cell_file(cell_filename(dst, cs.kind, iout, k, iogroupsize), cs, lts[k], src, ncpu, nbnd, names)
+            write_cell_file(cell_filename(dst, cs.kind, iout, k, iogroupsize), cs, lt, src, ncpu, nbnd, names)
         end
     end
 
@@ -272,7 +271,7 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
     if inp.particles !== nothing
         pt = inp.particles
         npart = write_particles_table(dst, iout, t, dec, pt; nstar_tot=inp.nstar_tot, nsink=inp.nsink,
-                                      lts=lts, ngridmax=gmax, gs=iogroupsize)
+                                      local_tree, ngridmax=gmax, gs=iogroupsize)
         # legacy files have neither: the reader knows their layout (a header, if any, is copied)
         if !inp.legacy_particles
             write_descriptor(joinpath(gdst, "part_file_descriptor.txt"), pt.names, pt.types)
@@ -294,7 +293,7 @@ function write_ramses(inp::LeafInput, ncpu::Integer; outpath::AbstractString, me
             cp(joinpath(copy_from, f), joinpath(gdst, f)); push!(copied, f)
         end
     end
-    own = [Int(sum(lts[k].numbl[k, :])) for k in 1:ncpu]
+    own = [Int(sum(view(owned, k, :))) for k in 1:ncpu]
     report = RepartitionReport(isnothing(copy_from) ? "leaf data" : "leaf data ($copy_from)", dst, 0, ncpu,
                                nlocal, own, npart, maximum(nlocal) + 1, isempty(npart) ? 0 : maximum(npart),
                                nfiles(dst), time() - t0, overload, iogroupsize)

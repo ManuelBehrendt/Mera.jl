@@ -394,6 +394,13 @@ end
                 dec = RW.own_decomposition(t)
                 lts = [RW.build_local_tree(t, dec, k; nexpand_bound=RW.auto_nexpand_bound(t, dir, o)) for k in 1:ncpu]
                 nt = RW.global_numbtot([lt.numbl for lt in lts], t.header.nlevelmax); umt = maximum(RW.ngrid_current, lts)
+                # the domain walls take the keys at given ranks without sorting all keys; they must be
+                # the keys a full sort puts there, particle keys included
+                pk = [RW.key_of(t, Tuple(rand(MersenneTwister(k), 3) .* t.header.boxlen)) for k in 1:500]
+                allk = sort!(vcat(pk, [RW.key_of(t, RW.cell_center(t, l, i, ind)) for l in 1:RW.nlevels(t)
+                                       for i in 1:RW.ngrids(t.levels[l]) for ind in 1:8]))
+                rk = [1; rand(MersenneTwister(1), 1:length(allk), 60); length(allk)]
+                @test RW.ranked_keys(t, pk, rk) == allk[rk]
                 # the blocks of the per-cell files, located from the list sizes of the amr headers,
                 # are the ones found by walking every list record of the files
                 for kind in ("hydro", "grav", "rt")
