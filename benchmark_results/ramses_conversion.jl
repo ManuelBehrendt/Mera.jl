@@ -31,7 +31,7 @@ using Printf, Dates
 
 const SCRATCH = get(ENV, "MERA_SCRATCH", ""); isempty(SCRATCH) && error("set MERA_SCRATCH")
 const PUBLIC  = get(ENV, "MERA_PUBLIC", joinpath(get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests"), "RAMSES-PUBLIC"))
-const RANKS   = parse.(Int, split(get(ENV, "MERA_RANKS", "1024,4096"), ','))
+const RANKS   = parse.(Int, split(get(ENV, "MERA_RANKS", "1024,4096"), ',', keepempty=false))
 const LARGE   = [(String(s[1]), parse(Int, s[2]), parse(Int, s[3]), get(s, 4, "") == "w") for s in
                  (split(x, ':') for x in split(get(ENV, "MERA_LARGE", ""), ',', keepempty=false))]
 const THREADS = parse(Int, get(ENV, "MERA_THREADS", "8"))
@@ -100,8 +100,8 @@ writeramses_step(src, o, n, out) = child("""
                        rt = info.rt ? getrt(info; q...) : nothing,
                        particles = info.particles ? getparticles(info; q...) : nothing,
                        sinks = info.sinks ? getsinks(info; verbose=false) : nothing)
-    t = @elapsed writeramses($n; d..., outpath=$(repr(out)), verbose=false)
-    println("RESULT time=", t, " load=", tl, " grids=", length(d.hydro.data))
+    t = @elapsed w = writeramses($n; d..., outpath=$(repr(out)), verbose=false)
+    println("RESULT time=", t, " load=", tl, " grids=", sum(w.own_grids_per_rank))
     """)
 
 # every value of b against a: copies must be identical; from Mera data the refined cells are rebuilt
@@ -142,7 +142,14 @@ end
 # 2. many grids: your own outputs ----------------------------------------------------------------
 for (path, o, n, also_write) in LARGE
     src = outdir(path, o)
-    need = dirsize(src)
+    info = read(joinpath(src, "info_" * lpad(o, 5, '0') * ".txt"), String)
+    ncpu_old = parse(Int, match(r"ncpu\s*=\s*(\d+)", info)[1])
+    # the output holds the same data, but the per-list records of the amr and per-cell files
+    # (about ncpu² × levelmax × 24 bytes per file kind) change with the rank count
+    L = parse(Int, match(r"levelmax\s*=\s*(\d+)", info)[1])
+    kinds = count(k -> isfile(joinpath(src, k * "_" * lpad(o, 5, '0') * ".out00001")), ("hydro", "grav", "rt"))
+    records(n) = n^2 * L * (24kinds + 12)
+    need = dirsize(src) - records(ncpu_old) + records(n)
     free = diskstat(SCRATCH).available
     if free < 1.1need
         @printf("%s: needs up to %.0f GB in MERA_SCRATCH, %.0f GB free: skipped\n", src, gb(need), gb(free))
@@ -151,7 +158,6 @@ for (path, o, n, also_write) in LARGE
     w = mkpath(joinpath(SCRATCH, "large"))
     out = joinpath(w, "repartition")
     r, p = repartition_step(path, o, n, out)
-    ncpu_old = parse(Int, match(r"ncpu\s*=\s*(\d+)", read(joinpath(src, "info_" * lpad(o, 5, '0') * ".txt"), String))[1])
     record("grids", basename(normpath(path)), src, ncpu_old, n, "repartition", r, p; check=compare_step(path, o, out))
     cleanup(out)
     if also_write
@@ -163,10 +169,15 @@ for (path, o, n, also_write) in LARGE
     cleanup(w)
 end
 
-# results ------------------------------------------------------------------------------------------
+# results: merged into the file, a new row replacing one of the same step ---------------------------
 mkpath(dirname(RESULT))
+header = "case,output,input_gb,grids,ncpu_from,ncpu_to,route,seconds,peak_gb,identical,maxdiff"
+step(cols) = (cols[1], cols[2], string(cols[5]), string(cols[6]), cols[7])
+new = [join(r, ',') for r in ROWS]
+old = isfile(RESULT) ? filter(l -> !isempty(l), readlines(RESULT)[2:end]) : String[]
+keep = filter(l -> step(split(l, ',')) ∉ Set(step(string.(r)) for r in ROWS), old)
 open(RESULT, "w") do io
-    println(io, "case,output,input_gb,grids,ncpu_from,ncpu_to,route,seconds,peak_gb,identical,maxdiff")
-    foreach(r -> println(io, join(r, ',')), ROWS)
+    println(io, header)
+    foreach(l -> println(io, l), [keep; new])
 end
 println("\nwritten: ", RESULT)
