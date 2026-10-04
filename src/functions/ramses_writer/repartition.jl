@@ -178,7 +178,7 @@ function repartition(output_dir::AbstractString, ncpu::Integer;
     # 3. amr + per-cell files ---------------------------------------------------
     verbose && println("[4/5] writing amr / hydro / grav / rt files")
     nbnd = length(t.boundaries)
-    cellsets = filter(!isnothing, [open_cell_files(src, kind, iout, ncpu_old, t.header.nlevelmax, nbnd)
+    cellsets = filter(!isnothing, [open_cell_files(src, kind, iout, ncpu_old, t.header.nlevelmax, nbnd; lists=t.lists)
                                    for kind in ("hydro", "grav", "rt")])
     Threads.@threads for k in 1:ncpu
         hdr, lists = amr_file_content(t, dec, lts[k], gmax, numbtot, maximum(nlocal))

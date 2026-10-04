@@ -394,6 +394,16 @@ end
                 dec = RW.own_decomposition(t)
                 lts = [RW.build_local_tree(t, dec, k; nexpand_bound=RW.auto_nexpand_bound(t, dir, o)) for k in 1:ncpu]
                 nt = RW.global_numbtot([lt.numbl for lt in lts], t.header.nlevelmax); umt = maximum(RW.ngrid_current, lts)
+                # the blocks of the per-cell files, located from the list sizes of the amr headers,
+                # are the ones found by walking every list record of the files
+                for kind in ("hydro", "grav", "rt")
+                    cs = RW.open_cell_files(dir, kind, o, ncpu, t.header.nlevelmax, length(t.boundaries))
+                    cs === nothing && continue
+                    @test all(1:ncpu) do k
+                        p = foldl((p, _) -> RW._skip(cs.data[k], p), 1:RW.CELL_HEADER_RECORDS[kind]; init=1)
+                        RW._cell_blocks(cs.data[k], p, t.lists[k], cs.nvar) == cs.blocks[k]
+                    end
+                end
                 @test all(1:ncpu) do k
                     g = tempname()
                     RW.write_amr_file(g, RW.amr_file_content(t, dec, lts[k], Int(t.header.ngridmax), nt, umt)...)

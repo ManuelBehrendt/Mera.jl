@@ -127,8 +127,8 @@ function compare_outputs(dir_a::AbstractString, dir_b::AbstractString; leaves_on
     ng = (sum(ngrids, ta.levels), sum(ngrids, tb.levels))
     maxdiff = Dict{String,Vector{Float64}}()
     for kind in ("hydro", "grav", "rt")
-        ca = open_cell_files(dir_a, kind, ia, ta.header.ncpu, ta.header.nlevelmax, length(ta.boundaries))
-        cb = open_cell_files(dir_b, kind, ib, tb.header.ncpu, tb.header.nlevelmax, length(tb.boundaries))
+        ca = open_cell_files(dir_a, kind, ia, ta.header.ncpu, ta.header.nlevelmax, length(ta.boundaries); lists=ta.lists)
+        cb = open_cell_files(dir_b, kind, ib, tb.header.ncpu, tb.header.nlevelmax, length(tb.boundaries); lists=tb.lists)
         (ca === nothing || cb === nothing) && continue
         d = zeros(ca.nvar)
         amax = zeros(ca.nvar)

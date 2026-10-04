@@ -78,10 +78,12 @@ floating-point operations are the same as in RAMSES (`int(x*bscale)` with
 `bscale = 2^(nlevelmax+1)/scale`), so points on cell walls round identically.
 """
 function point_key(x::NTuple{3,Float64}, scale::Float64, nx::Integer, nlevelmax::Integer)
-    bscale = Float64(2^(nlevelmax + 1))
-    bit_length = hilbert_bit_length(nx * Int(bscale))
-    bscale = bscale / scale
-    ix, iy, iz = (unsafe_trunc(Int, c * bscale) for c in x)   # Fortran int() truncates
+    # each name is assigned once: a reassigned variable used in a closure is boxed on the heap,
+    # which cost an allocation per key (one key per cell)
+    b = Float64(2^(nlevelmax + 1))
+    bit_length = hilbert_bit_length(nx * Int(b))
+    bscale = b / scale
+    ix, iy, iz = ntuple(d -> unsafe_trunc(Int, x[d] * bscale), 3)   # Fortran int() truncates
     return hilbert3d(ix, iy, iz, bit_length)
 end
 
@@ -95,12 +97,12 @@ intersects domain `d` iff `kmax > bound_key(d-1) && kmin < bound_key(d)`.
 function cell_key_range(x::NTuple{3,Float64}, level::Integer, scale::Float64, nx::Integer, nlevelmax::Integer)
     dx = 0.5^level * scale                          # dx_loc of the caller
     dxmin = scale / Float64(2^nlevelmax)
-    bscale = Float64(2^(nlevelmax + 1))
-    bscaleloc = Float64(2^nlevelmax) * dxmin / dx
-    bit_length = hilbert_bit_length(nx * unsafe_trunc(Int, bscaleloc))
-    bscaleloc /= scale
-    bscale /= scale
-    ix, iy, iz = (unsafe_trunc(Int, c * bscaleloc) for c in x)
+    b = Float64(2^(nlevelmax + 1))
+    bloc = Float64(2^nlevelmax) * dxmin / dx
+    bit_length = hilbert_bit_length(nx * unsafe_trunc(Int, bloc))
+    bscaleloc = bloc / scale
+    bscale = b / scale
+    ix, iy, iz = ntuple(d -> unsafe_trunc(Int, x[d] * bscaleloc), 3)
     h = hilbert3d(ix, iy, iz, bit_length)
     dkey = (bscale / bscaleloc)^3
     return (h * dkey, (h + 1.0) * dkey)

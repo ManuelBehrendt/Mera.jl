@@ -65,6 +65,10 @@ end
 "Position of particle `i` of an old file (user units)."
 part_position(pf::PartFile, i) = ntuple(d -> _f64(pf.data, pf.field_offset[d] + 8(i - 1)), 3)
 
+# Coordinates at `level` of the cell holding the point `xc` (coarse-cell units). A function of its
+# own: a closure over the loop's reassigned `l` would be boxed, an allocation per particle and level.
+_cell_at(xc, level) = (f = 2.0^level; Coord((floor(Int, xc[1] * f), floor(Int, xc[2] * f), floor(Int, xc[3] * f))))
+
 """
     particle_owner(t, dec, x) -> Int
 
@@ -84,8 +88,7 @@ function particle_owner(t::GlobalTree, dec::Decomposition, x::NTuple{3,Float64})
     gpos == 0 && return owner_of_point(t, dec, x)                          # outside the tree
     l = 1
     while l < nlevels(t)
-        cell = ntuple(d -> floor(Int, xc[d] * 2.0^l), 3)                  # cell coords at level l
-        child = find_grid(t, l + 1, Coord(cell))
+        child = find_grid(t, l + 1, _cell_at(xc, l))
         child == 0 && break
         gpos, l = child, l + 1
     end
@@ -221,8 +224,8 @@ function leaf_cell_pointer(t::GlobalTree, lt::LocalTree, x::NTuple{3,Float64}, n
     gp == 0 && return Int32(0)
     l = 1
     while true
-        c = ntuple(d -> floor(Int, xc[d] * 2.0^l), 3)
-        child = find_grid(t, l + 1, Coord(c))
+        c = _cell_at(xc, l)
+        child = find_grid(t, l + 1, c)
         if child == 0 || !haskey(lt.local_index[l+1], child)
             igrid = get(lt.local_index[l], gp, Int32(0))
             return fine_cell_index(prod(g.n), ngridmax, igrid, cell_index((c .& 1)...))

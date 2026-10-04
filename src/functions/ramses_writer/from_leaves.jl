@@ -163,7 +163,7 @@ function tree_from_leaves(inp::LeafInput)
     length(bnd) == hdr.nboundary || error("&BOUNDARY_PARAMS describes $(length(bnd)) boundaries, header says $(hdr.nboundary).")
     t = GlobalTree(hdr, geom, levels, ones(Int32, prod(inp.n)),
                    [zeros(Int32, ngrids(x)) for x in levels], [zeros(Int32, ngrids(x)) for x in levels],
-                   bnd, [Dict{Coord,NTuple{3,Int32}}() for _ in 1:L])
+                   bnd, [Dict{Coord,NTuple{3,Int32}}() for _ in 1:L], FileLists[])
     check_tree(t)
     return t
 end
@@ -258,7 +258,7 @@ that should continue to round-off needs them as they were.
 """
 function stored_parents(dir, iout, kind::AbstractString)
     t = read_global_tree(dir, iout; verbose=false)
-    cs = open_cell_files(dir, kind, iout, Int(t.header.ncpu), Int(t.header.nlevelmax), length(t.boundaries))
+    cs = open_cell_files(dir, kind, iout, Int(t.header.ncpu), Int(t.header.nlevelmax), length(t.boundaries); lists=t.lists)
     cs === nothing && error("no $kind files in $dir")
     level = Int[]; cells = NTuple{3,Int}[]; rows = Vector{Float64}[]
     for l in 1:nlevels(t)-1, (g, ig) in enumerate(t.levels[l].ig), ind in 1:8
@@ -298,7 +298,7 @@ Rule 2 gives the same parents as rule 1 for hydro and as rule 0 for MHD, so thes
 """
 function infer_interpol_var(dir, iout, leaves::LeafCells, gamma::Float64; nsample::Integer=2000)
     t = read_global_tree(dir, iout; verbose=false, namelist="")
-    cs = open_cell_files(dir, "hydro", iout, Int(t.header.ncpu), Int(t.header.nlevelmax), length(t.boundaries))
+    cs = open_cell_files(dir, "hydro", iout, Int(t.header.ncpu), Int(t.header.nlevelmax), length(t.boundaries); lists=t.lists)
     row = Dict((l, c) => i for (i, (l, c)) in enumerate(zip(leaves.level, leaves.cells)))
     kids_of(l, p) = [get(row, (l + 1, (2p[1] + ix, 2p[2] + iy, 2p[3] + iz)), 0) for iz in 0:1 for iy in 0:1 for ix in 0:1]
     samples = Tuple{Vector{Int},Vector{Float64}}[]

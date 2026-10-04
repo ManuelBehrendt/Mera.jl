@@ -81,6 +81,40 @@ end
 TreeLevel() = TreeLevel(Coord[], zeros(0, 3), Dict{Coord,Int32}(), zeros(Int32, 0, 8))
 
 """
+    FileLists
+
+Where the lists of one old rank sit in its per-cell files (hydro, grav, rt), known from the
+`numbl`/`numbb` of its amr file. A per-cell file writes two small records for every list of every
+level, empty or not, and the data of a non-empty list after them. So the block of a list starts
+after 24 bytes per list before it plus `64 nvar (ncache + 1)` bytes per non-empty list before it.
+Kept for the file's own list (column 1) and the boundary lists (column 1 + ib). With thousands
+of ranks, walking the empty-list records instead would read about 1.6 MB per file.
+"""
+struct FileLists
+    ncache::Matrix{Int32}    # nlevelmax × (1 + nboundary)
+    nbefore::Matrix{Int}     # lists before this one
+    dbefore::Matrix{Int}     # Σ (ncache + 1) over the non-empty lists before this one
+    nlists::Int              # lists in the file
+    dtotal::Int              # Σ (ncache + 1) over all non-empty lists
+end
+
+function FileLists(hdr::AmrHeader, icpu::Integer)
+    ncpu, L, nb = Int(hdr.ncpu), Int(hdr.nlevelmax), Int(hdr.nboundary)
+    ncache = zeros(Int32, L, 1 + nb); nbefore = zeros(Int, L, 1 + nb); dbefore = zeros(Int, L, 1 + nb)
+    k, dsum = 0, 0
+    for l in 1:L, ib in 1:ncpu+nb
+        n = ib <= ncpu ? Int(hdr.numbl[ib, l]) : Int(hdr.numbb[ib-ncpu, l])
+        j = ib == icpu ? 1 : ib > ncpu ? 1 + ib - ncpu : 0
+        if j > 0
+            ncache[l, j], nbefore[l, j], dbefore[l, j] = n, k, dsum
+        end
+        k += 1
+        n > 0 && (dsum += n + 1)
+    end
+    return FileLists(ncache, nbefore, dbefore, k, dsum)
+end
+
+"""
     GlobalTree
 
 The complete octree. `levels[l]` holds all grids of level l. `src_cpu` and
@@ -98,6 +132,7 @@ struct GlobalTree
     # physical boundaries (empty for periodic boxes)
     boundaries::Vector{Boundary}
     bnd_src::Vector{Dict{Coord,NTuple{3,Int32}}}   # level -> boundary grid => (region, cpu, pos) of one old copy
+    lists::Vector{FileLists}       # per old rank, where its lists sit in the per-cell files (empty without files)
 end
 
 nlevels(t::GlobalTree) = length(t.levels)
@@ -163,11 +198,14 @@ function read_global_tree(dir::AbstractString, iout::Integer; verbose::Bool=true
     strip(hdr1.ordering) in ("hilbert", "bisection") ||
         error("Only ordering='hilbert' or 'bisection' is supported (found '$(strip(hdr1.ordering))').")
 
-    ig      = [Coord[] for _ in 1:L]
-    xg      = [Vector{Float64}[] for _ in 1:L]
-    flag1   = [Vector{Int32}[] for _ in 1:L]
-    src_cpu = [Int32[] for _ in 1:L]
-    src_pos = [Int32[] for _ in 1:L]
+    # every grid is stored once, so the header's totals give each level's final size
+    ntot    = [Int(hdr1.numbtot[1, l]) for l in 1:L]
+    ig      = [Vector{Coord}(undef, ntot[l]) for l in 1:L]
+    xg      = [Matrix{Float64}(undef, ntot[l], 3) for l in 1:L]
+    flag1   = [Matrix{Int32}(undef, ntot[l], 8) for l in 1:L]
+    src_cpu = [Vector{Int32}(undef, ntot[l]) for l in 1:L]
+    src_pos = [Vector{Int32}(undef, ntot[l]) for l in 1:L]
+    filled  = zeros(Int, L)
     flag1_coarse = copy(hdr1.flag1_coarse)
     geom = Geometry(hdr1)
     boundaries = Boundary[]
@@ -184,30 +222,41 @@ function read_global_tree(dir::AbstractString, iout::Integer; verbose::Bool=true
         end
     end
     bnd_src = [Dict{Coord,NTuple{3,Int32}}() for _ in 1:L]
+    filelists = Vector{FileLists}(undef, ncpu)
 
-    for icpu in 1:ncpu
-        verbose && (icpu == 1 || icpu % 100 == 0 || icpu == ncpu) &&
-            println("  reading amr file $icpu / $ncpu")
-        hdr, lists = icpu == 1 ? read_amr_file(amr_filename(dir, iout, 1)) :
-                                 read_amr_file(amr_filename(dir, iout, icpu))
-        # coarse cells: take the flag of the rank that owns the cell
-        for c in eachindex(flag1_coarse)
-            hdr.cpu_map_coarse[c] == icpu && (flag1_coarse[c] = hdr.flag1_coarse[c])
+    # files are parsed in parallel, a few per thread at a time, and merged in rank order
+    parsed = Vector{Tuple{AmrHeader,Vector{Vector{GridList}}}}(undef, 4 * Threads.nthreads())
+    for batch in Iterators.partition(1:ncpu, length(parsed))
+        verbose && (first(batch) == 1 || last(batch) == ncpu || any(i -> i % 500 == 0, batch)) &&
+            println("  reading amr file $(last(batch)) / $ncpu")
+        Threads.@threads for j in eachindex(batch)
+            parsed[j] = read_amr_file(amr_filename(dir, iout, batch[j]))
         end
-        for l in 1:L
-            g = lists[l][icpu]                       # this rank's own grids
-            for i in 1:ngrids(g)
-                push!(ig[l], grid_coord(view(g.xg, i, :), l))
-                push!(xg[l], g.xg[i, :])
-                push!(flag1[l], g.flag1[i, :])
-                push!(src_cpu[l], icpu)
-                push!(src_pos[l], i)
+        for (j, icpu) in enumerate(batch)
+            hdr, lists = parsed[j]
+            filelists[icpu] = FileLists(hdr, icpu)
+            # coarse cells: take the flag of the rank that owns the cell
+            for c in eachindex(flag1_coarse)
+                hdr.cpu_map_coarse[c] == icpu && (flag1_coarse[c] = hdr.flag1_coarse[c])
             end
-            # boundary grids: identical on every rank that holds them, keep one copy
-            for ib in 1:Int(hdr1.nboundary)
-                gb = lists[l][ncpu+ib]
-                for i in 1:ngrids(gb)
-                    get!(bnd_src[l], grid_coord(view(gb.xg, i, :), l), (Int32(ib), Int32(icpu), Int32(i)))
+            for l in 1:L
+                g = lists[l][icpu]                       # this rank's own grids
+                n0, n = filled[l], ngrids(g)
+                n0 + n <= ntot[l] || error("Level $l: the files hold more grids than RAMSES reports ($(ntot[l])).")
+                for i in 1:n
+                    ig[l][n0+i] = grid_coord(view(g.xg, i, :), l)
+                end
+                xg[l][n0+1:n0+n, :] .= g.xg
+                flag1[l][n0+1:n0+n, :] .= g.flag1
+                src_cpu[l][n0+1:n0+n] .= icpu
+                src_pos[l][n0+1:n0+n] .= 1:n
+                filled[l] = n0 + n
+                # boundary grids: identical on every rank that holds them, keep one copy
+                for ib in 1:Int(hdr1.nboundary)
+                    gb = lists[l][ncpu+ib]
+                    for i in 1:ngrids(gb)
+                        get!(bnd_src[l], grid_coord(view(gb.xg, i, :), l), (Int32(ib), Int32(icpu), Int32(i)))
+                    end
                 end
             end
         end
@@ -215,15 +264,16 @@ function read_global_tree(dir::AbstractString, iout::Integer; verbose::Bool=true
 
     levels = TreeLevel[]
     for l in 1:L
-        n = length(ig[l])
-        lookup = Dict{Coord,Int32}(ig[l][i] => i for i in 1:n)
+        n = ntot[l]
+        filled[l] == n || error("Level $l has $(filled[l]) grids, RAMSES reports $n.")
+        lookup = sizehint!(Dict{Coord,Int32}(), n)
+        for i in 1:n
+            lookup[ig[l][i]] = i
+        end
         length(lookup) == n || error("Level $l: a grid is owned by more than one CPU file.")
-        push!(levels, TreeLevel(ig[l],
-            n == 0 ? zeros(0, 3) : permutedims(reduce(hcat, xg[l])),
-            lookup,
-            n == 0 ? zeros(Int32, 0, 8) : permutedims(reduce(hcat, flag1[l]))))
+        push!(levels, TreeLevel(ig[l], xg[l], lookup, flag1[l]))
     end
-    tree = GlobalTree(hdr1, geom, levels, flag1_coarse, src_cpu, src_pos, boundaries, bnd_src)
+    tree = GlobalTree(hdr1, geom, levels, flag1_coarse, src_cpu, src_pos, boundaries, bnd_src, filelists)
     check_tree(tree)
     inferred && settle_boundary_types!(tree, dir, iout)
     return tree

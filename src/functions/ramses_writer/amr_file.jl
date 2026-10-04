@@ -140,10 +140,13 @@ function read_amr_file(path::AbstractString)
     # --- fine levels: one block per (level, list) with ncache > 0 -----------
     twondim, twotondim = 2ndim, 2^ndim
     lists = [Vector{GridList}(undef, ncpu + nboundary) for _ in 1:L]
+    # most lists are empty (with thousands of ranks, nearly all); they share one empty GridList,
+    # since nine fresh arrays for each would be billions of allocations over a whole output
+    empty = GridList(ndim)
     for ilevel in 1:L, ibound in 1:(ncpu+nboundary)
         ncache = ibound <= ncpu ? numbl[ibound, ilevel] : numbb[ibound-ncpu, ilevel]
         if ncache == 0
-            lists[ilevel][ibound] = GridList(ndim)
+            lists[ilevel][ibound] = empty
             continue
         end
         ind_grid = read_record(r, Int32)

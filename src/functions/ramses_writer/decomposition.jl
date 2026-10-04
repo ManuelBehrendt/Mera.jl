@@ -126,7 +126,8 @@ function balanced_bound_key(t::GlobalTree, ncpu::Integer; overload::Integer=1,
             end
         end
     end
-    sort!(keys)
+    # in place: the default radix sort would take a second array as large as `keys`
+    sort!(keys; alg=QuickSort)
     ndomain = ncpu * overload
     N = length(keys)
     bk = zeros(Float64, ndomain + 1)

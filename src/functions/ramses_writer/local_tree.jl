@@ -61,17 +61,21 @@ counts as authorized). The returned grid may or may not exist.
 """
 function neighbour_cell(t::GlobalTree, level, ig::Coord, ind, dir)
     o = cell_offset(ind)
-    c = [2ig[1] + o[1], 2ig[2] + o[2], 2ig[3] + o[3]]      # cell coordinates at `level`
     d = (dir + 1) ÷ 2
-    c[d] += isodd(dir) ? -1 : 1
+    step = isodd(dir) ? -1 : 1
     g = t.geom
     lo, hi = g.cmin[d] * 2^level, (g.cmax[d] + 1) * 2^level  # box in level cells
+    cd = 2Int(ig[d]) + o[d] + step                           # the coordinate that moves
     if g.periodic[d]
-        c[d] = mod(c[d], hi)
-    elseif !(lo <= c[d] < hi)
+        cd = mod(cd, hi)
+    elseif !(lo <= cd < hi)
         return nothing
     end
-    return Coord((c[1] >> 1, c[2] >> 1, c[3] >> 1)), cell_index(c[1] & 1, c[2] & 1, c[3] & 1)
+    # neighbour cell coordinates at `level` (written out: a closure over `cd` would be boxed)
+    c1 = d == 1 ? cd : 2Int(ig[1]) + o[1]
+    c2 = d == 2 ? cd : 2Int(ig[2]) + o[2]
+    c3 = d == 3 ? cd : 2Int(ig[3]) + o[3]
+    return Coord((c1 >> 1, c2 >> 1, c3 >> 1)), cell_index(c1 & 1, c2 & 1, c3 & 1)
 end
 
 """

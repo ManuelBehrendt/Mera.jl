@@ -24,13 +24,16 @@
     CellFileSet
 
 All old files of one kind (`"hydro"`, `"grav"` or `"rt"`) of an output.
-`blocks[icpu][ilevel, ibound] = (ncache, offset)` locates the data of every
-list; `offset` is the byte position of the first data record's marker.
+`blocks[icpu][ilevel, j] = (ncache, offset)` locates the data of a list; `offset` is the
+byte position of the first data record's marker. Only the lists anyone reads are kept: the
+file's own list (j = 1) and the boundary lists (j = 1 + ib). The ghost lists of the other
+ranks are skipped, which would cost nlevelmax × ncpu² entries (1 GB per kind at 2048 ranks).
 """
 struct CellFileSet
     kind::String
     header::Vector{Vector{UInt8}}    # raw header records of old file 1
     nvar::Int                        # Float64 records per cell
+    ncpu::Int                        # ranks of the old output
     data::Vector{Vector{UInt8}}      # memory-mapped old files
     blocks::Vector{Matrix{Tuple{Int,Int}}}
 end
@@ -48,71 +51,92 @@ const CELL_HEADER_RECORDS = Dict("hydro" => 6, "grav" => 4, "rt" => 6)
 "Byte position just after the record starting at `p` (skips marker, payload, marker)."
 _skip(d, p) = p + 8 + _i32(d, p)
 
-# Offsets of every (level, list) block of one cell file, starting at byte `p` after the header,
-# for `nvar` Float64 records per cell. `nothing` unless the blocks read the file exactly to its end.
-function _cell_blocks(d, p, nlevelmax, nlists, ndim, nvar)
-    b = Matrix{Tuple{Int,Int}}(undef, nlevelmax, nlists)
-    for l in 1:nlevelmax, ib in 1:nlists
+# Offsets of the own list (rank `icpu`) and the boundary lists of one cell file, starting at byte
+# `p` after the header, for `nvar` Float64 records per cell. Walks every block; `nothing` unless the
+# blocks read the file exactly to its end.
+function _cell_blocks(d, p, nlevelmax, ncpu, nboundary, icpu, ndim, nvar)
+    b = Matrix{Tuple{Int,Int}}(undef, nlevelmax, 1 + nboundary)
+    for l in 1:nlevelmax, ib in 1:ncpu+nboundary
         p + 8 <= length(d) && _i32(d, p + 4) == l || return nothing
         p = _skip(d, p)
         ncache = Int(_i32(d, p + 4))
         p = _skip(d, p)
-        b[l, ib] = (ncache, p)
+        ib == icpu && (b[l, 1] = (ncache, p))
+        ib > ncpu && (b[l, 1+ib-ncpu] = (ncache, p))
         ncache > 0 && (p += 2^ndim * nvar * (8ncache + 8))
         p <= length(d) + 1 || return nothing
     end
     return p == length(d) + 1 ? b : nothing
 end
 
+# The same from the list sizes of the amr header, without reading the file: only its length is
+# checked here (`nothing` on a mismatch). The ncache record before each block is checked when the
+# block is used (see `prefetch`); reading it now would cost one random read per block and file.
+function _cell_blocks(d, p, fl::FileLists, nvar)
+    p - 1 + 24fl.nlists + 64nvar * fl.dtotal == length(d) || return nothing
+    b = Matrix{Tuple{Int,Int}}(undef, size(fl.ncache))
+    for i in eachindex(b)
+        b[i] = (Int(fl.ncache[i]), p + 24(fl.nbefore[i] + 1) + 64nvar * fl.dbefore[i])
+    end
+    return b
+end
+
 """
-    open_cell_files(dir, kind, iout, ncpu, nlevelmax, nboundary) -> CellFileSet or nothing
+    open_cell_files(dir, kind, iout, ncpu, nlevelmax, nboundary; lists) -> CellFileSet or nothing
 
 Maps all `kind_XXXXX.outYYYYY` files and indexes their lists. Returns
-`nothing` if the output has no files of this kind.
+`nothing` if the output has no files of this kind. With `lists` (the tree's
+[`FileLists`](@ref)) the blocks are located from the amr headers; a file whose
+length or list records disagree is walked record by record instead.
 """
-function open_cell_files(dir, kind, iout, ncpu, nlevelmax, nboundary, ndim=3)
+function open_cell_files(dir, kind, iout, ncpu, nlevelmax, nboundary, ndim=3;
+                         lists::Vector{FileLists}=FileLists[])
     isfile(cell_filename(dir, kind, iout, 1)) || return nothing
     nhead = CELL_HEADER_RECORDS[kind]
-    data = Vector{UInt8}[]
-    blocks = Matrix{Tuple{Int,Int}}[]
+    # file 1 gives the header and the number of variables
+    d1 = open(io -> Mmap.mmap(io), cell_filename(dir, kind, iout, 1))
     header = Vector{UInt8}[]
-    nvar = 0
-    for icpu in 1:ncpu
-        d = open(io -> Mmap.mmap(io), cell_filename(dir, kind, iout, icpu))
+    p1 = 1
+    for _ in 1:nhead
+        push!(header, d1[p1+4:p1+3+_i32(d1, p1)])
+        p1 = _skip(d1, p1)
+    end
+    nvar = Int(reinterpret(Int32, header[2])[1])
+    # A gravity file whose header says ndim can hold phi + ndim forces (RAMSES versions that wrote
+    # ndim there) or the ndim forces only (older versions, no phi). Take the layout that reads the
+    # file exactly to its end.
+    known = length(lists) == ncpu
+    if kind == "grav" && nvar == ndim
+        nvar = (known ? _cell_blocks(d1, p1, lists[1], ndim + 1) :
+                        _cell_blocks(d1, p1, nlevelmax, ncpu, nboundary, 1, ndim, ndim + 1)) !== nothing ? ndim + 1 : ndim
+    end
+    # then every file is indexed on its own; with thousands of ranks this is slow on one thread
+    data = Vector{Vector{UInt8}}(undef, ncpu)
+    blocks = Vector{Union{Nothing,Matrix{Tuple{Int,Int}}}}(undef, ncpu)
+    Threads.@threads for icpu in 1:ncpu
+        d = icpu == 1 ? d1 : open(io -> Mmap.mmap(io), cell_filename(dir, kind, iout, icpu))
         p = 1
-        for h in 1:nhead
-            if icpu == 1
-                push!(header, d[p+4:p+3+_i32(d, p)])
-            end
+        for _ in 1:nhead
             p = _skip(d, p)
         end
-        if icpu == 1
-            nvar = Int(reinterpret(Int32, header[2])[1])
-            # A gravity file whose header says ndim can hold phi + ndim forces (RAMSES versions
-            # that wrote ndim there) or the ndim forces only (older versions, no phi). Take the
-            # layout that reads the file exactly to its end.
-            if kind == "grav" && nvar == ndim
-                nvar = _cell_blocks(d, p, nlevelmax, ncpu + nboundary, ndim, ndim + 1) !== nothing ?
-                       ndim + 1 : ndim
-            end
-        end
-        r = _cell_blocks(d, p, nlevelmax, ncpu + nboundary, ndim, nvar)
-        r === nothing && error("$(kind) file $icpu: the level records do not match $nvar variables per cell")
-        b = r
-        push!(data, d)
-        push!(blocks, b)
+        data[icpu] = d
+        b = known ? _cell_blocks(d, p, lists[icpu], nvar) : nothing
+        blocks[icpu] = b !== nothing ? b : _cell_blocks(d, p, nlevelmax, ncpu, nboundary, icpu, ndim, nvar)
     end
-    return CellFileSet(kind, header, nvar, data, blocks)
+    bad = findfirst(isnothing, blocks)
+    bad === nothing || error("$(kind) file $bad: the level records do not match $nvar variables per cell")
+    return CellFileSet(kind, header, nvar, ncpu, data, Vector{Matrix{Tuple{Int,Int}}}(blocks))
 end
 
 """
     cell_value(cs, icpu, ilevel, ibound, pos, ind, ivar) -> Float64
 
 Value of variable `ivar` in cell `ind` of the `pos`-th grid of list `ibound`
-in old file `icpu`.
+in old file `icpu`. The list is the file's own (`ibound == icpu`) or a boundary
+list (`ibound > ncpu`).
 """
 function cell_value(cs::CellFileSet, icpu, ilevel, ibound, pos, ind, ivar)
-    ncache, off = cs.blocks[icpu][ilevel, ibound]
+    ncache, off = cs.blocks[icpu][ilevel, ibound > cs.ncpu ? 1 + ibound - cs.ncpu : 1]
     rec = (ind - 1) * cs.nvar + (ivar - 1)                 # which Float64 record
     return _f64(cs.data[icpu], off + rec * (8ncache + 8) + 4 + 8(pos - 1))
 end
@@ -223,5 +247,39 @@ end
 "Value getter for old RAMSES files."
 file_value(cs::CellFileSet) = (s, l, ind, ivar) -> cell_value(cs, s.icpu, l, s.ibound, s.pos, ind, ivar)
 
-write_cell_file(path, cs::CellFileSet, lt::LocalTree, sources, ncpu_new, nboundary) =
+function write_cell_file(path, cs::CellFileSet, lt::LocalTree, sources, ncpu_new, nboundary)
+    prefetch(cs, sources)
     write_cell_file(path, cs.header, cs.nvar, lt, sources, file_value(cs), ncpu_new, nboundary)
+end
+
+"""
+    prefetch(cs, sources)
+
+The values of a new file are gathered in small pieces from many mapped old files, and each
+piece the OS reads on first touch is small. This asks the OS beforehand to read, in large
+chunks, every old block the new file takes at least a quarter of its grids from. Blocks that
+give only a few ghost grids are left to be read on demand. Every block used is also checked
+against the ncache record in front of it, since its position was computed, not read.
+"""
+function prefetch(cs::CellFileSet, sources)
+    for (l, src) in enumerate(sources)
+        used = Dict{Tuple{Int32,Int32},Int}()
+        for s in src
+            used[(s.icpu, s.ibound)] = get(used, (s.icpu, s.ibound), 0) + 1
+        end
+        for ((icpu, ib), n) in used
+            ncache, off = cs.blocks[icpu][l, ib > cs.ncpu ? 1 + ib - cs.ncpu : 1]
+            Sys.isunix() && 4n >= ncache && _willneed(cs.data[icpu], off, 8 * cs.nvar * (8ncache + 8))
+            _i32(cs.data[icpu], off - 8) == ncache ||
+                error("$(cs.kind) file $icpu, level $l: list $ib does not have the size its amr file gives")
+        end
+    end
+end
+
+# madvise(MADV_WILLNEED) on bytes p:p+len-1 of a mapped file (the value 3 on Linux and macOS)
+function _willneed(d::Vector{UInt8}, p::Int, len::Int)
+    page = Int(ccall(:getpagesize, Cint, ()))
+    a = UInt(pointer(d, p)); a0 = a - a % page
+    ccall(:madvise, Cint, (Ptr{Cvoid}, Csize_t, Cint), Ptr{Cvoid}(a0), len + (a - a0), 3)
+    return
+end
