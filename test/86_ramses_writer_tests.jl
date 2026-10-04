@@ -391,6 +391,7 @@ end
                                        for i in 1:RW.ngrids(t.levels[l]) for ind in 1:8]))
                 rk = [1; rand(MersenneTwister(1), 1:length(allk), 60); length(allk)]
                 @test RW.ranked_keys(t, pk, rk) == allk[rk]
+                @test RW.ranked_keys(t, pk, rk; chunk=7) == allk[rk]      # many chunks, as on large outputs
                 # the bisection walls, placed without storing the cells, are the walls of the plain form
                 pp = RW.particle_positions(dir, o, t)
                 @test all((1, 5, 7)) do n

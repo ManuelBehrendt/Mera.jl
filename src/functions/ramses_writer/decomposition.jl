@@ -133,15 +133,16 @@ The keys at the given positions (sorted ranks) among the keys of every cell of t
 1.6 GB for 25 million grids). The keys are counted in value buckets (an order-preserving map),
 and only the buckets that hold a wanted position are collected and sorted.
 """
-function ranked_keys(t::GlobalTree, extra_keys::Vector{Float64}, ranks::Vector{Int})
+function ranked_keys(t::GlobalTree, extra_keys::Vector{Float64}, ranks::Vector{Int}; chunk::Int=1 << 16)
     isempty(ranks) && return Float64[]
     nb = 1 << 20
     s = nb / max_key(t)
     bucket(k) = clamp(unsafe_trunc(Int, k * s) + 1, 1, nb)
-    chunks = collect(Iterators.partition(1:sum(ngrids, t.levels; init=0), 1 << 16))
-    # every cell key, visited chunk by chunk on all threads: f(key) for each
+    chunks = collect(Iterators.partition(1:sum(ngrids, t.levels; init=0), chunk))
+    # every cell key, visited chunk by chunk on all threads: f(key) for each. The grids are counted
+    # across the levels: grid i of level l is number g + i, g the grids of the levels before
     function each_key(f, ci)
-        g = first(chunks[ci]) - 1
+        g = 0
         for l in 1:nlevels(t)
             n = ngrids(t.levels[l])
             for i in max(1, first(chunks[ci]) - g):min(n, last(chunks[ci]) - g), ind in 1:8
