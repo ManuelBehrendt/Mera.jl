@@ -40,7 +40,8 @@ RAMSES = get(ENV, "MERA_RAMSES_BIN", "/Volumes/FASTStorage/projects/RamsesConver
 RAMSES_READBACK = get(ENV, "MERA_RAMSES_READBACK_BIN",
                       "/Volumes/FASTStorage/projects/RamsesConverter/build/readback-hydro/bin/ramses3d")
 MPIRUN = get(ENV, "MERA_MPIRUN", "/opt/local/bin/mpirun")
-# the validation tables of the full test suite (section 6), produced by the same code
+# the result tables of the RAMSES validation suite (sections 6 and 7): RAMSES run on files written
+# by Mera's converter (RamsesConverter/e2e, run with this Mera)
 SUITE  = get(ENV, "MERA_RAMSESSUITE", "/Volumes/FASTStorage/projects/RamsesConverter/e2e/results")
 
 using Mera, CairoMakie, Printf, Statistics
@@ -67,6 +68,7 @@ println("dm_gas: ncpu = ", getinfo(4, DMGAS, verbose=false).ncpu, ", particles: 
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[ Info: Mera v1.8.0
 sedov:  ncpu = 4, levels 4 to 7, 10000 grids max per rank
 dm_gas: ncpu = 4, particles: 30000
 ```
@@ -371,9 +373,9 @@ end
 ```
 coarse grid (3, 3, 3), box = coarse cells (1, 1, 1) to (1, 1, 1), 6 walls: outflow
 rank  own grids  ghost grids  boundary grids
-1     23470      2479         2362
-2     24870      2775         2605
-3     49277      2504         4640
+1     32539      2998         3246
+2     32538      3190         3194
+3     32540      2997         3246
 ```
 
 ```julia
@@ -425,7 +427,7 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_MAbJiR/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_6On8RI/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
@@ -527,7 +529,7 @@ rank  grids   boundary  grids   fathers  neighbours  children  owners
 4     29027   2450      yes     yes      yes         yes       yes
 ```
 
-Every rank's tree is rebuilt exactly. The same check passes for every run of the test suite, a
+Every rank's tree is rebuilt exactly. The same check passes for every run of the RAMSES validation suite, a
 16-level cosmological run on 16 CPUs and a galaxy simulation on 640 CPUs (section 13 gives time and memory for large outputs). The
 new decompositions are made by the same code, so they are what RAMSES itself would write with that
 number of ranks.
@@ -614,7 +616,8 @@ ranks   same time  same octree  every value identical
 ```
 
 RAMSES holds exactly the same state after reading the converted files as after reading its own,
-bit for bit, for every rank count. The suite ran the same test on all 13 kinds of run, with
+bit for bit, for every rank count. The RAMSES validation suite ran the same test on all 13 kinds
+of run, with
 particles, sinks, MHD and radiative transfer, on 1 to 8 ranks (the particle records and the sink
 table compared byte for byte as well):
 
@@ -753,7 +756,7 @@ RAMSES uninterrupted vs restarted, both on 4 CPUs         same    1.1e-15
 converted to 3 CPUs, restarted, vs RAMSES restart on 4    same    7.6e-16
 ```
 
-The full test suite ran the same check on every kind of run Mera reads. The table is the suite's
+The RAMSES validation suite ran the same check on every kind of run Mera reads. The table is its
 own result file; the "reference" is either RAMSES's restart on the original rank count or the
 original uninterrupted run.
 
@@ -1058,7 +1061,7 @@ sedov3d_amr_lb_ncpu4    AMR hydro                       hilbert    3     same   
 sedov3d_amr_lb_ncpu4    AMR hydro                       bisection  5     same    1e-15   –       –       –
 sedov3d_uniform_ncpu4   uniform grid                    hilbert    3     same    5e-16   –       –       –
 sedov3d_uniform_ncpu4   uniform grid                    bisection  5     same    0e+00   –       –       –
-sedov3d_outflow_ncpu4   outflow walls                   hilbert    3     same    8e-15   –       –       –
+sedov3d_outflow_ncpu4   outflow walls                   hilbert    3     same    7e-15   –       –       –
 sedov3d_outflow_ncpu4   outflow walls                   bisection  5     same    5e-15   –       –       –
 sedov3d_grav_part_ncpu4 gravity, tracer particles       hilbert    3     same    2e-15   1e-12   –       –
 sedov3d_grav_part_ncpu4 gravity, tracer particles       bisection  5     same    2e-15   7e-14   –       –
@@ -1592,7 +1595,7 @@ end
 run                     covers                          from a mera file  RAMSES restarting itself
 sedov3d_amr_lb_ncpu4    AMR hydro                       1e-15             1e-15
 sedov3d_uniform_ncpu4   uniform grid                    5e-16             9e-16
-sedov3d_outflow_ncpu4   outflow walls                   8e-15             7e-15
+sedov3d_outflow_ncpu4   outflow walls                   7e-15             7e-15
 sedov3d_grav_part_ncpu4 gravity, tracer particles       1e-12             6e-14
 dm_gas3d_ncpu4          gravity, dark matter            8e-15             8e-15
 sinks3d_ncpu4           sinks, gravity, particles       2e-11             2e-15
@@ -1661,26 +1664,26 @@ end
 
 ```
 output                size     grids      ranks        route                    time     peak memory  identical
-cosmo3d               20 MB    11k        8 → 1024     repartition              11 s     1.0 GB       yes
+cosmo3d               20 MB    11k        8 → 1024     repartition              18 s     1.0 GB       yes
 cosmo3d               737 MB   11k        1024 → 8     repartition back         7 s      0.9 GB       yes
 cosmo3d               20 MB    11k        8 → 1024     writeramses (Mera data)  10 s     1.2 GB       refined cells 1e-16
-cosmo3d               20 MB    11k        8 → 4096     repartition              118 s    1.3 GB       yes
-cosmo3d               8.5 GB   11k        4096 → 8     repartition back         15 s     1.4 GB       yes
-cosmo3d               20 MB    11k        8 → 4096     writeramses (Mera data)  161 s    1.4 GB       refined cells 1e-16
-mw_L10                5.7 GB   4.0M       640 → 64     repartition              63 s     2.0 GB       yes
-manu_sim_sf_L14       14.1 GB  7.2M       2048 → 256   repartition              150 s    2.6 GB       yes
-L13_SN5_CD_only       54.2 GB  25.1M      5120 → 512   repartition              806 s    7.9 GB       yes
+cosmo3d               20 MB    11k        8 → 4096     repartition              110 s    1.3 GB       yes
+cosmo3d               8.5 GB   11k        4096 → 8     repartition back         24 s     1.3 GB       yes
+cosmo3d               20 MB    11k        8 → 4096     writeramses (Mera data)  97 s     1.4 GB       refined cells 1e-16
+mw_L10                5.7 GB   4.0M       640 → 64     repartition              69 s     1.9 GB       yes
+manu_sim_sf_L14       14.1 GB  7.2M       2048 → 256   repartition              199 s    2.3 GB       yes
+L13_SN5_CD_only       54.2 GB  25.1M      5120 → 512   repartition              669 s    6.3 GB       yes
 ```
 
 - **Every value is kept**, also on the way to 4096 ranks and back, and on the 54 GB output.
-- **Memory grows with the grids**: 2.0 GB for 4 million grids, 2.6 GB for 7 million, 7.9 GB for
-  25 million, so about 0.3 GB per million grids plus 0.5 GB for Julia and Mera. The 54 GB output is
+- **Memory grows with the grids**: 1.9 GB for 4 million grids, 2.3 GB for 7 million, 6.3 GB for
+  25 million, so about 0.25 GB per million grids plus 0.5 GB for Julia and Mera. The 54 GB output is
   larger than the 32 GB of memory of this laptop; it does not need to fit.
-- **Time is set by the disk.** The 54 GB output is read and 27 GB are written in 13 minutes, about
-  100 MB/s together on this USB disk. A faster disk gives a faster conversion.
+- **Time is set by the disk.** The 54 GB output is read and 27 GB are written in 11 minutes, about
+  120 MB/s together on this USB disk. A faster disk gives a faster conversion.
 - **Many ranks cost disk space, not memory.** At 4096 ranks the 20 MB of the cosmological run
   become an 8.5 GB output, because RAMSES's format has those small records for every list of every
-  rank. Most of the 118 s go to writing them; reading the output back takes 15 s.
+  rank. Most of the 110 s go to writing them; reading the output back takes 25 s.
 - **`writeramses` needs the data in memory.** It starts from Mera data, which holds every leaf cell,
   and rebuilds the refined cells from them, so its memory grows with the data, like loading it with
   Mera. For a large run whose RAMSES files still exist, `repartition` is the route that streams.
@@ -1697,7 +1700,7 @@ L13_SN5_CD_only       54.2 GB  25.1M      5120 → 512   repartition            
 - `restart_completeness` proves the data is complete; `compareramses` checks any two outputs.
 - `writeramses` refuses incomplete data and a cosmological run from an old mera file whose
   simulation is gone (its expansion history is unknown; `force=true` writes it anyway).
-- Large outputs: `repartition` keeps the octree in memory and streams the values, about 0.3 GB per
+- Large outputs: `repartition` keeps the octree in memory and streams the values, about 0.25 GB per
   million grids; a 54 GB output with 25 million grids converts on a laptop (section 13).
 - Set `ngridmax` and `npartmax` in the restart namelist from the report, and start RAMSES with
   `mpirun -np ncpu ramses3d run.nml output`.
