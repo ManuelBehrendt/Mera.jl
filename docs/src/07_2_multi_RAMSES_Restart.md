@@ -67,7 +67,6 @@ println("dm_gas: ncpu = ", getinfo(4, DMGAS, verbose=false).ncpu, ", particles: 
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Mera v1.8.0
 sedov:  ncpu = 4, levels 4 to 7, 10000 grids max per rank
 dm_gas: ncpu = 4, particles: 30000
 ```
@@ -121,6 +120,7 @@ function density_slice(dir, iout, z, n)
 end
 
 const CPU_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+blues = cgrad(["#cde2fb", "#86b6ef", "#3987e5", "#1c5cab", "#0d366b"])   # one sequential scale for every map
 function label_ranks!(ax, img, n)
     for r in 1:maximum(filter(!isnan, img))
         idx = findall(==(r), img); isempty(idx) && continue
@@ -243,24 +243,42 @@ and only every `nremap` steps, and it will rebalance the converted run the same 
 load-balance step. Grey bars: the volume each rank covers is very different, because a rank near
 the blast owns small cells.
 
-The same split in 3-D, one rank per panel, for 3 CPUs (each cube is a leaf cell, drawn at its
-size). Rank 3 is the half with x > 0.5, rank 2 most of the other half, and rank 1 a small block at
-the origin: it holds the fine cells of the blast, a third of all cells in about 5 % of the volume:
+The same idea at a higher rank count and in both orderings Mera writes, on a run with more
+structure: the cosmological test run at a = 0.2 (gas and dark matter, refined to level 8 where matter
+collapses), split for 16 ranks. Left, the refinement level in a slice through the finest cells;
+middle, the 16 Hilbert domains; right, the 16 bisection domains. Each holds the same share of the
+cells, so domains shrink where the cells are fine. Hilbert domains are pieces of one curve and
+interlock; bisection domains are boxes, cut along x, y and z in turn:
 
 ```julia
-dec3 = decs[2][3]
-fig = Figure(size=(1050, 380))
-for k in 1:3
-    mine = [c for c in leaves if dec3.cpu_map[c.l][c.g, c.ind] == k]
-    ax = Axis3(fig[1, k]; aspect=:data, title="rank $k of 3: $(length(mine)) leaf cells",
-               xlabel="x", ylabel="y", zlabel="z", limits=(0, 1, 0, 1, 0, 1), azimuth=0.8π)
-    meshscatter!(ax, [Point3f(c.x...) for c in mine]; marker=Rect3f(Vec3f(-0.5), Vec3f(1)),
-                 markersize=[Vec3f(0.92 * c.dx) for c in mine], color=CPU_COLORS[k])
+COSMO3D = joinpath(RUNS, "cosmo3d_ncpu8")       # the cosmological test run, 8 CPUs, AMR levels 5 to 8
+tc = RW.read_global_tree(joinpath(COSMO3D, "output_00004"), 4; verbose=false)    # a = 0.2
+dh, db = RW.new_decomposition(tc, 16; ordering=:hilbert), RW.new_decomposition(tc, 16; ordering=:bisection)
+# the slice goes through the finest cells: the middle of the deepest level's grids
+deep = tc.levels[end].ig
+zc = (sort([Int(g[3]) for g in deep])[cld(length(deep), 2)] + 0.5) / 2.0^(RW.nlevels(tc) - 1)
+lev = slice_map(tc, zc, n, (l, g, ind) -> Float64(l))
+rk(dec) = slice_map(tc, zc, n, (l, g, ind) -> Float64(dec.cpu_map[l][g, ind]))
+fig = Figure(size=(1150, 400))
+ax = Axis(fig[1, 1]; aspect=DataAspect(), title=@sprintf("refinement level (z = %.3f)", zc), xlabel="x / boxlen", ylabel="y / boxlen")
+hm = heatmap!(ax, range(0, 1; length=n), range(0, 1; length=n), lev; colormap=blues, colorrange=(4.5, 8.5))
+Colorbar(fig[1, 2], hm; ticks=5:8, width=10)
+for (col, (dec, name)) in enumerate(((dh, "16 ranks, Hilbert"), (db, "16 ranks, bisection")))
+    ax = Axis(fig[1, col + 2]; aspect=DataAspect(), title=name, xlabel="x / boxlen", yticklabelsvisible=false)
+    heatmap!(ax, range(0, 1; length=n), range(0, 1; length=n), rk(dec);
+             colormap=cgrad(:tab20, 16; categorical=true), colorrange=(0.5, 16.5))
+    cells = [sum(count(==(k), dec.cpu_map[l]) for l in 1:RW.nlevels(tc)) for k in 1:16]
+    @printf("%-20s cells per rank %d to %d\n", name, minimum(cells), maximum(cells))
 end
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_10_1.png)
+```
+16 ranks, Hilbert    cells per rank 11871 to 11872
+16 ranks, bisection  cells per rank 11278 to 12363
+```
+
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_10_2.png)
 
 ```julia
 # What rank 2 of 3 keeps in memory, level by level: its own grids and the ghost layer around them.
@@ -408,11 +426,11 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_vcobOi/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_L3EAMz/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
-  14 files written in 0.9 s
+  14 files written in 0.7 s
 ```
 
 The report's last numbers go into the restart namelist: each rank must be allowed at least
@@ -674,7 +692,6 @@ largest difference, every hydro variable: 7.6e-16
 ρn = density_slice(joinpath(native, "output_00007"), 7, z, n)
 ρc = density_slice(joinpath(run3,   "output_00007"), 7, z, n)
 rel = abs.(ρc .- ρn) ./ abs.(ρn)
-blues = cgrad(["#cde2fb", "#86b6ef", "#3987e5", "#1c5cab", "#0d366b"])
 fig = Figure(size=(1100, 390))
 for (col, (img, ttl)) in enumerate(((ρn, "RAMSES restart on 4 CPUs"), (ρc, "converted, restarted on 3 CPUs")))
     ax = Axis(fig[1, col]; aspect=DataAspect(), title=ttl, xlabel="x / boxlen", ylabel=col == 1 ? "y / boxlen" : "")
@@ -1099,6 +1116,78 @@ fluxes are averages, like every other parent.
 When the RAMSES files still exist, `repartition` is the exact route. `writeramses` is for the
 case where only Mera data is left.
 
+### Where an error would show
+
+A number per run can say that something differs, not where. The bug a converter is most likely to
+have is a wrong ghost cell or pointer at the border between two ranks, and that would show up
+along those borders. The maps below are the local relative difference |Δρ|/ρ between the restart
+from the mera file and RAMSES's own restart, one output later, in a slice. The black dots mark the
+borders between the ranks of the files RAMSES restarted from. Three hard cases: the cosmological
+run in bisection ordering, the MHD tube and the radiative-transfer run.
+
+```julia
+# The leaf cell under each pixel for any box, also with wall layers (coarse cells around the box).
+function leaf_slice(t, z, n, value)
+    g0 = t.geom; img = fill(NaN, n, n)
+    for i in 1:n, j in 1:n
+        xc = ntuple(d -> g0.cmin[d] + (d == 1 ? (i - 0.5) / n : d == 2 ? (j - 0.5) / n : z) * g0.nx_loc, 3)
+        g = RW.find_grid(t, 1, RW.Coord(ntuple(d -> floor(Int32, xc[d]), 3))); g == 0 && continue
+        l = 1
+        while true
+            c = ntuple(d -> floor(Int, xc[d] * 2^l), 3)
+            child = RW.find_grid(t, l + 1, RW.Coord(c))
+            child == 0 && (img[i, j] = value(l, g, RW.cell_index((c .& 1)...)); break)
+            g, l = child, l + 1
+        end
+    end
+    img
+end
+function reldiff_slice(ref, new, iout, z, n; kind="hydro", ivar=1)
+    ta, tb = RW.read_global_tree(ref, iout; verbose=false), RW.read_global_tree(new, iout; verbose=false)
+    ca = RW.open_cell_files(ref, kind, iout, ta.header.ncpu, ta.header.nlevelmax, length(ta.boundaries))
+    cb = RW.open_cell_files(new, kind, iout, tb.header.ncpu, tb.header.nlevelmax, length(tb.boundaries))
+    leaf_slice(ta, z, n, (l, g, ind) -> begin
+        h = tb.levels[l].lookup[ta.levels[l].ig[g]]
+        a = RW.cell_value(ca, ta.src_cpu[l][g], l, ta.src_cpu[l][g], ta.src_pos[l][g], ind, ivar)
+        b = RW.cell_value(cb, tb.src_cpu[l][h], l, tb.src_cpu[l][h], tb.src_pos[l][h], ind, ivar)
+        abs(a - b) / max(abs(a), floatmin())
+    end)
+end
+# pixels where the rank changes: the borders of the domains RAMSES restarted from
+function rank_borders(dir, iout, z, n)
+    t = RW.read_global_tree(dir, iout; verbose=false); dec = RW.own_decomposition(t)
+    r = leaf_slice(t, z, n, (l, g, ind) -> Float64(dec.cpu_map[l][g, ind]))
+    [Point2f((i - 0.5) / n, (j - 0.5) / n) for i in 1:n-1, j in 1:n-1 if r[i, j] != r[i+1, j] || r[i, j] != r[i, j+1]]
+end
+cases = [("cosmo3d_ncpu8", "bisection", 3, 0.5, "cosmological, bisection, 5 ranks"),
+         ("mhdtube3d_ncpu4", "hilbert", 5, 0.5, "MHD tube, Hilbert, 3 ranks"),
+         ("stromgren3d_ncpu4", "bisection", 6, 0.03, "radiative transfer, bisection, 5 ranks")]
+refs = Dict(r[1] => r[3] for r in mruns)
+fig = Figure(size=(1150, 420))
+for (col, (run, ord, o, zs, ttl)) in enumerate(cases)
+    dir = joinpath(WORK, "mera_restart_$(run)_$ord")
+    d = reldiff_slice(joinpath(RUNS, refs[run], "output_" * lpad(o + 1, 5, '0')), joinpath(dir, "output_" * lpad(o + 1, 5, '0')), o + 1, zs, n)
+    ax = Axis(fig[1, col]; aspect=DataAspect(), title=ttl, xlabel="x / box", ylabel=col == 1 ? "y / box" : "",
+              yticklabelsvisible=col == 1)
+    hm = heatmap!(ax, range(0, 1; length=n), range(0, 1; length=n), log10.(max.(d, 1e-17)); colormap=blues, colorrange=(-17, -12))
+    scatter!(ax, rank_borders(joinpath(dir, "output_" * lpad(o, 5, '0')), o, zs, n); color=:black, markersize=1.6)
+    col == 3 && Colorbar(fig[1, 4], hm; label="log₁₀ |Δρ|/ρ, one output after the restart", width=10)
+    @printf("%-42s largest |Δρ|/ρ in the slice %.1e\n", ttl, maximum(filter(!isnan, d)))
+end
+fig
+```
+
+```
+cosmological, bisection, 5 ranks           largest |Δρ|/ρ in the slice 4.2e-16
+MHD tube, Hilbert, 3 ranks                 largest |Δρ|/ρ in the slice 0.0e+00
+radiative transfer, bisection, 5 ranks     largest |Δρ|/ρ in the slice 0.0e+00
+```
+
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_51_4.png)
+
+The differences are round-off without structure, or exactly zero, and nothing lines up with the
+rank borders: the converted files give RAMSES the same ghost cells and neighbours as its own.
+
 ## 9. Mera files written before 1.8.0
 
 Mera stores the amr header (exact time, per-level time steps, step counters) in
@@ -1298,9 +1387,21 @@ numbered apart from dark matter, so `compareramses` matches them by identity and
 
 The public test simulations of Mera cover every kind of data, and each goes through every route:
 `repartition` of RAMSES's files to Hilbert ordering on 3 ranks, to bisection on 5 ranks and to IO
-groups, and the same three from its Mera data saved as a mera file and loaded back. The table
-gives the largest difference from the original output, relative to each variable's largest value,
-over every variable, particle and sink. The test suite runs the same matrix
+groups, and the same three from its Mera data saved as a mera file and loaded back.
+
+The repartition columns and the "leaves" column give the largest difference from the original
+output over every variable, particle and sink, relative to each variable's largest value. A zero
+there is a bit-for-bit copy, so no faint region can hide anything. The refined cells are rebuilt
+from their children, so they carry round-off. For them the measure is local: |Δ| relative to the
+size of the numbers that were averaged, the cell and its 8 children. For the pressure that size
+includes the kinetic and magnetic energy density (times γ − 1), because the pressure is the total
+energy minus those two: in cold, fast gas, as in the cosmological run, its round-off is set by the
+total energy. An error in a faint refined cell would show here even where it is tiny next to the
+peak.
+
+A dash means RAMSES itself does not keep those cells as averages of their children, so there is no
+value of its to compare with: on a uniform grid (below `levelmin`, as above) and in a run with
+`static_gas=.true.` (`clumps3d`), whose gas RAMSES never evolves. The test suite runs the same matrix
 (`test/86_ramses_writer_tests.jl`), and also rebuilds every rank's file of each simulation exactly
 as RAMSES wrote it.
 
@@ -1323,7 +1424,44 @@ sims = [("sedov3d_amr", 7, "AMR hydro, periodic"), ("sedov3d_grav_part", 7, "gra
 routes = [("Hilbert", 3, (ordering=:hilbert,)), ("bisection", 5, (ordering=:bisection,)),
           ("IO groups", 3, (ordering=:hilbert, iogroupsize=2))]
 worst(c) = c.same_tree ? maximum(vcat([maximum(v) for v in values(c.maxdiff)], collect(c.particle_maxdiff), c.sink_maxdiff)) : Inf
-M = fill(NaN, length(sims), 2length(routes))
+# The refined cells only, each compared with the size of what was averaged into it: the cell and its
+# 8 children, and for the pressure also (gamma - 1) times their kinetic and magnetic energy density.
+function local_scale(vals, v, names, gamma)
+    s = maximum(abs, vals[v])
+    if names[v] === :p
+        iv = [findfirst(==(c), names) for c in (:vx, :vy, :vz)]
+        ib = [findfirst(==(c), names) for c in (:bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right)]
+        for k in eachindex(vals[1])
+            e = 0.5 * vals[1][k] * sum(vals[i][k]^2 for i in iv)
+            all(!isnothing, ib) && (e += 0.125 * sum((vals[ib[d]][k] + vals[ib[d+3]][k])^2 for d in 1:3))
+            s = max(s, (gamma - 1) * e)
+        end
+    end
+    s
+end
+function refined_local(src, out, iout, info)
+    ta, tb = RW.read_global_tree(src, iout; verbose=false), RW.read_global_tree(out, iout; verbose=false)
+    worst = 0.0
+    for (kind, names) in (("hydro", info.variable_list), ("grav", info.gravity_variable_list), ("rt", info.rt_variable_list))
+        ca = RW.open_cell_files(src, kind, iout, ta.header.ncpu, ta.header.nlevelmax, length(ta.boundaries))
+        ca === nothing && continue
+        cb = RW.open_cell_files(out, kind, iout, tb.header.ncpu, tb.header.nlevelmax, length(tb.boundaries))
+        for l in 1:RW.nlevels(ta)-1, (g, ig) in enumerate(ta.levels[l].ig), ind in 1:8
+            gc = RW.find_grid(ta, l + 1, RW.child_coord(ig, ind)); gc == 0 && continue
+            h = tb.levels[l].lookup[ig]
+            vals = [vcat(RW.cell_value(ca, ta.src_cpu[l][g], l, ta.src_cpu[l][g], ta.src_pos[l][g], ind, v),
+                         [RW.cell_value(ca, ta.src_cpu[l+1][gc], l + 1, ta.src_cpu[l+1][gc], ta.src_pos[l+1][gc], k, v) for k in 1:8])
+                    for v in 1:ca.nvar]
+            for v in 1:ca.nvar
+                b = RW.cell_value(cb, tb.src_cpu[l][h], l, tb.src_cpu[l][h], tb.src_pos[l][h], ind, v)
+                worst = max(worst, abs(vals[v][1] - b) / max(local_scale(vals, v, names, info.gamma), floatmin()))
+            end
+        end
+    end
+    worst
+end
+static(info) = lowercase(strip(string(get(get(info.namelist_content, "&RUN_PARAMS", Dict()), "static_gas", ".false.")))) in (".true.", "t", ".t.")
+M = fill(NaN, length(sims), 7)       # repartition x3 | mera-file leaves (all routes) | mera-file refined x3
 for (i, (name, o, _)) in enumerate(sims)
     src = joinpath(PUBLIC, name); dir = joinpath(src, "output_" * lpad(o, 5, '0'))
     for (j, (lab, n, kw)) in enumerate(routes)                       # RAMSES files to RAMSES files
@@ -1345,57 +1483,64 @@ for (i, (name, o, _)) in enumerate(sims)
         savedata(obj, mf, mode; verbose=false); mode = :append
     end
     L = NamedTuple{keys(d)}(Tuple(obj === nothing ? nothing : loaddata(o, mf, k; verbose=false) for (k, obj) in pairs(d)))
+    M[i, 4] = 0.0
     for (j, (lab, n, kw)) in enumerate(routes)                       # mera file to RAMSES files
         out = joinpath(WORK, "matrix", name, "mera file " * lab)
         Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
             writeramses(n; L..., outpath=out, overwrite=true, verbose=false, kw...)
         end
-        M[i, length(routes) + j] = worst(compareramses(o, src, out; leaves_only=uniform))
+        M[i, 4] = max(M[i, 4], worst(compareramses(o, src, out; leaves_only=true)))
+        # RAMSES keeps no averages to compare with on a uniform grid or with static gas
+        M[i, 4 + j] = uniform || static(mi) ? NaN : refined_local(dir, joinpath(out, "output_" * lpad(o, 5, '0')), o, mi)
     end
 end
-cols = ["repartition: " .* first.(routes); "mera file: " .* first.(routes)]
-cell(x) = rpad(x == 0 ? "0" : @sprintf("%.0e", x), 11)
-println(rpad("", 50), rpad("RAMSES files to RAMSES files", 33), "| mera file to RAMSES files")
-println(rpad("simulation", 22), rpad("covers", 28), join(rpad(r[1], 11) for r in routes), "| ", join(rpad(r[1], 11) for r in routes))
+cols = ["repartition: " .* first.(routes); "mera file: leaves, all routes"; "mera file, refined: " .* first.(routes)]
+cell(x) = rpad(isnan(x) ? "–" : x == 0 ? "0" : @sprintf("%.0e", x), 11)
+println(rpad("", 50), rpad("RAMSES files to RAMSES files", 33), "| mera file: leaves | refined cells, local")
+println(rpad("simulation", 22), rpad("covers", 28), join(rpad(r[1], 11) for r in routes), "| ", rpad("all", 9), "| ",
+        join(rpad(r[1], 11) for r in routes))
 for (i, (name, _, what)) in enumerate(sims)
-    println(rpad(name, 22), rpad(what, 28), join(cell(x) for x in M[i, 1:3]), "| ", join(cell(x) for x in M[i, 4:6]))
+    println(rpad(name, 22), rpad(what, 28), join(cell(x) for x in M[i, 1:3]), "| ", rpad(cell(M[i, 4]), 9), "| ",
+            join(cell(x) for x in M[i, 5:7]))
 end
 ```
 
 ```
-                                                  RAMSES files to RAMSES files     | mera file to RAMSES files
-simulation            covers                      Hilbert    bisection  IO groups  | Hilbert    bisection  IO groups
-sedov3d_amr           AMR hydro, periodic         0          0          0          | 6e-16      6e-16      6e-16
-sedov3d_grav_part     gravity, tracer particles   0          0          0          | 4e-16      4e-16      4e-16
-mhdtube3d             MHD, outflow walls          0          0          0          | 4e-16      4e-16      4e-16
-clumps3d              clumps, gravity             0          0          0          | 4e-16      4e-16      4e-16
-stromgren3d           RT, uniform grid, walls     0          0          0          | 0          0          0
-sinks3d               sinks, gravity, particles   0          0          0          | 8e-16      8e-16      8e-16
-ramses_abc_flow       MHD, uniform grid           0          0          0          | 0          0          0
-ramses_rt_dirac       RT and MHD, AMR             0          0          0          | 3e-16      3e-16      3e-16
-legacy_particles3d    legacy particles, one rank  0          0          0          | 0          0          0
-cosmo3d               cosmological, gas and DM    0          0          0          | 1e-16      1e-16      1e-16
-sedov3d_bisection     RAMSES bisection output     0          0          0          | 3e-16      3e-16      3e-16
-dm_gas3d_bisection    bisection, gravity, DM      0          0          0          | 4e-16      4e-16      4e-16
-sedov3d_iogroups      RAMSES IO-group output      0          0          0          | 4e-16      4e-16      4e-16
+                                                  RAMSES files to RAMSES files     | mera file: leaves | refined cells, local
+simulation            covers                      Hilbert    bisection  IO groups  | all      | Hilbert    bisection  IO groups
+sedov3d_amr           AMR hydro, periodic         0          0          0          | 0          | 7e-16      7e-16      7e-16
+sedov3d_grav_part     gravity, tracer particles   0          0          0          | 0          | 7e-16      7e-16      7e-16
+mhdtube3d             MHD, outflow walls          0          0          0          | 0          | 6e-16      6e-16      6e-16
+clumps3d              clumps, gravity             0          0          0          | 0          | –          –          –
+stromgren3d           RT, uniform grid, walls     0          0          0          | 0          | –          –          –
+sinks3d               sinks, gravity, particles   0          0          0          | 0          | 8e-16      8e-16      8e-16
+ramses_abc_flow       MHD, uniform grid           0          0          0          | 0          | –          –          –
+ramses_rt_dirac       RT and MHD, AMR             0          0          0          | 0          | 1e-15      1e-15      1e-15
+legacy_particles3d    legacy particles, one rank  0          0          0          | 0          | –          –          –
+cosmo3d               cosmological, gas and DM    0          0          0          | 0          | 5e-16      5e-16      5e-16
+sedov3d_bisection     RAMSES bisection output     0          0          0          | 0          | 4e-16      4e-16      4e-16
+dm_gas3d_bisection    bisection, gravity, DM      0          0          0          | 0          | 7e-16      7e-16      7e-16
+sedov3d_iogroups      RAMSES IO-group output      0          0          0          | 0          | 4e-16      4e-16      4e-16
 ```
 
 ```julia
-# The matrix as a picture: zero means bit-identical (values copied); the rest is round-off from
-# averaging the refined cells.
-fig = Figure(size=(900, 60 + 34 * length(sims)))
-ax = Axis(fig[1, 1]; xticks=(1:6, replace.(cols, ": " => "\n")), yticks=(1:length(sims), [s[1] * "  (" * s[3] * ")" for s in sims]),
-          yreversed=true, title="Every public test simulation, every route: largest difference from the original")
-hm = heatmap!(ax, 1:6, 1:length(sims), permutedims(log10.(max.(M, 1e-18))); colormap=blues, colorrange=(-18, -12))
-for i in eachindex(sims), j in 1:6
-    text!(ax, j, i; text=M[i, j] == 0 ? "0" : @sprintf("%.0e", M[i, j]), align=(:center, :center), fontsize=12)
+# The matrix as a picture: zero means bit-identical; the refined cells of the mera-file route carry
+# round-off from averaging, measured cell by cell. A dash: RAMSES keeps no averages to compare with.
+fig = Figure(size=(1050, 60 + 34 * length(sims)))
+ax = Axis(fig[1, 1]; xticks=(1:7, ["repartition\nHilbert", "repartition\nbisection", "repartition\nIO groups",
+                                  "mera file\nleaves", "refined\nHilbert", "refined\nbisection", "refined\nIO groups"]),
+          yticks=(1:length(sims), [s[1] * "  (" * s[3] * ")" for s in sims]), yreversed=true,
+          title="Every public test simulation, every route: largest difference from the original")
+hm = heatmap!(ax, 1:7, 1:length(sims), permutedims(log10.(max.(replace(M, NaN => 0.0), 1e-18))); colormap=blues, colorrange=(-18, -12))
+for i in eachindex(sims), j in 1:7
+    text!(ax, j, i; text=isnan(M[i, j]) ? "–" : M[i, j] == 0 ? "0" : @sprintf("%.0e", M[i, j]), align=(:center, :center), fontsize=12)
 end
-vlines!(ax, [3.5]; color=:black, linewidth=1)
+vlines!(ax, [3.5, 4.5]; color=:black, linewidth=1)
 Colorbar(fig[1, 2], hm; label="log₁₀ largest difference (0 shown at the bottom)", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_62_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_65_1.png)
 
 ## 12. In short
 
