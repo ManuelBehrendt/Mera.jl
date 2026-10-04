@@ -138,16 +138,18 @@ function amr_file_content(t::GlobalTree, dec::Decomposition, lt::LocalTree, ngri
 end
 
 """
+    global_numbtot(own) -> Matrix{Int32}
     global_numbtot(numbl_all, nlevelmax) -> Matrix{Int32}
 
 RAMSES's `numbtot(1:10, level)`: total, minimum, maximum and mean number of
-grids per rank at each level (rows 5–10 unused). `numbl_all[k]` is the
-`numbl` matrix of rank k; only its own list `numbl[k, :]` counts.
+grids per rank at each level (rows 5 to 10 unused), from the grids each rank
+owns on each level (`own`, ncpu × nlevelmax, as [`rank_sizes`](@ref) gives
+it), or from every rank's `numbl` matrix, of which only its own list
+`numbl[k, :]` counts.
 """
 global_numbtot(numbl_all::Vector{Matrix{Int32}}, nlevelmax::Integer) =
     global_numbtot(Int32[numbl_all[k][k, l] for k in 1:length(numbl_all), l in 1:nlevelmax])
 
-# from the grids each rank owns on each level (ncpu × nlevelmax)
 function global_numbtot(own::Matrix{Int32})
     ncpu, nlevelmax = size(own)
     nt = zeros(Int32, 10, nlevelmax)

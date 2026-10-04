@@ -102,12 +102,6 @@ function read_mixed(r::FortranReader, types::Type...)
     return Tuple(vals)
 end
 
-"Next record as a string (trailing blanks removed)."
-read_string(r::FortranReader) = rstrip(String(read_record(r)))
-
-"Skips the next record."
-skip_record(r::FortranReader) = (read_record(r); nothing)
-
 # ----------------------------------------------------------------------------
 #  Writing
 # ----------------------------------------------------------------------------

@@ -156,8 +156,8 @@ end
         dir  = joinpath(fx.path, "output_" * lpad(o, 5, '0'))
         tmp  = mktempdir()
 
-        @testset "RAMSES's own files are reproduced" begin
-            # read every amr file, then write it again: byte for byte the same file
+        @testset "an amr file read and written again is the same file" begin
+            # (every rank's file rebuilt from the global tree is tested in the matrix below)
             for k in (1, info.ncpu)
                 f = RW.amr_filename(dir, o, k)
                 h, lists = RW.read_amr_file(f)
@@ -165,23 +165,9 @@ end
                 @test read(f) == read(g)
                 rm(g)
             end
-            # rebuild each rank's tree with RAMSES's own decomposition: the same grids, ghost
-            # zones and pointers RAMSES wrote
-            t = RW.read_global_tree(dir, o; verbose=false)
-            nexp = RW.detect_nexpand_bound(dir)
-            dec = RW.decompose(t, info.ncpu; bound_key=copy(t.header.bound_key))
-            lts = [RW.build_local_tree(t, dec, k; nexpand_bound=nexp) for k in 1:info.ncpu]
-            nt  = RW.global_numbtot([lt.numbl for lt in lts], t.header.nlevelmax)
-            umt = maximum(RW.ngrid_current, lts)
-            for k in 1:info.ncpu
-                g = tempname()
-                RW.write_amr_file(g, RW.amr_file_content(t, dec, lts[k], Int(t.header.ngridmax), nt, umt)...)
-                @test _rw_canonical_amr(RW.amr_filename(dir, o, k)) == _rw_canonical_amr(g)
-                rm(g)
-            end
         end
 
-        @testset "repartition to $n ranks keeps every value" for n in (1, 3, 7)
+        @testset "repartition to $n ranks keeps every value" for n in (1, 7)
             out = joinpath(tmp, "n$n")
             rep = repartition(o, fx.path, n; outpath=out, verbose=false)
             @test rep.ncpu_new == n && rep.ncpu_old == info.ncpu
@@ -197,8 +183,8 @@ end
             @test msum(gethydro(i2; q...)) == msum(gethydro(info; q...))
         end
 
-        @testset "round trip to 3 ranks and back" begin
-            repartition(o, joinpath(tmp, "n3"), info.ncpu; outpath=joinpath(tmp, "back"), verbose=false)
+        @testset "round trip to 7 ranks and back" begin
+            repartition(o, joinpath(tmp, "n7"), info.ncpu; outpath=joinpath(tmp, "back"), verbose=false)
             c = compareramses(o, fx.path, joinpath(tmp, "back"))
             @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff))
         end
@@ -210,8 +196,6 @@ end
             b = joinpath(out, "output_" * lpad(o, 5, '0'))
             t = RW.read_global_tree(b, o; verbose=false)
             @test strip(t.header.ordering) == "bisection"
-            c = compareramses(o, fx.path, out)
-            @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff)) && c.particle_maxdiff == (0.0, 0.0)
             # every rank's file is what the stored tree gives: the owners, the ghost cells (a cell
             # touching the rank's box, closed bounds) and the tree records
             dec = RW.own_decomposition(t)
@@ -238,8 +222,6 @@ end
             @test filter(startswith("group_"), readdir(g)) == ["group_00001", "group_00002", "group_00003"]
             @test isfile(RW.amr_filename(g, o, 5)) && dirname(RW.amr_filename(g, o, 5)) == joinpath(g, "group_00003")
             @test isfile(joinpath(g, "info_" * lpad(o, 5, '0') * ".txt"))
-            c = compareramses(o, fx.path, out)
-            @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff)) && c.particle_maxdiff == (0.0, 0.0)
             # a grouped output is read like any other, here back to a plain one Mera can read
             RW.repartition(g, info.ncpu; outpath=joinpath(tmp, "ungrouped"), verbose=false)
             c = compareramses(o, fx.path, joinpath(tmp, "ungrouped"))
@@ -257,8 +239,8 @@ end
         end
 
         @testset "guards" begin
-            @test_throws ErrorException repartition(o, fx.path, 3; outpath=joinpath(tmp, "n3"), verbose=false)
-            @test repartition(o, fx.path, 3; outpath=joinpath(tmp, "n3"), overwrite=true,
+            @test_throws ErrorException repartition(o, fx.path, 7; outpath=joinpath(tmp, "n7"), verbose=false)
+            @test repartition(o, fx.path, 3; outpath=joinpath(tmp, "n7"), overwrite=true,
                               verbose=false).ncpu_new == 3
             @test_throws ArgumentError repartition(o + 100, fx.path, 3; outpath=tmp, verbose=false)
             @test repartition(info, 2; outpath=joinpath(tmp, "via_info"), verbose=false).ncpu_new == 2
@@ -271,43 +253,17 @@ end
             @test isfile(RW.amr_filename(joinpath(own, basename(dir)), o, 1))
         end
 
-        @testset "Mera data, through a mera file, back to RAMSES" begin
-            gas  = gethydro(info; q...)
-            # parents=true keeps the stored gravity of the refined cells: RAMSES computes it on
-            # each level, not as an average, and its next Poisson solve starts from it
-            grav = info.gravity   ? getgravity(info; parents=true, q...) : nothing
-            part = info.particles ? getparticles(info; q...) : nothing
-            ok, _ = restart_completeness(gas; gravity=grav, particles=part)
-            @test ok
+        @testset "what a mera file must carry" begin
+            # (every route from a mera file is tested in the matrix below)
+            gas = gethydro(info; q...)
             mf = mkpath(joinpath(tmp, "merafile"))
             savedata(gas, mf, :write; verbose=false)
-            grav === nothing || savedata(grav, mf, :append; verbose=false)
-            part === nothing || savedata(part, mf, :append; verbose=false)
-            gas2  = loaddata(o, mf, :hydro; verbose=false)
-            grav2 = grav === nothing ? nothing : loaddata(o, mf, :gravity; verbose=false)
-            part2 = part === nothing ? nothing : loaddata(o, mf, :particles; verbose=false)
-            @test !isempty(gas2.info.grid_info.amr_header)        # the file is self-contained
-            rep = writeramses(3; hydro=gas2, gravity=grav2, particles=part2,
-                              outpath=joinpath(tmp, "w3"), verbose=false)
-            @test rep.ncpu_new == 3
-            # leaves only: refined cells are rebuilt from their children, as RAMSES's upload_fine
-            c = compareramses(o, fx.path, joinpath(tmp, "w3"); leaves_only=true)
-            @test c.same_tree
-            @test all(v -> all(iszero, v), values(c.maxdiff))
-            @test c.nparticles[1] == c.nparticles[2] && c.particle_maxdiff == (0.0, 0.0)
-            # and the REFINED cells too: the rebuilt parents must equal the stored ones. RAMSES
-            # averages internal energy for interpol_var 1 and 2 (hydro/interpol_hydro.f90, upl);
-            # averaging total energy instead left the sedov parents' pressure wrong by up to 4 per
-            # cent. The MHD upl sets a parent's face field from the 4 children on that face.
-            call = compareramses(o, fx.path, joinpath(tmp, "w3"))
-            @test maximum(call.maxdiff["hydro"]) < 1e-13
-            if grav !== nothing
-                # the stored gravity parents survive the mera file and are written as they were
-                @test haskey(grav2.used_descriptors, :parents)
-                @test all(iszero, call.maxdiff["grav"])
-                # without them the parents are averages: leaves exact, refined cells not
-                w0 = writeramses(3; hydro=gas2, gravity=getgravity(info; q...), particles=part2,
-                                 outpath=joinpath(tmp, "w3_noparents"), verbose=false)
+            @test !isempty(loaddata(o, mf, :hydro; verbose=false).info.grid_info.amr_header)
+            if info.gravity
+                # without parents=true the refined gravity cells are averages: leaves exact, refined not
+                part = info.particles ? getparticles(info; q...) : nothing
+                writeramses(3; hydro=gas, gravity=getgravity(info; q...), particles=part,
+                            outpath=joinpath(tmp, "w3_noparents"), verbose=false)
                 c0 = compareramses(o, fx.path, joinpath(tmp, "w3_noparents"))
                 @test maximum(c0.maxdiff["grav"]) > 0
                 @test all(iszero, compareramses(o, fx.path, joinpath(tmp, "w3_noparents"); leaves_only=true).maxdiff["grav"])
@@ -392,8 +348,9 @@ end
                 t = RW.read_global_tree(dir, o; verbose=false)
                 ncpu = Int(t.header.ncpu)
                 dec = RW.own_decomposition(t)
-                lts = [RW.build_local_tree(t, dec, k; nexpand_bound=RW.auto_nexpand_bound(t, dir, o)) for k in 1:ncpu]
-                nt = RW.global_numbtot([lt.numbl for lt in lts], t.header.nlevelmax); umt = maximum(RW.ngrid_current, lts)
+                nexp = RW.auto_nexpand_bound(t, dir, o)
+                nlocal, owned = RW.rank_sizes(t, dec; nexpand_bound=nexp)
+                nt = RW.global_numbtot(owned); umt = maximum(nlocal)
                 # the domain walls take the keys at given ranks without sorting all keys; they must be
                 # the keys a full sort puts there, particle keys included
                 pk = [RW.key_of(t, Tuple(rand(MersenneTwister(k), 3) .* t.header.boxlen)) for k in 1:500]
@@ -413,8 +370,12 @@ end
                 end
                 @test all(1:ncpu) do k
                     g = tempname()
-                    RW.write_amr_file(g, RW.amr_file_content(t, dec, lts[k], Int(t.header.ngridmax), nt, umt)...)
-                    same = _rw_canonical_amr(RW.amr_filename(dir, o, k)) == _rw_canonical_amr(g); rm(g); same
+                    lt = RW.build_local_tree(t, dec, k; nexpand_bound=nexp)
+                    RW.write_amr_file(g, RW.amr_file_content(t, dec, lt, Int(t.header.ngridmax), nt, umt)...)
+                    h1, h2 = RW.read_amr_file(RW.amr_filename(dir, o, k))[1], RW.read_amr_file(g)[1]
+                    same = _rw_canonical_amr(RW.amr_filename(dir, o, k)) == _rw_canonical_amr(g) &&
+                           h1.bisection_records == h2.bisection_records && h1.bound_key == h2.bound_key
+                    rm(g); same
                 end
                 # RAMSES files to RAMSES files
                 for (lab, n, kw) in routes
@@ -459,6 +420,13 @@ end
                     haskey(c.maxdiff, "rt") && @test maximum(c.maxdiff["rt"]) < 1e-13
                     @test c.nparticles[1] == c.nparticles[2] && c.particle_maxdiff == (0.0, 0.0) && c.sink_maxdiff == 0
                 end
+                # without `ordering`, writeramses keeps the ordering of the run the data came from
+                if strip(t.header.ordering) == "bisection"
+                    Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+                        writeramses(3; L..., outpath=joinpath(tmp, "auto"), verbose=false)
+                    end
+                    @test ordering_of(joinpath(tmp, "auto"), o) == "bisection"
+                end
                 # what this simulation adds to the coverage
                 push!(covered, :hydro, uniform ? :uniform : :amr, strip(t.header.ordering) == "bisection" ? :bisection : :hilbert)
                 RW.groupsize_of(dir) > 0 && push!(covered, :iogroups)
@@ -477,51 +445,6 @@ end
             @test covered ⊇ Set([:hydro, :amr, :uniform, :hilbert, :bisection, :iogroups, :gravity, :rt, :mhd,
                                  :particles, :legacy_particles, :sinks, :clumps, :walls, :cosmological])
         end
-    end
-
-    # RAMSES's own outputs in the other layouts: bisection ordering and IO groups. Every rank's file
-    # is rebuilt from the output's own tree or walls, and the values survive a repartition.
-    PUBLIC_AVAILABLE && @testset "$key (RAMSES's own layout)" for key in (:sedov3d_bisection, :dm_gas3d_bisection, :sedov3d_iogroups)
-        fx = PUBLIC_FIXTURES[key]
-        isdir(fx.path) || continue
-        o = fx.output; q = (verbose=false, show_progress=false); tmp = mktempdir()
-        dir = joinpath(fx.path, "output_" * lpad(o, 5, '0'))
-        t = RW.read_global_tree(dir, o; verbose=false)
-        @test strip(t.header.ordering) == (key === :sedov3d_iogroups ? "hilbert" : "bisection")
-        @test RW.groupsize_of(dir) == (key === :sedov3d_iogroups ? 2 : 0)
-        dec = RW.own_decomposition(t)
-        lts = [RW.build_local_tree(t, dec, k; nexpand_bound=RW.detect_nexpand_bound(dir)) for k in 1:fx.ncpu]
-        nt  = RW.global_numbtot([lt.numbl for lt in lts], t.header.nlevelmax)
-        umt = maximum(RW.ngrid_current, lts)
-        for k in 1:fx.ncpu
-            g = tempname()
-            RW.write_amr_file(g, RW.amr_file_content(t, dec, lts[k], Int(t.header.ngridmax), nt, umt)...)
-            @test _rw_canonical_amr(RW.amr_filename(dir, o, k)) == _rw_canonical_amr(g)
-            h1, h2 = RW.read_amr_file(RW.amr_filename(dir, o, k))[1], RW.read_amr_file(g)[1]
-            @test h1.bisection_records == h2.bisection_records && h1.bound_key == h2.bound_key
-            rm(g)
-        end
-        # to 3 ranks, plain, own ordering: every value kept, and Mera reads it
-        RW.repartition(dir, 3; outpath=tmp, verbose=false)
-        c = RW.compare_outputs(dir, joinpath(tmp, "output_" * lpad(o, 5, '0')))
-        @test c.same_tree && all(v -> all(iszero, v), values(c.maxdiff)) && c.particle_maxdiff == (0.0, 0.0)
-        i3 = getinfo(o, tmp, verbose=false)
-        @test i3.ncpu == 3
-        if key !== :sedov3d_iogroups
-            # Mera reads RAMSES's bisection output itself, and writes it back from its data
-            info = getinfo(o, fx.path, verbose=false)
-            gas = gethydro(info; q...)
-            @test msum(gas) ≈ msum(gethydro(i3; q...)) rtol=1e-14
-            grav = info.gravity ? getgravity(info; parents=true, q...) : nothing
-            part = info.particles ? getparticles(info; q...) : nothing
-            info.particles && @test length(part.data) == fx.oracle.npart
-            writeramses(3; hydro=gas, gravity=grav, particles=part, outpath=joinpath(tmp, "w"), verbose=false)
-            @test strip(RW.read_amr_file(RW.amr_filename(joinpath(tmp, "w", "output_" * lpad(o, 5, '0')), o, 1))[1].ordering) == "bisection"
-            c = compareramses(o, fx.path, joinpath(tmp, "w"))
-            @test c.same_tree && maximum(c.maxdiff["hydro"]) < 1e-13 && c.particle_maxdiff == (0.0, 0.0)
-            haskey(c.maxdiff, "grav") && @test all(iszero, c.maxdiff["grav"])
-        end
-        rm(tmp; recursive=true)
     end
 
     # Three community samples, run when present:
