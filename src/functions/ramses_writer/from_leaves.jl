@@ -177,19 +177,19 @@ end
 
 How to average the 8 children of a refined cell for one file kind. RAMSES
 averages *conserved* quantities; the files store primitive ones for hydro
-(velocity, pressure, mass fractions). `to_cons` / `to_prim` convert one cell.
+(velocity, pressure, mass fractions). `to_cons!` / `to_prim!` convert one cell in place.
 """
 struct Restriction
-    to_cons::Function
-    to_prim::Function
+    to_cons!::Function          # to_cons!(c, q): the conserved values of the primitive ones q, into c
+    to_prim!::Function          # to_prim!(q, c): back
     # variables averaged over 4 children instead of 8: MHD face fields, each over the children on
     # its own face (RAMSES mhd/interpol_hydro.f90, upl), as (variable index, child indices)
     faces::Vector{Tuple{Int,Vector{Int}}}
 end
-Restriction(to_cons, to_prim) = Restriction(to_cons, to_prim, Tuple{Int,Vector{Int}}[])
+Restriction(to_cons!, to_prim!) = Restriction(to_cons!, to_prim!, Tuple{Int,Vector{Int}}[])
 
 "No conversion: average the stored values directly (gravity, RT, conservative hydro files)."
-const PLAIN = Restriction(identity, identity)
+const PLAIN = Restriction(copyto!, copyto!)
 
 """
     hydro_restriction(names, gamma; interpol_var=0) -> Restriction
@@ -209,27 +209,30 @@ the first steps after a restart. MHD has its own upload and keeps the total ener
 """
 function hydro_restriction(names::Vector{String}, gamma::Float64; interpol_var::Integer=0)
     any(n -> startswith(n, "momentum") || n == "total_energy", names) && return PLAIN
-    iv = [findfirst(==("velocity_$c"), names) for c in ("x", "y", "z")]
-    ip = findfirst(in(("pressure", "thermal_pressure")), names)    # older RAMSES says thermal_pressure
-    (any(isnothing, iv) || ip === nothing) && error("Unrecognised hydro variables: $names")
-    ibl = [findfirst(==("B_$(c)_left"), names) for c in ("x", "y", "z")]
-    ibr = [findfirst(==("B_$(c)_right"), names) for c in ("x", "y", "z")]
-    mhd = !any(isnothing, ibl) && !any(isnothing, ibr)
+    iv_ = [findfirst(==("velocity_$c"), names) for c in ("x", "y", "z")]
+    ip_ = findfirst(in(("pressure", "thermal_pressure")), names)   # older RAMSES says thermal_pressure
+    (any(isnothing, iv_) || ip_ === nothing) && error("Unrecognised hydro variables: $names")
+    iv, ip = Int.(iv_), Int(ip_)                # concrete types: these are read for every cell
+    ibl_ = [findfirst(==("B_$(c)_left"), names) for c in ("x", "y", "z")]
+    ibr_ = [findfirst(==("B_$(c)_right"), names) for c in ("x", "y", "z")]
+    mhd = !any(isnothing, ibl_) && !any(isnothing, ibr_)
+    ibl, ibr = mhd ? (Int.(ibl_), Int.(ibr_)) : (Int[], Int[])
     isc = [i for (i, n) in enumerate(names) if i > ip && n != "equilibrium_density" && n != "equilibrium_pressure"]
     emag(q) = mhd ? 0.125 * sum((q[ibl[k]] + q[ibr[k]])^2 for k in 1:3) : 0.0
     # the energy slot carries internal energy where RAMSES averages it: hydro for interpol_var 1
     # and 2, MHD for interpol_var 1 only (the two upl routines differ there)
     internal = mhd ? interpol_var == 1 : interpol_var in (1, 2)
-    function to_cons(q)
-        c = copy(q); ρ = q[1]
+    # in place, so a cell costs no allocation; the arithmetic is that of RAMSES's conversions
+    function to_cons!(c, q)
+        copyto!(c, q); ρ = q[1]
         for k in 1:3; c[iv[k]] = ρ * q[iv[k]]; end
         c[ip] = internal ? q[ip] / (gamma - 1) :
                 q[ip] / (gamma - 1) + 0.5ρ * sum(q[iv[k]]^2 for k in 1:3) + emag(q)
         for i in isc; c[i] = ρ * q[i]; end
         return c
     end
-    function to_prim(c)
-        q = copy(c); ρ = c[1]
+    function to_prim!(q, c)
+        copyto!(q, c); ρ = c[1]
         for k in 1:3; q[iv[k]] = c[iv[k]] / ρ; end
         q[ip] = internal ? (gamma - 1) * c[ip] :
                 (gamma - 1) * (c[ip] - 0.5 * sum(c[iv[k]]^2 for k in 1:3) / ρ - emag(c))
@@ -245,7 +248,7 @@ function hydro_restriction(names::Vector{String}, gamma::Float64; interpol_var::
             push!(faces, (ibl[d], side(d, 0)), (ibr[d], side(d, 1)))
         end
     end
-    return Restriction(to_cons, to_prim, faces)
+    return Restriction(to_cons!, to_prim!, faces)
 end
 
 """
@@ -279,12 +282,34 @@ The parent of 8 children (`kids[k]`, k = 1 + ix + 2iy + 4iz), as RAMSES's upload
 conserved quantities averaged over the 8, MHD face fields over the 4 on their face.
 """
 function restrict(r::Restriction, kids::AbstractVector)
-    c = [r.to_cons(k) for k in kids]
-    acc = sum(c) ./ 8
-    for (iv, ks) in r.faces
-        acc[iv] = sum(c[k][iv] for k in ks) / length(ks)
+    nv = length(first(kids))
+    out = Vector{Float64}(undef, nv)
+    restrict!(out, r, reduce(hcat, kids), Matrix{Float64}(undef, nv, 8), Vector{Float64}(undef, nv))
+    return out
+end
+
+"""
+    restrict!(out, r, kids, cbuf, acc)
+
+`restrict` without allocation: `kids` holds the 8 children as columns (nvar × 8), `cbuf` and `acc`
+are work space of sizes nvar × 8 and nvar. The children are summed in order 1 to 8 and divided by 8,
+the arithmetic of `sum(children) ./ 8`.
+"""
+function restrict!(out, r::Restriction, kids::AbstractMatrix, cbuf::AbstractMatrix, acc::AbstractVector)
+    for k in 1:8
+        r.to_cons!(view(cbuf, :, k), view(kids, :, k))
     end
-    return r.to_prim(acc)
+    for v in eachindex(acc)
+        s = cbuf[v, 1]
+        for k in 2:8; s += cbuf[v, k]; end
+        acc[v] = s / 8
+    end
+    for (iv, ks) in r.faces
+        s = cbuf[iv, ks[1]]
+        for k in ks[2:end]; s += cbuf[iv, k]; end
+        acc[iv] = s / length(ks)
+    end
+    return r.to_prim!(out, acc)
 end
 
 """
@@ -337,14 +362,28 @@ cell is neither a leaf nor refined: the leaf set does not cover the tree.
 function cell_values(t::GlobalTree, leaves::LeafCells, r::Restriction)
     nv = size(leaves.values, 2)
     vals = [fill(NaN, ngrids(lv), 8, nv) for lv in t.levels]
-    for (i, (l, c)) in enumerate(zip(leaves.level, leaves.cells))
+    Threads.@threads for i in eachindex(leaves.level)            # each leaf fills its own cell
+        l, c = leaves.level[i], leaves.cells[i]
         g = t.levels[l].lookup[Coord(c .>> 1)]
-        vals[l][g, cell_index((c .& 1)...), :] .= view(leaves.values, i, :)
+        ind = cell_index((c .& 1)...)
+        for v in 1:nv; vals[l][g, ind, v] = leaves.values[i, v]; end
     end
-    for l in nlevels(t)-1:-1:1, (g, ig) in enumerate(t.levels[l].ig), ind in 1:8
-        child = find_grid(t, l + 1, child_coord(ig, ind))
-        child == 0 && continue
-        vals[l][g, ind, :] .= restrict(r, [vals[l+1][child, k, :] for k in 1:8])
+    # bottom-up: every grid of level l+1 makes the value of its parent cell at level l
+    for l in nlevels(t)-1:-1:1
+        up, low = t.levels[l], t.levels[l+1]
+        vl, vk = vals[l], vals[l+1]
+        Threads.@threads for part in collect(Iterators.partition(1:ngrids(low), 1 << 12))
+            kids = Matrix{Float64}(undef, nv, 8); cbuf = similar(kids)
+            acc = Vector{Float64}(undef, nv); out = similar(acc)
+            for g2 in part
+                ig = low.ig[g2]
+                p = up.lookup[Coord(ig .>> 1)]
+                for k in 1:8, v in 1:nv; kids[v, k] = vk[g2, k, v]; end
+                restrict!(out, r, kids, cbuf, acc)
+                ind = cell_index((ig .& 1)...)
+                for v in 1:nv; vl[p, ind, v] = out[v]; end
+            end
+        end
     end
     for l in 1:nlevels(t)
         any(isnan, vals[l]) && error("Level $l has cells that are neither leaves nor refined: the leaf data is incomplete.")
@@ -422,16 +461,20 @@ function boundary_cell_source(t::GlobalTree, l, b::Coord, ind, r, no_inflow::Boo
     return BoundaryCellSource(boundary_fallback_grid(t, l, b, r), ind, Tuple(flip), Tuple(clamp))
 end
 
+"Where the values of one grid of a rank come from: its global grid, or 8 sources of a boundary grid."
+const MemorySource = Union{Int32,NTuple{8,BoundaryCellSource}}
+
 """
-    memory_sources(t, lt; no_inflow=false) -> Vector{Vector{Any}}
+    memory_sources(t, lt; no_inflow=false) -> Vector{Vector{MemorySource}}
 
 For every grid of rank `lt` in file order: its global grid (interior grids),
-or 8 `BoundaryCellSource`s (boundary grids).
+or 8 `BoundaryCellSource`s (boundary grids). A small `Union`, not `Any`, so the
+writer's inner loop is compiled for both cases instead of dispatching per value.
 """
 function memory_sources(t::GlobalTree, lt::LocalTree; no_inflow::Bool=false)
-    return [vcat(Any[g for g in lt.grids[l]],
-                 Any[ntuple(ind -> boundary_cell_source(t, l, b, ind, r, no_inflow), 8)
-                     for (b, r) in zip(lt.bgrids[l], lt.bregion[l])])
+    return [vcat(MemorySource[g for g in lt.grids[l]],
+                 MemorySource[ntuple(ind -> boundary_cell_source(t, l, b, ind, r, no_inflow), 8)
+                              for (b, r) in zip(lt.bgrids[l], lt.bregion[l])])
             for l in 1:nlevels(t)]
 end
 

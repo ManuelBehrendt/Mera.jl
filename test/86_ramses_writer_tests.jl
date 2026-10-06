@@ -100,6 +100,45 @@ function _rw_bisection_ref(t, ncpu; extra_points=NTuple{3,Float64}[])
     return RW.BisectionTree(wall, next, indx, boxmin, boxmax, load)
 end
 
+# The plain form of the refined cells (one allocation per child and per conversion), kept as a
+# reference for the package's in-place, threaded form, which must give the same bits.
+function _rw_restriction_ref(names, gamma; interpol_var=0)
+    any(n -> startswith(n, "momentum") || n == "total_energy", names) && return (identity, identity, Tuple{Int,Vector{Int}}[])
+    iv = [findfirst(==("velocity_$c"), names) for c in ("x", "y", "z")]
+    ip = findfirst(in(("pressure", "thermal_pressure")), names)
+    ibl = [findfirst(==("B_$(c)_left"), names) for c in ("x", "y", "z")]
+    ibr = [findfirst(==("B_$(c)_right"), names) for c in ("x", "y", "z")]
+    mhd = !any(isnothing, ibl) && !any(isnothing, ibr)
+    isc = [i for (i, n) in enumerate(names) if i > ip && n != "equilibrium_density" && n != "equilibrium_pressure"]
+    emag(q) = mhd ? 0.125 * sum((q[ibl[k]] + q[ibr[k]])^2 for k in 1:3) : 0.0
+    internal = mhd ? interpol_var == 1 : interpol_var in (1, 2)
+    to_cons(q) = (c = copy(q); ρ = q[1]; for k in 1:3; c[iv[k]] = ρ * q[iv[k]]; end;
+                  c[ip] = internal ? q[ip] / (gamma - 1) : q[ip] / (gamma - 1) + 0.5ρ * sum(q[iv[k]]^2 for k in 1:3) + emag(q);
+                  for i in isc; c[i] = ρ * q[i]; end; c)
+    to_prim(c) = (q = copy(c); ρ = c[1]; for k in 1:3; q[iv[k]] = c[iv[k]] / ρ; end;
+                  q[ip] = internal ? (gamma - 1) * c[ip] : (gamma - 1) * (c[ip] - 0.5 * sum(c[iv[k]]^2 for k in 1:3) / ρ - emag(c));
+                  for i in isc; q[i] = c[i] / ρ; end; q)
+    faces = Tuple{Int,Vector{Int}}[]
+    mhd && for d in 1:3
+        push!(faces, (ibl[d], [k for k in 1:8 if ((k - 1) >> (d - 1)) & 1 == 0]), (ibr[d], [k for k in 1:8 if ((k - 1) >> (d - 1)) & 1 == 1]))
+    end
+    return to_cons, to_prim, faces
+end
+function _rw_cell_values_ref(t, leaves, (to_cons, to_prim, faces))
+    vals = [fill(NaN, RW.ngrids(lv), 8, size(leaves.values, 2)) for lv in t.levels]
+    for (i, (l, c)) in enumerate(zip(leaves.level, leaves.cells))
+        vals[l][t.levels[l].lookup[RW.Coord(c .>> 1)], RW.cell_index((c .& 1)...), :] .= view(leaves.values, i, :)
+    end
+    for l in RW.nlevels(t)-1:-1:1, (g, ig) in enumerate(t.levels[l].ig), ind in 1:8
+        child = RW.find_grid(t, l + 1, RW.child_coord(ig, ind)); child == 0 && continue
+        cc = [to_cons(vals[l+1][child, k, :]) for k in 1:8]
+        acc = sum(cc) ./ 8
+        for (iv, ks) in faces; acc[iv] = sum(cc[k][iv] for k in ks) / length(ks); end
+        vals[l][g, ind, :] .= to_prim(acc)
+    end
+    return vals
+end
+
 @testset verbose=true "writing RAMSES outputs" begin
 
     @testset "Fortran records (data-free)" begin
@@ -452,6 +491,21 @@ end
                 end
                 L = NamedTuple{keys(d)}(Tuple(obj === nothing ? nothing : loaddata(o, mf, k; verbose=false) for (k, obj) in pairs(d)))
                 info.gravity && @test haskey(L.gravity.used_descriptors, :parents)
+                # the refined cells, in place and threaded, are bit for bit those of the plain form
+                n3 = (info.grid_info.nx, info.grid_info.ny, info.grid_info.nz)
+                cmin3, _ = RW.coarse_box(n3, Mera._boundary_group(info))
+                hl = Mera._leafcells(L.hydro, Mera._hydro_names(info), info.variable_list, cmin3)
+                tl = RW.tree_from_leaves(RW.LeafInput(output=o, header=Mera.amr_header_of(info)[1], n=n3,
+                        nlevelmax=info.levelmax, levelmin=info.levelmin, boxlen=Float64(info.boxlen),
+                        ngridmax=info.grid_info.ngridmax, gamma=info.gamma, boundary_group=Mera._boundary_group(info), hydro=hl))
+                for rule in (0, 1)
+                    @test isequal(RW.cell_values(tl, hl, RW.hydro_restriction(hl.names, info.gamma; interpol_var=rule)),
+                                  _rw_cell_values_ref(tl, hl, _rw_restriction_ref(hl.names, info.gamma; interpol_var=rule)))
+                end
+                if info.gravity
+                    gl = Mera._leafcells(L.gravity, String.(info.gravity_variable_list), info.gravity_variable_list, cmin3)
+                    @test isequal(RW.cell_values(tl, gl, RW.PLAIN), _rw_cell_values_ref(tl, gl, (identity, identity, Tuple{Int,Vector{Int}}[])))
+                end
                 for (lab, n, kw) in routes
                     out = joinpath(tmp, "mera file " * lab)
                     Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do

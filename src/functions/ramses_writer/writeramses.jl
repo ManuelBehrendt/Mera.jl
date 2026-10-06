@@ -126,7 +126,10 @@ function _leafcells(obj, names::Vector{String}, valcols::Vector{Symbol}, cmin)
     lev = hasproperty(c, :level) ? Int.(c.level) : fill(obj.lmax, n)     # Mera omits :level on uniform grids
     cells = [((c.cx[i] - 1) + cmin[1] * 2^lev[i], (c.cy[i] - 1) + cmin[2] * 2^lev[i],
               (c.cz[i] - 1) + cmin[3] * 2^lev[i]) for i in 1:n]
-    vals = isempty(valcols) ? zeros(n, 0) : reduce(hcat, [Float64.(getproperty(c, v)) for v in valcols])
+    vals = Matrix{Float64}(undef, n, length(valcols))         # filled column by column, no temporary copies
+    for (j, v) in enumerate(valcols)
+        vals[:, j] .= getproperty(c, v)
+    end
     return _RW.LeafCells(lev, cells, vals, names)
 end
 
