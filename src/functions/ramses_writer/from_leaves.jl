@@ -529,6 +529,21 @@ write_cell_file(path, cs::MemoryCellSet, lt::LocalTree, sources, ncpu_new, nboun
 #  Completeness: do the leaves describe the whole simulation box?
 # ----------------------------------------------------------------------------
 
+"Number of elements two sorted, duplicate-free vectors have in common, in one merge pass."
+function _common(a::AbstractVector, b::AbstractVector)
+    i, j, k = 1, 1, 0
+    @inbounds while i <= length(a) && j <= length(b)
+        if a[i] == b[j]
+            k += 1; i += 1; j += 1
+        elseif a[i] < b[j]
+            i += 1
+        else
+            j += 1
+        end
+    end
+    return k
+end
+
 """
     leaf_coverage(cells, cmin, cmax, levelmin) -> Vector{Pair{String,Tuple{Bool,String}}}
 
@@ -568,11 +583,16 @@ function leaf_coverage(leaves::LeafCells, cmin, cmax, levelmin::Integer)
         interior[l] = unique!(sort!(up))
     end
     has(v, c) = (i = searchsortedfirst(v, c); i <= length(v) && v[i] == c)
-    overlaps = sum((count(c -> has(interior[l], c), byl[l]) for l in 1:L); init=0)
+    overlaps = sum((_common(byl[l], interior[l]) for l in 1:L); init=0)
     push!(out, "no overlap" => (overlaps == 0, "$overlaps leaves have other leaves inside them"))
     nbox = prod(big(cmax[d] - cmin[d] + 1) for d in 1:3)
     covered = sum((big(8)^(L - l) * length(byl[l]) for l in 1:L); init=big(0))
-    inside = all(all(cmin[d] * 2^l <= c[d] < (cmax[d] + 1) * 2^l for d in 1:3) for (l, c) in zip(lev, cells))
+    outside = Threads.Atomic{Int}(0)
+    Threads.@threads for part in collect(Iterators.partition(1:n, 1 << 16))
+        k = count(i -> !all(cmin[d] * 2^lev[i] <= cells[i][d] < (cmax[d] + 1) * 2^lev[i] for d in 1:3), part)
+        Threads.atomic_add!(outside, k)
+    end
+    inside = outside[] == 0
     push!(out, "full coverage" => (inside && covered == nbox * big(8)^L,
         @sprintf("leaves cover %.12f of the box%s", Float64(covered / (nbox * big(8)^L)),
                  inside ? "" : " (some cells lie outside the box)")))
