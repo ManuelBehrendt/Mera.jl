@@ -539,6 +539,21 @@ function _dedup_sorted!(v::AbstractVector)
     return resize!(v, k)
 end
 
+"How many elements of the sorted vector `a` (repeats allowed) occur in the sorted, duplicate-free `b`."
+function _count_in(a::AbstractVector, b::AbstractVector)
+    i, j, k = 1, 1, 0
+    @inbounds while i <= length(a) && j <= length(b)
+        if a[i] == b[j]
+            k += 1; i += 1
+        elseif a[i] < b[j]
+            i += 1
+        else
+            j += 1
+        end
+    end
+    return k
+end
+
 "Number of elements two sorted, duplicate-free vectors have in common, in one merge pass."
 function _common(a::AbstractVector, b::AbstractVector)
     i, j, k = 1, 1, 0
@@ -592,8 +607,8 @@ function leaf_coverage(leaves::LeafCells, cmin, cmax, levelmin::Integer)
         up = [c .>> 1 for v in (byl[l+1], interior[l+1]) for c in v]
         interior[l] = _dedup_sorted!(sort!(up))
     end
-    has(v, c) = (i = searchsortedfirst(v, c); i <= length(v) && v[i] == c)
-    overlaps = sum((_common(byl[l], interior[l]) for l in 1:L); init=0)
+    common = [_common(byl[l], interior[l]) for l in 1:L]           # cells both leaf and interior
+    overlaps = sum(common; init=0)
     push!(out, "no overlap" => (overlaps == 0, "$overlaps leaves have other leaves inside them"))
     nbox = prod(big(cmax[d] - cmin[d] + 1) for d in 1:3)
     covered = sum((big(8)^(L - l) * length(byl[l]) for l in 1:L); init=big(0))
@@ -606,20 +621,15 @@ function leaf_coverage(leaves::LeafCells, cmin, cmax, levelmin::Integer)
     push!(out, "full coverage" => (inside && covered == nbox * big(8)^L,
         @sprintf("leaves cover %.12f of the box%s", Float64(covered / (nbox * big(8)^L)),
                  inside ? "" : " (some cells lie outside the box)")))
-    # every cell of an oct holding a leaf above levelmin is itself a leaf or has leaves below it
-    holes = Threads.Atomic{Int}(0)
+    # every cell of an oct holding a leaf above levelmin is itself a leaf or has leaves below it:
+    # its 8 cells are counted against the leaves and the interior cells that lie in such octs
+    holes = 0
     for l in levelmin+1:L
         octs = _dedup_sorted!(sort!([c .>> 1 for c in byl[l]]))
-        Threads.@threads for part in collect(Iterators.partition(octs, 1 << 14))
-            h = 0
-            for o in part, i in 0:1, j in 0:1, k in 0:1
-                c = NTuple{3,Int32}((2o[1] + i, 2o[2] + j, 2o[3] + k))
-                (has(byl[l], c) || has(interior[l], c)) || (h += 1)
-            end
-            Threads.atomic_add!(holes, h)
-        end
+        inner = _count_in(sort!([c .>> 1 for c in interior[l]]), octs)
+        holes += 8length(octs) - (length(byl[l]) + inner - common[l])
     end
-    push!(out, "closed octs" => (holes[] == 0, "$(holes[]) cells of partly filled octs are missing"))
+    push!(out, "closed octs" => (holes == 0, "$holes cells of partly filled octs are missing"))
     push!(out, "levels" => (minimum(lev; init=levelmin) >= levelmin, "leaf levels $(extrema(lev)), levelmin $levelmin"))
     return out
 end

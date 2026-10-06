@@ -126,8 +126,11 @@ function _leafcells(obj, names::Vector{String}, valcols::Vector{Symbol}, cmin; l
     vals = _RW.ColumnMatrix(_floatcolumns(c, valcols), n)     # Mera's own columns, not copied
     like === nothing || return _RW.LeafCells(like.level, like.cells, vals, names)
     lev = hasproperty(c, :level) ? Int.(c.level) : fill(obj.lmax, n)     # Mera omits :level on uniform grids
-    cells = [((c.cx[i] - 1) + cmin[1] * 2^lev[i], (c.cy[i] - 1) + cmin[2] * 2^lev[i],
-              (c.cz[i] - 1) + cmin[3] * 2^lev[i]) for i in 1:n]
+    cells = Vector{NTuple{3,Int}}(undef, n)
+    cx, cy, cz = c.cx, c.cy, c.cz
+    Threads.@threads for i in 1:n
+        cells[i] = ((cx[i] - 1) + cmin[1] * 2^lev[i], (cy[i] - 1) + cmin[2] * 2^lev[i], (cz[i] - 1) + cmin[3] * 2^lev[i])
+    end
     return _RW.LeafCells(lev, cells, vals, names)
 end
 
