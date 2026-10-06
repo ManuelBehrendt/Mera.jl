@@ -529,6 +529,16 @@ write_cell_file(path, cs::MemoryCellSet, lt::LocalTree, sources, ncpu_new, nboun
 #  Completeness: do the leaves describe the whole simulation box?
 # ----------------------------------------------------------------------------
 
+"Drops repeated elements from a sorted vector in one pass (`unique!` would hash every element)."
+function _dedup_sorted!(v::AbstractVector)
+    isempty(v) && return v
+    k = 1
+    @inbounds for i in 2:length(v)
+        v[i] != v[k] && (v[k += 1] = v[i])
+    end
+    return resize!(v, k)
+end
+
 "Number of elements two sorted, duplicate-free vectors have in common, in one merge pass."
 function _common(a::AbstractVector, b::AbstractVector)
     i, j, k = 1, 1, 0
@@ -575,12 +585,12 @@ function leaf_coverage(leaves::LeafCells, cmin, cmax, levelmin::Integer)
     Threads.@threads for l in 1:L; sort!(byl[l]); end
     ndistinct = sum((length(v) == 0 ? 0 : 1 + count(i -> v[i] != v[i-1], 2:length(v)) for v in byl); init=0)
     push!(out, "unique cells" => (ndistinct == n, "$n cells, $ndistinct distinct"))
-    foreach(unique!, byl)
+    foreach(_dedup_sorted!, byl)
     # interior cells: every cell that has leaves below it (the ancestors of all leaves), per level
     interior = [NTuple{3,Int32}[] for _ in 1:max(L, 1)]
     for l in L-1:-1:1
         up = [c .>> 1 for v in (byl[l+1], interior[l+1]) for c in v]
-        interior[l] = unique!(sort!(up))
+        interior[l] = _dedup_sorted!(sort!(up))
     end
     has(v, c) = (i = searchsortedfirst(v, c); i <= length(v) && v[i] == c)
     overlaps = sum((_common(byl[l], interior[l]) for l in 1:L); init=0)
@@ -599,7 +609,7 @@ function leaf_coverage(leaves::LeafCells, cmin, cmax, levelmin::Integer)
     # every cell of an oct holding a leaf above levelmin is itself a leaf or has leaves below it
     holes = Threads.Atomic{Int}(0)
     for l in levelmin+1:L
-        octs = unique!(sort!([c .>> 1 for c in byl[l]]))
+        octs = _dedup_sorted!(sort!([c .>> 1 for c in byl[l]]))
         Threads.@threads for part in collect(Iterators.partition(octs, 1 << 14))
             h = 0
             for o in part, i in 0:1, j in 0:1, k in 0:1
