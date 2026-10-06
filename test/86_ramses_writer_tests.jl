@@ -172,6 +172,11 @@ end
         g = RW.read_namelist_group(nml, "BOUNDARY_PARAMS")
         @test g["nboundary"] == ["6"]
         @test RW.nml_ints(g, "bound_type", []) == fill(2, 6)          # Fortran's repeat count 6*2
+        # Mera's own copy of a namelist (info.namelist_content), as a mera file stores it: a key with
+        # a trailing blank, and a comment written straight after the values (`!2=outflow`) cut at `=`
+        mg = Mera._nml_group((namelist_content=Dict("&BOUNDARY_PARAMS" => Dict("bound_type" => " 2, 2, 2    !2",
+                              "nboundary " => " 6", "ibound_min" => "3*-1")),), "&BOUNDARY_PARAMS")
+        @test mg == Dict("bound_type" => ["2", "2", "2"], "nboundary" => ["6"], "ibound_min" => ["-1", "-1", "-1"])
         rm(nml)
     end
 

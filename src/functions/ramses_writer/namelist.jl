@@ -32,19 +32,29 @@ function read_namelist_group(path::AbstractString, group::AbstractString)
     # join and split on "key =" boundaries
     joined = join(body, " ")
     for m in eachmatch(r"([A-Za-z_][A-Za-z0-9_]*(?:\([^)]*\))?)\s*=\s*(.*?)(?=\s*[A-Za-z_][A-Za-z0-9_]*(?:\([^)]*\))?\s*=|$)", joined)
-        key = lowercase(m.captures[1])
-        vals = String[]
-        for v in split(m.captures[2], r"[,\s]+"; keepempty=false)
-            if occursin(r"^\d+\*", v)                          # Fortran repeat: 6*2
-                n, x = split(v, '*'; limit=2)
-                append!(vals, fill(String(x), parse(Int, n)))
-            else
-                push!(vals, String(v))
-            end
-        end
-        out[key] = vals
+        out[lowercase(m.captures[1])] = nml_values(m.captures[2])
     end
     return out
+end
+
+"""
+    nml_values(s) -> Vector{String}
+
+The values of one namelist entry: a `!` comment dropped, split at commas and blanks, and the
+Fortran repeat syntax `6*2` expanded. Mera's own copy of a namelist (`info.namelist_content`)
+keeps such comments, e.g. `" 2, 2, 2, 2, 2, 2    !2"` from `bound_type= 2,...  !2=outflow`.
+"""
+function nml_values(s::AbstractString)
+    vals = String[]
+    for v in split(first(split(s, '!')), r"[,\s]+"; keepempty=false)
+        if occursin(r"^\d+\*", v)                              # Fortran repeat: 6*2
+            n, x = split(v, '*'; limit=2)
+            append!(vals, fill(String(x), parse(Int, n)))
+        else
+            push!(vals, String(v))
+        end
+    end
+    return vals
 end
 
 "Integer values of a namelist entry, or `default` if absent."

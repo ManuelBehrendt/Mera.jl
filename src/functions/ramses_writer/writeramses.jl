@@ -14,8 +14,8 @@ const _RW = RamsesWriter
 function _nml_group(info, group)
     g = get(info.namelist_content, group, nothing)
     g === nothing && return Dict{String,Vector{String}}()
-    return Dict{String,Vector{String}}(lowercase(string(k)) => split(string(v), r"[,\s]+"; keepempty=false)
-                                       for (k, v) in g)
+    # keys can carry blanks (`"nboundary "`) and values a trailing comment, as Mera stores them
+    return Dict{String,Vector{String}}(lowercase(strip(string(k))) => _RW.nml_values(string(v)) for (k, v) in g)
 end
 
 """
