@@ -219,6 +219,24 @@ end
         rm(nml)
     end
 
+    @testset "completeness of leaf cells (data-free)" begin
+        # one coarse cell, levelmin 1: its 8 level-1 cells, the last one refined into 8 level-2 cells
+        lvl1 = [(1, ((k - 1) & 1, ((k - 1) >> 1) & 1, (k - 1) >> 2)) for k in 1:8]
+        lvl2 = [(2, (2 + i, 2 + j, 2 + k)) for i in 0:1 for j in 0:1 for k in 0:1]
+        leafset(ks) = RW.LeafCells(first.(ks), last.(ks), zeros(length(ks), 0), String[])
+        result(ks) = Dict(RW.leaf_coverage(leafset(ks), (0, 0, 0), (0, 0, 0), 1))
+        passed(ks) = Dict(k => v[1] for (k, v) in result(ks))
+        @test all(values(passed(lvl1)))
+        @test all(values(passed([lvl1[1:7]; lvl2])))                           # refined, still complete
+        @test !passed([lvl1; lvl1[3:3]])["unique cells"]                        # a cell twice
+        bad = passed([lvl1; lvl2])                                              # a leaf with leaves inside it
+        @test !bad["no overlap"] && !bad["full coverage"]
+        bad = passed([lvl1[1:7]; lvl2[1:7]])                                    # an oct with a cell missing
+        @test !bad["closed octs"] && !bad["full coverage"]
+        @test result([lvl1[1:7]; lvl2[1:7]])["closed octs"][2] == "1 cells of partly filled octs are missing"
+        @test !Dict(RW.leaf_coverage(leafset(lvl1), (0, 0, 0), (0, 0, 0), 2))["levels"][1]   # below levelmin
+    end
+
     if !PUBLIC_AVAILABLE
         @info "RAMSES-PUBLIC fixtures not present at $PUBLIC_PATH: skipping the RAMSES-writer data tests."
     else

@@ -533,37 +533,49 @@ function leaf_coverage(leaves::LeafCells, cmin, cmax, levelmin::Integer)
     lev, cells = leaves.level, leaves.cells
     n = length(lev)
     L = maximum(lev; init=0)
-    keys_ = Set{Tuple{Int,NTuple{3,Int}}}(zip(lev, cells))
     out = Pair{String,Tuple{Bool,String}}[]
-    push!(out, "unique cells" => (length(keys_) == n, "$n cells, $(length(keys_)) distinct"))
-    parent(k) = (k[1] - 1, k[2] .>> 1)
-    overlaps = 0
-    interior = Set{Tuple{Int,NTuple{3,Int}}}()
-    for k in keys_
-        a = k
-        while a[1] > 1
-            a = parent(a)
-            a in keys_ && (overlaps += 1; break)
-            push!(interior, a)
-        end
+    # the leaves of each level as sorted coordinates (12 bytes each), no hash set: on a production
+    # run these are hundreds of millions of cells
+    count_ = zeros(Int, max(L, 1))
+    for l in lev; count_[l] += 1; end
+    byl = [Vector{NTuple{3,Int32}}(undef, count_[l]) for l in 1:max(L, 1)]
+    fill!(count_, 0)
+    for i in 1:n
+        l = lev[i]; byl[l][count_[l] += 1] = NTuple{3,Int32}(cells[i])
     end
-    push!(out, "no overlap" => (overlaps == 0, "$overlaps leaves lie inside another leaf"))
+    Threads.@threads for l in 1:L; sort!(byl[l]); end
+    ndistinct = sum((length(v) == 0 ? 0 : 1 + count(i -> v[i] != v[i-1], 2:length(v)) for v in byl); init=0)
+    push!(out, "unique cells" => (ndistinct == n, "$n cells, $ndistinct distinct"))
+    foreach(unique!, byl)
+    # interior cells: every cell that has leaves below it (the ancestors of all leaves), per level
+    interior = [NTuple{3,Int32}[] for _ in 1:max(L, 1)]
+    for l in L-1:-1:1
+        up = [c .>> 1 for v in (byl[l+1], interior[l+1]) for c in v]
+        interior[l] = unique!(sort!(up))
+    end
+    has(v, c) = (i = searchsortedfirst(v, c); i <= length(v) && v[i] == c)
+    overlaps = sum((count(c -> has(interior[l], c), byl[l]) for l in 1:L); init=0)
+    push!(out, "no overlap" => (overlaps == 0, "$overlaps leaves have other leaves inside them"))
     nbox = prod(big(cmax[d] - cmin[d] + 1) for d in 1:3)
-    covered = sum((big(8)^(L - l) for l in lev); init=big(0))
+    covered = sum((big(8)^(L - l) * length(byl[l]) for l in 1:L); init=big(0))
     inside = all(all(cmin[d] * 2^l <= c[d] < (cmax[d] + 1) * 2^l for d in 1:3) for (l, c) in zip(lev, cells))
     push!(out, "full coverage" => (inside && covered == nbox * big(8)^L,
         @sprintf("leaves cover %.12f of the box%s", Float64(covered / (nbox * big(8)^L)),
                  inside ? "" : " (some cells lie outside the box)")))
-    holes = 0
-    for (l, c) in keys_
-        l <= levelmin && continue
-        base = (c .>> 1) .<< 1
-        for i in 0:1, j in 0:1, k in 0:1
-            s = (l, base .+ (i, j, k))
-            (s in keys_ || s in interior) || (holes += 1)
+    # every cell of an oct holding a leaf above levelmin is itself a leaf or has leaves below it
+    holes = Threads.Atomic{Int}(0)
+    for l in levelmin+1:L
+        octs = unique!(sort!([c .>> 1 for c in byl[l]]))
+        Threads.@threads for part in collect(Iterators.partition(octs, 1 << 14))
+            h = 0
+            for o in part, i in 0:1, j in 0:1, k in 0:1
+                c = NTuple{3,Int32}((2o[1] + i, 2o[2] + j, 2o[3] + k))
+                (has(byl[l], c) || has(interior[l], c)) || (h += 1)
+            end
+            Threads.atomic_add!(holes, h)
         end
     end
-    push!(out, "closed octs" => (holes == 0, "$holes missing siblings"))
+    push!(out, "closed octs" => (holes[] == 0, "$(holes[]) cells of partly filled octs are missing"))
     push!(out, "levels" => (minimum(lev; init=levelmin) >= levelmin, "leaf levels $(extrema(lev)), levelmin $levelmin"))
     return out
 end

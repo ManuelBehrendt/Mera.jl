@@ -245,15 +245,14 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
     check("finite values", all(all(isfinite, getproperty(c, v)) for v in present), "hydro, $(length(present)) columns")
     hasproperty(c, :rho) && check("positive density", all(>(0), c.rho), "min ρ = $(minimum(c.rho))")
 
-    hydro_cells = Set(zip(leaves.level, leaves.cells))
     for (name, obj, vars) in (("gravity", gravity, info.gravity_variable_list), ("rt", rt, info.rt_variable_list))
         (info.gravity && name == "gravity" || info.rt && name == "rt") || continue
         if obj === nothing
             check(name, false, "the simulation has $name data, none given"); continue
         end
-        lc = _leafcells(obj, String.(vars), vars, cmin)
-        check("$name cells", Set(zip(lc.level, lc.cells)) == hydro_cells, "$(length(lc.level)) cells, same as hydro")
-        check("$name finite", all(isfinite, lc.values), "")
+        oc = columns(obj.data)
+        check("$name cells", _same_cells(gas, obj, cmin), "$(length(oc.cx)) cells, same as hydro")
+        check("$name finite", all(all(isfinite, getproperty(oc, v)) for v in vars if hasproperty(oc, v)), "")
         if name == "gravity" && info.levelmax > info.levelmin
             # not a failure either way: without them a restart continues within the Poisson tolerance
             np_ = haskey(obj.used_descriptors, :parents) ? length(obj.used_descriptors[:parents].level) : 0
@@ -323,6 +322,22 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
               "$files copied from the original output")
     end
     return ok, rep
+end
+
+"""
+    _same_cells(a, b, cmin) -> Bool
+
+Do two Mera objects hold the same cells? Mera keeps its tables sorted by level and position, so
+equal position columns answer it without building sets of hundreds of millions of cells; tables in
+another order are compared as sorted lists.
+"""
+function _same_cells(a, b, cmin)
+    ca, cb = columns(a.data), columns(b.data)
+    length(ca.cx) == length(cb.cx) || return false
+    cols = hasproperty(ca, :level) && hasproperty(cb, :level) ? (:level, :cx, :cy, :cz) : (:cx, :cy, :cz)
+    all(getproperty(ca, k) == getproperty(cb, k) for k in cols) && return true
+    la, lb = _leafcells(a, String[], Symbol[], cmin), _leafcells(b, String[], Symbol[], cmin)
+    return sort!(collect(zip(la.level, la.cells))) == sort!(collect(zip(lb.level, lb.cells)))
 end
 
 "A uniform grid: the run never refines beyond levelmin, so Mera stores no :level column."
