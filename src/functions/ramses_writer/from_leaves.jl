@@ -25,14 +25,28 @@ Leaf cells of one file kind (hydro, gravity or RT): `level[i]` and integer
 cell coordinates `cells[i]` (0-based, in the coarse grid *including* boundary
 layers, i.e. the RAMSES convention used everywhere in this package), and
 `values[i, :]` in the order of the RAMSES file records, named `names`
-(the descriptor names, e.g. "density", "velocity_x", …, "pressure").
+(the descriptor names, e.g. "density", "velocity_x", …, "pressure"). `values` is
+any matrix: a `Matrix`, or a `ColumnMatrix` over the columns of a Mera table.
 """
-struct LeafCells
+struct LeafCells{M<:AbstractMatrix{Float64}}
     level::Vector{Int}
     cells::Vector{NTuple{3,Int}}
-    values::Matrix{Float64}
+    values::M
     names::Vector{String}
 end
+
+"""
+    ColumnMatrix(cols, n)
+
+The columns `cols` (each of length `n`) read as one n × length(cols) matrix, without copying them:
+the leaf values of a production run are tens of GB, and Mera already holds them column by column.
+"""
+struct ColumnMatrix{V<:AbstractVector{Float64}} <: AbstractMatrix{Float64}
+    cols::Vector{V}
+    n::Int
+end
+Base.size(m::ColumnMatrix) = (m.n, length(m.cols))
+Base.@propagate_inbounds Base.getindex(m::ColumnMatrix, i::Int, j::Int) = m.cols[j][i]
 
 """
     ParticleTable(names, types, columns)

@@ -120,18 +120,20 @@ function _hydro_names(info)
     return [get(_RAMSES_HYDRO_NAME, v, String(v)) for v in info.variable_list]
 end
 
-function _leafcells(obj, names::Vector{String}, valcols::Vector{Symbol}, cmin)
+function _leafcells(obj, names::Vector{String}, valcols::Vector{Symbol}, cmin; like=nothing)
     c = columns(obj.data)
     n = length(c.cx)
+    vals = _RW.ColumnMatrix(_floatcolumns(c, valcols), n)     # Mera's own columns, not copied
+    like === nothing || return _RW.LeafCells(like.level, like.cells, vals, names)
     lev = hasproperty(c, :level) ? Int.(c.level) : fill(obj.lmax, n)     # Mera omits :level on uniform grids
     cells = [((c.cx[i] - 1) + cmin[1] * 2^lev[i], (c.cy[i] - 1) + cmin[2] * 2^lev[i],
               (c.cz[i] - 1) + cmin[3] * 2^lev[i]) for i in 1:n]
-    vals = Matrix{Float64}(undef, n, length(valcols))         # filled column by column, no temporary copies
-    for (j, v) in enumerate(valcols)
-        vals[:, j] .= getproperty(c, v)
-    end
     return _RW.LeafCells(lev, cells, vals, names)
 end
+
+# The value columns as Float64 vectors: Mera's own where they are Float64 already, a copy otherwise.
+_floatcolumns(c, valcols) = Vector{Float64}[(x = getproperty(c, v); x isa Vector{Float64} ? x : Vector{Float64}(x))
+                                          for v in valcols]
 
 "Mera column of each RAMSES particle field (descriptor name); other fields keep their descriptor name."
 const _PARTCOL = Dict("position_x" => :x, "position_y" => :y, "position_z" => :z, "velocity_x" => :vx,
@@ -324,6 +326,14 @@ function restart_completeness(gas; gravity=nothing, rt=nothing, particles=nothin
     return ok, rep
 end
 
+"Do two Mera objects list the same cells in the same order (equal level and position columns)?"
+function _same_order(a, b)
+    ca, cb = columns(a.data), columns(b.data)
+    length(ca.cx) == length(cb.cx) || return false
+    cols = hasproperty(ca, :level) && hasproperty(cb, :level) ? (:level, :cx, :cy, :cz) : (:cx, :cy, :cz)
+    return all(getproperty(ca, k) == getproperty(cb, k) for k in cols)
+end
+
 """
     _same_cells(a, b, cmin) -> Bool
 
@@ -332,10 +342,8 @@ equal position columns answer it without building sets of hundreds of millions o
 another order are compared as sorted lists.
 """
 function _same_cells(a, b, cmin)
-    ca, cb = columns(a.data), columns(b.data)
-    length(ca.cx) == length(cb.cx) || return false
-    cols = hasproperty(ca, :level) && hasproperty(cb, :level) ? (:level, :cx, :cy, :cz) : (:cx, :cy, :cz)
-    all(getproperty(ca, k) == getproperty(cb, k) for k in cols) && return true
+    length(columns(a.data).cx) == length(columns(b.data).cx) || return false
+    _same_order(a, b) && return true
     la, lb = _leafcells(a, String[], Symbol[], cmin), _leafcells(b, String[], Symbol[], cmin)
     return sort!(collect(zip(la.level, la.cells))) == sort!(collect(zip(lb.level, lb.cells)))
 end
@@ -428,11 +436,15 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
                   "original output; without it such a run is refused."
         end
     end
+    # gravity lives on the hydro cells: when the tables list them in the same order, the hydro
+    # positions are shared instead of built a second time
     grav_leaves = info.gravity && gravity !== nothing ?
-        _leafcells(gravity, String.(info.gravity_variable_list), info.gravity_variable_list, cmin) : nothing
+        _leafcells(gravity, String.(info.gravity_variable_list), info.gravity_variable_list, cmin;
+                   like=_same_order(hydro, gravity) ? hydro_leaves : nothing) : nothing
     rt_leaves, rt_header = nothing, Vector{UInt8}[]
     if info.rt && rt !== nothing
-        rt_leaves = _leafcells(rt, String.(info.rt_variable_list), info.rt_variable_list, cmin)
+        rt_leaves = _leafcells(rt, String.(info.rt_variable_list), info.rt_variable_list, cmin;
+                               like=_same_order(hydro, rt) ? hydro_leaves : nothing)
         nrt = length(info.rt_variable_list)
         rt_header = [_RW._rec(Int32(1)), _RW._rec(Int32(nrt)), _RW._rec(Int32(3)),
                      _RW._rec(Int32(info.levelmax)), _RW._rec(Int32(get(bgroup, "nboundary", ["0"])[1] |> x -> parse(Int, x))),
