@@ -316,8 +316,20 @@ Write the analysis once; it works on every data type.
 <img src="docs/src/assets/gallery/coin_small.gif" alt="A galaxy tipping from face-on to edge-on and tumbling, in surface density, line-of-sight velocity and temperature" width="640">
 
 Complete workflows you can point at your own simulation: download a notebook, change the path and
-the output number, run it. The first is an animation that tips a galaxy from face-on onto its edge
-and tumbles it like a spun coin, in surface density, line-of-sight velocity and temperature.
+the output number, run it. Two examples:
+
+- **[A spun coin](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/001_coin_flip_movie)**:
+  an animation that tips a galaxy from face-on onto its edge and tumbles it like a spun coin, in
+  surface density, line-of-sight velocity and temperature (above).
+- **[Any number of CPUs](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/005_ramses_any_rank_count)**:
+  a galaxy output of 197 million cells, written by RAMSES on 5120 MPI ranks, rewritten for 512, 5120
+  and 10240 ranks, once from its RAMSES files and once from its mera file alone. Every value is
+  checked against the original, with the time, memory and disk each route costs (below: the same
+  galaxy split for 512 and for 10240 ranks).
+
+<img src="docs/src/assets/gallery/ramses_any_rank_count_thumb.png" alt="The same galaxy split into the domains of 512 and of 10240 MPI ranks, each rank a colour" width="520">
+
+More recipes:
 
 - **[Gallery](https://manuelbehrendt.github.io/Mera.jl/stable/gallery/)**, and the notebooks behind
   it in the [Notebooks repository](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery)
