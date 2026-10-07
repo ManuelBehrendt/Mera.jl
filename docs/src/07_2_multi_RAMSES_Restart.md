@@ -1687,6 +1687,13 @@ L13_SN5_CD_only       54.2 GB  25.1M      5120 → 512   repartition            
 - **`writeramses` needs the data in memory.** It starts from Mera data, which holds every leaf cell,
   and rebuilds the refined cells from them, so its memory grows with the data, like loading it with
   Mera. For a large run whose RAMSES files still exist, `repartition` is the route that streams.
+- **At production scale.** The gallery recipe
+  [Rewriting a RAMSES output for any number of CPUs](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/005_ramses_any_rank_count)
+  runs both routes on a server with 16 threads, on a galaxy output of 197 million leaf cells
+  (28 million grids, 58 GB on 5120 ranks). `repartition` writes it for 512, 5120 and 10240 ranks in
+  1.5, 4.5 and 13 minutes, with at most 10.5 GB of memory. `writeramses` starts from the 16 GB mera
+  file, which takes 33 GB in memory, and needs 5 to 15 minutes and 67 to 73 GB with the loaded data.
+  Every leaf cell comes out bit for bit the same on both routes.
 
 ## 14. In short
 
