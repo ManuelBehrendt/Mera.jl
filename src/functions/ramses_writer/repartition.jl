@@ -26,7 +26,9 @@ struct RepartitionReport
 end
 
 function Base.show(io::IO, r::RepartitionReport)
-    println(io, "RAMSES output repartitioned: ncpu $(r.ncpu_old) → $(r.ncpu_new)")
+    # ncpu_old is 0 when the output was written from leaf data, which has no rank count
+    println(io, r.ncpu_old == 0 ? "RAMSES output written for ncpu $(r.ncpu_new)" :
+                                  "RAMSES output repartitioned: ncpu $(r.ncpu_old) → $(r.ncpu_new)")
     println(io, "  from : ", r.input)
     println(io, "  to   : ", r.output)
     println(io, "  own grids per rank      : min $(minimum(r.own_grids_per_rank)), max $(maximum(r.own_grids_per_rank))")

@@ -415,6 +415,8 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
               "and with many particles strongly (a few per cent and a changed octree in our tests). " *
               "Use upgrade_merafile while the simulation still exists."
     end
+    verbose && println("amr header: ", (mera = "stored in the mera file", simulation = "read from the original output",
+                                        approximate = "rebuilt from the info fields")[hsource])
     n = (info.grid_info.nx, info.grid_info.ny, info.grid_info.nz)
     bgroup = _boundary_group(info)
     cmin, _ = _RW.coarse_box(n, bgroup)
@@ -500,7 +502,6 @@ function writeramses(ncpu::Integer; hydro, gravity=nothing, rt=nothing, particle
     report = _RW.write_ramses(inp, ncpu; outpath, meta, sinks=sinkdata, copy_from=_original_dir(info),
                              namelist_text=nml, overwrite, verbose, iogroupsize,
                              ordering=ordering === :auto ? _ordering(info) : ordering)
-    verbose && println("amr header from: ", hsource)
     return report
 end
 

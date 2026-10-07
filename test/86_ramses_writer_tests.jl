@@ -266,6 +266,7 @@ end
             out = joinpath(tmp, "n$n")
             rep = repartition(o, fx.path, n; outpath=out, verbose=false)
             @test rep.ncpu_new == n && rep.ncpu_old == info.ncpu
+            @test startswith(sprint(show, rep), "RAMSES output repartitioned: ncpu $(info.ncpu) → $n")
             c = compareramses(o, fx.path, out)
             @test c.same_tree
             @test all(v -> all(iszero, v), values(c.maxdiff))
@@ -357,8 +358,10 @@ end
             if info.gravity
                 # without parents=true the refined gravity cells are averages: leaves exact, refined not
                 part = info.particles ? getparticles(info; q...) : nothing
-                writeramses(3; hydro=gas, gravity=getgravity(info; q...), particles=part,
-                            outpath=joinpath(tmp, "w3_noparents"), verbose=false)
+                rep = writeramses(3; hydro=gas, gravity=getgravity(info; q...), particles=part,
+                                  outpath=joinpath(tmp, "w3_noparents"), verbose=false)
+                # leaf data has no rank count to come from
+                @test startswith(sprint(show, rep), "RAMSES output written for ncpu 3\n")
                 c0 = compareramses(o, fx.path, joinpath(tmp, "w3_noparents"))
                 @test maximum(c0.maxdiff["grav"]) > 0
                 @test all(iszero, compareramses(o, fx.path, joinpath(tmp, "w3_noparents"); leaves_only=true).maxdiff["grav"])
