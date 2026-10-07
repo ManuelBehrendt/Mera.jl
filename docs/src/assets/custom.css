@@ -104,6 +104,7 @@ html.theme--documenter-dark .mera-tab-btn-active:hover {
 .gallery-thumb-word-in-a-galaxy { background-image: url("gallery/word_in_a_galaxy_thumb.png"); }
 .gallery-thumb-probe { background-image: url("gallery/probe_thumb.png"); }
 .gallery-thumb-sweep { background-image: url("gallery/sweep_thumb.png"); }
+.gallery-thumb-ramses-any-rank-count { background-image: url("gallery/ramses_any_rank_count_thumb.png"); }
 .gallery-card .gallery-title {
     display: block;
     font-weight: 600;

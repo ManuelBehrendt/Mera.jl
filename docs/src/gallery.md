@@ -52,6 +52,16 @@ run it.
   together</span>
 </a>
 
+<a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/005_ramses_any_rank_count">
+  <span class="gallery-thumb gallery-thumb-ramses-any-rank-count" role="img"
+        aria-label="The same galaxy split into the domains of 512 and of 10240 MPI ranks, each rank a colour"></span>
+  <span class="gallery-title">Rewriting a RAMSES output for any number of CPUs</span>
+  <span class="gallery-meta">RAMSES · a galaxy simulation of 197 million cells, written on 5120 ranks,
+  rewritten for 512, 5120 and 10240 from its RAMSES files and from its mera file alone, every value
+  checked against the original, with the time, memory and disk each route costs and how fast each
+  version reads back</span>
+</a>
+
 </div>
 ```
 
