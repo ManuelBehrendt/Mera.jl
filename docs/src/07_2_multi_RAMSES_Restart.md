@@ -69,11 +69,12 @@ The page explains each step and then checks the result four ways:
    any other rank count.
 2. **Same values** (section 5): rewritten for 1, 3, 7 and 8 ranks, and 4 → 3 → 4, every cell value
    and particle differs from the original by exactly 0.
-3. **Same data in RAMSES** (section 6): RAMSES loads the new files and saves what it loaded right
-   away, before it computes anything. Loading also sets up the links between the ranks, so a broken
-   link would show here. Result: the saved data is the same, bit for bit, as when RAMSES loads its
-   own original files (1 to 8 ranks, 104 of 104 tests). So any later difference comes from the
-   computation, not from the files.
+3. **Same data in RAMSES** (section 6): a restart works only if RAMSES, after loading the new files,
+   holds exactly the data it holds after loading its own. To see what it holds, a slightly modified
+   RAMSES loads the files and at once writes everything it loaded (all grids, cell values and
+   particles) to a new output, before computing anything. This is done once with the new files and
+   once with the original files. Result: the two outputs are the same, bit for bit (1 to 8 ranks,
+   104 of 104 tests). So the new files give RAMSES exactly the right start.
 4. **Same evolution** (section 7): RAMSES continues the run for 13 steps, once from the new files on
    3 ranks and once from its own files on 4 ranks. Result: the two differ by at most `8e-16`, which
    is round-off. For scale: RAMSES restarted from its own files differs by `1e-15` from the same
