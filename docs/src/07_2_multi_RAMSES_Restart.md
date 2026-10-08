@@ -63,8 +63,10 @@ particles and sinks; refined cells rebuilt. RAMSES then continues to round-off (
 
 The page explains each step and then checks the result four ways:
 
-1. **Same files as RAMSES** (section 4): given RAMSES's own split of a 4-rank output, Mera rebuilds
-   its four amr files; every grid, ghost grid and pointer matches.
+1. **Same files as RAMSES** (section 4): no rank change and no mera file. Mera takes a 4-rank RAMSES
+   output, keeps RAMSES's own 4 domains, and writes the four amr files again with its own writer.
+   Every grid, ghost grid and pointer equals RAMSES's file. This tests the writer itself: the same
+   code builds the files for any other rank count.
 2. **Same values** (section 5): rewritten for 1, 3, 7 and 8 ranks, and 4 → 3 → 4, every cell value
    and particle differs from the original by exactly 0.
 3. **Same memory in RAMSES** (section 6): RAMSES reads the new files and writes its memory out
@@ -490,10 +492,14 @@ ranks need more per rank.
 
 ## 4. Check 1: RAMSES's own files are reproduced
 
-Given RAMSES's own split, the method must rebuild RAMSES's own files. Each of the four amr files (one per
-rank) is rebuilt and compared with the original. Grids are matched by level and position, pointers by what
-they point to, so a different numbering does not count as a difference. Grids, ghosts, boundary
-grids, pointers and the counts per level must all match.
+This check changes nothing: same output, same 4 ranks, same domain walls as RAMSES. Mera writes the
+four amr files (one per rank) again with its own writer and compares them with the files RAMSES
+wrote. If they match, the writer builds each rank's tree (own grids, ghosts, pointers) exactly as
+RAMSES does, and the same code then builds the files for other rank counts.
+
+Grids are matched by level and position, pointers by what they point to, so a different numbering
+does not count as a difference. Grids, ghosts, boundary grids, pointers and the counts per level
+must all match.
 
 ```julia
 # Every grid named by (level, list, position); every pointer by the position it points to.
