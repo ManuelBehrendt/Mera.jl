@@ -28,8 +28,8 @@ then run `mpirun -np 512 ramses3d run.nml 250` in `/sims/run_512`. How it works:
 [sections 2](#2.-How-RAMSES-splits-a-run-over-CPUs) and [3](#3.-repartition:-what-it-does,-step-by-step).
 
 **If you only have a mera file.** A [mera file](07_multi_Mera_Files.md) is Mera's compressed copy of
-an output in one file. It keeps every leaf cell, so RAMSES can restart from it after the RAMSES
-files are deleted:
+an output in one file. It keeps every leaf cell, so `writeramses` can write new RAMSES files
+from it, also when the original output is deleted:
 
 ```julia
 gas  = loaddata(250, "/merafiles", :hydro)          # load each data type from the mera file
