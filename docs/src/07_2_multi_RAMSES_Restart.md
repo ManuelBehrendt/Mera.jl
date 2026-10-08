@@ -142,7 +142,6 @@ println("dm_gas: ncpu = ", getinfo(4, DMGAS, verbose=false).ncpu, ", particles: 
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Mera v1.8.0
 sedov:  ncpu = 4, levels 4 to 7, 10000 grids max per rank
 dm_gas: ncpu = 4, particles: 30000
 ```
@@ -225,6 +224,44 @@ function leaf_cells(t)
         push!(out, (l=l, g=g, ind=ind, x=(c .+ 0.5) ./ 2^l, dx=1 / 2^l))
     end
     out
+end
+
+# Which grids rank k holds under each pixel of a slice at height z on level lev: 0 not on the rank,
+# 1 own, 2 ghost, 3 boundary grid (outside a wall). Coordinates in coarse cells (box units for a
+# periodic box).
+function rank_grid_map(t, dec, lt, k, lev, z, xs)
+    held, bnd = Set(lt.grids[lev]), Set(lt.bgrids[lev])
+    img = fill(NaN, length(xs), length(xs))
+    for (i, x) in enumerate(xs), (j, y) in enumerate(xs)
+        ig = RW.Coord(floor.(Int, (x, y, z) .* 2^(lev - 1)))
+        if ig in bnd
+            img[i, j] = 3.0
+        else
+            g = RW.find_grid(t, lev, ig); g == 0 && continue
+            img[i, j] = g in held ? (RW.grid_owner(t, dec, lev, g) == k ? 1.0 : 2.0) : 0.0
+        end
+    end
+    img
+end
+
+# The grids rank k holds on each of `levels`, side by side; `walls` draws the box (coarse cells 1 to 2).
+function rank_grids_figure(t, dec, k, levels; z, xs=((1:256) .- 0.5) ./ 256, walls=false)
+    lt = RW.build_local_tree(t, dec, k)
+    colors = ["#e4e3dd", CPU_COLORS[1], CPU_COLORS[2], CPU_COLORS[3]]
+    unit = walls ? " (coarse cells)" : " / boxlen"
+    fig = Figure(size=(1050, 390))
+    for (col, lev) in enumerate(levels)
+        ax = Axis(fig[1, col]; aspect=DataAspect(), title="level $lev grids on rank $k of $(dec.ncpu)",
+                  xlabel="x" * unit, ylabel = col == 1 ? "y" * unit : "")
+        heatmap!(ax, xs, xs, rank_grid_map(t, dec, lt, k, lev, z, xs);
+                 colormap=cgrad(colors; categorical=true), colorrange=(-0.5, 3.5))
+        walls && lines!(ax, [1, 2, 2, 1, 1], [1, 1, 2, 2, 1]; color=:black, linewidth=1.5)
+    end
+    shown = walls ? [2, 3, 4, 1] : [2, 3, 1]
+    labels = Dict(2 => "own grids", 3 => "ghost grids", 4 => "boundary grids\n(outside the walls)", 1 => "not on this rank")
+    Legend(fig[1, length(levels) + 1], [PolyElement(color=colors[c]) for c in shown], [labels[c] for c in shown];
+           framevisible=false)
+    fig
 end;
 ```
 
@@ -354,76 +391,39 @@ fig
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_13_2.png)
 
 ```julia
-# What rank 2 of 3 keeps in memory, level by level: its own grids and the ghost layer around them.
+# The grids rank 2 of 3 holds on levels 3, 4 and 5: its own and the ghost grids around them
 dec3 = RW.decompose(t, 3)
-lt   = RW.build_local_tree(t, dec3, 2)
-fig = Figure(size=(1050, 390))
-for (col, lev) in enumerate((3, 4, 5))
-    ax = Axis(fig[1, col]; aspect=DataAspect(), title="level $lev grids on rank 2 of 3",
-              xlabel="x / boxlen", ylabel=col == 1 ? "y / boxlen" : "")
-    img = fill(NaN, n, n); held = Set(lt.grids[lev])
-    for i in 1:n, j in 1:n
-        ig = RW.Coord((floor(Int, (i - 0.5) / n * 2^(lev - 1)), floor(Int, (j - 0.5) / n * 2^(lev - 1)),
-                       floor(Int, z * 2^(lev - 1))))
-        g = RW.find_grid(t, lev, ig); g == 0 && continue
-        img[i, j] = g in held ? (RW.grid_owner(t, dec3, lev, g) == 2 ? 1.0 : 2.0) : 0.0
-    end
-    heatmap!(ax, range(0, 1; length=n), range(0, 1; length=n), img;
-             colormap=cgrad(["#e4e3dd", CPU_COLORS[1], CPU_COLORS[2]]; categorical=true), colorrange=(-0.5, 2.5))
-end
-Legend(fig[1, 4], [PolyElement(color=c) for c in (CPU_COLORS[1], CPU_COLORS[2], "#e4e3dd")],
-       ["own grids", "ghost grids", "not on this rank"]; framevisible=false)
-fig
+rank_grids_figure(t, dec3, 2, (3, 4, 5); z)
 ```
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_14_1.png)
 
-White: not refined there. The ghost layer is one grid wide. On these coarse levels one grid is a
-large part of the box (a quarter of it at level 3), so the ghosts cover much of it. Each finer level
-halves the layer: in the run with walls below, ghosts are about 9 % of a rank's grids.
+Blue: the grids rank 2 owns. Orange: **ghost grids**, copies of its neighbours' grids next to its
+border, because the solver needs the neighbouring values. The ghost layer is one grid wide. On these
+coarse levels one grid is a large part of the box (a quarter of it at level 3), so the ghosts cover
+much of it; each finer level halves the layer. The box is periodic, so the layer continues across
+the faces: the orange strip at the right edge of the level-4 panel borders rank 2's cells at the
+left edge. White: not refined there.
 
-### Ghost zones and box boundaries
+### Walls
 
-`repartition` builds the ghost grids with RAMSES's own rules (`authorize_fine`, `refine_fine`,
-`make_boundary_flag`), level by level. A rank holds:
-
-| what | why |
-|---|---|
-| every level-1 grid | RAMSES keeps the coarse level on every rank |
-| the grids it owns (parent cell on its piece of the curve) | its own work |
-| every grid within one cell of its own cells (two for MHD) | the solver reaches that far across the border |
-| the children of those grids, level by level | a ghost region is refined like its owner |
-| boundary grids beyond physical walls | the solver at a wall reads cells outside the box |
-
-**Periodic box** (the default, no `&BOUNDARY_PARAMS`): the box wraps around, and the ghost layer
-continues across the face. In the level-4 panel above, rank 2 owns x < 0.5; the orange strip at
-x > 0.875 is ghost, its neighbour across the periodic face.
-
-**Physical walls** (outflow, reflexive, imposed; set in `&BOUNDARY_PARAMS`): RAMSES adds one layer
-of coarse cells outside each wall, and the ranks hold **boundary grids** there. They copy the
-refinement of the cell inside the wall. Their values come from `make_boundary_hydro`: the inside
-value, with the normal velocity flipped at a reflexive wall and inflow suppressed at an outflow wall.
-
-The Sedov run below has outflow walls on all six faces: a 3 × 3 × 3 coarse grid with the box in the
-centre. On 3 ranks:
+Instead of a periodic box, a run can have walls (outflow, reflexive or imposed, set in
+`&BOUNDARY_PARAMS`). RAMSES then also keeps the grids just outside each wall, the **boundary
+grids**; their values mirror the cells inside. `repartition` builds them too. The Sedov run with
+outflow walls on all six faces, split over 3 ranks:
 
 ```julia
-OUTFLOW = joinpath(RUNS, "sedov3d_outflow_ncpu4")                 # 4 CPUs, outflow on all faces
-to = RW.read_global_tree(joinpath(OUTFLOW, "output_00004"), 4; verbose=false)
-println("coarse grid ", to.geom.n, ", box = coarse cells ", to.geom.cmin, " to ", to.geom.cmax,
-        ", ", length(to.boundaries), " walls: ",
-        join(unique(("reflexive", "outflow", "imposed")[b.btype ÷ 10 + 1] for b in to.boundaries), ", "))
+OUTFLOW = joinpath(RUNS, "sedov3d_outflow_ncpu4")     # Sedov run, outflow walls on all six faces
+to   = RW.read_global_tree(joinpath(OUTFLOW, "output_00004"), 4; verbose=false)
 deco = RW.decompose(to, 3)
-lto  = [RW.build_local_tree(to, deco, k) for k in 1:3]
-println(rpad("rank", 6), rpad("own grids", 11), rpad("ghost grids", 13), "boundary grids")
+println("rank  own grids  ghost grids  boundary grids")
 for k in 1:3
-    own = sum(lto[k].numbl[k, :])
-    println(rpad(k, 6), rpad(own, 11), rpad(sum(lto[k].numbl) - own, 13), sum(lto[k].numbb))
+    lt = RW.build_local_tree(to, deco, k); own = sum(lt.numbl[k, :])
+    @printf("%-5d %-10d %-12d %d\n", k, own, sum(lt.numbl) - own, sum(lt.numbb))
 end
 ```
 
 ```
-coarse grid (3, 3, 3), box = coarse cells (1, 1, 1) to (1, 1, 1), 6 walls: outflow
 rank  own grids  ghost grids  boundary grids
 1     32539      2998         3246
 2     32538      3190         3194
@@ -431,39 +431,14 @@ rank  own grids  ghost grids  boundary grids
 ```
 
 ```julia
-# Rank 2's grids around the box, in a slice through the box centre, levels 2 to 4. Coordinates in
-# coarse cells: the box is the square from 1 to 2.
-k, zc = 2, 1.5
-lt2 = lto[k]; held = [Set(lt2.grids[l]) for l in eachindex(lt2.grids)]
-bnd = [Set(lt2.bgrids[l]) for l in eachindex(lt2.bgrids)]
-m = 280; X = range(0.8, 2.2; length=m)
-fig = Figure(size=(1050, 390))
-for (col, l) in enumerate((2, 3, 4))
-    img = fill(NaN, m, m)
-    for (i, x) in enumerate(X), (j, y) in enumerate(X)
-        ig = RW.Coord((floor(Int, x * 2^(l - 1)), floor(Int, y * 2^(l - 1)), floor(Int, zc * 2^(l - 1))))
-        if ig in bnd[l]
-            img[i, j] = 3.0
-        else
-            g = RW.find_grid(to, l, ig); g == 0 && continue
-            img[i, j] = g in held[l] ? (RW.grid_owner(to, deco, l, g) == k ? 1.0 : 2.0) : 0.0
-        end
-    end
-    ax = Axis(fig[1, col]; aspect=DataAspect(), title="level $l grids on rank $k of 3",
-              xlabel="x (coarse cells)", ylabel = col == 1 ? "y (coarse cells)" : "")
-    heatmap!(ax, X, X, img; colormap=cgrad(["#e4e3dd", CPU_COLORS[1], CPU_COLORS[2], CPU_COLORS[3]];
-             categorical=true), colorrange=(-0.5, 3.5))
-    lines!(ax, [1, 2, 2, 1, 1], [1, 1, 2, 2, 1]; color=:black, linewidth=1.5)       # the walls
-end
-Legend(fig[1, 4], [PolyElement(color=c) for c in (CPU_COLORS[1], CPU_COLORS[2], CPU_COLORS[3], "#e4e3dd")],
-       ["own grids", "ghost grids", "boundary grids\n(outside the walls)", "not on this rank"]; framevisible=false)
-fig
+# Rank 2 around the box, levels 2 to 4, in a slice through the box centre
+rank_grids_figure(to, deco, 2, (2, 3, 4); z=1.5, xs=range(0.8, 2.2; length=280), walls=true)
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_18_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_17_1.png)
 
-The black square is the box. Rank 2 holds boundary grids where its own and ghost cells reach the
-walls.
+The black square is the box. Green: boundary grids, held where rank 2's own or ghost grids reach a
+wall. Ghosts are about 9 % of a rank's grids here, because most grids are on finer levels.
 
 ## 3. `repartition`: what it does, step by step
 
@@ -489,7 +464,7 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_vmIXLB/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_ao9lKP/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
@@ -760,7 +735,7 @@ Colorbar(fig[1, 5], hm; label="log₁₀ |Δρ|/ρ", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_33_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_32_1.png)
 
 Machine precision everywhere: RAMSES cannot tell the converted files from its own. Particles are a
 stricter test, because gravity couples each particle to all the mass. The run with 30,000
@@ -1016,7 +991,7 @@ gravity parents averaged   largest |Δρ|/ρ in this slice: 9.0e-05
 gravity parents as stored  largest |Δρ|/ρ in this slice: 1.2e-14
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_47_3.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_46_3.png)
 
 Stored gravity parents: round-off. Averaged ones: the gas differs by up to `5e-5` around the
 centre, the potential by `3e-6`.
@@ -1466,7 +1441,7 @@ Colorbar(fig[1, 2], hm; label="log₁₀ largest relative difference", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_64_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_63_1.png)
 
 | run type | difference after one output | why |
 |---|---|---|
@@ -1545,7 +1520,7 @@ MHD tube, Hilbert, 3 ranks                 largest |Δρ|/ρ in the slice 0.0e+0
 radiative transfer, bisection, 5 ranks     largest |Δρ|/ρ in the slice 0.0e+00
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_67_4.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_66_4.png)
 
 Round-off without structure, or zero, and nothing along the rank borders.
 
