@@ -69,16 +69,19 @@ The page explains each step and then checks the result four ways:
    any other rank count.
 2. **Same values** (section 5): rewritten for 1, 3, 7 and 8 ranks, and 4 → 3 → 4, every cell value
    and particle differs from the original by exactly 0.
-3. **Same memory in RAMSES** (section 6): RAMSES reads the new files and writes out its memory
-   before its first step. While reading, it also builds its ghost zones and the lists of cells the
-   ranks exchange, so a wrong pointer in the files would show here. Result: the same memory as after
-   reading the original files, bit for bit, on 1 to 8 ranks (104 of 104 dumps in the validation
-   suite). Checks 1 and 2 use Mera to test Mera's files; this one lets RAMSES test them. It also
-   shows that reading is exact, so any later difference comes from the computation.
+3. **Same memory in RAMSES** (section 6): RAMSES reads the files written by `repartition` and, before
+   its first time step (nothing computed yet), writes everything it holds in memory as an output.
+   While reading, it also builds its ghost zones and the lists of cells the ranks exchange, so a
+   wrong pointer in the files would show here. Result: the same as after reading the original files,
+   bit for bit, on 1 to 8 ranks (104 of 104 dumps in the validation suite). Checks 1 and 2 use Mera
+   to test Mera's files; this one lets RAMSES test them. It also shows that reading is exact, so any
+   later difference comes from the computation.
 4. **Same evolution** (section 7): RAMSES continues the run for 13 steps, once from the new files on
    3 ranks and once from its own files on 4 ranks. Result: the two differ by at most `8e-16`, which
    is round-off. For scale: RAMSES restarted from its own files differs by `1e-15` from the same
-   simulation computed straight through from the start, without a restart.
+   simulation computed straight through from the start, without a restart. The files store velocity
+   and pressure, and a restart converts them back to momentum and energy, which can change the last
+   bit.
 
 The notebook starts RAMSES itself, as `mpirun -np <ranks> ramses3d run.nml <output>` (helper
 `run_ramses`), so every restart on this page really runs. Only the validation-suite tables
