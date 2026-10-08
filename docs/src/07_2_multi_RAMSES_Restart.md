@@ -391,14 +391,15 @@ fig
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_13_2.png)
 
 ```julia
-# The grids rank 2 of 3 holds on levels 3, 4 and 5: its own and the ghost grids around them
+# The grids rank 2 of 3 holds on levels 3, 4 and 5: its own and the ghost grids around them.
+# The slice is the x-y plane at z = 0.03, just inside the bottom face, through the blast.
 dec3 = RW.decompose(t, 3)
-rank_grids_figure(t, dec3, 2, (3, 4, 5); z)
+rank_grids_figure(t, dec3, 2, (3, 4, 5); z=0.03)
 ```
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_14_1.png)
 
-Blue: the grids rank 2 owns. Orange: **ghost grids**, copies of its neighbours' grids next to its
+A slice at z = 0.03, through the blast. Blue: the grids rank 2 owns. Orange: **ghost grids**, copies of its neighbours' grids next to its
 border, because the solver needs the neighbouring values. The ghost layer is one grid wide. On these
 coarse levels one grid is a large part of the box (a quarter of it at level 3), so the ghosts cover
 much of it; each finer level halves the layer. The box is periodic, so the layer continues across
@@ -431,7 +432,8 @@ rank  own grids  ghost grids  boundary grids
 ```
 
 ```julia
-# Rank 2 around the box, levels 2 to 4, in a slice through the box centre
+# Rank 2 around the box, levels 2 to 4. The slice is the x-y plane through the box centre
+# (z = 1.5 coarse cells; the box spans coarse cells 1 to 2).
 rank_grids_figure(to, deco, 2, (2, 3, 4); z=1.5, xs=range(0.8, 2.2; length=280), walls=true)
 ```
 
@@ -464,11 +466,11 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_ao9lKP/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_JbIcpX/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
-  14 files written in 0.8 s
+  14 files written in 0.7 s
 ```
 
 The report's last line goes into the restart namelist: `ngridmax` (and `npartmax`) per rank. Fewer
