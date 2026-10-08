@@ -63,24 +63,23 @@ particles and sinks; refined cells rebuilt. RAMSES then continues to round-off (
 
 The page explains each step and then checks the result four ways:
 
-1. **Same files as RAMSES** (section 4): Mera takes a 4-rank RAMSES output, keeps RAMSES's own
-   4 domains, and writes the four amr files again with its own writer. Every grid, ghost grid and
-   pointer equals RAMSES's file. This tests the writer itself: the same code builds the files for
-   any other rank count.
-2. **Same values** (section 5): rewritten for 1, 3, 7 and 8 ranks, and 4 → 3 → 4, every cell value
-   and particle differs from the original by exactly 0.
-3. **Same data in RAMSES** (section 6): a restart works only if RAMSES, after loading the new files,
-   holds exactly the data it holds after loading its own. To see what it holds, a slightly modified
-   RAMSES loads the files and at once writes everything it loaded (all grids, cell values and
-   particles) to a new output, before computing anything. This is done once with the new files and
-   once with the original files. Result: the two outputs are the same, bit for bit (1 to 8 ranks,
-   104 of 104 tests). So the new files give RAMSES exactly the right start.
-4. **Same evolution** (section 7): the final test is to let RAMSES run. It continues the simulation
-   for 13 time steps twice: from the new files on 3 ranks, and from its own files on 4 ranks.
-   Result: the two runs agree to about 15 digits (largest relative difference `8e-16`). A tiny
-   difference in the last digit is normal: a restart, or another number of ranks, makes the computer
-   round the last digit a little differently. RAMSES alone shows the same: restarted from its own
-   files, it differs just as much (`1e-15`) from the same simulation run without a restart.
+1. **Same files as RAMSES** (section 4): first, Mera must write RAMSES's files correctly. It takes
+   an output RAMSES wrote on 4 ranks and writes it again for the same 4 ranks. Result: the files
+   equal RAMSES's own, grid by grid and link by link. The same code writes the files for any other
+   number of ranks.
+2. **Same values** (section 5): next, no number may change. The output is written for 1, 3, 7 and 8
+   ranks, and from 4 to 3 and back to 4 ranks. Result: every value is exactly the same as in the
+   original.
+3. **Same data in RAMSES** (section 6): then RAMSES must read the new files correctly. RAMSES loads
+   them and, before computing anything, writes out what it loaded. The same is done with the
+   original files. Result: both are exactly the same (1 to 8 ranks, 104 of 104 tests). So RAMSES
+   starts from exactly the right data.
+4. **Same evolution** (section 7): finally, RAMSES runs. It continues the simulation for 13 time
+   steps, once from the new files on 3 ranks and once from its own files on 4 ranks. Result: the two
+   runs agree to about 15 digits (largest relative difference `8e-16`). The last digit may differ,
+   because a restart or another number of ranks makes the computer round a little differently.
+   RAMSES alone shows the same: restarted from its own files, it differs just as much (`1e-15`) from
+   the same simulation run without a restart.
 
 The notebook starts RAMSES itself, as `mpirun -np <ranks> ramses3d run.nml <output>` (helper
 `run_ramses`), so every restart on this page really runs. Only the validation-suite tables
