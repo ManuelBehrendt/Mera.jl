@@ -63,15 +63,16 @@ particles and sinks; refined cells rebuilt. RAMSES then continues to round-off (
 
 The page explains each step and then checks the result four ways:
 
-1. **Same files as RAMSES** (section 4): no rank change and no mera file. Mera takes a 4-rank RAMSES
-   output, keeps RAMSES's own 4 domains, and writes the four amr files again with its own writer.
+1. **Same files as RAMSES** (section 4): Mera takes a 4-rank RAMSES output, keeps RAMSES's own 4 domains, and writes the four amr files again with its own writer.
    Every grid, ghost grid and pointer equals RAMSES's file. This tests the writer itself: the same
    code builds the files for any other rank count.
 2. **Same values** (section 5): rewritten for 1, 3, 7 and 8 ranks, and 4 → 3 → 4, every cell value
    and particle differs from the original by exactly 0.
-3. **Same memory in RAMSES** (section 6): RAMSES reads the new files and writes its memory out
-   before the first step; this equals the dump from the original files bit for bit, on 1 to 8
-   ranks (104 of 104 dumps in the validation suite).
+3. **Same memory in RAMSES** (section 6): when RAMSES reads files, it also rebuilds its ghost zones
+   and the tables that tell each rank which cells to exchange with which other rank. A wrong pointer
+   or flag in the new files would show only there. So RAMSES reads the new files and writes its
+   memory out before the first step; this equals the dump from the original files bit for bit, on
+   1 to 8 ranks (104 of 104 dumps in the validation suite).
 4. **Same evolution** (section 7): RAMSES runs 13 steps from the new files on 3 ranks; the result
    matches RAMSES's own restart on 4 ranks to `8e-16`, as close as RAMSES restarts itself (`1e-15`).
 
