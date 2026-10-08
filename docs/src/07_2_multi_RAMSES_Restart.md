@@ -69,13 +69,11 @@ The page explains each step and then checks the result four ways:
    any other rank count.
 2. **Same values** (section 5): rewritten for 1, 3, 7 and 8 ranks, and 4 → 3 → 4, every cell value
    and particle differs from the original by exactly 0.
-3. **Same memory in RAMSES** (section 6): RAMSES reads the files written by `repartition` and, before
-   its first time step (nothing computed yet), writes everything it holds in memory as an output.
-   While reading, it also builds its ghost zones and the lists of cells the ranks exchange, so a
-   wrong pointer in the files would show here. Result: the same as after reading the original files,
-   bit for bit, on 1 to 8 ranks (104 of 104 dumps in the validation suite). Checks 1 and 2 use Mera
-   to test Mera's files; this one lets RAMSES test them. It also shows that reading is exact, so any
-   later difference comes from the computation.
+3. **Same data in RAMSES** (section 6): RAMSES loads the new files and saves what it loaded right
+   away, before it computes anything. Loading also sets up the links between the ranks, so a broken
+   link would show here. Result: the saved data is the same, bit for bit, as when RAMSES loads its
+   own original files (1 to 8 ranks, 104 of 104 tests). So any later difference comes from the
+   computation, not from the files.
 4. **Same evolution** (section 7): RAMSES continues the run for 13 steps, once from the new files on
    3 ranks and once from its own files on 4 ranks. Result: the two differ by at most `8e-16`, which
    is round-off. For scale: RAMSES restarted from its own files differs by `1e-15` from the same
