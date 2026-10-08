@@ -16,7 +16,7 @@ the output ([section 1](#1.-Why-this-is-needed)). Mera rewrites an output for an
 
 ## At a glance
 
-**You still have the RAMSES output.** Rewrite it for the new number of ranks; every value is copied:
+**If you have the RAMSES output.** Rewrite it for the new number of ranks; every value is copied:
 
 ```julia
 r = repartition(250, "/sims/run", 512; outpath="/sims/run_512")   # output 250, written for 512 ranks
@@ -27,7 +27,7 @@ Put `r.ngridmax_needed` and `r.npart_max` into the restart namelist as `ngridmax
 then run `mpirun -np 512 ramses3d run.nml 250` in `/sims/run_512`. How it works:
 [sections 2](#2.-How-RAMSES-splits-a-run-over-CPUs) and [3](#3.-repartition:-what-it-does,-step-by-step).
 
-**You only have a mera file.** A [mera file](07_multi_Mera_Files.md) is Mera's compressed copy of
+**If you only have a mera file.** A [mera file](07_multi_Mera_Files.md) is Mera's compressed copy of
 an output, one file holding every data type; it keeps every leaf cell, so a RAMSES output can be
 written from it after the RAMSES files are gone:
 
