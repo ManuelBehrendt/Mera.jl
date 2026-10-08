@@ -408,10 +408,11 @@ left edge. White: not refined there.
 
 ### Walls
 
-Instead of a periodic box, a run can have walls (outflow, reflexive or imposed, set in
-`&BOUNDARY_PARAMS`). RAMSES then also keeps the grids just outside each wall, the **boundary
-grids**; their values mirror the cells inside. `repartition` builds them too. The Sedov run with
-outflow walls on all six faces, split over 3 ranks:
+Many runs have walls instead of a periodic box (outflow, reflexive or imposed, set in
+`&BOUNDARY_PARAMS`). Their files hold a third kind of grid: the **boundary grids** just outside each
+wall, whose values mirror the cells inside. RAMSES needs them to restart, so `repartition` must
+build them for every new rank; check 1 (section 4) tests them too. The Sedov run with outflow walls
+on all six faces, split over 3 ranks:
 
 ```julia
 OUTFLOW = joinpath(RUNS, "sedov3d_outflow_ncpu4")     # Sedov run, outflow walls on all six faces
