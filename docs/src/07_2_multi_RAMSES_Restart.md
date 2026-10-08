@@ -11,8 +11,8 @@
     This page is also an executable **Jupyter notebook**: [open / download `07_2_multi_RAMSES_Restart.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/07_2_multi_RAMSES_Restart.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-RAMSES writes one file per MPI rank, and it restarts only with the number of ranks that wrote
-the output ([section 1](#1.-Why-this-is-needed)). Mera rewrites an output for any other number of ranks.
+RAMSES writes one file per data type and MPI rank (`amr_`, `hydro_`, `grav_`, `rt_`, `part_`, ...),
+and it restarts only with the number of ranks that wrote them ([section 1](#1.-Why-this-is-needed)). Mera rewrites an output for any other number of ranks.
 
 ## At a glance
 
@@ -463,8 +463,8 @@ ranks need more per rank.
 
 ## 4. Check 1: RAMSES's own files are reproduced
 
-Given RAMSES's own split, the method must rebuild RAMSES's own files. Each of the four files is
-rebuilt and compared with the original. Grids are matched by level and position, pointers by what
+Given RAMSES's own split, the method must rebuild RAMSES's own files. Each of the four amr files (one per
+rank) is rebuilt and compared with the original. Grids are matched by level and position, pointers by what
 they point to, so a different numbering does not count as a difference. Grids, ghosts, boundary
 grids, pointers and the counts per level must all match.
 
