@@ -69,16 +69,16 @@ The page explains each step and then checks the result four ways:
    any other rank count.
 2. **Same values** (section 5): rewritten for 1, 3, 7 and 8 ranks, and 4 → 3 → 4, every cell value
    and particle differs from the original by exactly 0.
-3. **Same memory in RAMSES** (section 6): checks 1 and 2 use Mera to judge Mera's files; here RAMSES
-   judges them. RAMSES reads the new files and writes out what it holds in memory before its first
-   step. Reading also makes it rebuild its ghost zones and the lists of cells each rank exchanges
-   with the others, so a wrong pointer would show here. The result equals the memory after reading
-   its own files, bit for bit, on 1 to 8 ranks (104 of 104 dumps in the validation suite). So
-   reading is exact, and any later difference comes from computing, not from the files.
-4. **Same evolution** (section 7): RAMSES continues the run for 13 steps twice: from the new files
-   on 3 ranks, and from its own files on 4 ranks. The two results differ by at most `8e-16`. That is
-   round-off: RAMSES alone, restarted on its own 4 ranks, differs from the run that never stopped
-   by `1e-15`.
+3. **Same memory in RAMSES** (section 6): RAMSES reads the new files and writes out its memory
+   before its first step. While reading, it also builds its ghost zones and the lists of cells the
+   ranks exchange, so a wrong pointer in the files would show here. Result: the same memory as after
+   reading the original files, bit for bit, on 1 to 8 ranks (104 of 104 dumps in the validation
+   suite). Checks 1 and 2 use Mera to test Mera's files; this one lets RAMSES test them. It also
+   shows that reading is exact, so any later difference comes from the computation.
+4. **Same evolution** (section 7): RAMSES continues the run for 13 steps, once from the new files on
+   3 ranks and once from its own files on 4 ranks. Result: the two differ by at most `8e-16`, which
+   is round-off. For scale: RAMSES restarted from its own files differs by `1e-15` from the same
+   simulation computed straight through from the start, without a restart.
 
 The notebook starts RAMSES itself, as `mpirun -np <ranks> ramses3d run.nml <output>` (helper
 `run_ramses`), so every restart on this page really runs. Only the validation-suite tables
@@ -783,7 +783,7 @@ largest difference: hydro 8.5e-15, gravity 1.2e-14, particle position 5.6e-16 bo
 ```
 
 **RAMSES alone, for comparison:** the Sedov run on 4 and on 8 CPUs from the start, and a restart on
-its own 4 CPUs against the uninterrupted run:
+its own 4 CPUs against the same run computed straight through, without a restart:
 
 ```julia
 floorcmp = [("RAMSES from t = 0 on 4 vs 8 CPUs, output 7",
@@ -806,7 +806,7 @@ converted to 3 CPUs, restarted, vs RAMSES restart on 4    same    7.6e-16
 ```
 
 The RAMSES validation suite, every kind of run. The reference is RAMSES's own restart, or the
-uninterrupted run:
+run computed straight through, without a restart:
 
 ```julia
 println(rpad("run", 28), rpad("CPUs", 8), rpad("octree", 8), rpad("hydro", 8), rpad("grav", 8),
@@ -1566,7 +1566,7 @@ Two avoidable cases give more:
 | mera file from before 1.8.0 whose simulation is gone | up to a few per cent with many particles | `upgrade_merafile` while the simulation still exists (§9) |
 
 **Is that small enough?** Compare with RAMSES restarting its own output on its own ranks, over the
-same interval, against the run that never stopped:
+same interval, against the same run computed straight through, without a restart:
 
 ```julia
 # What RAMSES gives by itself: its own restart on the original ranks against the run that never
