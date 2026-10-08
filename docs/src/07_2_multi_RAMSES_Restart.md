@@ -81,6 +81,21 @@ files or IO groups; periodic, outflow, reflexive or imposed boundaries; hydro, M
 particles (also the legacy format), sinks and clumps. **Not supported:** the orderings `'planar'`
 and `'angular'`, `QUADHILBERT` builds, 1-D and 2-D runs.
 
+## Setup
+
+### The simulations
+
+Paths to the test runs and to the RAMSES builds used on this page. To run the page yourself, change
+them or set the environment variables. The two main runs, both written on 4 CPUs:
+
+| name | run | used in |
+|---|---|---|
+| `SEDOV` | Sedov blast, AMR levels 4 to 7, load-balanced | sections 1 to 7 and 10 |
+| `DMGAS` | gas, self-gravity and 30,000 dark-matter particles | sections 5, 7 and 8 |
+
+The other runs (outflow walls, cosmological, MHD, RT, the public test simulations) are named where
+they are used.
+
 ```julia
 # Two RAMSES test runs, both written on 4 CPUs, and the RAMSES build that made them.
 # Point these at your own runs and build, or set the environment variables.
@@ -122,6 +137,13 @@ Mera v1.8.0 | Julia 1.12.7 | 8 threads
 sedov:  ncpu = 4, levels 4 to 7, 10000 grids max per rank
 dm_gas: ncpu = 4, particles: 30000
 ```
+
+### Helper functions
+
+Small tools for this page, not part of Mera: start RAMSES with `mpirun` (`run_ramses`), write a
+restart namelist with enough memory per rank (`restart_namelist`), draw a slice through the octree
+(`slice_map`, `density_slice`), label the ranks in figures, and list the leaf cells (`leaf_cells`).
+They use `Mera.RamsesWriter` (`RW`) only to look inside the files.
 
 ```julia
 # ── tools used below, no new Mera concepts ──
@@ -253,7 +275,7 @@ end
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_8_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_10_1.png)
 
 ```julia
 # The load behind those shapes: cells owned per rank, counted on every level (the unit RAMSES and
@@ -280,7 +302,7 @@ repartition: 3 CPUs          cells per rank [2693, 2693, 2694]   (max/min 1.000)
 repartition: 7 CPUs          cells per rank [1154, 1154, 1154, 1155, 1154, 1154, 1155]   (max/min 1.001)
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_9_3.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_11_3.png)
 
 Coloured bars: after `repartition` every rank holds the same number of cells, to within one.
 RAMSES's own split is uneven (1,050 to 3,353 cells): it rebalances only every `nremap` steps, with
@@ -320,7 +342,7 @@ fig
 16 ranks, bisection  cells per rank 11278 to 12363
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_11_2.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_13_2.png)
 
 ```julia
 # What rank 2 of 3 keeps in memory, level by level: its own grids and the ghost layer around them.
@@ -345,7 +367,7 @@ Legend(fig[1, 4], [PolyElement(color=c) for c in (CPU_COLORS[1], CPU_COLORS[2], 
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_12_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_14_1.png)
 
 White: not refined there.
 
@@ -427,7 +449,7 @@ Legend(fig[1, 4], [PolyElement(color=c) for c in (CPU_COLORS[1], CPU_COLORS[2], 
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_16_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_18_1.png)
 
 The black square is the box. Rank 2 holds boundary grids where its own and ghost cells reach the
 walls.
@@ -723,7 +745,7 @@ Colorbar(fig[1, 5], hm; label="log₁₀ |Δρ|/ρ", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_31_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_33_1.png)
 
 Machine precision everywhere: RAMSES cannot tell the converted files from its own. Particles are a
 stricter test, because gravity couples each particle to all the mass. The run with 30,000
@@ -979,7 +1001,7 @@ gravity parents averaged   largest |Δρ|/ρ in this slice: 9.0e-05
 gravity parents as stored  largest |Δρ|/ρ in this slice: 1.2e-14
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_45_3.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_47_3.png)
 
 Stored gravity parents: round-off. Averaged ones: the gas differs by up to `5e-5` around the
 centre, the potential by `3e-6`.
@@ -1429,7 +1451,7 @@ Colorbar(fig[1, 2], hm; label="log₁₀ largest relative difference", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_62_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_64_1.png)
 
 | run type | difference after one output | why |
 |---|---|---|
@@ -1508,7 +1530,7 @@ MHD tube, Hilbert, 3 ranks                 largest |Δρ|/ρ in the slice 0.0e+0
 radiative transfer, bisection, 5 ranks     largest |Δρ|/ρ in the slice 0.0e+00
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_65_4.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_67_4.png)
 
 Round-off without structure, or zero, and nothing along the rank borders.
 
