@@ -226,14 +226,14 @@ function leaf_cells(t)
     out
 end
 
-# Which grids rank k holds under each pixel of a slice at height z on level lev: 0 not on the rank,
-# 1 own, 2 ghost, 3 boundary grid (outside a wall). Coordinates in coarse cells (box units for a
-# periodic box).
+# Which grids rank k holds under each pixel of a slice at height z (box units) on level lev:
+# 0 not on the rank, 1 own, 2 ghost, 3 boundary grid (outside a wall).
 function rank_grid_map(t, dec, lt, k, lev, z, xs)
     held, bnd = Set(lt.grids[lev]), Set(lt.bgrids[lev])
+    c0 = t.geom.cmin                                   # where the box starts in the coarse grid
     img = fill(NaN, length(xs), length(xs))
     for (i, x) in enumerate(xs), (j, y) in enumerate(xs)
-        ig = RW.Coord(floor.(Int, (x, y, z) .* 2^(lev - 1)))
+        ig = RW.Coord(floor.(Int, ((x, y, z) .+ c0) .* 2^(lev - 1)))
         if ig in bnd
             img[i, j] = 3.0
         else
@@ -244,24 +244,30 @@ function rank_grid_map(t, dec, lt, k, lev, z, xs)
     img
 end
 
-# The grids rank k holds on each of `levels`, side by side; `walls` draws the box (coarse cells 1 to 2).
+# The grids rank k holds on each of `levels`, side by side, in box units; `walls` draws the box.
 function rank_grids_figure(t, dec, k, levels; z, xs=((1:256) .- 0.5) ./ 256, walls=false)
     lt = RW.build_local_tree(t, dec, k)
     colors = ["#e4e3dd", CPU_COLORS[1], CPU_COLORS[2], CPU_COLORS[3]]
-    unit = walls ? " (coarse cells)" : " / boxlen"
     fig = Figure(size=(1050, 390))
     for (col, lev) in enumerate(levels)
         ax = Axis(fig[1, col]; aspect=DataAspect(), title="level $lev grids on rank $k of $(dec.ncpu)",
-                  xlabel="x" * unit, ylabel = col == 1 ? "y" * unit : "")
+                  xlabel="x / boxlen", ylabel = col == 1 ? "y / boxlen" : "")
         heatmap!(ax, xs, xs, rank_grid_map(t, dec, lt, k, lev, z, xs);
                  colormap=cgrad(colors; categorical=true), colorrange=(-0.5, 3.5))
-        walls && lines!(ax, [1, 2, 2, 1, 1], [1, 1, 2, 2, 1]; color=:black, linewidth=1.5)
+        walls && lines!(ax, [0, 1, 1, 0, 0], [0, 0, 1, 1, 0]; color=:black, linewidth=1.5)
     end
     shown = walls ? [2, 3, 4, 1] : [2, 3, 1]
     labels = Dict(2 => "own grids", 3 => "ghost grids", 4 => "boundary grids\n(outside the walls)", 1 => "not on this rank")
     Legend(fig[1, length(levels) + 1], [PolyElement(color=colors[c]) for c in shown], [labels[c] for c in shown];
            framevisible=false)
     fig
+end
+
+# How many own, ghost and boundary grids rank k holds.
+function grid_counts(t, dec, k)
+    lt = RW.build_local_tree(t, dec, k)
+    own = sum(lt.numbl[k, :])
+    return (own=own, ghost=sum(lt.numbl) - own, boundary=sum(lt.numbb))
 end;
 ```
 
@@ -408,11 +414,12 @@ left edge. White: not refined there.
 
 ### Walls
 
-Many runs have walls instead of a periodic box (outflow, reflexive or imposed, set in
-`&BOUNDARY_PARAMS`). Their files hold a third kind of grid: the **boundary grids** just outside each
-wall, whose values mirror the cells inside. RAMSES needs them to restart, so `repartition` must
-build them for every new rank; check 1 (section 4) tests them too. The Sedov run with outflow walls
-on all six faces, split over 3 ranks:
+Many runs have walls instead of a periodic box: gas flows out (outflow), bounces back (reflexive) or
+flows in with fixed values (imposed). The solver also needs cells beyond a wall, so RAMSES keeps a
+layer of **boundary grids** just outside each wall, filled from the cells just inside. These grids
+are stored in the files, so `repartition` must build them for every new rank; check 1 (section 4)
+tests them. The example is the Sedov run with outflow walls on all six faces, split over 3 ranks.
+How many grids each rank holds:
 
 ```julia
 OUTFLOW = joinpath(RUNS, "sedov3d_outflow_ncpu4")     # Sedov run, outflow walls on all six faces
@@ -420,8 +427,8 @@ to   = RW.read_global_tree(joinpath(OUTFLOW, "output_00004"), 4; verbose=false)
 deco = RW.decompose(to, 3)
 println("rank  own grids  ghost grids  boundary grids")
 for k in 1:3
-    lt = RW.build_local_tree(to, deco, k); own = sum(lt.numbl[k, :])
-    @printf("%-5d %-10d %-12d %d\n", k, own, sum(lt.numbl) - own, sum(lt.numbb))
+    g = grid_counts(to, deco, k)
+    @printf("%-5d %-10d %-12d %d\n", k, g.own, g.ghost, g.boundary)
 end
 ```
 
@@ -433,15 +440,17 @@ rank  own grids  ghost grids  boundary grids
 ```
 
 ```julia
-# Rank 2 around the box, levels 2 to 4. The slice is the x-y plane through the box centre
-# (z = 1.5 coarse cells; the box spans coarse cells 1 to 2).
-rank_grids_figure(to, deco, 2, (2, 3, 4); z=1.5, xs=range(0.8, 2.2; length=280), walls=true)
+# Rank 2 around the box, levels 2 to 4, in the x-y plane through the box centre (z = 0.5)
+rank_grids_figure(to, deco, 2, (2, 3, 4); z=0.5, xs=range(-0.2, 1.2; length=280), walls=true)
 ```
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_17_1.png)
 
-The black square is the box. Green: boundary grids, held where rank 2's own or ghost grids reach a
-wall. Ghosts are about 9 % of a rank's grids here, because most grids are on finer levels.
+The black square is the box. Green: the boundary grids rank 2 holds, outside the walls next to its
+own and ghost grids. On level 2 one grid is half the box, so rank 2 holds every grid there as a
+ghost. On finer levels it owns the top of the box (blue), and the green layer gets thinner, since
+each grid is half as wide. White: no grid there. Ghosts are about 9 % of a rank's grids here,
+because most grids are on finer levels.
 
 ## 3. `repartition`: what it does, step by step
 
@@ -467,11 +476,11 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_JbIcpX/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_s3bfeX/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
-  14 files written in 0.7 s
+  14 files written in 0.8 s
 ```
 
 The report's last line goes into the restart namelist: `ngridmax` (and `npartmax`) per rank. Fewer
