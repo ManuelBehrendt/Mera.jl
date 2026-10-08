@@ -19,31 +19,29 @@ the output ([section 1](#1.-Why-this-is-needed)). Mera rewrites an output for an
 **You still have the RAMSES output.** Rewrite it for the new number of ranks; every value is copied:
 
 ```julia
-r = repartition(250, "/sims/run", 512; outpath="/sims/run_512")
+r = repartition(250, "/sims/run", 512; outpath="/sims/run_512")   # output 250, written for 512 ranks
+c = compareramses(250, "/sims/run", "/sims/run_512")               # check: same octree, same values?
 ```
 
 Put `r.ngridmax_needed` and `r.npart_max` into the restart namelist as `ngridmax` and `npartmax`,
 then run `mpirun -np 512 ramses3d run.nml 250` in `/sims/run_512`. How it works:
 [sections 2](#2.-How-RAMSES-splits-a-run-over-CPUs) and [3](#3.-repartition:-what-it-does,-step-by-step).
 
-**You only have Mera data, or a mera file.** Load every data type, check that nothing is missing,
-and write:
+**You only have a mera file.** A [mera file](07_multi_Mera_Files.md) is Mera's compressed copy of
+an output, one file holding every data type; it keeps every leaf cell, so a RAMSES output can be
+written from it after the RAMSES files are gone:
 
 ```julia
-info = getinfo(250, "/sims/run")
-gas  = gethydro(info);  part = getparticles(info)
-grav = getgravity(info; parents=true)        # also the gravity of the refined cells
-savedata(gas, "/merafiles", :write); savedata(grav, "/merafiles", :append); savedata(part, "/merafiles", :append)
-
-# later, also when the RAMSES files are gone:
-gas  = loaddata(250, "/merafiles", :hydro)
+gas  = loaddata(250, "/merafiles", :hydro)          # load each data type from the mera file
 grav = loaddata(250, "/merafiles", :gravity)
 part = loaddata(250, "/merafiles", :particles)
-ok, report = restart_completeness(gas; gravity=grav, particles=part)
-r = writeramses(512; hydro=gas, gravity=grav, particles=part, outpath="/sims/run_512")
+ok, report = restart_completeness(gas; gravity=grav, particles=part)                     # nothing missing?
+r = writeramses(512; hydro=gas, gravity=grav, particles=part, outpath="/sims/run_512")   # written for 512 ranks
 ```
 
-How it works: [section 8](#8.-From-Mera-data-and-mera-files:-writeramses).
+The same works with data loaded by `gethydro` and the other readers. For the gravity to continue
+exactly, it must be loaded with `getgravity(info; parents=true)` before it is saved. How it works:
+[section 8](#8.-From-Mera-data-and-mera-files:-writeramses).
 
 | function | what it does | more |
 |---|---|---|
@@ -56,12 +54,10 @@ How it works: [section 8](#8.-From-Mera-data-and-mera-files:-writeramses).
 
 Both writers take `ordering=:bisection` and `iogroupsize=n` for runs that use them ([§10](#10.-Other-layouts-and-older-RAMSES-versions)).
 
-**What to expect.** `repartition` writes the same numbers to the last bit. `writeramses` does the
-same for the leaf cells, the particles and the sinks, and rebuilds the refined cells from them.
-RAMSES then continues from the new files as if it had never stopped, apart from the last digits:
-about `1e-15` for the gas, up to `2e-11` for gravity, because on another number of ranks RAMSES
-adds its sums in another order (it does the same when it changes the rank count itself;
-[§7](#7.-Check-4:-RAMSES-continues-the-run), [§11](#11.-Every-kind-of-run,-every-route), [§12](#12.-When-results-differ,-and-by-how-much)). Large outputs: [§13](#13.-Large-outputs:-time-and-memory).
+**What to expect.** `repartition`: identical values. `writeramses`: identical leaf cells,
+particles and sinks; refined cells rebuilt. RAMSES then continues to round-off (`1e-15` gas, up to
+`2e-11` gravity), as it does when it changes the rank count itself
+([§7](#7.-Check-4:-RAMSES-continues-the-run), [§11](#11.-Every-kind-of-run,-every-route), [§12](#12.-When-results-differ,-and-by-how-much)). Large outputs: [§13](#13.-Large-outputs:-time-and-memory).
 
 ## About this page
 
