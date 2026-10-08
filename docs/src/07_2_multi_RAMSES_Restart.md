@@ -28,8 +28,8 @@ then run `mpirun -np 512 ramses3d run.nml 250` in `/sims/run_512`. How it works:
 [sections 2](#2.-How-RAMSES-splits-a-run-over-CPUs) and [3](#3.-repartition:-what-it-does,-step-by-step).
 
 **If you only have a mera file.** A [mera file](07_multi_Mera_Files.md) is Mera's compressed copy of
-an output, one file holding every data type; it keeps every leaf cell, so a RAMSES output can be
-written from it after the RAMSES files are gone:
+an output in one file. It keeps every leaf cell, so RAMSES can restart from it after the RAMSES
+files are deleted:
 
 ```julia
 gas  = loaddata(250, "/merafiles", :hydro)          # load each data type from the mera file
@@ -39,8 +39,8 @@ ok, report = restart_completeness(gas; gravity=grav, particles=part)            
 r = writeramses(512; hydro=gas, gravity=grav, particles=part, outpath="/sims/run_512")   # written for 512 ranks
 ```
 
-The same works with data loaded by `gethydro` and the other readers. For the gravity to continue
-exactly, it must be loaded with `getgravity(info; parents=true)` before it is saved. How it works:
+Data loaded with `gethydro` and the other readers works the same. Load the gravity with
+`getgravity(info; parents=true)` before saving, so that it continues exactly. How it works:
 [section 8](#8.-From-Mera-data-and-mera-files:-writeramses).
 
 | function | what it does | more |
@@ -61,19 +61,20 @@ particles and sinks; refined cells rebuilt. RAMSES then continues to round-off (
 
 ## About this page
 
-This page shows what each step does and why, and then checks the result four ways: against
-RAMSES's own files, value by value, by RAMSES reading the files without taking a step, and by
-letting RAMSES continue the run. RAMSES itself runs from this page, and the numbers and figures
-are computed here; only the tables of the RAMSES validation suite (sections 6 and 7) and of the
-benchmark (section 13) are read from their result files.
+The page explains each step and checks the result four ways:
 
-Supported: 3-D runs on uniform or AMR grids, cosmological or not, with `ordering='hilbert'`
-(RAMSES's default) or `'bisection'`, files plain or in IO groups (`IOGROUPSIZEREP`), periodic or
-simple physical boundaries (outflow, reflexive, imposed), and hydro, MHD, RT, gravity, particles
-(dark matter, stars, tracers, sink clouds, also the legacy format), sinks and clumps. Section 11
-runs every public test simulation through every route and restarts RAMSES from mera files of
-every kind of run. Not supported: the orderings `'planar'`
-and `'angular'` (Mera does not read them) and `QUADHILBERT` builds; Mera is 3-D only.
+1. RAMSES's own files are rebuilt exactly (section 4);
+2. every value stays the same (section 5);
+3. RAMSES reads the new files into the same memory state as its own (section 6);
+4. RAMSES continues the run as from its own files (section 7).
+
+RAMSES runs from this page. Only the validation-suite tables (sections 6 and 7) and the benchmark
+(section 13) are read from result files.
+
+**Supported:** 3-D runs, uniform or AMR, cosmological or not; Hilbert or bisection ordering; plain
+files or IO groups; periodic, outflow, reflexive or imposed boundaries; hydro, MHD, RT, gravity,
+particles (also the legacy format), sinks and clumps. **Not supported:** the orderings `'planar'`
+and `'angular'`, `QUADHILBERT` builds, 1-D and 2-D runs.
 
 ```julia
 # Two RAMSES test runs, both written on 4 CPUs, and the RAMSES build that made them.
@@ -193,9 +194,8 @@ end;
 
 ## 1. Why this is needed
 
-A RAMSES restart reads `amr_*.outXXXXX`, `hydro_*.outXXXXX` and the rest, one file per rank, and
-every rank reads exactly its own file. Start the run on another number of ranks and RAMSES stops
-before the first step. The cell below tries it: the 4-CPU output, restarted on 3 ranks.
+Each rank reads its own files (`amr_*.outXXXXX`, `hydro_*.outXXXXX`, ...). On another number of
+ranks RAMSES stops before the first step. The 4-CPU output, restarted on 3 ranks:
 
 ```julia
 d = mkpath(joinpath(WORK, "wrong_ncpu"))
@@ -213,23 +213,17 @@ RAMSES finished: false
 
 ## 2. How RAMSES splits a run over CPUs
 
-RAMSES orders all cells along a **Hilbert curve**, a line that visits every cell once and keeps
-neighbouring cells close together on the line. The curve is cut into as many pieces as there are
-ranks, each with about the same amount of work, and every rank owns one piece: its **domain**.
+RAMSES orders all cells along a **Hilbert curve**, a line through every cell that keeps neighbours
+close. It cuts the curve into one piece per rank, each with about the same work. A rank's piece is
+its **domain**.
 
-A rank also keeps a thin layer of cells that belong to its neighbours, the **ghost zone**, because
-the hydro solver needs the neighbouring values at the domain border. The files store exactly
-what each rank holds in memory: its own grids, the ghost grids and the boundary grids, linked by
-pointers (father, neighbours, children).
+Each rank also keeps copies of the cells next to its border, the **ghost zone**, because the solver
+needs them. The files store exactly what each rank holds: its own grids, ghost grids and boundary
+grids, linked by pointers. So a new number of ranks changes every file.
 
-Changing the number of ranks therefore changes every file: the curve is cut differently, other
-cells become ghosts, and every pointer changes.
-
-The figures use the Sedov blast, which sits in the corner at the origin of a periodic box.
-Domains are 3-D, so one slice is not enough: the first figure cuts all three box planes through
-the blast (x-y, x-z and y-z, each just inside the box face at 0.03). The top row is the
-decomposition RAMSES wrote on 4 CPUs; the other rows are what `repartition` computes for 3 and
-7 CPUs. The blast has the finest cells, so the domains there are small: a domain holds a share of
+The figures use the Sedov blast in the corner of a periodic box. The first figure cuts three planes
+through the blast, just inside the box faces. Top row: RAMSES's split on 4 CPUs. Other rows:
+`repartition` for 3 and 7 CPUs. Domains are small near the blast, because a domain holds a share of
 the cells, not of the volume.
 
 ```julia
@@ -283,18 +277,15 @@ repartition: 7 CPUs          cells per rank [1154, 1154, 1154, 1155, 1154, 1154,
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_9_3.png)
 
-Coloured bars: after `repartition` every rank holds the same number of cells, to within one. The
-split RAMSES wrote is uneven (1,050 to 3,353 cells): RAMSES balances with its own cost function
-and only every `nremap` steps, and it will rebalance the converted run the same way at its next
-load-balance step. Grey bars: the volume each rank covers is very different, because a rank near
-the blast owns small cells.
+Coloured bars: after `repartition` every rank holds the same number of cells, to within one.
+RAMSES's own split is uneven (1,050 to 3,353 cells): it rebalances only every `nremap` steps, with
+its own cost function, and will rebalance the converted run the same way. Grey bars: the volume per
+rank differs a lot.
 
-The same idea at a higher rank count and in both orderings Mera writes (Hilbert and bisection, section 10), on a run with more
-structure: the cosmological test run at a = 0.2 (gas and dark matter, refined to level 8 where matter
-collapses), split for 16 ranks. Left, the refinement level in a slice through the finest cells;
-middle, the 16 Hilbert domains; right, the 16 bisection domains. Each holds the same share of the
-cells, so domains shrink where the cells are fine. Hilbert domains are pieces of one curve and
-interlock; bisection domains are boxes, cut along x, y and z in turn:
+The cosmological test run at a = 0.2, split for 16 ranks in both orderings Mera writes (section 10).
+Left: the refinement level in a slice through the finest cells. Middle: Hilbert domains, pieces of
+one curve that interlock. Right: bisection domains, boxes cut along x, y and z in turn. Domains are
+small where the cells are fine:
 
 ```julia
 COSMO3D = joinpath(RUNS, "cosmo3d_ncpu8")       # the cosmological test run, 8 CPUs, AMR levels 5 to 8
@@ -351,37 +342,32 @@ fig
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_12_1.png)
 
-White: the level is not refined there.
+White: not refined there.
 
 ### Ghost zones and box boundaries
 
-The hydro solver updates a cell from its neighbours, so at the border of its domain a rank needs
-cells it does not own. RAMSES keeps copies of them, the **ghost grids**, and the files store them.
-`repartition` builds them with RAMSES's own rules (`authorize_fine`, `refine_fine`,
-`make_boundary_flag`), level by level:
+`repartition` builds the ghost grids with RAMSES's own rules (`authorize_fine`, `refine_fine`,
+`make_boundary_flag`), level by level. A rank holds:
 
-| a rank holds | why |
+| what | why |
 |---|---|
-| every level-1 grid | RAMSES keeps the whole coarse level on every rank |
-| the grids it owns (their parent cell is on its stretch of the Hilbert curve) | its own work |
-| every grid within one cell of its own cells (two for MHD) | the solver's stencil reaches that far across the border |
-| the children of those grids, level by level | a ghost region is refined as its owner is |
-| boundary grids beyond physical walls | the stencil at a wall reads cells outside the box |
+| every level-1 grid | RAMSES keeps the coarse level on every rank |
+| the grids it owns (parent cell on its piece of the curve) | its own work |
+| every grid within one cell of its own cells (two for MHD) | the solver reaches that far across the border |
+| the children of those grids, level by level | a ghost region is refined like its owner |
+| boundary grids beyond physical walls | the solver at a wall reads cells outside the box |
 
-**A periodic box** is the default, when the namelist has no `&BOUNDARY_PARAMS`. The box then wraps
-around: the cells at x = 0 border the cells at x = 1, and the ghost layer continues across the face.
-The figure above shows it. In the level-4 panel, rank 2 owns cells at x < 0.5, and the orange strip
-at the right edge, x > 0.875, is ghost: those cells are its neighbours across the periodic face.
+**Periodic box** (the default, no `&BOUNDARY_PARAMS`): the box wraps around, and the ghost layer
+continues across the face. In the level-4 panel above, rank 2 owns x < 0.5; the orange strip at
+x > 0.875 is ghost, its neighbour across the periodic face.
 
-**Physical walls** (outflow, reflexive, imposed) are set in `&BOUNDARY_PARAMS`. RAMSES then
-makes the coarse grid larger than the box by one layer of coarse cells per wall, and each rank also
-holds **boundary grids** just outside the walls. They copy the refinement of the cell inside the
-wall, and their values are set by `make_boundary_hydro`: the value of that inside cell, with the
-normal velocity flipped at a reflexive wall and inflow suppressed at an outflow wall.
+**Physical walls** (outflow, reflexive, imposed; set in `&BOUNDARY_PARAMS`): RAMSES adds one layer
+of coarse cells outside each wall, and the ranks hold **boundary grids** there. They copy the
+refinement of the cell inside the wall. Their values come from `make_boundary_hydro`: the inside
+value, with the normal velocity flipped at a reflexive wall and inflow suppressed at an outflow wall.
 
-The Sedov run below has outflow walls on all six faces: its coarse grid is 3 × 3 × 3 cells and
-the box is the central one. Split over 3 ranks, each rank holds a third of the box, a ghost layer,
-and a layer of boundary grids along the walls it touches:
+The Sedov run below has outflow walls on all six faces: a 3 × 3 × 3 coarse grid with the box in the
+centre. On 3 ranks:
 
 ```julia
 OUTFLOW = joinpath(RUNS, "sedov3d_outflow_ncpu4")                 # 4 CPUs, outflow on all faces
@@ -438,18 +424,18 @@ fig
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_16_1.png)
 
-The black square is the box. Outside it, only the layer of boundary grids next to the walls
-exists, and rank 2 holds it where its own and ghost cells reach the walls. White: not refined.
+The black square is the box. Rank 2 holds boundary grids where its own and ghost cells reach the
+walls.
 
 ## 3. `repartition`: what it does, step by step
 
 | step | what | how | why |
 |---|---|---|---|
-| 1 | read the global octree | all old `amr_*` files, every grid once, with its position | the new split needs the whole tree, not one rank's piece |
-| 2 | new domains | the Hilbert curve cut into `ncpu` pieces of equal work (cells, and particles with `balance_particles=true`) | each rank then has the same load, and none exceeds `npartmax` |
-| 3 | each new rank's octree | own grids + ghost grids + boundary grids, with every pointer | RAMSES reads this, and nothing else, into memory |
-| 4 | the cell files | `hydro_*`, `grav_*`, `rt_*`: values copied bit for bit into the new grid order | no value is recomputed, so nothing can change |
-| 5 | particles and text files | each particle to the rank owning the finest cell around it; clump rows re-dealt; `info_*.txt` gets the new `ncpu` and domain table; files that do not depend on `ncpu` are copied | the rest of the output, consistent with the new split |
+| 1 | read the global octree | every old `amr_*` file | the new split needs the whole tree |
+| 2 | new domains | Hilbert curve cut into `ncpu` pieces of equal work (cells, plus particles with `balance_particles=true`) | equal load; no rank exceeds `npartmax` |
+| 3 | each rank's octree | own + ghost + boundary grids, with every pointer | this is what RAMSES loads |
+| 4 | cell files | `hydro_*`, `grav_*`, `rt_*` values copied bit for bit | nothing is recomputed |
+| 5 | particles and text files | each particle to the rank of its cell; clump rows re-dealt; `info_*.txt` gets the new domains; other files copied | the rest of the output |
 
 ```julia
 rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
@@ -472,17 +458,15 @@ RAMSES output repartitioned: ncpu 4 → 3
   14 files written in 0.8 s
 ```
 
-The report's last numbers go into the restart namelist: each rank must be allowed at least
-`ngridmax` grids (and `npartmax` particles). With fewer ranks each rank holds more.
+The report's last line goes into the restart namelist: `ngridmax` (and `npartmax`) per rank. Fewer
+ranks need more per rank.
 
 ## 4. Check 1: RAMSES's own files are reproduced
 
-If the method is right, it must reproduce what RAMSES wrote when it is given RAMSES's own
-decomposition. So each of the four original files is rebuilt from the global tree, with the
-original curve cuts, and compared with the RAMSES file. The comparison is index-free: every grid is
-identified by its level and position, and every pointer by the position it points to, so a
-different grid numbering is not counted as a difference. Grids, ghost zones, boundary grids,
-every pointer and the per-level counts must all match.
+Given RAMSES's own split, the method must rebuild RAMSES's own files. Each of the four files is
+rebuilt and compared with the original. Grids are matched by level and position, pointers by what
+they point to, so a different numbering does not count as a difference. Grids, ghosts, boundary
+grids, pointers and the counts per level must all match.
 
 ```julia
 # Every grid named by (level, list, position); every pointer by the position it points to.
@@ -536,8 +520,7 @@ rank  grids   grids   fathers  neighbours  children  owners
 4     705     yes     yes      yes         yes       yes
 ```
 
-The same check on the run with outflow walls: here the files also hold the boundary grids and
-their pointers, and they must match as well.
+The same on the run with outflow walls, boundary grids included:
 
 ```julia
 srco = joinpath(OUTFLOW, "output_00004")
@@ -567,17 +550,15 @@ rank  grids   boundary  grids   fathers  neighbours  children  owners
 4     29027   2450      yes     yes      yes         yes       yes
 ```
 
-Every rank's tree is rebuilt exactly. The same check passes for every run of the RAMSES validation suite, a
-16-level cosmological run on 16 CPUs and a galaxy simulation on 640 CPUs (section 13 gives time and memory for large outputs). The
-new decompositions are made by the same code, so they are what RAMSES itself would write with that
-number of ranks.
+Every rank is rebuilt exactly. The same holds for every run of the RAMSES validation suite, a
+16-level cosmological run on 16 CPUs and a galaxy run on 640 CPUs. New splits come from the same
+code, so they are what RAMSES would write.
 
 ## 5. Check 2: the values do not change
 
-[`compareramses`](@ref) compares two outputs written with any numbers of CPUs: the octree, every
-hydro, gravity and RT value (as a fraction of that variable's largest value) and every particle,
-matched by its identity. A converted output must hold exactly the same numbers, and so must an
-output taken to another rank count and back.
+[`compareramses`](@ref) compares two outputs with any rank counts: the octree, every hydro, gravity
+and RT value (relative to the variable's largest value) and every particle, matched by identity. A
+conversion, and a round trip, must give exactly zero:
 
 ```julia
 println(rpad("conversion", 22), rpad("same octree", 13), rpad("max |Δ| hydro", 15), "particles, max |Δx|")
@@ -607,19 +588,17 @@ dm_gas 4 → 7          yes          0.0e+00        30000, 0.0e+00
 4 → 3 → 4             yes          0.0e+00
 ```
 
-All differences are exactly zero: the values are copied, never recomputed.
+All zero: the values are copied, never recomputed.
 
 ## 6. Check 3: RAMSES reads the files exactly
 
-Identical files are necessary but not enough: RAMSES rebuilds ghost zones and communication
-tables when it reads them, and a wrong pointer or flag would only show up there. So RAMSES reads
-the converted files and writes its memory out again **before taking any step**. The same is done
-with the original files on the original 4 ranks, and the two dumps are compared.
+RAMSES rebuilds ghost zones and communication tables when it reads files, so a wrong pointer would
+show only there. The test: RAMSES reads the files and writes its memory out **before any step**,
+once from the converted files and once from the originals on 4 ranks. The two dumps are compared.
 
-RAMSES has no switch for this: after a restart it refuses to write an output before its first step
-(one test in `amr/output_amr.f90`). The dumps here come from a copy of RAMSES built with only that
-line disabled, started with `nstepmax` one step ahead and `foutput=1`, so it writes at the start of
-its first step, before any hydro, gravity or particle update.
+RAMSES has no switch for this: after a restart it refuses to write before its first step (one test
+in `amr/output_amr.f90`). The dumps come from a RAMSES build with that one line disabled, run with
+`nstepmax` one step ahead and `foutput=1`.
 
 ```julia
 # nstep_coarse of the restart output: nstepmax one ahead makes RAMSES stop after that dump
@@ -653,11 +632,8 @@ ranks   same time  same octree  every value identical
 8       yes        yes          yes
 ```
 
-RAMSES holds exactly the same state after reading the converted files as after reading its own,
-bit for bit, for every rank count. The RAMSES validation suite ran the same test on all 13 kinds
-of run, with
-particles, sinks, MHD and radiative transfer, on 1 to 8 ranks (the particle records and the sink
-table compared byte for byte as well):
+Identical, bit for bit, for every rank count. The RAMSES validation suite ran the same test on all
+13 kinds of run (particles, sinks, MHD, RT) on 1 to 8 ranks, particle and sink records included:
 
 ```julia
 # the suite's result file: one header line, then one run per line
@@ -698,16 +674,13 @@ stromgren3d_ncpu4         ✔ ✔ ✔ ✔ ✔ ✔ ✔ ✔
 
 ## 7. Check 4: RAMSES continues the run
 
-Now RAMSES runs. Two runs start from the same output 6: RAMSES's own restart on the original
-4 ranks, and the converted files on 3 ranks. Both advance over the **same interval**, from output 6
-at t = 7.72e-3 to output 7 at t = 9.91e-3 (13 time steps), and are compared at output 7. This is
-not a later time against the initial condition: it is the same evolution computed twice. If
-anything RAMSES read were wrong, the two evolutions would drift apart.
+Two runs from output 6: RAMSES's own restart on 4 ranks, and the converted files on 3 ranks. Both
+run to output 7 (13 steps) and are compared there. Had RAMSES read anything wrong, they would drift
+apart.
 
-They cannot be expected to agree bit for bit, and this is RAMSES, not the files: sums over ranks
-(the time step, the gravity solver) are added in a different order on a different number of
-ranks, and RAMSES converts velocity to momentum and back when it reads and writes. The last check
-of this section measures that floor on RAMSES alone.
+They cannot agree bit for bit. On another number of ranks RAMSES adds its sums (time step, gravity)
+in another order, and it converts velocity to momentum and back. The end of this section measures
+that floor on RAMSES alone.
 
 ```julia
 # the converted output, in its own run directory, with a namelist sized for 3 ranks
@@ -747,9 +720,9 @@ fig
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_31_1.png)
 
-The two runs agree to machine precision everywhere: RAMSES cannot tell the converted output from
-its own. Particles are the stricter test, because gravity couples every particle to the whole mass
-distribution. The run with 30,000 dark-matter particles, converted to 7 ranks and continued:
+Machine precision everywhere: RAMSES cannot tell the converted files from its own. Particles are a
+stricter test, because gravity couples each particle to all the mass. The run with 30,000
+dark-matter particles, converted to 7 ranks:
 
 ```julia
 run7 = joinpath(WORK, "check2_dm_gas_4_7")
@@ -770,9 +743,8 @@ same octree: true,  particles matched by identity: 30000
 largest difference: hydro 8.5e-15, gravity 1.2e-14, particle position 5.6e-16 boxlen
 ```
 
-**What RAMSES itself gives.** The same comparison without Mera in between: the Sedov run computed
-by RAMSES from the start on 4 and on 8 CPUs, and a run restarted on its own 4 CPUs against the same
-run without interruption.
+**RAMSES alone, for comparison:** the Sedov run on 4 and on 8 CPUs from the start, and a restart on
+its own 4 CPUs against the uninterrupted run:
 
 ```julia
 floorcmp = [("RAMSES from t = 0 on 4 vs 8 CPUs, output 7",
@@ -794,9 +766,8 @@ RAMSES uninterrupted vs restarted, both on 4 CPUs         same    1.1e-15
 converted to 3 CPUs, restarted, vs RAMSES restart on 4    same    7.6e-16
 ```
 
-The RAMSES validation suite ran the same check on every kind of run Mera reads. The table is its
-own result file; the "reference" is either RAMSES's restart on the original rank count or the
-original uninterrupted run.
+The RAMSES validation suite, every kind of run. The reference is RAMSES's own restart, or the
+uninterrupted run:
 
 ```julia
 println(rpad("run", 28), rpad("CPUs", 8), rpad("octree", 8), rpad("hydro", 8), rpad("grav", 8),
@@ -831,36 +802,30 @@ mhdtube3d_ncpu4             4 → 5   same    2e-13   –       –       0e+00
 stromgren3d_ncpu4           4 → 6   same    0e+00   –       0e+00   0e+00
 ```
 
-Every run continues with the same octree and round-off differences. Two things continue only
-statistically, by design: **stochastic star formation** and **Monte-Carlo tracers** draw random
-numbers from seeds that depend on the rank count, exactly as when RAMSES itself changes the
-number of ranks between runs. That row of the table (`starform3d`) is a different random
-realization, not an error; only a change inside RAMSES, seeding per cell or per particle instead
-of per rank, could make it repeat exactly.
+Same octree and round-off everywhere, except **stochastic star formation** (and Monte-Carlo
+tracers): their random seeds depend on the rank count, as when RAMSES itself changes it.
+`starform3d` is another random realization, not an error.
 
 ## 8. From Mera data and mera files: `writeramses`
 
-Mera keeps the **leaf cells** (the finest cell at each place) with all their variables, plus the
-particles and sinks. A restart needs more: the whole octree, the values of the refined (parent)
-cells, and a few header numbers. [`writeramses`](@ref) rebuilds them:
+Mera keeps the **leaf cells** (the finest cell at each place), the particles and the sinks. A
+restart also needs the whole octree, the refined (parent) cells and some header values.
+[`writeramses`](@ref) rebuilds them:
 
-| needed by RAMSES | in Mera | how it is obtained |
+| RAMSES needs | Mera has | how |
 |---|---|---|
-| the octree | leaf cells with level and position | every leaf implies all its ancestors: rebuilt exactly |
-| leaf values | all variables, code units | copied |
-| refined-cell values, hydro | not stored | average of the 8 children, bottom up, exactly as RAMSES's `upload_fine`: mass and momentum, and internal energy (for `interpol_var` 1 or 2, else total energy) |
-| refined-cell values, gravity | kept with `getgravity(info; parents=true)` | RAMSES solves gravity on each level, so these are not averages: they are stored as they are |
+| the octree | leaves with level and position | each leaf implies its ancestors: exact |
+| leaf values | all variables | copied |
+| refined hydro cells | not stored | average of the 8 children, as RAMSES's `upload_fine` (internal energy for `interpol_var` 1 or 2, else total energy) |
+| refined gravity cells | `getgravity(info; parents=true)` | stored as RAMSES wrote them: gravity is solved per level, not averaged |
 | ghost and boundary grids, pointers | not stored | built as in `repartition` |
-| time, per-level time steps, energy bookkeeping | `info.grid_info.amr_header` | copied (saved in mera files since Mera 1.8.0) |
+| time, time steps per level, energies | `info.grid_info.amr_header` | copied (in mera files since Mera 1.8.0) |
 
 ### Is the data complete?
 
-A restart needs **every** cell of the box, every level and variable, every particle. A subregion
-can never become a restart of the same simulation: the missing volume has no data.
-[`restart_completeness`](@ref) proves completeness from the data itself, not from what the user
-says was loaded, and `writeramses` refuses incomplete data. The most important test is exact
-**coverage**: the leaves, counted in units of the finest cell, must fill the box exactly, in
-integer arithmetic.
+A restart needs every cell, level, variable and particle; a subregion cannot become a restart.
+[`restart_completeness`](@ref) checks this from the data itself, and `writeramses` refuses
+incomplete data. The key test: the leaves must fill the box exactly, counted in integers.
 
 ```julia
 di   = getinfo(4, DMGAS, verbose=false)
@@ -922,9 +887,8 @@ one cell removed              NO        full coverage, gravity cells
 
 ### Through a mera file, back to RAMSES
 
-The complete data is saved as a mera file, loaded again as a user without the RAMSES output would,
-and written as a 3-CPU RAMSES output. Its leaves must equal the original's exactly, the rebuilt
-hydro parents must equal the ones RAMSES stored, and the stored gravity parents travel in the file.
+Save the complete data as a mera file, load it again, write it for 3 CPUs. The leaves must equal the
+original, the rebuilt hydro parents must equal RAMSES's, and the gravity parents come from the file:
 
 ```julia
 mf = mkpath(joinpath(WORK, "merafile"))
@@ -957,12 +921,10 @@ gravity parents in the mera file: 7494 cells; all gravity cells, largest differe
 
 ### What RAMSES makes of it
 
-The output written from the mera file, restarted on 3 ranks, against RAMSES's own restart. For
-comparison, the same data is also written with the gravity parents rebuilt as averages of their
-children, as from a mera file saved without `parents=true`. The comparison uses the **leaf
-cells**, the cells that carry the solution. Some values RAMSES stores in refined cells are never
-updated after a restart (the coarse levels of a uniform grid, for example), so they say nothing
-about the run.
+The output from the mera file, restarted on 3 ranks, against RAMSES's own restart. For contrast, the
+same with averaged gravity parents, as from a mera file saved without `parents=true`. Only leaf cells
+are compared: some refined values are never updated after a restart (for example the coarse levels
+of a uniform grid).
 
 ```julia
 restart_namelist(joinpath(DMGAS, "dm_gas3d.nml"), joinpath(runm, "run.nml");
@@ -1014,37 +976,31 @@ gravity parents as stored  largest |Δρ|/ρ in this slice: 1.2e-14
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_45_3.png)
 
-With the gravity parents as stored, RAMSES continues to round-off. With averaged ones the octree is
-the same, but the gas differs by up to `5e-5` in the refined region around the centre, and the
-potential by `3e-6`.
+Stored gravity parents: round-off. Averaged ones: the gas differs by up to `5e-5` around the
+centre, the potential by `3e-6`.
 
-The reason is how RAMSES computes gravity. It solves the Poisson equation on every level
-separately and keeps each level's potential in its refined cells. After a restart it starts its
-next solve from those, and stops once it meets its tolerance. The average of the children differs
-from RAMSES's own coarse potential by 0.3 to 0.6 % on the levels it solves; starting from there,
-the solver converges to an answer that differs within its tolerance, and the gas follows the
-gravity. `getgravity(info; parents=true)` keeps the stored values (in the object's
-`used_descriptors[:parents]`, so they are saved in mera files), and `writeramses` writes them back.
+Why: RAMSES solves gravity on each level and keeps each level's potential in the refined cells.
+After a restart it starts from those and stops at its tolerance. Averages differ from RAMSES's own
+coarse potential by 0.3 to 0.6 %, so the solver stops at another answer, and the gas follows.
+`getgravity(info; parents=true)` keeps the stored values (in `used_descriptors[:parents]`, saved in
+mera files), and `writeramses` writes them back.
 
 The hydro parents need no storing. With `interpol_var` 1 or 2, RAMSES averages the children's
-**internal** energy into the parent and adds the parent's own kinetic energy
-(`hydro/interpol_hydro.f90`, `upl`). `writeramses` does the same, so the rebuilt parents equal
-RAMSES's to `1e-16` (the mera-file cell above). Averaging the total energy instead leaves the
-parent too hot by the kinetic energy of the velocity differences inside it; that alone cost `2e-4`
-after a restart of the AMR Sedov run.
+**internal** energy and adds the parent's kinetic energy (`upl` in `hydro/interpol_hydro.f90`).
+`writeramses` does the same, so the parents match to `1e-16`. Averaging the total energy instead
+makes the parent too hot; that cost `2e-4` after a restart of the AMR Sedov run.
 
-When the RAMSES files still exist, `repartition` is the exact route. `writeramses` is for the
-case where only Mera data is left. Section 11 restarts RAMSES from mera files of every kind of run.
+With the RAMSES files, use `repartition`, the exact route. `writeramses` is for when only Mera data
+is left. Section 11 restarts RAMSES from mera files of every kind of run.
 
 ## 9. Mera files written before 1.8.0
 
-Mera stores the amr header (exact time, per-level time steps, step counters) in
-`info.grid_info.amr_header` since 1.8.0, and the gravity parents when they are loaded with
-`parents=true`. For an older file, `writeramses` reads it from the original
-simulation if that still exists at the recorded path, and the result is the same as from a new
-file. If the simulation is gone, it writes the files anyway and warns: the per-level time steps are
-then unknown, and RAMSES needs them to advance gravity and particles. What that costs, measured
-here by removing the header, the gravity parents and the simulation path from freshly loaded data:
+Since 1.8.0 a mera file stores the amr header (exact time, time steps per level, step counters), and
+the gravity parents when loaded with `parents=true`. For an older file `writeramses` takes the header
+from the original simulation if it still exists, with the same result. If the simulation is gone, it
+writes anyway and warns: the time steps per level are then unknown, and RAMSES needs them for
+gravity and particles. The cost, measured by removing the header, the gravity parents and the
+simulation path:
 
 ```julia
 oldruns = [("sedov3d_amr_lb_ncpu4", 6), ("clumps3d_ncpu4", 3), ("sedov3d_grav_part_ncpu4", 6), ("dm_gas3d_ncpu4", 4)]
@@ -1091,14 +1047,12 @@ dm_gas3d_ncpu4            header and parents            same    7e-15    8e-15  
 dm_gas3d_ncpu4            old file, simulation gone     DIFF    3e-02    4e-02    1e-03
 ```
 
-Hydro runs restart as well without the header. Runs with gravity lose round-off (the gravity
-parents are averages), and a run with many particles more: the first particle step uses the wrong
-time step, the octree changes and the state deviates by a few per cent. Such a file is only safe
-after `upgrade_merafile`.
+Hydro runs are fine without the header. With gravity the differences grow (averaged parents). With
+many particles the first step uses a wrong time step, the octree changes and the results differ by
+a few per cent. Upgrade such files first.
 
-`upgrade_merafile` adds the header, and the gravity parents of complete gravity data, to an old
-file while its simulation still exists, and saves it again through a temporary file, so an
-interrupted upgrade never damages the original:
+`upgrade_merafile` adds the header and the gravity parents to an old file while its simulation still
+exists. It saves through a temporary file, so an interrupted upgrade cannot damage the original:
 
 ```julia
 upgrade_merafile(250, "/merafiles")                               # simulation at the recorded path
@@ -1109,14 +1063,12 @@ upgrade_merafile(250, "/merafiles"; simulation="/new/place/sim")  # simulation m
 
 ### Bisection ordering
 
-Instead of cutting the Hilbert curve, RAMSES can cut the box itself (`ordering='bisection'`): a
-node of a binary tree holding n ranks is split by a wall into a part for n÷2 ranks and one for the
-rest, along x, y and z in turn. The amr files store the tree, the info file each rank's box. For
-such an output `repartition` reads the tree, rebuilds each rank's files from it (a ghost cell is
-one that touches the rank's box), and builds a new balanced tree for another rank count, or
-converts to the Hilbert ordering. The restart namelist must name the ordering of the files.
+With `ordering='bisection'` RAMSES cuts the box instead of the curve: a wall splits n ranks into n÷2
+and the rest, along x, y and z in turn. The amr files store this tree. `repartition` rebuilds each
+rank's files from it (a ghost cell touches the rank's box), builds a new balanced tree for another
+rank count, or converts to Hilbert. The restart namelist must name the ordering.
 
-The Sedov run again, now with bisection on 4 ranks from the start:
+The Sedov run with bisection on 4 ranks from the start:
 
 ```julia
 bis = joinpath(WORK, "sedov_bisection"); mkpath(bis)
@@ -1156,15 +1108,13 @@ new ranks   ordering    octree  hydro after one output
 3           hilbert     same    9e-16
 ```
 
-Each restart namelist is the run's own with `ordering='bisection'` added where the files use it;
-the Hilbert one needs no line (the default). Mera reads bisection outputs too: they list no
-Hilbert walls, so its readers then read every file.
+Add `ordering='bisection'` to the namelist where the files use it; Hilbert is the default. Mera
+also reads bisection outputs (it then reads every file).
 
 ### IO groups
 
-With `IOGROUPSIZEREP = n` RAMSES writes the files of every n ranks into one folder `group_GGGGG`,
-and the files written once per output into `group_00001`. `repartition` and `writeramses` read
-such outputs and write them with `iogroupsize = n`:
+With `IOGROUPSIZEREP = n` RAMSES puts the files of every n ranks into one folder `group_GGGGG`.
+`repartition` and `writeramses` read such outputs and write them with `iogroupsize = n`:
 
 ```julia
 grp = joinpath(WORK, "sedov_groups")
@@ -1184,27 +1134,29 @@ group_00003: amr_00006.out00005
 every value kept: true
 ```
 
-In the RAMSES version used here, `IOGROUPSIZEREP` is set when RAMSES is compiled
-(`amr/amr_parameters.f90`), so a grouped output restarts only with a build of the same value. Two
-quirks of that version are handled or worth knowing. It looks for `output_N/info_N.txt` before a
-restart even with groups, so the writer puts a copy there. And it creates only the `group_00001`
-folder of its next output, so the other group folders must exist before it writes one. With a
-build for `IOGROUPSIZEREP = 2`, grouped outputs from `repartition` and from `writeramses`
-restarted on 3 ranks to round-off (hydro `8e-16` for the AMR Sedov run; hydro `7e-15`, gravity
-`8e-15`, particles `5e-16` box lengths for the run with gravity and particles).
+In the RAMSES version used here `IOGROUPSIZEREP` is fixed at compile time (`amr/amr_parameters.f90`),
+so a grouped output restarts only with a build of the same value. Two quirks of that version:
+
+- it looks for `output_N/info_N.txt` even with groups, so the writer puts a copy there;
+- it creates only the `group_00001` folder of its next output, so the other group folders must exist
+  before it writes.
+
+With a build for `IOGROUPSIZEREP = 2`, grouped outputs from both writers restarted on 3 ranks to
+round-off (hydro `8e-16` for the AMR Sedov run; hydro `7e-15`, gravity `8e-15`, particles `5e-16`
+box lengths for the run with gravity and particles).
 
 ### Older RAMSES versions
 
-Outputs from before 2018 differ in several ways, and each is handled:
+Outputs from before 2018 differ, and each difference is handled:
 
 | what | how it is handled |
 |---|---|
-| no `namelist.txt` | walls read from the boundary grids in the amr files; wall type (outflow or reflexive) and ghost width (one or two cells) chosen by which rebuilds rank 1's file exactly, else they stop and ask for the namelist; `interpol_var` taken from the stored parent cells |
-| no hydro descriptor | the variable layout Mera detects (for MHD: face fields at 5 to 10, pressure at 11) |
+| no `namelist.txt` | walls read from the boundary grids in the amr files; wall type and ghost width chosen so that rank 1's file is rebuilt exactly (if none fits, the namelist is asked for); `interpol_var` from the stored parent cells |
+| no hydro descriptor | the variable layout Mera detects (MHD: face fields at 5 to 10, pressure at 11) |
 | particle files without `part_file_descriptor.txt` | read and written in their legacy layout, metallicity included |
 | gravity files with the forces only | read as `[:ax, :ay, :az]` |
 
-A cosmological run from such a version, 16 ranks, 1.09 million particles, loaded with Mera and
+A cosmological run from such a version (16 ranks, 1.09 million particles), loaded with Mera and
 written back:
 
 ```julia
@@ -1228,41 +1180,33 @@ complete: true
 octree same; all cells, largest difference: hydro 6e-17, gravity 0e+00; particles 1090895 of 1090895, position 0e+00
 ```
 
-Every cell, refined ones included, and every particle equal the original. Legacy stars are
-numbered apart from dark matter, so `compareramses` matches them by identity and kind.
+Every cell and every particle equals the original. Legacy stars are numbered apart from dark
+matter, so `compareramses` matches them by identity and kind.
 
 ## 11. Every kind of run, every route
 
-Two tests, on every kind of data Mera reads. First the files: every public test simulation goes
-through every route, and each written output is compared with the original. Then RAMSES: it
-restarts from mera files of every kind of run, and the result is compared with its own restart.
+Two tests on every kind of data: first the written files, then RAMSES restarting from mera files.
 
 ### The files
 
-Mera's public test simulations cover every kind of data Mera reads. Each goes through six routes:
-`repartition` of its RAMSES files to Hilbert ordering on 3 ranks, to bisection on 5 ranks and to IO
-groups, and the same three with `writeramses`, from its Mera data saved as a mera file and loaded
-back. RAMSES does not run here: every written output is compared with the original, file content
-against file content. RAMSES runs in the next part.
+Each public test simulation goes through six routes: `repartition` to Hilbert on 3 ranks, to
+bisection on 5 ranks and to IO groups, and the same three with `writeramses` from a mera file.
+RAMSES does not run here; the files are compared with the original.
 
 How to read the table:
 
-- **repartition** and **mera file: leaves**: the largest difference from the original over every
-  variable, particle and sink, relative to each variable's largest value. Zero means a bit-for-bit
-  copy, so not even a faint region can hide an error.
-- **refined cells, local**: `writeramses` rebuilds the refined cells from their children, so they
-  carry round-off. Each is compared with the size of the numbers averaged into it, the cell and its
-  8 children, so an error would show even in a faint cell. For the pressure that size includes the
-  kinetic and magnetic energy density (times γ − 1), because RAMSES stores the total energy and the
-  pressure is what remains after those two are taken off.
-- **–**: RAMSES does not keep these cells as averages of their children, so there is nothing to
-  compare with. On a uniform grid RAMSES never updates the cells below `levelmin`, and with
-  `static_gas=.true.` (`clumps3d`) it never evolves the gas. Only the leaves carry the solution
-  there, and the restarts below show that such runs continue to round-off.
+- **repartition**, **mera file: leaves**: the largest difference over every variable, particle and
+  sink, relative to the variable's largest value. Zero is a bit-for-bit copy.
+- **refined cells, local**: rebuilt cells carry round-off. Each is compared with the size of what was
+  averaged into it (the cell and its 8 children), so an error would show even in a faint cell. For
+  the pressure that size includes (γ − 1) times the kinetic and magnetic energy density, because
+  the pressure is the total energy minus those two.
+- **–**: RAMSES keeps no averages here. On a uniform grid it never updates the cells below
+  `levelmin`; with `static_gas=.true.` (`clumps3d`) the gas never evolves. The restarts below show
+  that these runs continue to round-off.
 
-Outputs in IO groups are first repartitioned to plain files, because Mera's readers expect those.
-The test suite runs the same matrix (`test/86_ramses_writer_tests.jl`) and also rebuilds every
-rank's file of each simulation exactly as RAMSES wrote it.
+IO-group outputs are first converted to plain files for Mera's readers. The test suite
+(`test/86_ramses_writer_tests.jl`) runs the same matrix and also rebuilds every rank's files.
 
 ```julia
 PUBLIC = joinpath(get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests"), "RAMSES-PUBLIC")
@@ -1377,9 +1321,8 @@ sedov3d_iogroups      RAMSES IO-group output      0          0          0       
 
 ### RAMSES restarts from a mera file
 
-Every kind of run, saved as a mera file, written in both orderings and restarted by RAMSES (with
-its MHD and RT builds where needed), against RAMSES's own restart on the original ranks: leaf
-cells, one output later. The gravity is loaded with `parents=true` (section 8).
+Every kind of run: saved as a mera file, written in both orderings, restarted by RAMSES, compared
+with RAMSES's own restart (leaf cells, one output later). The gravity is loaded with `parents=true`:
 
 ```julia
 RAMSES_MHD = get(ENV, "MERA_RAMSES_MHD_BIN", "/Volumes/FASTStorage/projects/RamsesConverter/build/mhd/bin/ramses3d_mhd")
@@ -1487,24 +1430,20 @@ fig
 |---|---|---|
 | hydro on AMR or uniform grids, with physical walls | round-off | the rebuilt parents are RAMSES's own |
 | with self-gravity, particles, sinks or clumps | round-off (gravity `1e-11` or better) | the gravity parents are kept as stored (`parents=true`) |
-| MHD and radiative transfer | round-off | the MHD and RT rules below |
+| MHD and radiative transfer | round-off | the two rules below |
 | cosmological (gas, dark matter, gravity, AMR) | round-off | the exact amr header carries the expansion factor and its time steps |
 | stochastic star formation | statistical | random seeds depend on the rank count |
 
-Hilbert and bisection give the same result: the ordering only decides which rank holds which
-cell. Two rules make the MHD and RT parents RAMSES's own. An MHD parent takes each face field from
-the four children on that face. A photon density is written as the speed of light times the
-density, and RAMSES sets that speed to zero below `levelmin`, so those parents are zero; their
-fluxes are averages, like every other parent.
+Hilbert and bisection give the same result; the ordering only decides which rank holds which cell.
+The two rules: an MHD parent takes each face field from the four children on that face; photon
+densities are zero below `levelmin`, because RAMSES sets the light speed to zero there, and their
+fluxes are averaged like every other parent.
 
 ### Where an error would show
 
-A number per run can say that something differs, not where. The bug a converter is most likely to
-have is a wrong ghost cell or pointer at the border between two ranks, and that would show up
-along those borders. The maps below are the local relative difference |Δρ|/ρ between the restart
-from the mera file and RAMSES's own restart, one output later, in a slice. The black dots mark the
-borders between the ranks of the files RAMSES restarted from. Three hard cases: the cosmological
-run in bisection ordering, the MHD tube and the radiative-transfer run.
+A converter's most likely bug is a wrong ghost cell or pointer at a rank border, so it would show
+along those borders. The maps show |Δρ|/ρ between the restart from the mera file and RAMSES's own,
+one output later; black dots mark the rank borders. Three hard cases:
 
 ```julia
 # The leaf cell under each pixel for any box, also with wall layers (coarse cells around the box).
@@ -1566,34 +1505,29 @@ radiative transfer, bisection, 5 ranks     largest |Δρ|/ρ in the slice 0.0e+0
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_65_4.png)
 
-The differences are round-off without structure, or exactly zero, and nothing lines up with the
-rank borders: the converted files give RAMSES the same ghost cells and neighbours as its own.
+Round-off without structure, or zero, and nothing along the rank borders.
 
 ## 12. When results differ, and by how much
 
-Every route on this page either copies values or computes them the way RAMSES does. So a
-difference can come from only a few places. This table collects them, with the largest value
-measured on this page:
+Every route copies values or computes them as RAMSES does, so differences come from few places:
 
 | where | largest difference | why |
 |---|---|---|
-| `repartition`: every cell, particle and sink | 0 | values are copied byte for byte (sections 5 and 11) |
-| `writeramses`: leaf cells, particles, sinks | 0 | copied (sections 8 and 11) |
-| `writeramses`: refined hydro, MHD and RT cells | `1e-15` of the averaged values | rebuilt with RAMSES's own rules; only the order of the additions differs (section 11) |
-| RAMSES continuing from converted files | `1e-15` (hydro) to `2e-11` (gravity) | sums over ranks are added in another order on another number of ranks, and the gravity solver stops once it meets its tolerance, so it ends at a slightly different, equally valid answer (sections 7 and 11) |
-| stochastic star formation, Monte-Carlo tracers | statistical | random seeds depend on the rank count, as when RAMSES itself changes it (section 7) |
+| `repartition`: every cell, particle and sink | 0 | copied (§5, §11) |
+| `writeramses`: leaf cells, particles, sinks | 0 | copied (§8, §11) |
+| `writeramses`: refined hydro, MHD and RT cells | `1e-15` of the averaged values | RAMSES's rules; only the order of the additions differs (§11) |
+| RAMSES continuing from converted files | `1e-15` (hydro) to `2e-11` (gravity) | sums are added in another order on another rank count; the gravity solver then stops at a slightly different answer within its tolerance (§7, §11) |
+| stochastic star formation, Monte-Carlo tracers | statistical | random seeds depend on the rank count (§7) |
 
-Two cases give larger differences. Both depend on how the data was loaded, and both are avoided:
+Two avoidable cases give more:
 
 | case | difference | how to avoid it |
 |---|---|---|
-| gravity loaded without `parents=true` | gas `5e-5`, potential `3e-6` | `getgravity(info; parents=true)` (section 8) |
-| mera file from before 1.8.0 whose simulation is gone | up to a few per cent in a run with many particles | `upgrade_merafile` while the simulation still exists (section 9) |
+| gravity loaded without `parents=true` | gas `5e-5`, potential `3e-6` | `getgravity(info; parents=true)` (§8) |
+| mera file from before 1.8.0 whose simulation is gone | up to a few per cent with many particles | `upgrade_merafile` while the simulation still exists (§9) |
 
-**Is that small enough?** The yardstick is RAMSES itself. When RAMSES restarts its own output on its
-own ranks, the run does not continue bit for bit either. The next cell measures this over the same
-interval as the restarts in section 11 (RAMSES's restart against the run that never stopped, one
-output later), and puts it next to the restart from a mera file:
+**Is that small enough?** Compare with RAMSES restarting its own output on its own ranks, over the
+same interval, against the run that never stopped:
 
 ```julia
 # What RAMSES gives by itself: its own restart on the original ranks against the run that never
@@ -1631,45 +1565,36 @@ cosmo3d_ncpu8           cosmological: gas, DM, gravity  6e-12             9e-14 
 starform3d_ncpu4        stochastic star formation       1e-01             6e-15
 ```
 
-Hydro, MHD and RT runs continue from the converted files as closely as RAMSES continues from its
-own files: about `1e-15`, the precision of the numbers themselves.
+**Hydro, MHD and RT:** about `1e-15`, as close as RAMSES gets to itself.
 
-Runs with gravity differ more after a change of rank count, up to `2e-11`, while RAMSES restarting
-on its own ranks stays near `1e-14`. This comes from RAMSES, not from the files. Section 6 showed
-that RAMSES holds the same state, bit for bit, after reading the converted files as after reading
-its own. What changes is the number of ranks, and with it the order in which the gravity solver adds
-its sums. The solver stops once its error is below `epsilon` (`1e-4` in these namelists), so a
-different rounding can stop it at a slightly different answer. `2e-11` is seven orders of magnitude
-below that tolerance.
+**Gravity:** up to `2e-11` after a change of rank count, against about `1e-14` for RAMSES on its own
+ranks. This comes from RAMSES: section 6 showed that it holds the same state after reading either
+files. On other ranks the gravity solver adds its sums in another order and stops at its tolerance
+(`epsilon = 1e-4` here) at a slightly different answer. `2e-11` is seven orders of magnitude below
+that tolerance.
 
-The star-formation run shows the same thing more plainly. On its own ranks RAMSES draws the same
-random numbers again (`1e-15`); on other ranks it draws other ones, and stars form in other cells.
+**Star formation:** on its own ranks RAMSES draws the same random numbers again (`1e-15`); on other
+ranks it draws other ones.
 
-So every difference on this page is zero, round-off, or what RAMSES itself does when the number of
-ranks changes. None comes from the conversion.
+So every difference is zero, round-off, or what RAMSES itself does when the rank count changes.
 
 ## 13. Large outputs: time and memory
 
-`repartition` keeps the octree in memory, once, and the local tree of each new rank while it writes
-that rank's files. It never loads the values. The old hydro, gravity and RT files are mapped into
-memory, so the operating system reads each block from disk when a new file needs it, in large
-reads, and can drop it again at any time. So the memory grows with the number of grids, not with
-the size of the output.
+`repartition` holds the octree in memory once, plus the tree of the rank it is writing. It never
+loads the values: the old files are mapped into memory, and the system reads blocks as needed. So
+the memory grows with the number of grids, not with the size of the output.
 
-Two things make an output large, and each costs in its own way:
+What makes an output large:
 
-- **many grids**: the octree takes about 110 bytes per grid, and the other tables about as much again;
-- **many ranks**: every amr, hydro and gravity file holds a few small records for every list of every
-  rank, so with thousands of ranks the files are mostly such records. `repartition` reads the list
-  sizes from the amr files and never reads the records themselves.
+- **many grids**: about 110 bytes per grid for the octree, and as much again for other tables;
+- **many ranks**: every file holds small records for every list of every rank, so with thousands of
+  ranks the files are mostly these records. `repartition` takes the list sizes from the amr files
+  and skips the records.
 
-The table comes from `benchmark_results/ramses_conversion.jl` in the Mera repository, run on this
-laptop (8 threads, 32 GB RAM, the data on an external USB disk). The first rows take the public
-cosmological run to thousands of ranks and back; the others are large production runs. Each step ran
-in its own process. "Peak memory" is the largest memory the process used (macOS's peak memory
-footprint), without the file pages the system can drop. "Identical" means every cell, particle and
-sink is bit for bit the same as in the original output; from Mera data the refined cells are
-rebuilt, so their round-off is listed instead.
+The table comes from `benchmark_results/ramses_conversion.jl`, run on this laptop (8 threads, 32 GB
+RAM, data on a USB disk), each step in its own process. Peak memory: macOS's peak memory footprint,
+without file pages the system can drop. Identical: every cell, particle and sink bit for bit; for
+Mera data the round-off of the refined cells is shown instead.
 
 ```julia
 # the benchmark's result file, read like the suite's (an absolute path passes through joinpath)
@@ -1700,36 +1625,32 @@ manu_sim_sf_L14       14.1 GB  7.2M       2048 → 256   repartition            
 L13_SN5_CD_only       54.2 GB  25.1M      5120 → 512   repartition              669 s    6.3 GB       yes
 ```
 
-- **Every value is kept**, also on the way to 4096 ranks and back, and on the 54 GB output.
-- **Memory grows with the grids**: 1.9 GB for 4 million grids, 2.3 GB for 7 million, 6.3 GB for
-  25 million, so about 0.25 GB per million grids plus 0.5 GB for Julia and Mera. The 54 GB output is
-  larger than the 32 GB of memory of this laptop; it does not need to fit.
-- **Time is set by the disk.** The 54 GB output is read and 27 GB are written in 11 minutes, about
-  120 MB/s together on this USB disk. A faster disk gives a faster conversion.
-- **Many ranks cost disk space, not memory.** At 4096 ranks the 20 MB of the cosmological run
-  become an 8.5 GB output, because RAMSES's format has those small records for every list of every
-  rank. Most of the 110 s go to writing them; reading the output back takes 25 s.
-- **`writeramses` needs the data in memory.** It starts from Mera data, which holds every leaf cell,
-  and rebuilds the refined cells from them, so its memory grows with the data, like loading it with
-  Mera. For a large run whose RAMSES files still exist, `repartition` is the route that streams.
-- **At production scale.** The gallery recipe
+- **Every value is kept**, also to 4096 ranks and back, and for the 54 GB output.
+- **Memory follows the grids**: 1.9 GB for 4 million grids, 2.3 GB for 7 million, 6.3 GB for 25
+  million; about 0.25 GB per million grids plus 0.5 GB. The 54 GB output does not need to fit in the
+  laptop's 32 GB.
+- **Time follows the disk**: the 54 GB output is read and 27 GB are written in 11 minutes, about
+  120 MB/s on this USB disk.
+- **Many ranks cost disk, not memory**: at 4096 ranks the 20 MB cosmological run becomes 8.5 GB,
+  mostly per-list records. Writing them takes most of the 110 s; reading back takes 25 s.
+- **`writeramses` holds the data in memory**, like loading it with Mera. For a large run whose
+  RAMSES files exist, `repartition` streams.
+- **Production scale**: the gallery recipe
   [Rewriting a RAMSES output for any number of CPUs](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/005_ramses_any_rank_count)
-  runs both routes on a server with 16 threads, on a galaxy output of 197 million leaf cells
-  (28 million grids, 58 GB on 5120 ranks). `repartition` writes it for 512, 5120 and 10240 ranks in
-  1.5, 4.5 and 13 minutes, with at most 10.5 GB of memory. `writeramses` starts from the 16 GB mera
-  file, which takes 33 GB in memory, and needs 5 to 15 minutes and 67 to 73 GB with the loaded data.
-  Every leaf cell comes out bit for bit the same on both routes.
+  runs both routes on a 58 GB galaxy output (197 million leaf cells, 28 million grids, 5120 ranks)
+  with 16 threads. `repartition` to 512, 5120 and 10240 ranks: 1.5, 4.5 and 13 minutes, at most
+  10.5 GB. `writeramses` from the 16 GB mera file (33 GB loaded): 5 to 15 minutes, 67 to 73 GB with
+  the data. Every leaf cell is identical on both routes.
 
 ## 14. In short
 
-The functions and their calls are under [At a glance](#At-a-glance). Before the restart:
+Functions and calls: [At a glance](#At-a-glance). Before the restart:
 
-- **Namelist**: set `ngridmax` and `npartmax` from the report (`ngridmax_needed`, `npart_max`); add
+- **Namelist**: `ngridmax` and `npartmax` from the report (`ngridmax_needed`, `npart_max`);
   `ordering='bisection'` if the new files use it.
-- **IO groups**: grouped files need a RAMSES build with the same `IOGROUPSIZEREP`.
+- **IO groups**: a RAMSES build with the same `IOGROUPSIZEREP`.
 - **Start**: `mpirun -np ncpu ramses3d run.nml output`, in the folder given as `outpath`.
-- **Refused**: `writeramses` refuses incomplete data, and a cosmological run from a mera file saved
-  before Mera 1.8.0 whose simulation is gone, because its expansion history is unknown
-  (`force=true` writes it anyway).
-- **Random numbers**: stochastic star formation and Monte-Carlo tracers continue statistically, not
-  exactly, as when RAMSES itself changes the number of ranks.
+- **Refused**: incomplete data, and a cosmological run from a mera file saved before Mera 1.8.0
+  whose simulation is gone, because its expansion history is unknown (`force=true` writes it anyway).
+- **Random numbers**: stochastic star formation and Monte-Carlo tracers continue statistically, as
+  when RAMSES itself changes the rank count.
