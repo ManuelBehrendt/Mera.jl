@@ -12,12 +12,58 @@
 
 
 RAMSES writes one file per MPI rank, and it restarts only with the number of ranks that wrote
-the output. Mera can rewrite an output for any other number, in two ways:
+the output ([section 1](#1.-Why-this-is-needed)). Mera rewrites an output for any other number of ranks.
 
-| you have | use | result |
+## At a glance
+
+**You still have the RAMSES output.** Rewrite it for the new number of ranks; every value is copied:
+
+```julia
+r = repartition(250, "/sims/run", 512; outpath="/sims/run_512")
+```
+
+Put `r.ngridmax_needed` and `r.npart_max` into the restart namelist as `ngridmax` and `npartmax`,
+then run `mpirun -np 512 ramses3d run.nml 250` in `/sims/run_512`. How it works:
+[sections 2](#2.-How-RAMSES-splits-a-run-over-CPUs) and [3](#3.-repartition:-what-it-does,-step-by-step).
+
+**You only have Mera data, or a mera file.** Load every data type, check that nothing is missing,
+and write:
+
+```julia
+info = getinfo(250, "/sims/run")
+gas  = gethydro(info);  part = getparticles(info)
+grav = getgravity(info; parents=true)        # also the gravity of the refined cells
+savedata(gas, "/merafiles", :write); savedata(grav, "/merafiles", :append); savedata(part, "/merafiles", :append)
+
+# later, also when the RAMSES files are gone:
+gas  = loaddata(250, "/merafiles", :hydro)
+grav = loaddata(250, "/merafiles", :gravity)
+part = loaddata(250, "/merafiles", :particles)
+ok, report = restart_completeness(gas; gravity=grav, particles=part)
+r = writeramses(512; hydro=gas, gravity=grav, particles=part, outpath="/sims/run_512")
+```
+
+How it works: [section 8](#8.-From-Mera-data-and-mera-files:-writeramses).
+
+| function | what it does | more |
 |---|---|---|
-| the RAMSES output | [`repartition`](@ref) | every value bit-identical; RAMSES continues the run to round-off |
-| only Mera data or a mera file | [`writeramses`](@ref) | leaves bit-identical, refined cells as RAMSES builds them; RAMSES continues the run to round-off |
+| [`repartition`](@ref) | rewrites a RAMSES output for any number of ranks; every value copied | [§3](#3.-repartition:-what-it-does,-step-by-step), [§5](#5.-Check-2:-the-values-do-not-change) |
+| [`writeramses`](@ref) | writes a RAMSES output from complete Mera data; leaf cells copied, refined cells rebuilt as RAMSES builds them | [§8](#8.-From-Mera-data-and-mera-files:-writeramses) |
+| [`restart_completeness`](@ref) | checks that Mera data holds the whole box: every level, variable and particle | [§8](#8.-From-Mera-data-and-mera-files:-writeramses) |
+| `getgravity(info; parents=true)` | also loads the gravity of the refined cells, which RAMSES needs to continue exactly | [§8](#8.-From-Mera-data-and-mera-files:-writeramses) |
+| [`compareramses`](@ref) | compares two outputs written with any numbers of ranks: octree, every value, every particle | [§5](#5.-Check-2:-the-values-do-not-change) |
+| [`upgrade_merafile`](@ref) | adds what a restart needs to a mera file saved before Mera 1.8.0 | [§9](#9.-Mera-files-written-before-1.8.0) |
+
+Both writers take `ordering=:bisection` and `iogroupsize=n` for runs that use them ([§10](#10.-Other-layouts-and-older-RAMSES-versions)).
+
+**What to expect.** `repartition` writes the same numbers to the last bit. `writeramses` does the
+same for the leaf cells, the particles and the sinks, and rebuilds the refined cells from them.
+RAMSES then continues from the new files as if it had never stopped, apart from the last digits:
+about `1e-15` for the gas, up to `2e-11` for gravity, because on another number of ranks RAMSES
+adds its sums in another order (it does the same when it changes the rank count itself;
+[§7](#7.-Check-4:-RAMSES-continues-the-run), [§11](#11.-Every-kind-of-run,-every-route), [§12](#12.-When-results-differ,-and-by-how-much)). Large outputs: [§13](#13.-Large-outputs:-time-and-memory).
+
+## About this page
 
 This page shows what each step does and why, and then checks the result four ways: against
 RAMSES's own files, value by value, by RAMSES reading the files without taking a step, and by
@@ -212,7 +258,7 @@ end
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_7_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_8_1.png)
 
 ```julia
 # The load behind those shapes: cells owned per rank, counted on every level (the unit RAMSES and
@@ -239,7 +285,7 @@ repartition: 3 CPUs          cells per rank [2693, 2693, 2694]   (max/min 1.000)
 repartition: 7 CPUs          cells per rank [1154, 1154, 1154, 1155, 1154, 1154, 1155]   (max/min 1.001)
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_8_3.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_9_3.png)
 
 Coloured bars: after `repartition` every rank holds the same number of cells, to within one. The
 split RAMSES wrote is uneven (1,050 to 3,353 cells): RAMSES balances with its own cost function
@@ -282,7 +328,7 @@ fig
 16 ranks, bisection  cells per rank 11278 to 12363
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_10_2.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_11_2.png)
 
 ```julia
 # What rank 2 of 3 keeps in memory, level by level: its own grids and the ghost layer around them.
@@ -307,7 +353,7 @@ Legend(fig[1, 4], [PolyElement(color=c) for c in (CPU_COLORS[1], CPU_COLORS[2], 
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_11_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_12_1.png)
 
 White: the level is not refined there.
 
@@ -394,7 +440,7 @@ Legend(fig[1, 4], [PolyElement(color=c) for c in (CPU_COLORS[1], CPU_COLORS[2], 
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_15_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_16_1.png)
 
 The black square is the box. Outside it, only the layer of boundary grids next to the walls
 exists, and rank 2 holds it where its own and ghost cells reach the walls. White: not refined.
@@ -703,7 +749,7 @@ Colorbar(fig[1, 5], hm; label="log₁₀ |Δρ|/ρ", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_30_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_31_1.png)
 
 The two runs agree to machine precision everywhere: RAMSES cannot tell the converted output from
 its own. Particles are the stricter test, because gravity couples every particle to the whole mass
@@ -970,7 +1016,7 @@ gravity parents averaged   largest |Δρ|/ρ in this slice: 9.0e-05
 gravity parents as stored  largest |Δρ|/ρ in this slice: 1.2e-14
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_44_3.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_45_3.png)
 
 With the gravity parents as stored, RAMSES continues to round-off. With averaged ones the octree is
 the same, but the gas differs by up to `5e-5` in the refined region around the centre, and the
@@ -1439,7 +1485,7 @@ Colorbar(fig[1, 2], hm; label="log₁₀ largest relative difference", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_61_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_62_1.png)
 
 | run type | difference after one output | why |
 |---|---|---|
@@ -1522,7 +1568,7 @@ MHD tube, Hilbert, 3 ranks                 largest |Δρ|/ρ in the slice 0.0e+0
 radiative transfer, bisection, 5 ranks     largest |Δρ|/ρ in the slice 0.0e+00
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_64_4.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_65_4.png)
 
 The differences are round-off without structure, or exactly zero, and nothing lines up with the
 rank borders: the converted files give RAMSES the same ghost cells and neighbours as its own.
@@ -1680,17 +1726,14 @@ L13_SN5_CD_only       54.2 GB  25.1M      5120 → 512   repartition            
 
 ## 14. In short
 
-- `repartition(output, path, ncpu; outpath)` rewrites a RAMSES output for any number of ranks,
-  in Hilbert or bisection ordering, plain or in IO groups, uniform or AMR, cosmological or not.
-  Values bit-identical; RAMSES continues to round-off.
-- `writeramses(ncpu; hydro, gravity, rt, particles, sinks, outpath)` writes one from complete Mera
-  data, also from a mera file, in either ordering. Leaves bit-identical, refined cells as RAMSES
-  builds them; with the gravity loaded as `getgravity(info; parents=true)` every kind of run, MHD,
-  RT and cosmological runs included, continues to round-off.
-- `restart_completeness` proves the data is complete; `compareramses` checks any two outputs.
-- `writeramses` refuses incomplete data and a cosmological run from an old mera file whose
-  simulation is gone (its expansion history is unknown; `force=true` writes it anyway).
-- Large outputs: `repartition` keeps the octree in memory and streams the values, about 0.25 GB per
-  million grids; a 54 GB output with 25 million grids converts on a laptop (section 13).
-- Set `ngridmax` and `npartmax` in the restart namelist from the report, and start RAMSES with
-  `mpirun -np ncpu ramses3d run.nml output`.
+The functions and their calls are under [At a glance](#At-a-glance). Before the restart:
+
+- **Namelist**: set `ngridmax` and `npartmax` from the report (`ngridmax_needed`, `npart_max`); add
+  `ordering='bisection'` if the new files use it.
+- **IO groups**: grouped files need a RAMSES build with the same `IOGROUPSIZEREP`.
+- **Start**: `mpirun -np ncpu ramses3d run.nml output`, in the folder given as `outpath`.
+- **Refused**: `writeramses` refuses incomplete data, and a cosmological run from a mera file saved
+  before Mera 1.8.0 whose simulation is gone, because its expansion history is unknown
+  (`force=true` writes it anyway).
+- **Random numbers**: stochastic star formation and Monte-Carlo tracers continue statistically, not
+  exactly, as when RAMSES itself changes the number of ranks.
