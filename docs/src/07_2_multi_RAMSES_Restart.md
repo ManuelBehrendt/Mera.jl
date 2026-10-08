@@ -378,7 +378,9 @@ fig
 
 ![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_14_1.png)
 
-White: not refined there.
+White: not refined there. The ghost layer is one grid wide. On these coarse levels one grid is a
+large part of the box (a quarter of it at level 3), so the ghosts cover much of it. Each finer level
+halves the layer: in the run with walls below, ghosts are about 9 % of a rank's grids.
 
 ### Ghost zones and box boundaries
 
