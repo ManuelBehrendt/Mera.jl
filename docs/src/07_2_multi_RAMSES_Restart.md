@@ -21,8 +21,9 @@ the output. Mera can rewrite an output for any other number, in two ways:
 
 This page shows what each step does and why, and then checks the result four ways: against
 RAMSES's own files, value by value, by RAMSES reading the files without taking a step, and by
-letting RAMSES continue the run. Every number and
-figure below is computed on this page, and RAMSES itself runs from it.
+letting RAMSES continue the run. RAMSES itself runs from this page, and the numbers and figures
+are computed here; only the tables of the RAMSES validation suite (sections 6 and 7) and of the
+benchmark (section 13) are read from their result files.
 
 Supported: 3-D runs on uniform or AMR grids, cosmological or not, with `ordering='hilbert'`
 (RAMSES's default) or `'bisection'`, files plain or in IO groups (`IOGROUPSIZEREP`), periodic or
@@ -245,7 +246,7 @@ and only every `nremap` steps, and it will rebalance the converted run the same 
 load-balance step. Grey bars: the volume each rank covers is very different, because a rank near
 the blast owns small cells.
 
-The same idea at a higher rank count and in both orderings Mera writes, on a run with more
+The same idea at a higher rank count and in both orderings Mera writes (Hilbert and bisection, section 10), on a run with more
 structure: the cosmological test run at a = 0.2 (gas and dark matter, refined to level 8 where matter
 collapses), split for 16 ranks. Left, the refinement level in a slice through the finest cells;
 middle, the 16 Hilbert domains; right, the 16 bisection domains. Each holds the same share of the
@@ -329,22 +330,6 @@ around: the cells at x = 0 border the cells at x = 1, and the ghost layer contin
 The figure above shows it. In the level-4 panel, rank 2 owns cells at x < 0.5, and the orange strip
 at the right edge, x > 0.875, is ghost: those cells are its neighbours across the periodic face.
 
-**Walls without a namelist.** Older RAMSES versions leave `namelist.txt` empty, so an output can
-have walls that no text file describes. The amr files still hold the boundary grids beyond each
-wall. `repartition` and `writeramses` read the walls from them, and choose the wall type (outflow
-or reflexive) and the ghost width (one or two cells) by which choice rebuilds rank 1's file exactly.
-If none does, they stop and ask for the namelist.
-
-## 3. `repartition`: what it does, step by step
-
-| step | what | how | why |
-|---|---|---|---|
-| 1 | read the global octree | all old `amr_*` files, every grid once, with its position | the new split needs the whole tree, not one rank's piece |
-| 2 | new domains | the Hilbert curve cut into `ncpu` pieces of equal work (cells, and particles with `balance_particles=true`) | each rank then has the same load, and none exceeds `npartmax` |
-| 3 | each new rank's octree | own grids + ghost grids + boundary grids, with every pointer | RAMSES reads this, and nothing else, into memory |
-| 4 | the cell files | `hydro_*`, `grav_*`, `rt_*`: values copied bit for bit into the new grid order | no value is recomputed, so nothing can change |
-| 5 | particles and text files | each particle to the rank owning the finest cell around it; clump rows re-dealt; `info_*.txt` gets the new `ncpu` and domain table; files that do not depend on `ncpu` are copied | the rest of the output, consistent with the new split |
-
 **Physical walls** (outflow, reflexive, imposed) are set in `&BOUNDARY_PARAMS`. RAMSES then
 makes the coarse grid larger than the box by one layer of coarse cells per wall, and each rank also
 holds **boundary grids** just outside the walls. They copy the refinement of the cell inside the
@@ -412,6 +397,16 @@ fig
 
 The black square is the box. Outside it, only the layer of boundary grids next to the walls
 exists, and rank 2 holds it where its own and ghost cells reach the walls. White: not refined.
+
+## 3. `repartition`: what it does, step by step
+
+| step | what | how | why |
+|---|---|---|---|
+| 1 | read the global octree | all old `amr_*` files, every grid once, with its position | the new split needs the whole tree, not one rank's piece |
+| 2 | new domains | the Hilbert curve cut into `ncpu` pieces of equal work (cells, and particles with `balance_particles=true`) | each rank then has the same load, and none exceeds `npartmax` |
+| 3 | each new rank's octree | own grids + ghost grids + boundary grids, with every pointer | RAMSES reads this, and nothing else, into memory |
+| 4 | the cell files | `hydro_*`, `grav_*`, `rt_*`: values copied bit for bit into the new grid order | no value is recomputed, so nothing can change |
+| 5 | particles and text files | each particle to the rank owning the finest cell around it; clump rows re-dealt; `info_*.txt` gets the new `ncpu` and domain table; files that do not depend on `ncpu` are copied | the rest of the output, consistent with the new split |
 
 ```julia
 rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
@@ -1353,7 +1348,7 @@ Outputs from before 2018 differ in several ways, and each is handled:
 
 | what | how it is handled |
 |---|---|
-| no `namelist.txt` | walls read from the boundary grids in the amr files; wall type and ghost width chosen by which rebuilds rank 1's file exactly; `interpol_var` taken from the stored parent cells |
+| no `namelist.txt` | walls read from the boundary grids in the amr files; wall type (outflow or reflexive) and ghost width (one or two cells) chosen by which rebuilds rank 1's file exactly, else they stop and ask for the namelist; `interpol_var` taken from the stored parent cells |
 | no hydro descriptor | the variable layout Mera detects (for MHD: face fields at 5 to 10, pressure at 11) |
 | particle files without `part_file_descriptor.txt` | read and written in their legacy layout, metallicity included |
 | gravity files with the forces only | read as `[:ax, :ay, :az]` |
@@ -1387,32 +1382,30 @@ numbered apart from dark matter, so `compareramses` matches them by identity and
 
 ## 11. Every kind of run, every route
 
-The public test simulations of Mera cover every kind of data, and each goes through every route:
-`repartition` of RAMSES's files to Hilbert ordering on 3 ranks, to bisection on 5 ranks and to IO
-groups, and the same three from its Mera data saved as a mera file and loaded back.
+Mera's public test simulations cover every kind of data Mera reads. Each goes through six routes:
+`repartition` of its RAMSES files to Hilbert ordering on 3 ranks, to bisection on 5 ranks and to IO
+groups, and the same three with `writeramses`, from its Mera data saved as a mera file and loaded
+back. RAMSES does not run here: every written output is compared with the original, file content
+against file content. (Section 8 restarted RAMSES from such outputs.)
 
-The repartition columns and the "leaves" column give the largest difference from the original
-output over every variable, particle and sink, relative to each variable's largest value. A zero
-there is a bit-for-bit copy, so no faint region can hide anything. The refined cells are rebuilt
-from their children, so they carry round-off. For them the measure is local: |Δ| relative to the
-size of the numbers that were averaged, the cell and its 8 children. For the pressure that size
-includes the kinetic and magnetic energy density (times γ − 1), because the pressure is the total
-energy minus those two: in cold, fast gas, as in the cosmological run, its round-off is set by the
-total energy. An error in a faint refined cell would show here even where it is tiny next to the
-peak.
+How to read the table:
 
-A dash means RAMSES itself does not keep those cells as averages of their children, so there is no
-value of its to compare with: on a uniform grid (below `levelmin`, as above) and in a run with
-`static_gas=.true.` (`clumps3d`), whose gas RAMSES never evolves. The test suite runs the same matrix
-(`test/86_ramses_writer_tests.jl`), and also rebuilds every rank's file of each simulation exactly
-as RAMSES wrote it.
+- **repartition** and **mera file: leaves**: the largest difference from the original over every
+  variable, particle and sink, relative to each variable's largest value. Zero means a bit-for-bit
+  copy, so not even a faint region can hide an error.
+- **refined cells, local**: `writeramses` rebuilds the refined cells from their children, so they
+  carry round-off. Each is compared with the size of the numbers averaged into it, the cell and its
+  8 children, so an error would show even in a faint cell. For the pressure that size includes the
+  kinetic and magnetic energy density (times γ − 1), because RAMSES stores the total energy and the
+  pressure is what remains after those two are taken off.
+- **–**: RAMSES does not keep these cells as averages of their children, so there is nothing to
+  compare with. On a uniform grid RAMSES never updates the cells below `levelmin`, and with
+  `static_gas=.true.` (`clumps3d`) it never evolves the gas. Only the leaves carry the solution
+  there, and section 8 showed that such runs restart to round-off.
 
-On an AMR run every cell is compared, refined ones included: RAMSES averages the refined cells,
-also below `levelmin`. On a uniform grid RAMSES never updates the cells below `levelmin` (its main
-loop does so only when `levelmin < levelmax`), so they keep their initial values and only the
-leaves carry the solution; there the leaves are compared, and the uniform-grid restarts above show
-that nothing else matters. Outputs in IO groups are first repartitioned to plain files, because
-Mera's readers expect those.
+Outputs in IO groups are first repartitioned to plain files, because Mera's readers expect those.
+The test suite runs the same matrix (`test/86_ramses_writer_tests.jl`) and also rebuilds every
+rank's file of each simulation exactly as RAMSES wrote it.
 
 ```julia
 PUBLIC = joinpath(get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests"), "RAMSES-PUBLIC")
