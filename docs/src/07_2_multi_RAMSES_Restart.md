@@ -80,8 +80,9 @@ The page explains each step and then checks the result four ways:
    round-off: RAMSES alone, restarted on its own 4 ranks, differs from the run that never stopped
    by `1e-15`.
 
-RAMSES runs from this page. Only the validation-suite tables (sections 6 and 7) and the benchmark
-(section 13) are read from result files.
+The notebook starts RAMSES itself, as `mpirun -np <ranks> ramses3d run.nml <output>` (helper
+`run_ramses`), so every restart on this page really runs. Only the validation-suite tables
+(sections 6 and 7) and the benchmark (section 13) are read from result files.
 
 **Supported:** 3-D runs, uniform or AMR, cosmological or not; Hilbert or bisection ordering; plain
 files or IO groups; periodic, outflow, reflexive or imposed boundaries; hydro, MHD, RT, gravity,
