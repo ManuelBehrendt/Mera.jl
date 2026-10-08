@@ -64,19 +64,21 @@ particles and sinks; refined cells rebuilt. RAMSES then continues to round-off (
 The page explains each step and then checks the result four ways:
 
 1. **Same files as RAMSES** (section 4): Mera takes a 4-rank RAMSES output, keeps RAMSES's own
-   4 domains, and writes the four amr files again with its own writer. Every grid, ghost grid and pointer equals RAMSES's file. This tests the writer itself: the same
-   code builds the files for any other rank count.
+   4 domains, and writes the four amr files again with its own writer. Every grid, ghost grid and
+   pointer equals RAMSES's file. This tests the writer itself: the same code builds the files for
+   any other rank count.
 2. **Same values** (section 5): rewritten for 1, 3, 7 and 8 ranks, and 4 → 3 → 4, every cell value
    and particle differs from the original by exactly 0.
-3. **Same memory in RAMSES** (section 6): when RAMSES reads files, it also rebuilds its ghost zones
-   and the tables that tell each rank which cells to exchange with which other rank. A wrong pointer
-   or flag in the new files would show only there. So RAMSES reads the new files and writes its
-   memory out before the first step; this equals the dump from the original files bit for bit, on
-   1 to 8 ranks (104 of 104 dumps in the validation suite).
-4. **Same evolution** (section 7): RAMSES runs 13 steps from the new files on 3 ranks. The result
-   differs from RAMSES's own restart on 4 ranks by at most `8e-16`. For comparison, RAMSES restarted
-   on its own 4 ranks differs from the run that never stopped by `1e-15`. Both are round-off: the
-   converted run is as close as RAMSES gets to itself.
+3. **Same memory in RAMSES** (section 6): checks 1 and 2 use Mera to judge Mera's files; here RAMSES
+   judges them. RAMSES reads the new files and writes out what it holds in memory before its first
+   step. Reading also makes it rebuild its ghost zones and the lists of cells each rank exchanges
+   with the others, so a wrong pointer would show here. The result equals the memory after reading
+   its own files, bit for bit, on 1 to 8 ranks (104 of 104 dumps in the validation suite). So
+   reading is exact, and any later difference comes from computing, not from the files.
+4. **Same evolution** (section 7): RAMSES continues the run for 13 steps twice: from the new files
+   on 3 ranks, and from its own files on 4 ranks. The two results differ by at most `8e-16`. That is
+   round-off: RAMSES alone, restarted on its own 4 ranks, differs from the run that never stopped
+   by `1e-15`.
 
 RAMSES runs from this page. Only the validation-suite tables (sections 6 and 7) and the benchmark
 (section 13) are read from result files.
