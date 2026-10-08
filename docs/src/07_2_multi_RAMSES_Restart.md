@@ -61,12 +61,17 @@ particles and sinks; refined cells rebuilt. RAMSES then continues to round-off (
 
 ## About this page
 
-The page explains each step and checks the result four ways:
+The page explains each step and then checks the result four ways:
 
-1. RAMSES's own files are rebuilt exactly (section 4);
-2. every value stays the same (section 5);
-3. RAMSES reads the new files into the same memory state as its own (section 6);
-4. RAMSES continues the run as from its own files (section 7).
+1. **Same files as RAMSES** (section 4): given RAMSES's own split of a 4-rank output, Mera rebuilds
+   its four amr files; every grid, ghost grid and pointer matches.
+2. **Same values** (section 5): rewritten for 1, 3, 7 and 8 ranks, and 4 → 3 → 4, every cell value
+   and particle differs from the original by exactly 0.
+3. **Same memory in RAMSES** (section 6): RAMSES reads the new files and writes its memory out
+   before the first step; this equals the dump from the original files bit for bit, on 1 to 8
+   ranks (104 of 104 dumps in the validation suite).
+4. **Same evolution** (section 7): RAMSES runs 13 steps from the new files on 3 ranks; the result
+   matches RAMSES's own restart on 4 ranks to `8e-16`, as close as RAMSES restarts itself (`1e-15`).
 
 RAMSES runs from this page. Only the validation-suite tables (sections 6 and 7) and the benchmark
 (section 13) are read from result files.
