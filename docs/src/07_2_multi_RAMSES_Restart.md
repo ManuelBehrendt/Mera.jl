@@ -75,12 +75,12 @@ The page explains each step and then checks the result four ways:
    particles) to a new output, before computing anything. This is done once with the new files and
    once with the original files. Result: the two outputs are the same, bit for bit (1 to 8 ranks,
    104 of 104 tests). So the new files give RAMSES exactly the right start.
-4. **Same evolution** (section 7): RAMSES continues the run for 13 steps, once from the new files on
-   3 ranks and once from its own files on 4 ranks. Result: the two differ by at most `8e-16`, which
-   is round-off. For scale: RAMSES restarted from its own files differs by `1e-15` from the same
-   simulation computed straight through from the start, without a restart. The files store velocity
-   and pressure, and a restart converts them back to momentum and energy, which can change the last
-   bit.
+4. **Same evolution** (section 7): the final test is to let RAMSES run. It continues the simulation
+   for 13 time steps twice: from the new files on 3 ranks, and from its own files on 4 ranks.
+   Result: the two runs agree to about 15 digits (largest relative difference `8e-16`). A tiny
+   difference in the last digit is normal: a restart, or another number of ranks, makes the computer
+   round the last digit a little differently. RAMSES alone shows the same: restarted from its own
+   files, it differs just as much (`1e-15`) from the same simulation run without a restart.
 
 The notebook starts RAMSES itself, as `mpirun -np <ranks> ramses3d run.nml <output>` (helper
 `run_ramses`), so every restart on this page really runs. Only the validation-suite tables
