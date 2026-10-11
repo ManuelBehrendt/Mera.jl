@@ -37,7 +37,7 @@ gas  = gethydro(info, verbose=false);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[Mera]: 2026-09-26T20:38:07.236
+[Mera]: 2026-10-11T19:10:13.544
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -76,7 +76,7 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.40 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.27 ms/it)
 ✓ File processing complete! Combining results...
 ```
 
@@ -177,7 +177,7 @@ println("map N-PDF bins        : ", length(N.pdf))
 
 ```
 particle vx PDF bins  : 60
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.76 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.37 ms/it)
 ✓ File processing complete! Combining results...
 epot PDF bins         : 60
 Progress: 100%|█████████████████████████████████████████| Time: 0:00:01

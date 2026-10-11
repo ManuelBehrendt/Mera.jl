@@ -89,6 +89,7 @@ println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[ Info: Mera v1.8.0
 gravity cells  : 4879946   columns: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
 gas cells      : 4879946
 box            : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
@@ -319,9 +320,9 @@ println("centre test vs split, volume mean: ",
 ```
 
 ```
-mean over cells,  split region   : -1907.2 (km/s)²
-mean over volume, centre test    : -1632.52 (km/s)²
-mean over volume, split region   : -1632.64 (km/s)²
+mean over cells,  split region   : -91545.4 (km/s)²
+mean over volume, centre test    : -78361.0 (km/s)²
+mean over volume, split region   : -78366.8 (km/s)²
 cell mean vs volume mean         : 16.8 %
 centre test vs split, volume mean: -0.00738 %
 ```
@@ -438,7 +439,7 @@ println("⟨epot⟩ over the ring   : ",
 ring volume            : 1712.947 kpc³
 analytic slab − band   : 1713.215 kpc³   dev = -0.0157 %
 identical to the operator form : true
-⟨epot⟩ over the ring   : -1600.32 (km/s)²
+⟨epot⟩ over the ring   : -76815.3 (km/s)²
 ```
 
 `@region` is only shorthand: it walks the block and injects `range_unit` and

@@ -51,7 +51,7 @@ println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
 gas cells = 590311   particles = 453200
 ```
 
@@ -463,7 +463,7 @@ fig
 ```
 [Mera] Hint: getvar(:vr_sphere) has no `vcenter` — velocities are in the BOX frame.
              Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             `vcenter=` the frame).
              (shown once per session; verbose(false) silences Mera's messages)
 ```
 

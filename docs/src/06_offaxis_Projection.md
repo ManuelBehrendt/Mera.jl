@@ -125,7 +125,6 @@ println("threads      : ", Threads.nthreads())
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Mera v1.8.0
 cells loaded : 51500562
 stars loaded : 627896
 box length   : 48.0 kpc
@@ -495,13 +494,13 @@ inclination + los         → ArgumentError
 direction=:faceon + axis  → ArgumentError
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_13_7.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_13_6.png)
 
 ```
 angle between the gas and star angular-momentum axes = 0.03°
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_13_10.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_13_9.png)
 
 `direction=:faceon` and `inclination=0, axis=:angmom` give the **same view**: the same line of
 sight to the last bit, the same up vector, and a map difference of exactly zero.
@@ -634,7 +633,7 @@ end
              These are WORLD-space bounds, so after rotation the full box depth folds into
              the image. Pass `zrange`, or `fov=<half-width>` for a fixed camera frame.
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-09-28T21:39:39.495
+[Mera]: 2026-10-11T19:18:25.952
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -859,13 +858,13 @@ maprow([p.map for p in panmaps], :sd,
 
 ```
 center                t [s]   extent [kpc]                  mass in frame [Msol]
-centre                9.3     [-10.3, 10.3, -10.3, 10.3]    5.453e9
-8 kpc along x         6.2     [-10.4, 10.4, -10.4, 10.4]    3.699e9
-8 kpc along y         6.2     [-10.4, 10.4, -10.4, 10.4]    3.692e9
-12 kpc out, corner    1.7     [-10.8, 10.8, -10.8, 10.8]    5.032e8
+centre                5.8     [-10.3, 10.3, -10.3, 10.3]    5.453e9
+8 kpc along x         3.8     [-10.4, 10.4, -10.4, 10.4]    3.699e9
+8 kpc along y         3.0     [-10.4, 10.4, -10.4, 10.4]    3.692e9
+12 kpc out, corner    0.8     [-10.8, 10.8, -10.8, 10.8]    5.032e8
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_26_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_26_2.png)
 
 The same idea as a movie. The camera keeps one direction and one field of view, and the centre
 walks across the box, so the galaxy drifts through the frame and out the other side. This is the
@@ -1007,7 +1006,7 @@ depth = ±5 kpc            6.04271e9             0.8638
 depth = ±2 kpc            3.34081e9             0.4776
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_33_7.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_33_6.png)
 
 ## 5. Whole cells or partial ones
 
@@ -1229,7 +1228,7 @@ angle gas to gas+stars   0.05 arcmin
 both maps on the joint axis: gas (166, 166)  stars (163, 163)   same camera: true
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_40_6.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_40_5.png)
 
 The angle between the gas and stellar axes is the number that decides whether this matters. A
 few arcminutes, as here, and any of the three axes gives the same picture. Degrees, which is what
@@ -1374,13 +1373,13 @@ level 10.0:  cell 0.0469  kpc  →  9.4 pixels per cell at pxsize = 0.005 kpc
 level 11.0:  cell 0.0234  kpc  →  4.7 pixels per cell at pxsize = 0.005 kpc
 level 12.0:  cell 0.0117  kpc  →  2.3 pixels per cell at pxsize = 0.005 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       35.0 %     2.205     0.4154
-cic       12.8 %     1.66      0.2669
-overlap   0.0 %      3.438     0.0128
-exact     0.0 %      12.73     0.0
+ngp       35.0 %     1.432     0.4154
+cic       12.8 %     1.248     0.2669
+overlap   0.0 %      2.455     0.0128
+exact     0.0 %      9.079     0.0
 stars     empty px   time [s]  what it does
-ngp       65.7 %     0.04      whole star in the nearest pixel
-cic       38.4 %     0.02      bilinear over 2x2
+ngp       65.7 %     0.02      whole star in the nearest pixel
+cic       38.4 %     0.01      bilinear over 2x2
 stars in this window: 183796
   binning=:overlap  returns the :cic map exactly: true
   binning=:exact    returns the :cic map exactly: true
@@ -2350,12 +2349,12 @@ maprow([all_g, cold_g, hot_g], :sd, ["all gas", "cold, T < 1e4 K", "hot, T > 1e4
 ```
 selection       cells         mass in frame [Msol]    frame
 everything      51500562      6.98579e9               (166, 166)
-T < 1e4 K       21057667      6.69841e9               (165, 165)
+T < 1e4 K       21057667      6.69841e9               (166, 166)
 T > 1e4 K       30442895      2.87379e8               (166, 166)
 the two parts add back to the whole: 100.0 %
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_74_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_74_2.png)
 
 The three frames are identical because `fov` pinned them, and the two parts add back to the
 whole because a mask only decides which cells are deposited, never how much of one.
@@ -2407,7 +2406,7 @@ println("          epot over filled pixels ", round.(extrema(filled), sigdigits=
 ```
 stars   : frame (187, 12)   los = [-0.0, -1.0, 0.0]
 gravity : maps Any[:epot, :sd]
-          epot over filled pixels (-0.9779, -0.1408)   (1206 of 75076 pixels empty)
+          epot over filled pixels (-46.94, -6.759)   (1206 of 75076 pixels empty)
 ```
 
 ### A slab instead of a slice, for particles
@@ -2522,7 +2521,7 @@ fig
 
 ```
 gas   frame (321, 321)   stars (321, 321)   potential (321, 321)
-φ along the line of sight: (-3070.0, -814.4) km²/s²
+φ along the line of sight: (-147400.0, -39090.0) km²/s²
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_81_3.png)
@@ -2567,10 +2566,10 @@ source, so the stored potential **does** include the bulge, the disc and the hal
 maps the mass the star panel cannot show. The two panels disagree about what this galaxy is made
 of, and each is right about its own tracer.
 
-!!! warning "Do not quote absolute `:epot` values yet"
-    The absolute values of `:epot` are affected by a known scaling issue in Mera, so the numbers
-    printed beside this figure should not be quoted. The shape of the map and its relative
-    structure are unaffected.
+!!! note "Read differences of the potential, not its value"
+    RAMSES fixes no zero point for the potential, so a single value of `:epot` means little.
+    Differences across the map, such as the depth of the well against the outskirts, are what
+    carry the physics.
 
 ```julia
 # The table above is a set of claims. Run them, a compatibility table that is never executed

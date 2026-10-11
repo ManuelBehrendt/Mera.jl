@@ -35,7 +35,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[Mera]: 2026-09-26T20:32:40.343
+[Mera]: 2026-10-11T18:52:49.011
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -205,7 +205,7 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-09-26T20:32:43.571
+[Mera]: Get gravity data: 2026-10-11T18:52:53.532
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -217,7 +217,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 8
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.77 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.72 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -227,7 +227,7 @@ Creating Table from 28320979 cells with max 8 threads...
    Available threads: 8
    Using parallel processing with 8 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 3.39 seconds
+✓ Table created in 4.3 seconds
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 ```
@@ -367,6 +367,7 @@ data_overview = dataoverview(grav)
 
 ```
 Calculating...
+ 100%|███████████████████████████████████████████████████| Time: 0:00:01
 ```
 
 ```
@@ -407,13 +408,13 @@ select(data_overview, (:level,:epot_tot, :epot_min, :epot_max ) )
 
 ```
 Table with 5 rows, 4 columns:
-level  epot_tot    epot_min   epot_max
-───────────────────────────────────────
-6      -9309.98    -0.157858  -0.105458
-7      -61891.4    -0.175757  -0.151563
-8      -1.66608e6  -0.292519  -0.172968
-9      -4.35579e6  -0.579801  -0.225363
-10     -3.57477e6  -0.986489  -0.271161
+level  epot_tot    epot_min  epot_max
+─────────────────────────────────────
+6      -4.46879e5  -7.5772   -5.06198
+7      -2.97079e6  -8.43633  -7.27503
+8      -7.9972e7   -14.0409  -8.30247
+9      -2.09078e8  -27.8305  -10.8174
+10     -1.71589e8  -47.3515  -13.0157
 ```
 
 ### Single column Extraction Example
@@ -426,11 +427,11 @@ column(data_overview, :epot_tot)
 
 ```
 5-element Vector{Any}:
-  -9309.980771585666
- -61891.37272811445
-     -1.6660843210800427e6
-     -4.355786574891018e6
-     -3.5747698183847037e6
+ -446879.07703611196
+      -2.9707858909494937e6
+      -7.997204741184205e7
+      -2.0907775559476885e8
+      -1.715889512824658e8
 ```
 
 ## Data Structure Deep Dive
@@ -627,8 +628,8 @@ end
 ```
 
 ```
-gravitational_energy     -2.869e+52 .. -1.115e+45  erg
-total_binding_energy      1.115e+45 ..  2.869e+52  erg
+gravitational_energy     -1.377e+54 .. -5.353e+46  erg
+total_binding_energy      5.353e+46 ..  1.377e+54  erg
 Fg                        9.260e+23 ..  4.539e+31  dyne
 Fr_cylinder              -4.538e+31 .. -2.271e+22  dyne
 Fr_sphere                -4.538e+31 .. -9.259e+23  dyne
@@ -663,8 +664,8 @@ println("\nthe map lies inside the per-cell range: ",
 ```
 
 ```
-epot map     -0.9849 ..    -0.1244
-per cell     -0.9865 ..    -0.1055
+epot map    -47.2762 ..    -5.9722
+per cell    -47.3515 ..    -5.0620
 the map lies inside the per-cell range: true
 ```
 
