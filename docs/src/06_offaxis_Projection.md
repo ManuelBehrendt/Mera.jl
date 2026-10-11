@@ -2220,14 +2220,24 @@ thermal and turbulent line widths and the species-mass scaling in full.
 
 ## 9. Weighting and totals
 
-`mode` decides whether a map is a mean or a total.
+`mode` decides whether a map is a weighted mean or a sum. On cell data (hydro, RT, gravity):
 
-| | |
-|---|---|
-| `mode=:standard` (default) | a weighted mean |
-| `mode=:sum` | the per-pixel total |
+| quantity | `mode=:standard` (default) | `mode=:sum` |
+|---|---|---|
+| `:sd`, `:mass` | the total; `mode` is ignored | the same |
+| `:ekin`, `:etherm`, `:volume` | weighted mean | the plain total, Σ q |
+| velocity dispersions (`:σlos`, `:σz`, ...) | weighted mean; `mode` is ignored | the same |
+| any other quantity, e.g. `:T`, `:vx`, `:rho` | weighted mean, Σ q·w / Σ w | **Σ q·w**, not Σ q |
 
-On hydro, `:sd` and `:mass` are always summed and `mode` changes the other variables.
+`w` is the `weighting`: mass for hydro, volume for RT, unless you choose another one.
+
+!!! warning "`mode=:sum` on an ordinary quantity is not a total"
+    `projection(gas, :T, :K; mode=:sum)` returns Σ T·m in each pixel, not Σ T, and the map's
+    unit label still says `K`. The real unit is K times the unit of the weight, and with the
+    default `weighting=[:mass, missing]` the mass is in code units. Use `mode=:sum` for `:mass`,
+    `:ekin`, `:etherm` and `:volume`, or to integrate a density over volume:
+    `projection(gas, :rho, :g_cm3; mode=:sum, weighting=[:volume, :cm3])` gives Σ ρ·V, the mass
+    in each pixel in grams. For anything else, keep the default mean.
 
 ### `:mass` on particles
 
