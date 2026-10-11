@@ -245,6 +245,10 @@ end
     potential, so `m * phi` is that cell's gas measured in the total field. The Gravity section of
     the Computation Reference says what follows from that, and what a snapshot cannot tell you.
 
+    RAMSES stores the potential short by a factor `boxlen` (its force is stored correctly).
+    `getvar` multiplies by `boxlen`, so `:epot` and the energies built from it are the physical
+    potential. The raw `:epot` column in `gravity.data` keeps RAMSES's value.
+
 
 ```julia
 getvar(   dataobject::DataSetType, var::Symbol;

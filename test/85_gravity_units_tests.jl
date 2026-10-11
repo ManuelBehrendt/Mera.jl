@@ -11,12 +11,13 @@
 # `gradient_phi` in `force_fine.f90` then differentiates with respect to the box FRACTION (it
 # computes `dx_loc` and does not use it). The two cancel for the force, so the stored `f` is a
 # correct user-unit acceleration while the stored `phi` is short by `boxlen`. Being internally
-# consistent, the pair can only be caught by differencing one against the other.
+# consistent, the pair can only be caught by differencing one against the other. Mera multiplies
+# by `boxlen` when it reads the potential (getvar_gravity.jl), so the ratio is 1 on every box.
 #
 # The fixture pair is what makes this conclusive. `clumps3d` has `boxlen = 1`, where the factor is
 # invisible and the ratio must be 1 today and forever: it is the CONTROL, and it proves the finite
 # difference itself is sound. `sedov3d_grav_part` has `boxlen = 0.5`, where a wrong factor makes
-# the ratio come out BELOW one, which no missing factor of two, no cell-centre convention and no
+# the ratio come out BELOW one (0.5 before the fix), which no missing factor of two, no cell-centre convention and no
 # refinement artefact can imitate.
 
 using Mera, Test, Statistics
@@ -83,14 +84,20 @@ end
             @test length(r) > 100
             m = median(r)
 
-            # The physics. BROKEN TODAY: `:epot` is short by `boxlen`, so this comes out near 0.5
-            # instead of 1. When the four `:epot` read sites in getvar_gravity.jl multiply by
-            # `boxlen`, Julia will report this as an unexpected pass. At that point drop the
-            # `_broken` here and delete the ratio check below it.
-            @test_broken isapprox(m, 1.0, rtol=0.02)
+            # The physics: Mera multiplies the stored potential by boxlen on reading.
+            @test isapprox(m, 1.0, rtol=0.02)
 
-            # Until then, pin the factor so the bug cannot drift or be partly patched unnoticed.
-            @test m ≈ info.boxlen rtol=0.02
+            # The stored column keeps RAMSES's value (old mera files, writeramses), and every
+            # quantity built from the potential carries the same correction.
+            g   = getgravity(info, verbose=false, show_progress=false)
+            gas = gethydro(info, verbose=false, show_progress=false)
+            raw = Mera.IndexedTables.select(g.data, :epot)
+            @test getvar(g, :epot) ≈ raw .* info.boxlen
+            @test getvar(g, :specific_gravitational_energy) ≈ getvar(g, :epot)
+            @test getvar(g, gas, :gravitational_energy) ≈ getvar(gas, :mass) .* getvar(g, :epot)
+            @test getvar(g, gas, :total_binding_energy) ≈ -getvar(g, gas, :gravitational_energy)
+            ov = dataoverview(g, verbose=false)
+            @test minimum(Mera.IndexedTables.select(ov, :epot_min)) ≈ minimum(raw) * info.boxlen
 
             @info "gravity units: measured a / (-grad phi)" boxlen=info.boxlen ratio=m samples=length(r)
         else

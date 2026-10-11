@@ -706,15 +706,16 @@ function dataoverview(dataobject::GravDataType; verbose::Bool=true)
         for ifn in fn
             if !in(ifn, skip_vars)
                 if ifn == epot_var
-                    cells_msum = sum(select(filtered_level , epot_var))
+                    # the stored potential is short by boxlen, see `potential` in getvar_gravity.jl
+                    cells_msum = sum(select(filtered_level , epot_var)) * dataobject.boxlen
                     #todo: introduce humanize for mass
                     #cells_masstot = cells_masstot + cells_msum
                     cells[Int(ilevel-lmin+1),cell_iterator] = cells_msum
                     cell_iterator= cell_iterator + 1
                     if length(select(filtered_level, epot_var)) != 0
                         epot_minmax = reduce((min = min, max = max), filtered_level, select=epot_var)
-                        epotmin= epot_minmax.min
-                        epotmax= epot_minmax.max
+                        epotmin= epot_minmax.min * dataobject.boxlen
+                        epotmax= epot_minmax.max * dataobject.boxlen
                     else
                         epotmin= 0.
                         epotmax= 0.
