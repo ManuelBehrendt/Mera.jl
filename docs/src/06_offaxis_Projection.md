@@ -92,7 +92,9 @@ say which path a call took. Check `m.los`: it is empty on the axis-aligned path.
   orientation off the data's angular momentum. Convenient for a disc, an assumption everywhere
   else. Chapter 6.
 
-This chapter uses the first kind, because it cannot be wrong.
+This chapter starts with the first kind. Mera uses exactly the vector you give, so the view does
+not depend on the data or on `center`. The second kind computes the axis from the data about
+`center`, so a wrong `center` gives a wrong axis without any warning (Chapter 6).
 
 ```julia
 # The AVALON snapshot used by every cell below. Point this at your own run, or set the
