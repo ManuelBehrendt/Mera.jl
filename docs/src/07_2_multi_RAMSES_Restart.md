@@ -483,11 +483,11 @@ rep = repartition(6, SEDOV, 3; outpath=joinpath(WORK, "sedov_3cpu"));
 [5/5] particles, clump tables and text files
 RAMSES output repartitioned: ncpu 4 → 3
   from : /Volumes/FASTStorage/projects/RamsesConverter/testruns/sedov3d_amr_lb_ncpu4/output_00006
-  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_I4GbYp/sedov_3cpu/output_00006
+  to   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_KQM620/sedov_3cpu/output_00006
   own grids per rank      : min 335, max 338
   grids in memory per rank: min 592, max 673  (own + ghost + boundary)
   restart namelist needs  : ngridmax ≥ 674
-  14 files written in 0.8 s
+  14 files written in 0.7 s
 ```
 
 The report's last line goes into the restart namelist: `ngridmax` (and `npartmax`) per rank. Fewer
@@ -1538,7 +1538,7 @@ fig = Figure(size=(1150, 420))
 for (col, (run, ord, o, zs, ttl)) in enumerate(cases)
     dir = joinpath(WORK, "mera_restart_$(run)_$ord")
     d = reldiff_slice(joinpath(RUNS, refs[run], "output_" * lpad(o + 1, 5, '0')), joinpath(dir, "output_" * lpad(o + 1, 5, '0')), o + 1, zs, n)
-    ax = Axis(fig[1, col]; aspect=DataAspect(), title=ttl, xlabel="x / box", ylabel=col == 1 ? "y / box" : "",
+    ax = Axis(fig[1, col]; aspect=DataAspect(), title=ttl, xlabel="x / boxlen", ylabel=col == 1 ? "y / boxlen" : "",
               yticklabelsvisible=col == 1)
     hm = heatmap!(ax, range(0, 1; length=n), range(0, 1; length=n), log10.(max.(d, 1e-17)); colormap=blues, colorrange=(-17, -12))
     scatter!(ax, rank_borders(joinpath(dir, "output_" * lpad(o, 5, '0')), o, zs, n); color=:black, markersize=1.6)
@@ -1578,8 +1578,15 @@ Two avoidable cases give more:
 | gravity loaded without `parents=true` | gas `5e-5`, potential `3e-6` | `getgravity(info; parents=true)` (§8) |
 | mera file from before 1.8.0 whose simulation is gone | up to a few per cent with many particles | `upgrade_merafile` while the simulation still exists (§9) |
 
-**Is that small enough?** Compare with RAMSES restarting its own output on its own ranks, over the
-same interval, against the same run computed straight through, without a restart:
+**Is that small enough?** The yardstick is RAMSES itself. Every restart changes a run a little,
+even when RAMSES restarts from its own files on its own ranks, and nobody counts that as an error.
+So a difference counts as small enough when it is no larger than that, or when the reason it is
+larger is known and lies inside RAMSES (below).
+
+The table measures both over the same interval, one output after the restart, as the largest
+relative difference to a reference: "from a mera file" is the route of this page, on any rank count
+(section 11); "RAMSES restarting itself" is RAMSES's own restart on its original ranks against the
+same run computed straight through, without a restart:
 
 ```julia
 # What RAMSES gives by itself: its own restart on the original ranks against the run that never
