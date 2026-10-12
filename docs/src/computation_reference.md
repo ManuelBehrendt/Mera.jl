@@ -311,6 +311,40 @@ acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
     "Total" in `:total_binding_energy` distinguishes it from `:specific_gravitational_energy`,
     which is per unit mass. It does not mean the total for the system.
 
+### How `:epot` is read
+
+RAMSES writes the potential too small by a factor `boxlen`. Its force is written correctly.
+The reason is in the Poisson solver:
+
+- `phi_fine_cg.f90` scales the source term by `boxlen/nx_loc`, so the solution comes out as
+  ``\phi_\mathrm{file} = \phi / \mathrm{boxlen}``.
+- `force_fine.f90` takes the gradient in box units, which multiplies by `boxlen` again. So
+  ``\mathbf a = -\nabla\phi`` is right, and only ``\phi`` itself is off.
+
+Mera corrects this when it reads the value, not when it loads the file:
+
+| Step | Formula |
+|---|---|
+| raw column in `gravity.data` | ``\phi_\mathrm{file}``, exactly as RAMSES wrote it |
+| potential in code units | ``\phi = \phi_\mathrm{file}\cdot\mathrm{boxlen}`` |
+| potential in a chosen unit | ``\phi\cdot s``, with ``s = (\mathrm{unit\_l}/\mathrm{unit\_t})^2`` for `:erg_g`, ``s/10^{10}`` for `:km2_s2`, ``s\cdot10^{-4}`` for `:J_kg` |
+
+Every place that uses ``\phi`` goes through this step: `getvar(gravity, :epot)`,
+`:specific_gravitational_energy`, `:gravitational_energy`, `:total_binding_energy`, projections
+of `:epot`, and the potential range printed by `dataoverview`. The accelerations need no change.
+
+The raw column stays as RAMSES wrote it on purpose. Mera files saved before the fix need no
+conversion, and `writeramses` still writes back the exact values RAMSES produced. If you read the
+column directly, for example with `select(gravity.data, :epot)`, multiply by `gravity.boxlen`
+yourself.
+
+For a run with `boxlen = 1` the two agree, which is why the error was easy to miss. The
+galaxies on the tutorial pages use `boxlen = 48`, so their potentials are 48 times larger than
+the raw column.
+
+The correction does not fix the zero point. RAMSES sets no reference level for ``\phi``, so
+compare differences of the potential between places, not single values.
+
 ### What gravity can and cannot answer today
 
 Mera pairs **gravity with hydro**. Everything below is the gas measured against the field the run
