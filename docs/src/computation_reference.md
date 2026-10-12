@@ -286,163 +286,69 @@ the cell mass:
 *Data: **gravity** (`getgravity`), which stores the potential ``\phi`` (`:epot`) and the
 acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
 
-!!! warning "`:epot` is the run's **total** potential, not the gas's own"
-    RAMSES solves Poisson once, for all the mass on the grid. The ``\phi`` in `:epot` therefore
-    contains the gas, the particles (stars, dark matter and, by default, the sinks) and any
-    analytic density the run adds to the Poisson source.
+### What the field contains
 
-    The acceleration can contain more than the potential. RAMSES adds two kinds of force to
-    ``\mathbf a`` directly, without putting them into ``\phi``:
+RAMSES solves Poisson once, for all the mass on the grid. So ``\phi`` is the **total**
+potential: gas, stars, dark matter, sinks, and any analytic density the run adds. It is not the
+potential of the gas alone.
 
-    - an analytic external force, set with `gravity_force_ana_type > 0`, or with
-      `gravity_type > 0` in older namelists;
-    - the force of massive sinks, if `mass_sink_direct_force` is set to 0 or more. These sinks
-      are then left out of the Poisson source.
-
-    So ``\mathbf a = -\nabla\phi`` holds only if the run uses neither.
-
-    What ``\phi`` contains is a property of the run, not of Mera. `&POISSON_PARAMS` in the
-    namelist says which case you have:
-
-    | setting | what ``\phi`` contains |
-    |---|---|
-    | `self_gravity=.true.` (the default; older: `gravity_type=0`) | all mass on the grid |
-    | `gravity_rho_ana_type > 0` (older: `gravity_type < 0`) | all mass on the grid, plus an analytic density |
-    | `gravity_force_ana_type > 0` | the mass on the grid if `self_gravity=.true.`; the analytic force is in ``\mathbf a`` only |
-    | `gravity_type > 0` (older namelists) | nothing: Poisson is not solved and `:epot` is zero; the analytic force is in ``\mathbf a`` only |
-
-    Both test galaxies used here have `gravity_type = -3`, so their ``\phi`` includes an external
-    halo that no amount of gas or particle data would reproduce:
-
-    ```julia
-    info.namelist_content["&POISSON_PARAMS"]
-    ```
-
-    Two consequences for the quantities below:
-
-    - ``m\,\phi`` is the energy of **that cell's gas** in the **total** field. It is not the
-      energy of the gas in its own field, and the difference is not small: particles carry 5.8 %
-      of the mass in the `mw_L10` box and dominate in a cosmological zoom.
-    - Summing ``m\,\phi`` over cells is **not** the system's gravitational self-energy. The table
-      below says why, along with the other questions a snapshot cannot answer.
-
-    "Total" in `:total_binding_energy` distinguishes it from `:specific_gravitational_energy`,
-    which is per unit mass. It does not mean the total for the system.
-
-### How `:epot` is read
-
-RAMSES writes the potential too small by a factor `boxlen`. Its force is written correctly.
-The reason is in the Poisson solver, which works on a grid of size 1 instead of `boxlen`:
-
-- Both solvers, `phi_fine_cg.f90` and `multigrid_fine_commons.f90`, multiply the source term by
-  `boxlen` once. On a unit grid, the right factor would be `boxlen` squared. So the solution comes
-  out as ``\phi_\mathrm{file} = \phi / \mathrm{boxlen}``.
-- `force_fine.f90` takes the gradient on the same unit grid, which multiplies by `boxlen` again.
-  So the acceleration is right, and only ``\phi`` itself is off.
-- RAMSES confirms this itself. Where it sets ``\phi`` from a formula, on the boundary of an
-  isolated box, it computes the potential in physical code units and divides it by `boxlen`
-  before storing it.
-
-(The factor is `boxlen/nx_loc` in the source. `nx_loc` is 1 in a standard run, and boundary
-cells do not change it.)
-
-Mera corrects this when it reads the value, not when it loads the file:
-
-| Step | Formula |
-|---|---|
-| raw column in `gravity.data` | ``\phi_\mathrm{file}``, exactly as RAMSES wrote it |
-| potential in code units | ``\phi = \phi_\mathrm{file}\cdot\mathrm{boxlen}`` |
-| potential in a chosen unit | ``\phi\cdot s``, with ``s = (\mathrm{unit\_l}/\mathrm{unit\_t})^2`` for `:erg_g`, ``s/10^{10}`` for `:km2_s2`, ``s\cdot10^{-4}`` for `:J_kg` |
-
-Every place that uses ``\phi`` goes through this step: `getvar(gravity, :epot)`,
-`:specific_gravitational_energy`, `:gravitational_energy`, `:total_binding_energy`, projections
-of `:epot`, and the potential range printed by `dataoverview`. The accelerations need no change.
-
-The raw column stays as RAMSES wrote it on purpose. Mera files saved before the fix need no
-conversion, and `writeramses` still writes back the exact values RAMSES produced. If you read the
-column directly, for example with `select(gravity.data, :epot)`, multiply by `gravity.boxlen`
-yourself.
-
-For a run with `boxlen = 1` the two agree, which is why the error was easy to miss. The
-galaxies on the tutorial pages use `boxlen = 48`, so their potentials are 48 times larger than
-the raw column.
-
-The correction does not fix the zero point. In a periodic box, ``\phi`` is fixed only up to
-a constant. In an isolated box, RAMSES sets ``\phi = -GM/r`` on the boundary, with ``M`` the
-mass inside the box. So ``\phi`` goes to zero far away only in that approximation, and mass
-outside the box is not in it. Compare differences of the potential between places, not single
-values.
-
-**Cosmological runs.** The same conversion is correct. RAMSES solves for the potential in
-supercomoving units, and the `unit_l`, `unit_t` and `unit_d` of each snapshot already contain the
-right powers of `aexp`. So `:epot` comes out as the potential in the proper frame at that
-redshift, and `:ax`, `:ay`, `:az` as the proper accelerations. Cosmological runs use
-`boxlen = 1`, so the correction above changes nothing there. Three points are specific to them:
-
-- ``\phi`` is the **peculiar** potential. Its source is ``\rho - \bar\rho``, so the mean density
-  of the universe is not in it, and ``m\,\phi`` is a peculiar potential energy.
-- ``\mathbf a`` is the gravitational part only. In an expanding box the peculiar velocity also
-  changes by ``-H\,\mathbf v`` from the expansion, and that term is not in ``\mathbf a``.
-- RAMSES's cosmological units imply ``G = 6.668\times10^{-8}`` cgs, 0.09 % below the value
-  Mera uses. This is far below any other uncertainty.
-
-**The potential in an output is one step old.** RAMSES writes an output at the start of a step,
-before that step's Poisson solve. The potential and the acceleration therefore come from the
-previous step, while the gas and the particles are current. The difference is usually small,
-about 1 % in a cosmological run at ``a = 0.1``, but it is larger where things change fast, for
-example around a sink that accretes quickly. The first output of a run is written before any
-solve, so there ``:epot`` and the accelerations are zero everywhere.
-
-**How this was checked.** On fresh RAMSES runs whose output is taken after a very short step,
-Mera's values satisfy ``\nabla^2\phi = 4\pi G(\rho - \bar\rho)`` in cgs to 0.03 % for
-`boxlen = 1` and `boxlen = 250`, and to 0.3 % in a cosmological run. The acceleration agrees with
-RAMSES's own gradient of the corrected ``\phi`` to round-off in every case.
-
-### What gravity can and cannot answer today
-
-Mera pairs **gravity with hydro**. Everything below is the gas measured against the field the run
-produced, and that is the whole of what a snapshot supports without re-solving Poisson.
-
-**Available now**
-
-| | |
-|---|---|
-| the field itself | `:epot`, `:ax/:ay/:az` and their cylindrical and spherical components |
-| force on a gas cell | ``\mathbf F = m_\mathrm{gas}\,\mathbf a``, complete: `a` already contains every source |
-| energy of gas in that field | ``E = m_\mathrm{gas}\,\phi``, complete for the mass that is in ``\phi`` (see the warning above) |
-| local stability | `:jeanslength`, `:jeansmass`, `:virial_parameter_local`, built from the cell's own gas and never from ``\phi`` |
-
-These are correct as they stand. You can use the field without knowing which mass made it: the
-acceleration contains every force the run applied, and the potential all the mass on the grid.
-
-**Not available from a snapshot**
-
-| | why |
-|---|---|
-| splitting ``\phi`` or ``\mathbf a`` by source | RAMSES writes one summed field, `(:epot, :ax, :ay, :az)`. The decomposition is not in the output, and recovering it would mean solving Poisson again with a subset of the mass |
-| the self-binding of one structure | a clump's own binding needs the pairs *within* that clump. Summing ``-m\,\phi`` over its cells gives its binding to the whole galaxy and the external halo instead, a much larger and different number |
-| the system's gravitational self-energy | ``W = \tfrac12\int\rho\,\phi\,dV``. The sum of ``m\,\phi`` has no factor ½ and omits the particles' own binding |
-| forces or energies on **particles** | the gravity quantities pair with hydro only, and particles carry no potential column. Stars and dark matter contribute to ``\phi``, but Mera does not interpolate the field back onto them |
-
-**`profile`, `pdf` and `phase` on a gravity object.** They work, but they weight by `:mass` unless
-told otherwise, and gravity carries no density, so there is no mass on that object. Weight by the
-cells instead:
+The acceleration can contain more. An analytic external **force**, or sinks with a direct force
+(`mass_sink_direct_force` ≥ 0), are added to ``\mathbf a`` only, never to ``\phi``. The namelist
+says which case a run is:
 
 ```julia
-profile(gravity, :r_cylinder, :epot; center=[:bc], weight=:volume)
-phase(gravity, :epot, :a_magnitude; weight=:volume)
-pdf(gravity, :epot; weight=:volume, logbins=false)   # phi is negative, so no log bins
+info.namelist_content["&POISSON_PARAMS"]
 ```
 
-`hydro` and `particles` need none of this: both carry a mass, so the default weight works. To bring
-a hydro column onto the gravity object for `getvar` itself, pass `hydro_data=gethydro(info)` loaded
-over the same cells.
+| setting | ``\phi`` contains |
+|---|---|
+| default (`self_gravity=.true.`, or `gravity_type=0`) | all mass on the grid |
+| `gravity_rho_ana_type > 0` (or `gravity_type < 0`) | all mass on the grid plus an analytic density, e.g. an external halo |
+| `gravity_force_ana_type > 0` | the mass on the grid; the analytic force is in ``\mathbf a`` only |
+| `gravity_type > 0` (older namelists) | nothing, `:epot` is zero; the analytic force is in ``\mathbf a`` only |
 
+The tutorial galaxies use `gravity_type = -3`, so their ``\phi`` includes an external halo.
+
+### Units
+
+RAMSES writes ``\phi`` too small by a factor `boxlen`, because its solver works on a box of
+size 1. The acceleration is written correctly. Mera multiplies ``\phi`` by `boxlen` whenever it
+reads it: in `getvar`, the energies, projections and `dataoverview`. The raw column in
+`gravity.data` keeps RAMSES's value, so if you read it directly, multiply by `gravity.boxlen`
+yourself.
+
+| | code units | physical unit |
+|---|---|---|
+| potential `:epot` | ``\phi_\mathrm{file}\cdot\mathrm{boxlen}`` | × ``(\mathrm{unit\_l}/\mathrm{unit\_t})^2`` for `:erg_g`, also `:km2_s2`, `:J_kg` |
+| acceleration `:ax`, `:ay`, `:az` | as stored | × ``\mathrm{unit\_l}/\mathrm{unit\_t}^2`` for `:cm_s2`, also `:km_s2`, `:m_s2` |
+
+**Cosmological runs** need nothing extra. The snapshot's units already contain the scale
+factor, so both fields come out in the proper frame at that redshift. Note that ``\phi`` is then
+the **peculiar** potential (its source is ``\rho - \bar\rho``), and ``\mathbf a`` does not include
+the slowing of peculiar velocities by the expansion (``-H\mathbf v``).
+
+These values are checked against Poisson's equation in physical units, for `boxlen` 1 and 250
+and for a cosmological run.
+
+### Three things to keep in mind
+
+1. **The zero point of ``\phi`` is arbitrary.** A periodic box fixes ``\phi`` only up to a
+   constant, and an isolated box sets it from the mass inside the box only. Compare differences
+   of ``\phi`` between places, not single values.
+2. **The field in an output is one step old.** RAMSES writes an output before that step's
+   Poisson solve, so ``\phi`` and ``\mathbf a`` lag the gas and particles by one step. This is
+   small where things change slowly (about 1 % in a cosmological run at ``a = 0.1``), but large
+   around fast changes, such as a quickly accreting sink. The first output of a run has
+   ``\phi = 0`` and ``\mathbf a = 0``.
+3. **A snapshot cannot split the field by source.** ``m\,\phi`` is the energy of a gas cell in the
+   *total* field. So the sum of ``m\,\phi`` over a clump is its binding to everything, not its
+   self-binding, and it is not the self-energy ``W = \tfrac12\int\rho\,\phi\,dV`` either. Particles
+   have no potential column, and Mera does not interpolate the field onto them.
 
 ### From gravity alone
 
-These need nothing but the gravity object. Every component measured about an axis or a centre
-depends on `center`, exactly as the velocity components do.
+These need only the gravity object. Components about an axis or a centre depend on `center`, as
+for velocities.
 
 | Quantity | Formula |
 |---|---|
@@ -455,78 +361,63 @@ depends on `center`, exactly as the velocity components do.
 | Sph. azimuthal accel. `:aphi_sphere` | azimuthal component about the chosen centre |
 | Specific energy `:specific_gravitational_energy` | ``\phi`` itself, energy per unit mass |
 
-### Energy and force, which need the cell mass
-
-A potential is per unit mass, so an **energy** or a **force** needs the mass of the cell, and the
-mass lives on the hydro object rather than the gravity one. Pass both:
+For `profile`, `pdf` and `phase` on a gravity object, weight by `:volume`: gravity has no mass,
+and these weight by mass unless told otherwise.
 
 ```julia
-getvar(gravity, hydro, :Fg, :dyne)              # per cell
-projection(gravity, hydro, :Fg, :dyne)          # as a map
+profile(gravity, :r_cylinder, :epot; center=[:bc], weight=:volume)
+pdf(gravity, :epot; weight=:volume, logbins=false)   # phi is negative, so no log bins
 ```
 
-Either object order works in both calls, so `getvar(hydro, gravity, …)` and
-`projection(hydro, gravity, …)` do the same thing. The Greek component names have ASCII
-spellings too: `:Fphi_cylinder` is the same quantity as `:Fϕ_cylinder`, exactly as
-`:vphi_cylinder` is for velocity.
+### Energy and force, which need the cell mass
 
-Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Load both
-over the identical `lmax` and ranges: Mera compares the cell indices of the two objects, not just
-how many there are, so a mass can never be paired with another cell's potential. Two different cuts
-holding the same number of cells are refused as well.
-
-On a **subregion** this matters twice over, because the cell fraction that weights boundary cells
-comes from the hydro object. Cut both with the same region value:
+The mass lives on the hydro object, so pass both, in either order:
 
 ```julia
-R  = sphere(10.)
+getvar(gravity, hydro, :Fg, :dyne)          # per cell
+projection(gravity, hydro, :Fg, :dyne)      # as a map
+```
+
+Load both over the same cells (same `lmax` and ranges); Mera checks the cell indices and refuses
+a mismatch. For a subregion, cut both with the same region, because the boundary-cell fraction
+comes from the hydro object:
+
+```julia
+R = sphere(10.)
 getvar(subregion(gravity, R), subregion(hydro, R), :total_binding_energy, :erg)
 ```
 
-See [Subregions](api/subregions.md) for what the fraction is applied to.
-
 | Quantity | Formula | Unit |
 |---|---|---|
-| Potential energy `:gravitational_energy` | ``E = m\,\phi`` | `:erg` |
-| Binding energy `:total_binding_energy` | ``E_\mathrm{b} = -m\,\phi`` | `:erg` |
+| Potential energy `:gravitational_energy` | ``E = m\,\phi`` (negative where bound) | `:erg` |
+| Binding energy `:total_binding_energy` | ``E_\mathrm{b} = -m\,\phi`` (positive where bound) | `:erg` |
 | Force magnitude `:Fg` | ``F = m\,|\mathbf a|`` | `:dyne` |
 | Force components `:Fx, :Fy, :Fz` | ``F_i = m\,a_i`` | `:dyne` |
 | Cyl. radial force `:Fr_cylinder` | ``m\,a_{r,\mathrm{cyl}}`` | `:dyne` |
-| Cyl. azimuthal force `:Fϕ_cylinder` | ``m\,a_{\varphi,\mathrm{cyl}}`` | `:dyne` |
+| Cyl. azimuthal force `:Fϕ_cylinder` (or `:Fphi_cylinder`) | ``m\,a_{\varphi,\mathrm{cyl}}`` | `:dyne` |
 | In-plane force magnitude `:F_magnitude_cylinder` | ``m\,\sqrt{a_{r,\mathrm{cyl}}^2+a_{\varphi,\mathrm{cyl}}^2}`` | `:dyne` |
 | Sph. radial force `:Fr_sphere` | ``m\,a_{r,\mathrm{sph}}`` | `:dyne` |
 | Sph. polar force `:Fθ_sphere` | ``m\,a_{\theta,\mathrm{sph}}`` | `:dyne` |
 | Sph. azimuthal force `:Fϕ_sphere` | ``m\,a_{\varphi,\mathrm{sph}}`` | `:dyne` |
 
-Each force is the mass times the acceleration component **of the same name**, taken from that
-component rather than recomputed, so the two share one definition and one treatment of `center`.
-
-`:gravitational_energy` is negative where the cell is bound, following ``\phi``.
-`:total_binding_energy` is its negative, positive where bound, which is the sign binding energies
-are usually quoted in.
+"Total" in `:total_binding_energy` means energy rather than energy per mass. It is not the total
+of the system.
 
 ### Projecting a gravity field
 
-Gravity carries no mass and no density, so it cannot weight its own line-of-sight average. That is
-why there is no single-argument `projection(gravity, ...)`: the hydro object supplies the weight.
+Gravity has no mass to weight a line-of-sight average, so the hydro object supplies it:
 
 ```julia
-projection(hydro, gravity, :epot)                    # column-mass-weighted mean potential
-projection(hydro, gravity, :epot; weighting=[:volume])
+projection(hydro, gravity, :epot)                       # mass-weighted mean along each ray
+projection(hydro, gravity, :epot; weighting=[:volume])  # volume-weighted mean
 ```
 
-The result is a **weighted mean** along each ray, not a column integral, which is the right
-treatment for an intensive field: a sum would simply scale with the depth of the box. Note
-`weighting` takes a vector. Mass and volume weighting answer different questions and give
-different numbers, so state which one you used.
+The result is a weighted **mean**, not a column integral, which is right for a field like
+``\phi``. Mass and volume weighting give different numbers, so say which one you used.
 
 !!! note "Removed in 1.8: `:escape_speed` and `:gravitational_redshift`"
-    Both treated ``\phi`` as if its zero point were fixed at infinity. RAMSES does not fix it
-    reliably: a periodic box leaves an arbitrary constant, and an isolated box sets the boundary
-    from the monopole of the mass inside it, which leaves out everything outside the box. ``\sqrt{-2\phi}`` is an escape
-    speed only if ``\phi \to 0`` far away, and ``\phi/c^2`` inherits the same offset. They
-    returned confident numbers that meant nothing without a stated reference level, so they were
-    withdrawn rather than left to be misread.
+    Both need ``\phi \to 0`` far away, and RAMSES does not fix the zero point (point 1 above).
+    They gave numbers that meant nothing without a reference level.
 
 ## Velocity dispersion and frames
 
