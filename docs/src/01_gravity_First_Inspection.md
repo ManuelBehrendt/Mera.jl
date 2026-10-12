@@ -580,13 +580,17 @@ energy or a force you need the mass of the cell, and the mass lives on the hydro
 gravity one.
 
 One thing to be clear about before using the numbers: `:epot` is the **total** potential. RAMSES
-solves Poisson once, for everything that gravitates, so it already contains the gas, the particles,
-the sinks and any external analytic potential the run was set up with. This run is `gravity_type
-= -3`, external potential **and** self-gravity:
+solves Poisson once, for all the mass on the grid, so it contains the gas, the particles and the
+sinks. This run has `gravity_type = -3`: self-gravity plus an analytic density for the external
+halo, added to the Poisson source. So the halo is part of the potential too:
 
 ```julia
 info.namelist_content["&POISSON_PARAMS"]["gravity_type"]
 ```
+
+A run with an analytic external **force** instead (`gravity_type > 0`) adds that force to the
+acceleration only, so the potential does not contain it. The
+[Computation Reference](computation_reference.md#Gravity) lists every case.
 
 So `m * phi` is the energy of that cell's **gas** in the **total** field. Summing it over cells
 does not give the system's gravitational self-energy. That is `W = (1/2) * integral of rho * phi`.

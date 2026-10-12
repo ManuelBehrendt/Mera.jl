@@ -287,17 +287,35 @@ the cell mass:
 acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
 
 !!! warning "`:epot` is the run's **total** potential, not the gas's own"
-    RAMSES solves Poisson once, for everything that gravitates. The ``\phi`` in `:epot` therefore
-    already contains the gas, the particles (stars and dark matter), the sinks, and any external
-    analytic potential the run was configured with. Mera stores it exactly as written.
+    RAMSES solves Poisson once, for all the mass on the grid. The ``\phi`` in `:epot` therefore
+    contains the gas, the particles (stars, dark matter and, by default, the sinks) and any
+    analytic density the run adds to the Poisson source.
 
-    What is in it is a property of the run, not of Mera. `gravity_type` in `&POISSON_PARAMS` says
-    which: `0` self-gravity only, `3` external potential only, `-3` external potential **and**
-    self-gravity. Both test galaxies used here are `-3`, so their ``\phi`` includes an external
+    The acceleration can contain more than the potential. RAMSES adds two kinds of force to
+    ``\mathbf a`` directly, without putting them into ``\phi``:
+
+    - an analytic external force, set with `gravity_force_ana_type > 0`, or with
+      `gravity_type > 0` in older namelists;
+    - the force of massive sinks, if `mass_sink_direct_force` is set to 0 or more. These sinks
+      are then left out of the Poisson source.
+
+    So ``\mathbf a = -\nabla\phi`` holds only if the run uses neither.
+
+    What ``\phi`` contains is a property of the run, not of Mera. `&POISSON_PARAMS` in the
+    namelist says which case you have:
+
+    | setting | what ``\phi`` contains |
+    |---|---|
+    | `self_gravity=.true.` (the default; older: `gravity_type=0`) | all mass on the grid |
+    | `gravity_rho_ana_type > 0` (older: `gravity_type < 0`) | all mass on the grid, plus an analytic density |
+    | `gravity_force_ana_type > 0` | the mass on the grid if `self_gravity=.true.`; the analytic force is in ``\mathbf a`` only |
+    | `gravity_type > 0` (older namelists) | nothing: Poisson is not solved and `:epot` is zero; the analytic force is in ``\mathbf a`` only |
+
+    Both test galaxies used here have `gravity_type = -3`, so their ``\phi`` includes an external
     halo that no amount of gas or particle data would reproduce:
 
     ```julia
-    info.namelist_content["&POISSON_PARAMS"]["gravity_type"]
+    info.namelist_content["&POISSON_PARAMS"]
     ```
 
     Two consequences for the quantities below:
@@ -314,12 +332,19 @@ acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
 ### How `:epot` is read
 
 RAMSES writes the potential too small by a factor `boxlen`. Its force is written correctly.
-The reason is in the Poisson solver:
+The reason is in the Poisson solver, which works on a grid of size 1 instead of `boxlen`:
 
-- `phi_fine_cg.f90` scales the source term by `boxlen/nx_loc`, so the solution comes out as
-  ``\phi_\mathrm{file} = \phi / \mathrm{boxlen}``.
-- `force_fine.f90` takes the gradient in box units, which multiplies by `boxlen` again. So
-  ``\mathbf a = -\nabla\phi`` is right, and only ``\phi`` itself is off.
+- Both solvers, `phi_fine_cg.f90` and `multigrid_fine_commons.f90`, multiply the source term by
+  `boxlen` once. On a unit grid, the right factor would be `boxlen` squared. So the solution comes
+  out as ``\phi_\mathrm{file} = \phi / \mathrm{boxlen}``.
+- `force_fine.f90` takes the gradient on the same unit grid, which multiplies by `boxlen` again.
+  So the acceleration is right, and only ``\phi`` itself is off.
+- RAMSES confirms this itself. Where it sets ``\phi`` from a formula, on the boundary of an
+  isolated box, it computes the potential in physical code units and divides it by `boxlen`
+  before storing it.
+
+(The factor is `boxlen/nx_loc` in the source. `nx_loc` is 1 in a standard run, and boundary
+cells do not change it.)
 
 Mera corrects this when it reads the value, not when it loads the file:
 
@@ -342,8 +367,11 @@ For a run with `boxlen = 1` the two agree, which is why the error was easy to mi
 galaxies on the tutorial pages use `boxlen = 48`, so their potentials are 48 times larger than
 the raw column.
 
-The correction does not fix the zero point. RAMSES sets no reference level for ``\phi``, so
-compare differences of the potential between places, not single values.
+The correction does not fix the zero point. In a periodic box, ``\phi`` is fixed only up to
+a constant. In an isolated box, RAMSES sets ``\phi = -GM/r`` on the boundary, with ``M`` the
+mass inside the box. So ``\phi`` goes to zero far away only in that approximation, and mass
+outside the box is not in it. Compare differences of the potential between places, not single
+values.
 
 ### What gravity can and cannot answer today
 
@@ -356,11 +384,11 @@ produced, and that is the whole of what a snapshot supports without re-solving P
 |---|---|
 | the field itself | `:epot`, `:ax/:ay/:az` and their cylindrical and spherical components |
 | force on a gas cell | ``\mathbf F = m_\mathrm{gas}\,\mathbf a``, complete: `a` already contains every source |
-| energy of gas in that field | ``E = m_\mathrm{gas}\,\phi``, likewise complete |
+| energy of gas in that field | ``E = m_\mathrm{gas}\,\phi``, complete for the mass that is in ``\phi`` (see the warning above) |
 | local stability | `:jeanslength`, `:jeansmass`, `:virial_parameter_local`, built from the cell's own gas and never from ``\phi`` |
 
 These are correct as they stand. You can use the field without knowing which mass made it: the
-potential and the acceleration already contain every source.
+acceleration contains every force the run applied, and the potential all the mass on the grid.
 
 **Not available from a snapshot**
 
@@ -468,9 +496,9 @@ treatment for an intensive field: a sum would simply scale with the depth of the
 different numbers, so state which one you used.
 
 !!! note "Removed in 1.8: `:escape_speed` and `:gravitational_redshift`"
-    Both treated ``\phi`` as if its zero point were fixed at infinity. RAMSES does not fix it: the
-    potential carries an arbitrary offset, which is set by the boundary conditions and differs
-    between a periodic box, a zoom region and an isolated halo. ``\sqrt{-2\phi}`` is an escape
+    Both treated ``\phi`` as if its zero point were fixed at infinity. RAMSES does not fix it
+    reliably: a periodic box leaves an arbitrary constant, and an isolated box sets the boundary
+    from the monopole of the mass inside it, which leaves out everything outside the box. ``\sqrt{-2\phi}`` is an escape
     speed only if ``\phi \to 0`` far away, and ``\phi/c^2`` inherits the same offset. They
     returned confident numbers that meant nothing without a stated reference level, so they were
     withdrawn rather than left to be misread.

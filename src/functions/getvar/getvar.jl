@@ -241,9 +241,11 @@ end
     the mass is the hydro object's. Mera compares the cell indices of the two, so a mismatched pair
     is refused rather than pairing a mass with another cell's potential.
 
-    `:epot` is the run's **total** potential: gas, particles, sinks and any external analytic
-    potential, so `m * phi` is that cell's gas measured in the total field. The Gravity section of
-    the Computation Reference says what follows from that, and what a snapshot cannot tell you.
+    `:epot` is the run's **total** potential: all the mass on the grid (gas, particles, sinks) and
+    any analytic density added to the Poisson source, so `m * phi` is that cell's gas measured in
+    the total field. An analytic external force is added to the acceleration only, never to
+    `:epot`. The Gravity section of the Computation Reference says what follows from that, and
+    what a snapshot cannot tell you.
 
     RAMSES stores the potential short by a factor `boxlen` (its force is stored correctly).
     `getvar` multiplies by `boxlen`, so `:epot` and the energies built from it are the physical
