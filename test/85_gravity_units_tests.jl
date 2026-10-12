@@ -59,6 +59,70 @@ function _accel_vs_potential_gradient(info)
     return ratios
 end
 
+# Slope of  lap(phi)  against  4 pi G (rho - mean rho)  in cgs, on the level-`lev` cells whose
+# 7-point stencil is all on that level, and slope of  ax  against RAMSES's own 5-point gradient
+# of phi (force_fine.f90) on that level. This is an ABSOLUTE check: it needs the potential, the
+# gas density, the particle masses, the positions and G to agree in physical units, with no
+# quantity derived from another. Particles are deposited cloud-in-cell with the level's cell as
+# the cloud, as RAMSES does for that level's solve; tracers (family <= 0) carry no mass there.
+#
+# The slope cannot be exactly 1 on a stored output: RAMSES writes an output before the step's
+# Poisson solve, so the potential is one step older than the gas and particles beside it.
+function _poisson_slope(info, lev)
+    g = getgravity(info, verbose=false, show_progress=false)
+    h = gethydro(info, verbose=false, show_progress=false)
+    p = getparticles(info, verbose=false, show_progress=false)
+    N = 2^lev
+    wrap(a) = mod1(a, N)
+    phi = fill(NaN, N, N, N)
+    ax  = fill(NaN, N, N, N)
+    rho = zeros(N, N, N)
+
+    gl = getvar(g, :level); pv = getvar(g, :epot, :erg_g); av = getvar(g, :ax, :cm_s2)
+    gx, gy, gz = Int.(getvar(g, :cx)), Int.(getvar(g, :cy)), Int.(getvar(g, :cz))
+    for i in findall(gl .== lev)
+        phi[gx[i], gy[i], gz[i]] = pv[i]
+        ax[gx[i], gy[i], gz[i]]  = av[i]
+    end
+
+    hl = getvar(h, :level); rg = getvar(h, :rho, :g_cm3)
+    hx, hy, hz = Int.(getvar(h, :cx)), Int.(getvar(h, :cy)), Int.(getvar(h, :cz))
+    for i in findall(hl .== lev); rho[hx[i], hy[i], hz[i]] = rg[i]; end
+
+    Lbox = info.boxlen * info.scale.cm
+    Δ = Lbox / N
+    m = getvar(p, :mass, :g)
+    m[getvar(p, :family) .<= 0] .= 0
+    x, y, z = (getvar(p, s) ./ info.boxlen for s in (:x, :y, :z))
+    for k in eachindex(m)
+        fx, fy, fz = x[k]*N + 0.5, y[k]*N + 0.5, z[k]*N + 0.5    # cell i is centred on (i-0.5)/N
+        ix, iy, iz = floor(Int, fx), floor(Int, fy), floor(Int, fz)
+        dx, dy, dz = fx - ix, fy - iy, fz - iz
+        for (ox, wx) in ((0, 1-dx), (1, dx)), (oy, wy) in ((0, 1-dy), (1, dy)), (oz, wz) in ((0, 1-dz), (1, dz))
+            rho[wrap(ix+ox), wrap(iy+oy), wrap(iz+oz)] += m[k] * wx * wy * wz / Δ^3
+        end
+    end
+    ρmean = (sum(getvar(h, :mass, :g)) + sum(m)) / Lbox^3
+
+    lap = Float64[]; src = Float64[]
+    for i in 1:N, j in 1:N, k in 1:N
+        nb = (phi[wrap(i+1), j, k], phi[wrap(i-1), j, k], phi[i, wrap(j+1), k],
+              phi[i, wrap(j-1), k], phi[i, j, wrap(k+1)], phi[i, j, wrap(k-1)])
+        (isnan(phi[i, j, k]) || any(isnan, nb)) && continue
+        push!(lap, (sum(nb) - 6phi[i, j, k]) / Δ^2)
+        push!(src, 4π * info.constants.G * (rho[i, j, k] - ρmean))
+    end
+    a = Float64[]; grad = Float64[]
+    for i in 1:N, j in 1:N, k in 1:N
+        f = ntuple(d -> phi[wrap(i+d-3), j, k], 5)          # phi at i-2 .. i+2
+        any(isnan, f) && continue
+        push!(a, ax[i, j, k])
+        push!(grad, -((4/3) * (f[4] - f[2]) / (2Δ) - (1/3) * (f[5] - f[1]) / (4Δ)))
+    end
+    return (poisson = sum(lap .* src) / sum(src .^ 2), correlation = cor(lap, src), cells = length(lap),
+            force = sum(a .* grad) / sum(grad .^ 2))
+end
+
 @testset "gravity units: a == -grad(phi)" begin
     if !DATA_AVAILABLE
         @info "85_gravity_units_tests: skipped, no simulation data"
@@ -103,5 +167,40 @@ end
         else
             @info "85_gravity_units_tests: sedov3d_grav_part fixture not present"
         end
+
+        # ── a large box: boxlen == 250 (pc) ──────────────────────────────────────────────────
+        pk = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC/sinks3d")
+        if isdir(pk)
+            info = getinfo(2, pk, verbose=false)
+            @test info.boxlen == 250.0
+            r = _accel_vs_potential_gradient(info)
+            @test length(r) > 100
+            @test median(r) ≈ 1.0 rtol=0.02     # 1/250 without the correction
+        else
+            @info "85_gravity_units_tests: sinks3d fixture not present"
+        end
+    end
+end
+
+@testset "gravity units: cosmological run, Poisson in physical units" begin
+    pc = joinpath(SIMULATION_PATH, "RAMSES-PUBLIC/cosmo3d")
+    if !DATA_AVAILABLE || !isdir(pc)
+        @info "85_gravity_units_tests: cosmo3d fixture not present, skipped"
+    else
+        # RAMSES solves for the peculiar potential in supercomoving units. Converting with the
+        # proper unit_l, unit_t, unit_d of the snapshot must give the proper-frame field:
+        # a = -grad(phi), and lap(phi) = 4 pi G (rho - mean rho) with gas plus dark matter.
+        info = getinfo(3, pc, verbose=false)
+        @test info.aexp < 0.2
+        r = _poisson_slope(info, info.levelmin)
+        @test r.cells > 10_000
+        # Same stencil as RAMSES, same level: exact up to round-off.
+        @test r.force ≈ 1.0 rtol=1e-3
+        @test r.correlation > 0.999
+        # Measured 0.986: the stored potential is one coarse step older than the density (a
+        # grows about 4 % per step here). A unit error in any converted quantity would be a
+        # factor of order aexp or boxlen_ini, far outside this band.
+        @test 0.97 < r.poisson < 1.01
+        @info "gravity units: cosmological Poisson check" aexp=info.aexp poisson=r.poisson correlation=r.correlation force=r.force cells=r.cells
     end
 end

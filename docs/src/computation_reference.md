@@ -373,6 +373,31 @@ mass inside the box. So ``\phi`` goes to zero far away only in that approximatio
 outside the box is not in it. Compare differences of the potential between places, not single
 values.
 
+**Cosmological runs.** The same conversion is correct. RAMSES solves for the potential in
+supercomoving units, and the `unit_l`, `unit_t` and `unit_d` of each snapshot already contain the
+right powers of `aexp`. So `:epot` comes out as the potential in the proper frame at that
+redshift, and `:ax`, `:ay`, `:az` as the proper accelerations. Cosmological runs use
+`boxlen = 1`, so the correction above changes nothing there. Three points are specific to them:
+
+- ``\phi`` is the **peculiar** potential. Its source is ``\rho - \bar\rho``, so the mean density
+  of the universe is not in it, and ``m\,\phi`` is a peculiar potential energy.
+- ``\mathbf a`` is the gravitational part only. In an expanding box the peculiar velocity also
+  changes by ``-H\,\mathbf v`` from the expansion, and that term is not in ``\mathbf a``.
+- RAMSES's cosmological units imply ``G = 6.668\times10^{-8}`` cgs, 0.09 % below the value
+  Mera uses. This is far below any other uncertainty.
+
+**The potential in an output is one step old.** RAMSES writes an output at the start of a step,
+before that step's Poisson solve. The potential and the acceleration therefore come from the
+previous step, while the gas and the particles are current. The difference is usually small,
+about 1 % in a cosmological run at ``a = 0.1``, but it is larger where things change fast, for
+example around a sink that accretes quickly. The first output of a run is written before any
+solve, so there ``:epot`` and the accelerations are zero everywhere.
+
+**How this was checked.** On fresh RAMSES runs whose output is taken after a very short step,
+Mera's values satisfy ``\nabla^2\phi = 4\pi G(\rho - \bar\rho)`` in cgs to 0.03 % for
+`boxlen = 1` and `boxlen = 250`, and to 0.3 % in a cosmological run. The acceleration agrees with
+RAMSES's own gradient of the corrected ``\phi`` to round-off in every case.
+
 ### What gravity can and cannot answer today
 
 Mera pairs **gravity with hydro**. Everything below is the gas measured against the field the run
