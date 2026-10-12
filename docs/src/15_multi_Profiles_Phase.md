@@ -5,34 +5,42 @@
      Any edit here is lost the next time the docs are rendered. -->
 ```
 
-# Profiles & phase diagrams, a step-by-step guide
+# Profiles and phase diagrams
 
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook**: [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-`profile`, `phase`, `profile3d` and `profiletimeseries` are **general, weighted
-reductions** over any Mera field, a *profile* bins by one quantity (often a **radius**) and reports
-per-bin **statistics** of another; a *phase diagram* is a 2-D weighted histogram. They work on
-**3-D data** (gas / gravity / particles) **and on projected 2-D maps**.
+`profile` sorts cells into bins of one quantity, usually a radius, and reports statistics of
+another quantity in each bin. `phase` is a 2-D weighted histogram of two quantities. Both work on
+gas, gravity and particle data, and on projected maps. `profile3d` adds a third quantity, and
+`profiletimeseries` follows a profile over many snapshots.
 
-This guide builds the core features up one at a time, on **one galaxy**. Six sections cover the
-essentials with a plot each; the remaining features share the same API and are summarised at the end.
+This page builds the features up one at a time, on one galaxy:
 
-## Setup, load the galaxy once
+| section | what it shows |
+|:--|:--|
+| 1 | choosing the bins |
+| 2 | statistics per bin, and your own |
+| 3 | density and enclosed mass |
+| 4 | weighting, a gravity profile, and gas, stars and dark matter on shared bins |
+| 5 | phase diagrams |
+| 6 | distribution shape and bootstrap errors |
 
-Load hydro, gravity and **particles** from **one** snapshot. That matters more than it looks: every
-number on this page is then about the same matter at the same time, so a mass decomposition can be
-compared against the gravity field of the same run. Mixing two runs would put gas from one and
-stars from another into the same total. Define a reusable physical **center**; profiles take a
-`center` in any length unit.
+The remaining options use the same calls and are listed at the end.
+
+## Setup
+
+Load gas, gravity and particles from **one** snapshot, so every number on the page is about the
+same matter at the same time. `center` is the origin of every radius below; it takes any length
+unit. The last lines set one plot style for the whole page.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
 # MERA_EXAMPLES environment variable; every path below is built from it.
 MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
 
-using Mera, CairoMakie, Statistics   # Statistics: quantile, used for the colour limits in §5
+using Mera, CairoMakie, Statistics   # Statistics: quantile, used in §2 and §5
 CairoMakie.activate!()
 BASE = MERA_EXAMPLES   # <-- change me
 info  = getinfo(100, joinpath(BASE,"RAMSES/spiral_clumps"), verbose=false)
@@ -41,6 +49,27 @@ grav  = getgravity(info, lmax=gas.lmax, verbose=false, show_progress=false)
 parts = getparticles(info, verbose=false, show_progress=false)   # SAME snapshot as the gas
 ctr = [:bc]                         # box centre; e.g. [24.,24.,24.] with range_unit=:kpc also works
 println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
+
+# Plot style for the whole page (figure code only, no Mera concepts).
+update_theme!(fontsize=15, Lines=(linewidth=2.5,), Legend=(framevisible=false,),
+              Axis=(titlefont=:regular, titlesize=16, xgridcolor=(:black,0.07), ygridcolor=(:black,0.07)))
+C = (blue=RGBf(0.20,0.47,0.74), navy=RGBf(0.16,0.25,0.45), orange=RGBf(0.90,0.52,0.13),
+     red=RGBf(0.70,0.15,0.20), green=RGBf(0.18,0.55,0.34), gold=RGBf(0.85,0.62,0.10),
+     purple=RGBf(0.42,0.32,0.66))
+# Log-axis ticks at whole powers of ten; on a range shorter than two decades, also at 2× and 5×.
+function decades(lo, hi)
+    t = 10.0 .^ (ceil(Int, log10(lo)):floor(Int, log10(hi)))
+    length(t) >= 2 && return t
+    return [m * 10.0^e for e in floor(Int, log10(lo)):ceil(Int, log10(hi)) for m in (1, 2, 5) if lo <= m * 10.0^e <= hi]
+end
+function pow10(vs)                                         # labels 10ⁿ and 2×10ⁿ
+    map(vs) do v
+        e = floor(Int, log10(v) + 1e-9); m = round(Int, v / 10.0^e)
+        m == 1 ? rich("10", superscript(string(e))) : rich("$(m)×10", superscript(string(e)))
+    end
+end
+logy = (yscale=log10, yticks=decades, ytickformat=pow10)     # splat into Axis for a log y axis
+rticks  = ([0.5,1,2,5,10,20], ["0.5","1","2","5","10","20"]); # log radius axes, in plain numbers
 ```
 
 ```
@@ -55,131 +84,105 @@ Mera v1.8.0 | Julia 1.12.7 | 8 threads
 gas cells = 590311   particles = 453200
 ```
 
-## 1. The simplest profile, binning a quantity
+## 1. Choosing the bins
 
-With only a bin field, `profile` returns the **summed weight** per bin, e.g. the radial **mass
-profile** M(R). The radius is measured about `center`; `nbins`, `xrange`, `scale` and units are
-physical. `scale=:log` gives log-spaced bins, **base 10 and not natural log**: the edges are
-`10 .^ range(log10(lo), log10(hi), length=nbins+1)`, the low edge is clamped to the smallest
-positive value, and the top edge is inclusive. Set bins by **count** (`nbins`), by a **physical width**
-(`binsize=0.5` in `xunit`, or `binsize=(500,:pc)` with its own unit; a dimensionless **dex** step
-under `scale=:log`), or by fully custom `edges=`, `binsize`/`edges` override `nbins`. Returns `x`
-(centres), `edges`, `count`, `sum` (Σweight), `sumw2`.
+With only a bin quantity, `profile` returns the **summed weight** per bin; with `weight=:mass`,
+that is the mass per bin. Radii are measured from `center`. There are four ways to set the bins:
+
+| keyword | bins |
+|:--|:--|
+| `nbins=40` | 40 bins of equal width over `xrange` |
+| `binsize=1.0`, `binsize=(500,:pc)` | a fixed width, in `xunit` or in its own unit |
+| `scale=:log` | log-spaced (base 10); with `binsize`, the width is in dex |
+| `edges=[1,2,4,8,16,24]` | your own bin boundaries |
+
+`binsize` and `edges` override `nbins`. The result holds `x` (bin centres), `edges`, `count`,
+`sum` (summed weight) and `sumw2`.
+
+Mass per bin grows with the bin width, so profiles with different bins only agree after dividing
+by the width. The right panel does this: three binnings, one curve.
 
 ```julia
-# Binning is a choice, and a bad one invents structure. 50 bins from R = 0 leaves the inner
-# ones nearly empty; on a log axis those become spikes several decades deep. Wider bins
-# starting at 1 kpc show the same galaxy without the noise.
-pl  = profile(gas, :r_cylinder; weight=:mass, binsize=1.0, xrange=(1.0,24), center=ctr, range_unit=:kpc, xunit=:kpc)
-plg = profile(gas, :r_cylinder; weight=:mass, nbins=18, scale=:log, xrange=(1.0,24), center=ctr, range_unit=:kpc, xunit=:kpc)
-pe  = profile(gas, :r_cylinder; weight=:mass, edges=[0.,2.,4.,8.,16.,24.], center=ctr, range_unit=:kpc, xunit=:kpc)
-pbs = profile(gas, :r_cylinder; weight=:mass, binsize=(500,:pc), xrange=(0,24), center=ctr, range_unit=:kpc, xunit=:kpc)
-println("binsize=(500,:pc) → bin width [kpc] = ", round(diff(pbs.edges)[1], digits=3), "  (", length(pbs.edges)-1, " bins)")
-M(p) = p.sum .* gas.scale.Msol      # code mass -> Msol
+# Four binnings of the same gas. Starting at 1 kpc avoids the nearly empty inner bins, which on a
+# log axis turn into deep spikes.
+kwr = (weight=:mass, center=ctr, range_unit=:kpc, xunit=:kpc)
+pl  = profile(gas, :r_cylinder; binsize=1.0,       xrange=(1.0,24), kwr...)   # 1 kpc wide
+pbs = profile(gas, :r_cylinder; binsize=(500,:pc), xrange=(1.0,24), kwr...)   # width in its own unit
+plg = profile(gas, :r_cylinder; nbins=18, scale=:log, xrange=(1.0,24), kwr...)
+pe  = profile(gas, :r_cylinder; edges=[1.,2.,4.,8.,16.,24.], kwr...)
+println("binsize=(500,:pc): ", length(pbs.edges)-1, " bins of ", round(diff(pbs.edges)[1], digits=3), " kpc")
 
-fig = Figure(size=(1080,420))
-ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="mass / bin [M⊙]", title="linear bins  (1 kpc wide, from 1 kpc)")
-scatterlines!(ax1, pl.x, M(pl), color=:seagreen)
-ax2 = Axis(fig[1,2], xscale=log10, yscale=log10, xlabel="R [kpc]", ylabel="mass / bin [M⊙]",
-           title="log bins + custom edges  (above 0.1 % of the peak)")
-o = M(plg) .> 1e-3 * maximum(M(plg))   # a bin can hold cells and almost no mass: filter on mass
-lines!(ax2, plg.x[o], M(plg)[o], color=:dodgerblue, linewidth=2, label="18 log bins")
-stairs!(ax2, pe.x, max.(M(pe),1), color=:crimson, step=:center, linewidth=2, label="custom edges")
-axislegend(ax2, position=:rb, framevisible=false)
+M(p)    = p.sum .* gas.scale.Msol      # mass per bin [Msol]
+dMdR(p) = M(p) ./ diff(p.edges)        # mass per kpc of radius, independent of the bin width
+
+# ── figure code from here ──
+fig = Figure(size=(1100,420))
+ax1 = Axis(fig[1,1]; xlabel="R [kpc]", ylabel="mass per bin [M⊙]", title="1 kpc bins")
+scatterlines!(ax1, pl.x, M(pl), color=C.green)
+ax2 = Axis(fig[1,2]; xscale=log10, xticks=rticks, logy...,
+           xlabel="R [kpc]", ylabel="dM/dR [M⊙ / kpc]", title="three binnings, divided by the bin width")
+o = dMdR(pbs) .> 0
+lines!(ax2, pbs.x[o], dMdR(pbs)[o], color=(C.navy,0.35), linewidth=1.5, label="0.5 kpc bins")
+o = dMdR(plg) .> 1e-3 * maximum(dMdR(plg))      # a bin can hold cells but almost no mass
+lines!(ax2, plg.x[o], dMdR(plg)[o], color=C.blue, label="18 log bins")
+stairs!(ax2, pe.edges, vcat(dMdR(pe), dMdR(pe)[end]), step=:post, color=C.red, label="custom edges")
+axislegend(ax2, position=:lb)
 fig
 ```
 
 ```
-binsize=(500,:pc) → bin width [kpc] = 0.5  (48 bins)
+binsize=(500,:pc): 46 bins of 0.5 kpc
 ```
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_5_3.png)
 
-## 2. Per-bin statistics, a binned statistic is not a histogram
+## 2. Statistics per bin
 
-Give a **second field** `yvar` and the bin stops being a count. Every bin now carries, for that
-field, weighted by `weight`:
+Give a second quantity, and every bin reports statistics of it, weighted by `weight`:
 
 | field | what it is |
 |:--|:--|
 | `mean` | the weighted mean |
-| `median`, `quantiles` | the 50th percentile, and whichever percentiles you ask for in `qlevels` |
+| `median`, `quantiles` | the median, and the percentiles asked for in `quantiles` |
 | `std` | the weighted standard deviation |
-| `sem` | the standard error **on the mean**, `std/√neff`, with Kish's effective sample size |
-| `min`, `max` | the extremes actually present |
-| `count`, `sum`, `sumw2` | how many cells, their summed weight, and its square |
-| `custom` | whatever your own `statistic=f` returned |
+| `sem` | the standard error of the mean, `std/√neff` (Kish's effective sample size) |
+| `min`, `max` | the extremes in the bin |
+| `skewness`, `kurtosis` | the shape of the distribution (section 6) |
+| `count`, `sum`, `sumw2` | number of cells, summed weight, summed squared weight |
+| `custom` | what your own `statistic` returned |
 
-**`std` and `sem` answer different questions**, and confusing them is the usual mistake. `std` is
-how much the gas in that bin *actually varies*; it does not shrink when you add cells. `sem` is how
-well the *mean* is pinned down; it shrinks as more cells enter the bin. Error bars on a mean want
-`sem`. A claim about the gas wants `std`, or better, quantiles.
+`std` and `sem` answer different questions. `std` is how much the gas in a bin varies; it does not
+shrink with more cells. `sem` is how well the mean is known; it does shrink. Use `sem` for error
+bars on a mean, and `std` or quantiles to describe the gas.
 
-### The `statistic` keyword: your own reduction, per bin
+### Your own statistic
 
-The table above is what Mera computes for you. `statistic=f` is the escape hatch for everything
-else. Mera sorts the cells into bins, and then, **once for each bin**, hands your function that
-bin's numbers and asks for a single value back. The answers land in `custom`, one per bin.
-
-Two things to know before writing one.
-
-**What your function receives.** `y` is a plain Julia vector of the `yvar` values of the cells that
-fell in this bin, and `w` is their weights (their masses, with `weight=:mass`). Nothing exotic:
-anything you can do to a vector, you can do here.
-
-**Which form Mera calls.** If your function takes two arguments it is called as `f(y, w)`, so you
-can weight. If it takes one it is called as `f(y)`, and then **the weights are not involved at
-all**, which is a real trap: a one-argument function treats a tiny cell and a massive one alike.
-
-Now read the line in the code below, right to left:
+`statistic=f` is called once per bin, and its results land in `custom`. A function of two
+arguments, `f(y, w)`, gets the bin's values `y` and weights `w`. A function of one argument,
+`f(y)`, gets only the values, so **the weights are ignored**. The figure uses the mass-weighted
+root mean square:
 
 ```julia
 statistic = (y, w) -> sqrt(sum(w .* y.^2) / sum(w))
 ```
 
-`(y, w) -> …` is Julia's anonymous function: "given `y` and `w`, compute this". Then `y.^2` squares
-every temperature (the dot means element by element), `w .* y.^2` weights each square by that
-cell's mass, `sum(...) / sum(w)` is the mass-weighted mean of the squares, and `sqrt` brings it
-back to kelvin. That is the **root mean square**, and it is in here precisely because Mera does not
-provide it: squaring first means a few very hot cells count enormously, which is why the red curve
-sits a decade above the mean.
-
-Other things people actually want, all tested on this snapshot at mid-radius:
+More examples, with their result for the bin at mid-radius:
 
 ```julia
-# how many cells in the bin are hotter than 10^6 K        -> 1391
-statistic = y -> count(>(1e6), y)
-
-# what fraction of the bin's MASS is hotter than 10^6 K    -> 0.0022
-statistic = (y, w) -> sum(w[y .> 1e6]) / sum(w)
-
-# the mass-weighted geometric mean, the natural average
-# for something spread over decades                        -> 6836 K
-statistic = (y, w) -> exp(sum(w .* log.(y)) / sum(w))
-
-# the interquartile range, a spread that ignores extremes  -> 7.5e6 K
-statistic = y -> quantile(y, 0.75) - quantile(y, 0.25)     # needs `using Statistics`
+statistic = y -> count(>(1e6), y)                        # cells hotter than 1e6 K   -> 1391
+statistic = (y, w) -> sum(w[y .> 1e6]) / sum(w)          # mass fraction above 1e6 K -> 0.0022
+statistic = (y, w) -> exp(sum(w .* log.(y)) / sum(w))    # geometric mean            -> 6836 K
+statistic = y -> quantile(y, 0.75) - quantile(y, 0.25)   # interquartile range       -> 7.5e6 K
 ```
 
-The first and last are one-argument forms, so they count cells rather than mass. That is the right
-choice for "how many cells" and the wrong one if you meant "how much gas", which is what the second
-example does instead.
+The first and last count cells, not mass, because they take one argument.
 
-### Reading the figure
-
-The left panel is the honest description of a bin: the median, the 16–84 % band holding the bulk
-of the gas, and the min–max envelope. The band is narrow while the envelope spans six decades,
-which is the multiphase ISM in one picture.
-
-The right panel is the same cells reduced three ways, and they do **not** agree. At R = 10 kpc the
-median is 6.0 × 10³ K, the mean 3.5 × 10⁴ K, and the RMS 6.6 × 10⁵ K: each about a decade above
-the last. That ordering, median < mean < RMS, is the signature of a strongly skewed distribution,
-where a small mass of very hot gas sets the mean and dominates the RMS while most of the gas is
-cool.
-
-`±std` is deliberately **not** drawn. It is symmetric, and here the spread is larger than the mean,
-so `mean − std` is negative: meaningless for a temperature and impossible to draw on a log axis.
-For a quantity spread over decades, quantiles are the honest spread.
+**Reading the figure.** Left: the median, the 16 to 84 % band and the min to max envelope. The band
+is narrow, while the envelope spans six decades: this is the multiphase gas. Right: three
+averages of the same cells. At R = 10 kpc the median is 6.0 × 10³ K, the mean 3.5 × 10⁴ K and the
+RMS 6.6 × 10⁵ K. Median < mean < RMS is the mark of a skewed distribution: a little very hot gas
+sets the mean, while most of the gas is cool. `±std` is not drawn; here it is larger than the
+mean, so `mean − std` would be negative.
 
 ```julia
 # One set of binning options, reused for both calls so the two profiles share identical bins.
@@ -208,179 +211,159 @@ mu  = pT.mean[ok]                    # mass-weighted mean
 sem = pT.sem[ok]                     # uncertainty ON THE MEAN, not the spread of the gas
 rms = pC.custom[ok]                  # whatever `statistic` returned, here the RMS
 
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-NAVY=RGBf(0.16,0.25,0.45); BLUE=RGBf(0.20,0.47,0.74); ORANGE=RGBf(0.90,0.52,0.13); RED=RGBf(0.70,0.15,0.20)
+# ── figure code from here ──
 fig = Figure(size=(1180,450))
-ax1 = Axis(fig[1,1], yscale=log10, xlabel="R [kpc]", ylabel="T [K]", title="the spread in each bin")
-band!(ax1, x, mn, mx, color=(NAVY,0.10), label="min – max")
-band!(ax1, x, q16, q84, color=(BLUE,0.35), label="16 – 84 %")
-lines!(ax1, x, q50, color=NAVY, linewidth=2.5, label="median")
-axislegend(ax1, position=:rt, framevisible=false)
+ax1 = Axis(fig[1,1]; logy..., xlabel="R [kpc]", ylabel="T [K]", title="the spread in each bin")
+band!(ax1, x, mn, mx, color=(C.navy,0.10), label="min – max")
+band!(ax1, x, q16, q84, color=(C.blue,0.35), label="16 – 84 %")
+lines!(ax1, x, q50, color=C.navy, label="median")
+axislegend(ax1, position=:rt)
 
-ax2 = Axis(fig[1,2], yscale=log10, xlabel="R [kpc]", ylabel="T [K]",
+ax2 = Axis(fig[1,2]; logy..., xlabel="R [kpc]", ylabel="T [K]",
            title="three ways to average the same cells")
-lines!(ax2, x, q50, color=NAVY,   linewidth=2.5, label="median  (50th percentile)")
-lines!(ax2, x, mu,  color=ORANGE, linewidth=2.5, label="mean  (mass-weighted)")
-lines!(ax2, x, rms, color=RED,    linewidth=2.5, label="RMS  (statistic=…)")
+lines!(ax2, x, q50, color=C.navy,   linewidth=2.5, label="median  (50th percentile)")
+lines!(ax2, x, mu,  color=C.orange, label="mean  (mass-weighted)")
+lines!(ax2, x, rms, color=C.red,    linewidth=2.5, label="RMS  (statistic=…)")
 # sem whiskers belong on the mean. Every third bin, and only where the lower whisker stays positive,
 # because a log axis cannot draw down to zero.
 se = [i for i in 1:3:length(x) if mu[i]-sem[i] > 0]
-errorbars!(ax2, x[se], mu[se], sem[se], color=ORANGE, whiskerwidth=7)
-axislegend(ax2, position=:rt, framevisible=false)
+errorbars!(ax2, x[se], mu[se], sem[se], color=C.orange, whiskerwidth=7)
+axislegend(ax2, position=:rt)
 fig
 ```
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_7_1.png)
 
-## 3. Density, enclosed mass & normalization
+## 3. Density and enclosed mass
 
-`geometry=:spherical` (shell `4/3·π·Δr³`) or `:cylindrical` (annulus `π·Δr²`) divides the binned
-weight by the shell volume to give a physical **`density`** (`weight`-unit per `xunit`³, +
-`shell_volume`). `cumulative=:forward` (or `:reverse`) adds `cumsum`/`cumcount`, the **enclosed
-mass** M(<r), which is where a half-mass radius comes from. `normalize=:sum` gives per-bin
-`fraction` (Σ=1); `normalize=:pdf` gives a true probability density (∫=1), so `profile` can bin
-*by* density and hand back a ρ-PDF.
-
-For PDFs specifically, [`pdf`](@ref) is the direct route and the
-[Statistics](statistics.md) page covers weighting, normalisation and the log-normal question in
-one place.
+* `geometry=:spherical` divides each bin's weight by its shell volume, `4/3·π·(r₂³ − r₁³)`, and
+  returns `density` in weight unit per `xunit`³. `geometry=:cylindrical` divides by the annulus
+  area, `π·(r₂² − r₁²)`, which gives a surface density per `xunit`².
+* `cumulative=:forward` (or `:reverse`) adds `cumsum` and `cumcount`. With `weight=:mass`,
+  `cumsum` is the enclosed mass M(<r), from which the half-mass radius follows.
+* `normalize=:sum` adds `fraction` (summing to 1), and `normalize=:pdf` a probability density
+  (integrating to 1). For distributions of a single quantity, [`pdf`](@ref) is the direct route;
+  the [Statistics](statistics.md) page covers it.
 
 ```julia
 pr = profile(gas, :r_sphere; weight=:mass, geometry=:spherical, cumulative=:forward, scale=:log,
              xrange=(0.3,24), nbins=40, center=ctr, range_unit=:kpc, xunit=:kpc)
-ρ = pr.density .* gas.scale.Msol; Menc = pr.cumsum .* gas.scale.Msol
-frac  = Menc ./ Menc[end]
-rhalf = pr.x[findfirst(>=(0.5), frac)]          # where half the gas is enclosed
+ρ     = pr.density .* gas.scale.Msol    # Msol / kpc^3
+Menc  = pr.cumsum  .* gas.scale.Msol    # Msol inside each bin's outer edge
+rhalf = pr.edges[1 + findfirst(>=(0.5), Menc ./ Menc[end])]   # half the gas inside this radius
 
-fig = Figure(size=(1080,420))
-a1 = Axis(fig[1,1], xscale=log10, yscale=log10, xlabel="r [kpc]", ylabel="ρ [M⊙/kpc³]",
-          title="spherical density ρ(r)   (geometry=:spherical)")
-od = ρ .> 0; scatterlines!(a1, pr.x[od], ρ[od], color=:crimson)
-a2 = Axis(fig[1,2], xscale=log10, xlabel="r [kpc]", ylabel="M(<r) [M⊙]",
-          title="enclosed mass   (cumulative=:forward)")
-lines!(a2, pr.x, Menc, color=:navy, linewidth=2.5)
-hlines!(a2, [0.5*Menc[end]], color=:gray, linestyle=:dash)
-vlines!(a2, [rhalf], color=:gray, linestyle=:dash)
-text!(a2, rhalf*1.15, 0.52*Menc[end]; text="half the gas inside $(round(rhalf,digits=1)) kpc",
-      color=:gray, fontsize=12, align=(:left,:bottom))
+# ── figure code from here ──
+fig = Figure(size=(1100,420))
+a1 = Axis(fig[1,1]; xscale=log10, xticks=rticks, logy...,
+          xlabel="r [kpc]", ylabel="ρ [M⊙ / kpc³]", title="density  (geometry=:spherical)")
+od = ρ .> 0
+scatterlines!(a1, pr.x[od], ρ[od], color=C.red, markersize=7)
+a2 = Axis(fig[1,2]; xscale=log10, xticks=rticks, xlabel="r [kpc]", ylabel="M(<r) [10¹⁰ M⊙]",
+          title="enclosed mass  (cumulative=:forward)")
+lines!(a2, pr.edges[2:end], Menc ./ 1e10, color=C.navy)
+hlines!(a2, [0.5*Menc[end]/1e10], color=:gray50, linestyle=:dash, linewidth=1.5)
+vlines!(a2, [rhalf], color=:gray50, linestyle=:dash, linewidth=1.5)
+text!(a2, rhalf*1.1, 0.5*Menc[end]/1e10; text="half the gas inside $(round(rhalf, digits=1)) kpc",
+      color=:gray35, fontsize=14, align=(:left,:top), offset=(0,-6))
 fig
 ```
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_9_1.png)
 
-## 4. Weighting & components, mass vs volume vs none
+## 4. Weighting, gravity, and components
 
-A bin holds many cells, and `weight` decides how much each of them counts towards the bin's value.
-The choice is not cosmetic: on an AMR grid it changes the answer, because a refined region packs
-many small cells into the space of one coarse cell.
+`weight` decides how much each cell counts in its bin. On an AMR grid this changes the answer,
+because a refined region packs many small cells into little space.
 
-| `weight` | each cell counts in proportion to | the mean then follows |
-|---|---|---|
-| `:mass` | its mass | where the material is |
-| `:volume` | the space it fills | where the volume is (grid data only) |
-| `:none` | nothing, every cell counts once | where the refinement is |
-| any field, e.g. `:T` | that field's value | whatever you chose |
+| `weight` | each cell counts in proportion to | the mean follows |
+|:--|:--|:--|
+| `:mass` | its mass | the material |
+| `:volume` | the space it fills (grid data only) | the volume |
+| `:none` | nothing, every cell counts once | the refinement |
+| any quantity, e.g. `:T` | that quantity | your choice |
 
-Dense gas occupies little volume and carries most of the mass, so a mass-weighted mean sits high
-above a volume-weighted one wherever a bin mixes dense clumps with thin gas. Neither is the right
-answer on its own: the gap between them is itself the measurement, and it tells you the bin is not
-uniform. Say which one you used.
+Dense gas fills little space but holds most of the mass. Wherever a bin mixes clumps with thin
+gas, the mass-weighted mean density therefore lies far above the volume-weighted one (left panel).
+The gap itself is information: the bin is not uniform. Always state which weight you used.
 
-**Gravity and RT data carry no `:mass` column**, so `weight=:mass` cannot work there. Use `:volume`
-or `:none` for those.
+**Gravity and RT data have no mass**, so use `weight=:volume` there. The middle panel profiles the
+gravitational potential this way, in (km/s)². Its zero point is arbitrary, so read its shape and
+its differences between radii, not single values (see
+[How Quantities Are Computed](computation_reference.md#Gravity)).
 
-**Comparing components starts with shared bins.** Pass `edges=` (a vector of bin boundaries) instead
-of `nbins=`, and every profile built from it lands on exactly the same radii. Curves on shared edges
-can be divided, subtracted or stacked afterwards; curves on separately chosen bins cannot. Combine
-that with `mask=`, a boolean vector selecting rows, and one snapshot gives the gas, the stars and the
-dark matter on one axis.
+**Components need shared bins.** Pass the same `edges=` vector to every call, and all curves land
+on the same radii, so they can be added, divided or compared. With a `mask=` from
+`getparticlemask`, one snapshot gives gas, stars and dark matter on one axis (right panel).
 
 ```julia
-# --- shared bins ---------------------------------------------------------------------------
-# A vector of BIN BOUNDARIES, not a bin count. 41 boundaries make 40 bins of 0.5 kpc each.
-# Every profile below is handed this same vector, which is what makes the curves comparable:
-# identical radii, so they can be divided, subtracted or stacked afterwards.
-ed = collect(range(0, 20, length=41))
-
-# One bundle of options reused by every call, so a difference between two curves can only come
-# from what we deliberately change (the weight, or the component), never from the binning.
+# Shared bins: 41 boundaries make 40 bins of 0.5 kpc. Every call below gets the same vector, so
+# a difference between two curves can only come from the weight or the component.
+ed     = collect(range(0, 20, length=41))
 common = (edges=ed, center=ctr, range_unit=:kpc, xunit=:kpc)
 
-# --- the same field, three weights ---------------------------------------------------------
-# :rho is the density of each cell; `unit=:nH` reports it as a hydrogen number density in cm^-3.
+# The same quantity, two weights. `unit=:nH` reports the density as hydrogen atoms per cm^3.
 pmw = profile(gas, :r_sphere, :rho; weight=:mass,   unit=:nH, common...)   # follows the material
 pvw = profile(gas, :r_sphere, :rho; weight=:volume, unit=:nH, common...)   # follows the space
 
-# Gravity data has no :mass column, so weight=:mass would fail here. :volume is the natural choice
-# for a field defined on the grid; :none would weight by refinement instead of by physical size.
-pep = profile(grav, :r_sphere, :epot; weight=:volume, common...)
+# Gravity has no mass column, so weight by volume. `unit=:km2_s2` gives the potential in (km/s)^2.
+pep = profile(grav, :r_sphere, :epot; weight=:volume, unit=:km2_s2, common...)
 
-# --- components on those same bins ----------------------------------------------------------
-# `getparticlemask` builds a boolean vector, one entry per particle, true for the family asked for.
-# Passing it as `mask=` restricts the profile to those rows; nothing is copied or reloaded.
+# Components on the same bins. `getparticlemask` returns one Bool per particle, true for the
+# family asked for; `mask=` restricts the profile to those rows. With no second quantity, `sum` is
+# the mass per bin, and `cumulative=:forward` adds it up from the centre: the enclosed mass.
 mstars = getparticlemask(parts, :stars; verbose=false)
 mdm    = getparticlemask(parts, :dm;    verbose=false)
-
-# With no yvar, `profile` sums the WEIGHT per bin, so weight=:mass gives the mass per bin in `.sum`.
-# `cumulative=:forward` adds those bins up from the inside out, so `.cumsum` is the mass enclosed
-# inside each bin's outer edge. Results are in code units; multiply by scale.Msol for solar masses.
 cg = profile(gas,   :r_sphere; weight=:mass, cumulative=:forward, common...)
 cs = profile(parts, :r_sphere; weight=:mass, cumulative=:forward, mask=mstars, common...)
 cd = profile(parts, :r_sphere; weight=:mass, cumulative=:forward, mask=mdm,    common...)
-Mg = cg.cumsum .* gas.scale.Msol
-Ms = cs.cumsum .* parts.scale.Msol
-Md = cd.cumsum .* parts.scale.Msol
+Mg, Ms, Md = cg.cumsum .* gas.scale.Msol, cs.cumsum .* parts.scale.Msol, cd.cumsum .* parts.scale.Msol
 
-# --- plot ------------------------------------------------------------------------------------
-fig = Figure(size=(1500, 430))
+# ── figure code from here ──
+fig = Figure(size=(1500,440))
+ax1 = Axis(fig[1,1]; logy..., xlabel="r [kpc]", ylabel="⟨n_H⟩ [cm⁻³]",
+           title="gas density, two weights")
+o1 = pmw.mean .> 0; o2 = pvw.mean .> 0          # empty bins report 0, which a log axis cannot show
+lines!(ax1, pmw.x[o1], pmw.mean[o1], color=C.red,  label="weight=:mass")
+lines!(ax1, pvw.x[o2], pvw.mean[o2], color=C.blue, label="weight=:volume")
+axislegend(ax1, position=:rt)
 
-ax1 = Axis(fig[1,1], yscale=log10, xlabel="r [kpc]", ylabel="⟨n_H⟩ [cm⁻³]",
-           title="same field, two weights (gas)")
-o1 = pmw.mean .> 0; o2 = pvw.mean .> 0        # log axis: drop empty bins, which report 0
-lines!(ax1, pmw.x[o1], pmw.mean[o1], color=:crimson, linewidth=2.5, label="mass-weighted")
-lines!(ax1, pvw.x[o2], pvw.mean[o2], color=:teal,    linewidth=2.5, label="volume-weighted")
-axislegend(ax1, position=:rt, framevisible=false)
-
-ax2 = Axis(fig[1,2], xlabel="r [kpc]", ylabel="⟨Φ⟩ [code]",
-           title="gravity: weight=:volume, :mass not available")
+ax2 = Axis(fig[1,2]; xlabel="r [kpc]", ylabel="⟨Φ⟩ [10⁴ (km/s)²]", title="gravitational potential, weight=:volume")
 og = isfinite.(pep.mean)
-lines!(ax2, pep.x[og], pep.mean[og], color=:slateblue, linewidth=2.5)
+lines!(ax2, pep.x[og], pep.mean[og] ./ 1e4, color=C.purple)
 
-ax3 = Axis(fig[1,3], yscale=log10, xlabel="r [kpc]", ylabel="M(<r) [M⊙]",
-           title="three components, one set of edges")
-for (M, col, lab) in ((Md, :navy, "dark matter"), (Ms, :goldenrod, "stars"), (Mg, :seagreen, "gas"))
-    ok = M .> 0                                # again, only bins that have something in them
-    lines!(ax3, cg.x[ok], M[ok], color=col, linewidth=2.5, label=lab)
+ax3 = Axis(fig[1,3]; logy..., xlabel="r [kpc]", ylabel="M(<r) [M⊙]",
+           title="enclosed mass, one set of edges")
+for (Mc, col, lab) in ((Ms, C.gold, "stars"), (Md, C.navy, "dark matter"), (Mg, C.green, "gas"))
+    ok = Mc .> 1e8                               # the innermost bins hold too few particles to show
+    lines!(ax3, ed[2:end][ok], Mc[ok], color=col, label=lab)
 end
-axislegend(ax3, position=:rb, framevisible=false)
+axislegend(ax3, position=:rb)
 fig
 ```
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_11_1.png)
 
-## 5. Phase diagrams, colour is a knob
+## 5. Phase diagrams
 
-`phase` is a 2-D weighted histogram of two fields, the classic mass-weighted **ρ to T** diagram.
-With a third field `cvar` each cell is coloured by the per-cell weighted **mean**; `cstat` swaps
-that for `:std`/`:median`/`:min`/`:max`/`:full` or a function. `normalize=:pdf` makes a 2-D PDF,
-and `xedges`/`yedges` accept custom edges.
+`phase(obj, x, y)` is a 2-D histogram of the summed weight; here, the gas mass in the
+density–temperature plane. A third quantity colours each bin by a statistic of it, chosen with
+`cstat`: `:mean` (the default), `:median`, `:std`, `:min`, `:max`, `:quantiles`, `:full` (all of
+them) or your own function. `normalize=:pdf` gives a 2-D probability density, and `xedges`,
+`yedges` take custom bins.
 
-Same ρ–T plane, four questions. **Every title says which statistic is drawn**, because a colour
-means nothing until you know whether it is a sum, a mean, a median or a spread:
+The four panels share one grid of bins and differ only in what the colour shows:
 
 | panel | statistic | what it answers |
 |:--|:--|:--|
-| mass | **sum** of the weight per bin | where the gas is |
-| ⟨v_r⟩ | **mean** radial velocity about the box centre | inflow against outflow, and the hot wind |
-| σ(v_r) | **standard deviation** per bin | how ordered that motion is |
-| cell size | **median** | where the refinement went, a property of the run, not the gas |
+| mass | **sum** of the weight | where the gas is |
+| ⟨v_r⟩ | **mean** radial velocity about the centre | inflow or outflow |
+| σ(v_r) | **standard deviation** of v_r | how ordered that motion is |
+| cell size | **median** | where the run refined; a property of the simulation, not of the gas |
 
-Three habits worth copying. Bins holding almost no mass carry wild means, and one of them will set
-the colour range for a whole panel, so they are masked first. `v_r` here is one-sided, a wind
-rather than a symmetric field, so the diverging limits come from a percentile of `|v_r|` rather
-than its extremes. And **σ spans 1.7 dex**, so it gets a log colour scale, without which the disc
-is a single flat colour; the cell size spans 0.3 dex and takes only three values, being the AMR
-level, so a log scale there would add nothing.
+Three habits make such panels readable. Bins with almost no mass get wild means, and one of them
+can set the colour range of a whole panel, so they are masked first. `v_r` is mostly outflow here,
+so the symmetric colour limits come from a percentile of `|v_r|`, not from its extremes. And σ
+spans 1.7 dex, so it gets a log colour scale. Velocities are measured in the box frame.
 
 ```julia
 # --- four views of the SAME plane -------------------------------------------------------------
@@ -434,28 +417,25 @@ vlim = qq(abs.(mask(pvr.mean)), 0.90)
 
 sig  = mask(psd.std); sig[sig .<= 0] .= NaN   # a log colour scale needs strictly positive values
 
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-# `xedges`/`yedges` are the bin BOUNDARIES, 141 of them for 140 bins. A heatmap wants one
-# coordinate per bin, so take each pair's midpoint; log10 because the axes are labelled in log10.
-xc = log10.((ph.xedges[1:end-1].+ph.xedges[2:end])./2)
-yc = log10.((ph.yedges[1:end-1].+ph.yedges[2:end])./2)
-lg(M) = log10.(replace(M, 0.0=>NaN))    # log10 of a map, empty bins blanked instead of becoming -Inf
-fig = Figure(size=(1150,860))
-# Each row below is one panel. The title names the STATISTIC, because a colour means nothing
-# until you know whether it is a sum, a mean, a median or a spread.
-#          title (naming the statistic)          data              colourmap  range                          log?
-panels = (("sum of mass per bin  (H)",           lg(ph.H),         :magma,   nothing,                        identity),
-          ("mean ⟨v_r⟩ [km/s]   (inflow / outflow)", mask(pvr.mean), :balance, (-vlim, vlim),                identity),
-          ("std σ(v_r) [km/s]   (log colour)",   sig,              :viridis, (qq(sig,0.02), qq(sig,0.995)),  log10),
-          ("median cell size [pc]",              mask(pcs.median), :cividis, nothing,                        identity))
-for (k,(lab,M,cm,rng,csc)) in enumerate(panels)
-    r=(k-1)÷2+1; c=2*((k-1)%2)+1        # 2×2 layout, each panel followed by its own colour bar
-    ax  = Axis(fig[r,c], xlabel="log₁₀ n_H [cm⁻³]", ylabel="log₁₀ T [K]", title=lab)
-    kwc = rng === nothing ? (; colormap=cm) : (; colormap=cm, colorrange=rng)   # nothing = let Makie choose
-    hm  = csc === log10 ? heatmap!(ax, xc, yc, M; colorscale=log10, kwc...) :
-                          heatmap!(ax, xc, yc, M; kwc...)
-    ax.backgroundcolor = :black         # masked (NaN) bins show as background, not as a colour
-    Colorbar(fig[r,c+1], hm)
+# ── figure code from here ──
+# A heatmap wants one coordinate per bin: the midpoints of the 141 edges, in log10 like the axes.
+xc = log10.((ph.xedges[1:end-1] .+ ph.xedges[2:end]) ./ 2)
+yc = log10.((ph.yedges[1:end-1] .+ ph.yedges[2:end]) ./ 2)
+lg(M) = log10.(replace(M, 0.0=>NaN))    # empty bins become blank instead of -Inf
+fig = Figure(size=(1150,880))
+#          title                    colour-bar label         data                         colour map  range                           scale
+panels = (("mass per bin (sum)",    "log₁₀ M [M⊙]",          lg(ph.H .* gas.scale.Msol),  :magma,   nothing,                        identity),
+          ("radial velocity (mean)", "⟨v_r⟩ [km/s]",         mask(pvr.mean),              :balance, (-vlim, vlim),                  identity),
+          ("its spread (std)",      "σ(v_r) [km/s]",         sig,                         :viridis, (qq(sig,0.02), qq(sig,0.995)),  log10),
+          ("cell size (median)",    "cell size [pc]",        mask(pcs.median),            :cividis, nothing,                        identity))
+for (k, (title, clabel, M, cm, rng, csc)) in enumerate(panels)
+    r = (k-1)÷2 + 1; c = 2*((k-1)%2) + 1   # 2×2 layout, each panel followed by its colour bar
+    ax  = Axis(fig[r,c]; xlabel="log₁₀ n_H [cm⁻³]", ylabel="log₁₀ T [K]", title=title,
+               backgroundcolor=RGBf(0.93,0.93,0.93))   # masked (NaN) bins show as light grey
+    kwc = rng === nothing ? (; colormap=cm) : (; colormap=cm, colorrange=rng)
+    hm  = heatmap!(ax, xc, yc, M; colorscale=csc, kwc...)
+    cticks = csc === log10 ? ([20,50,100,200,500,1000,2000], ["20","50","100","200","500","1000","2000"]) : Makie.automatic
+    Colorbar(fig[r,c+1], hm, label=clabel, ticks=cticks)
 end
 fig
 ```
@@ -469,22 +449,23 @@ fig
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_3.png)
 
-## 6. Distribution shape & uncertainties, moments, equal-count bins, bootstrap CIs
+## 6. Distribution shape and bootstrap errors
 
-Three statistics upgrades, all opt-in and composable:
+Three options, each opt-in and combinable:
 
-* **`skewness`** and (excess) **`kurtosis`** are always returned with a `yvar`, the asymmetry and
-  tail-weight of each bin's distribution (a Gaussian gives both ≈ 0).
-* **`scale=:equal`** places *quantile-spaced* edges so every bin holds about the same number of
-  points, far steadier statistics where the disk thins out (vs fixed-width bins that empty out).
-* **`bootstrap=N`** resamples each bin to add confidence intervals for the per-bin mean and median
-  (`mean_ci`/`median_ci`, `nbins×2`) plus `median_se`; `ci=:percentile` (default), `:basic` or
-  `:bca` (bias-corrected & accelerated). It is deterministic (seeded), so reruns match.
+* **`skewness`** and excess **`kurtosis`** come with every profile that has a second quantity:
+  the asymmetry and the tail weight of each bin's distribution. A Gaussian gives 0 for both.
+* **`scale=:equal`** places the edges at quantiles, so every bin holds about the same number of
+  cells. Statistics then stay steady where the disc thins out, and the bins get wider there. With
+  no `xrange`, the bins reach the outermost gas.
+* **`bootstrap=N`** resamples each bin N times and adds confidence intervals for the mean and the
+  median (`mean_ci`, `median_ci`, each `nbins × 2`) and `median_se`. `ci` chooses the method:
+  `:percentile` (default), `:basic` or `:bca` (bias-corrected and accelerated). `:bca` is more
+  accurate for skewed data, but its cost grows with the square of the cells per bin, so keep it
+  for bins of a few thousand cells. The resampling is seeded, so a rerun gives the same interval.
 
-The three panels are separate on purpose. In this galaxy the skewness of `v_z` reaches **-44**
-while the excess kurtosis reaches **2600**: drawn on one axis the skewness is a flat line on zero,
-and the strongly one-sided vertical motion in the mid-disc, which is the interesting part, is
-invisible.
+The three quantities get separate panels because their sizes differ so much: the skewness of
+`v_z` reaches −44, the excess kurtosis 2600.
 
 ```julia
 # --- one profile carrying three extra kinds of information --------------------------------------
@@ -494,13 +475,12 @@ invisible.
 # of being physically wider out there. Read the x axis as "bin centre", not "bin of constant size".
 #
 # bootstrap=800 resamples the cells inside each bin 800 times and looks at how much the per-bin mean
-# moves. The spread of those 800 means is the confidence interval, and it assumes nothing about the
-# distribution being Gaussian, which matters here because it is not. ci=:bca is the bias-corrected
-# and accelerated interval (the others are :percentile and :basic), and confidence_level=0.95 makes
-# it a 95% interval. The resampling is seeded, so
-# running the cell again gives exactly the same interval rather than a slightly different one.
+# moves. The spread of those 800 means is the confidence interval; it assumes nothing about the
+# distribution being Gaussian, which matters here because it is not. The default ci=:percentile is
+# used: ci=:bca adds a jackknife whose cost grows with the SQUARE of the cells per bin, which takes
+# minutes at the 32,000 cells per bin here. The resampling is seeded, so a rerun gives the same interval.
 pe = profile(gas, :r_cylinder, :vz; weight=:mass, unit=:km_s, scale=:equal, nbins=18,
-             center=ctr, range_unit=:kpc, xunit=:kpc, bootstrap=800, ci=:bca, confidence_level=0.95)
+             center=ctr, range_unit=:kpc, xunit=:kpc, bootstrap=800, confidence_level=0.95)
 
 println("equal-count points/bin (min..max): ", extrema(pe.count), "  → nearly equal")
 
@@ -512,21 +492,20 @@ hi = pe.mean_ci[ok,2]              # column 2 the upper. (median_ci and median_s
 sk = pe.skewness[ok]               # asymmetry of the v_z distribution in the bin; 0 = symmetric
 ku = pe.kurtosis[ok]               # EXCESS kurtosis, i.e. tail weight; 0 = Gaussian, not 3
 
-# Skewness runs to -44 here and excess kurtosis to 2600: on one axis the skewness is a flat
-# line on zero and the panel says nothing. One axis each, and the kurtosis in log.
+# ── figure code from here ──
 fig = Figure(size=(1350,420))
-ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="⟨v_z⟩ [km/s]", title="equal-count bins + BCa bootstrap 95% CI")
+ax1 = Axis(fig[1,1]; xlabel="R [kpc]", ylabel="⟨v_z⟩ [km/s]", title="mean with 95 % bootstrap interval")
 # The band is the confidence interval on the MEAN, not the spread of the gas. It is narrow because
 # each bin holds tens of thousands of cells; σ(v_z) itself is far wider (that is pe.std).
-band!(ax1, x, lo, hi, color=(:dodgerblue,0.25), label="95% CI (bootstrap)")
-lines!(ax1, x, mu, color=:dodgerblue, linewidth=2.5, label="⟨v_z⟩")
-axislegend(ax1, position=:rt, framevisible=false)
-ax2 = Axis(fig[1,2], xlabel="R [kpc]", ylabel="skewness", title="asymmetry of v_z per bin")
-hlines!(ax2, [0.0], color=:gray, linestyle=:dash)     # the symmetric case, for reference
-lines!(ax2, x, sk, color=:crimson, linewidth=2)
-ax3 = Axis(fig[1,3], xlabel="R [kpc]", ylabel="excess kurtosis", yscale=log10,
-           title="tail weight of v_z per bin")
-lines!(ax3, x, ku, color=:seagreen, linewidth=2)
+band!(ax1, x, lo, hi, color=(C.blue,0.25), label="95 % interval")
+lines!(ax1, x, mu, color=C.blue, label="⟨v_z⟩")
+axislegend(ax1, position=:rt)
+ax2 = Axis(fig[1,2]; xlabel="R [kpc]", ylabel="skewness", title="asymmetry of v_z")
+hlines!(ax2, [0.0], color=:gray50, linestyle=:dash, linewidth=1.5)     # the symmetric case, for reference
+lines!(ax2, x, sk, color=C.red)
+ax3 = Axis(fig[1,3]; xlabel="R [kpc]", ylabel="excess kurtosis", logy...,
+           title="tail weight of v_z")
+lines!(ax3, x, ku, color=C.green)
 fig
 ```
 
@@ -536,7 +515,7 @@ equal-count points/bin (min..max): (32096, 33456)  → nearly equal
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_3.png)
 
-## More features (same API, no separate plot here)
+## More features (same calls, no plot here)
 
 These use exactly the same `profile`/`phase` calls shown above:
 
@@ -580,6 +559,6 @@ These use exactly the same `profile`/`phase` calls shown above:
 | radius-vs-time evolution | `profiletimeseries` |
 | distribution shape; equal-count bins; bootstrap CIs | `skewness`/`kurtosis`, `scale=:equal`, `bootstrap=N` |
 
-Profiles & phase work on **gas, gravity, particles and projected maps** (`source=:data`
-or `:map`). Everything here is regression-tested in the Mera test suite. For *line-of-sight*
+Profiles and phase diagrams work on **gas, gravity, particles and projected maps**; the result's
+`source` field says which (`:data` or `:map`). Everything here is covered by Mera's test suite. For *line-of-sight*
 distributions (per-pixel spectra, velocity cubes) see the [Off-axis Projection](06_offaxis_Projection.md) guide.

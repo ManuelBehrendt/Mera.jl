@@ -394,7 +394,7 @@ profiles are not available for clump data.)
   Cost is `O(bootstrap·N_bin)` per bin (`:bca` adds an `O(N_bin²)` jackknife) — meant for modest counts.
 * `quantiles` — percentile levels for the per-bin weighted quantiles (default 16/50/84%).
 * `edges` — an explicit vector of bin edges (overrides `nbins`/`xrange`/`scale`); given in `xunit`.
-* `geometry` — `:spherical` (shell volume `4/3·π·Δr³`) or `:cylindrical` (annulus area `π·Δr²`)
+* `geometry` — `:spherical` (shell volume `4/3·π·(r₂³ − r₁³)`) or `:cylindrical` (annulus area `π·(r₂² − r₁²)`)
   adds `shell_volume` and a `density = sum / shell_volume` (e.g. a radial ρ(r) or surface density),
   in `weight`-unit per `xunit`³ (`xunit`²). Pair with `xvar=:r_sphere`/`:r_cylinder`.
 * `cumulative` — `:forward` (low→high) or `:reverse` adds `cumsum`/`cumcount` (e.g. enclosed mass M(<r)).
