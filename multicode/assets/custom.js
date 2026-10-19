@@ -75,6 +75,24 @@ console.log('MERA.jl documentation loaded successfully');
     }
 })();
 
+// ===========================================================================
+// Logo downloads
+// The table on the logo page is written in Markdown, so that Documenter
+// rewrites the file paths for the page depth it is building. Markdown cannot
+// set the download attribute, so add it here and the links save the file
+// instead of opening it. Without JS they still work, they just open.
+// ===========================================================================
+(function () {
+    function markDownloads() {
+        document.querySelectorAll('.logo-downloads a[href]').forEach(a => a.setAttribute('download', ''));
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', markDownloads);
+    } else {
+        markDownloads();
+    }
+})();
+
 // GoatCounter Analytics (invisible, privacy-focused)
 // Only visible to site owner for documentation usage statistics
 (function() {
