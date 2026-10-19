@@ -197,7 +197,11 @@ end
                 RW.hilbert3d(i, j, k, bits) === _rw_hilbert_ref(i, j, k, bits)
             end
         end
-        @test (@allocated RW.hilbert3d(5, 9, 17, 25)) == 0
+        # measured inside a function: at testset scope Julia 1.10 and 1.11 count 16 bytes that
+        # belong to the surrounding scope, not to hilbert3d
+        _hilbert_alloc() = @allocated RW.hilbert3d(5, 9, 17, 25)
+        _hilbert_alloc()
+        @test _hilbert_alloc() == 0
     end
 
     @testset "text formats (data-free)" begin
