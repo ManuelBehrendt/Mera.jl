@@ -271,12 +271,12 @@ worked examples: read them to see what an analysis of real data looks like, and 
 your own outputs. Those particular simulations are not distributed, so point the examples at a
 snapshot of your own, or at one of the test simulations below.
 
-To run code as you read, Mera publishes a small set of test simulations, fifteen of them, a few
-megabytes each. Every one carries either an analytic oracle, a law that
+To run code as you read, Mera publishes a small set of test simulations, fifteen of them, most a
+few megabytes (about 300 MB together). Every one carries either an analytic oracle, a law that
 follows from its own setup, or is checked against reference values published by the RAMSES
 developers. Mera's own test suite verifies the package against them, so you can confirm an
-installation behaves correctly without a large download. Fetch them with `download_testdata()`, or
-one at a time by name.
+installation behaves correctly. Fetch them all with `download_testdata()`, or one at a time by name
+(`download_testdata("sedov3d_amr")` is 2.3 MB).
 
 Two tutorial pages already use data you can obtain: the radiative-transfer page runs on one of the
 published test simulations, and the cosmology page carries download instructions for the yt
