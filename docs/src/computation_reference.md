@@ -748,7 +748,7 @@ Conceptual guide and worked examples: [Profiles & Phase Diagrams](profiles_phase
 | Column mass `:mass` (**grid data**) | ``\textstyle\sum m`` |
 | Column mass `:mass` (**particles**) | a mass-weighted **mean** particle mass by default; ``\textstyle\sum m`` only with `mode=:sum` |
 | Weighted-mean map, `mode=:standard` (default) | ``\langle q\rangle = \big(\textstyle\sum q\,w\big)\big/\big(\textstyle\sum w\big)`` |
-| Column sum, `mode=:sum` | ``\textstyle\sum q`` (extensive; conserves the total) |
+| Column sum, `mode=:sum` | grid data: ``\textstyle\sum q\,w`` (a plain ``\textstyle\sum q`` only for `:ekin`, `:etherm`, `:volume`); particles: ``\textstyle\sum q`` |
 | Velocity dispersion, **box frame** ``\;`` `:σx :σy :σz :σ :σr_cylinder :σϕ_cylinder :σr_sphere :σθ_sphere :σϕ_sphere` | ``\sigma = \sqrt{\max\!\big(\langle v^2\rangle - \langle v\rangle^2,\;0\big)}`` |
 | Velocity dispersion, **camera frame** ``\;`` `:σlos` `:σcamx` `:σcamy` (off-axis only) | the same formula, on ``v\cdot\hat{w}``, ``v\cdot\hat{r}``, ``v\cdot\hat{u}`` |
 

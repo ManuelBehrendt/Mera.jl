@@ -153,10 +153,10 @@ The `direction` presets are shortcuts. These pairs give the same line of sight:
 
 | preset | angle form | is it the same view? |
 |---|---|---|
-| `direction=:z` | `inclination=0, axis=:z` | yes, identical |
+| `direction=:z` | `inclination=0, axis=:z` | same orientation; the pixel grids differ, because the two paths place pixel edges differently |
 | `direction=:faceon` | `inclination=0, axis=:angmom` | yes, identical |
 | `direction=:edgeon` | `inclination=90, axis=:angmom` | yes, identical (it is `azimuth=0`) |
-| `face_on(obj)` / `edge_on(obj)`, splatted in | the two rows above | yes, identical |
+| `face_on(obj)` / `edge_on(obj)`, passed as `los=fr.los, up=fr.up` | the two rows above | the same camera rule; identical when the angular momentum matches (`face_on` measures it about the centre of mass of the whole object unless you give `center` or `aperture`) |
 
 All of these agree because one rule decides which way is up. With no `up=`, the image up is
 world `+z` seen across the line of sight, or `+y` when the line of sight is within 3 degrees of

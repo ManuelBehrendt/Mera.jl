@@ -70,7 +70,7 @@ These are the **grid** (hydro / gravity / RT) keywords. The particle projection 
 | `direction` | `:x`, `:y`, `:z` (default `:z`), or `:faceon`/`:edgeon`, which derive the orientation from the data's own angular momentum |
 | `los`, `up`, `theta`, `phi`, `inclination`, `azimuth` | off-axis line of sight: see [Off-axis](offaxis.md) |
 | `weighting` | how intensive quantities are averaged (see the note below) |
-| `mode` | `:standard` is a weighted **mean**, `Σ(q·w)/Σw`; `:sum` is the per-pixel total. Neither divides by area: only `:sd` does that, in both modes. `:sd` and `:mass` ignore `mode` entirely |
+| `mode` | `:standard` is a weighted **mean**, `Σ(q·w)/Σw`; `:sum` is `Σ(q·w)` on grid data (a plain per-pixel total `Σq` only for `:ekin`, `:etherm` and `:volume`) and `Σq` on particles. Neither divides by area: only `:sd` does that, in both modes. `:sd` and `:mass` ignore `mode` entirely |
 | `mask` | a boolean array from [`getmask`](@ref), applied before projecting; combines with `fov` |
 | `fov`, `fov_unit`, `aperture` | a rotation-invariant camera-plane window; `fov=[wx,wy]` for a rectangle (needs `aperture=:square`) |
 | `depth`, `depth_unit` | a slab cut **along the line of sight**, off-axis only |

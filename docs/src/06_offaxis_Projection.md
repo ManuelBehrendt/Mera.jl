@@ -69,8 +69,9 @@ away (Chapter 3). The tests that check this are listed at the end of the page.
 
 A projection is a camera. The data never moves, only the camera does.
 
-The camera looks along one direction, the **line of sight**, `los` for short. Each pixel adds up
-one straight column through the data along that direction. "Off-axis" means the line of sight
+The camera looks along one line, the **line of sight**, `los` for short. The `los` vector points
+from the object toward the camera, so the camera looks along `-los`. Each pixel adds up one
+straight column through the data along that line. "Off-axis" means the line of sight
 is not one of the box axes x, y or z.
 
 ### Am I off-axis at all?
@@ -410,7 +411,7 @@ Mera builds a right-handed orthonormal basis from `los`, and returns it on the m
 with `cam_right x up = los`.
 
 Without `up=`, the camera uses world **+z** as its up hint, and +y when the line of sight is
-itself the z axis. Along the six box directions this gives:
+within 3 degrees of the z axis. Along the six box directions this gives:
 
 | `los` | image x | image y | compared with the axis-aligned map |
 |---|---|---|---|
@@ -613,8 +614,9 @@ end
 # The same three windows on the stars. These 628 thousand young stars do not fill the +-16 kpc
 # window the gas fills, and the two kinds of window show it differently. The world range is fitted
 # to the data, so the star frame comes out smaller than the gas frame. `fov` is not: it fixes the
-# frame, so both `fov` rows match the gas rows above pixel for pixel, with empty sky around the
-# disc. That is what makes gas and star maps directly comparable.
+# frame, so both `fov` rows have the same window as the gas rows above, with empty sky around the
+# disc. The square window matches pixel for pixel; the circle frame on gas is one coarse cell
+# wider. That is what makes gas and star maps directly comparable.
 println()
 star_frames = NamedTuple[]
 for (nm, kw) in (("xrange/yrange ±16 kpc", (xrange=[-16,16], yrange=[-16,16], range_unit=:kpc)),
@@ -2225,7 +2227,7 @@ thermal and turbulent line widths and the species-mass scaling in full.
 |---|---|---|
 | `:sd`, `:mass` | the total; `mode` is ignored | the same |
 | `:ekin`, `:etherm`, `:volume` | weighted mean | the plain total, Σ q |
-| velocity dispersions (`:σlos`, `:σz`, ...) | weighted mean; `mode` is ignored | the same |
+| velocity dispersions (`:σlos`, `:σz`, ...) | from weighted means | `:σlos`, `:σcamx`, `:σcamy` the same; the box-frame σ maps are not widths, so use `mode=:standard` |
 | any other quantity, e.g. `:T`, `:vx`, `:rho` | weighted mean, Σ q·w / Σ w | **Σ q·w**, not Σ q |
 
 `w` is the `weighting`: mass for hydro, volume for RT, unless you choose another one.
@@ -2305,7 +2307,7 @@ vector can drive a map.
 
 ```julia
 cold = getvar(gas, :T, :K) .< 1e4
-projection(gas, :sd; los=[1,2,3], mask=cold, fov=16, fov_unit=:kpc)
+projection(gas, :sd; los=[1,2,3], mask=cold, center=[:bc], fov=16, fov_unit=:kpc)
 ```
 
 It composes with `fov`, `depth`, `split` and, on particles, `parttypes`. For value-space
@@ -3527,7 +3529,7 @@ Everything needed to debug an off-axis map travels on the result.
 
 **Orientation.** `position_angle=` rolls the image about `ŵ`; `up=` pins image y outright.
 Without `up=` the camera uses world +z as its hint, falling back to +y when the line of sight is
-the z axis itself. That fallback is a discontinuity: a sweep that passes through the pole will
+within 3 degrees of the z axis. That fallback is a discontinuity: a sweep that passes through the pole will
 jump there. Pin `up=` for any hand-written sweep, or use `rotation_sequence`, which sets a hint
 for you.
 
@@ -3631,7 +3633,7 @@ Lfix ./= sqrt(sum(abs2, Lfix))
 
 # 2. Project every snapshot with that ONE frozen line of sight and a fixed FOV.
 #    `up=` is pinned too. The default hint is world +z, which is stable, but it
-#    falls back to +y if a line of sight ever points along z, and that is a jump.
+#    falls back to +y if a line of sight comes within 3 degrees of z, and that is a jump.
 for out in outputs
     g = loaddata(out, path, :hydro; verbose=false)
     m = projection(g, :sd, :Msol_pc2; los=Lfix, up=[0,0,1], center=[:bc],

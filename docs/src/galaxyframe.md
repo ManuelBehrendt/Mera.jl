@@ -146,7 +146,7 @@ fr = face_on(gas)
 
 println(fr)                       # GalaxyFrame pretty-print
 println()
-println("los    : ", round.(fr.los,    digits=4))   # camera looks along this
+println("los    : ", round.(fr.los,    digits=4))   # line of sight, pointing toward the camera
 println("up     : ", round.(fr.up,     digits=4))   # camera up
 println("center : ", round.(fr.center, digits=5), "  [", fr.center_unit, "]")
 println("angmom : ", round.(fr.angmom, sigdigits=4))
