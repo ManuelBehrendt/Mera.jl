@@ -43,8 +43,14 @@ This page uses one galaxy and adds one feature at a time:
 
 Load gas, gravity and particles from **one** snapshot, so every number on the page is about the
 same matter at the same time. `center` is the origin of every radius below; it takes any length
-unit. The last lines set one plot style for the whole page: every radial plot runs from 0 to
-`Rmax` = 20 kpc, and has a thin panel below it with the number of cells or particles in each bin.
+unit. `getparticlemask` picks the stars and the dark matter, so that every gas profile below can
+be compared with the same profile of the particles, wherever the quantity exists for them.
+
+The last lines set one plot style for the whole page. Every radial plot runs from 0 to
+`Rmax` = 20 kpc and has a thin panel below it with the number of cells or particles in each bin.
+Behind a profile of a quantity that every cell has (temperature, density, velocity, …), grey
+shading shows the cells themselves: their mass in the radius–quantity plane, made with `phase`.
+The profile is a summary of this cloud.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -59,7 +65,10 @@ gas   = gethydro(info,  verbose=false, show_progress=false)
 grav  = getgravity(info, lmax=gas.lmax, verbose=false, show_progress=false)
 parts = getparticles(info, verbose=false, show_progress=false)   # SAME snapshot as the gas
 ctr = [:bc]                         # box centre; [50.,50.,50.] with range_unit=:kpc is the same point
-println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
+# One true/false per particle: `mask=mstars` restricts any profile to the stars, `mask=mdm` to the dark matter.
+mstars = getparticlemask(parts, :stars; verbose=false)
+mdm    = getparticlemask(parts, :dm;    verbose=false)
+println("gas cells = ", length(gas.data), "   stars = ", count(mstars), "   dark matter = ", count(mdm))
 
 # Plot style for the whole page (figure code only, no Mera concepts).
 update_theme!(fontsize=15, Lines=(linewidth=2.5,), Legend=(framevisible=false,),
@@ -86,7 +95,7 @@ rax  = (limits=((0, Rmax), nothing), xticks=0:5:Rmax)      # splat into Axis for
 # A thin panel docked under a profile: how many cells or particles fall in each bin. Few counts
 # mean a noisy bin; an empty bin leaves a gap. `top` is the profile axis above it.
 function countaxis(fig, row, col, top; ylabel="cells", xlabel="R [kpc]", log=true)
-    yax = log ? logy : (limits=((0, Rmax), (0, nothing)),)
+    yax = log ? logy : (limits=((0, Rmax), (0, nothing)), ytickformat=v -> string.(round.(Int, v)))
     ac  = Axis(fig[row+1, col]; merge(rax, yax)..., xlabel=xlabel, ylabel=ylabel)
     linkxaxes!(top, ac)
     hidexdecorations!(top; grid=false, ticks=false)        # the x axis labels move to the panel below
@@ -94,7 +103,20 @@ function countaxis(fig, row, col, top; ylabel="cells", xlabel="R [kpc]", log=tru
 end
 # counts per bin as steps over the bin edges; zero becomes a gap, which a log axis needs
 countsteps!(ac, edges, n; kw...) = stairs!(ac, edges, replace(Float64.(vcat(n, n[end])), 0.0 => NaN); step=:post, kw...)
-squeeze!(fig) = (rowsize!(fig.layout, 2, Relative(0.22)); rowgap!(fig.layout, 1, 6));   # count row: thin, close
+squeeze!(fig) = (rowsize!(fig.layout, 2, Relative(0.22)); rowgap!(fig.layout, 1, 6))    # count row: thin, close
+
+# The cells (or particles) behind a profile: their summed weight in the radius–quantity plane, as
+# grey shading under the profile lines. Darker means more mass; bins below 10⁻⁴ of the darkest
+# stay blank. `yfac` rescales the quantity to the axis unit (e.g. 1e-4 for 10⁴ (km/s)²).
+function cloud!(ax, obj, xvar, yvar; weight=:mass, yunit=:standard, yscale=:linear, yrange=nothing,
+                yfac=1, mask=[false], nbins=(40,60))
+    c = phase(obj, xvar, yvar; weight=weight, xunit=:kpc, yunit=yunit, xrange=(0,Rmax), yrange=yrange,
+              yscale=yscale, nbins=nbins, mask=mask, center=ctr, range_unit=:kpc)
+    H = log10.(c.H); H[.!isfinite.(H)] .= NaN
+    top = maximum(filter(isfinite, H))
+    heatmap!(ax, c.xedges, c.yedges .* yfac, H; colormap=cgrad([RGBf(0.96,0.96,0.96), RGBf(0.62,0.62,0.62)]),
+             colorrange=(top-4, top), lowclip=:transparent)
+end;
 ```
 
 ```
@@ -106,7 +128,7 @@ squeeze!(fig) = (rowsize!(fig.layout, 2, Relative(0.22)); rowgap!(fig.layout, 1,
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 8 threads
-gas cells = 590311   particles = 453200
+gas cells = 590311   stars = 413589   dark matter = 39611
 ```
 
 ## 1. Choosing the bins
@@ -124,6 +146,7 @@ that is the mass per bin. Radii are measured from `center`. There are four ways 
 `binsize` and `edges` override `nbins`. The result holds `x` (bin centres), `edges`, `count`,
 `sum` (summed weight) and `sumw2`.
 
+The left panel adds the stars and the dark matter, on the same 1 kpc bins: one `mask=` each.
 Mass per bin grows with the bin width, so profiles with different bins only agree after dividing
 by the width. The right panel does this: three binnings, one curve.
 
@@ -142,15 +165,23 @@ plg = profile(gas, :r_cylinder; nbins=15, scale=:log, xrange=(1,Rmax), kwr...) #
 pcu = profile(gas, :r_cylinder; edges=[0.,1,2,4,8,12,16,20], kwr...)
 println("binsize=(500,:pc): ", length(pbs.edges)-1, " bins of ", round(diff(pbs.edges)[1], digits=3), " kpc")
 
-M(p)    = p.sum .* gas.scale.Msol      # mass per bin [Msol]
+# The same 1 kpc bins for the particles: `mask=` keeps only the stars, or only the dark matter.
+pls = profile(parts, :r_cylinder; binsize=1.0, xrange=(0,Rmax), mask=mstars, kwr...)
+pld = profile(parts, :r_cylinder; binsize=1.0, xrange=(0,Rmax), mask=mdm,    kwr...)
+
+M(p)    = p.sum .* info.scale.Msol     # mass per bin [Msol]
 dMdR(p) = M(p) ./ diff(p.edges)        # mass per kpc of radius, independent of the bin width
 
 # ── figure code from here ──
 fig = Figure(size=(1100,560))
 ax1 = Axis(fig[1,1]; rax..., logy..., ylabel="mass per bin [M⊙]", title="1 kpc bins")
-o = M(pl) .> 0                         # an empty bin has no place on a log axis
-scatterlines!(ax1, pl.x[o], M(pl)[o], color=C.green)
-countsteps!(countaxis(fig, 1, 1, ax1), pl.edges, pl.count, color=C.green)
+c1  = countaxis(fig, 1, 1, ax1; ylabel="count")
+for (p, col, lab) in ((pl, C.green, "gas"), (pls, C.gold, "stars"), (pld, C.navy, "dark matter"))
+    o = M(p) .> 0                      # an empty bin has no place on a log axis
+    scatterlines!(ax1, p.x[o], M(p)[o], color=col, markersize=7, label=lab)
+    countsteps!(c1, p.edges, p.count, color=col)               # cells for gas, particles otherwise
+end
+axislegend(ax1, position=:rt)
 
 ax2 = Axis(fig[1,2]; rax..., logy..., ylabel="dM/dR [M⊙ / kpc]", title="three binnings, divided by the bin width")
 o = dMdR(pbs) .> 0
@@ -221,7 +252,13 @@ is narrow, while the envelope spans about seven decades: this is the multiphase 
 averages of the same cells. At R = 10 kpc the median is 6.0 × 10³ K, the mean 3.5 × 10⁴ K and the
 RMS 6.6 × 10⁵ K. Median < mean < RMS is the mark of a skewed distribution: a little very hot gas
 sets the mean, while most of the gas is cool. `±std` is not drawn; here it is larger than the
-mean, so `mean − std` would be negative.
+mean, so `mean − std` would be negative. The grey shading is the gas mass behind both panels.
+
+**Stars.** Stars have no temperature, but each one has an age with a spread in every bin, so the
+third panel makes the same profile of `:age` for the stars (`mask=mstars`). The mass-weighted
+median age is about 5 Gyr at every radius, and the 16 to 84 % range spans roughly 1 to 9 Gyr:
+old and young stars are mixed everywhere. The weight matters here too: 63 % of the star particles
+are younger than 100 Myr, yet they hold less than 16 % of the stellar mass in every bin.
 
 ```julia
 # One set of binning options, reused for both calls so the two profiles share identical bins.
@@ -250,16 +287,24 @@ mu  = pT.mean[ok]                    # mass-weighted mean
 sem = pT.sem[ok]                     # uncertainty ON THE MEAN, not the spread of the gas
 rms = pC.custom[ok]                  # whatever `statistic` returned, here the RMS
 
+# Stars have no temperature, but every star has an age, with a spread in each bin just like T.
+# Same bins, same statistics, restricted to the stars with `mask=`.
+pA = profile(parts, :r_cylinder, :age; weight=:mass, unit=:Gyr, nbins=40, xrange=(0,Rmax),
+             center=ctr, range_unit=:kpc, xunit=:kpc, mask=mstars, quantiles=[0.16, 0.5, 0.84])
+oa = pA.count .> 0
+
 # ── figure code from here ──
-fig = Figure(size=(1180,580))
-ax1 = Axis(fig[1,1]; rax..., logy..., ylabel="T [K]", title="the spread in each bin")
-band!(ax1, x, mn, mx, color=(C.navy,0.10), label="min – max")
+fig = Figure(size=(1650,580))
+ax1 = Axis(fig[1,1]; rax..., logy..., ylabel="T [K]", title="gas: the spread in each bin")
+cloud!(ax1, gas, :r_cylinder, :T; yunit=:K, yscale=:log)        # every cell, shaded by mass
+band!(ax1, x, mn, mx, color=(C.navy,0.08), label="min – max")
 band!(ax1, x, q16, q84, color=(C.blue,0.35), label="16 – 84 %")
 lines!(ax1, x, q50, color=C.navy, label="median")
 axislegend(ax1, position=:rt)
 countsteps!(countaxis(fig, 1, 1, ax1), pT.edges, pT.count, color=C.navy)
 
-ax2 = Axis(fig[1,2]; rax..., logy..., ylabel="T [K]", title="three ways to average the same cells")
+ax2 = Axis(fig[1,2]; rax..., logy..., ylabel="T [K]", title="gas: three ways to average the same cells")
+cloud!(ax2, gas, :r_cylinder, :T; yunit=:K, yscale=:log)
 lines!(ax2, x, q50, color=C.navy,   linewidth=2.5, label="median  (50th percentile)")
 lines!(ax2, x, mu,  color=C.orange, label="mean  (mass-weighted)")
 lines!(ax2, x, rms, color=C.red,    linewidth=2.5, label="RMS  (statistic=…)")
@@ -267,8 +312,16 @@ lines!(ax2, x, rms, color=C.red,    linewidth=2.5, label="RMS  (statistic=…)")
 # because a log axis cannot draw down to zero.
 se = [i for i in 1:3:length(x) if mu[i]-sem[i] > 0]
 errorbars!(ax2, x[se], mu[se], sem[se], color=C.orange, whiskerwidth=7)
+ylims!(ax2, 1e3, 1e7)                  # zoom on the averages; the full cloud is in the left panel
 axislegend(ax2, position=:rt)
 countsteps!(countaxis(fig, 1, 2, ax2), pT.edges, pT.count, color=C.navy)
+
+ax3 = Axis(fig[1,3]; rax..., ylabel="age [Gyr]", title="stars: the spread of ages in each bin")
+cloud!(ax3, parts, :r_cylinder, :age; yunit=:Gyr, mask=mstars, nbins=(40,30))
+band!(ax3, pA.x[oa], pA.quantiles[oa,1], pA.quantiles[oa,3], color=(C.gold,0.25), label="16 – 84 %")
+lines!(ax3, pA.x[oa], pA.median[oa], color=RGBf(0.55,0.38,0.0), linewidth=3, label="median")
+axislegend(ax3, position=:rt)
+countsteps!(countaxis(fig, 1, 3, ax3; ylabel="stars"), pA.edges, pA.count, color=C.gold)
 squeeze!(fig)
 fig
 ```
@@ -290,9 +343,12 @@ fig
 **What this density is.** With `weight=:mass`, `density` is the mass in a shell divided by the
 volume of the shell: the mean density of the shell. It is not a median, and not a mass-weighted
 mean. It matches the **volume-weighted** mean of the cell densities (section 4), which the left
-panel shows as open circles. The two differ slightly where the cells of a shell do not fill it
+panel shows as open circles. The stars and the dark matter use the same call with `mask=`; their
+density is the particle mass in a shell divided by its volume. The grey shading is the gas cells:
+the shell density is a summary of a spread of more than five decades. The two differ slightly where the cells of a shell do not fill it
 exactly, because a cell counts in the shell that holds its centre. The shells here are 1 kpc
-wide, no narrower than the smallest cells.
+wide, no narrower than the smallest cells. Section 4 compares the enclosed mass of the gas, the
+stars and the dark matter.
 
 ```julia
 ed3 = collect(0:1.0:Rmax)              # 1 kpc shells
@@ -302,20 +358,34 @@ pr = profile(gas, :r_sphere; weight=:mass, geometry=:spherical, cumulative=:forw
 Menc  = pr.cumsum  .* gas.scale.Msol          # Msol inside each bin's outer edge
 rhalf = pr.edges[1 + findfirst(>=(0.5), Menc ./ Menc[end])]   # half the gas inside Rmax is within rhalf
 
+# The same shells for the stars and the dark matter: their mass per shell volume.
+ρs = profile(parts, :r_sphere; weight=:mass, geometry=:spherical, mask=mstars,
+             edges=ed3, center=ctr, range_unit=:kpc, xunit=:kpc)
+ρd = profile(parts, :r_sphere; weight=:mass, geometry=:spherical, mask=mdm,
+             edges=ed3, center=ctr, range_unit=:kpc, xunit=:kpc)
+ρpc3(p) = p.density .* info.scale.Msol ./ 1e9                 # Msol/kpc^3 -> Msol/pc^3
+
 # For comparison: the volume-weighted mean of the cell densities, on the same shells.
 pv = profile(gas, :r_sphere, :rho; weight=:volume, unit=:Msol_pc3,
              edges=ed3, center=ctr, range_unit=:kpc, xunit=:kpc)
 
 # ── figure code from here ──
-fig = Figure(size=(1100,560))
+fig = Figure(size=(1100,600))
 a1 = Axis(fig[1,1]; rax..., logy..., ylabel="ρ [M⊙ / pc³]", title="density  (geometry=:spherical)")
+cloud!(a1, gas, :r_sphere, :rho; yunit=:Msol_pc3, yscale=:log)  # the gas cells, shaded by mass
 od = ρ .> 0
-scatterlines!(a1, pr.x[od], ρ[od], color=C.red, markersize=8, label="shell mass / shell volume")
+scatterlines!(a1, pr.x[od], ρ[od], color=C.green, markersize=8, label="gas: shell mass / volume")
 ov = pv.mean .> 0
-scatter!(a1, pv.x[ov], pv.mean[ov], color=:transparent, strokecolor=C.navy, strokewidth=1.5,
-         markersize=13, label="volume-weighted mean of ρ")
-axislegend(a1, position=:rt)
-countsteps!(countaxis(fig, 1, 1, a1; xlabel="r [kpc]"), pr.edges, pr.count, color=C.red)
+scatter!(a1, pv.x[ov], pv.mean[ov], color=:transparent, strokecolor=:black, strokewidth=1.2,
+         markersize=13, label="gas: volume-weighted mean")
+for (p, col, lab) in ((ρs, C.gold, "stars"), (ρd, C.navy, "dark matter"))
+    o = ρpc3(p) .> 0
+    scatterlines!(a1, p.x[o], ρpc3(p)[o], color=col, markersize=7, label=lab)
+end
+ylims!(a1, 1e-6, 5)                   # the thinnest gas cells reach further down
+axislegend(a1, position=:rt, labelsize=13)
+c1 = countaxis(fig, 1, 1, a1; ylabel="count", xlabel="r [kpc]")
+for (p, col) in ((pr, C.green), (ρs, C.gold), (ρd, C.navy)); countsteps!(c1, p.edges, p.count, color=col); end
 
 a2 = Axis(fig[1,2]; rax..., ylabel="M(<r) [10¹⁰ M⊙]", title="enclosed mass  (cumulative=:forward)")
 lines!(a2, pr.edges, vcat(0, Menc) ./ 1e10, color=C.navy)
@@ -345,7 +415,8 @@ because a refined region packs many small cells into little space.
 
 Dense gas fills little space but holds most of the mass. Wherever a bin mixes clumps with thin
 gas, the mass-weighted mean density therefore lies far above the volume-weighted one (left panel).
-The gap itself is information: the bin is not uniform. Always state which weight you used.
+The grey shading shows why: in every bin, the cells span several decades in density. The gap
+itself is information: the bin is not uniform. Always state which weight you used.
 
 **Gravity and RT data have no mass**, so use `weight=:volume` there. The middle panel profiles the
 gravitational potential this way, in (km/s)². Its zero point is arbitrary, so read its shape and
@@ -369,11 +440,8 @@ pvw = profile(gas, :r_sphere, :rho; weight=:volume, unit=:nH, common...)   # fol
 # Gravity has no mass column, so weight by volume. `unit=:km2_s2` gives the potential in (km/s)^2.
 pep = profile(grav, :r_sphere, :epot; weight=:volume, unit=:km2_s2, common...)
 
-# Components on the same bins. `getparticlemask` returns one Bool per particle, true for the
-# family asked for; `mask=` restricts the profile to those rows. With no second quantity, `sum` is
+# Components on the same bins, with the masks from the setup. With no second quantity, `sum` is
 # the mass per bin, and `cumulative=:forward` adds it up from the centre: the enclosed mass.
-mstars = getparticlemask(parts, :stars; verbose=false)
-mdm    = getparticlemask(parts, :dm;    verbose=false)
 cg = profile(gas,   :r_sphere; weight=:mass, cumulative=:forward, common...)
 cs = profile(parts, :r_sphere; weight=:mass, cumulative=:forward, mask=mstars, common...)
 cd = profile(parts, :r_sphere; weight=:mass, cumulative=:forward, mask=mdm,    common...)
@@ -382,13 +450,16 @@ Mg, Ms, Md = cg.cumsum .* gas.scale.Msol, cs.cumsum .* parts.scale.Msol, cd.cums
 # ── figure code from here ──
 fig = Figure(size=(1500,570))
 ax1 = Axis(fig[1,1]; rax..., logy..., ylabel="⟨n_H⟩ [cm⁻³]", title="gas density, two weights")
+cloud!(ax1, gas, :r_sphere, :rho; yunit=:nH, yscale=:log)       # the gas cells, shaded by mass
 o1 = pmw.mean .> 0; o2 = pvw.mean .> 0          # empty bins report 0, which a log axis cannot show
 lines!(ax1, pmw.x[o1], pmw.mean[o1], color=C.red,  label="weight=:mass")
 lines!(ax1, pvw.x[o2], pvw.mean[o2], color=C.blue, label="weight=:volume")
+ylims!(ax1, 1e-5, 2e2)                 # the thinnest gas cells reach further down
 axislegend(ax1, position=:rt)
 countsteps!(countaxis(fig, 1, 1, ax1; xlabel="r [kpc]"), ed, pmw.count, color=C.navy)       # the same cells for both weights
 
 ax2 = Axis(fig[1,2]; rax..., ylabel="⟨Φ⟩ [10⁴ (km/s)²]", title="gravitational potential, weight=:volume")
+cloud!(ax2, grav, :r_sphere, :epot; weight=:volume, yunit=:km2_s2, yfac=1e-4)   # gravity cells, by volume
 og = isfinite.(pep.mean)
 lines!(ax2, pep.x[og], pep.mean[og] ./ 1e4, color=C.purple)
 countsteps!(countaxis(fig, 1, 2, ax2; xlabel="r [kpc]"), ed, pep.count, color=C.purple)
@@ -580,41 +651,46 @@ Middle and right: the skewness reaches about −45 and the kurtosis several thou
 small `v_z`, and a few cells move much faster downwards. For such gas, `mean ± std` is a poor
 summary; quantiles (section 2) describe it better.
 
+**Stars** (gold) get the same call with `mask=mstars`. Their `v_z` is close to symmetric:
+the skewness stays between −0.8 and 1.3, the kurtosis below 8. Stars do not feel pressure or shocks, so
+they have no tail of fast-moving cells. Their equal-count bins crowd into the inner 6 kpc, where
+most stars are, and each holds about 20,000 particles, so their intervals are narrow.
+
 ```julia
 # Equal-count bins inside the disc, with shape statistics and a bootstrap on every bin.
-pb = profile(gas, :r_cylinder, :vz; weight=:mass, unit=:km_s, scale=:equal, nbins=18, xrange=(0,Rmax),
-             center=ctr, range_unit=:kpc, xunit=:kpc, bootstrap=800, confidence_level=0.95)
-println("cells per bin (min, max): ", extrema(pb.count))
-
-x  = pb.x                          # bin centres, kpc
-mu = pb.mean                       # mass-weighted mean v_z of each bin
-lo = pb.mean_ci[:,1]               # mean_ci is nbins×2: column 1 the lower end of the interval,
-hi = pb.mean_ci[:,2]               # column 2 the upper end
-sk = pb.skewness                   # asymmetry; 0 = symmetric
-ku = pb.kurtosis                   # EXCESS kurtosis, tail weight; 0 = Gaussian
+kb = (weight=:mass, unit=:km_s, scale=:equal, nbins=18, xrange=(0,Rmax), center=ctr, range_unit=:kpc,
+      xunit=:kpc, bootstrap=800, confidence_level=0.95)
+pb  = profile(gas,   :r_cylinder, :vz; kb...)
+pbs = profile(parts, :r_cylinder, :vz; mask=mstars, kb...)     # the same for the stars
+println("cells per bin (min, max): ", extrema(pb.count), "   stars per bin: ", extrema(pbs.count))
+# Each result holds: x (bin centres), mean, mean_ci (nbins×2: lower and upper end of the interval),
+# skewness (asymmetry, 0 = symmetric) and kurtosis (EXCESS kurtosis, tail weight, 0 = Gaussian).
 
 # ── figure code from here ──
-fig = Figure(size=(1350,540))
+fig = Figure(size=(1350,560))
 ax1 = Axis(fig[1,1]; rax..., ylabel="⟨v_z⟩ [km/s]", title="mean with 95 % bootstrap interval")
+cloud!(ax1, gas, :r_cylinder, :vz; yunit=:km_s, yrange=(-60,60), nbins=(40,30))   # gas cells near zero
 hlines!(ax1, [0.0], color=:gray50, linestyle=:dash, linewidth=1.5)
-band!(ax1, x, lo, hi, color=(C.blue,0.30), label="95 % interval")
-scatterlines!(ax1, x, mu, color=C.blue, markersize=8, label="⟨v_z⟩")
-axislegend(ax1, position=:rt)
 ax2 = Axis(fig[1,2]; rax..., ylabel="skewness", title="asymmetry of v_z")
 hlines!(ax2, [0.0], color=:gray50, linestyle=:dash, linewidth=1.5)     # the symmetric case
-scatterlines!(ax2, x, sk, color=C.red, markersize=8)
 ax3 = Axis(fig[1,3]; rax..., logy..., ylabel="excess kurtosis", title="tail weight of v_z")
-scatterlines!(ax3, x, ku, color=C.green, markersize=8)
-# equal-count bins: a linear count axis from zero shows that every bin holds about the same number
-for (k, ax) in enumerate((ax1, ax2, ax3))
-    countsteps!(countaxis(fig, 1, k, ax; log=false), pb.edges, pb.count, color=C.navy)
+cs  = [countaxis(fig, 1, k, ax; ylabel="count", log=false) for (k, ax) in enumerate((ax1, ax2, ax3))]
+for (p, col, lab) in ((pb, C.green, "gas"), (pbs, C.gold, "stars"))
+    band!(ax1, p.x, p.mean_ci[:,1], p.mean_ci[:,2], color=(col,0.30))
+    scatterlines!(ax1, p.x, p.mean, color=col, markersize=8, label=lab)
+    scatterlines!(ax2, p.x, p.skewness, color=col, markersize=8)
+    o = p.kurtosis .> 0                                    # a log axis shows only positive values
+    scatterlines!(ax3, p.x[o], p.kurtosis[o], color=col, markersize=8)
+    for c in cs; countsteps!(c, p.edges, p.count, color=col); end
 end
+ylims!(ax1, -60, 60)
+axislegend(ax1, position=:rt)
 squeeze!(fig)
 fig
 ```
 
 ```
-cells per bin (min, max): (3847, 4754)
+cells per bin (min, max): (3847, 4754)   stars per bin: (20266, 20267)
 ```
 
 ![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_3.png)
