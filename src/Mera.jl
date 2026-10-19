@@ -49,7 +49,6 @@ using ImageTransformations
 using ImageTransformations.Interpolations
 using Colors           # RGB/parse/Colorant for the immersive ray-caster (image assembly)
 using ColorSchemes     # named colormaps for the immersive ray-caster
-using CSV
 using FileIO
 using HDF5            # Chombo / PLUTO-AMR reader (read_data/PLUTO/reader_chombo.jl)
 using JSON3

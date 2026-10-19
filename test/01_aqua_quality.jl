@@ -11,7 +11,7 @@ checks = [
     "Unbound Type Params"   => () -> Aqua.test_unbound_args(Mera),
     "Method Ambiguities"    => () -> Aqua.test_ambiguities(Mera, recursive=false),
     "Project Extras"        => () -> Aqua.test_project_extras(Mera),
-    "Stale Dependencies"    => () -> Aqua.test_stale_deps(Mera, ignore=[:PyPlot, :Aqua]),
+    "Stale Dependencies"    => () -> Aqua.test_stale_deps(Mera, ignore=[:Aqua]),
     "Deps Compat"           => () -> Aqua.test_deps_compat(Mera, ignore=[:Dates, :LinearAlgebra,
                                          :Pkg, :Printf, :Random, :SparseArrays, :Statistics]),
     "Type Piracy"           => () -> Aqua.test_piracies(Mera),

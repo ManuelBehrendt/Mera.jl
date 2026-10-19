@@ -107,7 +107,7 @@ Three exemptions are deliberate, and they narrow what the badge in the top-level
 
 ```julia
 Aqua.test_ambiguities(Mera, recursive=false)          # Mera's own methods only, not its deps
-Aqua.test_stale_deps(Mera, ignore=[:PyPlot, :Aqua])   # PyPlot loads through an extension
+Aqua.test_stale_deps(Mera, ignore=[:Aqua])   # Aqua is a test-only dependency
 Aqua.test_deps_compat(Mera, ignore=[:Dates, :LinearAlgebra, :Pkg, :Printf, :Random,
                                     :SparseArrays, :Statistics])   # stdlibs ship with Julia
 ```
