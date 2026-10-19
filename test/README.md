@@ -2,7 +2,7 @@
 
 This page explains how the suite is organised, what each tier proves, and which simulation data
 backs which test — so that a reader (or a reviewer) can tell what has actually been verified
-without reading 66 test files.
+without reading 71 test files.
 
 ## Quick start
 
@@ -25,15 +25,17 @@ Form 3 is run on one configuration: **Julia 1.12 on macOS (Apple Silicon)**, wit
 an external drive. CI never runs it (`MERA_SMOKE_ONLY=1`), so a regression that appears only on
 Linux or Windows *with real data* would not be caught by either.
 
-Measured on 2026-08-31, Julia 1.12 on macOS:
+Measured on 2026-10-19, Julia 1.12 on macOS:
 
 | run | assertions | wall time |
 |---|---|---|
-| no simulation data (form 1 or 2) | **1800 pass, 0 fail, 3 broken** | ~1m40s |
-| form 2 with the data present anyway | **2796 pass, 0 fail** | ~11 min |
-| full local run, RAMSES data present | **6394 pass, 0 fail, 3 broken** | ~18 min |
+| no simulation data (form 1 or 2) | **2151 pass, 0 fail, 3 broken** | ~3 min |
+| full local run, RAMSES data present | **7970 pass, 0 fail, 2 broken** | ~24 min |
 
-The middle row is the one that surprises people: `MERA_SMOKE_ONLY=1` skips the data-backed tier,
+The "form 2 with the data present anyway" row of the earlier measurement (2796 pass, ~11 min, on
+2026-08-31) has not been measured again.
+
+That earlier row is the one that surprises people: `MERA_SMOKE_ONLY=1` skips the data-backed tier,
 but several always-run files read whatever data they find, so the same tier costs far more on a
 machine where the simulations are mounted.
 
@@ -45,7 +47,7 @@ deliberately includes every *analytic* correctness oracle, see Tier 1 below. The
 
 ### Tier 1 — data-free: analytic oracles, kernels and contracts
 
-Runs everywhere, including CI on Julia 1.10 / 1.11 / 1.12 across Linux, macOS and Windows. These
+Runs everywhere, including CI on Julia 1.10 / 1.11 / 1.12 / 1.13 across Linux, macOS and Windows. These
 tests use **no simulation output**. They are not mocks: they build small synthetic datasets in
 memory (or synthetic HDF5 files on disk) whose correct answer is known in closed form, then check
 the real code path against it.

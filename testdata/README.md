@@ -156,8 +156,9 @@ exist yet):
 - the download sizes in `CONTRIBUTING.md`, `test/README.md` and `fetch_fixtures.sh` (`--small`
   becomes 142 MB, everything 307 MB for v2), and the tag in `.github/workflows/fixtures.yml`.
 
-`.github/workflows/fixtures.yml` runs the data-backed tier on this: the `--small` set on every
-push, and the full set including the 165 MB Bondi fixture nightly.
+`.github/workflows/fixtures.yml` runs the public-fixture tests on this, the `--small` set or the
+full one with the 165 MB Bondi run. It is started by hand for now; it can run on every push once
+each data-backed test file checks for its own simulation.
 
 ## RAMSES's own test configurations, run unchanged
 

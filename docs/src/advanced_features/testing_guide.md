@@ -1,258 +1,230 @@
-# MERA.jl Testing Framework
+# Testing Framework
 
-[![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl)
+[![coverage, CI tests](https://img.shields.io/codecov/c/github/ManuelBehrendt/Mera.jl?flag=ci-smoke&label=coverage%3A%20CI%20tests&color=blue)](https://codecov.io/gh/ManuelBehrendt/Mera.jl?flags[0]=ci-smoke)
+[![coverage, full suite](https://img.shields.io/codecov/c/github/ManuelBehrendt/Mera.jl?flag=local-full&label=coverage%3A%20full%20suite)](https://codecov.io/gh/ManuelBehrendt/Mera.jl?flags[0]=local-full)
 
-This page is the authoritative reference for the MERA.jl test suite: how to
-run it, how it is structured, which datasets it uses, and how coverage is
-measured and published.
+This page explains how to run Mera's test suite, where its test data comes from, how the suite is
+built, and how coverage is measured. The per-file map, which file proves what and on which
+simulation, is kept in
+[`test/README.md`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/test/README.md), next to
+the tests, so that it stays current.
 
-## Why local testing with heavy data
+## How the suite checks Mera
 
-MERA.jl reads and analyses real RAMSES adaptive-mesh-refinement (AMR)
-simulation output. Meaningful tests therefore need production-scale data:
-
-- **Data scale**: realistic RAMSES outputs contain millions of AMR cells
-  across 10+ refinement levels.
-- **Physical validity**: results must obey conservation/decomposition
-  relations (mass, momentum, energy) and reproduce textbook formulas.
-- **Reader correctness**: the binary RAMSES readers have format-specific
-  branches (e.g. legacy vs. family/tag particle formats) that only exercise
-  against actual simulation files.
-
-These datasets are far too large to ship to GitHub Actions runners, so the
-suite is split into a CI-friendly *smoke* subset and a full *local* run.
+Most correctness checks run on small public RAMSES simulations whose correct answer is known in
+advance: a law that follows from the setup (a Sedov blast grows as t^(2/5)), a number published by
+the RAMSES developers, or an input file written by hand. A failure then points at Mera, not at the
+simulation. A few older tests still use the maintainer's larger research runs; those are not
+published and are being replaced by the public ones.
 
 ## Running the tests
 
-The suite supports three modes, all driven by environment variables read in
-`test/test_config.jl` and `test/runtests.jl`:
+There are four ways to run the suite:
 
 ```bash
-# 1. Smoke run — data-independent only (this is what CI runs):
+# 1. Data-free only (what CI runs):
 MERA_SMOKE_ONLY=1 julia --project -e 'using Pkg; Pkg.test("Mera")'
 
-# 2. Full local run — requires RAMSES test data mounted:
+# 2. With the public test simulations, every test they can back:
+MERA_TEST_DATA="$(testdata/fetch_fixtures.sh --quiet)" MERA_SMOKE_ONLY=1 \
+    julia --project -e 'using Pkg; Pkg.test("Mera")'
+
+# 3. Everything, with all data (the maintainer's machine):
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 
-# 3. Full local run + coverage + Codecov upload (maintainer):
+# 4. Everything, with coverage, uploaded to Codecov (maintainer):
 UPLOAD=1 ./scripts/run_local_coverage.sh
 ```
 
-Two additional environment variables help during development:
+Set `MERA_SMOKE_ONLY=1` in mode 2. Without it, the suite treats the data as complete and also looks
+for the maintainer's unpublished runs, which then fail as missing.
 
-| Variable | Effect |
-|----------|--------|
-| `MERA_TEST_DATA` | Override the simulation-data directory. Defaults to `/Volumes/FASTStorage/Simulations/Mera-Tests`. |
-| `MERA_SMOKE_ONLY=1` | Run only the data-independent tiers (Aqua, unit system, type system). |
-| `MERA_FOCUS=a.jl,b.jl` | Run *only* the listed test files, in isolation, useful for spot-checking one file or for mutation testing. |
+Measured on 2026-10-19 on an Apple-silicon laptop, Julia 1.12: mode 3 runs about 7970 tests in
+about 24 minutes. Mode 1 runs about 2150 tests in a few minutes.
+
+When no data is found, or `MERA_SMOKE_ONLY=1` is set, the data-backed files are skipped cleanly, so
+`Pkg.test("Mera")` passes for contributors without data too.
+
+### Environment variables
+
+| variable | effect |
+|---|---|
+| `MERA_TEST_DATA` | the data root. If it is not set, the suite uses the maintainer's drive and then `testdata/fixtures/` (where `fetch_fixtures.sh` downloads to), whichever holds a `RAMSES-PUBLIC` folder |
+| `MERA_SMOKE_ONLY=1` | run only the always-run block: Aqua, units, types, the analytic oracles, region algebra, kernels, the reader registry, and the public-fixture oracles when that data is present. CI sets it |
+| `MERA_FOCUS=a.jl,b.jl` | run only the listed files, useful for one file or for mutation testing |
+| `MERA_QUIET_PROGRESS=1` | hide the per-file progress lines (`[suite +2m10s] (12) file.jl`) |
 
 ```bash
-# Example: run two files in isolation
-MERA_FOCUS=07_regions.jl,21_untested_surfaces_tests.jl \
+# example: run two files on their own
+MERA_FOCUS=07_regions.jl,36_offaxis_features_tests.jl \
     julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
-When the simulation directory is absent (or `MERA_SMOKE_ONLY=1` is set), the
-data-dependent tiers are skipped cleanly, so `Pkg.test("Mera")` always
-succeeds, CI and contributors without data still get a valid reduced run.
+`testdata/fetch_fixtures.sh` reads its own variables (`FIXTURE_TAG`, `FIXTURE_EXTERNAL_ROOT`,
+`FIXTURE_BASE_URL`); they are described at the top of the script.
 
-Full local run: roughly 5 minutes on an Apple-silicon laptop.
+## Getting the test data
 
-## GitHub Actions workflows
+The public test simulations are published as assets of the `testdata-v2` GitHub release, not as
+files in the repository, so a `Pkg.add("Mera")` never downloads them. Fifteen simulations, 307 MB
+in all:
 
-Four workflows live in `.github/workflows/`. Only the first runs tests; the
-others handle docs, dependency maintenance, and releases.
+```julia
+ENV["MERA_TEST_DATA"] = download_testdata()      # all fifteen, into ~/.julia/mera_testdata
+path = download_testdata("sedov3d_amr")         # or one, by name (2.3 MB)
+```
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `CI.yml` | push / PR to `master` | Runs the **smoke** subset (`MERA_SMOKE_ONLY=1`) on a matrix of Julia `1.10`, `1.11`, `1.12` and `1.13`, across Ubuntu, macOS and Windows (twelve jobs), plus a documentation build job. This is the only workflow that runs tests, the full data-backed suite cannot run here because the RAMSES datasets are too large to ship to CI runners. |
-| `documentation.yml` | push / PR / tags | Builds the Documenter site (`docs/make.jl`) and deploys it to the `gh-pages` branch served at <https://manuelbehrendt.github.io/Mera.jl>. |
-| `CompatHelper.yml` | daily cron | Opens PRs to bump `[compat]` bounds in `Project.toml` when dependencies publish new versions. |
-| `TagBot.yml` | Julia registry comment | Creates the GitHub release and git tag automatically once a new version is registered in the Julia General registry. |
-
-### Julia version coverage
-
-The `CI.yml` matrix pins `1.10` (the LTS, and the package's declared minimum
-in `Project.toml`), `1.11`, and `1.12` (the current stable). `setup-julia`
-resolves each minor-version string to its newest patch release at run time,
-so the suite always runs against the latest `1.10.x`, `1.11.x`, and `1.12.x`.
-
-Pre-releases (e.g. `1.13`, which at time of writing is only a release
-candidate) are intentionally **not** included: they are moving targets and
-upstream rc bugs would produce spurious failures. When `1.13.0` ships as
-stable: add a `'1.13'` row (and optionally drop an older series). To get
-early warning of breakage on an upcoming release: add a non-blocking `'pre'`
-(or `'nightly'`) matrix entry; `fail-fast: false` is already set so such a row
-can fail without failing the whole build.
+From a shell, `./testdata/fetch_fixtures.sh` does the same; `--small` leaves out the 165 MB Bondi
+run (142 MB in total), and single names are accepted too. It downloads only what is missing and
+prints the folder it used as its last line. How the simulations are made, and how to regenerate
+them from the namelists, is in
+[`testdata/README.md`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/testdata/README.md).
 
 ## Test suite structure
 
-`test/runtests.jl` executes 62 test files in tiered order. Tier 1 is
-data-independent and always runs; the data-backed tier runs only when simulation
-data is present and `MERA_SMOKE_ONLY` is not set.
+`test/runtests.jl` runs 71 test files in two blocks:
 
-| tier | what it proves | data needed |
+| block | what it proves | data needed |
 |---|---|---|
-| **1, data-free** | package hygiene (Aqua), unit scales and CODATA anchors, the type system, analytic oracles for conservation on-axis and off-axis, weighted-statistics and structure-finder kernels, synthetic-HDF5 reader contracts, the reader registry, the IO layer, mera-file round-trips, and that every `julia` block in `docs/src` parses | none |
-| **2, data-backed** | the same code paths against real RAMSES output: readers, derived quantities, projections, regions, conservation relations, clump analysis, VTK export, save/load round-trips | `MERA_TEST_DATA` |
+| **always run** (34 files) | package hygiene (Aqua), unit scales and CODATA anchors, the type system, analytic oracles (conservation on- and off-axis, weighted statistics, structure finders, region volumes, covering grid), value-space filtering, the configuration and IO layer, the reader registry, that every `julia` block in `docs/src` parses, and, when `RAMSES-PUBLIC` is present, the public-fixture oracles and RAMSES's reference solutions | none, or the public simulations |
+| **data-backed** (37 files) | the same code paths on the maintainer's research runs: readers, derived quantities, projections, regions, conservation, clump analysis, VTK export, save and load | `MERA_TEST_DATA`, and `MERA_SMOKE_ONLY` not set |
 
-A per-file map, which file proves what and which simulation backs it, is kept in
-[`test/README.md`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/test/README.md).
-It is maintained alongside the suite, so this page does not repeat it; a list
-copied here would silently fall behind as files are added.
+On the `multicode` branch, further always-run files cover the readers for other simulation codes.
 
-Three files are infrastructure rather than tests:
+Infrastructure rather than tests:
 
-| file | role |
+| file or folder | role |
 |---|---|
-| `test_config.jl` | `SIMULATION_PATH`, the `DATASETS` dict, tolerances, CODATA constants, mode flags |
-| `test_utilities.jl` | helpers: `load_test_info`, `load_test_hydro`, region-extent validators |
-| `run_coverage.jl` | alternative entry point that runs every existing test file |
+| `test_config.jl` | resolves the data root (`SIMULATION_PATH`), the `DATASETS` and `PUBLIC_FIXTURES` tables, tolerances, CODATA constants, the mode flags |
+| `test_utilities.jl` | loaders (`load_test_info`, `load_test_hydro`, `load_test_particles`, ...), region checks (`assert_inside_box`, `assert_inside_sphere`), analytic reference formulas and synthetic-data builders |
+| `baselines/` | committed reference values, so a silent change in a result fails a test |
+| `results/` | values measured in the last run (not committed) |
 
 ## Test datasets
 
-All datasets live under `SIMULATION_PATH` (`test_config.jl`), overridable via
-`MERA_TEST_DATA`.
+**Public simulations made for the tests.** Each comes from a namelist in `testdata/namelists/` and
+is checked against something theory fixes:
 
-| Key | Directory | Output | Hydro | Gravity | Particles | Clumps | Primary use |
-|-----|-----------|-------:|:-----:|:-------:|:---------:|:------:|-------------|
-| `:spiral_clumps` | `spiral_clumps` | 100 | x | x | | x | Primary dataset for most tests |
-| `:spiral_ugrid` | `spiral_ugrid` | 1 | x | x | x | | Particle tests, uniform-grid tests |
-| `:mw_L10` | `mw_L10` | 300 | | | | | Multi-CPU info reading |
-| `:manu_sf` | `manu_sim_sf_L14` | 400 | | | x | x | Clumps + **legacy** (pversion 0) particles |
-| `:mlike` | `mlike` | 500 | | x | | | Gravity-only readers |
-| `:manu_stable` | `manu_stable_2019` | 1 | x | | x | | Particle data readers |
+| simulation | what it checks |
+|---|---|
+| `sedov3d_amr`, `sedov3d_amr_mera` | AMR hydro: the Sedov radius grows as t^(2/5); the mera-file copy must reproduce the RAMSES read exactly |
+| `sedov3d_grav_part` | gravity and tracer particles: no particle is created or lost; the acceleration equals minus the gradient of the potential |
+| `mhdtube3d` | MHD: a divergence-free field keeps `Bx == 1` exactly |
+| `clumps3d` | the clump finder must return the four blobs placed by construction |
+| `stromgren3d` | radiative transfer: the ionisation front follows the analytic Strömgren law |
+| `sinks3d` | the sink catalogue |
+| `legacy_particles3d` | the pre-2017 particle format; the hand-written input file is the answer |
+| `sedov3d_bisection`, `dm_gas3d_bisection`, `sedov3d_iogroups` | RAMSES's bisection ordering and IO-group folders, read and rewritten |
+| `cosmo3d` | a cosmological run: Poisson's equation holds in physical units |
 
-Any RAMSES output can be substituted by editing `SIMULATION_PATH` and the
-`DATASETS` dictionary in `test_config.jl`.
+**RAMSES's own tests, run unchanged.** `ramses_abc_flow`, `ramses_rt_dirac` and
+`ramses_smbh_bondi` are configurations from RAMSES's test suite. Mera's results are compared with
+the reference values the RAMSES developers publish, at each test's own tolerance.
 
-## Coverage workflow
+**Other public data.** A cosmological zoom and two MHD runs from public sample data, for the
+cosmology accessors and for MHD files without a variable descriptor.
 
-Because the data lives only on the maintainer's machine, coverage is measured
-locally and uploaded to Codecov, CI does not measure it.
+**The maintainer's research runs** (`spiral_clumps`, `spiral_ugrid`, `mw_L10` and others) back the
+older data-backed files. They are not published and are being replaced by the simulations above.
+`test/README.md` lists every dataset with its source.
 
-`scripts/run_local_coverage.sh`:
+## GitHub Actions workflows
 
-1. Wipes stale `*.cov` and `coverage.lcov` files.
-2. Runs `Pkg.test("Mera"; coverage=true)`.
-3. Aggregates `src/**/*.cov` into `coverage.lcov` via
-   `scripts/process_coverage.jl` (which excludes `src/dev/`,
-   `src/benchmarks/`, and `src/visualization/`, non-library code).
-4. When `UPLOAD=1` and a `CODECOV_TOKEN` is available, uploads to Codecov.
+Five workflows live in `.github/workflows/`:
 
-The token can be stored in `~/.config/mera/codecov.env` (mode 600) instead of
-being exported manually.
+| workflow | trigger | purpose |
+|---|---|---|
+| `CI.yml` | push and pull request to `master` and `multicode` | the data-free block (`MERA_SMOKE_ONLY=1`) on Julia 1.10, 1.11, 1.12 and 1.13, each on Ubuntu, macOS and Windows: twelve jobs. Uploads the `ci-smoke` coverage from the 1.12 Ubuntu job |
+| `fixtures.yml` | manual (`workflow_dispatch`) | downloads the public simulations and runs their oracles. Manual for now: it can run on every push once each data-backed file checks for its own simulation |
+| `documentation.yml` | push, pull request, tags | builds this site and deploys it to <https://manuelbehrendt.github.io/Mera.jl> |
+| `CompatHelper.yml` | daily | opens pull requests that raise the `[compat]` bounds in `Project.toml` |
+| `TagBot.yml` | registry comment | creates the GitHub release and tag once a version is registered |
 
-## Notebook / tutorial tests (real-world workflows)
+Julia 1.10 is the minimum in `Project.toml` and 1.13 the current release. `setup-julia` picks the
+newest patch of each. `fail-fast: false` is set, so a pre-release row could be added later without
+failing the whole build.
 
-The Jupyter tutorial notebooks in the documentation
-([`Mera-Docs/version_1`](https://github.com/ManuelBehrendt/Mera.jl)) double as an
-**end-to-end, real-world workflow test tier**. Where the unit suite exercises
-functions in isolation, the notebooks run the *full analysis pipelines a user
-would actually follow*: load info → read hydro/particles/gravity/clumps →
-select regions → derive variables → project → mask/filter → save/load Mera
-files → export VTK, against the real RAMSES datasets. Two distinct kinds of
-value:
+## Coverage
 
-- **Executable regression tests.** Every notebook is run headless with
-  `jupyter nbconvert --execute` and scanned for error cells. A failing cell
-  is a real, user-facing breakage. This catches integration-level bugs the
-  unit suite can miss, e.g. the Julia 1.12 `dataoverview` crash
-  (`Core.TypeName.mt` removed) was surfaced by the notebooks while the unit
-  suite had it marked `@test_broken`.
-- **Visual verification for authors/reviewers.** The executed notebooks
-  preserve their outputs, tables, projection plots, VTK previews, so a
-  maintainer can *see* that results look physically correct, not merely that
-  no exception was thrown. This is the human-in-the-loop check that pure
-  assertions cannot provide.
+There are two coverage numbers, shown by the two badges above:
 
-### Running them
+| flag | covers | where it runs |
+|---|---|---|
+| `ci-smoke` | the data-free block only | GitHub Actions, on every push |
+| `local-full` | the whole suite, with all data | the maintainer's machine, via `scripts/run_local_coverage.sh` |
 
-The notebooks use a dedicated Julia 1.12 kernel bound to the docs environment,
-which `dev`s Mera from this repo (so they test the working tree, not a
-released version). Create the kernels once via `IJulia.installkernel` from the
-notebooks project:
+`scripts/run_local_coverage.sh` removes old `*.cov` files, runs `Pkg.test("Mera"; coverage=true)`,
+and gathers the results into `coverage.lcov` with `scripts/process_coverage.jl`, which leaves out
+`src/dev/`, `src/benchmarks/` and `src/visualization/`. With `UPLOAD=1` and a `CODECOV_TOKEN` it
+uploads them; the token can live in `~/.config/mera/codecov.env` (mode 600).
+
+## Notebook tests
+
+The tutorial notebooks double as end-to-end tests. They live outside this repository, in the
+maintainer's `Mera-Docs/version_1.1` folder, and run complete analyses on research simulations:
+load, select, derive, project, filter, save and export.
+
+- **They catch breakage the unit tests miss.** A failing cell is a real, user-facing error. A
+  Julia 1.12 crash in `dataoverview`, for example, was first found by the notebooks; the unit suite
+  now tests it directly.
+- **They show the results.** The executed notebooks keep their tables and figures, so a person can
+  see that a result looks physically right, not only that nothing failed.
+
+`scripts/run_notebooks.sh nb.ipynb ...` re-executes notebooks one at a time. A notebook whose cell
+raises is left unchanged, so a failed run is safe to repeat.
+
+`scripts/run_coverage_with_notebooks.sh` adds the notebooks to the coverage: it runs the unit suite
+with coverage, then executes every notebook with a coverage kernel that records only this
+repository's source, and uploads the combined result under the `local-full-notebooks` flag. Its
+settings are `NOTEBOOK_DIR` (default `.../Mera-Docs/version_1.1`), `COV_KERNEL` (default
+`mera-docs-1.12-cov-1.12`) and `UPLOAD`. The kernels are made once with `IJulia.installkernel`:
 
 ```julia
 using IJulia
-NB = "/path/to/Mera-Docs/version_1"
-# plain execution kernel (4 threads)
-installkernel("Mera-Docs 1.12 (4t)", "--project=$NB",
+NB = "/path/to/Mera-Docs/version_1.1"
+installkernel("Mera-Docs 1.12 (4t)", "--project=$NB",          # plain execution kernel
               env=Dict("JULIA_NUM_THREADS" => "4"))
-# coverage kernel — tracks only this repo's source
-installkernel("Mera-Docs 1.12 cov", "--project=$NB",
+installkernel("Mera-Docs 1.12 cov", "--project=$NB",           # coverage kernel, this repo only
               "--code-coverage=@/path/to/Mera.jl",
               env=Dict("JULIA_NUM_THREADS" => "4"))
 ```
 
-Executed copies are written to `version_1/executed/` (gitignored); the
-originals are left untouched.
-
-### Wired into coverage
-
-`scripts/run_coverage_with_notebooks.sh` produces a **combined** coverage
-report from both the unit suite *and* the notebooks:
-
-1. Wipes stale `*.cov`.
-2. Runs `Pkg.test("Mera"; coverage=true)` → `*.cov` next to `src/`.
-3. Executes every tutorial notebook with the coverage kernel
-   (`--code-coverage=@<repo>`), which appends more `*.cov` to the *same*
-   `src/` files, so notebook execution counts toward library coverage.
-4. Aggregates everything via `scripts/process_coverage.jl` and (with
-   `UPLOAD=1`) uploads to Codecov under the `local-full-notebooks` flag.
-
-Because both phases write `*.cov` next to the source, the tutorials raise
-coverage of paths the unit suite under-exercises (display/`viewfields`,
-`dataoverview`, projection and VTK variants). The coverage kernel's
-`@<repo>` path restriction keeps `*.cov` confined to `Mera.jl/src`, none
-leak into the notebooks repo (which also gitignores `*.cov` as a safety net).
-
 ## What the tests validate
 
-The suite is designed for *meaningful* coverage, not line-hit padding:
+The suite aims at coverage that means something, not at lines that are merely touched:
 
-- **Physics formulas** are re-derived from primitive variables in CGS and
-  compared to Mera's output (sound speed, temperature, Jeans length/mass,
-  free-fall time).
-- **Region selections** validate the *extent* of the returned cells, not just
-  the count, every `subregion`/`shellregion` test checks that selected
-  cells actually lie inside the requested geometry.
-- **I/O round-trips** compare loaded data cell-by-cell against the original
-  RAMSES read, including info metadata and scale factors.
-- **Error paths** are exercised with `@test_throws` for invalid inputs.
-- **Partition invariants**: `subregion` plus its `inverse` must reconstruct
-  the parent dataset exactly.
+- **Answers known in advance.** The public simulations are checked against analytic laws (Sedov,
+  Strömgren, a divergence-free field, a fixed particle count, four placed clumps) and against
+  RAMSES's own published reference values.
+- **Physics formulas** are derived again from the primitive variables in CGS and compared with
+  Mera's result: sound speed, temperature, Jeans length and mass, free-fall time.
+- **Parts add up to the whole.** A region and its complement reproduce the parent exactly, and so
+  do a condition and its negation.
+- **Region selections** check where the returned cells are, not only how many there are.
+- **The same result two ways**, for example `getvar(gas, :T; mask=m)` against `getvar(gas, :T)[m]`.
+- **Round trips** compare saved and reloaded data cell by cell with the original read.
+- **Baselines** catch a result that changes silently.
+- **Error paths** are tested with `@test_throws`.
 
-The suite has been spot-checked with manual mutation testing: deliberately
-breaking a physics factor, a reader branch, or a region bound each causes the
-corresponding test to fail, confirming the assertions bite.
+The assertions were spot-checked by breaking the code on purpose, a physics factor, a reader
+branch, a region bound, and confirming that the matching test fails.
 
 ## For JOSS reviewers
 
-1. **CI verification**: `MERA_SMOKE_ONLY=1 julia --project -e 'using Pkg;
-   Pkg.test("Mera")'` passes without simulation data. Aqua.jl checks code
-   quality (no ambiguities, no unbound type parameters, no stale deps, no
-   type piracy).
-2. **Full verification**: with RAMSES data mounted, the full suite runs in
-   ~5 minutes and exercises data I/O, derived quantities, projections,
-   regions, conservation relations, parallel safety, clump analysis, VTK
-   export, and save/load round-trips.
-3. **Coverage**: measured locally and published to Codecov (badge above).
-   Uncovered code is concentrated in rarely-used backends (multi-CPU parallel
-   readers, sink-particle paths) and interactive display methods.
-4. **Reproducibility**: point `MERA_TEST_DATA` at any RAMSES output and
-   edit the `DATASETS` dictionary in `test_config.jl`.
-5. **Real-world workflows**: the tutorial notebooks are executed end-to-end
-   and their rendered outputs (tables, projection plots, VTK previews) can be
-   inspected directly, demonstrating that complete user pipelines work and
-   produce physically sensible results (see *Notebook / tutorial tests*).
+1. **Without any data**: `MERA_SMOKE_ONLY=1 julia --project -e 'using Pkg; Pkg.test("Mera")'`
+   passes. Aqua.jl runs seven static checks (undefined exports, unbound type parameters, method
+   ambiguities among Mera's own methods, project extras, stale dependencies, compat bounds, type
+   piracy); `test/README.md` lists the three deliberate exemptions.
+2. **With the public data**: `download_testdata()` fetches the fifteen simulations, and mode 2
+   above runs every check they can back, including RAMSES's own reference solutions.
+3. **Coverage**: see the two badges and the section above.
+4. **Reproducibility**: every public simulation can be regenerated from its namelist in
+   `testdata/namelists/`, and each has a known answer.
+5. **Real-world workflows**: the tutorial notebooks run complete analyses and keep their outputs,
+   so the results can be inspected directly.
 
 ## Testing philosophy
 
-MERA.jl's testing ensures both software reliability and scientific validity:
-traditional software-testing practices (unit, integration, error-path,
-quality-assurance) combined with the validation needs of astrophysical
-simulation analysis (conservation relations, AMR boundary handling,
-coordinate transforms, numerical precision). The two-mode design keeps CI
-fast and deterministic while the local run delivers full, physically
-meaningful validation.
+Two kinds of checks work together. Software checks (unit, integration, error paths, static quality)
+make sure the code does what it says. Scientific checks (known answers, conservation, parts adding
+up to the whole) make sure what it says is physically right.

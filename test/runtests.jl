@@ -8,7 +8,10 @@
 #
 #   2. Smoke-only mode (CI runners, no simulation data):
 #        MERA_SMOKE_ONLY=1 julia --project -e 'using Pkg; Pkg.test("Mera")'
-#      Runs only the data-independent tiers (Aqua + unit system).
+#      Runs only the always-run block: Aqua, units, types, analytic oracles, the reader
+#      registry, the IO layer, and the public-fixture oracles when RAMSES-PUBLIC is present.
+#      With MERA_TEST_DATA pointing at the public simulations (download_testdata()), this is
+#      every test that data can back.
 #
 #   3. Full run + coverage (laptop, for Codecov upload):
 #        ./scripts/run_local_coverage.sh

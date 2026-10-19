@@ -13,10 +13,11 @@ env:
 
 # CI runners do not have access to the RAMSES simulation data on the
 # maintainer's external drive, so the full test suite cannot run here.
-# We run the "smoke" subset: every data-free tier of runtests.jl — Aqua and the
-# unit systems, but also the synthetic-HDF5 reader contracts (GADGET/AREPO,
-# Chombo), the reader registry, the IO layer and the mera-file round-trips. That
-# is real file I/O on synthetic fixtures, not a load-only check. Full coverage is
+# We run the "smoke" subset: every data-free file of runtests.jl. That is Aqua and
+# the unit systems, but also the analytic oracles, the reader registry, the IO
+# layer and the mera-file round-trips (on the multicode branch also the
+# synthetic-file contracts of the other readers). That is real file I/O on
+# synthetic fixtures, not a load-only check. Full coverage is
 # collected locally and uploaded to Codecov by scripts/run_local_coverage.sh.
 
 jobs:
