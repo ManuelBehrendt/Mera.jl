@@ -44,7 +44,7 @@ This page uses one galaxy and adds one feature at a time:
 Load gas, gravity and particles from **one** snapshot, so every number on the page is about the
 same matter at the same time. `center` is the origin of every radius below; it takes any length
 unit. The last lines set one plot style for the whole page: every radial plot runs from 0 to
-`Rmax` = 20 kpc.
+`Rmax` = 20 kpc, and has a thin panel below it with the number of cells or particles in each bin.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -81,7 +81,20 @@ function pow10(vs)                                         # labels 10ⁿ and 2�
 end
 logy = (yscale=log10, yticks=decades, ytickformat=pow10)     # splat into Axis for a log y axis
 Rmax = 20                                                   # radial plots run from 0 to Rmax kpc
-rax  = (limits=((0, Rmax), nothing), xticks=0:5:Rmax);     # splat into Axis for a radius axis
+rax  = (limits=((0, Rmax), nothing), xticks=0:5:Rmax)      # splat into Axis for a radius axis
+
+# A thin panel docked under a profile: how many cells or particles fall in each bin. Few counts
+# mean a noisy bin; an empty bin leaves a gap. `top` is the profile axis above it.
+function countaxis(fig, row, col, top; ylabel="cells", xlabel="R [kpc]", log=true)
+    yax = log ? logy : (limits=((0, Rmax), (0, nothing)),)
+    ac  = Axis(fig[row+1, col]; merge(rax, yax)..., xlabel=xlabel, ylabel=ylabel)
+    linkxaxes!(top, ac)
+    hidexdecorations!(top; grid=false, ticks=false)        # the x axis labels move to the panel below
+    return ac
+end
+# counts per bin as steps over the bin edges; zero becomes a gap, which a log axis needs
+countsteps!(ac, edges, n; kw...) = stairs!(ac, edges, replace(Float64.(vcat(n, n[end])), 0.0 => NaN); step=:post, kw...)
+squeeze!(fig) = (rowsize!(fig.layout, 2, Relative(0.22)); rowgap!(fig.layout, 1, 6));   # count row: thin, close
 ```
 
 ```
@@ -114,7 +127,9 @@ that is the mass per bin. Radii are measured from `center`. There are four ways 
 Mass per bin grows with the bin width, so profiles with different bins only agree after dividing
 by the width. The right panel does this: three binnings, one curve.
 
-**Bins and cells.** A cell counts in the one bin that holds its centre. Bins much narrower than
+**Bins and cells.** The thin panel under each profile shows how many cells (or particles) each bin
+holds. A bin with few counts gives a noisy value; an empty bin leaves a gap. A cell counts in the
+one bin that holds its centre. Bins much narrower than
 the cells therefore hold few cells, or none, and the profile becomes jagged. The cells of this
 run are 0.8 to 3 kpc wide, which is why the 0.5 kpc curve jumps and its innermost bin is empty.
 
@@ -131,18 +146,24 @@ M(p)    = p.sum .* gas.scale.Msol      # mass per bin [Msol]
 dMdR(p) = M(p) ./ diff(p.edges)        # mass per kpc of radius, independent of the bin width
 
 # ── figure code from here ──
-fig = Figure(size=(1100,420))
-ax1 = Axis(fig[1,1]; rax..., logy..., xlabel="R [kpc]", ylabel="mass per bin [M⊙]", title="1 kpc bins")
+fig = Figure(size=(1100,560))
+ax1 = Axis(fig[1,1]; rax..., logy..., ylabel="mass per bin [M⊙]", title="1 kpc bins")
 o = M(pl) .> 0                         # an empty bin has no place on a log axis
 scatterlines!(ax1, pl.x[o], M(pl)[o], color=C.green)
-ax2 = Axis(fig[1,2]; rax..., logy..., xlabel="R [kpc]", ylabel="dM/dR [M⊙ / kpc]",
-           title="three binnings, divided by the bin width")
+countsteps!(countaxis(fig, 1, 1, ax1), pl.edges, pl.count, color=C.green)
+
+ax2 = Axis(fig[1,2]; rax..., logy..., ylabel="dM/dR [M⊙ / kpc]", title="three binnings, divided by the bin width")
 o = dMdR(pbs) .> 0
 lines!(ax2, pbs.x[o], dMdR(pbs)[o], color=(C.navy,0.35), linewidth=1.5, label="0.5 kpc bins")
 o = dMdR(plg) .> 1e-3 * maximum(dMdR(plg))      # the first log bin holds cells but almost no mass
 scatterlines!(ax2, plg.x[o], dMdR(plg)[o], color=C.blue, markersize=8, label="15 log bins")
 stairs!(ax2, pcu.edges, vcat(dMdR(pcu), dMdR(pcu)[end]), step=:post, color=C.red, label="custom edges")
 axislegend(ax2, position=:rt)
+c2 = countaxis(fig, 1, 2, ax2)
+countsteps!(c2, pbs.edges, pbs.count, color=(C.navy,0.35), linewidth=1.5)
+countsteps!(c2, plg.edges, plg.count, color=C.blue)
+countsteps!(c2, pcu.edges, pcu.count, color=C.red)
+squeeze!(fig)
 fig
 ```
 
@@ -230,15 +251,15 @@ sem = pT.sem[ok]                     # uncertainty ON THE MEAN, not the spread o
 rms = pC.custom[ok]                  # whatever `statistic` returned, here the RMS
 
 # ── figure code from here ──
-fig = Figure(size=(1180,450))
-ax1 = Axis(fig[1,1]; rax..., logy..., xlabel="R [kpc]", ylabel="T [K]", title="the spread in each bin")
+fig = Figure(size=(1180,580))
+ax1 = Axis(fig[1,1]; rax..., logy..., ylabel="T [K]", title="the spread in each bin")
 band!(ax1, x, mn, mx, color=(C.navy,0.10), label="min – max")
 band!(ax1, x, q16, q84, color=(C.blue,0.35), label="16 – 84 %")
 lines!(ax1, x, q50, color=C.navy, label="median")
 axislegend(ax1, position=:rt)
+countsteps!(countaxis(fig, 1, 1, ax1), pT.edges, pT.count, color=C.navy)
 
-ax2 = Axis(fig[1,2]; rax..., logy..., xlabel="R [kpc]", ylabel="T [K]",
-           title="three ways to average the same cells")
+ax2 = Axis(fig[1,2]; rax..., logy..., ylabel="T [K]", title="three ways to average the same cells")
 lines!(ax2, x, q50, color=C.navy,   linewidth=2.5, label="median  (50th percentile)")
 lines!(ax2, x, mu,  color=C.orange, label="mean  (mass-weighted)")
 lines!(ax2, x, rms, color=C.red,    linewidth=2.5, label="RMS  (statistic=…)")
@@ -247,6 +268,8 @@ lines!(ax2, x, rms, color=C.red,    linewidth=2.5, label="RMS  (statistic=…)")
 se = [i for i in 1:3:length(x) if mu[i]-sem[i] > 0]
 errorbars!(ax2, x[se], mu[se], sem[se], color=C.orange, whiskerwidth=7)
 axislegend(ax2, position=:rt)
+countsteps!(countaxis(fig, 1, 2, ax2), pT.edges, pT.count, color=C.navy)
+squeeze!(fig)
 fig
 ```
 
@@ -284,22 +307,25 @@ pv = profile(gas, :r_sphere, :rho; weight=:volume, unit=:Msol_pc3,
              edges=ed3, center=ctr, range_unit=:kpc, xunit=:kpc)
 
 # ── figure code from here ──
-fig = Figure(size=(1100,420))
-a1 = Axis(fig[1,1]; rax..., logy..., xlabel="r [kpc]", ylabel="ρ [M⊙ / pc³]",
-          title="density  (geometry=:spherical)")
+fig = Figure(size=(1100,560))
+a1 = Axis(fig[1,1]; rax..., logy..., ylabel="ρ [M⊙ / pc³]", title="density  (geometry=:spherical)")
 od = ρ .> 0
 scatterlines!(a1, pr.x[od], ρ[od], color=C.red, markersize=8, label="shell mass / shell volume")
 ov = pv.mean .> 0
 scatter!(a1, pv.x[ov], pv.mean[ov], color=:transparent, strokecolor=C.navy, strokewidth=1.5,
          markersize=13, label="volume-weighted mean of ρ")
 axislegend(a1, position=:rt)
-a2 = Axis(fig[1,2]; rax..., xlabel="r [kpc]", ylabel="M(<r) [10¹⁰ M⊙]",
-          title="enclosed mass  (cumulative=:forward)")
+countsteps!(countaxis(fig, 1, 1, a1; xlabel="r [kpc]"), pr.edges, pr.count, color=C.red)
+
+a2 = Axis(fig[1,2]; rax..., ylabel="M(<r) [10¹⁰ M⊙]", title="enclosed mass  (cumulative=:forward)")
 lines!(a2, pr.edges, vcat(0, Menc) ./ 1e10, color=C.navy)
 hlines!(a2, [0.5*Menc[end]/1e10], color=:gray50, linestyle=:dash, linewidth=1.5)
 vlines!(a2, [rhalf], color=:gray50, linestyle=:dash, linewidth=1.5)
 text!(a2, rhalf + 0.5, 0.5*Menc[end]/1e10; text="half the gas inside $(Rmax) kpc\nlies within $(round(rhalf, digits=1)) kpc",
       color=:gray35, fontsize=14, align=(:left,:top), offset=(0,-6))
+# the enclosed mass at r uses every cell inside r: `cumcount`, not the count per shell
+lines!(countaxis(fig, 1, 2, a2; ylabel="cells inside r", xlabel="r [kpc]"), pr.edges[2:end], pr.cumcount, color=C.navy)
+squeeze!(fig)
 fig
 ```
 
@@ -354,25 +380,28 @@ cd = profile(parts, :r_sphere; weight=:mass, cumulative=:forward, mask=mdm,    c
 Mg, Ms, Md = cg.cumsum .* gas.scale.Msol, cs.cumsum .* parts.scale.Msol, cd.cumsum .* parts.scale.Msol
 
 # ── figure code from here ──
-fig = Figure(size=(1500,440))
-ax1 = Axis(fig[1,1]; rax..., logy..., xlabel="r [kpc]", ylabel="⟨n_H⟩ [cm⁻³]",
-           title="gas density, two weights")
+fig = Figure(size=(1500,570))
+ax1 = Axis(fig[1,1]; rax..., logy..., ylabel="⟨n_H⟩ [cm⁻³]", title="gas density, two weights")
 o1 = pmw.mean .> 0; o2 = pvw.mean .> 0          # empty bins report 0, which a log axis cannot show
 lines!(ax1, pmw.x[o1], pmw.mean[o1], color=C.red,  label="weight=:mass")
 lines!(ax1, pvw.x[o2], pvw.mean[o2], color=C.blue, label="weight=:volume")
 axislegend(ax1, position=:rt)
+countsteps!(countaxis(fig, 1, 1, ax1; xlabel="r [kpc]"), ed, pmw.count, color=C.navy)       # the same cells for both weights
 
-ax2 = Axis(fig[1,2]; rax..., xlabel="r [kpc]", ylabel="⟨Φ⟩ [10⁴ (km/s)²]", title="gravitational potential, weight=:volume")
+ax2 = Axis(fig[1,2]; rax..., ylabel="⟨Φ⟩ [10⁴ (km/s)²]", title="gravitational potential, weight=:volume")
 og = isfinite.(pep.mean)
 lines!(ax2, pep.x[og], pep.mean[og] ./ 1e4, color=C.purple)
+countsteps!(countaxis(fig, 1, 2, ax2; xlabel="r [kpc]"), ed, pep.count, color=C.purple)
 
-ax3 = Axis(fig[1,3]; rax..., logy..., xlabel="r [kpc]", ylabel="M(<r) [M⊙]",
-           title="enclosed mass, one set of edges")
-for (Mc, col, lab) in ((Ms, C.gold, "stars"), (Md, C.navy, "dark matter"), (Mg, C.green, "gas"))
+ax3 = Axis(fig[1,3]; rax..., logy..., ylabel="M(<r) [M⊙]", title="enclosed mass, one set of edges")
+c3  = countaxis(fig, 1, 3, ax3; ylabel="inside r", xlabel="r [kpc]")
+for (Mc, pc, col, lab) in ((Ms, cs, C.gold, "stars"), (Md, cd, C.navy, "dark matter"), (Mg, cg, C.green, "gas"))
     ok = Mc .> 1e8                               # the innermost bins hold too few particles to show
     lines!(ax3, ed[2:end][ok], Mc[ok], color=col, label=lab)
+    lines!(c3, ed[2:end], replace(Float64.(pc.cumcount), 0.0 => NaN), color=col)   # particles or cells inside r
 end
 axislegend(ax3, position=:rb)
+squeeze!(fig)
 fig
 ```
 
@@ -400,6 +429,12 @@ Three habits make such panels readable. Bins with almost no mass get wild means,
 can set the colour range of a whole panel, so they are masked first. `v_r` is mostly outflow here,
 so the symmetric colour limits come from a percentile of `|v_r|`, not from its extremes. And σ
 spans 1.7 dex, so it gets a log colour scale. Velocities are measured in the box frame.
+
+The histogram at the bottom shows how many cells stand behind each bin. A colour from a bin with
+one or two cells is a single measurement, not an average; a bin with thousands of cells is well
+determined. The blue bars are the bins kept for the three colour panels. Here several hundred bins hold a
+single cell, and the bins dropped by the mass cut hold 36 % of the cells but almost no mass: the
+hot, thin gas fills many cells.
 
 ```julia
 # --- four views of the SAME plane -------------------------------------------------------------
@@ -453,12 +488,17 @@ vlim = qq(abs.(mask(pvr.mean)), 0.90)
 
 sig  = mask(psd.std); sig[sig .<= 0] .= NaN   # a log colour scale needs strictly positive values
 
+# How many cells stand behind each bin? The same bins with weight=:none: then `H` counts cells.
+nc = phase(gas, :rho, :T; kw..., weight=:none, xedges=ph.xedges, yedges=ph.yedges).H
+println("cells in the plane: ", Int(sum(nc)), "   filled bins: ", count(nc .> 0),
+        "   cells in the bins kept for the colour panels: ", Int(sum(nc[keep])))
+
 # ── figure code from here ──
 # A heatmap wants one coordinate per bin: the midpoints of the 141 edges, in log10 like the axes.
 xc = log10.((ph.xedges[1:end-1] .+ ph.xedges[2:end]) ./ 2)
 yc = log10.((ph.yedges[1:end-1] .+ ph.yedges[2:end]) ./ 2)
 lg(M) = log10.(replace(M, 0.0=>NaN))    # empty bins become blank instead of -Inf
-fig = Figure(size=(1150,880))
+fig = Figure(size=(1150,1150))
 #          title                    colour-bar label         data                         colour map  range                           scale
 panels = (("mass per bin (sum)",    "log₁₀ M [M⊙]",          lg(ph.H),                    :magma,   nothing,                        identity),
           ("radial velocity (mean)", "⟨v_r⟩ [km/s]",         mask(pvr.mean),              :balance, (-vlim, vlim),                  identity),
@@ -473,6 +513,17 @@ for (k, (title, clabel, M, cm, rng, csc)) in enumerate(panels)
     cticks = csc === log10 ? ([20,50,100,200,500,1000,2000], ["20","50","100","200","500","1000","2000"]) : Makie.automatic
     Colorbar(fig[r,c+1], hm, label=clabel, ticks=cticks)
 end
+
+# Bottom row: a histogram of the cells per bin, for all filled bins and for those kept above.
+# Counts are whole numbers, so the classes are 1, 2, 3–4, 5–8, 9–16, …: edges halfway between integers.
+he  = log10.(vcat(0.5, [2.0^k + 0.5 for k in 0:ceil(Int, log2(maximum(nc)))]))
+tk  = 0:ceil(Int, log10(maximum(nc)))
+axh = Axis(fig[3,1:4]; xlabel="cells per bin", ylabel="number of bins", title="cells behind each bin of the plane",
+           xticks=(tk, string.(10 .^ tk)))
+hist!(axh, log10.(nc[nc .> 0]); bins=he, color=(:gray60,0.5), label="all filled bins")
+hist!(axh, log10.(nc[keep]);     bins=he, color=(C.blue,0.7),  label="bins kept for ⟨v_r⟩, σ, cell size")
+axislegend(axh, position=:rt)
+rowsize!(fig.layout, 3, Relative(0.22))
 fig
 ```
 
@@ -481,9 +532,10 @@ fig
              Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
              `vcenter=` the frame).
              (shown once per session; verbose(false) silences Mera's messages)
+cells in the plane: 590311   filled bins: 7243   cells in the bins kept for the colour panels: 380390
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_3.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_4.png)
 
 ## 6. Distribution shape and error bars on the mean
 
@@ -504,7 +556,8 @@ them.
 **Bins with equal counts: `scale=:equal`.** It places the edges so that every bin holds about the
 same number of cells. With fixed widths, bins where the gas is sparse hold few cells and their
 statistics get noisy; equal-count bins are all measured equally well. The price is that bins are
-wider where the gas is sparse, so the bin centres are unevenly spaced (the dots in the figure).
+wider where the gas is sparse, so the bin centres are unevenly spaced (the dots in the figure), while the count panels below stay
+flat.
 
 **Error bars on the mean: `bootstrap=N`.** How well is the mean of a bin known? The usual formula,
 `sem = std/√n` (section 2), works well when the values are well behaved. When a few extreme cells
@@ -541,17 +594,22 @@ sk = pb.skewness                   # asymmetry; 0 = symmetric
 ku = pb.kurtosis                   # EXCESS kurtosis, tail weight; 0 = Gaussian
 
 # ── figure code from here ──
-fig = Figure(size=(1350,420))
-ax1 = Axis(fig[1,1]; rax..., xlabel="R [kpc]", ylabel="⟨v_z⟩ [km/s]", title="mean with 95 % bootstrap interval")
+fig = Figure(size=(1350,540))
+ax1 = Axis(fig[1,1]; rax..., ylabel="⟨v_z⟩ [km/s]", title="mean with 95 % bootstrap interval")
 hlines!(ax1, [0.0], color=:gray50, linestyle=:dash, linewidth=1.5)
 band!(ax1, x, lo, hi, color=(C.blue,0.30), label="95 % interval")
 scatterlines!(ax1, x, mu, color=C.blue, markersize=8, label="⟨v_z⟩")
 axislegend(ax1, position=:rt)
-ax2 = Axis(fig[1,2]; rax..., xlabel="R [kpc]", ylabel="skewness", title="asymmetry of v_z")
+ax2 = Axis(fig[1,2]; rax..., ylabel="skewness", title="asymmetry of v_z")
 hlines!(ax2, [0.0], color=:gray50, linestyle=:dash, linewidth=1.5)     # the symmetric case
 scatterlines!(ax2, x, sk, color=C.red, markersize=8)
-ax3 = Axis(fig[1,3]; rax..., logy..., xlabel="R [kpc]", ylabel="excess kurtosis", title="tail weight of v_z")
+ax3 = Axis(fig[1,3]; rax..., logy..., ylabel="excess kurtosis", title="tail weight of v_z")
 scatterlines!(ax3, x, ku, color=C.green, markersize=8)
+# equal-count bins: a linear count axis from zero shows that every bin holds about the same number
+for (k, ax) in enumerate((ax1, ax2, ax3))
+    countsteps!(countaxis(fig, 1, k, ax; log=false), pb.edges, pb.count, color=C.navy)
+end
+squeeze!(fig)
 fig
 ```
 
