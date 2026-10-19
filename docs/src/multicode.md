@@ -28,7 +28,7 @@ It is development work, not part of any 1.x release. Install it with:
 | **FLASH** | HDF5 PARAMESH | AMR | gas, MHD | format fixtures | [FLASH](flash_reader.md) |
 | **GADGET** | HDF5 `PartType*` | SPH particles | particles, SUBFIND groups | format fixtures | [GADGET](gadget_reader.md) |
 | **AREPO** | HDF5 `PartType*` | moving mesh | gas cells (with `:volume`), particles, SUBFIND groups | format fixtures | [AREPO](arepo_reader.md) |
-| **Quokka** (AMReX/BoxLib) | AMReX plotfile | AMR | gas, particles | format fixtures | AMReX / Quokka |
+| **Quokka** (AMReX/BoxLib) | AMReX plotfile | AMR | gas, particles | format fixtures | [AMReX / Quokka](amrex_reader.md) |
 
 GADGET and AREPO are different codes, one smoothed-particle, one moving-mesh, but they write the
 same HDF5 snapshot layout, so one reader serves both and each has its own page for what differs.
