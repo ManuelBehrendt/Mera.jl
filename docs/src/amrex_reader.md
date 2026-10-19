@@ -264,6 +264,9 @@ amrex_provenance
 amrex_domain
 amrex_extent
 amrex_extrema
+amrex_foreach_box
+amrex_box_origin
+amrex_project
 amrex_plotfile
 amrex_output_numbers
 amrex_particle_types
