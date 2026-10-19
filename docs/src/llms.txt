@@ -8,9 +8,8 @@
 
 This file is a compact grounding for an AI assistant. It is not a tutorial. It states the data
 model, the vocabulary, the mistakes that are easy to make, and how to check that an answer is
-right. Everything below was verified against Mera 1.8, the development line until it is registered
-(the last registered version is 1.7.0, which has none of the region values, `filterdata` or the
-off-axis features named here).
+right. Everything below was verified against Mera 1.8. Versions before 1.8 have none of the region
+values, `filterdata` or the off-axis features named here.
 
 ## Data model
 

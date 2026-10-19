@@ -20,7 +20,7 @@
 #
 # Env:
 #   MERA_TEST_DATA          explicit data root (checked first)
-#   FIXTURE_TAG             release tag to pull from (default: testdata-v2; testdata-v1 for Mera 1.8)
+#   FIXTURE_TAG             release tag to pull from (default: testdata-v2; testdata-v1 has the first eleven)
 #   FIXTURE_REPO            owner/name (default: ManuelBehrendt/Mera.jl)
 #   FIXTURE_EXTERNAL_ROOT   the "already on a big disk" location to check (default: the
 #                           maintainer's external drive; set this on a cluster or shared machine)
