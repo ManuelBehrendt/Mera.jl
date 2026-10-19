@@ -333,9 +333,9 @@ const PUBLIC_FIXTURES = Dict(
     :cosmo3d => (
         path = joinpath(PUBLIC_PATH, "cosmo3d"),
         ramses_version = "2026.05",            # initial conditions from RAMSES's tests/poisson/cosmo
-        outputs = 2, boxlen = 1.0, ncpu = 8, output = 3,
+        outputs = 1, boxlen = 1.0, ncpu = 8, output = 3,
         oracle = (npart = 32768, aexp_output3 = 0.1004),
-        note = "cosmological: gas + dark matter + self-gravity + AMR (levels 5 to 8); outputs 1 and 3 only",
+        note = "cosmological: gas + dark matter + self-gravity + AMR (levels 5 to 8); output 3 only, the initial conditions are not shipped",
     ),
     :legacy_particles3d => (
         path = joinpath(PUBLIC_PATH, "legacy_particles3d"),

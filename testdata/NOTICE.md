@@ -64,8 +64,10 @@ this table is a summary rather than the authority.
 
 `cosmo3d.nml` runs RAMSES's own cosmological initial conditions: those of `tests/poisson/cosmo`
 (`cosmo_128`, which that test downloads from ramses.cnrs.fr), averaged over 4×4×4 blocks to 32³ by
-`testdata/make_cosmo3d_ic.py`. The averaged files ship in `cosmo3d/ic/`. The run itself (gas,
-self-gravity and AMR on top of the dark matter) is ours.
+`testdata/make_cosmo3d_ic.py`. Neither those files nor `output_00001` (step 0, which holds the same
+initial conditions) is published: the archive holds only `output_00003` (a = 0.10), the namelist and
+`run.log`. The run itself (gas, self-gravity and AMR on top of the dark matter) is ours. To rerun it,
+download `cosmo_128` and let `make_cosmo3d_ic.py` write the `ic/` folder the namelist reads.
 
 `clumps3d.nml` is not derived from upstream. RAMSES ships no self-contained 3-D clump-finder test,
 so it was written from scratch and is entirely ours. The same holds for `dm_gas3d_bisection.nml`

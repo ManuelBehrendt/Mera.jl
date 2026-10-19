@@ -428,7 +428,7 @@ end
     PUBLIC_AVAILABLE && @testset verbose=true "every kind of run, every route" begin
         matrix = [(:sedov3d_amr, 0), (:sedov3d_grav_part, 0), (:mhdtube3d, 0), (:clumps3d, 0), (:stromgren3d, 0),
                   (:sinks3d, 0), (:ramses_abc_flow, 0), (:ramses_rt_dirac, 0), (:legacy_particles3d, 0),
-                  (:cosmo3d, 1), (:cosmo3d, 3), (:sedov3d_bisection, 0), (:dm_gas3d_bisection, 0), (:sedov3d_iogroups, 0)]
+                  (:cosmo3d, 3), (:sedov3d_bisection, 0), (:dm_gas3d_bisection, 0), (:sedov3d_iogroups, 0)]
         routes = (("Hilbert", 3, (ordering=:hilbert,)), ("bisection", 5, (ordering=:bisection,)),
                   ("IO groups", 3, (ordering=:hilbert, iogroupsize=2)))
         allzero(c) = all(v -> all(iszero, v), values(c.maxdiff))

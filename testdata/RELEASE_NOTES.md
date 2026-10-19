@@ -4,12 +4,13 @@ Small RAMSES simulation outputs you can download and analyse with
 [Mera.jl](https://github.com/ManuelBehrendt/Mera.jl). They are the same simulations Mera's own test
 suite runs against, so every one has a known answer to check against.
 
-Total 312 MB across 16 archives (15 simulations plus the documentation set).
+Total 307 MB across 16 archives (15 simulations plus the documentation set).
 Each unpacks to a single directory.
 
 v2 adds four simulations and changes none: `sedov3d_bisection`, `dm_gas3d_bisection` and
 `sedov3d_iogroups`, RAMSES's own outputs in its bisection ordering and in IO-group folders, and
-`cosmo3d`, a small cosmological run from RAMSES's own initial conditions. All four serve Mera's
+`cosmo3d`, a small cosmological run from RAMSES's own initial conditions (one snapshot; the initial
+conditions themselves are not included, `NOTICE.md` says where to get them). All four serve Mera's
 `repartition` and `writeramses`. The other eleven are the same data as in `testdata-v1`,
 which stays in place unchanged for Mera 1.8. The tag is versioned independently of the package:
 it changes only when the set of simulations changes.
@@ -18,8 +19,8 @@ it changes only when the set of simulations changes.
 
 ```bash
 git clone https://github.com/ManuelBehrendt/Mera.jl && cd Mera.jl
-./testdata/fetch_fixtures.sh --small     # 147 MB, everything except the Bondi run
-./testdata/fetch_fixtures.sh             # everything, 312 MB
+./testdata/fetch_fixtures.sh --small     # 142 MB, everything except the Bondi run
+./testdata/fetch_fixtures.sh             # everything, 307 MB
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
@@ -75,7 +76,7 @@ oracle**, meaning something theory fixes independently of Mera.
 | `sedov3d_bisection` | `ordering='bisection'`, ncpu=4 | every rank's file rebuilt exactly from the stored tree |
 | `dm_gas3d_bisection` | bisection with self-gravity and 30 000 dark-matter particles | as above; the particle count is the input file's |
 | `sedov3d_iogroups` | files in IO-group folders (`IOGROUPSIZEREP=2`) | every rank's file rebuilt exactly from the stored walls |
-| `cosmo3d` | cosmological: gas, dark matter, self-gravity, AMR to level 8 | every rank's file rebuilt exactly; 32 768 dark-matter particles |
+| `cosmo3d` | cosmological: gas, dark matter, self-gravity, AMR to level 8 | every rank's file rebuilt exactly; 32 768 dark-matter particles; Poisson's equation in physical units |
 
 ## RAMSES's own test configurations
 

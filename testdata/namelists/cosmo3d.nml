@@ -4,9 +4,10 @@
 ! Initial conditions: RAMSES's own test tests/poisson/cosmo (cosmo_128, from ramses.cnrs.fr),
 ! averaged over 4^3 blocks to 32^3 (box 1.25 Mpc, a_start = 0.0066, Omega_m = 0.3175,
 ! Omega_L = 0.6825, H0 = 67.11). The gas starts from ic_deltab and the dark-matter velocities.
-! Adiabatic gas (no cooling, no star formation), so a restart is deterministic. The averaged
-! initial conditions are in ic/. Only outputs 1 (a = 0.0066, still uniform) and 3 (a = 0.1,
-! refined to level 8) are kept; rerun for the others:
+! Adiabatic gas (no cooling, no star formation), so a restart is deterministic. The initial
+! conditions are not ours and are not published: make_cosmo3d_ic.py writes them into ic/. The
+! published archive keeps only output 3 (a = 0.1, refined to level 8); rerun for the others:
+!     python3 make_cosmo3d_ic.py path/to/cosmo_128 ic
 !     mpirun -np 8 ramses3d cosmo3d.nml > run.log
 
 &RUN_PARAMS
