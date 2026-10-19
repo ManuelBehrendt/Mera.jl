@@ -110,9 +110,7 @@ Between them: both the multi-file (ncpu=8) and single-file (ncpu=1) reader paths
 grids, three `nvarh` layouts (5 / 8 / 11), every data type Mera reads, and both the legacy and
 modern on-disk formats.
 
-The last four are prepared for the `testdata-v2` release (on the maintainer's drive and in
-`package_fixtures.sh`); they join `fetch_fixtures.sh` once v2 is published. Until then their tests
-skip when the fixtures are absent.
+The last four are new in the `testdata-v2` release.
 
 ## Attribution
 

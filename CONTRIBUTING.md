@@ -71,7 +71,7 @@ each, as a GitHub release. One command fetches them:
 
 ```bash
 testdata/fetch_fixtures.sh            # all of them
-testdata/fetch_fixtures.sh --small    # skip the largest, 117 MB total
+testdata/fetch_fixtures.sh --small    # skip the largest, 142 MB total
 ```
 
 It only downloads what is missing, and prints the resolved directory as its last line, so you can

@@ -15,12 +15,12 @@
 # Usage:
 #   testdata/fetch_fixtures.sh                 # all fixtures
 #   testdata/fetch_fixtures.sh sedov3d_amr ...  # only the named ones
-#   testdata/fetch_fixtures.sh --small          # everything except ramses_smbh_bondi (117 MB)
+#   testdata/fetch_fixtures.sh --small          # everything except ramses_smbh_bondi (142 MB)
 #   testdata/fetch_fixtures.sh --force          # re-download even if present
 #
 # Env:
 #   MERA_TEST_DATA          explicit data root (checked first)
-#   FIXTURE_TAG             release tag to pull from (default: testdata-v1)
+#   FIXTURE_TAG             release tag to pull from (default: testdata-v2; testdata-v1 for Mera 1.8)
 #   FIXTURE_REPO            owner/name (default: ManuelBehrendt/Mera.jl)
 #   FIXTURE_EXTERNAL_ROOT   the "already on a big disk" location to check (default: the
 #                           maintainer's external drive; set this on a cluster or shared machine)
@@ -29,16 +29,18 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TAG="${FIXTURE_TAG:-testdata-v1}"
+TAG="${FIXTURE_TAG:-testdata-v2}"
 REPO="${FIXTURE_REPO:-ManuelBehrendt/Mera.jl}"
 LOCAL_ROOT="$REPO_ROOT/testdata/fixtures"
 EXTERNAL_ROOT="${FIXTURE_EXTERNAL_ROOT:-/Volumes/FASTStorage/Simulations/Mera-Tests}"
 BASE_URL="${FIXTURE_BASE_URL:-https://github.com/$REPO/releases/download/$TAG}"
 
 ALL=(sedov3d_amr sedov3d_amr_mera sedov3d_grav_part mhdtube3d clumps3d stromgren3d
-     sinks3d legacy_particles3d ramses_abc_flow ramses_rt_dirac ramses_smbh_bondi)
+     sinks3d legacy_particles3d ramses_abc_flow ramses_rt_dirac ramses_smbh_bondi
+     sedov3d_bisection dm_gas3d_bisection sedov3d_iogroups cosmo3d)
 SMALL=(sedov3d_amr sedov3d_amr_mera sedov3d_grav_part mhdtube3d clumps3d stromgren3d
-       sinks3d legacy_particles3d ramses_abc_flow ramses_rt_dirac)
+       sinks3d legacy_particles3d ramses_abc_flow ramses_rt_dirac
+       sedov3d_bisection dm_gas3d_bisection sedov3d_iogroups cosmo3d)
 
 QUIET=0; FORCE=0; WANT=()
 for a in "$@"; do

@@ -145,12 +145,12 @@ oracle it is asserted against, and any trap worth knowing. They fall into four c
 **provenance** — which matters, because it determines what a failure means.
 
 **Getting them.** Nothing needs configuring by hand: the fixtures are published as assets on the
-`testdata-v1` release. From Julia, `download_testdata()` fetches them and returns a directory that
+`testdata-v2` release. From Julia, `download_testdata()` fetches them and returns a directory that
 works as `MERA_TEST_DATA`. From a shell, one script finds or fetches them.
 
 ```bash
-./testdata/fetch_fixtures.sh --small     # 117 MB: everything except the Bondi run
-./testdata/fetch_fixtures.sh             # everything, 282 MB
+./testdata/fetch_fixtures.sh --small     # 142 MB: everything except the Bondi run
+./testdata/fetch_fixtures.sh             # everything, 307 MB
 julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
