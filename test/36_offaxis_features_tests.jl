@@ -7,7 +7,14 @@
 
 # Data-free profile/phase unit tests (pure-function kernels — run even without simulation data):
 # binning input-validation guards and weighted-statistic oracles against hand-computed values.
-using JLD2   # used below; do not rely on another test file importing it
+using JLD2            # used below; do not rely on another test file importing it
+using LinearAlgebra   # cross/dot/norm in the camera-basis tests
+using Random          # a fixed stream of random spin axes
+using Statistics      # mean, in the equal-count bin tests
+
+# the mode metadata a projection records for one variable (field name is internal)
+maps_mode_of(m, v) = m.maps_mode[v]
+
 @testset "profile: binning guards + weighted-stat oracles (data-free)" begin
     # --- binning input validation (silent-mis-bin guards) ---
     @test_throws ArgumentError Mera._edges_by_step(10.0, 1.0, 1.0)               # reversed range (binsize)
@@ -209,15 +216,6 @@ end
         @test isapprox(sum(ph.pdf .* (diff(ph.xedges) * diff(ph.yedges)')), 1.0; rtol=1e-10)
     end
 
-    @testset "rotationcurve: enclosed mass → v_circ = √(GM/r)" begin
-        rc = rotationcurve(gas; center=[:bc], range_unit=:kpc, nbins=40, xrange=(0.3, 40), xunit=:kpc)
-        @test issorted(rc.m_enc) && length(rc.v_circ) == 40                  # enclosed mass is cumulative
-        @test all(rc.v_circ[rc.count .> 0] .> 0) && all(rc.g[rc.count .> 0] .> 0)
-        # independent oracle: G = 4.30091e-6 (km/s)² kpc / M⊙ with M⊙/kpc inputs
-        vchk = sqrt.(4.30091e-6 .* rc.m_enc ./ rc.x)
-        @test maximum(abs.(rc.v_circ .- vchk)) <= 5e-3 * maximum(vchk)
-    end
-
     @testset "getparticlemask: select by type / family / tag" begin
         parts = getparticles(getinfo(du.output, du.path, verbose=false), verbose=false, show_progress=false)
         n = length(parts.data); fam = getvar(parts, :family)
@@ -234,9 +232,6 @@ end
         ps = profile(parts, :r_cylinder; weight=:mass, mask=ms, nbins=20, center=[:bc], range_unit=:kpc, xunit=:kpc)
         @test isapprox(sum(ps.sum), mstars; rtol=1e-10)
         @test isapprox(sum(ps.sum), sum(getvar(parts,:mass)) - sum(getvar(parts,:mass)[md]); rtol=1e-10)
-        # rotationcurve accepts the same mask (DM-only enclosed mass)
-        rcd = rotationcurve(parts; mask=md, center=[:bc], range_unit=:kpc, nbins=20, xrange=(0.3,30))
-        @test all(rcd.v_circ[rcd.count .> 0] .> 0) && issorted(rcd.m_enc)
         @test_throws ArgumentError getparticlemask(parts, :bogus; verbose=false)
     end
 
@@ -335,7 +330,7 @@ end
     # Regression tests for the audited bug fixes (P0/P1/P2). Each pins a confirmed defect so it
     # cannot silently return: stdlib-reducer dispatch, vector-yvar timeseries, zero-spread cubes,
     # cube/projection window parity, subregion conservation, NaN-safe quantiles, log guards, empty
-    # masks, nmax floor, the rotationcurve radius pairing, phase quantiles, and phase(map,…).
+    # masks, nmax floor, phase quantiles, and phase(map,…).
     # ----------------------------------------------------------------------------------------------
     @testset "regression: audited bug fixes" begin
         rckw = (center=[:bc], range_unit=:kpc, xunit=:kpc)
@@ -391,16 +386,6 @@ end
         @testset "P1-7 binning=:overlap, nmax=0 is not an all-zero map" begin
             p0 = projection(gas, :sd, :Msol_pc2; los=[1.,1,1], binning=:overlap, nmax=0, verbose=false, show_progress=false)
             @test sum(p0.maps[:sd]) > 0
-        end
-
-        @testset "P2-1 rotationcurve pairs enclosed mass with the OUTER bin edge" begin
-            rc   = rotationcurve(gas; nbins=30, xrange=(0.5,30), rckw...)
-            rsph = getvar(gas, :r_sphere, :kpc, center=[:bc], center_unit=:kpc); mg = getvar(gas, :mass, :Msol)
-            # rc.x is the outer-edge radius; the cumulative mass is the mass inside [edges[1], rc.x]
-            Mindep = [sum(mg[(rsph .>= rc.edges[1]) .& (rsph .< r)]) for r in rc.x]
-            @test all(isapprox.(rc.m_enc, Mindep; rtol=1e-10))
-            vindep = sqrt.(4.30091e-6 .* Mindep ./ rc.x)             # √(G·M(<r)/r) at the OUTER edge
-            @test maximum(abs.(rc.v_circ .- vindep)) <= 5e-3 * maximum(vindep)
         end
 
         @testset "P2-2 phase emits per-bin quantiles (non-:mean cstat)" begin
@@ -459,8 +444,6 @@ end
         @test a.x == b.x && a.sum == b.sum
         @test phase(gas, :rho, :T; nbins=(16,16), center=[:bc], range_unit=:kpc).H ==
               phase(gas, :rho, :T; nbins=(16,16), center=[:bc], center_unit=:kpc).H
-        @test rotationcurve(gas; nbins=15, xrange=(0.5,30), center=[:bc], range_unit=:kpc).v_circ ==
-              rotationcurve(gas; nbins=15, xrange=(0.5,30), center=[:bc], center_unit=:kpc).v_circ
         @test profile3d(gas, :x, :y, :z; nbins=8, center=[:bc], range_unit=:kpc).H ==
               profile3d(gas, :x, :y, :z; nbins=8, center=[:bc], center_unit=:kpc).H
     end
@@ -627,6 +610,726 @@ end
         @test haskey(project(info, :sd, :Msol_pc2; direction=:z, vars=[:rho], verbose=false).maps, :sd)
         # mass conserved through the one-call path
         @test isapprox(sum(mp.maps[:sd]) * (mp.pixsize*gas.scale.pc)^2, sum(getvar(gas,:mass,:Msol)); rtol=1e-6)
+    end
+
+    # ==============================================================================================
+    # Camera-space and sampling features: depth, angmom_radius, asymmetric fov, and the count maps.
+    # Each asserts behaviour, not just that the call returns: a depth cut must drop mass MONOTONICALLY
+    # and keep everything when it is wider than the box, an angmom radius must change which cells are
+    # summed, an asymmetric fov must produce an asymmetric frame, and a count map must sum to a known
+    # multiple of the number of cells or particles.
+    # ==============================================================================================
+    @testset "depth: a line-of-sight cut in camera coordinates" begin
+        M = msum(gas, :Msol)
+        kw = (los=[1.,2.,3.], center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        gm(m) = sum(m.maps[:mass])
+        full = gm(projection(gas, :mass, :Msol; kw...))
+        @test isapprox(full, M; rtol=1e-10)                      # no cut keeps everything
+
+        fracs = [gm(projection(gas, :mass, :Msol; depth=d, depth_unit=:kpc, kw...)) / M
+                 for d in (1.0, 3.0, 10.0, 1000.0)]
+        @test issorted(fracs)                                     # wider window keeps more
+        @test fracs[1] < 1.0                                      # a narrow cut really cuts
+        @test isapprox(fracs[end], 1.0; rtol=1e-10)               # wider than the box keeps all
+
+        # an asymmetric window is a window, not a half-width: it must differ from the symmetric one
+        a = gm(projection(gas, :mass, :Msol; depth=[-1.0, 3.0], depth_unit=:kpc, kw...)) / M
+        b = gm(projection(gas, :mass, :Msol; depth=2.0, depth_unit=:kpc, kw...)) / M
+        @test a != b
+
+        # REGRESSION: `fov` re-enters projection on the selected sphere, and a keyword that is not
+        # handed on there is not rejected, it silently reverts to its default. `depth` and
+        # `angmom_radius` were both dropped that way once; a demo built on them measured nothing.
+        fkw = (los=[1.,2.,3.], center=[:bc], fov=8, fov_unit=:kpc, aperture=:circle,
+               pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        with_fov    = gm(projection(gas, :mass, :Msol; fkw...))
+        with_fov_d  = gm(projection(gas, :mass, :Msol; depth=1.0, depth_unit=:kpc, fkw...))
+        @test with_fov_d < with_fov                      # depth must still bite under fov
+
+        akw = (direction=:faceon, center=[:bc], range_unit=:kpc, fov=8, fov_unit=:kpc,
+               aperture=:circle, pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        @test projection(gas, :sd, :Msol_pc2; akw...).los !=
+              projection(gas, :sd, :Msol_pc2; angmom_radius=[2,:kpc], akw...).los
+
+        # the slab must follow `center`, not the frame pivot. With los=+z the camera depth IS world
+        # z, so moving the centre off the disc must empty the slab; it once did not, because the
+        # cut was measured from the pivot and a full box puts that at the box centre.
+        bc = gas.boxlen * gas.scale.kpc / 2
+        on  = gm(projection(gas, :mass, :Msol; los=[0.,0.,1.], center=[bc,bc,bc], range_unit=:kpc,
+                            depth=2, depth_unit=:kpc, pxsize=[2.0,:kpc], verbose=false, show_progress=false))
+        off = gm(projection(gas, :mass, :Msol; los=[0.,0.,1.], center=[bc,bc,bc+10], range_unit=:kpc,
+                            depth=2, depth_unit=:kpc, pxsize=[2.0,:kpc], verbose=false, show_progress=false))
+        @test off < on / 10                       # 10 kpc above the disc holds far less
+
+        # guards
+        @test_throws ArgumentError projection(gas, :mass, :Msol; depth=[3.0,1.0], depth_unit=:kpc, kw...)
+        @test_throws ArgumentError projection(gas, :mass, :Msol; depth=-1.0, depth_unit=:kpc, kw...)
+        # depth is camera-space, so the axis-aligned path must refuse it and say what to use instead
+        @test_throws ArgumentError projection(gas, :mass, :Msol; direction=:z, depth=1.0,
+                                              depth_unit=:kpc, center=[:bc], pxsize=[1.0,:kpc],
+                                              verbose=false, show_progress=false)
+    end
+
+    @testset "angmom_radius: orient on a region, not on everything loaded" begin
+        L_all = angmom(gas; center=[:bc], range_unit=:kpc)
+        L_in  = angmom(gas; center=[:bc], range_unit=:kpc, radius=[5,:kpc])
+        @test length(L_all) == 3 && all(isfinite, L_all)
+        @test all(isfinite, L_in)
+        # the restricted sum is over strictly fewer cells, so the vectors cannot be identical
+        inner = subregion(gas, :sphere, radius=5., center=[:bc], range_unit=:kpc, verbose=false)
+        @test length(inner.data) < length(gas.data)
+        @test L_all != L_in
+        # and it flows through the public call
+        pkw = (direction=:faceon, center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc],
+               verbose=false, show_progress=false)
+        m    = projection(gas, :sd, :Msol_pc2; angmom_radius=[5,:kpc], pkw...)
+        mall = projection(gas, :sd, :Msol_pc2; pkw...)
+        @test isapprox(sum(abs2, m.los), 1.0; rtol=1e-10)         # a unit line of sight
+        # and it must be a DIFFERENT camera: asserting only that it is a unit vector passes for
+        # any line of sight at all, including one where the keyword was ignored
+        @test m.los != mall.los
+        # a mask decides the axis too, as on particles: the camera follows the cells drawn
+        hot  = getvar(gas, :T, :K) .> 1e4
+        mhot = projection(gas, :sd, :Msol_pc2; mask=hot, pkw...)
+        Lhot = angmom(gas; center=[:bc], range_unit=:kpc, mask=hot)
+        @test mhot.los ≈ Lhot ./ norm(Lhot)
+        @test mhot.los != mall.los
+    end
+
+    @testset "angmom: one vector, any camera, several components" begin
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        unitv(v) = v ./ norm(v)
+        ang(a, b) = acosd(clamp(dot(unitv(a), unitv(b)), -1, 1))
+
+        L = angmom(gas; center=[:bc], range_unit=:kpc)
+        @test length(L) == 3 && all(isfinite, L) && norm(L) > 0
+
+        # `radius=` must select exactly what an explicit subregion selects, and nothing else.
+        # Asserting only "the vector changed" would pass for a radius read in the wrong unit.
+        for R in (5, 10, 20)
+            sub = subregion(gas, :sphere, radius=R, center=[:bc], range_unit=:kpc, verbose=false)
+            @test angmom(gas; center=[:bc], range_unit=:kpc, radius=[R,:kpc]) ≈
+                  angmom(sub; center=[:bc], range_unit=:kpc)
+        end
+        # a fractional centre with a radius in kpc must mean the same thing as a :bc centre
+        @test angmom(gas; center=[0.5,0.5,0.5], range_unit=:standard, radius=[10,:kpc]) ≈
+              angmom(gas; center=[:bc], range_unit=:kpc, radius=[10,:kpc])
+
+        # SEVERAL COMPONENTS: the joint vector is the sum of the parts, exactly
+        Lp = angmom(part; center=[:bc], range_unit=:kpc)
+        J  = angmom([gas, part]; center=[:bc], range_unit=:kpc)
+        @test J ≈ L .+ Lp
+        @test ang(L, J) > 0.1          # and it is a genuinely different axis, not a rounding
+        @test_throws ArgumentError angmom(Any[])
+
+        # VELOCITY FRAME: `vcenter` reaches getvar, a zero boost is the box frame, and the quiet
+        # default leaves the session's verbose setting as it found it
+        @test angmom(gas; center=[:bc], range_unit=:kpc, vcenter=[0., 0., 0.]) ≈ L
+        La = angmom(gas; center=[:bc], range_unit=:kpc, vcenter=:auto)
+        @test La ≈ [sum(getvar(gas, c; center=[:bc], center_unit=:kpc, vcenter=:auto))
+                    for c in (:lx, :ly, :lz)]
+        vm = Mera.verbose_mode
+        angmom(gas; center=[:bc], range_unit=:kpc)
+        @test Mera.verbose_mode === vm
+
+        # a mask restricts what defines the axis
+        cold = getvar(gas, :T, :K) .< 1e4
+        @test ang(L, angmom(gas; center=[:bc], range_unit=:kpc, mask=cold)) > 0.1
+        # radius and mask together: the mask counts rows of the object passed in, the sphere has
+        # fewer, so it must mean "mask first, then the sphere", exactly as a filtered object would
+        coldobj = filterdata(gas, :T, x -> x < 1e4; unit=:K, verbose=false)
+        @test angmom(gas; center=[:bc], range_unit=:kpc, radius=[5,:kpc], mask=cold) ≈
+              angmom(coldobj; center=[:bc], range_unit=:kpc, radius=[5,:kpc])
+        @test_throws ArgumentError angmom(gas; center=[:bc], range_unit=:kpc,
+                                          radius=[5,:kpc], mask=cold[1:end-1])
+        # NOTE a tiny radius does NOT raise: `subregion` keeps a cell whose boundary reaches the
+        # sphere, so the cell holding the centre is always caught. The empty-selection error is
+        # for a centre that misses the data, not for a small radius.
+        @test norm(angmom(gas; center=[:bc], range_unit=:kpc, radius=[1e-9,:kpc])) >= 0
+
+        # the refactor must not have moved any camera: :faceon is exactly angmom()
+        pkw = (center=[:bc], range_unit=:kpc, pxsize=[2.0,:kpc], verbose=false, show_progress=false)
+        @test ang(projection(gas, :sd, :Msol_pc2; direction=:faceon, pkw...).los, L) < 1e-8
+        @test ang(projection(part, :sd, :Msol_pc2; direction=:faceon, pkw...).los, Lp) < 1e-8
+
+        # and the vector drives any view, including one built from several components
+        m = projection(gas, :sd, :Msol_pc2; axis=J, inclination=0, pkw...)
+        @test ang(m.los, J) < 1e-8
+        @test sum(m.maps[:sd]) > 0
+
+        # particles gained angmom_radius, so both data types now offer it
+        pa = projection(part, :sd, :Msol_pc2; direction=:faceon, pkw...)
+        pb = projection(part, :sd, :Msol_pc2; direction=:faceon, angmom_radius=[5,:kpc], pkw...)
+        @test ang(pa.los, pb.los) > 1e-3
+        @test ang(pb.los, angmom(part; center=[:bc], range_unit=:kpc, radius=[5,:kpc])) < 1e-6
+    end
+
+    @testset "fov=[wx,wy]: a rectangular frame" begin
+        kw = (center=[:bc], fov_unit=:kpc, pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        sq = projection(gas, :sd, :Msol_pc2; direction=:edgeon, fov=8, aperture=:square, kw...)
+        re = projection(gas, :sd, :Msol_pc2; direction=:edgeon, fov=[8,2], aperture=:square, kw...)
+        @test size(sq.maps[:sd], 1) == size(sq.maps[:sd], 2)      # scalar fov stays square
+        nx, ny = size(re.maps[:sd])
+        @test nx > ny                                             # [8,2] is wide and short
+        ex = getextent(re, :kpc)
+        @test isapprox((ex[2]-ex[1]) / (ex[4]-ex[3]), 4.0; rtol=0.15)   # about 8:2
+        @test isapprox(re.ratio, (ex[2]-ex[1])/(ex[4]-ex[3]); rtol=1e-6)
+        # the transpose is the transpose
+        tr = projection(gas, :sd, :Msol_pc2; direction=:edgeon, fov=[2,8], aperture=:square, kw...)
+        @test size(tr.maps[:sd], 2) > size(tr.maps[:sd], 1)
+        # guards: a rectangle has no single radius, and a half-width must be positive
+        @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,2], aperture=:circle, kw...)
+        @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,2,1], aperture=:square, kw...)
+        @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; fov=[8,-2], aperture=:square, kw...)
+    end
+
+    @testset "a box-axis los reproduces the matching direction= preset" begin
+        # WHY: with no `up=`, the camera used to pick the world axis LEAST parallel to the line of
+        # sight, and ties broke to x. For los=[0,0,1] that gave right=[0,-1,0], an image rotated
+        # 90 degrees from direction=:z. The up hint is now world +z, falling back to +y when the
+        # line of sight is z itself, so the two agree.
+        r, u, w = Mera.build_camera_basis([0.,0,1])
+        @test r ≈ [1.,0,0] && u ≈ [0.,1,0] && w ≈ [0.,0,1]     # exactly direction=:z
+        r2, u2, _ = Mera.build_camera_basis([1.,0,0])
+        @test r2 ≈ [0.,1,0] && u2 ≈ [0.,0,1]                   # edge-on with z up
+        # an explicit up= must give the same thing, not something different
+        r3, u3, _ = Mera.build_camera_basis([0.,0,1], [0.,1,0])
+        @test r3 ≈ r && u3 ≈ u
+        # still orthonormal and right-handed for a general direction
+        for los in ([1.,2,3], [-3.,1,2], [0.,1,0])
+            a, b, c = Mera.build_camera_basis(los)
+            @test cross(a, b) ≈ c atol=1e-12
+            @test abs(dot(a,b)) < 1e-12 && isapprox(norm(a), 1; rtol=1e-12)
+        end
+
+        # NEAR THE POLE the +z hint is useless: its component perpendicular to the line of
+        # sight is almost nothing, and the DIRECTION of that remainder is set by wherever the
+        # small tilt happens to point. A face-on galaxy whose spin axis sits a hundredth of a
+        # degree off z would otherwise get a roll chosen by that hundredth of a degree, and the
+        # next snapshot, with the axis wobbled, a quite different one. Inside the cone the hint
+        # is +y, which is stable and is what direction=:z uses.
+        ups = [Mera.build_camera_basis(normalize([a, b, 1.0]))[2]
+               for (a, b) in ((5.2e-4, 0.0), (0.0, 5.2e-4), (-5.2e-4, 0.0), (0.0, -5.2e-4))]
+        for u in ups
+            @test u ≈ ups[1] atol=1e-3          # a wobbling axis must not spin the image
+            @test abs(dot(u, [0.,1,0])) > 0.999 # and it is the stable +y hint
+        end
+        # outside the cone the hint is +z again, so an inclined view keeps north up
+        for i in (10, 30, 60)
+            _, u, _ = Mera.build_camera_basis(normalize([sind(i), 0.0, cosd(i)]))
+            @test u[3] > 0                       # +z component survives
+            @test isapprox(u[3], sind(i); atol=1e-9)
+        end
+
+        # and it holds for a real map: the image centroid must land in the same place either way
+        kw = (center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc], verbose=false, show_progress=false,
+              xrange=[-10,10], yrange=[-10,10], zrange=[-10,10])
+        function centroid(m)
+            M = m.maps[:mass]; ex = getextent(m, :kpc); nx, ny = size(M)
+            xs = range(ex[1], ex[2], length=nx+1)[1:end-1] .+ (ex[2]-ex[1])/(2nx)
+            ys = range(ex[3], ex[4], length=ny+1)[1:end-1] .+ (ex[4]-ex[3])/(2ny)
+            t = sum(M); (sum(M .* xs)/t, sum(M .* ys')/t)
+        end
+        half = gas.boxlen/2 * gas.info.scale.kpc          # axis-aligned extent is absolute
+        for (dir, losv) in ((:z, [0.,0,1]), (:x, [1.,0,0]))
+            ax = centroid(projection(gas, :mass, :Msol; direction=dir, kw...))
+            ob = centroid(projection(gas, :mass, :Msol; los=losv, kw...))
+            @test isapprox(ax[1] - half, ob[1]; atol=0.25)
+            @test isapprox(ax[2] - half, ob[2]; atol=0.25)
+        end
+    end
+
+    @testset "velocity dispersions off-axis: box frame and camera frame" begin
+        kw = (center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        BOX = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+        CAM = [:σlos, :σcamx, :σcamy]
+
+        # all of them produce a finite, non-negative map off-axis (they used to be refused)
+        for v in vcat(BOX, CAM)
+            m = projection(gas, v, :km_s; los=[1.,2,3], kw...)
+            M = m.maps[v]
+            @test all(isfinite, M) && all(M .>= 0)
+            @test any(M .> 0)
+        end
+
+        # THE ORACLE: the dispersion tensor's trace is rotation invariant, so the camera triple
+        # and the box triple must agree pixel by pixel. This is what proves the camera-frame
+        # components are really components of the same tensor and not a re-scaled copy.
+        # Pixels fed by a single cell have zero spread in exact arithmetic, so the ratio of two
+        # round-off values there is meaningless: :ncell is exactly how we exclude them.
+        for b in (:ngp, :cic, :overlap, :exact)
+            m = projection(gas, vcat(CAM, [:σx,:σy,:σz], [:ncell]), :km_s;
+                           los=[1.,2,3], binning=b, kw...)
+            cam = m.maps[:σcamx].^2 .+ m.maps[:σcamy].^2 .+ m.maps[:σlos].^2
+            box = m.maps[:σx].^2    .+ m.maps[:σy].^2    .+ m.maps[:σz].^2
+            ok  = (box .> 0) .& (m.maps[:ncell] .> 1)
+            @test count(ok) > 1000
+            @test median(abs.(cam[ok] .- box[ok]) ./ box[ok]) < 1e-12
+        end
+
+        # looking down z, the camera axes ARE the box axes, so the two must coincide exactly
+        m = projection(gas, vcat(CAM, [:σx,:σy,:σz]), :km_s; los=[0.,0,1], binning=:ngp, kw...)
+        for (c, b) in ((:σcamx,:σx), (:σcamy,:σy), (:σlos,:σz))
+            B = m.maps[b]; ok = B .> 0
+            @test maximum(abs.(m.maps[c][ok] .- B[ok]) ./ B[ok]) < 1e-12
+        end
+
+        # :σ is the spread of the SPEED, not the trace: sqrt(<|v|²>-<|v|>²) vs sqrt(<|v|²>-|<v>|²).
+        # They are different numbers and the page must not equate them.
+        m2 = projection(gas, [:σ, :σx, :σy, :σz], :km_s; los=[1.,2,3], binning=:ngp, kw...)
+        tr = sqrt.(m2.maps[:σx].^2 .+ m2.maps[:σy].^2 .+ m2.maps[:σz].^2)
+        ok = tr .> 0
+        @test median(m2.maps[:σ][ok] ./ tr[ok]) < 0.99      # strictly smaller, by Jensen
+
+        # camera-frame names are refused where there is no camera, with a message that says so
+        for v in (:vlos, :σlos, :vcamx, :σcamx, :vcamy, :σcamy)
+            e = try projection(gas, v, :km_s; direction=:z, center=[:bc], pxsize=[2.,:kpc],
+                               verbose=false, show_progress=false); nothing catch err; err end
+            @test e isa ArgumentError
+            @test occursin("CAMERA-frame", sprint(showerror, e))
+        end
+
+        # and the same for particles, including the trace identity
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        pm = projection(part, vcat(CAM, [:σx,:σy,:σz], [:npart]), :km_s; los=[1.,2,3], kw...)
+        pcam = pm.maps[:σcamx].^2 .+ pm.maps[:σcamy].^2 .+ pm.maps[:σlos].^2
+        pbox = pm.maps[:σx].^2    .+ pm.maps[:σy].^2    .+ pm.maps[:σz].^2
+        pok  = (pbox .> 0) .& (pm.maps[:npart] .> 1)
+        @test count(pok) > 100
+        @test median(abs.(pcam[pok] .- pbox[pok]) ./ pbox[pok]) < 1e-12
+        @test_throws ArgumentError projection(part, :σcamx, :km_s; direction=:z, center=[:bc],
+                                              pxsize=[2.,:kpc], verbose=false, show_progress=false)
+    end
+
+    @testset "a dispersion is a width whatever mode says" begin
+        # With mode=:sum the box-frame σ maps used to be sqrt(Σv²w - (Σvw)²), the root of two sums,
+        # which is the width of nothing. They must equal the mode=:standard maps on every path,
+        # while the velocity components themselves stay sums.
+        kw = (center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        vars = [:σx, :σz, :σr_cylinder, :vx]
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        for (obj, path) in ((gas, (direction=:z,)), (gas, (los=[1.,2,3],)),
+                            (part, (direction=:z,)), (part, (los=[1.,2,3],)))
+            st = projection(obj, vars, :km_s; mode=:standard, path..., kw...)
+            sm = projection(obj, vars, :km_s; mode=:sum,      path..., kw...)
+            for v in (:σx, :σz, :σr_cylinder)
+                # axis-aligned particle maps are NaN where a pixel is empty, in both modes
+                @test isequal(isnan.(sm.maps[v]), isnan.(st.maps[v]))
+                @test filter(!isnan, sm.maps[v]) ≈ filter(!isnan, st.maps[v])
+                @test any(st.maps[v] .> 0)
+            end
+            @test !(sm.maps[:vx] ≈ st.maps[:vx])      # the component is still a sum
+        end
+    end
+
+    @testset "one rule for up: every spelling of face-on and edge-on agrees" begin
+        # Three pieces of code used to choose the roll of a view by three different rules: the
+        # camera's up hint, the `inclination`/`azimuth` reference, and `face_on`/`edge_on`. So
+        # `direction=:faceon`, `inclination=0, axis=:angmom` and `face_on` could each give a
+        # differently rolled image, and near the pole which way the spin axis leaned decided
+        # whether two of them agreed. There is now one rule, and these pin it.
+        R(; kw...) = Mera.resolve_los(; los=nothing, theta=nothing, phi=nothing, direction=:z,
+                                       inclination=nothing, azimuth=nothing, axis=nothing,
+                                       angle_unit=:deg, up=nothing, L=nothing, kw...)
+        cam(x) = Mera.build_camera_basis(x...)
+        rng = Random.MersenneTwister(7)
+        axes = [randn(rng, 3) for _ in 1:40]
+        append!(axes, [[a, b, 1.0] for (a, b) in ((3e-5, 6.3e-4), (6.3e-4, 3e-5), (-6e-4, 1e-4), (0.0, 0.0))])
+        for L in axes
+            f1, f2 = cam(R(direction=:faceon, L=L)), cam(R(inclination=0,  axis=:angmom, L=L))
+            e1, e2 = cam(R(direction=:edgeon, L=L)), cam(R(inclination=90, axis=:angmom, L=L))
+            @test all(isapprox.(f1, f2; atol=1e-9))      # :faceon IS inclination=0
+            @test all(isapprox.(e1, e2; atol=1e-9))      # :edgeon IS inclination=90
+        end
+
+        # near the pole the lean of the axis no longer decides the roll
+        ups = [cam(R(inclination=0, axis=:angmom, L=L))[2] for L in axes[end-3:end]]
+        @test all(u -> isapprox(u, ups[1]; atol=1e-3), ups)
+
+        # about the default box axis nothing moved: the documented convention holds
+        r0, u0, w0 = cam(R(inclination=0, axis=:z))
+        @test r0 ≈ [1., 0, 0] && u0 ≈ [0., 1, 0] && w0 ≈ [0., 0, 1]      # same as direction=:z
+        @test R(inclination=60, azimuth=0, axis=:z)[1] ≈ [0., -sind(60), cosd(60)]
+        for (th, ph) in ((30, 0), (60, 45), (80, 200))                  # azimuth = phi + 90
+            @test normalize(R(inclination=th, azimuth=ph + 90, axis=:z)[1]) ≈
+                  Mera._los_from_angles(th, ph, :deg)
+        end
+        # and about the box y axis z is now up, as for every other axis (it used to be -z)
+        @test cam(R(inclination=0, axis=:y))[2] ≈ [0., 0, 1]
+
+        # face_on / edge_on frames, splatted into projection, give the preset's camera exactly
+        kw = (center=[0.5,0.5,0.5], range_unit=:standard, pxsize=[2.,:kpc], verbose=false,
+              show_progress=false)
+        fr, er = face_on(gas; center=[0.5,0.5,0.5]), edge_on(gas; center=[0.5,0.5,0.5])
+        pf = projection(gas, :sd, :Msol_pc2; direction=:faceon, kw...)
+        pe = projection(gas, :sd, :Msol_pc2; direction=:edgeon, kw...)
+        @test fr.los ≈ pf.los atol=1e-9
+        @test fr.up  ≈ pf.up  atol=1e-9
+        @test er.los ≈ pe.los atol=1e-9
+        @test er.up  ≈ pe.up  atol=1e-9
+    end
+
+    @testset "guards that used to fail silently or unhelpfully" begin
+        pkw = (center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        # The three spherical sigmas were missing from the off-axis guard list, so they fell
+        # through to getvar and died with "not a column of this object". Now that dispersions
+        # run off-axis they must simply WORK, which is the stronger check: the drift that caused
+        # the bad error message is gone because all paths read one shared list of names.
+        @test Set(Mera._SIGMA_NAMES) == Set(keys(Mera._SIGMA_TO_V))
+        for v in (:σr_sphere, :σθ_sphere, :σϕ_sphere)
+            m = projection(gas, [:sd, v], [:Msol_pc2, :km_s]; los=[1.,2,3], pkw...)
+            @test all(isfinite, m.maps[v]) && any(m.maps[v] .> 0)
+        end
+        # radius and angle maps are still refused, and say why
+        for v in (:r_cylinder, :r_sphere, :ϕ)
+            e = try projection(gas, [:sd, v]; los=[1.,2,3], pkw...); nothing catch err; err end
+            @test e !== nothing
+            @test occursin("slanted column", sprint(showerror, e))
+        end
+
+        # particles: :npart on the axis-aligned path returned a map of ones that looks like a count
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        @test_throws ArgumentError projection(part, [:sd, :npart]; direction=:z, pkw...)
+        @test sum(projection(part, [:sd, :npart]; los=[1.,2,3], pkw...).maps[:npart]) > 0
+
+        # parttypes must set the CAMERA too, not only what is drawn: orienting :faceon on the dark
+        # matter gave the stars+DM axis, so parttypes=[:dm] and [:stars] shared one camera.
+        dmsel = Mera._parttype_select(part, [:dm]); stsel = Mera._parttype_select(part, [:stars])
+        @test count(dmsel) > 0 && count(stsel) > 0
+        Ldm = projection(part, :sd, :Msol_pc2; parttypes=[:dm],    direction=:faceon, pkw...).los
+        Lst = projection(part, :sd, :Msol_pc2; parttypes=[:stars], direction=:faceon, pkw...).los
+        Lal = projection(part, :sd, :Msol_pc2; parttypes=[:all],   direction=:faceon, pkw...).los
+        @test Ldm != Lst                       # two components, two axes
+        @test Ldm != Lal
+        for L in (Ldm, Lst, Lal)
+            @test isapprox(sum(abs2, L), 1.0; rtol=1e-10)
+        end
+    end
+
+    @testset "fov fixes the frame, whatever the selection fills" begin
+        # `fov` promises a fixed camera-plane window. The frame used to be fitted to the data
+        # that survived the sphere, so a star disc that does not fill it came back smaller than
+        # the window and off-centre, and aperture=:square then cropped stars away (reported:
+        # ±7 kpc of stars at fov=12, gas correctly ±12). The frame is now built from `fov`.
+        dp   = DATASETS[:spiral_ugrid]
+        finfo = getinfo(dp.output, dp.path, verbose=false)
+        fgas  = gethydro(finfo, verbose=false, show_progress=false)
+        fpart = getparticles(finfo, verbose=false, show_progress=false)
+        fstars = getparticlemask(fpart, :stars; verbose=false)
+        fkw = (los=[1.,2,3], center=[:bc], range_unit=:kpc, fov=12, fov_unit=:kpc,
+               pxsize=[0.2,:kpc], verbose=false, show_progress=false)
+        starmass(m) = sum(m.maps[:sd]) * (m.pixsize * m.scale.pc)^2
+
+        sq_gas  = projection(fgas,  :sd, :Msol_pc2; aperture=:square, fkw...)
+        sq_star = projection(fpart, :sd, :Msol_pc2; aperture=:square, mask=fstars, fkw...)
+        for m in (sq_gas, sq_star)
+            e = getextent(m, :kpc)
+            @test all(isapprox.(abs.(e), 12; atol=0.2))          # ±fov on both axes
+            @test isapprox(e[1] + e[2], 0; atol=1e-9)            # centred on `center`
+            @test isapprox(e[3] + e[4], 0; atol=1e-9)
+        end
+        @test size(sq_gas.maps[:sd]) == size(sq_star.maps[:sd])  # one window, one pixel grid
+
+        # nothing of this disc lies outside the square, so the square keeps what the circle keeps
+        ci_star = projection(fpart, :sd, :Msol_pc2; aperture=:circle, mask=fstars, fkw...)
+        @test isapprox(starmass(sq_star), starmass(ci_star); rtol=1e-12)
+        # and the circle frame keeps every selected star: the total is the sphere's total
+        insph = subregion(fpart, :sphere, radius=12., center=[:bc], range_unit=:kpc, verbose=false)
+        smask = getparticlemask(insph, :stars; verbose=false)
+        @test isapprox(starmass(ci_star), sum(getvar(insph, :mass, :Msol)[smask]); rtol=1e-10)
+
+        # the same frame at every viewing angle, for points as for cells
+        sizes = Set(size(projection(fpart, :sd, :Msol_pc2; inclination=55, azimuth=az, axis=:z,
+                                    aperture=:circle, mask=fstars, center=[:bc], range_unit=:kpc,
+                                    fov=12, fov_unit=:kpc, pxsize=[0.2,:kpc], verbose=false,
+                                    show_progress=false).maps[:sd]) for az in 0:60:300)
+        @test length(sizes) == 1
+        # and rotation_sequence, which cuts its own sphere, holds the star frame too
+        seq = rotation_sequence(fpart, :sd, :Msol_pc2; angles=0:60:300, inclination=55, axis=:z,
+                                center=[:bc], fov=12, fov_unit=:kpc, aperture=:circle,
+                                pxsize=[0.2,:kpc], mask=fstars)
+        @test length(Set(size(m.maps[:sd]) for m in seq)) == 1
+        @test size(seq[1].maps[:sd]) == first(sizes)
+        # a mask must not move the frame either, also for :circle, where a grid frame keeps a
+        # margin for its cells: masked and unmasked maps have to share one pixel grid
+        dense = getvar(fgas, :rho) .> median(getvar(fgas, :rho))
+        ci_all  = projection(fgas, :sd, :Msol_pc2; aperture=:circle, fkw...)
+        ci_mask = projection(fgas, :sd, :Msol_pc2; aperture=:circle, mask=dense, fkw...)
+        @test size(ci_all.maps[:sd]) == size(ci_mask.maps[:sd])
+        @test ci_all.extent == ci_mask.extent
+        # a sparse GAS selection had the same flaw: a thin depth slab still gets the whole window
+        slab = projection(fgas, :sd, :Msol_pc2; aperture=:square, depth=0.5, depth_unit=:kpc, fkw...)
+        @test size(slab.maps[:sd]) == size(sq_gas.maps[:sd])
+    end
+
+    @testset "slice: what a depth-buffer painter can honestly report per pixel" begin
+        # A slice is NOT a deposit. Cells tile space, exactly one owns the point where the plane
+        # crosses, and that one cell wins the pixel. So a cell COUNT is not available here and
+        # would read 1 everywhere: asking for it would be asking the wrong question. What the
+        # algorithm does know is which pixels it reached and how big the winning cell was.
+        sl = slice(gas, :rho, :g_cm3; los=[1.,2,3], center=[:bc], pxsize=[1.0,:kpc], verbose=false)
+        @test size(sl.coverage) == size(sl.map)
+        @test size(sl.cellsize) == size(sl.map)
+        @test sl.coverage == .!isnan.(sl.map)              # painted exactly where there is a value
+        @test any(sl.coverage) && !all(sl.coverage)        # a tilted plane leaves corners empty
+        @test all(isnan, sl.cellsize[.!sl.coverage])       # no winner, no cell size
+        @test all(sl.cellsize[sl.coverage] .> 0)
+        @test all(isfinite, sl.depth[sl.coverage])
+
+        # the winning cell sizes must be real AMR cell sizes of this object
+        levels = sort(unique(getvar(gas, :cellsize)))
+        @test all(c -> any(isapprox(c, l; rtol=1e-9) for l in levels), unique(sl.cellsize[sl.coverage]))
+
+        # AND THE POINT OF IT: comparing cellsize with pixsize says whether the map is
+        # over-sampled. Shrink the pixel and the fraction of pixels finer than their own cell
+        # has to rise, because the cells do not get any smaller.
+        fine = Float64[]
+        for px in (2.0, 1.0, 0.25)
+            s2 = slice(gas, :rho, :g_cm3; los=[1.,2,3], center=[:bc], pxsize=[px,:kpc],
+                       verbose=false)
+            c = s2.cellsize[s2.coverage]
+            push!(fine, count(c .> px) / length(c))
+        end
+        @test fine[1] < fine[2] < fine[3]
+        @test fine[3] > 0.99            # at a quarter kpc every pixel is finer than its cell
+    end
+
+    @testset "particles: mode=:sum gives the total in each pixel" begin
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        Mtot = msum(part, :Msol)
+        kw = (center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+
+        # A particle has no volume, so projection(part, :mass) is the mass-weighted MEAN particle
+        # mass, not a total. There was no way to ask for the total; now there is.
+        for view in ((; direction=:z), (; los=[1.,2,3]))
+            mean_map = projection(part, :mass, :Msol; view..., kw...)
+            sum_map  = projection(part, :mass, :Msol; mode=:sum, view..., kw...)
+            @test maps_mode_of(sum_map, :mass) == :sum
+            @test sum(sum_map.maps[:mass]) > sum(filter(isfinite, mean_map.maps[:mass]))
+
+            # ORACLE: it must equal the route the hint used to send people down, :sd times the
+            # pixel area. Comparing to msum alone would hide a shared edge effect.
+            p = projection(part, :sd, :Msol_pc2; view..., kw...)
+            sd_mass = sum(p.maps[:sd]) * (p.pixsize * p.scale.pc)^2
+            @test isapprox(sum(sum_map.maps[:mass]), sd_mass; rtol=1e-9)
+            @test isapprox(sum(sum_map.maps[:mass]), Mtot; rtol=1e-3)
+        end
+
+        # off-axis it conserves exactly
+        om = projection(part, :mass, :Msol; mode=:sum, los=[1.,2,3], kw...)
+        @test isapprox(sum(om.maps[:mass]), Mtot; rtol=1e-9)
+
+        # the default is untouched, and a typo is refused rather than read as :standard
+        @test maps_mode_of(projection(part, :mass, :Msol; direction=:z, kw...), :mass) !=
+              :sum
+        @test_throws ArgumentError projection(part, :mass, :Msol; mode=:average,
+                                              direction=:z, kw...)
+    end
+
+    @testset "split=true: partial cells carry their fraction" begin
+        kw = (los=[1.,2,3], center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+
+        # --- the fraction kernel, against a case with an exact answer --------------------------
+        # Looking down z, a plane cutting a cube at height f leaves exactly f of its volume below.
+        for f in (0.0, 0.25, 0.5, 0.75, 1.0)
+            @test Mera._slab_fractions([0.0], [1.0], [0.,0,1], -10.0, -0.5 + f; nsub=64)[1] ≈ f atol=1e-9
+        end
+        # and it is a fraction for any tilt
+        for w in ([1.,0,0], [1.,1,0]./sqrt(2), [1.,2,3]./sqrt(14))
+            fr = Mera._slab_fractions([0.0, 0.0], [1.0, 1.0], w, -10.0, 0.0)
+            @test all(0 .<= fr .<= 1)
+            # exactly a half, for any tilt: a sub-point landing on the mid-plane counts half
+            # to each side, which is what keeps this unbiased AND the slabs additive
+            @test fr[1] ≈ 0.5 atol=1e-12
+        end
+
+        # --- depth: ADDITIVITY, the property a hard cut cannot have ---------------------------
+        # Cut one slab into N adjacent pieces and re-sum. Each cell must be counted once in
+        # total, no matter how many faces cross it.
+        #
+        # This is not a hypothetical: on a regular grid with a rational line of sight, whole
+        # lattices of cells land EXACTLY on a face, and a closed cell-centre test counts every
+        # one of them twice. On this galaxy that inflates the re-summed partition by 4 percent.
+        ref_split = sum(projection(gas, :mass, :Msol; depth=[-40.,40.], depth_unit=:kpc,
+                                   split=true, kw...).maps[:mass])
+        ref_hard  = sum(projection(gas, :mass, :Msol; depth=[-40.,40.], depth_unit=:kpc,
+                                   kw...).maps[:mass])
+        for N in (2, 3, 4, 8)
+            e = range(-40, 40, length=N+1)
+            tot_s = sum(sum(projection(gas, :mass, :Msol; depth=[e[i],e[i+1]], depth_unit=:kpc,
+                                       split=true, kw...).maps[:mass]) for i in 1:N)
+            @test isapprox(tot_s, ref_split; rtol=1e-9)        # exactly additive
+        end
+        e2 = range(-40, 40, length=3)
+        tot_h = sum(sum(projection(gas, :mass, :Msol; depth=[e2[i],e2[i+1]], depth_unit=:kpc,
+                                   kw...).maps[:mass]) for i in 1:2)
+        @test tot_h > ref_hard * 1.01          # the hard cut really does double-count the face
+
+        # a thin slab must hold less than a thick one, either way round
+        for sp in (false, true)
+            m = [sum(projection(gas, :mass, :Msol; depth=d, depth_unit=:kpc, split=sp,
+                                kw...).maps[:mass]) for d in (1, 4, 16)]
+            @test m[1] < m[2] < m[3]
+        end
+
+        # --- fov: the map must equal the mass of the split sphere it selected ------------------
+        for R in (5, 10, 20)
+            t = msum(subregion(gas, sphere(float(R); center=[:bc], range_unit=:kpc);
+                               split=true, verbose=false), :Msol)
+            b = sum(projection(gas, :mass, :Msol; fov=R, fov_unit=:kpc, aperture=:circle,
+                               split=true, kw...).maps[:mass])
+            @test isapprox(b, t; rtol=1e-9)
+            # whole cells at the rim overstate it, and most at the smallest radius
+            a = sum(projection(gas, :mass, :Msol; fov=R, fov_unit=:kpc, aperture=:circle,
+                               kw...).maps[:mass])
+            @test a > b
+        end
+
+        # --- refine: the total must not move, only where the mass sits ----------------------
+        # `split` gets the number right with a staircase edge; `refine` subdivides the cells the
+        # sphere crosses so the edge sharpens. Refining resolves the boundary better, so the
+        # selected mass converges; it must converge to what the same refined subregion holds.
+        base = sum(projection(gas, :mass, :Msol; fov=5, fov_unit=:kpc, aperture=:circle,
+                              split=true, kw...).maps[:mass])
+        prev = base
+        for R in (1, 2)
+            got = sum(projection(gas, :mass, :Msol; fov=5, fov_unit=:kpc, aperture=:circle,
+                                 split=true, refine=R, kw...).maps[:mass])
+            truth = msum(subregion(gas, sphere(5.0; center=[:bc], range_unit=:kpc);
+                                   split=true, refine=R, verbose=false), :Msol)
+            @test isapprox(got, truth; rtol=1e-9)      # same answer as the explicit subregion
+            @test abs(got - base) / base < 0.01        # it converges, it does not jump
+            prev = got
+        end
+        # refine_to reaches the same place as the refine depth it implies
+        @test isapprox(sum(projection(gas, :mass, :Msol; fov=5, fov_unit=:kpc, aperture=:circle,
+                                      split=true, refine_to=[0.2,:kpc], kw...).maps[:mass]),
+                       prev; rtol=1e-6)
+        # and it is refused where it would mean nothing
+        @test_throws ArgumentError projection(gas, :mass, :Msol; fov=5, fov_unit=:kpc,
+                                              refine=2, kw...)                    # no split
+        @test_throws ArgumentError projection(gas, :mass, :Msol; split=true, refine=2, kw...)  # no fov
+
+        # split must keep working alongside the other fov keywords
+        cold = getvar(gas, :T, :K) .< 1e4
+        for extra in ((; ), (; mask=cold), (; depth=4, depth_unit=:kpc), (; aperture=:square))
+            m = projection(gas, :mass, :Msol; fov=10, fov_unit=:kpc, split=true, extra..., kw...)
+            @test sum(m.maps[:mass]) > 0 && all(isfinite, m.maps[:mass])
+        end
+        # and default off, so nothing already measured moves
+        @test sum(projection(gas, :mass, :Msol; fov=10, fov_unit=:kpc, aperture=:circle,
+                             kw...).maps[:mass]) !=
+              sum(projection(gas, :mass, :Msol; fov=10, fov_unit=:kpc, aperture=:circle,
+                             split=true, kw...).maps[:mass])
+    end
+
+    @testset "mask under fov: the two combine" begin
+        kw = (los=[1.,2.,3.], center=[:bc], fov_unit=:kpc, pxsize=[1.0,:kpc],
+              verbose=false, show_progress=false)
+        cold = getvar(gas, :T, :K) .< 1e4
+        @test 0 < count(cold) < length(cold)        # a mask that actually removes something
+
+        # THE BUG: `fov` projects a subregion, so a mask cut for the full object has the wrong
+        # length inside. It used to stop with "array-mask length does not match".
+        full = projection(gas, :mass, :Msol; fov=8, aperture=:circle, kw...)
+        cut  = projection(gas, :mass, :Msol; fov=8, aperture=:circle, mask=cold, kw...)
+        # `fov` fixes the frame, so the mask does not change it: the two maps share one pixel
+        # grid and can be compared pixel by pixel. (Without `fov` a mask still shrinks the frame.)
+        @test size(cut.maps[:mass]) == size(full.maps[:mass])
+        @test cut.extent == full.extent
+        Mf, Mc = sum(full.maps[:mass]), sum(cut.maps[:mass])
+        @test Mc < Mf                                # the mask removed mass
+        @test Mc > 0                                 # but not all of it
+
+        # and it is the RIGHT mass. Independent oracle: filter the object through the public
+        # `filterdata` and project that, which must land on the same total as the mask keyword.
+        pre = filterdata(gas, Below(:T, 1e4; unit=:K))
+        @test length(pre.data) == count(cold)
+        ref = projection(pre, :mass, :Msol; fov=8, aperture=:circle, kw...)
+        @test isapprox(sum(ref.maps[:mass]), Mc; rtol=1e-9)
+
+        # a mask must not silently disappear when it rides along with the other fov keywords
+        rect = projection(gas, :mass, :Msol; fov=[8.,3.], aperture=:square, mask=cold, kw...)
+        @test sum(rect.maps[:mass]) < sum(projection(gas, :mass, :Msol; fov=[8.,3.],
+                                                     aperture=:square, kw...).maps[:mass])
+        deep = projection(gas, :mass, :Msol; fov=8, aperture=:circle, depth=2, depth_unit=:kpc,
+                          mask=cold, kw...)
+        @test sum(deep.maps[:mass]) < Mc             # depth still bites through the mask
+
+        # a wrong-length mask must still be refused rather than quietly truncated
+        @test_throws ArgumentError projection(gas, :mass, :Msol; fov=8, aperture=:circle,
+                                              mask=cold[1:end-1], kw...)
+
+        # points carry the same bug and the same fix
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        young = getvar(part, :age, :Myr) .< 100
+        if 0 < count(young) < length(young)
+            pfull = projection(part, :mass, :Msol; fov=8, aperture=:circle, kw...)
+            pcut  = projection(part, :mass, :Msol; fov=8, aperture=:circle, mask=young, kw...)
+            @test sum(pcut.maps[:mass]) < sum(pfull.maps[:mass])
+            @test sum(pcut.maps[:mass]) > 0
+        end
+    end
+
+    @testset ":ncell / :npart count what fed each pixel" begin
+        N = length(gas.data)
+        kw = (los=[1.,2.,3.], center=[:bc], pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        M = msum(gas, :Msol)
+        # What the count MEANS depends on the kernel, and the test says so rather than assuming:
+        #   :ngp       one event per cell, so the map sums to exactly the cell count
+        #   :cic       up to four, the stencil pixels
+        #   :overlap   one per SUB-POINT deposit, so a cell spread over many pixels counts many times
+        #   :exact     one per pixel its footprint touches
+        # Only :ngp has an exact identity; the others are sampling density and are bounded below.
+        for b in (:ngp, :cic, :overlap, :exact)
+            m = projection(gas, [:mass, :ncell], [:Msol, :standard]; binning=b, kw...)
+            C = m.maps[:ncell]
+            @test size(C) == size(m.maps[:mass])
+            @test all(C .>= 0)
+            @test sum(C) >= N - 1                 # every cell is deposited at least once
+            b === :ngp && @test isapprox(sum(C), N; rtol=1e-9)
+            b === :cic && @test sum(C) <= 4N + 1
+            # and the counter must not have disturbed the value it rode along with
+            @test isapprox(sum(m.maps[:mass]), M; rtol=1e-9)
+        end
+
+        # the counter belongs to the off-axis deposit. On the axis-aligned path there is none, and
+        # returning a map of ones would look like a count, so it must refuse instead.
+        @test_throws ArgumentError projection(gas, [:sd, :ncell]; direction=:z, center=[:bc],
+                                              pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+
+        # ORDERING: :vlos and :σlos are handled in their own branch and never reach the deposit,
+        # so allocating the counter on `first(selected_vars)` left it empty and :ncell came back a
+        # ones-mask. Asking for :ncell second, behind :vlos, must still give a real count.
+        mv = projection(gas, [:vlos, :ncell], [:km_s, :standard]; binning=:cic, kw...)
+        @test sum(mv.maps[:ncell]) > N          # a count, not a 0/1 mask
+        @test maximum(mv.maps[:ncell]) > 1
+
+        # points: the same idea, and the count is what tells you a pixel holds a single particle
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false, show_progress=false)
+        Np = length(part.data); Mp = msum(part, :Msol)
+        for b in (:ngp, :cic)
+            m = projection(part, [:sd, :npart], [:Msol_pc2, :standard]; binning=b, kw...)
+            C = m.maps[:npart]
+            @test all(C .>= 0)
+            # points have no footprint, so both kernels have an exact identity here
+            b === :ngp && @test isapprox(sum(C), Np; rtol=1e-9)
+            b === :cic && @test sum(C) <= 4Np + 1
+            @test isapprox(sum(m.maps[:sd]) * (m.pixsize * part.scale.pc)^2, Mp; rtol=1e-6)
+        end
     end
 
 end

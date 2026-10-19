@@ -11,6 +11,8 @@
 #   - Jeans length lambda_J = cs * sqrt(3pi / (32 G rho))   [Mera convention]
 #   - Jeans mass   M_J  = (4pi/3) * (lambda_J/2)^3 * rho
 #   - Jeans number N_J  = lambda_J / cellsize
+#   - Classical Jeans conventions: lambda_iso = sqrt(pi (P/rho)/(G rho)),
+#     lambda_ad = sqrt(gamma) lambda_iso, N_J = lambda/cellsize, Truelove J = cellsize/lambda_iso
 #   - Free-fall time t_ff = sqrt(3pi / (32 G rho))
 #   - Spherical / cylindrical kinematic decompositions
 #   - Temperature aliases :Temp, :Temperature
@@ -245,6 +247,33 @@ end
             expected = @. (4π/3) * (jeans_l / 2)^3 * rho
             @test isapprox(jeans_m, expected, rtol=RTOL_PHYSICS)
         end
+    end
+
+    @testset "Jeans conventions (:jeanslength_iso/_ad, :jeansnumber_iso/_ad/_truelove)" begin
+        # Independent recomputation from the stored primitives (P, ρ) in CGS,
+        # not via :cs: λ_iso = sqrt(π (P/ρ) / (G ρ)).
+        G       = hydro.info.constants.G
+        gam     = hydro.info.gamma
+        p_cgs   = getvar(hydro, :p) .* hydro.info.unit_d .* hydro.info.unit_v^2
+        rho_cgs = getvar(hydro, :rho, :g_cm3)
+        dx_cm   = getvar(hydro, :cellsize, :cm)
+        l_iso_cm = @. sqrt(π * (p_cgs / rho_cgs) / (G * rho_cgs))
+
+        @test isapprox(getvar(hydro, :jeanslength_iso, :cm), l_iso_cm, rtol=RTOL_PHYSICS)
+        @test isapprox(getvar(hydro, :jeanslength_ad,  :cm), sqrt(gam) .* l_iso_cm, rtol=RTOL_PHYSICS)
+        @test isapprox(getvar(hydro, :jeanslength_iso) .* hydro.info.scale.cm, l_iso_cm, rtol=RTOL_PHYSICS)
+        @test isapprox(getvar(hydro, :jeanslength_iso, :pc),
+                       getvar(hydro, :jeanslength_iso, :cm) ./ hydro.info.constants.pc, rtol=RTOL_PHYSICS)
+
+        @test isapprox(getvar(hydro, :jeansnumber_iso), l_iso_cm ./ dx_cm, rtol=RTOL_PHYSICS)
+        @test isapprox(getvar(hydro, :jeansnumber_ad),  sqrt(gam) .* l_iso_cm ./ dx_cm, rtol=RTOL_PHYSICS)
+        @test isapprox(getvar(hydro, :jeansnumber_truelove), dx_cm ./ l_iso_cm, rtol=RTOL_PHYSICS)
+
+        # Relation to the legacy convention: λ_J(Mera) = c_s t_ff = sqrt(3γ/32) λ_iso
+        @test isapprox(getvar(hydro, :jeanslength) ./ getvar(hydro, :jeanslength_iso),
+                       fill(sqrt(3gam / 32), length(l_iso_cm)), rtol=RTOL_PHYSICS)
+
+        @test Set(getvar_requirements(:hydro, :jeansnumber_truelove)) == Set([:rho, :p])
     end
 
     # ========================================================================
@@ -916,4 +945,40 @@ end
         end
     end
 
+end
+
+# ----------------------------------------------------------------------------
+# The Jeans conventions on a COSMOLOGICAL run, against RAMSES's own refinement formula.
+# RAMSES (hydro/hydro_flag.f90, jeans_length_refine) works in code units with
+#   λ_J = sqrt(π cs² / (ρ factG)),  cs² = P/ρ,  factG = 3/(8π) Ωm aexp   (cosmological runs).
+# Mera computes λ_J in physical CGS with the physical G and converts back. The two must differ
+# only by the constant sqrt(factG / (G unit_d unit_t²)): RAMSES scales G into its own
+# cosmological unit system, whose constants (ρ_crit, H0) are not exactly G = 6.6743e-8. So the
+# ratio is exact per cell, and that constant must be close to 1.
+# ----------------------------------------------------------------------------
+if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
+   !(@isdefined(SMOKE_ONLY) && SMOKE_ONLY) &&
+   haskey(DATASETS, :yt_cosmo) && isdir(DATASETS[:yt_cosmo].path)
+
+    @testset "Jeans conventions on a cosmological run (yt_cosmo)" begin
+        ds   = DATASETS[:yt_cosmo]
+        info = getinfo(ds.output, ds.path, verbose=false)
+        @test iscosmological(info)
+        # two levels above levelmin keep the test small; the relation holds cell by cell
+        h = gethydro(info; lmax=info.levelmin + 1, verbose=false, show_progress=false)
+        ρ, P = getvar(h, :rho), getvar(h, :p)
+        factG = 3 / (8π) * info.omega_m * info.aexp
+        λ_ramses = @. sqrt(π * (P / ρ) / (ρ * factG))                   # code units, as RAMSES
+        units    = sqrt(factG / (info.constants.G * info.unit_d * info.unit_t^2))
+
+        @test isapprox(getvar(h, :jeanslength_iso), units .* λ_ramses, rtol=1e-10)
+        @test isapprox(getvar(h, :jeansnumber_iso), units .* λ_ramses ./ getvar(h, :cellsize), rtol=1e-10)
+        @test isapprox(getvar(h, :jeanslength_ad), sqrt(info.gamma) .* units .* λ_ramses, rtol=1e-10)
+        @test isapprox(getvar(h, :jeansnumber_truelove), getvar(h, :cellsize) ./ (units .* λ_ramses), rtol=1e-10)
+        @test abs(units - 1) < 2e-3          # measured 1.0014 on this run: constants, not physics
+        # the physical length is the code-unit value times the length scale
+        @test isapprox(getvar(h, :jeanslength_iso, :cm),
+                       getvar(h, :jeanslength_iso) .* info.scale.cm, rtol=1e-12)
+        @test all(isfinite, getvar(h, :jeanslength_iso)) && all(>(0), getvar(h, :jeanslength_iso))
+    end
 end

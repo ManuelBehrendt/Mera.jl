@@ -846,7 +846,7 @@ if @isdefined(DATASETS) && haskey(DATASETS, :ramses_mhd) && isdir(DATASETS[:rams
         # :e_magnetic is extensive: it is built from :volume, so on a split sub-region it carries
         # the boundary fraction like :mass does. Nothing pinned that, and a change to how the
         # energy is assembled could drop it without any other test noticing.
-        R  = Sphere(0.3, center=[:bc], range_unit=:standard)
+        R  = sphere(0.3, center=[:bc], range_unit=:standard)
         es = sum(getvar(subregion(gas, R, verbose=false),                :e_magnetic))
         en = sum(getvar(subregion(gas, R, split=false, verbose=false),   :e_magnetic))
         @test es != en                                   # the fraction reached the energy

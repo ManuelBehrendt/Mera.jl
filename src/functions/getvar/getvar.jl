@@ -9,7 +9,9 @@ function getvar()
     println("              -derived hydro vars-")
     println(":x, :y, :z")
     println(":mass, :cellsize, :volume, :freefall_time")
+    println(":ncell  (one per cell; ask for it in an off-axis projection to get a count map)")
     println(":cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber, :jeansmass")
+    println(":jeanslength_iso, :jeanslength_ad, :jeansnumber_iso, :jeansnumber_ad, :jeansnumber_truelove")
     println(":virial_parameter_local")
     println(":T, :Temp, :Temperature with p/rho")
     println(":etherm (thermal energy per cell)")
@@ -44,6 +46,7 @@ function getvar()
     println("              -derived particle vars-")
     println(":age (cosmology-aware: physical age from conformal birth time)")
     println(":zform, :formation_redshift, :formation_time (stars; cosmological runs only)")
+    println(":npart  (one per particle; ask for it in an off-axis projection to get a count map)")
     println()
     println("===========================[gravity]:===========================")
     println("       -all the non derived gravity vars-")
@@ -126,7 +129,7 @@ end
 # Centre reminder for frame-relative quantities
 #
 # `center` in `getvar` is the ORIGIN of the derived coordinate frame. It is a
-# DIFFERENT argument from the `center` that places a region (`Sphere(10; center=…)`),
+# DIFFERENT argument from the `center` that places a region (`sphere(10; center=…)`),
 # and it defaults to `[0.,0.,0.]` — the box CORNER.
 #
 # For absolute positions (`:x/:y/:z`) the corner is the right default: it returns
@@ -158,17 +161,14 @@ const _CENTER_RELATIVE_VARS = Set{Symbol}([
     :r_sphere_periodic, :r_cylinder_periodic,
 ])
 
-"""
-    _map_col(f, table) -> Vector{Float64}
-
-`map` over a data table, returning a typed empty vector when the table has no rows.
-
-A region can legitimately select nothing: a sphere smaller than one cell, or a cut that misses
-the data. Mapping over the empty table then leaves the element type unknown, and the table
-machinery cannot build a result from it, which surfaces as an error naming internal fields
-instead of the empty selection that caused it. Every column here is a Float64, so say so.
-"""
-@inline _map_col(f, table) = isempty(table) ? Float64[] : map(f, table)
+# Cell size from the level column, in whole-column form. The row-wise version it replaces built
+# a NamedTuple per row and called a closure over `selected_unit`, a variable the getvar loop
+# reassigns, so Julia boxed it and dispatched dynamically on every row: about a minute for 51
+# million cells. Same arithmetic in the same order, so the values are bit-identical. An empty
+# selection (a sphere smaller than one cell, a cut that misses the data) gives a typed empty
+# vector rather than an error about internal fields.
+_cellsize_col(boxlen, level, unit) =
+    Float64[boxlen / 2^l * unit for l in level]
 
 function _center_hint(vars, center)
     # Cheap guard first: in the common (correct) case an origin was given, and this returns
@@ -199,7 +199,7 @@ end
     measured: `:r_sphere`, `:r_cylinder`, `:ϕ`, the `v*_sphere`/`v*_cylinder`,
     `a*_sphere`/`a*_cylinder`, `mach_*` and angular-momentum families. It is a
     **different argument** from the `center` that places a region
-    (`Sphere(10; center=[:bc])`) and it defaults to `[0.,0.,0.]`, the box **corner**.
+    (`sphere(10; center=[:bc])`) and it defaults to `[0.,0.,0.]`, the box **corner**.
 
     For absolute positions (`:x`, `:y`, `:z`) the corner is the right default — those
     are the simulation's own coordinates. For the frame-relative quantities it is
@@ -215,7 +215,7 @@ end
     ```
 
 !!! note "`:mass` and `:volume` are boundary-aware on a split sub-region"
-    A sub-region built from a **value-type** region (`subregion(gas, Sphere(10))`, `split=true` by
+    A sub-region built from a **value-type** region (`subregion(gas, sphere(10))`, `split=true` by
     default) carries a per-cell `:fraction ∈ (0,1]` — how much of that cell lies inside the region.
     `getvar(:volume)` returns `fraction * cellsize^3` and `getvar(:mass)` returns
     `fraction * rho * volume`, so totals are the amount **inside the boundary** rather than the sum
@@ -241,9 +241,15 @@ end
     the mass is the hydro object's. Mera compares the cell indices of the two, so a mismatched pair
     is refused rather than pairing a mass with another cell's potential.
 
-    `:epot` is the run's **total** potential: gas, particles, sinks and any external analytic
-    potential, so `m * phi` is that cell's gas measured in the total field. The Gravity section of
-    the Computation Reference says what follows from that, and what a snapshot cannot tell you.
+    `:epot` is the run's **total** potential: all the mass on the grid (gas, particles, sinks) and
+    any analytic density added to the Poisson source, so `m * phi` is that cell's gas measured in
+    the total field. An analytic external force is added to the acceleration only, never to
+    `:epot`. The Gravity section of the Computation Reference says what follows from that, and
+    what a snapshot cannot tell you.
+
+    RAMSES stores the potential short by a factor `boxlen` (its force is stored correctly).
+    `getvar` multiplies by `boxlen`, so `:epot` and the energies built from it are the physical
+    potential. The raw `:epot` column in `gravity.data` keeps RAMSES's value.
 
 
 ```julia

@@ -101,10 +101,16 @@ table exactly.
 | `sinks3d` | `namelists/sinks3d.nml` | sink catalogue (`sink_NNNNN.csv`); accretion between snapshots; mera-file round trip |
 | `sedov3d_amr_mera` | `make_mera_files.jl` | mera-file (JLD2) round trip; no RAMSES run needed |
 | `timeseries_sedov3d` | `namelists/sedov3d.nml` | the original multi-snapshot fixture |
+| `sedov3d_bisection` | `namelists/sedov3d_bisection.nml` | `ordering='bisection'`, ncpu=4: RAMSES's own bisection files, rebuilt and repartitioned |
+| `dm_gas3d_bisection` | `namelists/dm_gas3d_bisection.nml` + `ic_part/` | bisection with self-gravity and 30 000 dark-matter particles; output 4 only |
+| `sedov3d_iogroups` | `namelists/sedov3d_iogroups.nml` | files in IO-group folders (`IOGROUPSIZEREP=2`, set at compile time in RAMSES 2026.05) |
+| `cosmo3d` | `namelists/cosmo3d.nml` + `make_cosmo3d_ic.py` | cosmological: gas, dark matter, gravity, AMR; RAMSES's own initial conditions averaged to 32³, not published (the archive holds output 3 only) |
 
 Between them: both the multi-file (ncpu=8) and single-file (ncpu=1) reader paths, AMR and uniform
 grids, three `nvarh` layouts (5 / 8 / 11), every data type Mera reads, and both the legacy and
 modern on-disk formats.
+
+The last four are new in the `testdata-v2` release.
 
 ## Attribution
 
@@ -120,13 +126,14 @@ Packaging writes a `SOURCE.txt` into each fixture directory first: the Mera repo
 namelist the data came from, and the RAMSES attribution. It is written at packaging time rather
 than by hand, so a regenerated fixture cannot ship without it.
 
-The generated fixtures are published as **assets on the `testdata-v1` release**, not committed to
-this repository: Mera is registered, so tree contents ship in every `Pkg.add("Mera")` tarball and
+The generated fixtures are published as **assets on a `testdata-vN` release**, not committed to
+this repository (`testdata-v1`: eleven simulations, for Mera 1.8; `testdata-v2`: the same eleven
+plus `sedov3d_bisection`, `dm_gas3d_bisection`, `sedov3d_iogroups` and `cosmo3d`): Mera is registered, so tree contents ship in every `Pkg.add("Mera")` tarball and
 persist in git history.
 
 | script | what it does |
 |---|---|
-| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `READMEs.tar.gz` (282 MB total) |
+| `package_fixtures.sh [OUTDIR]` | builds one `.tar.gz` per fixture plus `READMEs.tar.gz` (307 MB total) |
 | `fetch_fixtures.sh [--small\|--all\|<names>]` | finds them on disk, or downloads them |
 | `check_release_staging.sh` | **run this after editing anything in `RAMSES-PUBLIC`** — reports whether the staged archives and the committed manifest still describe the current data |
 
@@ -134,12 +141,20 @@ To publish a new set:
 
 ```bash
 testdata/package_fixtures.sh /path/to/staging
-gh release create testdata-v1 --title 'Test fixtures v1' --notes-file testdata/RELEASE_NOTES.md
-gh release upload testdata-v1 /path/to/staging/*.tar.gz
+gh release create testdata-v2 --title 'Test fixtures v2' --notes-file testdata/RELEASE_NOTES.md
+gh release upload testdata-v2 /path/to/staging/*.tar.gz
 ```
 
-Bump the tag (`testdata-v2`, via `FIXTURE_TAG`) when a fixture changes, so an older checkout keeps
-resolving the assets published on the release.
+Bump the tag when the set changes, and leave the old release in place, so an older checkout keeps
+resolving the assets it was tested with. Only after the new release is online, switch to it in one
+commit (before that, `fetch_fixtures.sh` and `download_testdata()` would ask for assets that do not
+exist yet):
+
+- `testdata/fetch_fixtures.sh`: the default `TAG`, and the new names in `ALL` and `SMALL`;
+- `src/functions/download_testdata.jl`: `TESTDATA_TAG`, `TESTDATA_FIXTURES` and its docstring table,
+  and the catalogue size in `test/78_download_testdata_tests.jl`;
+- the download sizes in `CONTRIBUTING.md`, `test/README.md` and `fetch_fixtures.sh` (`--small`
+  becomes 142 MB, everything 307 MB for v2), and the tag in `.github/workflows/fixtures.yml`.
 
 `.github/workflows/fixtures.yml` runs the data-backed tier on this: the `--small` set on every
 push, and the full set including the 165 MB Bondi fixture nightly.

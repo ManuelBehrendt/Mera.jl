@@ -87,6 +87,35 @@
         @test length(filterdata(gas, c, verbose=false).data) + length(filterdata(gas, !c, verbose=false).data) == n
     end
 
+    @testset "center and vcenter reach the condition" begin
+        # A condition inherits getvar's defaults, so a radius is measured from the box CORNER
+        # unless a centre is given. On a galaxy in the middle of its box that selects the wrong
+        # gas, or nothing at all, and says so nowhere.
+        r_corner = getvar(gas, :r_cylinder, :kpc)
+        r_centre = getvar(gas, :r_cylinder, :kpc, center=[:bc])
+        @test r_corner != r_centre                                  # the trap is real
+        cond = InRange(:r_cylinder, 0, 5; unit=:kpc)
+        @test count(getmask(gas, cond)) == count(0 .<= r_corner .<= 5)
+        @test count(getmask(gas, cond, center=[:bc])) == count(0 .<= r_centre .<= 5)
+        # and the same keyword reaches filterdata, including through & composition
+        f = filterdata(gas, cond, center=[:bc], verbose=false)
+        @test length(f.data) == count(0 .<= r_centre .<= 5)
+        both = filterdata(gas, cond, Above(:rho, 0.0), center=[:bc], verbose=false)
+        @test length(both.data) == count((0 .<= r_centre .<= 5) .& (getvar(gas, :rho) .> 0))
+        # vcenter does the same for the velocity frame: :mach is box frame without it
+        v0 = bulk_velocity(gas)
+        m_box  = getvar(gas, :mach)
+        m_rest = getvar(gas, :mach, vcenter=v0)
+        if m_box != m_rest                                          # only if the box frame moves
+            t = sum(m_box) / length(m_box)
+            @test count(getmask(gas, Above(:mach, t)))               == count(m_box  .> t)
+            @test count(getmask(gas, Above(:mach, t), vcenter=v0))   == count(m_rest .> t)
+        end
+        # the quantity/predicate shorthand takes them too
+        @test count(getmask(gas, :r_cylinder, <(5); unit=:kpc, center=[:bc])) ==
+              count(r_centre .< 5)
+    end
+
     @testset "@filter macro routes Mera objects through filterdata" begin
         # on a Mera object: works on a DERIVED quantity and returns a same-type object
         m = @filter gas :cs >= b

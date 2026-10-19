@@ -44,14 +44,14 @@ end
 function _region_value_type_hint(shape::Symbol; radius=0., height=0., xrange=[0.,0.], yrange=[0.,0.],
                                  zrange=[0.,0.], center=[:bc], range_unit::Symbol=:standard, shell::Bool=false)
     eq = if shell
-        shape === :sphere ? "SphericalShell($(radius[1]), $(radius[2]); center=$(center), range_unit=:$(range_unit))" :
-                            "Cylinder(r_out, $(height); …) \\ Cylinder(r_in, $(height); …)"
+        shape === :sphere ? "sphericalshell($(radius[1]), $(radius[2]); center=$(center), range_unit=:$(range_unit))" :
+                            "cylinder(r_out, $(height); …) \\ cylinder(r_in, $(height); …)"
     elseif shape === :sphere
-        "Sphere($(radius); center=$(center), range_unit=:$(range_unit))"
+        "sphere($(radius); center=$(center), range_unit=:$(range_unit))"
     elseif shape === :cylinder || shape === :disc
-        "Cylinder($(radius), $(height); center=$(center), range_unit=:$(range_unit))"
+        "cylinder($(radius), $(height); center=$(center), range_unit=:$(range_unit))"
     else
-        "Cuboid(xrange=$(xrange), yrange=$(yrange), zrange=$(zrange), center=$(center), range_unit=:$(range_unit))"
+        "cuboid(xrange=$(xrange), yrange=$(yrange), zrange=$(zrange), center=$(center), range_unit=:$(range_unit))"
     end
     hint(:region_value_type_tip,
          "regions also work as value types, with EXACT edge-cell splitting.",
@@ -64,14 +64,15 @@ end
 """    AbstractRegion
 
 Supertype of the composable region value types passed to [`subregion`](@ref):
-[`Cuboid`](@ref), [`Sphere`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref). A region
-is a geometry-relative-to-`center` value type; `subregion(obj, region)` selects the cells it
-covers and, with `split=true`, attaches the exact per-cell inside-fraction. Regions compose
-with the boolean operators `∩` (intersection), `∪` (union), `\\` (difference) and `!`
-(complement) — e.g. `Sphere(20) \\ Cylinder(5, 30)` drills a cylindrical hole through a ball."""
+[`Cuboid`](@ref), [`Sphere`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref),
+[`CylindricalShell`](@ref). A region is a geometry-relative-to-`center` value type;
+`subregion(obj, region)` selects the cells it covers and, with `split=true`, attaches the
+exact per-cell inside-fraction. Regions compose with the boolean operators
+`∩` (intersection), `∪` (union), `\\` (difference) and `!`
+(complement) — e.g. `sphere(20) \\ cylinder(5, 30)` drills a cylindrical hole through a ball."""
 abstract type AbstractRegion end
 
-"""    Sphere(radius; center=[:bc], range_unit=:kpc)
+"""    sphere(radius; center=[:bc], range_unit=:kpc)
 
 A ball of `radius` (in `range_unit`) about `center`."""
 struct Sphere <: AbstractRegion
@@ -79,7 +80,7 @@ struct Sphere <: AbstractRegion
 end
 Sphere(radius::Real; center=[:bc], range_unit::Symbol=:kpc) = Sphere(Float64(radius), Vector{Any}(_as_center(center)), range_unit)
 
-"""    SphericalShell(r_in, r_out; center=[:bc], range_unit=:kpc)
+"""    sphericalshell(r_in, r_out; center=[:bc], range_unit=:kpc)
 
 The shell `r_in ≤ |r| ≤ r_out` (in `range_unit`) about `center`."""
 struct SphericalShell <: AbstractRegion
@@ -88,7 +89,7 @@ end
 SphericalShell(r_in::Real, r_out::Real; center=[:bc], range_unit::Symbol=:kpc) =
     SphericalShell(Float64(r_in), Float64(r_out), Vector{Any}(_as_center(center)), range_unit)
 
-"""    CylindricalShell(r_in, r_out, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
+"""    cylindricalshell(r_in, r_out, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
 A cylindrical shell `r_in ≤ r_cyl ≤ r_out` of half-height `height` along `axis` (the value-type
 analogue of `shellregion(:cylinder)`; `axis` allows a tilted shell)."""
@@ -98,7 +99,7 @@ end
 CylindricalShell(r_in::Real, r_out::Real, height::Real; axis=[0.,0.,1.], center=[:bc], range_unit::Symbol=:kpc) =
     CylindricalShell(Float64(r_in), Float64(r_out), Float64(height), Float64.(axis), Vector{Any}(_as_center(center)), range_unit)
 
-"""    Cylinder(radius, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
+"""    cylinder(radius, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
 A cylinder of cylindrical `radius` spanning `±height` along `axis` (so `height` is the
 half-height, matching the existing `subregion(:cylinder)` convention). `axis` is the symmetry
@@ -110,7 +111,7 @@ end
 Cylinder(radius::Real, height::Real; axis=[0.,0.,1.], center=[:bc], range_unit::Symbol=:kpc) =
     Cylinder(Float64(radius), Float64(height), Float64.(axis), Vector{Any}(_as_center(center)), range_unit)
 
-"""    Cuboid(; xrange, yrange, zrange, center=[:bc], range_unit=:kpc)
+"""    cuboid(; xrange, yrange, zrange, center=[:bc], range_unit=:kpc)
 
 An axis-aligned box; `xrange`/`yrange`/`zrange` are `[lo, hi]` offsets from `center` (in
 `range_unit`), as in `subregion(:cuboid)`."""
@@ -120,6 +121,43 @@ struct Cuboid <: AbstractRegion
 end
 Cuboid(; xrange, yrange, zrange, center=[:bc], range_unit::Symbol=:kpc) =
     Cuboid(Float64.(xrange), Float64.(yrange), Float64.(zrange), Vector{Any}(_as_center(center)), range_unit)
+
+# ---------------------------------------------------------------------------------------------
+# The exported spellings are lowercase.
+#
+# `Sphere` and `Cylinder` are also exported by Makie (through GeometryBasics), and Julia makes a
+# name exported by two loaded packages ambiguous: the bare name then binds to NEITHER and dies
+# with "UndefVarError: Sphere not defined", which reads like a missing export rather than a
+# clash. Since every plotting session loads Makie, that was a trap with no signpost.
+#
+# So the types keep their capitalized names, as types should, and are no longer exported; the
+# constructors are exported in lowercase, as functions should be. `Mera.Sphere` still names the
+# type for anyone who wants to dispatch on it.
+"""    sphere(radius; center=[:bc], range_unit=:kpc)
+
+A ball of `radius` (in `range_unit`) about `center`. Returns a [`Mera.Sphere`](@ref)."""
+sphere(radius::Real; kwargs...) = Sphere(radius; kwargs...)
+
+"""    sphericalshell(r_in, r_out; center=[:bc], range_unit=:kpc)
+
+The shell `r_in ≤ |r| ≤ r_out` (in `range_unit`) about `center`."""
+sphericalshell(r_in::Real, r_out::Real; kwargs...) = SphericalShell(r_in, r_out; kwargs...)
+
+"""    cylinder(radius, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
+
+A cylinder of cylindrical `radius` spanning `±height` along `axis` (`height` is the half-height)."""
+cylinder(radius::Real, height::Real; kwargs...) = Cylinder(radius, height; kwargs...)
+
+"""    cylindricalshell(r_in, r_out, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
+
+A cylindrical shell `r_in ≤ r_cyl ≤ r_out` of half-height `height` along `axis`."""
+cylindricalshell(r_in::Real, r_out::Real, height::Real; kwargs...) =
+    CylindricalShell(r_in, r_out, height; kwargs...)
+
+"""    cuboid(; xrange, yrange, zrange, center=[:bc], range_unit=:kpc)
+
+An axis-aligned box; `xrange`/`yrange`/`zrange` are `[lo, hi]` offsets from `center`."""
+cuboid(; kwargs...) = Cuboid(; kwargs...)
 
 # physical center (handles :bc) + a length→normalised factor, exactly as prepranges does.
 # NB "as prepranges does" means the CORRECTED form: divide by boxlen·selected_unit. The inverted
@@ -165,15 +203,15 @@ function _prepare(r::Cuboid, obj; nsub::Int=8)
     return cellfrac, inside
 end
 function _prepare(r::SphericalShell, obj; nsub::Int=8)
-    cf_out, in_out = _prepare(Sphere(r.r_out; center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
-    cf_in,  in_in  = _prepare(Sphere(r.r_in;  center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
+    cf_out, in_out = _prepare(sphere(r.r_out; center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
+    cf_in,  in_in  = _prepare(sphere(r.r_in;  center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
     cellfrac(nx,ny,nz,h) = cf_out(nx,ny,nz,h) - cf_in(nx,ny,nz,h)   # both convex → exact difference
     contains(x,y,z) = in_out(x,y,z) && !in_in(x,y,z)
     return cellfrac, contains
 end
 function _prepare(r::CylindricalShell, obj; nsub::Int=8)
-    cf_out, in_out = _prepare(Cylinder(r.r_out, r.height; axis=r.axis, center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
-    cf_in,  in_in  = _prepare(Cylinder(r.r_in,  r.height; axis=r.axis, center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
+    cf_out, in_out = _prepare(cylinder(r.r_out, r.height; axis=r.axis, center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
+    cf_in,  in_in  = _prepare(cylinder(r.r_in,  r.height; axis=r.axis, center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
     cellfrac(nx,ny,nz,h) = cf_out(nx,ny,nz,h) - cf_in(nx,ny,nz,h)   # both convex → exact difference
     contains(x,y,z) = in_out(x,y,z) && !in_in(x,y,z)
     return cellfrac, contains
@@ -291,9 +329,9 @@ function _bbox(r::Cuboid, obj)
            (c[1]+tonorm(r.xrange[2]), c[2]+tonorm(r.yrange[2]), c[3]+tonorm(r.zrange[2]))
 end
 _bbox(r::SphericalShell, obj) =
-    _bbox(Sphere(r.r_out; center=r.center, range_unit=r.range_unit), obj)
+    _bbox(sphere(r.r_out; center=r.center, range_unit=r.range_unit), obj)
 _bbox(r::CylindricalShell, obj) =
-    _bbox(Cylinder(r.r_out, r.height; axis=r.axis, center=r.center, range_unit=r.range_unit), obj)
+    _bbox(cylinder(r.r_out, r.height; axis=r.axis, center=r.center, range_unit=r.range_unit), obj)
 function _bbox(r::RegionUnion, obj)
     a = _bbox(r.a, obj); b = _bbox(r.b, obj)
     return min.(a[1], b[1]), max.(a[2], b[2])
@@ -577,6 +615,26 @@ function subregion(obj::ClumpDataType, region::AbstractRegion; inverse::Bool=fal
 end
 
 
+function subregion(obj::SinkDataType, region::AbstractRegion; inverse::Bool=false, verbose::Bool=true)
+    verbose = checkverbose(verbose)
+    _, contains = _prepare(region, obj)
+    data = obj.data; bl = obj.boxlen          # a sink is a point at :x, :y, :z (code units)
+    xs = IndexedTables.select(data, :x); ys = IndexedTables.select(data, :y); zs = IndexedTables.select(data, :z)
+    _blo, _bhi = _bbox(region, obj)
+    blo1 = Float64(_blo[1]); blo2 = Float64(_blo[2]); blo3 = Float64(_blo[3])
+    bhi1 = Float64(_bhi[1]); bhi2 = Float64(_bhi[2]); bhi3 = Float64(_bhi[3])
+    nrows = length(data); keep = Vector{Bool}(undef, nrows)
+    _keeploop!(keep, contains, xs, ys, zs, Float64(bl), inverse,
+               blo1, blo2, blo3, bhi1, bhi2, bhi3)
+    cols = IndexedTables.columns(data)
+    newdata = IndexedTables.table(map(c -> c[keep], cols); pkey = collect(IndexedTables.pkeynames(data)))
+    if verbose
+        println("Region: ", nameof(typeof(region)), "  (sinks)")
+        println("Selected sinks: ", count(keep), " / ", nrows)
+    end
+    return _copy_with_data(obj, newdata)
+end
+
 # ---- @region: readability sugar for composite definitions --------------------------
 const _REGION_CTORS = Set([:Sphere, :Cuboid, :Cylinder, :SphericalShell, :CylindricalShell])
 
@@ -626,9 +684,9 @@ the constructors out by hand.
 
 ```julia
 capstone = @region unit=:kpc center=[:bc] begin
-    disc    = Cylinder(12, 2)
-    blister = Sphere(2.5; center=[30, :bc, 26])   # explicit center wins
-    chimney = Cylinder(1.2, 5; center=[19, :bc, :bc])
+    disc    = cylinder(12, 2)
+    blister = sphere(2.5; center=[30, :bc, 26])   # explicit center wins
+    chimney = cylinder(1.2, 5; center=[19, :bc, :bc])
     (disc ∪ blister) \\ chimney
 end
 subregion(gas, capstone)

@@ -85,9 +85,7 @@ function gridoverlay(dataobject; level=:max, direction::Symbol=:z,
         # in camera (right/up) coordinates — an approximate grid indicator aligned with an
         # off-axis projection (the true tilted-cube silhouette is a hexagon).
         Lvec = (direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L) ?
-            [sum(getvar(d,:lx,center=center,center_unit=range_unit)),
-             sum(getvar(d,:ly,center=center,center_unit=range_unit)),
-             sum(getvar(d,:lz,center=center,center_unit=range_unit))] : nothing
+            angmom(d; center=center, range_unit=range_unit) : nothing
         losv, uph = resolve_los(los=los, theta=theta, phi=phi, inclination=inclination,
                                 azimuth=azimuth, axis=axis, direction=direction,
                                 angle_unit=angle_unit, up=up, L=Lvec)

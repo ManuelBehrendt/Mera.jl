@@ -115,8 +115,7 @@ info = infodata(390, AVALON, verbose=false);                   # metadata only â
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[ Info: Mera v1.8.0
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
 ```
 
 `info` already knows everything about the snapshot (levels, box size, which files exist,
@@ -138,7 +137,7 @@ Memory used: 12.146 GB
 ```
 
 ```
-(12.145861252211034, "GB")
+(12.145861259661615, "GB")
 ```
 
 That call reads one component. When you want several, `loadall` reads them all with
@@ -196,14 +195,7 @@ hidedecorations!(ax)
 fig
 ```
 
-```
-[Mera] Hint: getvar(:lx) has no `vcenter` â€” velocities are in the BOX frame.
-             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
-             (shown once per session; verbose(false) silences Mera's messages)
-```
-
-![](switching_to_mera_files/switching_to_mera_10_2.png)
+![](switching_to_mera_files/switching_to_mera_10_1.png)
 
 ```julia
 out = mktempdir()                                   # any existing folder

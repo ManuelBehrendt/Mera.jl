@@ -6,13 +6,13 @@ name: Fixtures
 # the RAMSES reference solutions are exercised on every push too, not only on the maintainer's
 # laptop.
 #
-# The fixtures live as assets on the `testdata-v1` tag, NOT in the git tree: Mera is a registered
+# The fixtures live as assets on the `testdata-v2` tag, NOT in the git tree: Mera is a registered
 # package, so anything committed here would be downloaded by every Pkg.add("Mera") and would stay
 # in history forever.
 
 on:
   # No push or pull_request trigger, and this is not the old "the release does not exist yet"
-  # reason: testdata-v1 is published with 12 assets and the download works.
+  # reason: testdata-v2 is published with 16 assets and the download works.
   #
   # The blocker is the test suite's data model. Setting MERA_TEST_DATA flips one global
   # DATA_AVAILABLE flag (test/test_config.jl), after which the data-backed tier assumes EVERY

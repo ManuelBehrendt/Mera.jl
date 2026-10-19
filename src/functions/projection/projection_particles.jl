@@ -266,7 +266,29 @@ projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 pxsize::Array{<:Any,1}=[missing, missing],
                 mask=[false],
                 direction::Symbol=:z,
+                los::Union{Array{<:Real,1}, Nothing}=nothing,
+                up::Union{Array{<:Real,1}, Nothing}=nothing,
+                theta::Union{Real, Nothing}=nothing,
+                phi::Union{Real, Nothing}=nothing,
+                inclination::Union{Real, Nothing}=nothing,
+                azimuth::Union{Real, Nothing}=nothing,
+                position_angle::Union{Real, Nothing}=nothing,
+                axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                angle_unit::Symbol=:deg,
+                binning::Symbol=:cic,
+                fov=nothing,
+                fov_unit::Symbol=:standard,
+                aperture::Symbol=:circle,
+                parttypes::Array{Symbol,1}=[:all],
+                thickness=nothing,
+                thickness_unit::Symbol=:standard,
+                offset=nothing,
+                offset_unit::Symbol=:standard,
+                angmom_radius=nothing,
+                max_threads::Int=Threads.nthreads(),
                 weighting::Symbol=:mass,
+                mode::Symbol=:standard,
+                angmom_radius=nothing,
                 xrange::Array{<:Any,1}=[missing, missing],
                 yrange::Array{<:Any,1}=[missing, missing],
                 zrange::Array{<:Any,1}=[missing, missing],
@@ -304,6 +326,16 @@ return PartMapsType
   (smear each cell over an M4 kernel sized from its `:volume`; mass-conserving; needs a `:volume` column),
   or `:voronoi` (nearest-generator: sample each LOS through the nearest cell — sharp, genuinely
   moving-mesh; intensive maps exact, surface density approximate)
+- **`mode`:** `:standard` (default) returns a weighted mean; `:sum` returns the per-pixel
+  **total**. This is how you get a real mass map from points: `projection(part, :mass, :Msol;
+  mode=:sum)` sums to the mass of everything projected. The default is a mean because a particle
+  has no volume to make `:mass` extensive, so the default map is the mass-weighted mean particle
+  mass, useful as a mass-spectrum and equal-mass check but not a budget.
+- **`angmom_radius`:** restrict the orientation sum behind `direction=:faceon`/`:edgeon` and
+  `axis=:angmom` to a sphere about `center`, e.g. `[10, :kpc]`. Without it the sum runs over
+  everything loaded, where the outer material has the longest lever arm. `mask` and `parttypes`
+  also narrow it, so `parttypes=[:dm], direction=:faceon` orients on the dark matter alone.
+  [`angmom`](@ref) returns the vector itself if you want to compute it once and reuse it.
 - **`nlos`:** number of samples along each line of sight, `:voronoi` only. By default Mera steps at
   the scale of the *cells* — `min(pixsize, ½·median(V)^⅓)`, capped at 4096 — because stepping at
   pixel scale walks over whole cells whenever cells are smaller than a pixel. Set it only to trade
@@ -374,6 +406,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -383,6 +416,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -411,14 +445,14 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -451,6 +485,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -460,6 +495,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -488,14 +524,14 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -528,6 +564,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -537,6 +574,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -565,14 +603,14 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -605,6 +643,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -614,6 +653,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -642,14 +682,14 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -681,6 +721,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -690,6 +731,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -718,14 +760,14 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 inclination=inclination,
                                 azimuth=azimuth,
                                 position_angle=position_angle,
-                                axis=axis,
+                                axis=axis, angmom_radius=angmom_radius,
                                 angle_unit=angle_unit,
                                 binning=binning,
                             fov=fov, fov_unit=fov_unit, aperture=aperture,
                             thickness=thickness, thickness_unit=thickness_unit,
                             offset=offset, offset_unit=offset_unit,
                                 #plane_orientation=plane_orientation,
-                                weighting=weighting,
+                                weighting=weighting, mode=mode,
                                 nlos=nlos,
                                 max_threads=max_threads,
                                 xrange=xrange,
@@ -758,6 +800,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             azimuth::Union{Real, Nothing}=nothing,
                             position_angle::Union{Real, Nothing}=nothing,
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angmom_radius=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             fov=nothing,
@@ -767,6 +810,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
+                            mode::Symbol=:standard,
                             nlos::Union{Nothing,Int}=nothing,
                             max_threads::Int=Threads.nthreads(),
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -776,6 +820,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             range_unit::Symbol=:standard,
                             data_center::CenterType=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
+                            _fov_half=nothing,       # internal: fixed frame half-width from `fov`
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=true,
                             show_progress::Bool=true,
@@ -815,18 +860,26 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     # is not rotation-invariant, so `fov` selects a SPHERE instead and the frame is fixed at every
     # viewing angle. Points carry no footprint, so only the framing differs here — not the deposit.
     if fov !== nothing
-        src, win, fov_code, _ = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        # a mask applies to the object the caller holds, so filter first and cut the sphere out of
+        # the filtered data; passing it to the inner call instead gives it the wrong length
+        premasked, inner_mask = _fov_premask(dataobject, mask)
+        src, win, fov_code, rsel = _fov_selection(premasked, fov, fov_unit, aperture, center)
+        # the frame half-width in code units, so the inner call can hold the frame fixed
+        fov_half = rsel / (fov_unit === :standard ? 1.0 / dataobject.boxlen :
+                                                    getunit(dataobject.info, fov_unit))
         m = create_projection(src, vars; parttypes=parttypes, units=units, lmax=lmax, res=res,
-                              pxsize=pxsize, mask=mask, direction=direction, los=los, up=up,
+                              pxsize=pxsize, mask=inner_mask, direction=direction, los=los, up=up,
                               theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
                               position_angle=position_angle, axis=axis, angle_unit=angle_unit,
-                              binning=binning, weighting=weighting, nlos=nlos,
+                              angmom_radius=angmom_radius,
+                              binning=binning, weighting=weighting, mode=mode, nlos=nlos,
                               thickness=thickness, thickness_unit=thickness_unit,
                               offset=offset, offset_unit=offset_unit,
                               max_threads=max_threads, xrange=win, yrange=win,
                               zrange=win, center=center, range_unit=fov_unit,
                               data_center=data_center, data_center_unit=data_center_unit,
-                              ref_time=ref_time, verbose=verbose, show_progress=show_progress)
+                              ref_time=ref_time, verbose=verbose, show_progress=show_progress,
+                              _fov_half=fov_half)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         return m
     end
@@ -877,6 +930,11 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                           :σθ_sphere   => [:vθ_sphere,   :vθ_sphere2],
                           :σϕ_sphere   => [:vϕ_sphere,   :vϕ_sphere2] )
 
+    # the velocity components a requested dispersion needs; with mode=:sum their mass-weighted
+    # means are kept apart in σ_mean, because the component maps themselves are sums
+    σ_deps_aa = Set{Symbol}(v for s in selected_vars if s in σcheck for v in σ_to_v[s])
+    σ_mean = Dict{Symbol,Matrix{Float64}}()
+
     for i in σcheck
         idx = findall(x->x==i, selected_vars) #[1]
         if length(idx) >= 1
@@ -890,7 +948,27 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         end
     end
     # ========================================================
+    # A hydro cell has a volume, so :mass is an extensive map there and the pixels sum to the total
+    # mass. A particle has none, so :mass falls through to the generic branch and returns the
+    # mass-weighted mean PARTICLE mass in the pixel. Summing that map gives a number that means
+    # nothing and that drifts with the pixel size, which looks like a conservation failure. The
+    # conserving map for points is :sd. Say so once, rather than letting the user find out from a
+    # broken budget.
+    if :mass in selected_vars
+        mode === :sum || hint(:particle_mass_not_extensive,
+             "projection(particles, :mass) is a mean, not a sum.",
+             "On cell data :mass is extensive and the map sums to the total mass.",
+             "A particle has no volume, so this map holds the mass-weighted mean particle mass.",
+             "For the total mass in each pixel, ask for it:",
+             "    projection(part, :mass, :Msol; mode=:sum)      # sums to the total",
+             "or use :sd and multiply by the pixel area:",
+             "    sum(p.maps[:sd]) * (p.pixsize * p.scale.pc)^2   # Msol, from :Msol_pc2";
+             verbose=verbose)
+    end
     weighting in (:mass, :volume, :sph, :voronoi) || throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default), :volume, :sph, or :voronoi."))
+    mode in (:standard, :sum) || throw(ArgumentError(
+        "projection (particles): mode must be :standard (weighted mean) or :sum (per-pixel " *
+        "total), got :$mode"))
     if weighting == :mass
         use_sd_map = Mera.checkformaps(selected_vars, ranglecheck)
         # only add :sd if there are also other variables than in ranglecheck
@@ -932,8 +1010,30 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                             los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
                                             boxlen, dataobject.lmin, lmax, scale, ref_time, verbose, nlos, max_threads;
                                             thickness=thickness, thickness_unit=thickness_unit,
-                                            offset=offset, offset_unit=offset_unit)
+                                            offset=offset, offset_unit=offset_unit,
+                                            angmom_radius=angmom_radius, mode=mode,
+                                            fov_half=_fov_half)
     end
+
+    # Camera-frame kinematics have no meaning without a camera: :vlos/:σlos are along the line
+    # of sight, :vcamx/:vcamy along the image axes. On the axis-aligned path there is no camera
+    # basis, and they used to fail with "not a column of this object", which does not say why.
+    for v in selected_vars
+        if v in _CAM_KINEMATICS
+            throw(ArgumentError(
+                ":$v is a CAMERA-frame quantity and needs an off-axis view (los=, inclination=, " *
+                "azimuth=, or direction=:faceon/:edgeon). Looking down a box axis, the line of " *
+                "sight IS that axis, so use :vz/:σz for direction=:z, :vx/:σx for :x, and so on."))
+        end
+    end
+
+    # :npart is filled by the off-axis deposit, which this path does not use. Here it is a column
+    # of ones going through the mass-weighted branch, so it came back as a map of ones that looks
+    # like a count. The hydro path already refuses :ncell for the same reason; do the same.
+    (:npart in selected_vars) && throw(ArgumentError(
+        ":npart counts what the OFF-AXIS deposit put in each pixel and is not available on the " *
+        "axis-aligned path. Give a view (los=, inclination=, azimuth=, or direction=:faceon/:edgeon) " *
+        "to get it."))
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
@@ -965,10 +1065,12 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     finished = zeros(Float64, res,res)
     rl = data_centerm .* dataobject.boxlen
 
+    # Bin edges are the pixel edges r-1 … r-1 of the window, the same interval `extent` reports,
+    # one full pixel per bin. Starting at r1 instead left the first row and column unbinned.
     if direction == :z
         # range on maximum used grid
-        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ res .* dataobject.boxlen
-        newrange2 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ res .* dataobject.boxlen
+        newrange1 = range(r1-1, stop=r2-1, length=(r2-r1)+1) ./ res .* dataobject.boxlen
+        newrange2 = range(r3-1, stop=r4-1, length=(r4-r3)+1) ./ res .* dataobject.boxlen
 
         var_a = :x
         var_b = :y
@@ -981,8 +1083,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     elseif direction == :y
         # range on maximum used grid
-        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ res .* dataobject.boxlen
-        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ res .* dataobject.boxlen
+        newrange1 = range(r1-1, stop=r2-1, length=(r2-r1)+1) ./ res .* dataobject.boxlen
+        newrange2 = range(r5-1, stop=r6-1, length=(r6-r5)+1) ./ res .* dataobject.boxlen
 
         var_a = :x
         var_b = :z
@@ -994,8 +1096,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     elseif direction == :x
         # range on maximum used grid
-        newrange1 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ res .* dataobject.boxlen
-        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ res .* dataobject.boxlen
+        newrange1 = range(r3-1, stop=r4-1, length=(r4-r3)+1) ./ res .* dataobject.boxlen
+        newrange2 = range(r5-1, stop=r6-1, length=(r6-r5)+1) ./ res .* dataobject.boxlen
         var_a = :y
         var_b = :z
         extent=[r3-1,r4-1,r5-1,r6-1] .* dataobject.boxlen ./ res
@@ -1091,6 +1193,25 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         end
                         maps_unit[Symbol( string(i_var)  )] = unit_name
                         maps_mode[Symbol( string(i_var)  )] = :mass_weighted
+                    elseif mode === :sum
+                        # per-pixel TOTAL of the quantity itself, not a weighted mean. A particle
+                        # has no volume, so for :mass this is the mass in the pixel and the map
+                        # sums to the mass of everything projected.
+                        qv = getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)
+                        wv = length(mask) == 1 ? qv : qv .* select(filtered_data, :mask)
+                        h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), wv, newrange1, newrange2, closed; max_threads=max_threads)
+                        selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                        maps[Symbol(i_var)] = selected_unit != 1. ? h.weights .* selected_unit : h.weights
+                        # a dispersion needs the mass-weighted MEAN of its components, not the sum
+                        if i_var in σ_deps_aa
+                            mw = length(mask) == 1 ? select(filtered_data, :mass) : select(filtered_data, :mass) .* select(filtered_data, :mask)
+                            hq = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), qv .* mw, newrange1, newrange2, closed; max_threads=max_threads)
+                            hm = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), mw, newrange1, newrange2, closed; max_threads=max_threads)
+                            μ = hq.weights ./ hm.weights      # the same division as mode=:standard
+                            σ_mean[Symbol(i_var)] = selected_unit != 1. ? μ .* selected_unit : μ
+                        end
+                        maps_unit[Symbol( string(i_var) )] = unit_name
+                        maps_mode[Symbol( string(i_var) )] = :sum
                     else
                         if length(mask) == 1
                             h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass), newrange1, newrange2, closed; max_threads=max_threads)
@@ -1288,9 +1409,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     if !(haskey(maps, selected_v[1]) && haskey(maps, selected_v[2]))
                         throw(ErrorException("Missing velocity component maps for dispersion calculation."))
                     end
-                    iv  = maps[selected_v[1]]
+                    iv  = get(σ_mean, selected_v[1], maps[selected_v[1]])
                     iv_unit = maps_unit[Symbol( string(selected_v[1])  )]
-                    iv2 = maps[selected_v[2]]
+                    iv2 = get(σ_mean, selected_v[2], maps[selected_v[2]])
                     iv2_unit = maps_unit[Symbol( string(selected_v[2])  )]
                     if iv_unit == iv2_unit
                         diff_iv = iv2 .- iv .^2
@@ -1411,20 +1532,27 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                                        los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
                                        boxlen, lmin, lmax, scale, ref_time, verbose, nlos=nothing, max_threads=Threads.nthreads();
                                        thickness=nothing, thickness_unit=nothing,
-                                       offset=nothing, offset_unit=nothing)
+                                       offset=nothing, offset_unit=nothing,
+                                       angmom_radius=nothing, mode::Symbol=:standard,
+                                       fov_half=nothing)
 
     sd_names      = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
     rcheck = [:r_cylinder, :r_sphere]; anglecheck = [:ϕ]
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
-              :σr_sphere, :σθ_sphere, :σϕ_sphere]
-    rσanglecheck = [rcheck..., σcheck..., anglecheck...]
+    σcheck = _SIGMA_NAMES
+    # Radius and angle maps stay axis-only: they describe the pixel's own geometry, and an
+    # off-axis pixel is a slanted column with no single radius. Dispersions are different: each
+    # is built from two ordinary getvar fields that project like any other scalar.
     for v in selected_vars
-        if v in rσanglecheck
+        if v in rcheck || v in anglecheck
             error("projection: off-axis particle projection does not support the map-only " *
-                  "variable :$v (radius/angle/velocity-dispersion). Use an axis direction=:x/:y/:z.")
+                  "variable :$v: it is a property of the pixel's own geometry, and an off-axis " *
+                  "pixel is a slanted column with no single value. Use direction=:x/:y/:z.")
         end
     end
+    σ_want = [v for v in selected_vars if v in σcheck]
+    σ_deps = isempty(σ_want) ? Symbol[] : unique(vcat((_SIGMA_TO_V[v] for v in σ_want)...))
+    σ_raw  = Dict{Symbol,Matrix{Float64}}()
     # Points have no footprint, so the two footprint kernels have nothing to integrate over and
     # fall back to :cic. That is the right physics, but it used to happen silently: a caller asking
     # for :exact got :cic and was told nothing, while the tutorial listed all four as if they
@@ -1446,9 +1574,14 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     # --- camera orientation (A1) ---
     Lvec = nothing
     if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
-        Lvec = [ sum(getvar(dataobject, :lx, center=data_centerm, ref_time=ref_time)),
-                 sum(getvar(dataobject, :ly, center=data_centerm, ref_time=ref_time)),
-                 sum(getvar(dataobject, :lz, center=data_centerm, ref_time=ref_time)) ]
+        # The camera must be set by the SAME particles that get drawn. `parttypes` and any user
+        # mask are already folded into `mask` by the caller, so orienting on the unmasked object
+        # would point `parttypes=[:dm], :faceon` at the stars as well as the dark matter.
+        # `data_centerm` is already resolved to the box's fractional units, so the centre is read
+        # as :standard while a bare `angmom_radius` still means the projection's `range_unit`.
+        Lvec = angmom(dataobject; center=data_centerm, range_unit=:standard,
+                      radius=angmom_radius, radius_unit=range_unit, ref_time=ref_time,
+                      mask=(length(mask) > 1 ? collect(Bool.(mask)) : nothing))
     end
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
                             inclination=inclination, azimuth=azimuth,
@@ -1511,8 +1644,19 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
         half = boxlen / 2
         x0, x1, y0, y1 = -half, half, -half, half
     end
-    nx = max(1, round(Int, (x1 - x0) / pixsize))
-    ny = max(1, round(Int, (y1 - y0) / pixsize))
+    if fov_half !== nothing
+        # `fov` fixes the frame: symmetric about `center` and the same at every angle. Fitted to
+        # the particles instead, a disc that does not fill the sphere came back smaller than the
+        # window and off-centre, and the square crop then cut stars away. Never smaller than the
+        # data, so every particle still lands on the grid.
+        hw = fov_half + pixsize
+        hx = max(hw, -x0, x1); hy = max(hw, -y0, y1)
+        nx = max(1, ceil(Int, 2hx / pixsize)); ny = max(1, ceil(Int, 2hy / pixsize))
+        x0 = -nx * pixsize / 2; y0 = -ny * pixsize / 2
+    else
+        nx = max(1, round(Int, (x1 - x0) / pixsize))
+        ny = max(1, round(Int, (y1 - y0) / pixsize))
+    end
     x1 = x0 + nx * pixsize; y1 = y0 + ny * pixsize
     grid_extent = (x0, x1, y0, y1); grid_resolution = (nx, ny)
     extent = [x0, x1, y0, y1]
@@ -1524,11 +1668,18 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     # Line-of-sight velocity for off-axis kinematics :vlos / :σlos (code units).
     # Negated for the same reason as in the hydro path: cam_w points toward the observer, while
     # observational work counts a positive radial velocity as RECEDING. See projection_hydro.jl.
-    vlossel = Float64[]
-    if (:vlos in selected_vars) || (:σlos in selected_vars)
+    # The two in-plane components come from the same construction, along image x (cam_right) and
+    # image y (cam_up). They carry no observational sign convention, so they are not negated.
+    camvel = Dict{Symbol,Vector{Float64}}()
+    if any(v -> v in selected_vars, _CAM_KINEMATICS)
         vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
-        vlossel = Float64.(-(vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+        proj(a) = Float64.((vx .* a[1] .+ vy .* a[2] .+ vz .* a[3])[sel])
+        ((:vlos  in selected_vars) || (:σlos  in selected_vars)) && (camvel[:los]  = -proj(cam_w))
+        ((:vcamx in selected_vars) || (:σcamx in selected_vars)) && (camvel[:camx] =  proj(cam_right))
+        ((:vcamy in selected_vars) || (:σcamy in selected_vars)) && (camvel[:camy] =  proj(cam_up))
     end
+    cam_axis_of = Dict(:vlos => :los, :σlos => :los, :vcamx => :camx,
+                       :σcamx => :camx, :vcamy => :camy, :σcamy => :camy)
     req_unit(iv) = (k = findfirst(==(iv), selected_vars);
                     (k !== nothing && length(units) >= k) ? units[k] : :standard)
 
@@ -1543,9 +1694,17 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     pixel_vol_fac = (boxlen / res)^3 * res          # mirrors the axis density normalisation
     maps = SortedDict(); maps_unit = SortedDict(); maps_mode = SortedDict()
 
+    # `:npart` counts how many particles fed each pixel, filled by the SAME deposit as the value.
+    # For points this is the number that matters most: a pixel holding one star has no spread, so
+    # its sigma is exactly zero, and its "mean" is that one star (Chapter on stars).
+    npart_map = (:npart in selected_vars) ? zeros(Float64, nx, ny) : nothing
+    npart_filled = Ref(false)      # `deposit` runs once per variable; the count is wanted once
     deposit(vals, wts) = begin
         g = zeros(Float64, nx, ny); w = zeros(Float64, nx, ny)
-        deposit_rotated_cells_to_grid!(g, w, xc, yc, vals, wts, grid_extent, grid_resolution; binning=bin)
+        cg = (npart_map !== nothing && !npart_filled[]) ? npart_map : nothing
+        deposit_rotated_cells_to_grid!(g, w, xc, yc, vals, wts, grid_extent, grid_resolution;
+                                       binning=bin, count_grid=cg)
+        cg === nothing || (npart_filled[] = true)
         return g, w
     end
 
@@ -1612,6 +1771,11 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                 maps_unit[ivar] = un; maps_mode[ivar] = :voronoi
             end
         end
+        if npart_map !== nothing
+            maps[:npart] = npart_map
+            maps_unit[:npart] = :standard
+            maps_mode[:npart] = :sum
+        end
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         return PartMapsType(maps, maps_unit, SortedDict(), maps_mode, lmax, lmin, lmax, ref_time,
                             ranges, extent, copy(extent), ratio, res, pixsize, boxlen, scale,
@@ -1621,21 +1785,23 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
 
     for ivar in selected_vars
         # ---- off-axis line-of-sight kinematics (mass-weighted), stars/particles ----
-        if ivar === :vlos || ivar === :σlos
+        if ivar in _CAM_KINEMATICS
             usym   = req_unit(ivar)
             vscale = usym === :standard ? 1.0 : getunit(dataobject.info, usym)
-            g1, w1 = deposit(vlossel, massv)
-            nz = w1 .> 0; meanv = zeros(Float64, nx, ny); meanv[nz] = g1[nz] ./ w1[nz]
-            if ivar === :vlos
-                m = meanv .* vscale
+            vcomp  = camvel[cam_axis_of[ivar]]
+            g1, w1 = deposit(vcomp, massv)
+            if ivar === :vlos || ivar === :vcamx || ivar === :vcamy
+                m = _moments_mean(g1, w1) .* vscale
             else
-                g2, _ = deposit(vlossel .^ 2, massv)
-                meanv2 = zeros(Float64, nx, ny); meanv2[nz] = g2[nz] ./ w1[nz]
-                m = sqrt.(max.(meanv2 .- meanv .^ 2, 0.0)) .* vscale
+                g2, _ = deposit(vcomp .^ 2, massv)
+                m = _moments_dispersion(g1, g2, w1) .* vscale
             end
             maps[ivar] = m; maps_unit[ivar] = usym; maps_mode[ivar] = :mass_weighted
             continue
         end
+
+        # a dispersion is assembled after the loop from its two component maps
+        ivar in σcheck && continue
 
         if ivar in sd_names
             g, _ = deposit(ones_w, massv)            # Σ mass per pixel
@@ -1651,6 +1817,21 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                 g, _ = deposit(vals, ones_w)         # Σ value
                 m = g ./ pixel_vol_fac
                 mmode = :volume_weighted
+            elseif mode === :sum
+                # the per-pixel TOTAL of the quantity itself. A particle carries no volume, so
+                # only a sum over the particles in the pixel is meaningful: for :mass this is the
+                # mass in the pixel, and the map sums to the mass of everything projected.
+                g, _ = deposit(vals, ones_w)         # Σ value
+                m = g
+                mmode = :sum
+                # a dispersion still needs the mass-weighted mean of its components
+                if ivar in σ_deps
+                    gμ, wμ = deposit(vals, massv)
+                    μ = zeros(Float64, nx, ny)
+                    nzμ = wμ .> 0
+                    μ[nzμ] = gμ[nzμ] ./ wμ[nzμ]
+                    σ_raw[ivar] = μ
+                end
             else
                 g, w = deposit(vals, massv)          # Σ value·mass  /  Σ mass
                 m = zeros(Float64, nx, ny)
@@ -1659,13 +1840,31 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                 mmode = :mass_weighted
             end
         end
+        # raw (code-unit) component mean, for the dispersions assembled below
+        ivar in σ_deps && !haskey(σ_raw, ivar) && (σ_raw[ivar] = copy(m))
+
         selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
         maps[ivar]      = selected_unit != 1.0 ? m .* selected_unit : m
         maps_unit[ivar] = unit_name
         maps_mode[ivar] = mmode
     end
 
+    # ---- velocity dispersions in the BOX frame (see the hydro path for the reasoning) --------
+    for ivar in σ_want
+        c1, c2 = _SIGMA_TO_V[ivar]
+        (haskey(σ_raw, c1) && haskey(σ_raw, c2)) || continue
+        selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
+        maps[ivar]      = sqrt.(max.(σ_raw[c2] .- σ_raw[c1] .^ 2, 0.0)) .* selected_unit
+        maps_unit[ivar] = unit_name
+        maps_mode[ivar] = :mass_weighted
+    end
+
     ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
+    if npart_map !== nothing
+        maps[:npart] = npart_map
+        maps_unit[:npart] = :standard
+        maps_mode[:npart] = :sum
+    end
     return PartMapsType(maps, maps_unit, SortedDict(), maps_mode, lmax, lmin, lmax, ref_time,
                         ranges, extent, copy(extent), ratio, res, pixsize, boxlen, scale,
                         dataobject.info,

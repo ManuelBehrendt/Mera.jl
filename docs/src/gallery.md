@@ -16,12 +16,50 @@ run it.
 <div class="gallery-grid">
 
 <a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/001_coin_flip_movie">
-  <img src="assets/gallery/coin_flip_movie_thumb.png"
-       alt="Three panels of the same galaxy seen edge-on: surface density, line-of-sight velocity and temperature">
+  <span class="gallery-thumb gallery-thumb-coin-flip-movie" role="img"
+        aria-label="Three panels of the same galaxy seen edge-on: surface density, line-of-sight velocity and temperature"></span>
   <span class="gallery-title">A spun-coin movie of your own galaxy</span>
   <span class="gallery-meta">RAMSES · three panels, surface density, line-of-sight velocity and
   temperature, with the camera tipping from face-on onto its edge, turning in place, tumbling like
   a spun coin and falling flat, as a seamless loop</span>
+</a>
+
+<a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/002_word_in_a_galaxy">
+  <span class="gallery-thumb gallery-thumb-word-in-a-galaxy" role="img"
+        aria-label="The word MERA cut out of a galactic gas disc seen at 60 degrees, beside the same letters kept as the only gas"></span>
+  <span class="gallery-title">Cutting a word out of a galaxy</span>
+  <span class="gallery-meta">RAMSES · region algebra as a stencil: letters built from cuboids,
+  unioned into one word, then subtracted from the disc and intersected with it, face-on, tilted to
+  60°, repeated on the stars, and turned into a movie that flips and zooms</span>
+</a>
+
+<a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/003_probe_through_a_galaxy">
+  <span class="gallery-thumb gallery-thumb-probe" role="img"
+        aria-label="A small sphere of gas cut out of a galaxy, its internal structure resolved, seen at 60 degrees"></span>
+  <span class="gallery-title">A probe sphere through a galaxy</span>
+  <span class="gallery-meta">RAMSES · a sphere the thickness of the disc is carried once around the
+  galaxy, showing only the gas inside it, while the movie cycles through surface density,
+  line-of-sight velocity, dispersion, temperature, pressure and the stars</span>
+</a>
+
+<a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/004_temperature_sweep">
+  <span class="gallery-thumb gallery-thumb-sweep" role="img"
+        aria-label="The same galaxy volume rendered at four temperatures: a cold spiral, a thick warm disc, a web of bubble walls, and a smooth hot envelope"></span>
+  <span class="gallery-title">A temperature sweep through a galaxy</span>
+  <span class="gallery-meta">RAMSES · the camera holds still and the transfer function moves: a
+  window 0.12 dex wide slides from 30 K to 10⁷ K, volume rendered, so each phase of the gas lights
+  up where it lives, followed by the same window opening into fog and three phases nested
+  together</span>
+</a>
+
+<a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/005_ramses_any_rank_count">
+  <span class="gallery-thumb gallery-thumb-ramses-any-rank-count" role="img"
+        aria-label="The same galaxy split into the domains of 512 and of 10240 MPI ranks, each rank a colour"></span>
+  <span class="gallery-title">Rewriting a RAMSES output for any number of CPUs</span>
+  <span class="gallery-meta">RAMSES · a galaxy simulation of 197 million cells, written on 5120 ranks,
+  rewritten for 512, 5120 and 10240 from its RAMSES files and from its mera file alone, every value
+  checked against the original, with the time, memory and disk each route costs and how fast each
+  version reads back</span>
 </a>
 
 </div>

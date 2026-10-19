@@ -62,9 +62,9 @@ and units, and no code-specific branches in the analysis**. It is not a promise 
 tessellation and a refined grid are the same thing, because they are not.
 
 !!! note "Where the readers live"
-    The 1.x release ships the RAMSES reader only. Readers for PLUTO, Chombo, Athena++, FLASH,
-    GADGET, AREPO and AMReX/Quokka are developed on the `multicode` branch for version 2.0. The
-    registry itself, and everything on this page, is part of the released package.
+    On this `multicode` branch the readers for PLUTO, Chombo, Athena++, FLASH, GADGET, AREPO and
+    AMReX/Quokka ship alongside the RAMSES one. The released 1.x line ships the RAMSES reader only,
+    but the registry itself, and everything on this page, is part of it.
 
 ## Three kinds of simulation, two kinds of object
 

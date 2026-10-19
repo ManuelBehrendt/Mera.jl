@@ -1,6 +1,9 @@
 # VTK Export API Reference
 
-Mera does not render volumes itself. It writes VTK files, and you open those in ParaView,
+Mera renders volumes two ways. [`volumerender`](@ref) and its camera helpers
+[`volumelook`](@ref), [`volumeorbit`](@ref) and [`volumepath`](@ref) render inside Julia; see
+[Volume Rendering](../17_multi_Volume_Rendering.md). This page is the **VTK export** route
+instead: Mera writes VTK files and you open those in ParaView,
 the narrative guides are [Intro](../paraview/paraview_intro.md),
 [Hydro](../paraview/08_hydro_VTK_export.md) and
 [Particles](../paraview/08_particles_VTK_export.md), which cover the ParaView side:

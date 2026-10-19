@@ -168,13 +168,18 @@ function get_data(  dataobject::HydroDataType,
         # missing level on AMR data still raises rather than being silently invented.
         elseif i == :level && !isamr
             vars_dict[:level] = fill(lmax, length(masked_data))
+        # One per cell. On its own it is just ones; its purpose is `projection(obj, :ncell)`, where
+        # the deposit counts how many cells fed each pixel. That count is what separates a pixel
+        # you can quote from one built out of a single cell.
+        elseif i == :ncell
+            vars_dict[:ncell] = fill(1.0, length(masked_data))
         elseif i == :cellsize
             selected_unit = getunit(dataobject, :cellsize, vars, units)
             if isamr
                 # Use pre-filtered data for level information
-                vars_dict[:cellsize] = _map_col(row-> dataobject.boxlen / 2^row.level * selected_unit, masked_data)
+                vars_dict[:cellsize] = _cellsize_col(dataobject.boxlen, select(masked_data, :level), selected_unit)
             else # if uniform grid
-                vars_dict[:cellsize] = _map_col(row-> dataobject.boxlen / 2^lmax * selected_unit, masked_data)
+                vars_dict[:cellsize] = fill(dataobject.boxlen / 2^lmax * selected_unit, length(masked_data))
             end
         elseif i == :volume
             selected_unit = getunit(dataobject, :volume, vars, units)
@@ -198,6 +203,31 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :jeansnumber
             selected_unit = getunit(dataobject, :jeansnumber, vars, units)
             vars_dict[:jeansnumber] = getvar(filtered_dataobject, :jeanslength, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion) ./ selected_unit
+
+        # Further Jeans-length conventions (see docs "Jeans & collapse"). All use the classical
+        # λ_J = sqrt(π c² / (G ρ)) and differ only in the sound speed c:
+        #   _iso : c² = P/ρ   (isothermal; Truelove+1997, RAMSES `jeans_refine`, Federrath+2011)
+        #   _ad  : c² = γP/ρ  (adiabatic)
+        # Mera's :cs is adiabatic, so c_iso = c_s/√γ. Computed in CGS, returned in code length
+        # units (as :jeanslength) before `selected_unit` converts.
+        elseif i == :jeanslength_iso || i == :jeanslength_ad
+            selected_unit = getunit(dataobject, i, vars, units)
+            gamma_fac = i == :jeanslength_iso ? 1.0 / dataobject.info.gamma : 1.0
+            vars_dict[i] = sqrt.( pi .* gamma_fac .* getvar(filtered_dataobject, :cs, unit=:cm_s, mask=use_mask_in_recursion).^2 ./
+                                  (dataobject.info.constants.G .* getvar(filtered_dataobject, :rho, unit=:g_cm3, mask=use_mask_in_recursion)) ) ./
+                           dataobject.info.scale.cm .* selected_unit
+
+        # Cells per Jeans length, N_J = λ_J/Δx (the quantity RAMSES `jeans_refine` sets).
+        elseif i == :jeansnumber_iso || i == :jeansnumber_ad
+            selected_unit = getunit(dataobject, i, vars, units)
+            lvar = i == :jeansnumber_iso ? :jeanslength_iso : :jeanslength_ad
+            vars_dict[i] = getvar(filtered_dataobject, lvar, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion) ./ selected_unit
+
+        # Truelove et al. (1997) Jeans number J = Δx/λ_J (isothermal λ_J); their criterion is J ≤ 1/4.
+        # Note this is the INVERSE of :jeansnumber / :jeansnumber_iso.
+        elseif i == :jeansnumber_truelove
+            selected_unit = getunit(dataobject, :jeansnumber_truelove, vars, units)
+            vars_dict[:jeansnumber_truelove] = getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :jeanslength_iso, mask=use_mask_in_recursion) ./ selected_unit
 
         elseif i == :jeansmass
             selected_unit = getunit(dataobject, :jeansmass, vars, units)

@@ -10,7 +10,7 @@
 
     @testset "catalogue" begin
         F = Mera.TESTDATA_FIXTURES
-        @test length(F) == 11
+        @test length(F) == 15
         # every entry is (size_mb, description), both usable
         for (name, (mb, desc)) in pairs(F)
             @test mb > 0

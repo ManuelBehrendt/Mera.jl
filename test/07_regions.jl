@@ -76,7 +76,7 @@
 
 # Explicit import: in the full suite an earlier figure test loads CairoMakie, which re-exports
 # `Sphere`/`Cylinder` from GeometryBasics and would shadow Mera's region types. The explicit
-# `using` overrides that ambiguity so bare `Sphere(...)`/`Cylinder(...)` resolve to Mera's here.
+# `using` overrides that ambiguity so bare `sphere(...)`/`cylinder(...)` resolve to Mera's here.
 using IndexedTables   # used below; do not rely on another test file importing it
 using Mera: Sphere, Cylinder
 
@@ -98,7 +98,7 @@ end
     # ========================================================================
     # subregion() — cuboid in standard units
     # ========================================================================
-    @testset "Cuboid (standard units)" begin
+    @testset "cuboid(standard units)" begin
         sub = subregion(hydro, :cuboid,
             xrange=[0.25, 0.75], yrange=[0.25, 0.75], zrange=[0.25, 0.75],
             range_unit=:standard, verbose=false)
@@ -118,7 +118,7 @@ end
     # ========================================================================
     # subregion() — cuboid in kpc, with explicit centre
     # ========================================================================
-    @testset "Cuboid (kpc units, centred)" begin
+    @testset "cuboid(kpc units, centred)" begin
         half_kpc = boxlen_kpc / 4
 
         sub = subregion(hydro, :cuboid,
@@ -750,13 +750,13 @@ end
         if length(hydro.data) > 0
             @test !(:level in propertynames(hydro.data.columns))         # genuinely uniform grid
             R = 0.20 * hydro.boxlen * hydro.info.scale.kpc
-            gs = subregion(hydro, Sphere(R; center=[:bc], range_unit=:kpc); verbose=false)
-            gw = subregion(hydro, Sphere(R; center=[:bc], range_unit=:kpc); split=false, verbose=false)
+            gs = subregion(hydro, sphere(R; center=[:bc], range_unit=:kpc); verbose=false)
+            gw = subregion(hydro, sphere(R; center=[:bc], range_unit=:kpc); split=false, verbose=false)
             @test gs isa Mera.HydroDataType && length(gs.data) > 0
             @test in(:fraction, propertynames(gs.data.columns))          # split attached a :fraction
             @test isapprox(msum(gs, :Msol), msum(gw, :Msol); rtol=0.05)  # split & centre-test bracket the exact mass
             # combinators work on the uniform grid too
-            gc = subregion(hydro, Sphere(R; range_unit=:kpc) \ Cylinder(0.3R, R; range_unit=:kpc); verbose=false)
+            gc = subregion(hydro, sphere(R; range_unit=:kpc) \ cylinder(0.3R, R; range_unit=:kpc); verbose=false)
             @test gc isa Mera.HydroDataType
         end
     end
@@ -783,12 +783,12 @@ end
         n = length(clumps.data)
         if n > 0
             R = 0.25 * clumps.boxlen * clumps.info.scale.kpc      # quarter-box radius about the centre
-            inn = subregion(clumps, Sphere(R; center=[:bc], range_unit=:kpc); verbose=false)
-            out = subregion(clumps, Sphere(R; center=[:bc], range_unit=:kpc); inverse=true, verbose=false)
+            inn = subregion(clumps, sphere(R; center=[:bc], range_unit=:kpc); verbose=false)
+            out = subregion(clumps, sphere(R; center=[:bc], range_unit=:kpc); inverse=true, verbose=false)
             @test inn isa Mera.ClumpDataType
             @test length(inn.data) + length(out.data) == n        # region + complement = all clumps
             # a difference removes (at most) the cylinder's clumps from the ball
-            comp = subregion(clumps, Sphere(R; range_unit=:kpc) \ Cylinder(0.3R, R; range_unit=:kpc); verbose=false)
+            comp = subregion(clumps, sphere(R; range_unit=:kpc) \ cylinder(0.3R, R; range_unit=:kpc); verbose=false)
             @test length(comp.data) <= length(inn.data)
         end
     end

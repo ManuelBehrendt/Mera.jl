@@ -23,6 +23,9 @@ const UNDOCUMENTED_OK = Set([
     # flux budgets, moved to the git-ignored src/dev while the method is being worked on: present
     # on this machine, absent from master and from any release, so they have no docs page
     :fluxbudget, :fluxtimeseries, :fluxprofile, :fluxshell, :fluxmap, :fluxmapplot,
+    # rotationcurve, moved to the git-ignored src/dev while the spherical enclosed-mass estimate
+    # is reconciled with the curve solved from the gravity field: same situation as the flux budgets
+    :rotationcurve,
 ])
 
 let
@@ -151,6 +154,7 @@ makedocs(modules = [Mera],
                              "Notifications"       => "api/notifications.md",
                              "Complete API"        => "api.md"],
                        ] : Any[ "Home"                  => "index.md",
+		              "Where to Start"         => "where_to_start.md",
 		              "First Look"             => "first_look.md",
 		              "Composable Reports"     => "report.md",
 		              "Getting Started"        => Any[
@@ -222,19 +226,28 @@ makedocs(modules = [Mera],
                           "Auto-Frame (center & orient)" => "galaxyframe.md",
                           "Axis-aligned (x/y/z)" => Any[ "Hydro"     => "06_hydro_Projection.md",
                                                          "Particles" => "06_particles_Projection.md"],
-                          # ONE page. Six pages became three (the notebook duplicates), then three
-                          # became one: an expert-panel review found the guide re-taught what the
-                          # other two derived, so the material is now a single step-by-step
-                          # notebook with the pipeline detail in ?projection and the guarantees in
-                          # the test suite (Appendix B).
-                          "Off-axis"                     => "06_offaxis_Projection.md"],
+                          # The tutorial is ONE page by design: six pages became three (the
+                          # notebook duplicates), then three became one, because a review found the
+                          # guide re-taught what the other two derived. Pipeline detail lives in
+                          # ?projection, the guarantees in the test suite (listed at the end of
+                          # the tutorial). The analytic validation page and the conservation
+                          # chapter left the docs on 2026-09-28; a separate paper presents them.
+                          "Off-axis" => Any[ "Cheatsheet" => "offaxis_cheatsheet.md",
+                                             "Tutorial"   => "06_offaxis_Projection.md"],
+                          # Both ways of making a volume rendering sit together: Mera's own
+                          # renderer, and the VTK export for ParaView. They used to be one nav
+                          # group apart, which hid the choice from the reader.
+                          "Volume Rendering" => Any[
+                              "In Mera"             => "17_multi_Volume_Rendering.md",
+                              "ParaView: Intro"     => "paraview/paraview_intro.md",
+                              "ParaView: Hydro"     => "paraview/08_hydro_VTK_export.md",
+                              "ParaView: Particles" => "paraview/08_particles_VTK_export.md"]],
 
-                      "Data & Visualization" => Any[
+                      "Data" => Any[
                           "MERA-Files"          => Any[ "Mera-Files" => "07_multi_Mera_Files.md",
                                                         "Converter"  => "07_1_multi_Mera_Files_Converter.md"],
-                          "Volume Rendering"    => Any[ "Intro"     => "paraview/paraview_intro.md",
-                                                        "Hydro"     => "paraview/08_hydro_VTK_export.md",
-                                                        "Particles" => "paraview/08_particles_VTK_export.md"]],
+                          "RAMSES restart, any CPUs" => "07_2_multi_RAMSES_Restart.md",
+                          "Export/Import (ASCII, binary)" => "examples/ExportImportData.md"],
 
                       # --- code-agnostic readers: their own top-level section, not buried under Data ---
                       "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
@@ -246,6 +259,44 @@ makedocs(modules = [Mera],
                                                        "AREPO/GADGET run-time logs" => "gadget_logs.md",
                                                        "Cosmological Units" => "cosmological_units.md",
                                                        "Zoom Simulations"   => "zoom_simulations.md"],
+
+                      # Grouped by what the reader is trying to do, not by how advanced it is.
+                      # Notifications sit here because telling you a long read has finished is part
+                      # of running one, and multi-threading sits with the benchmarks because one
+                      # measures the other.
+                      "Working Efficiently" => Any[
+                          "Bundling Arguments (myargs)" => "bundled_arguments.md",
+                          "Pipelines"                   => "pipelines.md",
+                          "Verbose & Progress Switches" => "verbose_progress_switches.md",
+                          "Notifications"       => Any[ "Overview"      => "notifications/index.md",
+                                                        "Setup & Usage" => "notifications/setup_and_usage.md",
+                                                        "Examples"      => "notifications/examples.md"]],
+                      "Performance & Benchmarks" => Any[
+                          "Multi-Threading"          => "multi-threading/multi-threading_intro.md",
+                          "Measured Performance"     => "benchmarks/performance.md",
+                          "Run Your Own Benchmarks"  => "benchmarks/run_your_own.md"],
+                      # Getting Started already answers "coming from another tool"
+                      # (switching_to_mera) and "Julia for this kind of work"
+                      # (julia_for_simulation_analysis), in curated pages roughly a tenth of
+                      # the length. Only the pages adding something beyond those stay listed.
+                      # The rest are still built and still reachable by link.
+                      "Julia & Ecosystem" => Any[
+                          # one package list, not two: the former "Essential Packages" page now
+                          # covers only the mechanics (environments, where to search)
+                          "Recommended Packages"           => "recommended_packages.md",
+                          "Finding & Installing Packages"  => "quickreference/03_packages.md",
+                          "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md",
+                          "Resources & Community"          => "quickreference/06_resources.md"],
+                      # The old "Miscellaneous" page was retired in favour of the four pages that
+                      # cover its topics properly: bundled_arguments.md (myargs),
+                      # verbose_progress_switches.md, and api/notifications.md for bell/notifyme.
+                      # Its notebook is parked in the notebooks repo under _superseded/.
+                      "Project & Misc" => Any[
+                          "Gallery & Workflows" => "gallery.md",
+                            "Using an AI Assistant" => "assistant.md",
+                          "Adding a Reader"     => "adding_a_reader.md",
+                          "Testing Framework"   => "advanced_features/testing_guide.md",
+                          "Logo"                => "logo.md"],
 
                       # --- one home for all the formerly-scattered per-topic API pages ---
                       "API Reference" => Any[
@@ -259,44 +310,39 @@ makedocs(modules = [Mera],
                           "Projections"         => "api/projections.md",
                           "Off-axis Projection" => "api/offaxis.md",
                           "Mera-Files"          => "api/mera_files.md",
+                          "Writing RAMSES"      => "api/ramses_writer.md",
                           "Volume Rendering"    => "api/volume_rendering.md",
                           "Multi-Threading"     => "api/multithreading.md",
                           "Cosmology"           => "api/cosmology.md",
                           "Movies"              => "api/movies.md",
                           "Configuration"       => "api/configuration.md",
                           "Notifications"       => "api/notifications.md",
-                          "Complete API"        => "api.md"],
-
-                      # --- advanced / reference material, collapsed under one group ---
-                      "More" => Any[
-                          "Advanced Features" => Any[
-                              "Bundling Arguments (myargs)" => "bundled_arguments.md",
-                              "Verbose & Progress Switches" => "verbose_progress_switches.md",
-                              "Multi-Threading"     => "multi-threading/multi-threading_intro.md",
-                              "Adding a Reader"     => "adding_a_reader.md",
-                              "Testing Framework"   => "advanced_features/testing_guide.md",
-                              "Notifications"       => Any[ "Overview"      => "notifications/index.md",
-                                                            "Setup & Usage" => "notifications/setup_and_usage.md",
-                                                            "Examples"      => "notifications/examples.md"]],
-                          "Benchmarks" => Any[ "Measured Performance"    => "benchmarks/performance.md",
-                                              "Run Your Own Benchmarks" => "benchmarks/run_your_own.md"],
-                          # Getting Started already answers "coming from another tool"
-                          # (switching_to_mera) and "Julia for this kind of work"
-                          # (julia_for_simulation_analysis), in curated pages roughly a tenth of
-                          # the length. Only the pages adding something beyond those stay listed.
-                          # The rest are still built and still reachable by link.
-                          "Quick Reference" => Any[ "Essential Packages"      => "quickreference/03_packages.md",
-                                                    "Resources & Community"   => "quickreference/06_resources.md",
-                                                    "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md"],
-                          # "Miscellaneous" is deliberately not listed: its four sections (myargs,
-                          # verbose/progress switches, bell, notifyme) each have a dedicated page in
-                          # this same "More" section, and its notification sections are pasted `?bell`
-                          # / `?notifyme` REPL output that api.md already renders properly. Meeting the
-                          # same four topics twice, at two levels of quality, is what the docs panel
-                          # flagged. The page and its notebook are kept, just not offered as a route.
-                          "Examples & Misc" => Any[ "Recommended Packages" => "recommended_packages.md"]]
+                          "Complete API"        => "api.md"]
                     ]
 )
+
+# ---------------------------------------------------------------------------------------------
+# llms-full.txt: the conceptual pages concatenated into one file, for attaching to an AI
+# assistant. Conceptual pages only, including three short generated ones (first_look, pipelines,
+# derived_fields). The tutorial pages are mostly printed output, which costs an assistant a great
+# deal of context and teaches it little. EXPERIMENTAL: see docs/src/assistant.md.
+let conceptual = ["index.md", "where_to_start.md", "first_look.md", "computation_reference.md",
+                  "projection_which_tool.md", "offaxis_cheatsheet.md", "profiles_phase.md",
+                  "derived_fields.md", "bundled_arguments.md", "pipelines.md", "periodic_boxes.md",
+                  "reproducibility.md", "report.md", "troubleshooting.md", "recommended_packages.md",
+                  "verbose_progress_switches.md", "gallery.md"]
+    out = IOBuffer()
+    println(out, "# Mera.jl: conceptual documentation, concatenated\n")
+    println(out, "Generated by docs/make.jl. Start from llms.txt for a compact grounding.\n")
+    for page in conceptual
+        src = joinpath(@__DIR__, "src", page)
+        isfile(src) || (@warn "llms-full.txt: page not found, skipped" page; continue)
+        println(out, "\n\n<!-- ===== ", page, " ===== -->\n")
+        write(out, read(src, String))
+    end
+    write(joinpath(@__DIR__, "build", "llms-full.txt"), String(take!(out)))
+    @info "wrote llms-full.txt"
+end
 
 # The release line is published from `master`, the multi-code line from `multicode`, each
 # into its own folder on the docs site. Without this, the frontend pages exist only as raw

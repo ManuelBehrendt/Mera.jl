@@ -81,20 +81,33 @@ Base.:&(a::FilterCondition, b::FilterCondition) = _And(a, b)
 Base.:|(a::FilterCondition, b::FilterCondition) = _Or(a, b)
 Base.:!(a::FilterCondition)                     = _Not(a)
 
-# vectorised quantity fetch (getvar in the requested unit; :standard = code units)
-_qvals(obj, q::Symbol, unit::Symbol) = unit === :standard ? getvar(obj, q) : getvar(obj, q, unit)
+# Vectorised quantity fetch (getvar in the requested unit; :standard = code units).
+#
+# `center` and `vcenter` are forwarded only when given, so a call that passes neither behaves
+# exactly as before. They matter because a condition on a derived quantity inherits getvar's
+# defaults: without `center` a radius like :r_cylinder is measured from the box CORNER, and
+# without `vcenter` a velocity-derived quantity like :mach is in the BOX frame. On a galaxy
+# sitting in the middle of its box, and rotating, both defaults give an answer nobody wants.
+function _qvals(obj, q::Symbol, unit::Symbol; center=nothing, center_unit::Symbol=:standard,
+                vcenter=nothing)
+    kw = NamedTuple()
+    center  === nothing || (kw = (; kw..., center=center, center_unit=center_unit))
+    vcenter === nothing || (kw = (; kw..., vcenter=vcenter))
+    isempty(kw) && return unit === :standard ? getvar(obj, q) : getvar(obj, q, unit)
+    return unit === :standard ? getvar(obj, q; kw...) : getvar(obj, q, unit; kw...)
+end
 
-_mask(c::Above, obj)   = _qvals(obj, c.quantity, c.unit) .> c.value
-_mask(c::Below, obj)   = _qvals(obj, c.quantity, c.unit) .< c.value
-_mask(c::InRange, obj) = (v = _qvals(obj, c.quantity, c.unit); (v .>= c.lo) .& (v .<= c.hi))
-_mask(c::Equals, obj)  = (v = _qvals(obj, c.quantity, c.unit); c.atol == 0.0 ? (v .== c.value) : (abs.(v .- c.value) .<= c.atol))
-_mask(c::IsFinite, obj)        = isfinite.(_qvals(obj, c.quantity, c.unit))
-_mask(c::AbovePercentile, obj) = (v = _qvals(obj, c.quantity, c.unit); v .>  quantile(v, c.p/100))
-_mask(c::BelowPercentile, obj) = (v = _qvals(obj, c.quantity, c.unit); v .<  quantile(v, c.p/100))
-_mask(c::Satisfies, obj)       = c.f.(_qvals(obj, c.quantity, c.unit))
-_mask(c::_And, obj)    = _mask(c.a, obj) .& _mask(c.b, obj)
-_mask(c::_Or, obj)     = _mask(c.a, obj) .| _mask(c.b, obj)
-_mask(c::_Not, obj)    = .!_mask(c.a, obj)
+_mask(c::Above, obj; kw...)   = _qvals(obj, c.quantity, c.unit; kw...) .> c.value
+_mask(c::Below, obj; kw...)   = _qvals(obj, c.quantity, c.unit; kw...) .< c.value
+_mask(c::InRange, obj; kw...) = (v = _qvals(obj, c.quantity, c.unit; kw...); (v .>= c.lo) .& (v .<= c.hi))
+_mask(c::Equals, obj; kw...)  = (v = _qvals(obj, c.quantity, c.unit; kw...); c.atol == 0.0 ? (v .== c.value) : (abs.(v .- c.value) .<= c.atol))
+_mask(c::IsFinite, obj; kw...)        = isfinite.(_qvals(obj, c.quantity, c.unit; kw...))
+_mask(c::AbovePercentile, obj; kw...) = (v = _qvals(obj, c.quantity, c.unit; kw...); v .>  quantile(v, c.p/100))
+_mask(c::BelowPercentile, obj; kw...) = (v = _qvals(obj, c.quantity, c.unit; kw...); v .<  quantile(v, c.p/100))
+_mask(c::Satisfies, obj; kw...)       = c.f.(_qvals(obj, c.quantity, c.unit; kw...))
+_mask(c::_And, obj; kw...)    = _mask(c.a, obj; kw...) .& _mask(c.b, obj; kw...)
+_mask(c::_Or, obj; kw...)     = _mask(c.a, obj; kw...) .| _mask(c.b, obj; kw...)
+_mask(c::_Not, obj; kw...)    = .!_mask(c.a, obj; kw...)
 
 """
     getmask(obj, condition) -> BitVector
@@ -105,35 +118,45 @@ Build a boolean selection mask over `obj`'s rows from a value-space `condition`
 pair (e.g. `getmask(gas, :T, >(1e4); unit=:K)`). The mask is computed vectorised through
 [`getvar`](@ref), so it works on any derived quantity; pass it to `getvar`/`projection`/
 statistics via their `mask=` keyword without copying the data.
+
+A condition inherits [`getvar`](@ref)'s defaults, so give it the same frame you would give
+`getvar`: `center` (with `center_unit`) for a quantity measured from a point, and `vcenter`
+for one measured in a velocity frame. Without `center`, a radius such as `:r_cylinder` is
+measured from the box corner. Without `vcenter`, `:mach` and the other velocity-derived
+quantities are in the box frame, which on a rotating disc is not the number you want.
 """
-getmask(obj, c::FilterCondition) = BitVector(_mask(c, obj))
-getmask(obj, quantity::Symbol, pred; unit::Symbol=:standard) =
-    BitVector(pred.(_qvals(obj, quantity, unit)))
+getmask(obj, c::FilterCondition; center=nothing, center_unit::Symbol=:standard,
+        vcenter=nothing) =
+    BitVector(_mask(c, obj; center=center, center_unit=center_unit, vcenter=vcenter))
+getmask(obj, quantity::Symbol, pred; unit::Symbol=:standard, center=nothing,
+        center_unit::Symbol=:standard, vcenter=nothing) =
+    BitVector(pred.(_qvals(obj, quantity, unit; center=center, center_unit=center_unit,
+                           vcenter=vcenter)))
 
 """
     getmask(obj, region::AbstractRegion) -> BitVector
 
 A **geometric** selection mask: `true` for the rows inside `region`
-([`Sphere`](@ref), [`Cylinder`](@ref), [`Cuboid`](@ref), the shells, and anything built from
+([`sphere`](@ref), [`cylinder`](@ref), [`cuboid`](@ref), the shells, and anything built from
 them with `&`/`|`/`!`/`-`).
 
 `subregion`/`shellregion` return a new *object*; this returns the mask itself, so geometry
 composes with the `mask=` keyword that `getvar`, `projection`, `profile`, `phase`, `msum` and
-the statistics already accept — and with value-space conditions, via `&`:
+the statistics already accept, and with value-space conditions, via `&`:
 
 ```julia
-inner = getmask(gas, Sphere(r200, center=halo_pos, range_unit=:kpc))
+inner = getmask(gas, sphere(r200, center=halo_pos, range_unit=:kpc))
 msum(gas, :Msol, mask=inner)
 profile(gas, :r_sphere, :T; mask = inner & getmask(gas, :T, >(1e4); unit=:K))
 ```
 
 It uses the same containment test and AABB pruning as `subregion`, so a mask and a subregion
 always agree on which rows are in. Hand-rolling the radius arithmetic instead is where the
-`ckpc/h`-versus-normalised-centre confusion bites — `range_unit` is handled here once.
+`ckpc/h`-versus-normalised-centre confusion bites; `range_unit` is handled here once.
 
 Cells straddling the boundary are **in or out** by their centre; a mask has no room for the
-fractional membership `subregion(..., cell=true)` computes. Use `subregion` when the edge
-matters.
+fractional membership that `subregion(obj, region)` computes with its default `split=true`. Use
+`subregion` when the edge matters.
 """
 function getmask(obj, region::AbstractRegion)
     data = obj.data
@@ -181,13 +204,22 @@ compose with `&`/`|`/`!`; several positional conditions are AND-combined. The `q
 ```julia
 hot   = filterdata(gas, Above(:T, 1e4; unit=:K))
 cold_dense = filterdata(gas, Below(:T, 1e3; unit=:K) & Above(:rho, 100; unit=:nH))
-disc  = filterdata(gas, InRange(:r_cylinder, 0, 15; unit=:kpc), Below(:vz, 50; unit=:km_s))
-projection(hot, :sd, :Msol_pc2)        # the result is a normal Mera object
+disc  = filterdata(gas, InRange(:r_cylinder, 0, 15; unit=:kpc), center=[:bc])
 ```
+
+`center`, `center_unit` and `vcenter` are passed straight to [`getvar`](@ref) and default to
+its defaults, which means a radius is measured from the box corner and a velocity-derived
+quantity is in the box frame. Give them whenever the condition names a quantity that depends
+on where the object is, or on how fast it moves:
+
+```julia
+filterdata(gas, InRange(:r_cylinder, 0, 10; unit=:kpc), center=[:bc])   # about the box centre
+filterdata(gas, Above(:mach, 1), vcenter=:auto)                        # in the gas rest frame
 """
-function filterdata(obj, c::FilterCondition; verbose::Bool=true)
+function filterdata(obj, c::FilterCondition; center=nothing, center_unit::Symbol=:standard,
+                    vcenter=nothing, verbose::Bool=true)
     verbose = checkverbose(verbose)
-    mask = _mask(c, obj)
+    mask = _mask(c, obj; center=center, center_unit=center_unit, vcenter=vcenter)
     data = obj.data
     cols = IndexedTables.columns(data)
     newdata = IndexedTables.table(map(col -> col[mask], cols); pkey = collect(IndexedTables.pkeynames(data)))
@@ -197,11 +229,11 @@ function filterdata(obj, c::FilterCondition; verbose::Bool=true)
     end
     return _copy_with_data(obj, newdata)
 end
-filterdata(obj, c1::FilterCondition, c2::FilterCondition, rest::FilterCondition...; verbose::Bool=true) =
-    filterdata(obj, foldl(&, (c1, c2, rest...)); verbose=verbose)
-filterdata(obj, quantity::Symbol, pred; unit::Symbol=:standard, verbose::Bool=true) =
-    filterdata(obj, _PredCond(quantity, pred, unit); verbose=verbose)
+filterdata(obj, c1::FilterCondition, c2::FilterCondition, rest::FilterCondition...; kw...) =
+    filterdata(obj, foldl(&, (c1, c2, rest...)); kw...)
+filterdata(obj, quantity::Symbol, pred; unit::Symbol=:standard, kw...) =
+    filterdata(obj, _PredCond(quantity, pred, unit); kw...)
 
 # adapter so the quantity/predicate shorthand reuses the same machinery
 struct _PredCond <: FilterCondition; quantity::Symbol; pred; unit::Symbol; end
-_mask(c::_PredCond, obj) = c.pred.(_qvals(obj, c.quantity, c.unit))
+_mask(c::_PredCond, obj; kw...) = c.pred.(_qvals(obj, c.quantity, c.unit; kw...))

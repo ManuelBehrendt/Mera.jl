@@ -52,8 +52,12 @@ function _bin_edges(v, rng, scale::Symbol, n::Int; binsize=nothing)
         end
         hi <= 0 && throw(ArgumentError("log-scale upper bound must be positive (got $hi)"))
         hi <= lo && throw(ArgumentError("log-scale range is empty: lo=$lo ≥ hi=$hi"))
-        binsize === nothing && return 10.0 .^ range(log10(lo), log10(hi), length=n+1) |> collect
-        return 10.0 .^ _edges_by_step(log10(lo), log10(hi), Float64(binsize))   # binsize = dex step
+        e = binsize === nothing ? collect(10.0 .^ range(log10(lo), log10(hi), length=n+1)) :
+                                  10.0 .^ _edges_by_step(log10(lo), log10(hi), Float64(binsize))   # binsize = dex step
+        # 10^log10(v) is not always v: a first edge that rounds above the minimum drops the smallest
+        # value from every bin. Pin the outer edges to the exact range.
+        e[1] = lo; e[end] = hi
+        return e
     elseif scale === :equal
         binsize === nothing ||
             throw(ArgumentError("binsize is incompatible with scale=:equal (quantile bins have no fixed width); use nbins"))
@@ -381,8 +385,12 @@ profiles are not available for clump data.)
 * `xrange=(lo,hi)` (end point) in **`xunit`** (the binning axis can be *any* quantity, so its unit is
   `xunit`, **not** `center_unit`/`range_unit` — unlike the spatial `xrange` of `projection`). `xunit`/`unit`
   set the x-axis / `yvar` field units.
-* `scale` — `:linear` (default), `:log` (log-spaced bins), or **`:equal`** (quantile-spaced *adaptive*
-  bins so every bin holds ~the same number of points — robust for sparse outer radii / noisy data).
+* `scale` — `:linear` (default), `:log`, or **`:equal`** (quantile-spaced *adaptive* bins so every
+  bin holds ~the same number of points — robust for sparse outer radii / noisy data). **`:log` is
+  base 10**: the edges are `10 .^ range(log10(lo), log10(hi), length=nbins+1)`, the low edge is
+  clamped to the smallest positive value, and non-positive values are dropped with a warning
+  (they have no log bin). Under `:log`, `binsize` is therefore a **dex** step (a dimensionless
+  number, 0.1 = ten bins per decade), not a width in `xunit`.
 * `bootstrap=N` (>0) — also return **bootstrap confidence intervals** for the per-bin mean and median
   by resampling each bin `N` times (default off). `ci` selects the interval: `:percentile` (default),
   `:basic`, or `:bca` (bias-corrected & accelerated). `confidence_level` (default 0.95) and a fixed
@@ -390,7 +398,7 @@ profiles are not available for clump data.)
   Cost is `O(bootstrap·N_bin)` per bin (`:bca` adds an `O(N_bin²)` jackknife) — meant for modest counts.
 * `quantiles` — percentile levels for the per-bin weighted quantiles (default 16/50/84%).
 * `edges` — an explicit vector of bin edges (overrides `nbins`/`xrange`/`scale`); given in `xunit`.
-* `geometry` — `:spherical` (shell volume `4/3·π·Δr³`) or `:cylindrical` (annulus area `π·Δr²`)
+* `geometry` — `:spherical` (shell volume `4/3·π·(r₂³ − r₁³)`) or `:cylindrical` (annulus area `π·(r₂² − r₁²)`)
   adds `shell_volume` and a `density = sum / shell_volume` (e.g. a radial ρ(r) or surface density),
   in `weight`-unit per `xunit`³ (`xunit`²). Pair with `xvar=:r_sphere`/`:r_cylinder`.
 * `cumulative` — `:forward` (low→high) or `:reverse` adds `cumsum`/`cumcount` (e.g. enclosed mass M(<r)).
@@ -527,9 +535,12 @@ end
 **2D phase diagram** — the summed `weight` in bins of (`xvar`, `yvar`) (e.g. a mass-weighted
 density–temperature diagram, `phase(gas, :rho, :T; xscale=:log, yscale=:log)`). With a third field
 `cvar`, also returns the per-bin weighted **mean** of `cvar`. `H[i,j]` is the total weight in
-x-bin `i`, y-bin `j`. `normalize=:sum`/`:pdf` adds `fraction`/`pdf` (2-D). With `cvar`, `cstat`
-selects a richer per-bin reduction of `cvar` in addition to `mean`: `:std`, `:median`, `:min`,
-`:max`, `:full` (all four), or a function `f(cview, wview)` (→ `custom`). Any non-`:mean` `cstat`
+x-bin `i`, y-bin `j`. Each axis scale is `:linear` or `:log`, and **`:log` is base 10** (edges
+`10 .^ range(log10(lo), log10(hi), …)`, so an `xbinsize`/`ybinsize` under `:log` is a **dex** step);
+non-positive values have no log bin and are dropped with a warning.
+`normalize=:sum`/`:pdf` adds `fraction`/`pdf` (2-D). With `cvar`, `cstat` selects a richer per-bin
+reduction of `cvar` in addition to `mean`: `:std`, `:median`, `:min`, `:max`, `:full` (all four),
+or a function `f(cview, wview)` (→ `custom`). Any non-`:mean` `cstat`
 also returns a per-bin weighted `quantiles` array (`nbx × nby × length(quantiles)`) at the
 `quantiles` levels (with `qlevels`).
 
@@ -693,49 +704,6 @@ function _phase2d(x, y, w, cv, nbx, nby, xrange, yrange, xscale, yscale;
 end
 
 """
-    rotationcurve(dataobject; center=[:bc], center_unit=:standard, rvar=:r_sphere, nbins=50,
-                  xrange=nothing, scale=:linear, xunit=:kpc, mask=[false]) -> NamedTuple
-
-**Circular-velocity (rotation) curve from the enclosed mass.** Bin all cells/particles by radius
-`rvar` (`:r_sphere` or `:r_cylinder`) about a physical `center`, form the enclosed mass
-M(<r) = Σ mass(< r), and return the Newtonian circular velocity `v_circ = √(G·M(<r)/r)` and the
-gravitational acceleration `g = G·M(<r)/r²`. Needs a `:mass` field (hydro / particles);
-mass-bearing components can be combined by concatenating their radius/mass (see the component-split
-example in the profiles tutorial).
-
-Returns `x` (the **outer bin-edge radius** in `xunit`, where the enclosed mass is complete),
-`edges`, `count`, `m_enc` (enclosed mass, M⊙), `v_circ` (km/s) and `g` (cm/s²). The cumulative mass
-`Σ mass(< r)` is the mass interior to each bin's *upper edge*, so the velocity/acceleration are
-evaluated at that same radius (`edges[2:end]`) — pairing them with the bin centre would mix a
-half-bin of mass against a smaller radius and overestimate the inner curve.
-"""
-function rotationcurve(dataobject; center=[:bc], range_unit::Symbol=:standard, center_unit=nothing,
-        rvar::Symbol=:r_sphere, nbins::Int=50, xrange=nothing, scale::Symbol=:linear, xunit::Symbol=:kpc, mask=[false])
-    info = dataobject.info
-    cu = center_unit === nothing ? range_unit : center_unit  # `center_unit` is the clearer alias of `range_unit`
-    rx = Float64.(getvar(dataobject, rvar, xunit, center=center, center_unit=cu))
-    mg = Float64.(getvar(dataobject, :mass, :g))
-    skip = check_mask(dataobject, mask, false)
-    sel = skip ? trues(length(rx)) : collect(Bool.(mask))
-    rx = rx[sel]; mg = mg[sel]
-    edges = _bin_edges(rx, xrange, scale, nbins)
-    nb = nbins
-    members = _bin_members(rx, edges, nb)
-    router = edges[2:end]                                             # radius where Σmass(<r) is complete
-    count = [length(m) for m in members]
-    mbin_g = [isempty(m) ? 0.0 : sum(@view mg[m]) for m in members]
-    Menc_g = cumsum(mbin_g)                                           # enclosed mass [g] at the upper edge
-    G = info.constants.G                                             # [cm³ g⁻¹ s⁻²]
-    cm_per_xunit = getunit(info, :cm) / (xunit === :standard ? 1.0 : getunit(info, xunit))
-    rc_cm = router .* cm_per_xunit
-    v_circ = sqrt.(G .* Menc_g ./ rc_cm) ./ 1e5                       # cm/s → km/s
-    g = G .* Menc_g ./ rc_cm .^ 2                                     # [cm/s²]
-    m_enc = Menc_g .* (getunit(info, :Msol) / getunit(info, :g))      # [M⊙]
-    return (x=router, edges=edges, count=count, m_enc=m_enc, v_circ=v_circ, g=g,
-            xunit=xunit, rvar=rvar, source=:data)
-end
-
-"""
     velocitydispersion(dataobject; rvar=:r_cylinder, components=(:vr_cylinder,:vϕ_cylinder,:vz),
                        weight=:mass, vunit=:km_s, nbins=50, xrange=nothing, scale=:linear, binsize=nothing,
                        center=[:bc], center_unit=:standard, xunit=:kpc, mask=[false],
@@ -826,8 +794,7 @@ per-radial-bin), see [`localdispersion`](@ref).
     ([`profile3d`](@ref)/[`phase`](@ref) in R and z or azimuth), to localise it.
 
     For a **local, per-pixel** dispersion of the *line-of-sight* velocity instead, use the projected
-    map `projection(obj, :σlos)` (or `los_moments`/`los_component``(...; dispersion=true)`)
-    and profile it (`profile(proj, :σlos; xvar=:r, weight=:sd)`). There σ = √(⟨v²⟩−⟨v⟩²) is taken about
+    map `projection(obj, :σlos)` and profile it (`profile(proj, :σlos; xvar=:r, weight=:sd)`). There σ = √(⟨v²⟩−⟨v⟩²) is taken about
     **each pixel's own mean** (the local bulk/rotation velocity is removed per pixel), so it is locally
     rest-frame; it still includes sub-pixel / along-the-line-of-sight ordered motion (beam smearing).
     Note these two are also physically different quantities — a 3-D velocity *component* vs a projected
@@ -1152,7 +1119,8 @@ generalization of [`phase`](@ref). `H[i,j,k]` is the total weight in the (i,j,k)
 `sum(H)` is the total weight (e.g. a ρ–T–Z mass cube). With a fourth field `cvar`, also returns
 the per-bin weighted **mean** of `cvar`. `normalize=:sum` adds `fraction = H/ΣH`; `:pdf` also adds
 `pdf` (÷ the 3-D cell volume, so the integral is 1). Each axis takes its own `range`/`scale`/`unit`,
-and `nbins` is an integer or a 3-tuple. Marginalizing one axis (`sum(H; dims=3)`) recovers the
+and `nbins` is an integer or a 3-tuple. As in [`phase`](@ref), a `:log` axis is **base 10** and its
+`binsize` is a **dex** step. Marginalizing one axis (`sum(H; dims=3)`) recovers the
 corresponding [`phase`](@ref).
 
 Returns `xedges`, `yedges`, `zedges`, `H` (and `mean` with `cvar`; `fraction`/`pdf` if normalized),

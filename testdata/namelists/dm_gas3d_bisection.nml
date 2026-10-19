@@ -1,0 +1,72 @@
+! dm_gas3d_bisection.nml, a Mera test fixture: gas, self-gravity and 30,000 dark-matter particles
+! on 4 ranks with ordering='bisection'. Only output_00004 is kept (13 MB each); rerun for the others:
+!     mpirun -np 4 ramses3d dm_gas3d_bisection.nml > run.log      (reads the particles from ic_part/)
+!
+! Written for these tests, not derived from a RAMSES configuration: gas + collisionless dark matter
+! + self-gravity + AMR. Periodic box, boxlen=1, G=1 code units.
+!   DM : equilibrium Plummer sphere, N=30000, M=1, a=0.05, truncated at r=0.4, in the ascii file
+!        ic_part (included; 7 columns x y z vx vy vz m, seed 12345)
+!        filetype='ascii' + initfile(1)='.'  -> pm/init_part.f90::load_ascii; all particles family 1 (DM),
+!        positions in ic_part are relative to the box centre.
+!   gas: uniform d=0.1, p=0.01 (gas mass 0.1), no tracers.
+!   AMR: levelmin 5 -> levelmax 7, quasi-Lagrangian (m_refine on total gas+DM mass, mass_sph=1e-4).
+!   nremap=5 -> load balanced domains.
+
+&RUN_PARAMS
+ordering='bisection'
+hydro=.true.
+poisson=.true.
+pic=.true.
+nrestart=0
+nremap=5
+nsubcycle=10*2
+ncontrol=1
+verbose=.false.
+/
+
+&AMR_PARAMS
+levelmin=5
+levelmax=7
+ngridmax=60000
+npartmax=40000
+nexpand=1
+boxlen=1.0
+/
+
+&INIT_PARAMS
+filetype='ascii'
+initfile(1)='.'
+nregion=1
+region_type(1)='square'
+x_center=0.5
+y_center=0.5
+z_center=0.5
+length_x=10.0
+length_y=10.0
+length_z=10.0
+exp_region=10.0
+d_region=0.1
+u_region=0.0
+v_region=0.0
+w_region=0.0
+p_region=0.01
+/
+
+&OUTPUT_PARAMS
+tout=0.0,0.02,0.04,0.06,0.08
+/
+
+&HYDRO_PARAMS
+gamma=1.6666667
+courant_factor=0.8
+scheme='muscl'
+slope_type=1
+riemann='hllc'
+/
+
+&REFINE_PARAMS
+mass_sph=1e-4
+m_refine=10*8.
+interpol_var=1
+interpol_type=0
+/

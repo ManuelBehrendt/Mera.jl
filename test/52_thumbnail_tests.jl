@@ -1,7 +1,11 @@
 # makethumb: fixed-size preview images. Data-free, so it runs anywhere: the sources are drawn
 # here rather than read from a simulation.
 
-using Mera, Test, FileIO, Colors
+using Mera, Test
+# FileIO and Colors are Mera's dependencies, not this test environment's, so Pkg.test cannot see
+# them by name. Reach them through Mera, as 51_movie_tests.jl already does.
+using Mera.FileIO: load, save
+using Mera.Colors: RGB, red, green, blue
 
 @testset "thumbnail" begin
     dir = mktempdir()

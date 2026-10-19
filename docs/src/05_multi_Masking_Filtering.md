@@ -28,7 +28,7 @@ Everything else on this page is about writing the *condition*.
 **Reading convention.** Longer code cells are cut in two by a banner line:
 
 ```
-# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 ```
 
 Everything above the banner is the Mera part; everything below is Makie
@@ -49,27 +49,37 @@ decoration.
 
 ## 1. Selection by State
 
-The same galaxy as the sub-region pages, at `lmax=8` so the page stays quick.
-All three data types are loaded, because filtering is not a hydro-only idea,
-particles filter on age, clumps on their catalogue properties.
+This page runs on a snapshot of the AVALON disc galaxy, one of the maintainer's
+research simulations. It is not part of the public example set, so point the path
+below at a simulation of your own, or set `MERA_AVALON`; every call on the page
+works the same on other data.
+
+The working set is a **pre-cut window**, stored as a Mera file so it reloads in one
+call: output 390, every cell inside ±12 × ±12 × ±6 kpc about the box centre,
+37,055,386 of them, with the columns cut to the five hydro variables this page uses
+(`:rho`, `:vx`, `:vy`, `:vz`, `:p`). The box is 48 kpc across, the levels run from 6
+to 12, and the snapshot sits at t = 580 Myr.
+
+Gas and particles are both loaded, because filtering is not a hydro-only idea:
+particles filter on age, and on what kind of particle they are (§5).
 
 ```julia
-# Example-data root. Point this at your own simulation folder, or set the
-# MERA_EXAMPLES environment variable; every path below is built from it.
-MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+# The AVALON run used here is the maintainer's own. Point AVALON at a snapshot of
+# your own, or set the MERA_AVALON environment variable.
+AVALON = get(ENV, "MERA_AVALON", "/Volumes/FASTStorage/Simulations/AVALONpaper/AV05CD/mera_masking")
 
 using Mera
 
-path = "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14"
-info = getinfo(400, path, verbose=false)
-
-gas       = gethydro(info, lmax=8, smallr=1e-5, verbose=false, show_progress=false)
-particles = getparticles(info, verbose=false, show_progress=false)
-clumps    = getclumps(info, verbose=false)
+# A pre-cut window stored as a Mera file: ±12 x ±12 x ±6 kpc about the box centre,
+# five hydro variables, and every particle. One call, nothing to select at load time.
+gas       = loaddata(390, AVALON, :hydro;     verbose=false)
+particles = loaddata(390, AVALON, :particles; verbose=false)
+info      = gas.info
 
 println("gas cells      : ", length(gas.data))
 println("star particles : ", length(particles.data))
-println("clumps         : ", length(clumps.data))
+println("box            : ", round(gas.boxlen * info.scale.kpc, sigdigits=4),
+        " kpc, levels ", gas.lmin, " to ", gas.lmax)
 ```
 
 ```
@@ -80,10 +90,10 @@ println("clumps         : ", length(clumps.data))
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-gas cells      : 849332
-star particles : 508939
-clumps         : 644
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+gas cells      : 37055386
+star particles : 627896
+box            : 48.0 kpc, levels 6 to 12
 ```
 
 ```julia
@@ -97,13 +107,15 @@ println()
 println("mass of hot gas, via the object : ", round(msum(hot, :Msol), sigdigits=6), " Msol")
 println("            ... via the mask    : ", round(msum(gas, :Msol, mask=mask), sigdigits=6), " Msol")
 println("identical                       : ", msum(hot, :Msol) == msum(gas, :Msol, mask=mask))
+
+# `hot` stays alive to the end of §6, which draws it; `mask` is a BitVector, a few MB
 ```
 
 ```
-filterdata → HydroDataType, 489608 cells
-getmask    → BitVector, 489608 true of 849332
-mass of hot gas, via the object : 2.14499e9 Msol
-            ... via the mask    : 2.14499e9 Msol
+filterdata → HydroDataType, 8423491 cells
+getmask    → BitVector, 8423491 true of 37055386
+mass of hot gas, via the object : 2.39909e7 Msol
+            ... via the mask    : 2.39909e7 Msol
 identical                       : true
 ```
 
@@ -118,48 +130,51 @@ anything `getvar` can *derive*, temperature, sound speed, Mach number, a
 cylindrical radius. That is the whole point: you write the physics, not the code
 that reconstructs it.
 
+**Give the condition its frame.** A condition names a quantity, and that quantity is
+computed by `getvar`, with `getvar`'s defaults. A radius is then measured from the
+box corner, and a velocity-derived quantity such as `:mach` is in the box frame.
+Neither is what you want for a galaxy sitting in the middle of its box and turning,
+so pass `center` (with `center_unit`) and `vcenter` to `filterdata` and `getmask`
+exactly as you would pass them to `getvar`. They are handed straight through.
+
 ```julia
+# Two of these conditions name a quantity that depends on where the galaxy is, or on how
+# fast it moves, so they are given a frame. The others do not have one.
 conds = [
-    ("Above(:rho, 1, :nH)          ", Above(:rho, 1, unit=:nH)),            # stored column
-    ("Below(:T, 2e4, :K)           ", Below(:T, 2e4, unit=:K)),             # derived: temperature
-    ("Above(:cs, 20, :km_s)        ", Above(:cs, 20, unit=:km_s)),          # derived: sound speed
-    ("Above(:mach, 1)              ", Above(:mach, 1)),                     # derived, dimensionless
-    ("InRange(:r_cylinder, 0,10,:kpc)", InRange(:r_cylinder, 0, 10, unit=:kpc)),  # derived geometry
-    ("Equals(:level, gas.lmax)     ", Equals(:level, gas.lmax)),            # discrete
+    ("Above(:rho, 1, :nH)",            Above(:rho, 1, unit=:nH),                NamedTuple()),
+    ("Below(:T, 1e3, :K)",             Below(:T, 1e3, unit=:K),                 NamedTuple()),
+    ("Above(:cs, 20, :km_s)",          Above(:cs, 20, unit=:km_s),              NamedTuple()),
+    ("Above(:mach, 1)",                Above(:mach, 1),                         (vcenter=:auto,)),
+    ("InRange(:r_cylinder,0,10,:kpc)", InRange(:r_cylinder, 0, 10, unit=:kpc),  (center=[:bc],)),
+    ("Equals(:level, gas.lmax)",       Equals(:level, gas.lmax),                NamedTuple()),
 ]
 m_all = msum(gas, :Msol)
-println(rpad("condition", 34), rpad("cells", 10), "mass share")
-println("-"^60)
-for (name, c) in conds
-    s = filterdata(gas, c, verbose=false)
-    println(rpad(name, 34), rpad(length(s.data), 10),
+println(rpad("condition", 32), rpad("frame", 16), rpad("cells", 12), "mass share")
+println("-"^72)
+for (name, c, kw) in conds
+    s     = filterdata(gas, c; verbose=false, kw...)
+    frame = isempty(kw) ? "-" : join([string(k, "=", repr(v)) for (k, v) in pairs(kw)], " ")
+    println(rpad(name, 32), rpad(frame, 16), rpad(length(s.data), 12),
             round(100 * msum(s, :Msol) / m_all, digits=1), " %")
 end
+GC.gc()
 ```
 
 ```
-condition                         cells     mass share
-------------------------------------------------------------
-Above(:rho, 1, :nH)               10126     79.8 %
-Below(:T, 2e4, :K)                33569     37.0 %
-Above(:cs, 20, :km_s)             652583    44.6 %
-[Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
-             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
-             (shown once per session; verbose(false) silences Mera's messages)
-Above(:mach, 1)                   520858    94.5 %
-[Mera] Hint: getvar(:r_cylinder) has no `center`: it is measured about the box CORNER.
-             Pass center=:bc, or center=[x, y, z] with center_unit. This is a separate
-             argument from the `center` that places a region; give both the same origin.
-             (shown once per session; verbose(false) silences Mera's messages)
-InRange(:r_cylinder, 0,10,:kpc)   8896      0.1 %
-Equals(:level, gas.lmax)          501568    92.6 %
+condition                       frame           cells       mass share
+------------------------------------------------------------------------
+Above(:rho, 1, :nH)             -               8369634     62.7 %
+Below(:T, 1e3, :K)              -               3270752     47.4 %
+Above(:cs, 20, :km_s)           -               12035707    1.0 %
+Above(:mach, 1)                 vcenter=:auto   30533846    99.8 %
+InRange(:r_cylinder,0,10,:kpc)  center=[:bc]    31772889    81.2 %
+Equals(:level, gas.lmax)        -               14318440    59.0 %
 ```
 
 Note `:r_cylinder` in that list. A *geometric* quantity used as a value
 condition selects a cylinder, but by testing each cell's centre, with no
-boundary treatment. When the geometry is what you care about, use a region
-instead (§7); the exactness is worth it.
+boundary treatment, and only about the `center` you hand it. When the geometry is
+what you care about, use a region instead (§7); the exactness is worth it.
 
 Two further selectors are worth knowing:
 
@@ -175,35 +190,38 @@ conditions to `filterdata` ANDs them, which reads better for the common case.
 ```julia
 cold_dense = filterdata(gas, Above(:rho, 1, unit=:nH) & Below(:T, 1e5, unit=:K), verbose=false)
 either     = filterdata(gas, Above(:T, 1e6, unit=:K) | Above(:rho, 10, unit=:nH), verbose=false)
-not_cold   = filterdata(gas, !Below(:T, 2e4, unit=:K), verbose=false)
-# several arguments = AND, in a form that reads like a sentence
+not_cold   = filterdata(gas, !Below(:T, 1e3, unit=:K), verbose=false)
+# several arguments = AND, in a form that reads like a sentence; the frame serves both
 disc_cold  = filterdata(gas, InRange(:r_cylinder, 0, 15, unit=:kpc),
-                             Below(:T, 2e4, unit=:K), verbose=false)
+                             Below(:T, 1e3, unit=:K), center=[:bc], verbose=false)
 
 for (n, o) in (("rho > 1 nH  AND  T < 1e5 K", cold_dense),
                ("T > 1e6 K   OR   rho > 10 nH", either),
-               ("NOT (T < 2e4 K)", not_cold),
-               ("r < 15 kpc  AND  T < 2e4 K", disc_cold))
-    println(rpad(n, 30), rpad(length(o.data), 9), round(msum(o, :Msol), sigdigits=5), " Msol")
+               ("NOT (T < 1e3 K)", not_cold),
+               ("r < 15 kpc  AND  T < 1e3 K", disc_cold))
+    println(rpad(n, 30), rpad(length(o.data), 10), round(msum(o, :Msol), sigdigits=5), " Msol")
 end
 
 # a condition and its complement partition the object exactly
-cold = filterdata(gas, Below(:T, 2e4, unit=:K), verbose=false)
+cold = filterdata(gas, Below(:T, 1e3, unit=:K), verbose=false)
 println()
 println("cold + not-cold cells : ", length(cold.data) + length(not_cold.data),
         "   of ", length(gas.data))
 println("cold + not-cold mass  : ", round(msum(cold, :Msol) + msum(not_cold, :Msol), sigdigits=10))
 println("whole box mass        : ", round(m_all, sigdigits=10))
+
+# `cold` stays for §6; the other selections are finished with
+cold_dense = nothing; either = nothing; not_cold = nothing; disc_cold = nothing; GC.gc()
 ```
 
 ```
-rho > 1 nH  AND  T < 1e5 K    10080    1.6812e10 Msol
-T > 1e6 K   OR   rho > 10 nH  490701   2.1381e10 Msol
-NOT (T < 2e4 K)               815763   1.9503e10 Msol
-r < 15 kpc  AND  T < 2e4 K    516      2.1893e6 Msol
-cold + not-cold cells : 849332   of 849332
-cold + not-cold mass  : 3.096875415e10
-whole box mass        : 3.096875415e10
+rho > 1 nH  AND  T < 1e5 K    8322439   4.1935e9 Msol
+T > 1e6 K   OR   rho > 10 nH  10253905  2.7792e9 Msol
+NOT (T < 1e3 K)               33784634  3.5279e9 Msol
+r < 15 kpc  AND  T < 1e3 K    3270752   3.1769e9 Msol
+cold + not-cold cells : 37055386   of 37055386
+cold + not-cold mass  : 6.704844898e9
+whole box mass        : 6.704844898e9
 ```
 
 The partition is exact because `!` is a strict negation of the same test, no
@@ -225,12 +243,14 @@ println("faintest 10 %         : ", rpad(length(faint.data), 9),
         round(100*msum(faint, :Msol)/m_all, digits=3), " %")
 println("finest level & top 1 %: ", rpad(length(core.data), 9),
         round(100*msum(core, :Msol)/m_all, digits=1), " %")
+
+dense10 = nothing; faint = nothing; core = nothing; GC.gc()
 ```
 
 ```
-densest 10 % of cells : 84934    91.1 % of the mass
-faintest 10 %         : 0        0.0 %
-finest level & top 1 %: 8494     78.6 %
+densest 10 % of cells : 3705539  50.5 % of the mass
+faintest 10 %         : 3705539  0.073 %
+finest level & top 1 %: 370554   20.1 %
 ```
 
 `AbovePercentile(:rho, 90)` is *the densest tenth of the cells*, whatever the
@@ -251,11 +271,12 @@ function with a `mask=` keyword takes it, or when you need several different
 subsets of one object without copying the data each time.
 
 ```julia
-cond = Below(:rho, 1, unit=:Msol_pc3)
+cond = Below(:rho, 1, unit=:nH)      # the diffuse gas: under one hydrogen atom per cm³
 
 # the object route: chains straight into other Mera verbs
 sel = filterdata(gas, cond, verbose=false)
-p   = projection(sel, :sd, :Msol_pc2; res=64, center=[:bc], verbose=false, show_progress=false)
+p   = projection(sel, :sd, :Msol_pc2; pxsize=[0.5, :kpc], center=[:bc],
+                 verbose=false, show_progress=false)
 println("object route : ", length(sel.data), " cells, map max Σ = ",
         round(maximum(p.maps[:sd]), sigdigits=4), " Msol/pc²")
 
@@ -270,14 +291,17 @@ m2 = getmask(gas, Above(:T, 1e4, unit=:K))
 println()
 println("cells satisfying both : ", count(m .& m2))
 println("... same as one combined condition : ",
-        count(m .& m2) == length(filterdata(gas, cond & Above(:T, 1e4, unit=:K), verbose=false).data))
+        count(m .& m2) == count(getmask(gas, cond & Above(:T, 1e4, unit=:K))))
+
+# `m` stays, §5 reuses it; the filtered copy and its map are done with
+sel = nothing; p = nothing; m2 = nothing; GC.gc()
 ```
 
 ```
-object route : 848882 cells, map max Σ = 161.6 Msol/pc²
-mask route   : 848882 cells, mass = 1.33692e10 Msol
+object route : 28685752 cells, map max Σ = 10.4 Msol/pc²
+mask route   : 28685752 cells, mass = 2.49945e9 Msol
 same mass    : true
-cells satisfying both : 848882
+cells satisfying both : 16154492
 ... same as one combined condition : true
 ```
 
@@ -287,8 +311,8 @@ Every aggregate that takes a `mask=` keyword applies it to the rows before
 reducing. One condition, four statistics, gas and particles side by side:
 
 ```julia
-mg = getmask(gas,       Below(:rho, 1, unit=:Msol_pc3))
-mp = getmask(particles, Below(:age, 100, unit=:Myr))        # young stars
+mg = m                                                   # the §4 condition, already masked
+mp = getmask(particles, Below(:age, 100, unit=:Myr))     # young stars
 
 println(rpad("statistic", 34), rpad("all", 20), "masked")
 println("-"^70)
@@ -311,16 +335,18 @@ s_msk = wstat(getvar(gas, :vx, :km_s), weight=getvar(gas, :mass), mask=mg)
 println()
 println("gas ⟨vx⟩ mass-weighted [km/s] : all ", round(s_all.mean, digits=3),
         "   masked ", round(s_msk.mean, digits=3))
+
+mp = nothing; s_all = nothing; s_msk = nothing; GC.gc()   # the masks are BitVectors, a few MB
 ```
 
 ```
 statistic                         all                 masked
 ----------------------------------------------------------------------
-gas  msum [Msol]                  3.09688e10          1.33692e10
-gas  centre of mass x [kpc]       23.3607             23.6093
-gas  bulk velocity x [km/s]       -1.2                -3.094
-part msum [Msol]                  5.80443e9           1.81123e9
-gas ⟨vx⟩ mass-weighted [km/s] : all -1.2   masked -3.094
+gas  msum [Msol]                  6.70484e9           2.49945e9
+gas  centre of mass x [kpc]       23.9998             24.0233
+gas  bulk velocity x [km/s]       -0.157              2.52
+part msum [Msol]                  5.03498e8           1.00609e8
+gas ⟨vx⟩ mass-weighted [km/s] : all -0.157   masked 2.52
 ```
 
 The mask must be as long as the object's row count, which is why it belongs to
@@ -347,42 +373,51 @@ young_stars = getparticlemask(parts, :stars) .& getmask(parts, Below(:age, 100, 
 | other | 5 |
 | tracer (test particle) | ≤ 0 |
 
-The galaxy used on this page was written in the **legacy** particle format, which has no `:family`
-column at all. There `getparticlemask` falls back to `:birth` and offers only `:stars`
-(`birth != 0`) and `:dm` (`birth == 0`), which is why the age conditions above are the natural
-way to work with it.
+This run was written in the **modern** particle format, so it carries a `:family` column and the
+type is then just another quantity. A named type, a value condition on `:family`, and a filtered
+object all pick the same rows:
 
 ```julia
-# what this dataset supports
-for sel in (:stars, :dm, :tracer)
-    n = try count(getparticlemask(particles, sel, verbose=false)) catch e; "unavailable (legacy format)" end
-    println(rpad(string(sel), 8), " -> ", n)
-end
+# three routes to the same particles, on this page's own data
+println("families present             : ", Int.(sort(unique(getvar(particles, :family)))))
+println("getparticlemask(:stars)      : ", count(getparticlemask(particles, :stars, verbose=false)))
+println("getmask(:family, ==(2.0))    : ", count(getmask(particles, :family, ==(2.0))))
+println("filterdata(:family, ==(2.0)) : ",
+        length(filterdata(particles, :family, ==(2.0), verbose=false).data), " rows")
+println("dark matter / tracers here   : ",
+        count(getparticlemask(particles, :dm, verbose=false)), " / ",
+        count(getparticlemask(particles, :tracer, verbose=false)))
 ```
 
 ```
-stars    -> 508939
-dm       -> 0
-tracer   -> unavailable (legacy format)
+families present             : [2]
+getparticlemask(:stars)      : 627896
+getmask(:family, ==(2.0))    : 627896
+filterdata(:family, ==(2.0)) : 627896 rows
+dark matter / tracers here   : 0 / 0
 ```
 
-On a run written in the modern format the `:family` column is present, and then the type is just
-another quantity: `getmask` and `filterdata` work on it exactly as they do on density or age. The
-small public test simulation below carries Monte-Carlo **tracers**, test particles advected by the
-flow without acting back on it, so every selection route can be shown at once.
+Every particle in this galaxy is a star, so `:dm` and `:tracer` select nothing. One case is
+therefore missing: a **tracer**, a test particle advected by the flow without acting back on it.
+The small public test simulation below carries Monte-Carlo tracers, so that route can be shown
+too, on data anyone can download.
 
 ```julia
+# the public test set, for the one particle type this galaxy has not got
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 tracer_run = "$MERA_EXAMPLES/RAMSES-PUBLIC/sedov3d_grav_part"
 if isdir(tracer_run)
     tp = getparticles(getinfo(3, tracer_run, verbose=false), verbose=false, show_progress=false)
     println("families present            : ", Int.(sort(unique(getvar(tp, :family)))))
     println("getparticlemask(:tracer)    : ", count(getparticlemask(tp, :tracer, verbose=false)))
     println("getmask(:family, ==(0))     : ", count(getmask(tp, :family, ==(0.0))))
-    println("filterdata(:family, ==(0))  : ", length(filterdata(tp, :family, ==(0.0)).data), " rows")
+    println("filterdata(:family, ==(0))  : ",
+            length(filterdata(tp, :family, ==(0.0), verbose=false).data), " rows")
     # type and place compose, like everything else on this page
-    core = subregion(tp, Sphere(0.15; range_unit=:standard), verbose=false)
+    core = subregion(tp, sphere(0.15; range_unit=:standard), verbose=false)
     println("tracers inside a sphere     : ", count(getparticlemask(core, :tracer, verbose=false)),
             " of ", length(core.data), " particles in the region")
+    tp = nothing; core = nothing; GC.gc()
 else
     println("fixture not installed: ", tracer_run)
 end
@@ -392,8 +427,6 @@ end
 families present            : [0]
 getparticlemask(:tracer)    : 124990
 getmask(:family, ==(0))     : 124990
-Filter: PartDataType
-Selected rows: 124990 / 124990
 filterdata(:family, ==(0))  : 124990 rows
 tracers inside a sphere     : 1707 of 1707 particles in the region
 ```
@@ -416,18 +449,22 @@ CairoMakie.activate!()
 # FIGURE INFRASTRUCTURE for the whole page, skim freely on first read.
 # The one Mera-relevant definition is `prj`: the projection defaults every panel reuses.
 # ─────────────────────────────────────────────────────────────────────
-const SDLIM5 = (-3.0, 3.0)     # log10 Σ [Msol/pc²] — one colour scale for every panel below
+# The colour limits are a starting guess for this run. Check them against the first
+# figure below and widen or narrow the range before comparing panels by eye.
+const SDLIM5 = (-2.0, 3.0)     # log10 Σ [Msol/pc²], one colour scale for every panel below
 
 function sdpanel!(ax, p; kpc=gas.info.scale.kpc)
     xs = range(p.cextent[1]*kpc, p.cextent[2]*kpc; length=size(p.maps[:sd], 1))
     ys = range(p.cextent[3]*kpc, p.cextent[4]*kpc; length=size(p.maps[:sd], 2))
-    heatmap!(ax, xs, ys, log10.(max.(p.maps[:sd], 1e-3)); colormap=:inferno, colorrange=SDLIM5)
+    heatmap!(ax, xs, ys, log10.(max.(p.maps[:sd], 10.0^SDLIM5[1]));
+             colormap=:inferno, colorrange=SDLIM5)
     ax.aspect = DataAspect(); ax.backgroundcolor = :black; hidedecorations!(ax)
     return ax
 end
 
+# the working set stops at ±12 kpc in x and y, so the maps stop there too
 prj(d; kw...) = projection(d, :sd, :Msol_pc2; direction=:z, center=[:bc], range_unit=:kpc,
-                           xrange=[-16, 16], yrange=[-16, 16], pxsize=[0.1, :kpc],
+                           xrange=[-12, 12], yrange=[-12, 12], pxsize=[0.1, :kpc],
                            verbose=false, show_progress=false, kw...)
 ```
 
@@ -436,37 +473,40 @@ prj (generic function with 1 method)
 ```
 
 ```julia
-cold_g = filterdata(gas, Below(:T, 2e4, unit=:K), verbose=false)     # state only — full box
-hot_g  = filterdata(gas, Above(:T, 1e6, unit=:K), verbose=false)
+# `cold` and `hot` were selected in §3 and §1; only the percentile cut is new here
 dense1 = filterdata(gas, AbovePercentile(:rho, 99), verbose=false)   # adaptive: densest 1 %
 
-for (n, o) in (("cold  T<2e4 K ", cold_g), ("hot   T>1e6 K ", hot_g), ("densest 1%    ", dense1))
-    println(n, ": ", rpad(length(o.data), 9), round(msum(o, :Msol), sigdigits=4),
-            " Msol  = ", round(100*msum(o, :Msol)/m_all, digits=1), " % of the box")
+for (n, o) in (("cold  T<1e3 K ", cold), ("hot   T>1e6 K ", hot), ("densest 1%    ", dense1))
+    println(n, ": ", rpad(length(o.data), 10),
+            rpad(string(round(100*length(o.data)/length(gas.data), digits=1), " % of cells"), 18),
+            round(100*msum(o, :Msol)/m_all, digits=1), " % of the mass")
 end
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(1180, 420))
-sdpanel!(Axis(fig[1, 1], title="cold gas  T < 2·10⁴ K — the star-forming phase"), prj(cold_g))
-sdpanel!(Axis(fig[1, 2], title="hot gas  T > 10⁶ K — smooth and volume-filling"), prj(hot_g))
+sdpanel!(Axis(fig[1, 1], title="cold gas, T < 10³ K, the star-forming phase"), prj(cold))
+sdpanel!(Axis(fig[1, 2], title="hot gas, T > 10⁶ K, smooth and volume-filling"), prj(hot))
 sdpanel!(Axis(fig[1, 3], title="densest 1 % of cells (AbovePercentile)"), prj(dense1))
 Colorbar(fig[1, 4]; colormap=:inferno, colorrange=SDLIM5, label="log₁₀ Σ  [Msol pc⁻²]")
+
+cold = nothing; hot = nothing; dense1 = nothing; GC.gc()
 fig
 ```
 
 ```
-cold  T<2e4 K : 33569    1.147e10 Msol  = 37.0 % of the box
-hot   T>1e6 K : 489608   2.145e9 Msol  = 6.9 % of the box
-densest 1%    : 8494     2.433e10 Msol  = 78.6 % of the box
+cold  T<1e3 K : 3270752   8.8 % of cells    47.4 % of the mass
+hot   T>1e6 K : 8423491   22.7 % of cells   0.4 % of the mass
+densest 1%    : 370554    1.0 % of cells    20.1 % of the mass
 ```
 
 ![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_26_3.png)
 
-Three views of one simulation, on one colour scale. The cold phase is
-filamentary and carries 37 % of the mass in 4 % of the cells; the hot phase is
-smooth and volume-filling, 6.9 % of the mass spread over most of the box; and the
-densest percentile, a *relative* threshold, isolates the clumps while holding
-79 % of the mass, without anyone having to know this run's density scale.
+Three views of one simulation, on one colour scale, and the shares printed above say what
+each panel holds. The cold phase is filamentary and carries 47.4 % of the mass in
+8.8 % of the cells; the hot phase is smooth and volume-filling, and it is the mirror
+image, 22.7 % of the cells holding 0.4 % of the mass; and the densest percentile, a
+*relative* threshold, isolates the clumps while holding 20.1 % of the mass, without
+anyone having to know this run's density scale.
 
 Read the middle panel with the usual care: it is a column density, so a smooth
 map means the hot gas is spread along every line of sight, not that it is
@@ -479,29 +519,30 @@ the answer. Here the disc is cut as an **exact split region** (boundary cells
 carry their `:fraction`) and then partitioned by temperature.
 
 ```julia
-import Mera: Cylinder     # Mera's region type (plotting packages export a Cylinder too)
-
-disc_reg = Cylinder(12., 2.; center=[:bc], range_unit=:kpc)   # radius, half-height [kpc]
+disc_reg = cylinder(10., 2.; center=[:bc], range_unit=:kpc)   # radius, half-height [kpc]
 disc = subregion(gas, disc_reg, verbose=false)                # split: rim cells carry :fraction
 
-cold_d = filterdata(disc, Below(:T, 2e4, unit=:K), verbose=false)
-rest_d = filterdata(disc, !Below(:T, 2e4, unit=:K), verbose=false)
+cold_d = filterdata(disc, Below(:T, 1e3, unit=:K), verbose=false)
+rest_d = filterdata(disc, !Below(:T, 1e3, unit=:K), verbose=false)
 
 m_c, m_r, m_d = msum(cold_d, :Msol), msum(rest_d, :Msol), msum(disc, :Msol)
-println("cold (< 2e4 K) in the disc : ", round(m_c, sigdigits=5), " Msol")
-println("rest (≥ 2e4 K) in the disc : ", round(m_r, sigdigits=5), " Msol")
+println("cold (< 1e3 K) in the disc : ", round(m_c, sigdigits=5), " Msol")
+println("rest (≥ 1e3 K) in the disc : ", round(m_r, sigdigits=5), " Msol")
 println("cold + rest  vs  disc      : ", round(m_c + m_r, sigdigits=9), "  vs  ",
         round(m_d, sigdigits=9), " Msol")
 println()
 # the other order gives the same rows
-other = subregion(filterdata(gas, Below(:T, 2e4, unit=:K), verbose=false), disc_reg, verbose=false)
+other = subregion(filterdata(gas, Below(:T, 1e3, unit=:K), verbose=false), disc_reg, verbose=false)
 println("filter→region == region→filter cells : ", length(other.data) == length(cold_d.data))
+
+# `cold_d` and `m_c` stay for the next two cells
+disc = nothing; rest_d = nothing; other = nothing; GC.gc()
 ```
 
 ```
-cold (< 2e4 K) in the disc : 8.9066e9 Msol
-rest (≥ 2e4 K) in the disc : 1.3963e10 Msol
-cold + rest  vs  disc      : 2.28691723e10  vs  2.28691723e10 Msol
+cold (< 1e3 K) in the disc : 3.0897e9 Msol
+rest (≥ 1e3 K) in the disc : 2.3385e9 Msol
+cold + rest  vs  disc      : 5.42822765e9  vs  5.42822765e9 Msol
 filter→region == region→filter cells : true
 ```
 
@@ -521,35 +562,42 @@ p_cd = prj(cold_d)
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig = Figure(size=(640, 520))
-ax = Axis(fig[1, 1], title="cold gas inside the split disc — two kinds of edge")
+ax = Axis(fig[1, 1], title="cold gas inside the split disc, two kinds of edge")
 sdpanel!(ax, p_cd)
-arc!(ax, Point2f(0, 0), 12., 0, 2π; color=:white, linewidth=1.2, linestyle=:dash)
+arc!(ax, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1.2, linestyle=:dash)
 Colorbar(fig[1, 2]; colormap=:inferno, colorrange=SDLIM5, label="log₁₀ Σ  [Msol pc⁻²]")
+
+p_cd = nothing; cold_d = nothing; GC.gc()
 fig
 ```
 
 ![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_31_1.png)
 
 ```julia
-# match the geometric edge to the map's pixel size, so the rim is sharp where it is rendered
-disc_px = subregion(gas, disc_reg; refine_to=[0.1, :kpc], verbose=false)
-cold_px = filterdata(disc_px, Below(:T, 2e4, unit=:K), verbose=false)
+# refine the geometric edge below the map's pixel size (0.1 kpc), so what limits the
+# drawn rim is the pixel grid and not the cells
+disc_px = subregion(gas, disc_reg; refine_to=[0.05, :kpc], verbose=false)
+cold_px = filterdata(disc_px, Below(:T, 1e3, unit=:K), verbose=false)
 
 fr = Mera.select(cold_px.data, :fraction)
 cs = getvar(cold_px, :cellsize, :kpc)
 println("largest straddling cell on the rim : ",
         round(maximum(cs[0.0 .< fr .< 1.0]), digits=3), " kpc   (map-ready)")
 println("cold mass, refine_to vs plain      : ", round(msum(cold_px, :Msol) / m_c, digits=5))
+
+disc_px = nothing; cold_px = nothing; fr = nothing; cs = nothing; GC.gc()
 ```
 
 ```
-largest straddling cell on the rim : 0.094 kpc   (map-ready)
+largest straddling cell on the rim : 0.012 kpc   (map-ready)
 cold mass, refine_to vs plain      : 1.0
 ```
 
 `refine_to` changes how sharply the boundary is *drawn*, not how much mass is
-inside it, the ratio above is 1 to five digits. See §7 of the
-[hydro sub-region page](03_hydro_Get_Subregions.md) for what it costs.
+inside it, the ratio above is 1 to five digits. The target here is 0.05 kpc, half
+the pixel of the maps on this page: the rim cells of this run are already finer
+than 0.1 kpc, so a coarser target would split nothing and change nothing. See §7 of
+the [hydro sub-region page](03_hydro_Get_Subregions.md) for what it costs.
 
 ## 8. Adding a Column of Your Own
 
@@ -560,23 +608,26 @@ Not(…)` removes it again.
 ```julia
 using Mera.IndexedTables      # the table verbs (transform, select, Not, columns) live here
 
-mach = getvar(gas, :mach)                       # a derived quantity, one value per cell
+# one value per cell, in the gas rest frame: :mach is velocity-derived, so it needs a frame
+mach = getvar(gas, :mach; vcenter=:auto)
 gas.data = transform(gas.data, :mach => mach)   # push it onto the table (IndexedTables)
 println("columns now: ", propertynames(Mera.columns(gas.data)))
 
-# it behaves like any other column from here on
+# it behaves like any other column from here on, and a stored column needs no frame
 supersonic = filterdata(gas, Above(:mach, 1), verbose=false)
 println("supersonic cells : ", length(supersonic.data), "  = ",
         round(100*length(supersonic.data)/length(gas.data), digits=1), " % of the box")
 
 gas.data = select(gas.data, Not(:mach))         # and take it away again
 println("columns after removal: ", propertynames(Mera.columns(gas.data)))
+
+mach = nothing; supersonic = nothing; GC.gc()
 ```
 
 ```
-columns now: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2, :mach)
-supersonic cells : 520858  = 61.3 % of the box
-columns after removal: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+columns now: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :mach)
+supersonic cells : 30533846  = 82.4 % of the box
+columns after removal: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p)
 ```
 
 Mera already derives `:mach` on demand, so this is not the way to *get* a Mach
@@ -602,7 +653,7 @@ vt = columns(gas.data, (:rho, :level))     # a NamedTuple of columns
 println("select == getvar : ", r1 == r2, "   columns() gives ", propertynames(vt))
 
 # ---- filtering rows: a predicate on the table ------------------------------------------
-density = 3. / gas.scale.Msol_pc3          # threshold in CODE units — no unit= here
+density = 3. / gas.scale.Msol_pc3          # threshold in CODE units, no unit= here
 filtered_db = filter(p -> p.rho >= density, gas.data)
 println("rows kept: ", length(filtered_db), " of ", length(gas.data))
 
@@ -616,12 +667,14 @@ m_b = sum(getvar(gas_new, :mass, :Msol))
 m_c2 = msum(filterdata(gas, Above(:rho, 3, unit=:Msol_pc3), verbose=false), :Msol)
 println("mass via filtered_db / construct_datatype / filterdata : ",
         round(m_a, sigdigits=8), "  ", round(m_b, sigdigits=8), "  ", round(m_c2, sigdigits=8))
+
+r1 = nothing; r2 = nothing; vt = nothing; gas_new = nothing; GC.gc()
 ```
 
 ```
 select == getvar : true   columns() gives (:rho, :level)
-rows kept: 210 of 849332
-mass via filtered_db / construct_datatype / filterdata : 1.4862768e10  1.4862768e10  1.4862768e10
+rows kept: 62082 of 37055386
+mass via filtered_db / construct_datatype / filterdata : 4.610364e8  4.610364e8  4.610364e8
 ```
 
 ```julia
@@ -640,15 +693,17 @@ println("hand-built cylinder + density : ", length(filtered_db), " rows, ",
         round(sum(getvar(gas, :mass, :Msol, filtered_db=filtered_db)), sigdigits=6), " Msol")
 
 # the same thing as a region and a condition, units, exact boundary, and no geometry by hand
-reg = Cylinder(3., 2.; center=[:bc], range_unit=:kpc)
+reg = cylinder(3., 2.; center=[:bc], range_unit=:kpc)
 sel = filterdata(subregion(gas, reg, verbose=false), Above(:rho, 3, unit=:Msol_pc3), verbose=false)
 println("region × condition            : ", length(sel.data), " rows, ",
         round(msum(sel, :Msol), sigdigits=6), " Msol   (split boundary)")
+
+sel = nothing; GC.gc()
 ```
 
 ```
-hand-built cylinder + density : 33 rows, 2.81234e9 Msol
-region × condition            : 37 rows, 2.83126e9 Msol   (split boundary)
+hand-built cylinder + density : 29798 rows, 2.2217e8 Msol
+region × condition            : 29847 rows, 2.22173e8 Msol   (split boundary)
 ```
 
 The two numbers differ, and the difference is the point of the sub-region pages:
@@ -673,12 +728,44 @@ filtered_db = @apply gas.data begin
     @where abs((:cz - 0.5) * boxlen/2^:level - cv) <= height
 end
 println("@apply pipeline       : ", length(filtered_db), " rows")
+
+finest = nothing; tbl_only = nothing; filtered_db = nothing; GC.gc()
 ```
 
 ```
-@filter on the object : HydroDataType, 501568 cells
-@filter on the table  : IndexedTable, 210 rows
-@apply pipeline       : 210 rows
+@filter on the object : HydroDataType, 14318440 cells
+@filter on the table  : IndexedTable, 62082 rows
+@apply pipeline       : 62082 rows
+```
+
+**The macro compares in code units.** This is the one thing to know before reaching for `>` and
+`<` on a Mera object, and it is easy to miss because the condition *looks* physical. `@filter gas
+:T > 1e4` does not mean ten thousand Kelvin: it means ten thousand in this run's code units, which
+here is about `6.8e9` K, hotter than anything in the box. Written with a unit the same number is a
+real temperature cut and keeps roughly half the cells, a completely different selection.
+
+Nothing is broken about the macro. It is compact and it understands derived quantities, which is
+exactly what it is for. But a number without a unit is a statement about one particular run, so
+whenever the threshold is physical, say the unit and let `Above` or `Below` do the conversion.
+
+```julia
+macro_hot = @filter gas :T > 1e4                             # 1e4 in CODE units, not Kelvin
+unit_hot  = filterdata(gas, Above(:T, 1e4, unit=:K), verbose=false)
+
+println("@filter gas :T > 1e4        : ", length(macro_hot.data), " cells")
+println("Above(:T, 1e4, unit=:K)     : ", length(unit_hot.data), " cells   of ", length(gas.data))
+println("1e4 code units is really    : ", round(1e4 * gas.info.scale.K, sigdigits=4), " K")
+println("this run's gas spans        : ", round(minimum(getvar(gas, :T, :K)), sigdigits=3),
+        " .. ", round(maximum(getvar(gas, :T, :K)), sigdigits=3), " K")
+
+macro_hot = nothing; unit_hot = nothing; GC.gc()
+```
+
+```
+@filter gas :T > 1e4        : 0 cells
+Above(:T, 1e4, unit=:K)     : 16289680 cells   of 37055386
+1e4 code units is really    : 6.803e9 K
+this run's gas spans        : 12.0 .. 4.37e8 K
 ```
 
 ```julia
@@ -690,10 +777,12 @@ mask_c = getmask(gas, Below(:rho, 4, unit=:Msol_pc3))    # the value-space verb
 
 println("all three agree : ", mask_a == mask_b == mask_c, "   (", count(mask_c), " cells)")
 println("type            : ", typeof(mask_c))
+
+mask_a = nothing; mask_b = nothing; mask_c = nothing; GC.gc()
 ```
 
 ```
-all three agree : true   (849177 cells)
+all three agree : true   (37025375 cells)
 type            : BitVector
 ```
 
@@ -704,9 +793,15 @@ as a condition on one quantity.
 
 ## 10. Practical Guidance
 
-**Say the unit.** `Above(:rho, 1, unit=:nH)` is a statement about physics;
-`p.rho >= 3.0` on the raw table is a statement about this run's code units and
-will mean something different in the next simulation.
+**Say the unit.** `Above(:rho, 1, unit=:nH)` is a statement about physics.
+`p.rho >= 3.0` on the raw table, and `@filter gas :rho >= 3.0` on the object, are
+both statements about this run's code units and will mean something different in
+the next simulation.
+
+**Say the frame too.** A condition is computed by `getvar`, so a radius needs a
+`center` and a velocity-derived quantity needs a `vcenter`. Leave them out and you
+measure from the box corner, in the box frame, which on a galaxy in the middle of
+its box is a selection nobody asked for (§2).
 
 **Filter, then look.** A condition is cheap and a map is cheap. §6 takes seconds
 and catches a threshold that selects nothing, or everything, before it becomes
@@ -723,9 +818,10 @@ several subsets of one object without copying.
 between simulations; `Above(:rho, 1e3, unit=:nH)` does not, unless you mean it
 absolutely.
 
-**Geometry belongs in a region.** `InRange(:r_cylinder, …)` works, but it is a
-centre test with no boundary treatment. If the geometry matters, cut it as a
-region (§7) and let the boundary cells carry their fractions.
+**Geometry belongs in a region.** `InRange(:r_cylinder, …)` works, given a
+`center`, but it is a centre test with no boundary treatment. If the geometry
+matters, cut it as a region (§7) and let the boundary cells carry their
+fractions.
 
 ## Summary
 
@@ -734,6 +830,8 @@ region (§7) and let the boundary cells carry their fractions.
   They select identically (§1, §4).
 - A condition is a **quantity, a threshold and a unit**, and the quantity can be
   anything `getvar` derives, temperature, sound speed, Mach number, age (§2).
+- A condition also takes `getvar`'s **frame**: `center` for a quantity measured
+  from a point, `vcenter` for one measured in a moving frame (§2).
 - Conditions compose with `&`, `|`, `!`; several arguments mean AND; and
   `AbovePercentile`/`BelowPercentile` set the threshold from the data itself
   (§3).

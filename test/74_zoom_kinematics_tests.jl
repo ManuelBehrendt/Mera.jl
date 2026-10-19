@@ -707,8 +707,8 @@ end
 
     @testset "getmask(obj, region): geometry as a composable mask" begin
         F = synthetic_clumps(lmax=5)
-        sph  = Sphere(0.25, center=[:bc], range_unit=:standard)
-        cub  = Cuboid(xrange=[-0.2,0.2], yrange=[-0.2,0.2], zrange=[-0.2,0.2],
+        sph  = sphere(0.25, center=[:bc], range_unit=:standard)
+        cub  = cuboid(xrange=[-0.2,0.2], yrange=[-0.2,0.2], zrange=[-0.2,0.2],
                       center=[:bc], range_unit=:standard)
 
         # THE CONTRACT: a mask and a subregion must never disagree about which rows are in.
@@ -727,7 +727,7 @@ end
                                                            verbose=false), :Msol)
 
         # composes with region algebra …
-        both = getmask(F.gas, sph | Sphere(0.15, center=[0.8,0.5,0.5], range_unit=:standard))
+        both = getmask(F.gas, sph | sphere(0.15, center=[0.8,0.5,0.5], range_unit=:standard))
         @test count(both) >= count(m)
         @test count(getmask(F.gas, !sph)) == length(F.gas.data) - count(m)
 

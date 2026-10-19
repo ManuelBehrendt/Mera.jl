@@ -7,6 +7,11 @@
 
 ![DataSetType hierarchy](assets/TypeHierarchy.png)
 
+![API type families](assets/TypeHierarchyAPI.png)
+
+*The families you build and hand to a function: regions, filter conditions, clump finders,
+clump validators, neighbour indices and report cards.*
+
 - AMRMapsType <: DataMapsType  (`HydroMapsType` is a kept alias of it)
 - PartMapsType  <: DataMapsType
 

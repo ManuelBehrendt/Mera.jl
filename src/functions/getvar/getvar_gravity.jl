@@ -100,6 +100,13 @@ function get_data(dataobject::GravDataType,
         use_mask_in_recursion = mask  # Use original mask for recursive calls
     end
 
+    # The potential in code units. RAMSES stores it short by a factor boxlen: phi_fine_cg.f90
+    # scales the Poisson source by boxlen/nx_loc, and force_fine.f90 takes the gradient in box
+    # units, so the two cancel for the force but not for phi. Correct it here, on reading, so the
+    # stored column keeps RAMSES's value: old mera files need no conversion, and writeramses
+    # still writes back exactly what RAMSES wrote.
+    potential() = select(masked_data, :epot) .* boxlen
+
 
     if direction == :z
         apos = :cx
@@ -156,6 +163,8 @@ function get_data(dataobject::GravDataType,
                 else # if uniform grid
                     vars_dict[i] =  select(masked_data, cpos) .- 2^lmax .* center[3]
                 end
+            elseif i == :epot
+                vars_dict[i] = potential() .* selected_unit
             else
                 #if selected_unit != 1.
                     #println(i)
@@ -176,9 +185,9 @@ function get_data(dataobject::GravDataType,
         elseif i == :cellsize
             selected_unit = getunit(dataobject, :cellsize, vars, units)
             if isamr
-                vars_dict[:cellsize] =  _map_col(row-> dataobject.boxlen / 2^row.level * selected_unit , masked_data)
+                vars_dict[:cellsize] =  _cellsize_col(dataobject.boxlen, select(masked_data, :level), selected_unit)
             else # if uniform grid
-                vars_dict[:cellsize] =  _map_col(row-> dataobject.boxlen / 2^lmax * selected_unit , masked_data)
+                vars_dict[:cellsize] =  fill(dataobject.boxlen / 2^lmax * selected_unit, length(masked_data))
             end
         elseif i == :volume
             selected_unit = getunit(dataobject, :volume, vars, units)
@@ -227,13 +236,9 @@ function get_data(dataobject::GravDataType,
         # This is the gravitational potential energy per unit mass (identical to epot)
         elseif i == :specific_gravitational_energy
             selected_unit = getunit(dataobject, :specific_gravitational_energy, vars, units)
-            epot = select(masked_data, :epot)
-            vars_dict[:specific_gravitational_energy] = @. epot * selected_unit
+            vars_dict[:specific_gravitational_energy] = potential() .* selected_unit
 
-        # Base gravitational potential field: φ [erg/g] - already available as :epot column
-        elseif i == :epot
-            selected_unit = getunit(dataobject, :epot, vars, units)
-            vars_dict[:epot] = @. select(masked_data, :epot) * selected_unit
+        # :epot itself is a stored column, so it is handled with the columns above.
 
 
         # Cylindrical acceleration components - code units by default
@@ -366,7 +371,7 @@ function get_data(dataobject::GravDataType,
                                "cell mass. Call getvar(gravity, hydro, :gravitational_energy), or " *
                                "projection(hydro, gravity, :gravitational_energy).")
             m = cell_mass()
-            epot = select(masked_data, :epot)
+            epot = potential()
             vars_dict[:gravitational_energy] = @. m * epot * selected_unit
 
         # Binding energy of the cell, -m phi [erg]: the energy needed to remove it to infinity.
@@ -377,7 +382,7 @@ function get_data(dataobject::GravDataType,
                                "cell mass. Call getvar(gravity, hydro, :total_binding_energy), or " *
                                "projection(hydro, gravity, :total_binding_energy).")
             m = cell_mass()
-            epot = select(masked_data, :epot)
+            epot = potential()
             vars_dict[:total_binding_energy] = @. -m * epot * selected_unit
 
         # Gravitational force in cylindrical or spherical components, F = m a, [dyn]. One branch

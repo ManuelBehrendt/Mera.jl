@@ -663,8 +663,7 @@ family 2 : 544515 particles
 ### Selecting by particle type
 
 `getparticlemask` builds a boolean mask from a name, a family code, or a `(family=…, tag=…)` pair.
-The mask goes straight into `mask=` on `profile`, `phase`, `rotationcurve`, `projection`, `getvar`
-and friends.
+The mask goes straight into `mask=` on `profile`, `phase`, `projection`, `getvar` and friends.
 
 ```julia
 for sel in (:all, :dm, :stars, :clouds, :tracer, :gas)

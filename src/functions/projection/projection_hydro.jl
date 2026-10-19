@@ -76,6 +76,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
+                        split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -111,7 +117,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, refine=refine, refine_to=refine_to, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -149,6 +155,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
+                        split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -184,7 +196,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, refine=refine, refine_to=refine_to, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -222,6 +234,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
+                        split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -256,7 +274,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, refine=refine, refine_to=refine_to, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -296,6 +314,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
+                        split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
@@ -330,7 +354,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
-                            fov=fov, fov_unit=fov_unit, aperture=aperture,
+                            fov=fov, fov_unit=fov_unit, depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius, split=split, refine=refine, refine_to=refine_to, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -467,6 +491,26 @@ projection(dataobject::HydroDataType, vars::Array{Symbol,1};
            pxsize::Array{<:Any,1}=[missing, missing],
            mask::Union{Vector{Bool}, MaskType}=[false],
            direction::Symbol=:z,
+           los::Union{Array{<:Real,1}, Nothing}=nothing,
+           up::Union{Array{<:Real,1}, Nothing}=nothing,
+           theta::Union{Real, Nothing}=nothing,
+           phi::Union{Real, Nothing}=nothing,
+           inclination::Union{Real, Nothing}=nothing,
+           azimuth::Union{Real, Nothing}=nothing,
+           position_angle::Union{Real, Nothing}=nothing,
+           axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+           angle_unit::Symbol=:deg,
+           binning::Symbol=:overlap,
+           nmax::Int=64,
+           fov=nothing,
+           fov_unit::Symbol=:standard,
+           aperture::Symbol=:circle,
+           depth=nothing,
+           depth_unit::Symbol=:standard,
+           angmom_radius=nothing,
+           split::Bool=false,
+           refine::Int=0,
+           refine_to=nothing,
            weighting::Array{<:Any,1}=[:mass, missing],
            mode::Symbol=:standard,
            xrange::Array{<:Any,1}=[missing, missing],
@@ -479,6 +523,7 @@ projection(dataobject::HydroDataType, vars::Array{Symbol,1};
            verbose::Bool=true,
            show_progress::Bool=true,
            verbose_threads::Bool=false,
+           max_threads::Int=Threads.nthreads(),
            myargs::ArgumentsType=ArgumentsType())
 
 return AMRMapsType
@@ -542,7 +587,9 @@ Which to reach for:
   components, and unlike `inclination`/`azimuth` it is measured from the box axes rather than from a
   reference axis you choose.
 
-- **`inclination`, `azimuth`** (user-oriented; `azimuth` alias `position_angle`): tilt the view
+- **`inclination`, `azimuth`** (user-oriented): tilt the view. `position_angle` is **not** an
+  alias of `azimuth`: `azimuth` turns the camera about the reference axis and changes the line
+  of sight, while `position_angle` rolls the finished image about it and leaves `m.los` alone
   away from a reference `axis` by `inclination` (0°⇒down the axis, 90°⇒⟂ to it) and rotate
   around it by `azimuth`.
 - **`axis`**: reference axis for inclination/azimuth. Default `:z` (box vertical — assumes
@@ -554,7 +601,10 @@ Which to reach for:
 - **`direction=:faceon`/`:edgeon`**: shortcuts for `inclination=0`/`90` with `axis=:angmom`.
 - **`los::Vector`**: explicit line-of-sight (viewing) direction, e.g. `los=[1,1,1]` (need not be normalized)
 - **`theta`, `phi`**: spherical angles about the box axes; `los=[sinθcosφ, sinθsinφ, cosθ]`.
-- **`up::Vector`**: optional camera up-vector (default: auto; the reference axis kept upright)
+- **`up::Vector`**: optional camera up-vector. With `inclination`/`azimuth` the default keeps
+  the reference axis upright. With `los`/`theta`/`phi` and no `up`, the hint is world **+z**,
+  falling back to **+y** when the line of sight is itself the z axis, so a box-axis `los`
+  reproduces the matching `direction=` preset.
 - **`angle_unit::Symbol`**: `:deg` (default) or `:rad`
 - **`binning::Symbol`**: how rotated cells are deposited onto the camera plane —
   - `:overlap` (default) — per-cell footprint supersampling (`ns = ceil(cellsize/pixel)` sub-points
@@ -569,8 +619,10 @@ Which to reach for:
 - **`nmax::Int`**: `:overlap` supersampling cap (default `64`) — max sub-points per cube axis.
   Raise for fewer artifacts on very coarse cells (slower, ∝ `nmax³`), lower for speed.
 
-  All are mass-conserving. Off-axis currently supports the standard hydro/RT fields and
-  `:sd`/`:mass`; map-only variables (`:r_cylinder`, `:ϕ`, velocity dispersions) require an axis direction.
+  All are mass-conserving. Off-axis supports the standard hydro/RT fields, `:sd`/`:mass`, the
+  velocity dispersions (box frame and camera frame) and the `:ncell` counter. Only `:r_cylinder`,
+  `:r_sphere` and `:ϕ` still need an axis direction: they describe the pixel's own geometry, and
+  an off-axis pixel is a slanted column with no single value.
 
 #### Data Processing Options:
 - **`weighting::Array`**: Variable for weighting `[quantity, unit]` (default: `[:mass]`)
@@ -743,7 +795,9 @@ Returns `AMRMapsType` (alias: `HydroMapsType`) containing:
 - **`.pixsize`**: pixel size in **code length** units (× `proj.scale.<unit>` for physical)
 - **`.lmax_projected`**: Maximum AMR level included in projection
 - **`.ranges`**: normalized `[0,1]` coordinate ranges (this is the fractional field, unlike `.extent`)
-- **`.center`**: projection centre, in **code length** units
+- **`.center`**: projection centre as a **box fraction** (0 to 1), not a length. Off-axis it
+  records the resolved centre; on the axis-aligned path it comes back empty. A `slice`
+  result's `.center` is a different quantity with the same name, in code units
 
 ### Radiative transfer (RT) projections
 
@@ -818,6 +872,65 @@ Off-axis projections:
         is deepest on axis and falls to **zero at the frame boundary** — for `:square` that is the
         four corners, which sit exactly on the sphere. On a 100 kpc box, `fov=15, :square` gives
         42.4 kpc of depth at the centre, 30.0 kpc at the middle of an edge and 0 at the corners.
+
+        `depth` fixes this when it matters: it cuts along the **line of sight** itself, so the
+        column integrates the same distance everywhere in the frame.
+
+!!! note "Camera-space depth: `depth` / `depth_unit`"
+    `depth=2, depth_unit=:kpc` keeps a slab of half-thickness 2 kpc about `center`, measured
+    **along the viewing direction**. `depth=[-2, 6]` is an explicit window, so the foreground and
+    the background need not match. Every other window (`xrange`/`yrange`/`zrange`) is world space
+    and therefore does not follow the camera; this one does, which is what an off-axis column
+    density needs if it is to mean a fixed depth.
+
+    It applies to off-axis views only. On a box-axis view the line of sight IS a box axis, so
+    `zrange` already cuts exactly this slab, and `depth` raises there and says so.
+
+!!! note "Partial cells: `split`, `refine`, `refine_to`"
+    Every off-axis cut keeps a cell **whole** if its centre is inside and drops it whole
+    otherwise. `split=true` weights it instead by the fraction of its volume that really is
+    inside the `depth` slab or the `fov` sphere, which is what makes stacked slabs re-sum and a
+    small aperture hold the right mass.
+
+    `split` fixes the total; it does not move the mass. A half-in cell still deposits its
+    (reduced) share over its whole footprint, so the edge is still a staircase. `refine=N`
+    octree-subdivides the cells the `fov` **sphere** crosses, localising the boundary to
+    `cellsize/2^N` so the rendered edge sharpens; `refine_to=[length, unit]` subdivides until the
+    boundary cells reach a target size instead. Both need `fov` and `split=true`, and both
+    conserve: refining moves mass, it does not create any. Cost grows with the boundary area, at
+    most `8^N` per boundary cell.
+
+    For a region you select yourself, `subregion` takes the same `split`/`refine`/`refine_to`.
+
+!!! note "A rectangular frame: `fov=[wx, wy]`"
+    `fov` is normally one half-width and the frame is square. Two half-widths give a rectangle,
+    which is what an edge-on disc wants: in a square frame most of the pixels are empty sky.
+    Requires `aperture=:square`, because a rectangle has no single radius while `:circle` selects
+    a disc, which has one. A scalar `fov` behaves exactly as before.
+
+!!! note "Orienting on a region: `angmom_radius`"
+    `axis=:angmom` and the `direction=:faceon`/`:edgeon` presets compute the orientation from the
+    angular momentum of **the data that gets drawn**, about `center`: the object you pass, after
+    `mask`, and inside the `fov` sphere when `fov` is given. `depth` and
+    `xrange`/`yrange`/`zrange` do not narrow it. Load a whole box and the sum is
+    dominated by the material with the longest lever arm, which is usually not the disc you meant.
+    `angmom_radius=[10, :kpc]` restricts that sum to a sphere about `center`. For an axis from
+    other data (all components, or a selection you do not want to draw), compute it with
+    [`angmom`](@ref) and pass it as `axis=L`.
+
+    The vector is per object: gas and stars each have their own, so `:faceon` on one is a
+    different camera from `:faceon` on the other.
+
+!!! note "How well sampled is a pixel: `:ncell` and `:npart`"
+    Ask for `:ncell` (cells) or `:npart` (particles) alongside any other variable and the result
+    carries a map of what fed each pixel, filled by the same deposit as the value. The meaning
+    depends on the kernel: `:ngp` counts one per cell or particle, so the map sums to exactly how
+    many there were; `:cic` counts one per pixel of its 2x2 stencil; `:overlap` counts one per
+    sub-point and `:exact` one per pixel covered, so for those two it reads as sampling density
+    rather than an object tally.
+
+    The count is what separates a pixel you can quote from one built out of a single object: a
+    pixel holding one particle has no spread, so its dispersion is exactly zero.
         Harmless for an object centred in frame, but make `fov` comfortably larger than any
         diffuse column, profile or scale height you intend to measure.
 
@@ -875,8 +988,15 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         binning::Symbol=:overlap,
                         fov=nothing,
                         fov_unit::Symbol=:standard,
+                        depth=nothing,
+                        depth_unit::Symbol=:standard,
+                        angmom_radius=nothing,
+                        split::Bool=false,
+                        refine::Int=0,
+                        refine_to=nothing,
                         aperture::Symbol=:circle,
                         nmax::Int=64,
+                        _fov_half=nothing,       # internal: fixed frame half-width from `fov`
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
@@ -918,14 +1038,33 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
         end
     end
 
+    # `refine`/`refine_to` subdivide the cells the SPHERE boundary crosses, so they only mean
+    # something when there is a sphere to cross and a fraction to refine.
+    (refine > 0 || refine_to !== nothing) && (fov === nothing || !split) && throw(ArgumentError(
+        "refine/refine_to subdivide the cells a `fov` sphere cuts through, so they need both " *
+        "`fov=` and `split=true`. Without them there is no boundary to resolve. (For a region " *
+        "you select yourself, pass refine= to `subregion` instead.)"))
+
     # Camera-plane field of view. `xrange`/`yrange`/`zrange` are WORLD-space bounds, so a cubic
     # window is not rotation-invariant: tilting grows the frame and the window's own faces appear
     # as straight edges across the image. `fov` asks for a fixed camera-plane window instead, via
     # the rotation-invariant sphere selection `rotation_sequence` already uses.
     if fov !== nothing
-        src, win, fov_code, _rsel = _fov_selection(dataobject, fov, fov_unit, aperture, center)
-        gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center)
-        m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=mask,
+        # a mask applies to the object the caller holds, so filter first and cut the sphere out of
+        # the filtered data; passing it to the inner call instead gives it the wrong length
+        premasked, inner_mask = _fov_premask(dataobject, mask)
+        src, win, fov_code, _rsel = _fov_selection(premasked, fov, fov_unit, aperture, center, split;
+                                                   refine=refine, refine_to=refine_to)
+        # the gravity object is row-aligned with the hydro one, so it takes the same mask first;
+        # cut from the unmasked object instead, the two spheres would not share their rows
+        gpre = gravity_data === nothing ? nothing : first(_fov_premask(gravity_data, mask))
+        gsrc = _fov_companion(gpre, _rsel, fov_unit, center, split;
+                              refine=refine, refine_to=refine_to)
+        # the frame half-width in code units, so the inner call can hold the frame fixed
+        fov_half = _rsel / (fov_unit === :standard ? 1.0 / dataobject.boxlen :
+                                                     getunit(dataobject.info, fov_unit)) +
+                   _fov_margin(dataobject, src, premasked !== dataobject, _rsel, fov_unit, center)
+        m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=inner_mask,
                        direction=direction, los=los, up=up, theta=theta, phi=phi,
                        inclination=inclination, azimuth=azimuth, position_angle=position_angle,
                        axis=axis, angle_unit=angle_unit, binning=binning, nmax=nmax,
@@ -933,7 +1072,15 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                        center=center, range_unit=fov_unit, data_center=data_center,
                        data_center_unit=data_center_unit, verbose=verbose,
                        show_progress=show_progress, max_threads=max_threads,
-                       verbose_threads=verbose_threads, gravity_data=gsrc)
+                       verbose_threads=verbose_threads, gravity_data=gsrc,
+                       # `fov` re-enters this function on the selected sphere, so every keyword the
+                       # inner call still needs has to be handed on. Forgetting one does not fail,
+                       # it silently reverts to the default, which is worse.
+                       depth=depth, depth_unit=depth_unit, angmom_radius=angmom_radius,
+                       # NOT refine/refine_to: `_fov_selection` has already applied them to
+                       # the sphere, and the inner call has no `fov` left for them to mean
+                       # anything against, so forwarding them would trip the guard below.
+                       split=split, _fov_half=fov_half)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         return m
     end
@@ -1034,17 +1181,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     density_names = [:density, :rho, :ρ]
     rcheck = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder,
-              :σr_sphere, :σθ_sphere, :σϕ_sphere]
-    σ_to_v = SortedDict(  :σx => [:vx, :vx2],
-            :σy => [:vy, :vy2],
-            :σz => [:vz, :vz2],
-            :σ  => [:v,  :v2],
-            :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
-            :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2],
-                          :σr_sphere   => [:vr_sphere,   :vr_sphere2],
-                          :σθ_sphere   => [:vθ_sphere,   :vθ_sphere2],
-                          :σϕ_sphere   => [:vϕ_sphere,   :vϕ_sphere2] )
+    σcheck = _SIGMA_NAMES
+    σ_to_v = _SIGMA_TO_V
 
     # checks to use maps instead of projections
     notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck, σcheck, σ_to_v)
@@ -1062,12 +1200,38 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     # specifier is given (los/up/theta/phi or direction=:faceon/:edgeon).
     # ------------------------------------------------------------------
     if is_offaxis(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth, position_angle=position_angle, direction=direction)
+        # `depth` is a camera-space cut, so it only has a meaning on the off-axis path. On a box-axis
+        # view the line of sight IS a box axis and `zrange` already does this, exactly.
         return projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
                                   weighting, weight_scale, mode, ranges, center, range_unit,
                                   mask, los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, nmax, direction,
                                   boxlen, lmin, simlmax, isamr, scale, verbose, max_threads,
-                                  gravity_data)
+                                  gravity_data, depth, depth_unit, angmom_radius, split, _fov_half)
     end
+
+    # Camera-frame kinematics have no meaning without a camera: :vlos/:σlos are along the line
+    # of sight, :vcamx/:vcamy along the image axes. On the axis-aligned path there is no camera
+    # basis, and they used to fail with "not a column of this object", which does not say why.
+    for v in selected_vars
+        if v in _CAM_KINEMATICS
+            throw(ArgumentError(
+                ":$v is a CAMERA-frame quantity and needs an off-axis view (los=, inclination=, " *
+                "azimuth=, or direction=:faceon/:edgeon). Looking down a box axis, the line of " *
+                "sight IS that axis, so use :vz/:σz for direction=:z, :vx/:σx for :x, and so on."))
+        end
+    end
+
+    # :ncell/:npart are filled by the off-axis deposit, which the axis-aligned path does not use.
+    # Returning a map of ones there would look like a count and be a mask, so refuse it instead.
+    (:ncell in selected_vars) && throw(ArgumentError(
+        ":ncell counts what the OFF-AXIS deposit put in each pixel and is not available on the " *
+        "axis-aligned path. Give a view (los=, inclination=, azimuth=, or direction=:faceon/:edgeon) " *
+        "to get it."))
+
+    depth === nothing || throw(ArgumentError(
+        "depth= is a camera-space cut and applies to off-axis views only. This call is axis-aligned " *
+        "(direction=:x/:y/:z with no los/inclination/azimuth), where the line of sight is a box axis: " *
+        "use zrange (or xrange/yrange for :x/:y) instead, which cuts exactly the same slab."))
 
     if verbose
         println("Selected var(s)=$(tuple(selected_vars...)) ")
@@ -1442,24 +1606,21 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                 selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
                 selected_v = σ_to_v[ivar]
 
-                # revert weighting for velocity dispersion calculation
-                if mode == :standard
-                    # Use final weights for proper weighted averages
-                    mask_nonzero_v1 = final_weights[selected_v[1]] .> 0
-                    mask_nonzero_v2 = final_weights[selected_v[2]] .> 0
-                    
-                    # Direct allocation for velocity arrays (no memory pool needed)
-                    iv = zeros(Float64, length1, length2)
-                    iv2 = zeros(Float64, length1, length2)
-                    
-                    iv[mask_nonzero_v1] = final_grids[selected_v[1]][mask_nonzero_v1] ./ final_weights[selected_v[1]][mask_nonzero_v1]
-                    iv2[mask_nonzero_v2] = final_grids[selected_v[2]][mask_nonzero_v2] ./ final_weights[selected_v[2]][mask_nonzero_v2]
-                    
+                # A dispersion is a width, so it is built from the weighted MEANS <v> and <v^2>
+                # whatever `mode` says. With mode=:sum the component maps stay sums; taking the
+                # root of sum(v^2 w) - sum(v w)^2 would not be the width of anything.
+                mask_nonzero_v1 = final_weights[selected_v[1]] .> 0
+                mask_nonzero_v2 = final_weights[selected_v[2]] .> 0
+                iv  = zeros(Float64, length1, length2)
+                iv2 = zeros(Float64, length1, length2)
+                iv[mask_nonzero_v1]  = final_grids[selected_v[1]][mask_nonzero_v1] ./ final_weights[selected_v[1]][mask_nonzero_v1]
+                iv2[mask_nonzero_v2] = final_grids[selected_v[2]][mask_nonzero_v2] ./ final_weights[selected_v[2]][mask_nonzero_v2]
+                if mode == :sum
+                    imaps[selected_v[1]] = final_grids[selected_v[1]]
+                    imaps[selected_v[2]] = final_grids[selected_v[2]]
+                else
                     imaps[selected_v[1]] = iv
                     imaps[selected_v[2]] = iv2
-                elseif mode == :sum
-                    iv  = imaps[selected_v[1]] = final_grids[selected_v[1]]  
-                    iv2 = imaps[selected_v[2]] = final_grids[selected_v[2]]  
                 end
                 delete!(data_dict, selected_v[1])
                 delete!(data_dict, selected_v[2])
@@ -1468,7 +1629,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                 imaps[ivar] = sqrt.(max.(iv2 .- iv .^2, 0.)) .* selected_unit  # max to avoid negative values from numerical errors
                 maps_unit[ivar] = unit_name
                 maps_weight[ivar] = weighting
-                maps_mode[ivar] = mode
+                maps_mode[ivar] = :standard
                 
                 # assign units 
                 selected_unit, unit_name= getunit(dataobject, selected_v[1], selected_vars, units, uname=true)
@@ -1595,23 +1756,59 @@ end
 #       rotated footprint of the kept cells so every one lands on the grid.
 #  Conservative: the deposit preserves Σ value·weight to machine precision (subregions included).
 # =====================================================================================
+# Resolve a line-of-sight `depth` window to code units, measured along the camera's viewing
+# direction from `center`. Accepts a half-width (`depth=2`, symmetric) or an explicit window
+# (`depth=[-1, 3]`, which need not be symmetric: foreground and background can differ).
+# Angular momentum for `axis=:angmom` and the `:faceon`/`:edgeon` presets.
+#
+# By default this sums over EVERYTHING the object holds, which is right only when what you loaded
+# is what you want oriented. Load a whole box and the sum is dominated by the outer material with
+# the longest lever arm, so a "face-on galaxy" can come out tilted by the halo. `angmom_radius`
+# restricts the sum to a sphere about `center`, which is almost always what was meant.
+_angmom_vector(dataobject, center, range_unit, angmom_radius; kwargs...) =
+    angmom(dataobject; center=center, range_unit=range_unit, radius=angmom_radius, kwargs...)
+
+function _depth_window(depth, depth_unit::Symbol, info, boxlen)
+    cuw = depth_unit === :standard ? 1.0 / boxlen : getunit(info, depth_unit)
+    if depth isa Real
+        depth > 0 || throw(ArgumentError("depth must be positive when given as a half-width, got $depth"))
+        h = float(depth) / cuw
+        return (-h, h)
+    elseif depth isa AbstractVector && length(depth) == 2
+        lo, hi = float(depth[1]) / cuw, float(depth[2]) / cuw
+        lo < hi || throw(ArgumentError("depth=[lo,hi] needs lo < hi, got $depth"))
+        return (lo, hi)
+    end
+    throw(ArgumentError("depth must be a half-width (depth=2) or a window (depth=[-1,3]), got $depth"))
+end
+
 function projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
                             weighting, weight_scale, mode, ranges, center, range_unit,
                             mask, los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, nmax, direction,
                             boxlen, lmin, simlmax, isamr, scale, verbose,
                             max_threads=Threads.nthreads(),
-                            gravity_data::Union{GravDataType,Nothing}=nothing)
+                            gravity_data::Union{GravDataType,Nothing}=nothing,
+                            depth=nothing, depth_unit::Symbol=:standard,
+                            angmom_radius=nothing, split::Bool=false, fov_half=nothing)
 
     rcheck     = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
-    σcheck     = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σcheck     = _SIGMA_NAMES
+    # Radius and angle maps are still axis-only: they are geometry OF THE PIXEL, and an off-axis
+    # pixel is a slanted column with no single radius. Dispersions used to be refused here too,
+    # but they need nothing camera-specific: each is built from two ordinary getvar fields (v and
+    # v²) that project off-axis like any other scalar, so they run through the deposit below.
     for v in selected_vars
-        if v in rcheck || v in anglecheck || v in σcheck
-            error("projection: off-axis views (los/theta/phi/:faceon/:edgeon) do not yet " *
-                  "support the map-only variable :$v (radius/angle/velocity-dispersion maps). " *
+        if v in rcheck || v in anglecheck
+            error("projection: off-axis views (los/theta/phi/:faceon/:edgeon) do not " *
+                  "support the map-only variable :$v: it is a property of the pixel's own " *
+                  "geometry, and an off-axis pixel is a slanted column with no single value. " *
                   "Use an axis-aligned direction=:x/:y/:z for these.")
         end
     end
+    # which dispersions were asked for, and the component maps they are built from
+    σ_want = [v for v in selected_vars if v in σcheck]
+    σ_deps = isempty(σ_want) ? Symbol[] : unique(vcat((_SIGMA_TO_V[v] for v in σ_want)...))
     if !(binning in (:cic, :ngp, :overlap, :exact))
         throw(ArgumentError("binning must be :cic, :ngp (fast preview), :overlap (accurate) or :exact (analytic), got :$binning"))
     end
@@ -1619,9 +1816,11 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # --- camera orientation (A1) ---------------------------------------------------
     Lvec = nothing
     if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
-        Lvec = [ sum(getvar(dataobject, :lx, center=center, center_unit=range_unit)),
-                 sum(getvar(dataobject, :ly, center=center, center_unit=range_unit)),
-                 sum(getvar(dataobject, :lz, center=center, center_unit=range_unit)) ]
+        # Orient on the cells that get drawn, as the particle path does: a `mask` of cold gas
+        # gives the cold gas's own axis, not the axis of everything loaded.
+        Lvec = length(mask) > 1 ?
+            _angmom_vector(dataobject, center, range_unit, angmom_radius; mask=collect(Bool.(mask))) :
+            _angmom_vector(dataobject, center, range_unit, angmom_radius)
     end
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
                             inclination=inclination, azimuth=azimuth,
@@ -1652,21 +1851,19 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # --- selection mask: user mask ∧ the requested spatial sub-box (WORLD axes) ----
     # xrange/yrange/zrange select a world-space sub-box exactly like the axis-aligned path (and a
     # `subregion`'s ranges flow in identically). We clip on the WORLD coordinates (px,py,pz about the
-    # sub-box-centre pivot), NOT on the rotated camera coords — clipping a rotated camera coord against
-    # an axis-aligned half-extent drops in-box corner cells. A cell is kept when its FOOTPRINT overlaps
-    # the sub-box (centre within half-extent + half its own size), matching how `gethydro`/`subregion`
-    # select a subregion by cell-volume overlap; clipping on the bare cell centre instead drops the
-    # half-cell border layer and silently loses mass (≈0.4–0.9% for an off-axis subregion). With the
-    # half-cell margin, and the camera frame below auto-fitting the rotated footprint of the kept
-    # cells, every selected cell lands on the grid and the total is conserved to round-off.
-    # An axis needs no clip when the requested range already COVERS the data that was loaded
-    # (`dataobject.ranges`) — i.e. there is no *additional* crop beyond what `gethydro`/`subregion`
-    # already selected, so every loaded cell is wanted. Re-clipping the loaded subregion here on bare
-    # cell CENTRES would drop its half-cell overlap border and silently lose mass (≈0.4-0.9% off-axis);
-    # skipping the clip deposits all loaded cells, so the off-axis total conserves to round-off, like
-    # the full box. This matches the full-box case (`ranges == [0,1]³ == dataobject.ranges`) and the
-    # axis-aligned path, which never re-clips a loaded subregion. A genuine tighter crop (the requested
-    # range lies strictly inside the loaded data) still clips on the world coordinates exactly as before.
+    # sub-box-centre pivot), NOT on the rotated camera coords: clipping a rotated camera coord
+    # against an axis-aligned half-extent drops in-box corner cells.
+    #
+    # An axis needs no clip at all when the requested range already COVERS the loaded data
+    # (`dataobject.ranges`), because then every loaded cell is wanted and `gethydro`/`subregion`
+    # has already done the selection by cell-volume overlap. Re-clipping it here would drop the
+    # half-cell border layer that selection deliberately kept, losing about 0.4 to 0.9 percent of
+    # the mass off-axis. Skipping the clip deposits every loaded cell, so the total conserves to
+    # round-off, matching the full-box case and the axis-aligned path.
+    #
+    # A genuine tighter crop (the requested range lies strictly inside the loaded data) DOES clip,
+    # and it clips on the bare cell centre: a cell straddling the requested face is kept whole if
+    # its centre is inside and dropped whole if not. That is a hard cut, not a volume fraction.
     dr = dataobject.ranges
     tol = 1e-10
     full_x = ranges[1] <= dr[1] + tol && ranges[2] >= dr[2] - tol
@@ -1675,6 +1872,39 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     full_x || (sel = sel .& (abs.(px) .<= (ranges[2]-ranges[1])*boxlen/2))
     full_y || (sel = sel .& (abs.(py) .<= (ranges[4]-ranges[3])*boxlen/2))
     full_z || (sel = sel .& (abs.(pz) .<= (ranges[6]-ranges[5])*boxlen/2))
+
+    # --- line-of-sight depth cut -----------------------------------------------------------------
+    # Every clip above is in WORLD coordinates, so none of them follows the camera: tilt the view and
+    # a `zrange` becomes a slab through the box, not through the image. `depth` is the one cut
+    # measured along the viewing direction itself, which is what a column density needs if it is to
+    # integrate the same distance everywhere in the frame. `z_cam` is that coordinate and is already
+    # computed above, so this is a selection and nothing more.
+    depth_frac = nothing          # per-cell volume fraction inside the slab, when split=true
+    if depth !== nothing
+        dlo, dhi = _depth_window(depth, depth_unit, dataobject.info, boxlen)
+        # `z_cam` is measured from the frame PIVOT, which is the centre of the requested ranges and
+        # therefore the box centre when no window was given. The window the user asked for is about
+        # `center`, so shift it by however far `center` lies along the line of sight from the pivot.
+        # Without this a slab "about center" silently cuts through the box centre instead.
+        ctr_code = _center_code(dataobject, center, range_unit)
+        off = sum((ctr_code .- pivot .* boxlen) .* cam_w)
+        if split
+            # weight each cell by the fraction of its volume inside the slab, so the cut does not
+            # step by half a cell at each face. Cells with no overlap fall out of `sel` as before.
+            df = _slab_fractions(z_cam, cellsize_all, cam_w, dlo + off, dhi + off)
+            depth_frac = df
+            sel = sel .& (df .> 0)
+            verbose && println("depth cut (split): ", count(sel), " of ", ncells,
+                               " cells touch [", round(dlo + off, digits=4), ", ",
+                               round(dhi + off, digits=4), "] code units along the line of sight; ",
+                               count(sel .& (df .< 1)), " of them only partly")
+        else
+            sel = sel .& (z_cam .>= dlo + off) .& (z_cam .<= dhi + off)
+            verbose && println("depth cut: ", count(sel), " of ", ncells, " cells within [",
+                               round(dlo + off, digits=4), ", ", round(dhi + off, digits=4),
+                               "] code units along the line of sight, about center")
+        end
+    end
 
     # --- camera-plane extent: auto-fit the rotated footprint of the SELECTED cells -------------
     # margin = 1 pixel + half the COARSEST selected cell's projected shadow, per camera axis, so a
@@ -1692,8 +1922,22 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         half = boxlen / 2
         x0, x1, y0, y1 = -half, half, -half, half
     end
+    if fov_half !== nothing
+        # `fov` fixes the frame: symmetric about `center` and the same at every angle, whatever
+        # the selection fills. Fitting it to the data instead made a sparse selection (a mask, a
+        # depth slab, a thin disc) come back smaller and off-centre, and the square crop then cut
+        # into it. `fov_half` already carries the object's cell margin (`_fov_margin`), and the
+        # frame never shrinks below the data, so every deposit still lands on the grid.
+        hw = fov_half + pixsize
+        hx = max(hw, -x0, x1); hy = max(hw, -y0, y1)
+        x0, x1, y0, y1 = -hx, hx, -hy, hy
+    end
     nx = max(1, round(Int, (x1 - x0) / pixsize))
     ny = max(1, round(Int, (y1 - y0) / pixsize))
+    if fov_half !== nothing                      # keep the centre on `center` after snapping
+        nx = max(1, ceil(Int, (x1 - x0) / pixsize)); ny = max(1, ceil(Int, (y1 - y0) / pixsize))
+        x0 = -nx * pixsize / 2; y0 = -ny * pixsize / 2
+    end
     x1 = x0 + nx * pixsize; y1 = y0 + ny * pixsize                # snap extent to pixel grid
     grid_extent = (x0, x1, y0, y1)
     grid_resolution = (nx, ny)
@@ -1716,6 +1960,13 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         getvar(dataobject, weighting[1])
     wfull = wfull .* weight_scale
     wsel  = Float64.(wfull[sel])
+    # `split=true` scales every cell by the fraction of it inside the depth slab. Scaling the
+    # WEIGHT is what makes a half-in cell count half: an extensive map (:sd/:mass) deposits the
+    # value with unit weights, so its own vector is scaled below instead, and a weighted mean
+    # carries the fraction in both the numerator and the denominator, where it cancels for a
+    # fully-in cell and correctly reduces the pull of a partly-in one.
+    dfsel = depth_frac === nothing ? nothing : Float64.(depth_frac[sel])
+    dfsel === nothing || (wsel = wsel .* dfsel)
 
     # per-cell physical size (code units) for the footprint deposits — slice the sizes computed
     # above by the final selection (the world-space sub-box may have narrowed `sel`).
@@ -1729,17 +1980,28 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # RECEDING (redshifted), so we negate here and :vlos matches the convention of the papers it
     # will be compared against. Do not "simplify" this minus away: it inverts every rotation
     # curve. σlos is a width and is unaffected by the sign.
-    vlossel = Float64[]
-    if (:vlos in selected_vars) || (:σlos in selected_vars)
+    #
+    # The same construction gives the two IN-PLANE components, along image x (cam_right) and
+    # image y (cam_up). Those carry no sign convention from observation, so they are not negated.
+    camvel = Dict{Symbol,Vector{Float64}}()
+    if any(v -> v in selected_vars, _CAM_KINEMATICS)
         vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
-        vlossel = Float64.(-(vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+        proj(a) = Float64.((vx .* a[1] .+ vy .* a[2] .+ vz .* a[3])[sel])
+        ((:vlos  in selected_vars) || (:σlos  in selected_vars)) && (camvel[:los]  = -proj(cam_w))
+        ((:vcamx in selected_vars) || (:σcamx in selected_vars)) && (camvel[:camx] =  proj(cam_right))
+        ((:vcamy in selected_vars) || (:σcamy in selected_vars)) && (camvel[:camy] =  proj(cam_up))
     end
+    # which camera axis each name reads
+    cam_axis_of = Dict(:vlos => :los, :σlos => :los, :vcamx => :camx,
+                       :σcamx => :camx, :vcamy => :camy, :σcamy => :camy)
     # requested unit symbol for a variable (aligned with selected_vars; default :standard)
     req_unit(iv) = (k = findfirst(==(iv), selected_vars);
                     (k !== nothing && length(units) >= k) ? units[k] : :standard)
 
     pixel_area = pixsize^2
     imaps     = SortedDict()
+    σ_raw     = Dict{Symbol,Matrix{Float64}}()   # raw component means, for the dispersions below
+    count_map = nothing            # filled by the deposit when :ncell was asked for
     maps_unit = SortedDict()
     maps_weight = SortedDict()
     maps_mode = SortedDict()
@@ -1756,24 +2018,28 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
 
     for ivar in selected_vars
         # ---- off-axis line-of-sight kinematics: mean velocity and dispersion ----
-        if ivar === :vlos || ivar === :σlos
+        if ivar in _CAM_KINEMATICS
             usym   = req_unit(ivar)
             vscale = usym === :standard ? 1.0 : getunit(dataobject.info, usym)
+            vcomp  = camvel[cam_axis_of[ivar]]
             g1 = zeros(Float64, nx, ny); w1 = zeros(Float64, nx, ny)
-            depo!(g1, w1, vlossel)                                   # Σ vlos·m , Σ m
-            nz = w1 .> 0; meanv = zeros(Float64, nx, ny); meanv[nz] = g1[nz] ./ w1[nz]
-            if ivar === :vlos
-                m = meanv .* vscale                                  # mass-weighted mean v_los
-            else                                                     # :σlos = √(⟨v²⟩ − ⟨v⟩²)
+            depo!(g1, w1, vcomp)                                     # Σ v·m , Σ m
+            if ivar === :vlos || ivar === :vcamx || ivar === :vcamy
+                m = _moments_mean(g1, w1) .* vscale                  # mass-weighted mean velocity
+            else                                                     # σ = √(⟨v²⟩ − ⟨v⟩²)
                 g2 = zeros(Float64, nx, ny); w2 = zeros(Float64, nx, ny)
-                depo!(g2, w2, vlossel .^ 2)
-                meanv2 = zeros(Float64, nx, ny); meanv2[nz] = g2[nz] ./ w2[nz]   # w2 ≡ w1; use w2 for clarity
-                m = sqrt.(max.(meanv2 .- meanv .^ 2, 0.0)) .* vscale
+                depo!(g2, w2, vcomp .^ 2)
+                m = _moments_dispersion(g1, g2, w1) .* vscale        # w2 ≡ w1, same deposit
             end
             imaps[ivar] = m; maps_unit[ivar] = usym
             maps_weight[ivar] = weighting; maps_mode[ivar] = :standard
             continue
         end
+
+        # a dispersion has no per-cell value of its own; it is assembled after the loop from the
+        # two component maps the expansion added to `selected_vars`. Skip it here so the generic
+        # branch below does not ask getvar for a field that does not exist.
+        ivar in σcheck && continue
 
         if ivar === :sd || ivar === :mass
             vals = getvar(dataobject, :mass, center=center, center_unit=range_unit)   # mass is hydro-only
@@ -1785,22 +2051,34 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         vsel = Float64.(vals[sel])
 
         extensive_sum = (mode == :sum) && (ivar === :ekin || ivar === :etherm || ivar === :volume)
-        wts = (ivar === :sd || ivar === :mass || extensive_sum) ? ones(Float64, length(vsel)) : wsel
+        is_extensive  = ivar === :sd || ivar === :mass || extensive_sum
+        wts = is_extensive ? ones(Float64, length(vsel)) : wsel
+        # an extensive quantity rides in the VALUE, so the slab fraction scales that instead
+        is_extensive && dfsel !== nothing && (vsel = vsel .* dfsel)
 
         grid    = zeros(Float64, nx, ny)
         wgrid   = zeros(Float64, nx, ny)
+        # :ncell asks how many cells fed each pixel. It is filled by the SAME deposit as the
+        # value, so it counts exactly what was deposited, and it is a separate grid that is only
+        # ever incremented, so it cannot disturb the value or the weight.
+        # allocate on the first variable that REACHES the deposit. `first(selected_vars)` was wrong:
+        # :vlos/:σlos are handled in their own branch above and never get here, so asking for
+        # [:vlos, :ncell] left the counter unallocated and :ncell came back as a ones-mask.
+        cgrid = (:ncell in selected_vars && count_map === nothing) ? zeros(Float64, nx, ny) : nothing
         if binning === :overlap
             deposit_rotated_cells_overlap!(grid, wgrid, xc, yc, csize, vsel, wts,
                                            cam_right, cam_up, grid_extent, grid_resolution;
-                                           nmax=nmax, max_threads=max_threads)
+                                           nmax=nmax, max_threads=max_threads, count_grid=cgrid)
         elseif binning === :exact
             deposit_rotated_cells_exact!(grid, wgrid, xc, yc, csize, vsel, wts,
                                          cam_right, cam_up, cam_w, grid_extent, grid_resolution;
-                                         max_threads=max_threads)
+                                         max_threads=max_threads, count_grid=cgrid)
         else
             deposit_rotated_cells_to_grid!(grid, wgrid, xc, yc, vsel, wts,
-                                           grid_extent, grid_resolution; binning=binning)
+                                           grid_extent, grid_resolution; binning=binning,
+                                           count_grid=cgrid)
         end
+        cgrid === nothing || (count_map = cgrid)
 
         if ivar === :sd
             m = grid ./ pixel_area
@@ -1819,11 +2097,47 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
             w_meta, mode_meta = weighting, mode
         end
 
+        # keep the RAW weighted mean of a dispersion component. sigma is formed from <v> and
+        # <v^2> in code units and scaled once at the end, exactly as the axis-aligned path does;
+        # scaling each component first would square the unit factor on the second moment.
+        # With mode=:sum, `m` holds the sum, so the mean is formed here from the same deposit.
+        if ivar in σ_deps
+            if mode == :sum
+                μ = zeros(Float64, nx, ny)
+                nzμ = wgrid .> 0
+                μ[nzμ] = grid[nzμ] ./ wgrid[nzμ]
+                σ_raw[ivar] = μ
+            else
+                σ_raw[ivar] = copy(m)
+            end
+        end
+
         selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
         imaps[ivar]       = m .* selected_unit
         maps_unit[ivar]   = unit_name
+        # :ncell is carried through the pipeline like any variable so units and metadata are set
+        # the usual way, but the map itself is the counter the deposit filled, not a weighted mean.
+        ivar === :ncell && count_map !== nothing && (imaps[:ncell] = count_map)
         maps_weight[ivar] = w_meta
         maps_mode[ivar]   = mode_meta
+    end
+
+    # ---- velocity dispersions in the BOX frame -------------------------------------------------
+    # sigma = sqrt(<v^2> - <v>^2) per pixel, from the two component maps just projected. The
+    # components are box axes, so :sigmaz is the spread along the simulation z even when the
+    # camera looks down some other direction. For the spread along the LINE OF SIGHT, which is
+    # what a spectrum measures, use :sigmalos; for the two in-plane ones, :sigmacamx / :sigmacamy.
+    #
+    # `mode` is not consulted here. A dispersion is a width, so it is always built from weighted
+    # means; summing the two moments instead would not give a width of anything.
+    for ivar in σ_want
+        c1, c2 = _SIGMA_TO_V[ivar]
+        (haskey(σ_raw, c1) && haskey(σ_raw, c2)) || continue
+        selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
+        imaps[ivar]       = sqrt.(max.(σ_raw[c2] .- σ_raw[c1] .^ 2, 0.0)) .* selected_unit
+        maps_unit[ivar]   = unit_name
+        maps_weight[ivar] = weighting
+        maps_mode[ivar]   = :standard
     end
 
     ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
@@ -2392,7 +2706,8 @@ function deposit_rotated_cells_to_grid!(grid::AbstractMatrix{Float64},
                                         weights::AbstractVector{Float64},
                                         grid_extent::NTuple{4,Float64},
                                         grid_resolution::NTuple{2,Int};
-                                        binning::Symbol=:cic)
+                                        binning::Symbol=:cic,
+                                        count_grid::Union{Nothing,AbstractMatrix{Float64}}=nothing)
     nx::Int, ny::Int = grid_resolution
     x_min::Float64, x_max::Float64, y_min::Float64, y_max::Float64 = grid_extent
     inv_px::Float64 = nx / (x_max - x_min)
@@ -2406,6 +2721,7 @@ function deposit_rotated_cells_to_grid!(grid::AbstractMatrix{Float64},
             w::Float64 = weights[i]
             grid[ix, iy]        += values[i] * w
             weight_grid[ix, iy] += w
+            count_grid === nothing || (count_grid[ix, iy] += 1.0)
         end
         return nothing
     elseif binning != :cic
@@ -2428,6 +2744,12 @@ function deposit_rotated_cells_to_grid!(grid::AbstractMatrix{Float64},
         grid[ixr,iyl] += vw*wrl; weight_grid[ixr,iyl] += w*wrl
         grid[ixl,iyr] += vw*wlr; weight_grid[ixl,iyr] += w*wlr
         grid[ixr,iyr] += vw*wrr; weight_grid[ixr,iyr] += w*wrr
+        # one count per pixel the stencil actually touches, so a pixel fed by the tail of one
+        # cell's stencil is not mistaken for a well-sampled one
+        if count_grid !== nothing
+            wll > 0 && (count_grid[ixl,iyl] += 1.0); wrl > 0 && (count_grid[ixr,iyl] += 1.0)
+            wlr > 0 && (count_grid[ixl,iyr] += 1.0); wrr > 0 && (count_grid[ixr,iyr] += 1.0)
+        end
     end
     return nothing
 end
@@ -2484,7 +2806,8 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
         values::AbstractVector{Float64}, weights::AbstractVector{Float64},
         cam_right::AbstractVector{<:Real}, cam_up::AbstractVector{<:Real},
         grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int};
-        nmax::Int=64, max_threads::Int=Threads.nthreads())
+        nmax::Int=64, max_threads::Int=Threads.nthreads(),
+        count_grid::Union{Nothing,AbstractMatrix{Float64}}=nothing)
 
     nmax = max(nmax, 1)              # guard nmax<1: clamp(k,1,0)→0 would give ns=0 → all-zero map
     nx, ny = grid_resolution
@@ -2501,6 +2824,7 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
     nthreads = min(nthreads, n)
     gbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
     wbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
+    cbufs = count_grid === nothing ? nothing : [zeros(Float64, nx, ny) for _ in 1:nthreads]
 
     # contiguous cell chunks, one per thread (no shared writes)
     bounds = [floor(Int, (t-1)*n/nthreads) + 1 for t in 1:nthreads+1]
@@ -2508,7 +2832,7 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
 
     @sync for t in 1:nthreads
         Threads.@spawn begin
-            g = gbufs[t]; wg = wbufs[t]
+            g = gbufs[t]; wg = wbufs[t]; cg = cbufs === nothing ? nothing : cbufs[t]
             @inbounds for i in bounds[t]:(bounds[t+1]-1)
                 s = cellsize[i]
                 ns_full = ceil(Int, s * inv_px)
@@ -2551,6 +2875,7 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
                                         fyov <= 0.0 && continue
                                         f = fxov*fyov
                                         g[px,py]  += vw_i*f; wg[px,py] += w_i*f
+                                        cg === nothing || (cg[px,py] += 1.0)
                                     end
                                 end
                             else
@@ -2566,6 +2891,10 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
                                 g[ixr,iyl] += vw_i*wrl; wg[ixr,iyl] += w_i*wrl
                                 g[ixl,iyr] += vw_i*wlr; wg[ixl,iyr] += w_i*wlr
                                 g[ixr,iyr] += vw_i*wrr; wg[ixr,iyr] += w_i*wrr
+                                if cg !== nothing
+                                    wll > 0 && (cg[ixl,iyl] += 1.0); wrl > 0 && (cg[ixr,iyl] += 1.0)
+                                    wlr > 0 && (cg[ixl,iyr] += 1.0); wrr > 0 && (cg[ixr,iyr] += 1.0)
+                                end
                             end
                         end
                     end
@@ -2577,6 +2906,7 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
     @inbounds for t in 1:nthreads
         grid .+= gbufs[t]
         weight_grid .+= wbufs[t]
+        cbufs === nothing || (count_grid .+= cbufs[t])
     end
     return nothing
 end
@@ -2596,9 +2926,16 @@ end
 #  with tmin_k / tmax_k affine in the plane coords on each region where the entering face
 #  (argmax tmin) and exiting face (argmin tmax) are fixed.  The pixel∩footprint polygon is
 #  split along the kink lines (tmin_i = tmin_j, tmax_i = tmax_j) into convex pieces on which
-#  L is affine; on each piece ∫∫ L = area · L(centroid) is exact.  A final per-cell
-#  renormalisation makes the deposited shares a partition of unity (Σ f = 1) to machine
-#  precision, so totals are conserved exactly regardless of round-off.
+#  L is affine; on each piece ∫∫ L = area · L(centroid) is exact.  The shares are a partition
+#  of unity (Σ f = 1) by the analytic normalisation invT = 1/s³ when the footprint lies fully
+#  inside the grid, which is the normal case; only a footprint that runs off the grid takes the
+#  two-pass renormalisation over the in-grid pixels (see `inside` below).
+#
+#  Round-off note: Σ f − 1 does NOT grow with the number of pixels a cell covers (flat at a few
+#  eps from 4 to 26k pixels).  It grows with the cell's DISTANCE from the camera-plane origin,
+#  because the polygon clipping works in absolute coordinates and cancels.  Summed over a whole
+#  box this makes `:exact` slightly less bit-exact than `:overlap` (measured -225 eps against
+#  -0.5 eps on a 51.5M-cell snapshot), which is still 5e-14 and matters to no budget.
 #
 #  Degenerates correctly: ŵ ∥ a box axis ⇒ two axes become "walls" (|X_k| ≤ h) and the
 #  footprint is the axis-aligned square with L ≡ s ⇒ reproduces the exact area-overlap
@@ -2785,7 +3122,8 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
         cam_right::AbstractVector{<:Real}, cam_up::AbstractVector{<:Real},
         cam_w::AbstractVector{<:Real},
         grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int};
-        max_threads::Int=Threads.nthreads())
+        max_threads::Int=Threads.nthreads(),
+        count_grid::Union{Nothing,AbstractMatrix{Float64}}=nothing)
 
     nx, ny = grid_resolution
     x_min, x_max, y_min, y_max = grid_extent
@@ -2803,6 +3141,7 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
     nthreads = min(nthreads, n)
     gbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
     wbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
+    cbufs = count_grid === nothing ? nothing : [zeros(Float64, nx, ny) for _ in 1:nthreads]
     bounds = [floor(Int, (t-1)*n/nthreads) + 1 for t in 1:nthreads+1]
     bounds[end] = n + 1
 
@@ -2811,7 +3150,7 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
 
     @sync for t in 1:nthreads
         Threads.@spawn begin
-            g = gbufs[t]; wg = wbufs[t]
+            g = gbufs[t]; wg = wbufs[t]; cg = cbufs === nothing ? nothing : cbufs[t]
             # per-thread polygon work-pool + wall scratch (allocated once, reused per pixel)
             cap = 512
             PX = [Vector{Float64}(undef, 32) for _ in 1:cap]
@@ -2841,6 +3180,10 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
                     g[ixr,iyl]+=vw_i*wrl; wg[ixr,iyl]+=w_i*wrl
                     g[ixl,iyr]+=vw_i*wlr; wg[ixl,iyr]+=w_i*wlr
                     g[ixr,iyr]+=vw_i*wrr; wg[ixr,iyr]+=w_i*wrr
+                    if cg !== nothing
+                        wll > 0 && (cg[ixl,iyl] += 1.0); wrl > 0 && (cg[ixr,iyl] += 1.0)
+                        wlr > 0 && (cg[ixl,iyr] += 1.0); wrr > 0 && (cg[ixr,iyr] += 1.0)
+                    end
                     continue
                 end
 
@@ -2896,6 +3239,7 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
                             f = vol * invT
                             g[ix,iy]  += vw_i * f
                             wg[ix,iy] += w_i  * f
+                            cg === nothing || (cg[ix,iy] += 1.0)
                         end
                     end
                 end
@@ -2906,20 +3250,13 @@ function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix
     @inbounds for t in 1:nthreads
         grid .+= gbufs[t]
         weight_grid .+= wbufs[t]
+        cbufs === nothing || (count_grid .+= cbufs[t])
     end
     return nothing
 end
 
-# =====================================================================================
-#  Off-axis radiative-transfer accumulation (emission + absorption)
-# -------------------------------------------------------------------------------------
-#  Front-to-back formal solution of dI/dτ = S − I, per pixel:
-#       I += S·(1 − e^{−Δτ})·e^{−τ_sofar} ,  τ += Δτ ,  Δτ = κ·ℓ ,
-#  where ℓ = (∫∫_pixel L)/pixel_area is the exact box-spline chord (same footprint as :exact).
-#  `order` lists cell indices sorted NEAREST→farthest from the observer (front to back), so the
-#  per-pixel τ accumulator attenuates each cell by the dust/gas IN FRONT of it. Order-dependent
-#  ⇒ single-threaded by construction.  κ is in 1/(code length); S in the caller's source units.
-# =====================================================================================
+# Chord geometry shared by `deposit_rotated_cells_exact!` and the in-development transfer-function
+# projection (dev/transfer_functions), which integrates emission and extinction front to back.
 
 # affine coefficients (q,r,pmin,pmax) of tmin_k(x,y)=q·x+r·y+pmin and tmax_k=q·x+r·y+pmax
 # for cube axis k with projected components a=right·êk, b=up·êk, c=ŵ·êk.  Inactive (wall)

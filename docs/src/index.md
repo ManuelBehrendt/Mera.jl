@@ -6,6 +6,10 @@
 
 **MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for **RAMSES**, multi-resolution AMR grids, particles, gravity, clumps and radiative-transfer fields loaded into memory-efficient tables, and now reading **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 170+ physics-derived quantities on demand (across hydro, particles, gravity, RT and clumps) and provides conservation-correct projections, profiles, flux budgets and structure finding, all through one unified, multiple-dispatch API.
 
+Formats are read through a registry rather than hard-wired, so the analysis works on the data and
+never learns which code produced it. `quicklook` is the quickest way in: point it at a snapshot you
+have never seen and it reports what is there and draws it.
+
 Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`, `getrt` and `getclumps` readers, because it writes those to separate files. Where another code stores the same physics inside its snapshot, Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`, Athena++ six-ray radiation, the reader maps it to the canonical field, so `getvar(gas, :gpot)` works there too. AREPO and GADGET add particles and FoF group catalogues (`getgroups`; subhalos are not read).
 
 !!! warning "You are reading the multi-code development docs"
@@ -39,26 +43,56 @@ Pkg.add("Mera")
 using Mera
 ```
 
-Then run something. This needs no simulation data at all, because `synthetic_clumps()` builds
-real Mera objects in memory:
+Then run something on a real RAMSES simulation. `download_testdata` fetches one of Mera's public
+test simulations and hands you the path:
 
 ```julia
-using Mera
-F   = synthetic_clumps()              # 51,514 gas cells + 2,438 particles, 8 known clumps
-gas = F.gas
-projection(gas, :sd, :Msol_pc2)       # a 128×128 surface-density map
+using Mera, CairoMakie
+path = download_testdata("stromgren3d")   # a source ionising neutral gas
+info = getinfo(path, output=7)            # the last of its seven snapshots
+gas  = gethydro(info)
+p    = projection(gas, :xHII)             # the ionised-hydrogen fraction
+
+heatmap(p.extent[1:2], p.extent[3:4], p.maps[:xHII]; colormap=:inferno)
 ```
 
-Expect about 10 seconds on the first call, because Julia compiles as it goes. Later calls are
-instant. Everything else in these docs, `getvar`, `subregion`, `filterdata`, `profile`,
-`savedata`, works on `gas` exactly as it does on a real snapshot.
+![Ionised hydrogen around a source, from the Strömgren test simulation](assets/home/first_projection.png)
 
-With a snapshot of your own, point `getinfo` at the output folder and continue the same way:
+`projection` returns an object rather than a picture: the map is `p.maps[:xHII]` and its edges are
+`p.extent`, in kpc here, so you can draw it with any plotting package. Mera draws nothing itself.
+
+The source sits at a corner of the box and ionises outward, so the run follows one octant of the
+sphere at eight times the effective resolution. Its answer is known: the ionisation front should
+follow the Strömgren law, which is what Mera's own test suite checks it against.
+
+With a simulation of your own, point `getinfo` at the output folder and continue the same way:
 
 ```julia
 info = getinfo(300, "/path/to/simulation")   # reads output_00300
 gas  = gethydro(info)
 ```
+
+Loading several components means writing the same selection on each call. One call does all of
+it, and the same line works on a converted MERA file:
+
+```julia
+(; hydro, particles, info) = loadall("/path/to/simulation", 300;
+                                     lmax=10, xrange=[-10., 10.],
+                                     center=[:bc], range_unit=:kpc)
+```
+
+See [Pipelines](pipelines.md) for that, for the matching projection shorthand, and for keeping
+one selection in step across a whole script.
+
+Once you are past the tutorials, the [Gallery](gallery.md) holds complete workflows you can point
+at your own simulation, and is where to share the analysis behind a paper.
+
+If you are working with an AI assistant, [Using an AI Assistant](assistant.md) has a short file to
+give it so that it writes Mera that runs, and the three checks worth keeping in any script it
+produces. It is an experiment rather than a policy.
+
+[Where to start](where_to_start.md) is the other way in: one table from "I want to …" to the
+function that does it, for the twenty things people reach for first.
 
 **Next: [First Look](first_look.md).** It shows what one command tells you about an unfamiliar
 output, and what it costs on a large one. From there the sidebar follows the order you will
@@ -78,16 +112,21 @@ Pkg.add("PyPlot")       # only the projection pages that import it
 Mera's Makie support ships as a package extension: it activates by itself once a Makie backend
 such as CairoMakie is loaded, with nothing further to install.
 
+For the wider ecosystem around a Mera workflow, tables, units, statistics and IO, see
+[Recommended Packages](recommended_packages.md).
+
 **Requirements**: Julia 1.10 or newer, **1.12+ recommended**, and 8GB+ RAM
 **Platforms**: macOS (including Apple Silicon), Linux, Windows
-**Tested on every push**: Julia 1.10 / 1.11 / 1.12 × Linux, macOS and Windows, nine jobs
+**Tested on every push**: Julia 1.10 / 1.11 / 1.12 / 1.13 × Linux, macOS and Windows, twelve jobs
 
 Julia 1.10 is the minimum the package supports (`julia = "1.10"` in `Project.toml`) and stays in
 CI so it keeps working. 1.12 is what we recommend running: the compiler is faster and the garbage
 collector handles the large allocations of AMR and particle analysis better, which is most of what
 Mera does. CI runners have no simulation data, so they exercise the data-free tiers: the
 synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file round-trips,
-while the full suite runs against real snapshots locally.
+while the full suite runs against real snapshots locally, on one configuration: **Julia 1.12 on
+macOS (Apple Silicon)**. The data-backed tier is therefore verified on a single platform, not
+across the whole matrix.
 
 ## What Mera gives you
 
@@ -99,7 +138,7 @@ you write the analysis once:
 ```julia
 getvar(gas,       :mass)     # cell mass, density times volume
 getvar(particles, :mass)     # particle mass, discrete values
-getvar(clumps,    :mass)     # clump total mass, aggregated
+getvar(clumps,    :mass)     # clump mass, one row per clump
 getvar(sinks,     :mass)     # sink mass, the column RAMSES calls msink
 
 getvar(gravity,   :epot)     # gravity carries a potential, not a mass
@@ -121,39 +160,124 @@ projected.
 format, with Hilbert space-filling curve support, correct level weighting, and projections that
 conserve mass across refinement boundaries.
 
-**Built for large outputs on ordinary machines.** Selective loading and an IndexedTables.jl
-backend keep memory in hand, multi-threaded IO is measured rather than assumed, and MERA-files
-store snapshots compressed for fast time-series work.
+**One table, one row per cell.** Mera holds a snapshot as a table: one contiguous column per
+quantity, sorted on the cell's grid address `(level, cx, cy, cz)`. Three things follow, and they
+are why the rest of this page is possible.
 
-**Physics on demand.** Derived quantities for gas, particles, gravity and clumps, from Jeans mass
-to Mach numbers to virial parameters, computed on request rather than stored. Call `getvar()` with
-no arguments for the current list.
+The **refinement level travels with every cell**, so nothing has to be resampled onto a uniform
+grid first. A projection deposits each cell at its own size in a single pass over all levels, and
+`:level` can be selected on like any physical quantity.
+
+**Selecting is cheap.** A mask picks rows as views rather than copying columns, so a cut costs the
+columns you actually read and not the whole table. You can select in value space on anything
+`getvar` computes, in any unit, and combine those conditions:
+`filterdata(gas, Above(:T, 1e4, :K) & Below(:rho, 1e3, :nH))`.
+
+**Results stay the same kind of thing.** A region or a filter hands back an object of the original
+type, so `subregion` into `filterdata` into `projection` into `getvar` chains without adapters or
+conversions.
+
+**Built for large outputs on ordinary machines.** Selective loading keeps memory in hand, and the
+numbers are measured rather than assumed. Convert a snapshot once with `savedata` and reading it
+back is the same data, far cheaper:
+
+| reading one snapshot, all components | from the RAMSES output | from the MERA file |
+|---|---:|---:|
+| time | 514.9 s | **22.7 s** |
+| memory allocated | 665.4 GB | **47.4 GB** |
+| size on disk | 53.18 GB | **12.73 GB** |
+
+A production run with 5120 CPU files and 20489 files on disk, read at full resolution. The
+gain comes from not re-parsing every Fortran file and not storing the AMR hierarchy, so it
+grows with the file count and depends on your simulation. [Performance](benchmarks/performance.md)
+has the method, the limits, and the raw reports.
+
+**Physics on demand.** Nothing is precomputed and nothing is stored twice: ask for a quantity by
+name and Mera derives it from what the snapshot actually holds, in the unit you ask for.
+
+| | |
+|---|---|
+| thermodynamics | temperature, sound speed, mean molecular weight, five entropy measures, cooling time and length |
+| kinematics | velocities and Mach numbers in Cartesian, cylindrical and spherical frames, and the squared components the dispersions build on |
+| magnetic fields | components in three coordinate systems, magnitude, magnetic pressure, plasma beta, Alfvén speed, and Alfvén, fast and slow magnetosonic Mach numbers |
+| gravity | potential, accelerations and forces in three coordinate systems, specific and total binding energy |
+| stability and star formation | Jeans length, mass and number, local virial parameter, free-fall time |
+| angular momentum | specific and total, Cartesian, cylindrical and spherical components |
+| radiative transfer | ionisation fractions, number densities, photoionisation and photoheating rates, recombination |
+| geometry | cell size and volume, cylindrical and spherical radii, and their minimum-image forms for a periodic box |
+| cosmology | overdensity, formation redshift and time, physical age from conformal birth time |
+
+A quantity exists where the data supports it: the magnetosonic Mach numbers need a magnetic field,
+the ionisation states need radiative transfer. `getvar()` prints the current list, and
+[`add_field`](derived_fields.md) adds your own on the same footing.
+
+**Cells are split, not counted.** Say you want the mass inside a sphere of 10 kpc. The sphere is
+round. The cells are boxes. Some cells lie half in and half out, and you have to decide what to do
+with them.
+
+The usual rule looks at the centre of each cell and takes the whole cell or nothing. Mera can keep
+the part that is really inside:
+
+```julia
+sph = subregion(gas, sphere(10.))   # 10 kpc around the box centre
+msum(sph, :Msol)                    # the mass inside 10 kpc
+```
+
+Every cell on the edge gets a `:fraction`, a number between 0 and 1, saying how much of it lies
+inside. `getvar(:mass)` and `getvar(:volume)` both use it. This gives you one thing you can rely
+on: **the parts add up to the whole.** A sphere of 10 kpc is exactly the 5 kpc sphere plus the
+shell from 5 to 10 kpc.
+
+How much this changes a number depends on what the edge passes through. Around a large region in
+ordinary gas the two mistakes, gas wrongly added and gas wrongly dropped, cancel to well under a
+percent. They stop cancelling when the edge cuts something heavy: in the `mw_L10` test galaxy a
+thin shell with its edge on the densest cell comes out **14 % too heavy**. Splitting removes the
+question, so you do not need to know which case you are in.
+
+That is the arithmetic. The **picture** is a separate question: a projection spreads each edge
+cell's fraction-weighted mass over its whole footprint, so a boundary drawn on a coarse patch looks
+soft. `subregion(..., refine_to=[0.05, :kpc])` subdivides the straddling cells until their children
+are no larger than that, and the rendered edge sharpens to the scale you set. It changes no total,
+because `:fraction` already made the totals exact; it is a rendering tool, not an accuracy one.
+
+Only the region values do this, `sphere(10.)` and the other shapes, and `projection` with
+`split=true` on its `depth` or `fov` cut. The `xrange`/`yrange`/`zrange`
+options when loading, the older style with symbols, and `covering_grid` all count whole cells.
+Stars, dark matter and clumps are points, so there is nothing to split. See
+[Subregions](api/subregions.md).
 
 **Results you can defend.** Pin versions with a `Project.toml` and `Manifest.toml` in your own
-analysis project, and record what produced each number with [`provenance`](provenance.md). VTK
+analysis project, and record what produced each number with [`provenance`](provenance.md). See
+[Reproducibility](reproducibility.md) for how the pieces fit together. VTK
 export preserves AMR structure for ParaView and VisIt.
 
-Mera supports RAMSES stable-17.09 through stable-19.10, plus RAMSES 2025.05 (beta), and is in
-active use and active development.
+Mera supports RAMSES stable-17.09 through stable-19.10, and the 2025.05 and 2026.05 releases. The
+public test simulations are produced with RAMSES 2026.05 and checked against its own reference
+solutions on every release, so that support is exercised rather than assumed. Mera is in active use
+and active development.
 
 ## About the data in these tutorials
 
-The tutorial pages analyse research-scale RAMSES simulations, several gigabytes each, which are
-not distributed. They are worked examples: read them to see what an analysis of real data looks
-like, and adapt the code to your own outputs. Running a page unchanged will not work, because the
-simulation it points at is not something you have.
+The tutorial pages analyse research-scale RAMSES simulations, several gigabytes each. They are
+worked examples: read them to see what an analysis of real data looks like, and adapt the code to
+your own outputs. Those particular simulations are not distributed, so point the examples at a
+snapshot of your own, or at one of the test simulations below.
 
-If you want something you can run immediately, Mera publishes a small set of test simulations,
-eleven of them, a few megabytes each. Every one carries either an analytic oracle, a law that
+To run code as you read, Mera publishes a small set of test simulations, fifteen of them, most a
+few megabytes (about 300 MB together). Every one carries either an analytic oracle, a law that
 follows from its own setup, or is checked against reference values published by the RAMSES
-developers. They ship with a getting-started example, and Mera's own test suite verifies the
-package against them, so you can confirm an installation behaves correctly without a large
-download. See [`testdata/README.md`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/testdata/README.md)
-in the repository for how to fetch them.
+developers. Mera's own test suite verifies the package against them, so you can confirm an
+installation behaves correctly. Fetch them all with `download_testdata()`, or one at a time by name
+(`download_testdata("sedov3d_amr")` is 2.3 MB).
 
 Two tutorial pages already use data you can obtain: the radiative-transfer page runs on one of the
 published test simulations, and the cosmology page carries download instructions for the yt
 project's public sample dataset.
+
+Three pages need no download at all. [Clump Finding: Synthetic Example](clumpfind_synthetic.md),
+[Statistics (PDFs)](statistics.md) and [Uniform Grid / Resampling](covering_grid.md) build their
+data in memory as they run, and the clump-finding page scores the finder against known positions
+rather than eyeballing the result.
 
 Every tutorial builds its paths from one variable, so you do not have to edit the cells. Point it
 at your own simulations and the examples run against them:
@@ -176,6 +300,7 @@ If you already know what you want to compute:
 | compute masses and other quantities | [Basic Calculations](04_multi_Basic_Calculations.md) |
 | store or share a snapshot | [MERA Files](07_multi_Mera_Files.md) |
 | make it faster | [Multi-Threading](multi-threading/multi-threading_intro.md) |
+| know what it costs before you run it | [Performance](benchmarks/performance.md) |
 | look up a function | [Complete API](api.md) |
 
 Coming from another analysis tool, or new to Julia:
@@ -187,6 +312,12 @@ Coming from another analysis tool, or new to Julia:
 - [Troubleshooting](troubleshooting.md), the first-hour errors, listed under the message Mera
   actually prints
 
+## Citation
+
+If you use MERA in your research, please cite it using the DOI badge above. This supports
+continued development and helps other researchers discover the tool. Click the badge for BibTeX
+format. Please also star the [GitHub repository](https://github.com/ManuelBehrendt/Mera.jl).
+
 ## Community and support
 
 - [GitHub Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions): ask questions,
@@ -197,7 +328,6 @@ Coming from another analysis tool, or new to Julia:
   requests
 - In the REPL: `?getinfo` for function docs, `methods(getinfo)` for available methods
 - [Jupyter notebooks](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1)
-  and [RUM2023 materials](https://github.com/ManuelBehrendt/RUM2023)
 
 ## Ambient Study Music
 
@@ -217,11 +347,7 @@ astronomical object. Written alongside the package, and meant for long sessions 
 </p>
 ```
 
-## Citation and license
-
-If you use MERA in your research, please cite it using the DOI badge above. This supports
-continued development and helps other researchers discover the tool. Click the badge for BibTeX
-format. Please also star the [GitHub repository](https://github.com/ManuelBehrendt/Mera.jl).
+## License
 
 MIT License, Copyright (c) 2019 Manuel Behrendt.
 

@@ -41,8 +41,8 @@ println("cells loaded : ", length(gas.data))
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-08-31T14:17:33.969
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[Mera]: 2026-09-28T11:31:00.079
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -75,12 +75,13 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
+boundaries:       not periodic (&BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-08-31T14:17:36.434
+[Mera]: Get hydro data: 2026-09-28T11:31:01.885
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
@@ -90,19 +91,19 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
-   Compute threads: 4
-   GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:12 (20.04 ms/it)
+   Compute threads: 8
+   GC threads: 8
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.57 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
-Creating Table from 28320979 cells with max 4 threads...
-  Threading: 4 threads for 11 columns
-  Max threads requested: 4
-  Available threads: 4
-  Using parallel processing with 4 threads
+Creating Table from 28320979 cells with max 8 threads...
+  Threading: 8 threads for 11 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 35.799 seconds
+✓ Table created in 38.498 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 cells loaded : 28320979
@@ -145,24 +146,20 @@ fr = face_on(gas)
 
 println(fr)                       # GalaxyFrame pretty-print
 println()
-println("los    : ", round.(fr.los,    digits=4))   # camera looks along this
+println("los    : ", round.(fr.los,    digits=4))   # line of sight, pointing toward the camera
 println("up     : ", round.(fr.up,     digits=4))   # camera up
 println("center : ", round.(fr.center, digits=5), "  [", fr.center_unit, "]")
 println("angmom : ", round.(fr.angmom, sigdigits=4))
 ```
 
 ```
-[Mera] Hint: getvar(:lx) has no `vcenter` — velocities are in the BOX frame.
-             Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
-             (shown once per session; verbose(false) silences Mera's messages)
 GalaxyFrame:
   center (standard) = [0.5, 0.5005, 0.5004]
   los  = [-0.0004, -0.0002, 1.0]
-  up   = [-1.0, 0.0, -0.0004]
+  up   = [-0.0, 1.0, 0.0002]
   |angmom| = 160.2
 los    : [-0.0004, -0.0002, 1.0]
-up     : [-1.0, 0.0, -0.0004]
+up     : [-0.0, 1.0, 0.0002]
 center : [0.50001, 0.50046, 0.50044]  [standard]
 angmom : [-0.06597, -0.03328, 160.2]
 ```
@@ -181,10 +178,10 @@ println("los_faceon · los_edgeon = ", round(sum(fr.los .* eo.los), digits=6))
 ```
 GalaxyFrame:
   center (standard) = [0.5, 0.5005, 0.5004]
-  los  = [-0.0, 1.0, 0.0002]
+  los  = [0.0, -1.0, -0.0002]
   up   = [-0.0004, -0.0002, 1.0]
   |angmom| = 160.2
-edge-on los : [-0.0, 1.0, 0.0002]
+edge-on los : [0.0, -1.0, -0.0002]
 edge-on up  : [-0.0004, -0.0002, 1.0]
 los_faceon · los_edgeon = -0.0
 ```
@@ -193,6 +190,77 @@ Why it works without subtracting the bulk velocity: angular momentum measured ab
 **centre of mass** cancels any net translation, because ``\sum_i m_i \mathbf{r}_i = 0``
 there. (The same cancellation removes the Hubble flow in cosmological runs, since
 ``\mathbf{r} \times H\mathbf{r} = 0``.)
+
+## The vector itself: `angmom`
+
+`face_on` and `edge_on` hand you a ready-made frame. When you want the angular-momentum vector
+on its own, to reuse across datasets or snapshots, ask for it directly.
+
+| | |
+|---|---|
+| `angmom(gas)` | L about the box centre, over everything loaded |
+| `angmom(gas; radius=[10,:kpc])` | restricted to a sphere about `center` |
+| `angmom(gas; mask=cold)` | restricted to part of the data |
+| `angmom([gas, stars, dm])` | one axis from several components, momenta added |
+
+Feed the result to any view with `axis=L` or `los=L`. That is also the cheap route: L costs a
+full pass over the data and the `:faceon`/`:edgeon` presets recompute it on **every** call.
+
+```julia
+# The vector, and how much it depends on what you measure it over AND about.
+using LinearAlgebra
+unitv(v) = v ./ norm(v)
+angle_between(a, b) = round(acosd(clamp(abs(dot(unitv(a), unitv(b))), -1, 1)), digits=4)
+
+L_all = angmom(gas; center=[:bc], range_unit=:kpc)
+L_in  = angmom(gas; center=[:bc], range_unit=:kpc, radius=[10, :kpc])
+
+println("about the box centre, everything loaded : ", round.(unitv(L_all), digits=5))
+println("about the box centre, inside 10 kpc     : ", round.(unitv(L_in),  digits=5))
+println("angle between them                      : ", angle_between(L_all, L_in), " deg")
+
+# `center` is the origin of the lever arm, so it changes the answer too. `face_on` centres on
+# the centre of mass by default, which is NOT the box centre, so its vector is a third one.
+c_com  = center_of(gas)                                  # box fraction
+L_com  = angmom(gas; center=c_com, range_unit=:standard)
+fr     = face_on(gas)
+
+println("\nabout the centre of mass               : ", round.(unitv(L_com), digits=5))
+println("angle, box centre vs centre of mass     : ", angle_between(L_all, L_com), " deg")
+println("face_on(gas).angmom is that same vector : ", angle_between(fr.angmom, L_com) < 1e-8)
+```
+
+```
+about the box centre, everything loaded : [-0.00042, -0.00022, 1.0]
+about the box centre, inside 10 kpc     : [-0.00061, -0.00017, 1.0]
+angle between them                      : 0.0116 deg
+about the centre of mass               : [-0.00041, -0.00021, 1.0]
+angle, box centre vs centre of mass     : 0.0007 deg
+face_on(gas).angmom is that same vector : true
+```
+
+Two things move the answer, and the cell separates them. **What you sum over**: a whole-box L
+is dominated by whatever carries the most angular momentum times lever arm, usually the
+outskirts rather than the disc you meant. **What you measure about**: `center` is the origin of
+the lever arm, so the box centre and the centre of mass give different vectors. `face_on`
+defaults to the centre of mass, which is why its axis matches the third line and not the first.
+
+The angle is the number that decides whether any of this matters for you. A
+whole-box L is dominated by whatever carries the most angular momentum times lever arm, which is
+usually the outskirts rather than the disc you meant.
+
+**The vector belongs to the object you measured.** Gas and stars each have their own, so
+`face_on(gas)` and `face_on(stars)` are two different cameras. To compare them, compute one
+vector and pass it to both:
+
+```julia
+L = angmom([gas, stars]; center=[:bc], range_unit=:kpc, radius=[15, :kpc])
+projection(gas,   :sd; axis=L, inclination=0, center=[:bc], range_unit=:kpc)
+projection(stars, :sd; axis=L, inclination=0, center=[:bc], range_unit=:kpc)
+```
+
+Velocities are taken in the **box** frame, as `face_on` does. For an object streaming through the
+box, measuring about its own centre of mass largely cancels that.
 
 ## Drive a projection with the frame
 
@@ -213,13 +281,14 @@ println("edge-on Sigma extrema : ", extrema(p_edge.maps[:sd]))
 fig = Figure(size=(900, 420))
 ax1 = Axis(fig[1,1]; title="face-on  Sigma [Msol/pc^2]", aspect=DataAspect()); hidedecorations!(ax1)
 ax2 = Axis(fig[1,2]; title="edge-on  Sigma [Msol/pc^2]", aspect=DataAspect()); hidedecorations!(ax2)
-heatmap!(ax1, log10.(p_face.maps[:sd]'); colormap=:inferno)
-heatmap!(ax2, log10.(p_edge.maps[:sd]'); colormap=:inferno)
+# no transpose: a map's first index is image x, which is what heatmap puts on x
+heatmap!(ax1, log10.(p_face.maps[:sd]); colormap=:inferno)
+heatmap!(ax2, log10.(p_edge.maps[:sd]); colormap=:inferno)
 fig
 ```
 
 ```
-[Mera]: 2026-08-31T14:18:57.641
+[Mera]: 2026-09-28T11:32:31.320
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -229,7 +298,7 @@ Selected var(s)=(:sd,)
 Weighting      = :mass
 Off-axis LOS   = [-0.0004, -0.0002, 1.0]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-[Mera]: 2026-08-31T14:19:08.647
+[Mera]: 2026-09-28T11:32:40.274
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -237,13 +306,13 @@ ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 Selected var(s)=(:sd,)
 Weighting      = :mass
-Off-axis LOS   = [-0.0, 1.0, 0.0002]  (binning=:overlap)
+Off-axis LOS   = [0.0, -1.0, -0.0002]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-face-on Sigma extrema : (0.0, 200.81405317206742)
-edge-on Sigma extrema : (0.0, 6539.3160386012305)
+face-on Sigma extrema : (0.0, 197.12448191215034)
+edge-on Sigma extrema : (0.0, 6535.0811176608195)
 ```
 
-![](galaxyframe_files/galaxyframe_11_9.png)
+![](galaxyframe_files/galaxyframe_14_8.png)
 
 ## Several galaxies, mergers, cosmological boxes
 
@@ -286,7 +355,7 @@ println("aperture-framed center [kpc] : ", round.(fr_ap.center, digits=4))
 GalaxyFrame:
   center (kpc) = [24.0003, 24.022, 24.0212]
   los  = [-0.0004, -0.0002, 1.0]
-  up   = [-1.0, 0.0, -0.0004]
+  up   = [-0.0, 1.0, 0.0002]
   |angmom| = 160.2
 aperture-framed center [kpc] : [24.0003, 24.022, 24.0212]
 ```

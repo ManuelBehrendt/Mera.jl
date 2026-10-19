@@ -253,6 +253,8 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
                 if dataobject.descriptor.pversion > 0
                     append!(nvarp_list, 8)
                     filter!(e->e≠:var8, particlesvar_buffer)
+                elseif in(:metals, particlesvar_buffer) && nvarp >= 6
+                    append!(nvarp_list, 6)            # legacy: the field after the birth time
                 end
                 filter!(e->e≠:metals, particlesvar_buffer)
             end
@@ -362,50 +364,34 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         gravvar_buffer = copy(vars)
         used_descriptors = Dict()
 
+        # indices into gravity_variable_list: [:epot,:ax,:ay,:az], or [:ax,:ay,:az] for older
+        # outputs without the potential; :varN is positional
+        glist = dataobject.gravity_variable_list
+        if in(:cpu, gravvar_buffer) || in(:varn1, gravvar_buffer)
+            read_cpu = true
+            filter!(e->e≠:cpu, gravvar_buffer)
+            filter!(e->e≠:varn1, gravvar_buffer)
+        end
         if in(:all, gravvar_buffer)  #gravvar_buffer == [:all]
-            nvarg_list=[1,2,3,4]
-
-            # read_cpu = true
-            if in(:cpu, gravvar_buffer) || in(:varn1, gravvar_buffer)
-             read_cpu = true
-            end
-
+            nvarg_list = collect(1:nvarg)
         else
-
-            if in(:cpu, gravvar_buffer) || in(:varn1, gravvar_buffer)
-             read_cpu = true
-             filter!(e->e≠:cpu, gravvar_buffer)
-             filter!(e->e≠:varn1, gravvar_buffer)
+            for v in gravvar_buffer
+                i = findfirst(==(v), glist)
+                if i === nothing && occursin(r"^var\d+$", string(v))
+                    i = parse(Int, string(v)[4:end])
+                end
+                i === nothing && v in (:epot, :ax, :ay, :az) &&
+                    error("[Mera]: this output has no gravity variable :$v (it holds $(glist))")
+                i === nothing || append!(nvarg_list, i)
             end
-            if in(:epot, gravvar_buffer) || in(:var1, gravvar_buffer)
-             append!(nvarg_list, 1)
-             filter!(e->e≠:epot, gravvar_buffer)
-             filter!(e->e≠:var1, gravvar_buffer)
-            end
-            if in(:ax, gravvar_buffer) || in(:var2, gravvar_buffer)
-             append!(nvarg_list, 2)
-             filter!(e->e≠:ax, gravvar_buffer)
-             filter!(e->e≠:var2, gravvar_buffer)
-            end
-            if in(:ay, gravvar_buffer) || in(:var3, gravvar_buffer)
-             append!(nvarg_list, 3)
-             filter!(e->e≠:ay, gravvar_buffer)
-             filter!(e->e≠:var3, gravvar_buffer)
-            end
-            if in(:az, gravvar_buffer) || in(:var4, gravvar_buffer)
-             append!(nvarg_list, 4)
-             filter!(e->e≠:az, gravvar_buffer)
-             filter!(e->e≠:var4, gravvar_buffer)
-            end
-
         end
 
         if length(nvarg_list) == 0
             error("[Mera]: Simulation vars array is empty!")
         end
 
-        #clean for double assignment
-        nvarg_list = unique(nvarg_list)
+        #clean for double assignment; columns keep the file order, as before
+        nvarg_list = sort(unique(nvarg_list))
 
         if maximum(nvarg_list) > maximum(nvarg)
             error("[Mera]: Simulation maximum variable=$(maximum(nvarg)) < your maximum variable=$(maximum(nvarg_list))")
@@ -426,8 +412,8 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         if read_cpu append!(nvarg_list_strings, [:cpu]) end
         for i in nvarg_list
             #if !haskey(used_descriptors, i)
-                if i < 5
-                    append!(nvarg_list_strings, [Symbol("$(indices_togravvariables[i])")])
+                if i <= length(glist)
+                    append!(nvarg_list_strings, [glist[i]])
                 #elseif i > 4
                 #    append!(nvarg_list_strings, [Symbol("var$i")])
                 end

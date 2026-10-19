@@ -88,6 +88,40 @@ end
         end
     end
 
+    # Sinks are a point catalogue, like clumps: a region either contains a sink or does not,
+    # and there is no cell to split. Until Mera 1.8 they were the one data type without a
+    # value-type `subregion`, so region algebra stopped at the sink table.
+    @testset "regions select sinks by position" begin
+        mktempdir() do d
+            s = getsinks(_sink_info(d, SINK_CSV), verbose=false)
+            # the box is 100 wide, centre (50,50,50); the sinks sit at (10,20,20) and
+            # (30,40,0), so they are 58.31 and 54.77 from the centre
+            none = subregion(s, Mera.Sphere(0.50; center=[:bc], range_unit=:standard), verbose=false)
+            one  = subregion(s, Mera.Sphere(0.56; center=[:bc], range_unit=:standard), verbose=false)
+            both = subregion(s, Mera.Sphere(0.60; center=[:bc], range_unit=:standard), verbose=false)
+            @test length(none.data) == 0
+            @test length(one.data)  == 1
+            @test getvar(one, :id)  == [2.0]              # the nearer of the two
+            @test length(both.data) == 2
+            @test both isa Mera.SinkDataType              # still a catalogue, so it chains
+
+            # a region and its inverse must reproduce the parent, as everywhere else
+            inv = subregion(s, Mera.Sphere(0.56; center=[:bc], range_unit=:standard);
+                            inverse=true, verbose=false)
+            @test length(one.data) + length(inv.data) == length(s.data)
+
+            # the value API must agree with the symbol API the older pages teach
+            sym = subregion(s, :sphere, radius=0.56, center=[:bc],
+                            range_unit=:standard, verbose=false)
+            @test length(sym.data) == length(one.data)
+
+            # and the algebra has to compose on sinks too
+            shell = Mera.Sphere(0.60; center=[:bc], range_unit=:standard) \
+                    Mera.Sphere(0.56; center=[:bc], range_unit=:standard)
+            @test length(subregion(s, shell, verbose=false).data) == 1
+        end
+    end
+
     @testset "RAMSES's dimensional formulas survive the read" begin
         mktempdir() do d
             s = getsinks(_sink_info(d, SINK_CSV), verbose=false)

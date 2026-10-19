@@ -247,11 +247,11 @@ end
         # value-type and symbol APIs agree exactly, so they are compared directly here. (On CELL
         # data they differ by the half-cell centre convention, which is a separate open question.)
         for R in (15.0, 30.0, 45.0)
-            @test length(subregion(p, Sphere(R; center=[:bc], range_unit=:kpc), verbose=false).data) ==
+            @test length(subregion(p, sphere(R; center=[:bc], range_unit=:kpc), verbose=false).data) ==
                   length(subregion(p, :sphere, radius=R, center=[:bc], range_unit=:kpc, verbose=false).data)
         end
-        @test length(subregion(p, Sphere(25.0; center=[:bc], range_unit=:kpc), verbose=false).data) == 3
-        @test length(subregion(p, Cuboid(xrange=[-25,25], yrange=[-25,25], zrange=[-25,25],
+        @test length(subregion(p, sphere(25.0; center=[:bc], range_unit=:kpc), verbose=false).data) == 3
+        @test length(subregion(p, cuboid(xrange=[-25,25], yrange=[-25,25], zrange=[-25,25],
                                          center=[:bc], range_unit=:kpc), verbose=false).data) == 3
     end
 
@@ -791,9 +791,9 @@ end
         gas = getparticles_gadget(getinfo_gadget(13, dir, verbose=false); families=[0], verbose=false)
 
         R = 30.0                                   # kpc == code units here (scale.kpc == 1 by construction)
-        sph = Sphere(R; center=[:bc], range_unit=:standard)
-        b = subregion(gas, Sphere(R/box; center=[:bc], range_unit=:standard), verbose=false)
-        sp = subregion(gas, Sphere(R/box; center=[:bc], range_unit=:standard), split=true, verbose=false)
+        sph = sphere(R; center=[:bc], range_unit=:standard)
+        b = subregion(gas, sphere(R/box; center=[:bc], range_unit=:standard), verbose=false)
+        sp = subregion(gas, sphere(R/box; center=[:bc], range_unit=:standard), split=true, verbose=false)
 
         fr = Mera.select(sp.data, :fraction)
         @test all(0 .< fr .<= 1)                                   # a fraction is a fraction
@@ -810,7 +810,7 @@ end
 
         # point particles have no extent, so split is meaningless and must say so
         st = getparticles_gadget(getinfo_gadget(0, dir, verbose=false); families=[4], verbose=false)
-        @test_throws ArgumentError subregion(st, Sphere(0.2; center=[:bc], range_unit=:standard),
+        @test_throws ArgumentError subregion(st, sphere(0.2; center=[:bc], range_unit=:standard),
                                              split=true, verbose=false)
     end
 

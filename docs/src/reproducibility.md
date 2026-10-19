@@ -120,9 +120,19 @@ and a timestamp. Print it into your log, or save it beside the figure. Together 
 `Manifest.toml` it answers "what produced this?" completely. See
 [Provenance](provenance.md) for the full record and how to store it.
 
+### Maps and camera views
+
+`provenance` describes the snapshot and the build, not the view. A projection map carries its view
+itself: `m.los`, `m.up`, `m.center`, `m.pixsize` and `m.extent`, and [`savemap`](@ref) keeps them
+together with the provenance. One thing is not recorded: `direction=:faceon`, `:edgeon` and
+`axis=:angmom` compute the axis from the data that gets drawn (what you loaded, the `mask`, the
+`fov` sphere), so a different load or selection gives a different camera. For a result you want to repeat, store the vector ([`angmom`](@ref), or `m.los` and `m.up`)
+and pass it back in. The [off-axis cheatsheet](offaxis_cheatsheet.md#Reproducing-a-map) shows the
+call.
+
 ## Checking Mera itself
 
-The versions being pinned is only useful if the package is right. Mera publishes eleven small test
+The versions being pinned is only useful if the package is right. Mera publishes fifteen small test
 simulations, each with a known answer, either a law that follows from its own setup or reference
 values published by the RAMSES developers:
 
@@ -198,4 +208,5 @@ Two places to watch on a periodic run, because neither wraps:
 - [ ] Julia is started with `--project=`
 - [ ] the Julia version is recorded
 - [ ] `provenance` output is saved with each result
+- [ ] for camera views, the viewing vectors (`m.los`, `m.up`, or the `angmom` axis) are saved too
 - [ ] the simulation output and its path are named in the script, not typed by hand each run

@@ -7,7 +7,7 @@
 # Answers "what produced this?" six months later: Mera version, simulation path + output,
 # snapshot time (human-readable Myr/Gyr, or redshift for cosmological runs), box/levels, the
 # serialized scale-type version, and when the output was written. Read straight from the
-# InfoType that every data object, projection map and LOS/velocity cube already carries.
+# InfoType that every data object and projection map already carries.
 # ====================================================================================
 
 # Which Mera actually ran.
@@ -29,7 +29,10 @@ function _mera_build()
     isempty(_MERA_BUILD[]) || return _MERA_BUILD[]
     out = try
         dir = pkgdir(@__MODULE__)
-        if dir !== nothing && isdir(joinpath(dir, ".git"))
+        # `ispath`, not `isdir`: in a git WORKTREE `.git` is a small file pointing at the main
+        # repository, not a directory. `isdir` missed it, so a worktree build was stamped with
+        # the plain release number, which is the exact mix-up this function exists to prevent.
+        if dir !== nothing && ispath(joinpath(dir, ".git"))
             rev    = readchomp(`git -C $dir rev-parse --short HEAD`)
             branch = readchomp(`git -C $dir rev-parse --abbrev-ref HEAD`)
             dirty  = isempty(readchomp(`git -C $dir status --porcelain`)) ? "" : " +uncommitted"
@@ -48,7 +51,7 @@ end
 
 Which Mera actually ran, as a string. On a registered install this is the version, `"1.8.0"`.
 On a git checkout it adds the branch and the commit, and marks a working tree with uncommitted
-changes, `"1.8.0 (dev multicode @ 3a91f2c +uncommitted)"`, because `pkgversion` alone reports the
+changes, `"1.8.0 (dev master @ 3a91f2c +uncommitted)"`, because `pkgversion` alone reports the
 same version either way and cannot tell a release from somebody's branch.
 
 Use it when you share a script or a notebook, so a reader knows what produced the result. It is
@@ -98,21 +101,22 @@ Provenance(v::VersionNumber, path, output, simcode, cosmological, time_myr, reds
     provenance(x) -> Provenance
 
 Build a [`Provenance`](@ref) record from an `InfoType` or from any result that carries one:
-a **data object** (`gethydro`/`getparticles`/`getgravity`/`getclumps`/`getrt`), a
-[`projection`](@ref) map, or a `velocity_cube`/`los_cube`. Deterministic: it
-reads only the snapshot's own metadata, so it is safe to compare across runs.
+a **data object** (`gethydro`/`getparticles`/`getgravity`/`getclumps`/`getrt`, and any
+subregion of one), a [`projection`](@ref) map, a [`pdf`](@ref) of a data object or map, or a
+galaxy frame from [`face_on`](@ref). Deterministic: it reads only the snapshot's own metadata,
+so it is safe to compare across runs.
 
 ```julia
 gas = gethydro(getinfo(100, "/data/sim"))
 provenance(gas)                      # data object
 provenance(projection(gas, :sd))     # projection map
-provenance(velocity_cube(gas))       # LOS / velocity cube
+provenance(pdf(gas, :rho))           # a pdf keeps the snapshot it came from
 provenance(gas.info)                 # the InfoType directly
 ```
 
-For a `NamedTuple`-style result that carries no `.info` (a [`pdf`](@ref), a
-[`timeseries`](@ref) table, a `position_velocity` diagram), take the provenance of
-the source data object you computed it from.
+A result that carries no `.info` throws an `ArgumentError`: a [`profile`](@ref) or
+[`phase`](@ref), a [`timeseries`](@ref) table, or a `pdf` of a plain array. Take the provenance
+of the data object you computed it from.
 """
 function provenance(info::InfoType)
     Provenance(pkgversion(@__MODULE__), _mera_build(), info.path, round(Int, info.output), String(info.simcode),
@@ -124,9 +128,9 @@ end
 provenance(x) = hasproperty(x, :info) ? provenance(x.info) :
     throw(ArgumentError(
         "provenance: a $(typeof(x).name.name) carries no `.info`. Apply it to a data object " *
-        "(hydro/particles/gravity/clumps/RT), a projection map, a LOS/velocity cube, or an " *
-        "InfoType. For a NamedTuple result (pdf, timeseries, position_velocity), take " *
-        "provenance of the source data object."))
+        "(hydro/particles/gravity/clumps/RT), a projection map, a pdf of either, a galaxy " *
+        "frame, or an InfoType. For a result without it (profile, phase, timeseries, a pdf " *
+        "of a plain array), take provenance of the source data object."))
 
 # Human-readable snapshot time: redshift (+ age) for cosmological runs, else Myr/Gyr.
 function _prov_age(p::Provenance)
@@ -140,8 +144,7 @@ _prov_time(p::Provenance) = p.cosmological ?
 """
     provenance_string(x) -> String
 
-A compact one-line provenance string, ready for a figure caption, a `COMMENT` card when you
-export to FITS, or a log. Accepts the same inputs as [`provenance`](@ref) (or a `Provenance`).
+A compact one-line provenance string, ready for a figure caption, a file header or a log. Accepts the same inputs as [`provenance`](@ref) (or a `Provenance`).
 The time is shown as `z=…` for a cosmological run, otherwise in Myr/Gyr.
 
 The version names the build. On a normal install it is the plain version; on a git checkout it
@@ -150,7 +153,7 @@ development version cannot be mistaken for one made on the release:
 
 ```
 Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-Mera v1.8.0 (dev multicode @ 3a91f2c +uncommitted) | mw_L10/output_00300 | 445.89 Myr | ...
+Mera v1.8.0 (dev master @ 3a91f2c +uncommitted) | mw_L10/output_00300 | 445.89 Myr | ...
 ```
 
 Set the environment variable `MERA_PROVENANCE_PLAIN=1` to force the plain version, which is how

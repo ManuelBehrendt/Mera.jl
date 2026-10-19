@@ -111,9 +111,13 @@ projection(gas, :sd, inclination=90, axis=sep)      # look across the merger axi
 # 3. freeze the frame across a time series
 #    :angmom is recomputed per snapshot, so the disk can wobble between frames.
 #    Compute L once and reuse it as a fixed axis, and the movie stays steady.
-L0 = getvar(gas, [:lx, :ly, :lz], center=[:bc])
-Lfix = [sum(L0[:lx]), sum(L0[:ly]), sum(L0[:lz])]
+Lfix = angmom(gas; center=[:bc], range_unit=:kpc, radius=[20, :kpc])
 projection(gas, :sd, inclination=60, axis=Lfix)
+
+# 4. one axis for several components, so gas and stars share a camera
+Ljoint = angmom([gas, stars]; center=[:bc], range_unit=:kpc, radius=[20, :kpc])
+projection(gas,   :sd, inclination=60, axis=Ljoint)
+projection(stars, :sd, inclination=60, axis=Ljoint)
 ```
 
 The third case is the common one in practice. `axis=:angmom` is convenient, but it measures the
@@ -149,14 +153,20 @@ The `direction` presets are shortcuts. These pairs give the same line of sight:
 
 | preset | angle form | is it the same view? |
 |---|---|---|
-| `direction=:z` | `inclination=0, axis=:z` | yes, identical |
+| `direction=:z` | `inclination=0, axis=:z` | same orientation; the pixel grids differ, because the two paths place pixel edges differently |
 | `direction=:faceon` | `inclination=0, axis=:angmom` | yes, identical |
-| `direction=:edgeon` | `inclination=90, axis=:angmom` | edge-on in both, but from a different side |
+| `direction=:edgeon` | `inclination=90, axis=:angmom` | yes, identical (it is `azimuth=0`) |
+| `face_on(obj)` / `edge_on(obj)`, passed as `los=fr.los, up=fr.up` | the two rows above | the same camera rule; identical when the angular momentum matches (`face_on` measures it about the centre of mass of the whole object unless you give `center` or `aperture`) |
 
-The first two rows give exactly the same line of sight. The third does not. Every edge-on view is
-perpendicular to the spin axis, but there are many of them, one for each point around the disk.
-`:edgeon` picks one for you, and `inclination=90` lets you choose with `azimuth`. Use the preset
-when any edge-on view will do, and the angles when you need a particular one.
+All of these agree because one rule decides which way is up. With no `up=`, the image up is
+world `+z` seen across the line of sight, or `+y` when the line of sight is within 3 degrees of
+the z axis, where `+z` would give no usable direction. `inclination`/`azimuth` measure from the
+same reference, so `inclination=0` is the face-on preset and `inclination=90` the edge-on one.
+
+Every edge-on view is perpendicular to the spin axis, but there are many of them, one for each
+point around the disc. `:edgeon` is the one at `azimuth=0`; `inclination=90` with another
+`azimuth` walks you around the disc. Use the preset when any edge-on view will do, and the angles
+when you need a particular one.
 
 Give exactly one line-of-sight specifier: `los=`, or `inclination`/`azimuth`, or `direction=`.
 Passing two raises an error instead of quietly picking one.

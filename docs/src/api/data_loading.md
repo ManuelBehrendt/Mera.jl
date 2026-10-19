@@ -40,6 +40,15 @@ gethydro_chombo
 getgroups_gadget
 ```
 
+## Test simulations
+
+Mera publishes fifteen small RAMSES simulations as a GitHub release. Each has a known answer, so
+they can be used to check an installation without a large download.
+
+```@docs
+download_testdata
+```
+
 ## Related
 
 Spatial cuts after loading are in the [Subregions API](subregions.md); value-based selection
@@ -54,8 +63,4 @@ see the [Mera-Files API](mera_files.md).
 ```@docs
 covering_grid
 covering_grid_memory
-```
-
-```@docs
-download_testdata
 ```

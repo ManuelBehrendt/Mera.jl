@@ -50,9 +50,8 @@ decoration.
 4. the geometry gallery
 5. composites and the `@region` block
 6. place *and* property: regions meet filters
-7. profiles, and why the counts are the limit
-8. reference: the classic symbol API
-9. practical guidance
+7. reference: the classic symbol API
+8. practical guidance
 
 ## 1. What a Clump Row Is
 
@@ -68,7 +67,6 @@ MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera
 using Mera, CairoMakie
 # Makie also exports geometric names (Sphere, Cylinder, ...), state explicitly
 # that we mean Mera's region types:
-import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 CairoMakie.activate!()
 
 path = "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14"
@@ -95,7 +93,8 @@ println("clump masses   : ", round(minimum(getvar(clumps, :mass, :Msol)), sigdig
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[ Info: Mera v1.8.0
 clumps         : 644
 columns        : (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
 total clump mass: 1.3743e10 Msol
@@ -160,7 +159,7 @@ show_sd!(ax1, p_face; decorate=true)
 scatter!(ax1, cx, cy; markersize=msize(clumps), color=(:orangered, 0.75),
          strokewidth=0.3, strokecolor=:white)
 arc!(ax1, Point2f(0, 0), 10., 0, 2π; color=:cyan, linewidth=1.5, linestyle=:dash)
-text!(ax1, -15.2, 15.2; text="Sphere(10)", color=:cyan, fontsize=11,
+text!(ax1, -15.2, 15.2; text="sphere(10)", color=:cyan, fontsize=11,
       align=(:left, :top))
 limits!(ax1, -16, 16, -16, 16)
 
@@ -170,7 +169,7 @@ scatter!(ax2, cx, cz; markersize=msize(clumps), color=(:orangered, 0.75),
          strokewidth=0.3, strokecolor=:black)
 lines!(ax2, [-12., 12., 12., -12., -12.], [-2., -2., 2., 2., -2.];
        color=:royalblue, linewidth=1.5)
-text!(ax2, -11.5, 2.4; text="Cylinder(12, 2)", color=:royalblue, fontsize=11)
+text!(ax2, -11.5, 2.4; text="cylinder(12, 2)", color=:royalblue, fontsize=11)
 limits!(ax2, -16, 16, -8, 8)
 Colorbar(fig[1, 3]; colormap=:bone, colorrange=SDLIM, label="log₁₀ Σ_gas  [Msol pc⁻²]")
 fig
@@ -190,7 +189,7 @@ the region and keeps whole rows; there is no `:fraction`, no `split`, and a
 region together with its complement partitions the catalogue exactly.
 
 ```julia
-sph   = Sphere(10.)                     # center=[:bc], range_unit=:kpc by default
+sph   = sphere(10.)                     # center=[:bc], range_unit=:kpc by default
 c_in  = subregion(clumps, sph, verbose=false)
 c_out = subregion(clumps, sph, inverse=true, verbose=false)
 
@@ -255,7 +254,7 @@ println("effective radii : ", round(minimum(r_eff)*1e3, digits=1), " – ",
         round(maximum(r_eff)*1e3, digits=1), " pc   (median ",
         round(r_med*1e3, digits=1), " pc)")
 
-# the Sphere(10) of §2: how many clumps does that boundary actually cut?
+# the sphere(10) of §2: how many clumps does that boundary actually cut?
 R = 10.0
 straddling = count(abs.(d .- R) .< r_eff)
 peak  = sum(mass[d .< R])
@@ -377,12 +376,12 @@ to act on and are absent.
 
 ```julia
 gallery = [
-    ("Cuboid — a slab",            Cuboid(xrange=[-12, 12], yrange=[-12, 12], zrange=[-1, 1])),
-    ("Cylinder(8, 2)",             Cylinder(8., 2.)),
-    ("Sphere(6)",                  Sphere(6.)),
-    ("SphericalShell(6, 10)",      SphericalShell(6., 10.)),
-    ("CylindricalShell(6, 10, 2)", CylindricalShell(6., 10., 2.)),
-    ("Cylinder(8, 2) tilted 40°",  Cylinder(8., 2.; axis=[0, sind(40), cosd(40)])),
+    ("Cuboid — a slab",            cuboid(xrange=[-12, 12], yrange=[-12, 12], zrange=[-1, 1])),
+    ("cylinder(8, 2)",             cylinder(8., 2.)),
+    ("sphere(6)",                  sphere(6.)),
+    ("sphericalshell(6, 10)",      sphericalshell(6., 10.)),
+    ("cylindricalshell(6, 10, 2)", cylindricalshell(6., 10., 2.)),
+    ("cylinder(8, 2) tilted 40°",  cylinder(8., 2.; axis=[0, sind(40), cosd(40)])),
 ]
 for (name, reg) in gallery
     s = subregion(clumps, reg, verbose=false)
@@ -410,11 +409,11 @@ fig
 
 ```
 Cuboid — a slab               603    95.4 % of the clump mass
-Cylinder(8, 2)                352    57.9 % of the clump mass
-Sphere(6)                     249    37.8 % of the clump mass
-SphericalShell(6, 10)         151    32.3 % of the clump mass
-CylindricalShell(6, 10, 2)    151    32.3 % of the clump mass
-Cylinder(8, 2) tilted 40°     196    28.5 % of the clump mass
+cylinder(8, 2)                352    57.9 % of the clump mass
+sphere(6)                     249    37.8 % of the clump mass
+sphericalshell(6, 10)         151    32.3 % of the clump mass
+cylindricalshell(6, 10, 2)    151    32.3 % of the clump mass
+cylinder(8, 2) tilted 40°     196    28.5 % of the clump mass
 ```
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_17_4.png)
@@ -441,14 +440,14 @@ available if you prefer.)
 
 ```julia
 outer_disc = @region unit=:kpc center=[:bc] begin
-    disc = Cylinder(12, 2)
-    core = Cylinder(4, 2)
+    disc = cylinder(12, 2)
+    core = cylinder(4, 2)
     disc \ core             # the star-forming annulus, nucleus excluded
 end
 
 c_ring = subregion(clumps, outer_disc, verbose=false)
-c_disc = subregion(clumps, Cylinder(12., 2.), verbose=false)
-c_core = subregion(clumps, Cylinder(4., 2.), verbose=false)
+c_disc = subregion(clumps, cylinder(12., 2.), verbose=false)
+c_core = subregion(clumps, cylinder(4., 2.), verbose=false)
 
 println("disc slab            : ", rpad(length(c_disc.data), 7), round(msum(c_disc, :Msol), sigdigits=6), " Msol")
 println("  nucleus  r < 4     : ", rpad(length(c_core.data), 7), round(msum(c_core, :Msol), sigdigits=6))
@@ -490,7 +489,7 @@ want "the most massive tenth" of a catalogue whose mass scale you have not
 looked at yet.
 
 ```julia
-disc = subregion(clumps, Cylinder(12., 2.), verbose=false)
+disc = subregion(clumps, cylinder(12., 2.), verbose=false)
 
 solid   = filterdata(disc, Above(:relevance, 3.0), verbose=false)   # well-separated peaks
 massive = filterdata(disc, AbovePercentile(:mass, 90), verbose=false)  # top 10 % by mass
@@ -508,7 +507,7 @@ println("  both conditions       : ", rpad(length(both.data), 7),
 println()
 # order does not matter
 alt = subregion(filterdata(clumps, Above(:relevance, 3.0), verbose=false),
-                Cylinder(12., 2.), verbose=false)
+                cylinder(12., 2.), verbose=false)
 println("region∘filter == filter∘region : ", length(alt.data) == length(solid.data))
 ```
 
@@ -527,93 +526,18 @@ vocabulary. The important structural point is the last line: geometry and
 property are independent, so the order you apply them in cannot change the
 answer.
 
-## 7. Profiles, and Why the Counts Are the Limit
-
-A stack of `CylindricalShell` annuli turns the catalogue into a radial
-profile. With a few hundred objects in total, though, the honest constraint is
-not the geometry, it is how many clumps land in each ring.
-
-```julia
-r_ann = collect(1.0:1.0:15.0)
-n_cl, m_cl, area = Int[], Float64[], Float64[]
-for r in r_ann
-    a = subregion(clumps, CylindricalShell(r-0.5, r+0.5, 2.), verbose=false)
-    push!(n_cl, length(a.data))
-    push!(m_cl, length(a.data) == 0 ? 0.0 : msum(a, :Msol))
-    push!(area, π*((r+0.5)^2 - (r-0.5)^2))          # kpc²
-end
-
-println(rpad("annulus [kpc]", 16), rpad("N", 6), rpad("M [Msol]", 12), "1/√N")
-println("-"^44)
-for (r, n, m) in zip(r_ann, n_cl, m_cl)
-    println(rpad(string(r-0.5, " – ", r+0.5), 16), rpad(n, 6),
-            rpad(round(m, sigdigits=4), 12),
-            n == 0 ? "—" : string(round(100/sqrt(n), digits=0), " %"))
-end
-
-# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(960, 400))
-ax1 = Axis(fig[1, 1], xlabel="r [kpc]", ylabel="clumps per kpc²",
-           title="surface number density of clumps")
-lines!(ax1, r_ann, n_cl ./ area; color=:steelblue, linewidth=2.5)
-errorbars!(ax1, r_ann, n_cl ./ area, sqrt.(max.(n_cl, 1)) ./ area;
-           whiskerwidth=8, color=:grey30)
-scatter!(ax1, r_ann, n_cl ./ area; color=:steelblue, markersize=8)
-
-ax2 = Axis(fig[1, 2], xlabel="r [kpc]", ylabel="clumps in annulus",
-           title="the count behind every point on the left")
-barplot!(ax2, r_ann, n_cl; color=(:steelblue, 0.6))
-hlines!(ax2, [25.]; color=:grey, linestyle=:dash)
-text!(ax2, 14.5, 27; text="N = 25 → 20 % uncertainty", color=:grey, fontsize=10,
-      align=(:right, :bottom))
-fig
-```
-
-```
-annulus [kpc]   N     M [Msol]    1/√N
---------------------------------------------
-0.5 – 1.5       16    1.907e8     25.0 %
-1.5 – 2.5       84    2.176e9     11.0 %
-2.5 – 3.5       48    6.661e8     14.0 %
-3.5 – 4.5       58    1.257e9     13.0 %
-4.5 – 5.5       20    4.817e8     22.0 %
-5.5 – 6.5       54    1.288e9     14.0 %
-6.5 – 7.5       70    1.888e9     12.0 %
-7.5 – 8.5       4     1.685e7     50.0 %
-8.5 – 9.5       26    1.355e9     20.0 %
-9.5 – 10.5      36    4.822e8     17.0 %
-10.5 – 11.5     53    8.519e8     14.0 %
-11.5 – 12.5     94    1.878e9     10.0 %
-12.5 – 13.5     61    9.12e8      13.0 %
-13.5 – 14.5     20    3.004e8     22.0 %
-14.5 – 15.5     0     0.0         —
-```
-
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_26_2.png)
-
-The left panel looks like a measured profile. The right panel is what it is
-made of: a dozen or two objects per ring, sometimes fewer. The error bars are
-$\sqrt{N}$, and outside the star-forming disc they are the entire story.
-
-This is the same lesson as the [particle page's](03_particles_Get_Subregions.md)
-§3, arriving sooner. A clump catalogue is a small sample by construction, the
-finder returns hundreds of objects where the grid has millions of cells, so
-it reaches the counting limit at radii where a particle or cell profile is
-still perfectly smooth. Bin wide, quote $N$, and resist reading structure into
-rings holding five objects.
-
-## 8. Reference: the Classic Symbol API
+## 7. Reference: the Classic Symbol API
 
 The symbol interface works on clump data unchanged, testing the same peak
 positions.
 
 | Value type | Classic call |
 |:--|:--|
-| `Cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(clumps, :cuboid; xrange=…, …)` |
-| `Sphere(R)` | `subregion(clumps, :sphere; radius=R)` |
-| `Cylinder(R, H)` | `subregion(clumps, :cylinder; radius=R, height=H)` (z-axis only) |
-| `SphericalShell(rin, rout)` | `shellregion(clumps, :sphere; radius=[rin, rout])` |
-| `CylindricalShell(rin, rout, H)` | `shellregion(clumps, :cylinder; radius=[rin, rout], height=H)` |
+| `cuboid(xrange=…, yrange=…, zrange=…)` | `subregion(clumps, :cuboid; xrange=…, …)` |
+| `sphere(R)` | `subregion(clumps, :sphere; radius=R)` |
+| `cylinder(R, H)` | `subregion(clumps, :cylinder; radius=R, height=H)` (z-axis only) |
+| `sphericalshell(rin, rout)` | `shellregion(clumps, :sphere; radius=[rin, rout])` |
+| `cylindricalshell(rin, rout, H)` | `shellregion(clumps, :cylinder; radius=[rin, rout], height=H)` |
 
 Shared keywords: `center`, `range_unit`, `inverse=true`. As on the particle
 side, `cell` and `split` have no meaning for point-like rows, so the classic
@@ -627,7 +551,7 @@ setting plot limits.
 
 ```julia
 classic = subregion(clumps, :sphere; radius=10., center=[:bc], range_unit=:kpc, verbose=false)
-value_t = subregion(clumps, Sphere(10.), verbose=false)
+value_t = subregion(clumps, sphere(10.), verbose=false)
 
 println("classic :sphere   : ", rpad(length(classic.data), 7), round(msum(classic, :Msol), sigdigits=8))
 println("value-type Sphere : ", rpad(length(value_t.data), 7), round(msum(value_t, :Msol), sigdigits=8))
@@ -647,7 +571,7 @@ identical         : true
 catalogue extent  : x (-24.0, 24.0)  y (-24.0, 24.0)  z (-24.0, 24.0) kpc
 ```
 
-## 9. Practical Guidance
+## 8. Practical Guidance
 
 **The selection is exact; the interpretation is not.** `subregion` on a
 catalogue is a clean membership test on peak positions. "The clump mass inside
@@ -665,7 +589,9 @@ the catalogue as a partition of the gas is not.
 
 **Counts run out fast.** Hundreds of rows, not millions. Every profile point
 needs its $N$ quoted, and $\sqrt{N}$ is usually the largest error in the
-figure (§7).
+figure. The [particle page](03_particles_Get_Subregions.md) works that counting
+limit through in its §3; a catalogue of a few hundred objects reaches it at
+radii where a particle profile is still perfectly smooth.
 
 **Filter on the finder's own quality measures.** `:relevance` and `:ncell`
 exist to let you discard marginal detections; applying a region to an
@@ -684,8 +610,6 @@ unfiltered catalogue silently includes them (§6).
 - All region value types, boolean composition, `@region`, tilted axes and
   `inverse=true` behave as on every other page (§4, §5), and property filters
   compose with regions in either order (§6).
-- With a few hundred objects, counting noise arrives early: profiles are
-  limited by $N$ per bin, not by the geometry (§7).
 
 **Continue with:**
 

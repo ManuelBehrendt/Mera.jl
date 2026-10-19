@@ -39,6 +39,13 @@ using Statistics, LinearAlgebra, Random
         eg = Mera._bin_edges(x, nothing, :log, 10)
         @test length(eg) == 11 && all(eg .> 0)
         @test all(isapprox.(eg[2:end] ./ eg[1:end-1], eg[2]/eg[1]; rtol=1e-10))
+        # log: the outer edges are the exact data range, so no extreme value is lost. This minimum
+        # (a real gas density) rounded to 1.0800879367673929e-8 and fell outside every bin.
+        xl = [1.0800879367673925e-8, 3.0e-3, 96.25294139260016]
+        for el2 in (Mera._bin_edges(xl, nothing, :log, 140), Mera._bin_edges(xl, nothing, :log, 0; binsize=0.1))
+            @test el2[1] == minimum(xl) && el2[end] == maximum(xl)
+            @test all(v -> Mera._binindex(el2, v, length(el2) - 1) > 0, xl)
+        end
         # equal-count: each bin holds ~the same number of points
         ee = Mera._bin_edges(x, nothing, :equal, 10)
         memb = Mera._bin_members(x, ee, 10)
@@ -192,6 +199,38 @@ using Statistics, LinearAlgebra, Random
             @test sum(wg) ≈ Σw rtol=1e-10                          # off-axis conservation
         end
     end
+
+    @testset "off-axis deposit is independent of the thread count" begin
+        # The threaded deposits split the cells over threads and add the partial grids at the end,
+        # so a threaded map may differ from the serial one only by summation order: round-off, not
+        # content. CI runs with 4 threads, so this compares 1 thread against 2 and 4 there.
+        nx = ny = 64; ext = (-1.0, 1.0, -1.0, 1.0)
+        rng = MersenneTwister(11); n = 4_000
+        x3 = rand(rng, n) .- 0.5; y3 = rand(rng, n) .- 0.5; z3 = rand(rng, n) .- 0.5
+        cs = rand(rng, [0.01, 0.02, 0.04], n)                  # three AMR levels
+        vals = randn(rng, n); wts = rand(rng, n) .+ 0.1
+        r, u, w = Mera.build_camera_basis([0.4, -0.3, 1.0])
+        xcam = x3 .* r[1] .+ y3 .* r[2] .+ z3 .* r[3]
+        ycam = x3 .* u[1] .+ y3 .* u[2] .+ z3 .* u[3]
+        function dep(kernel, nt)
+            g = zeros(nx, ny); wg = zeros(nx, ny)
+            if kernel === :exact
+                Mera.deposit_rotated_cells_exact!(g, wg, xcam, ycam, cs, vals, wts, r, u, w, ext, (nx, ny); max_threads=nt)
+            else
+                Mera.deposit_rotated_cells_overlap!(g, wg, xcam, ycam, cs, vals, wts, r, u, ext, (nx, ny); max_threads=nt)
+            end
+            return g, wg
+        end
+        for kernel in (:exact, :overlap)
+            g1, w1 = dep(kernel, 1)
+            for nt in unique([2, 4, Threads.nthreads()])
+                gn, wn = dep(kernel, nt)
+                @test maximum(abs.(gn .- g1)) <= 1e-12 * maximum(abs.(g1))
+                @test maximum(abs.(wn .- w1)) <= 1e-12 * maximum(abs.(w1))
+                @test sum(wn) ≈ sum(wts) rtol=1e-12
+            end
+        end
+    end
 end
 
 # ------------------------------------------------------------------------------------------
@@ -213,9 +252,14 @@ function _oadep_twolevel_box(sC)
         push!(x,0.5+(i+0.5)*sF); push!(y,(j+0.5)*sF); push!(z,(k+0.5)*sF); push!(s,sF); end
     x,y,z,s
 end
-function _oadep_column(sC, pixsize, los, binning; nmax=64)
+# `up` is pinned rather than left to the camera's default hint. What this file tests is the
+# DEPOSIT: that the two AMR levels register to the same pixel grid with no seam and no holes.
+# The roll of the image is not part of that, but the fixed interior crop below is sensitive to
+# it: a cube projects to a hexagon, so its bounding box has empty corners, and the same central
+# crop reaches into them at one roll and not at another. Pinning `up` keeps the subject in view.
+function _oadep_column(sC, pixsize, los, binning; nmax=64, up=[0.0,1.0,0.0])
     x,y,z,s = _oadep_twolevel_box(sC)
-    cr,uc,w = Mera.build_camera_basis(los)
+    cr,uc,w = Mera.build_camera_basis(los, up)
     xc = (x.-0.5).*cr[1] .+ (y.-0.5).*cr[2] .+ (z.-0.5).*cr[3]
     yc = (x.-0.5).*uc[1] .+ (y.-0.5).*uc[2] .+ (z.-0.5).*uc[3]
     mass = s.^3; wt = ones(length(s))

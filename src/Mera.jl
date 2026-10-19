@@ -162,6 +162,7 @@ export
     center_of,
     face_on,
     edge_on,
+    angmom,
     GalaxyFrame,
     gridoverlay,
     gridoverlay!,
@@ -217,12 +218,17 @@ export
 
 #
     projection,
+    volumerender,
+    volumelook,
+    volumeorbit,
+    volumepath,
+    VolumeLook,
+    VolumeRenderType,
     project,
     offaxis_slice,
     profile,
     phase,
     profile3d,
-    rotationcurve,
     velocitydispersion,
     contamination,
     clumping,
@@ -240,7 +246,7 @@ export
     slice,
     CoveringGridResult,
 
-    # immersive 3-D visualisation (volume ray-caster)
+    # composable reports and previews
     report,
     preview,
     render,
@@ -320,12 +326,15 @@ export
     Satisfies,
     shellregion,
     AbstractRegion,
-    Sphere,
     @region,
-    Cylinder,
-    Cuboid,
-    SphericalShell,
-    CylindricalShell,
+# Region constructors are lowercase because Makie exports `Sphere` and `Cylinder` too, and a name
+# exported by two loaded packages binds to neither. The types keep their capitalized names and
+# are reachable as `Mera.Sphere` and so on; see region_algebra.jl.
+    sphere,
+    cylinder,
+    cuboid,
+    sphericalshell,
+    cylindricalshell,
 
 # miscellaneous
     viewmodule,
@@ -367,8 +376,14 @@ export
 # enhanced I/O functions
     show_mera_cache_stats,
     clear_mera_cache!,
-# volume rendering
+    # export to ParaView
     export_vtk,
+    # writing RAMSES outputs: any number of CPUs, from RAMSES files or from Mera data
+    repartition,
+    compareramses,
+    writeramses,
+    restart_completeness,
+    upgrade_merafile,
 
 # macro MacroTools
     @filter, @apply, @where,
@@ -529,6 +544,7 @@ include("functions/regions/shellregion.jl")
 include("functions/regions/shellregion_hydro.jl")
 include("functions/regions/region_algebra.jl")
 include("functions/filterdata.jl")
+include("functions/projection/volumerender.jl")   # volume rendering (needs the off-axis helpers)
 include("functions/regions/shellregion_gravity.jl")
 include("functions/regions/shellregion_rt.jl")
 include("functions/regions/shellregion_particles.jl")
@@ -561,6 +577,11 @@ include("functions/movie.jl")
 # Volume Rendering
 include("functions/data/export_hydro_to_vtk.jl")
 include("functions/data/export_particles_to_vtk.jl")
+
+# writing RAMSES outputs (repartition, writeramses): the format machinery is its own module
+include("functions/ramses_writer/RamsesWriter.jl")
+include("functions/ramses_writer/ramses_api.jl")
+include("functions/ramses_writer/writeramses.jl")
 
 # MacroTools
 include("macros/filter_data.jl")

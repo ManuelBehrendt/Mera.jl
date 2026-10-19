@@ -1,11 +1,11 @@
 # download_testdata.jl — fetch the public RAMSES test simulations.
 #
 # These are the same simulations Mera's own test suite runs against, published as
-# assets on the `testdata-v1` GitHub release. Each one carries a known answer:
+# assets on the `testdata-v2` GitHub release (`testdata-v1`, without the last four, for Mera 1.8). Each one carries a known answer:
 # either an analytic law that follows from its own setup, or reference values
 # published by the RAMSES developers. See testdata/README.md for how they are built.
 
-const TESTDATA_TAG = "testdata-v1"
+const TESTDATA_TAG = "testdata-v2"
 const TESTDATA_URL = "https://github.com/ManuelBehrendt/Mera.jl/releases/download/" * TESTDATA_TAG
 
 # name => (download size in MB, what it is)
@@ -21,6 +21,10 @@ const TESTDATA_FIXTURES = (
     ramses_abc_flow    = (5.7,   "RAMSES's own ABC-flow test, run unchanged"),
     ramses_rt_dirac    = (13.8,  "RAMSES's own radiative-transfer test, run unchanged"),
     ramses_smbh_bondi  = (165.4, "RAMSES's own Bondi accretion test, run unchanged"),
+    sedov3d_bisection  = (2.1,   "Sedov with ordering='bisection': RAMSES's bisection tree"),
+    dm_gas3d_bisection = (10.4,  "bisection with self-gravity and dark-matter particles"),
+    sedov3d_iogroups   = (0.4,   "Sedov written in IO-group folders (IOGROUPSIZEREP=2)"),
+    cosmo3d            = (12.0,  "a small cosmological run: gas, dark matter, gravity, AMR"),
 )
 
 _testdata_default_dir() = joinpath(DEPOT_PATH[1], "mera_testdata")
@@ -120,6 +124,10 @@ Available simulations, with download sizes:
 | `ramses_abc_flow` | 5.7 | RAMSES's own ABC-flow test, run unchanged |
 | `ramses_rt_dirac` | 13.8 | RAMSES's own radiative-transfer test, run unchanged |
 | `ramses_smbh_bondi` | 165.4 | RAMSES's own Bondi accretion test, run unchanged |
+| `sedov3d_bisection` | 2.1 | Sedov with `ordering='bisection'`: RAMSES's bisection tree |
+| `dm_gas3d_bisection` | 10.4 | bisection with self-gravity and dark-matter particles |
+| `sedov3d_iogroups` | 0.4 | Sedov written in IO-group folders (`IOGROUPSIZEREP=2`) |
+| `cosmo3d` | 12.0 | a small cosmological run: gas, dark matter, gravity, AMR |
 
 See also: [`getinfo`](@ref), [`synthetic_clumps`](@ref) for a data-free alternative.
 """

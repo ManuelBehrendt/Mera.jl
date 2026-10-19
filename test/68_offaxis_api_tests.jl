@@ -137,6 +137,23 @@
             @test count(isfinite, p.maps[:epot]) == length(p.maps[:epot])
         end
 
+        @testset "a mask with fov keeps hydro and gravity row-aligned" begin
+            # The mask is applied before the sphere is cut. The gravity companion has to take the
+            # same mask, or its sphere keeps rows the hydro sphere dropped and the deposit pairs
+            # the wrong cells. Masking inside the call must equal projecting pre-filtered objects.
+            info = load_test_info(:spiral_clumps)
+            gas  = gethydro(info;  lmax=6, verbose=false, show_progress=false)
+            grav = getgravity(info; lmax=6, verbose=false, show_progress=false)
+            m    = getvar(gas, :rho) .> median(getvar(gas, :rho))
+            keep(o) = Mera._copy_with_data(o, Mera._subset_table_keyed(o.data, m))
+            w = (fov=22, fov_unit=:kpc, aperture=:circle, center=[:bc], pxsize=[0.5, :kpc],
+                 inclination=30, azimuth=10, axis=[0.,0,1], verbose=false, show_progress=false)
+            inner = projection(gas, grav, :epot, :standard; mask=m, w...)
+            outer = projection(keep(gas), keep(grav), :epot, :standard; w...)
+            @test size(inner.maps[:epot]) == size(outer.maps[:epot])
+            @test isapprox(inner.maps[:epot], outer.maps[:epot]; rtol=1e-12)
+        end
+
         @testset "the unbounded-depth hint fires exactly when it applies" begin
             gas = load_test_hydro(:spiral_clumps)
             w = (center=[:bc], range_unit=:kpc, res=48, show_progress=false)

@@ -71,6 +71,32 @@ Pkg.add("CairoMakie")   # what most tutorial figures use
 Mera's Makie support is a package extension, it activates by itself once a backend is
 loaded, with nothing else to install.
 
+## `UndefVarError: Sphere not defined`
+
+The region constructors are **lowercase**:
+
+```julia
+using Mera, CairoMakie
+subregion(gas, sphere(10.; center=[:bc], range_unit=:kpc))
+```
+
+| shape | constructor |
+|---|---|
+| ball | `sphere(radius)` |
+| cylinder | `cylinder(radius, height)` |
+| box | `cuboid(; xrange, yrange, zrange)` |
+| spherical shell | `sphericalshell(r_in, r_out)` |
+| cylindrical shell | `cylindricalshell(r_in, r_out, height)` |
+
+They are lowercase because Makie exports a `Sphere` and a `Cylinder` of its own, and a name
+exported by two loaded packages binds to **neither**, so the capitalized spellings produced this
+very error in any plotting session. The types still exist for dispatch, as `Mera.Sphere`,
+`Mera.Cylinder` and so on; they are simply not exported.
+
+Older scripts that used the capitalized names, or an `import Mera: Sphere, ...` line, need the
+lowercase call instead. There is no deprecated alias, because keeping the old name exported
+would bring the clash back.
+
 ## `FieldError: type ScalesType003 has no field ...`
 
 ```

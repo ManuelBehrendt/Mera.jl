@@ -332,6 +332,36 @@ const PUBLIC_FIXTURES = Dict(
         oracle = (snapshot = 15, source = "tests/sink/smbh-bondi", nquantities = 40, nsink = 24, tolerance = 3e-13),
         note = "only the REFERENCED snapshot 15 is kept; foutput=1 writes 15 outputs, rerun the namelist for the rest",
     ),
+    # Layouts the RAMSES writer must read as RAMSES writes them (test/86_ramses_writer_tests.jl):
+    # the box cut by bisection instead of the Hilbert curve, and files in IO-group folders.
+    :sedov3d_bisection => (
+        path = joinpath(PUBLIC_PATH, "sedov3d_bisection"),
+        ramses_version = "2026.05",
+        outputs = 7, boxlen = 0.5, ncpu = 4, output = 6,
+        oracle = (ordering = "bisection",),
+        note = "ordering='bisection': the amr files hold the tree, the info files each rank's box",
+    ),
+    :dm_gas3d_bisection => (
+        path = joinpath(PUBLIC_PATH, "dm_gas3d_bisection"),
+        ramses_version = "2026.05",
+        outputs = 1, boxlen = 1.0, ncpu = 4, output = 4,
+        oracle = (ordering = "bisection", npart = 30000),
+        note = "gas + self-gravity + dark matter under bisection; only output_00004 is kept",
+    ),
+    :sedov3d_iogroups => (
+        path = joinpath(PUBLIC_PATH, "sedov3d_iogroups"),
+        ramses_version = "2026.05",            # built with IOGROUPSIZEREP=2, see its namelist
+        outputs = 3, boxlen = 0.5, ncpu = 4, output = 3,
+        oracle = (iogroupsize = 2,),
+        note = "files in output_NNNNN/group_GGGGG; Mera's readers need a plain output (repartition first)",
+    ),
+    :cosmo3d => (
+        path = joinpath(PUBLIC_PATH, "cosmo3d"),
+        ramses_version = "2026.05",            # initial conditions from RAMSES's tests/poisson/cosmo
+        outputs = 1, boxlen = 1.0, ncpu = 8, output = 3,
+        oracle = (npart = 32768, aexp_output3 = 0.1004),
+        note = "cosmological: gas + dark matter + self-gravity + AMR (levels 5 to 8); output 3 only, the initial conditions are not shipped",
+    ),
     :legacy_particles3d => (
         path = joinpath(PUBLIC_PATH, "legacy_particles3d"),
         ramses_version = "stable_17_09",       # NOT 2026.05 — see testdata/namelists/

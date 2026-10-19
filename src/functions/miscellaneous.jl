@@ -847,7 +847,7 @@ const _QTY_REF_UNIT = Dict{Symbol,Symbol}(
     :x => :cm, :y => :cm, :z => :cm,
     :r_sphere => :cm, :r_cylinder => :cm,
     :r_sphere_periodic => :cm, :r_cylinder_periodic => :cm,
-    :jeanslength => :cm, :l_cool => :cm,
+    :jeanslength => :cm, :jeanslength_iso => :cm, :jeanslength_ad => :cm, :l_cool => :cm,
     :t_cool => :s, :age => :s, :freefall_time => :s,
     :p => :Ba, :pressure => :Ba,
     :sd => :g_cm2, :surfacedensity => :g_cm2,

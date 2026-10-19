@@ -450,7 +450,7 @@ It supports both cell-based and point-based selection modes for precise boundary
 - `height::Real=0.`: Total cylinder height (extends ±height/2 from center plane)
 - `center::CenterType=[0., 0., 0.]`: Cylinder center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
-- `direction::Symbol=:z`: Cylinder axis orientation — only `:z` is implemented (`:x`/`:y` raise an error); for arbitrary orientations use the value-type `Cylinder(r, h; axis=…)` region
+- `direction::Symbol=:z`: Cylinder axis orientation — only `:z` is implemented (`:x`/`:y` raise an error); for arbitrary orientations use the value-type `cylinder(r, h; axis=…)` region
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
 - `periodic=false`: Wrap the region around the box faces. `true` applies to all three axes;
@@ -465,7 +465,7 @@ It supports both cell-based and point-based selection modes for precise boundary
 - **Point-based (`cell=false`)**: Includes only cells whose centers lie within the cylinder
 
 For a boundary cell counted by the fraction of it that actually lies inside, use the region
-value form, `subregion(gas, Cylinder(radius, height))`, which attaches a `:fraction` column that
+value form, `subregion(gas, cylinder(radius, height))`, which attaches a `:fraction` column that
 `getvar(:mass)` and `getvar(:volume)` apply.
 
 # Returns

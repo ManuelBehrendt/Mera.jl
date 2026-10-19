@@ -4,7 +4,7 @@ Syntax lookup for people analysing simulations in Julia. It assumes you can alre
 program, and answers "how do I write that here", not "what is a loop".
 
 Two pages nearby cover what this one deliberately leaves out:
-[Essential Packages](03_packages.md) for what to install, and
+[Recommended Packages](../recommended_packages.md) for what to install, and
 [Resources & Community](06_resources.md) for tutorials, books and where to ask.
 For performance in the context of real analysis, see
 [Julia for Simulation Analysis](../julia_for_simulation_analysis.md) and
@@ -379,7 +379,8 @@ The other direction works too: `JuliaCall` from Python or R, `jl_init()` from C,
 
 ## 16. Where to go next
 
-- [Essential Packages](03_packages.md), what to install and in what order
+- [Recommended Packages](../recommended_packages.md), what to install and in what order
+- [Finding and Installing Packages](03_packages.md), environments and where to search
 - [Resources & Community](06_resources.md), tutorials, books, and where to ask
 - [Julia for Simulation Analysis](../julia_for_simulation_analysis.md), the parts that
   matter for this kind of work

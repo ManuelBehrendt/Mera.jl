@@ -25,6 +25,7 @@ mkdir -p "$OUTDIR"
 FIXTURES=(
     sedov3d_amr sedov3d_amr_mera sedov3d_grav_part mhdtube3d clumps3d stromgren3d
     sinks3d legacy_particles3d ramses_abc_flow ramses_rt_dirac ramses_smbh_bondi
+    sedov3d_bisection dm_gas3d_bisection sedov3d_iogroups cosmo3d
 )
 
 # Report the FILE SIZE, which is what a download costs. `du` counts allocated blocks and
@@ -58,13 +59,29 @@ RAMSES is Copyright CEA and Romain Teyssier, released under the CeCILL licence
 if you use the radiative-transfer simulations, in published work.
 SRC
 
+    # cosmo3d starts from initial conditions that are not ours, so the archive holds only our run:
+    # no ic/, and no output_00001, which is step 0 and therefore the same initial conditions.
+    EXCL=()
+    if [ "$f" = cosmo3d ]; then
+        EXCL=(--exclude='cosmo3d/ic' --exclude='cosmo3d/output_00001')
+        cat >> "$ROOT/$f/SOURCE.txt" <<SRC
+
+The initial conditions are not included, and neither is output_00001 (step 0, the
+same initial conditions). They are RAMSES's own, from its test tests/poisson/cosmo:
+  https://ramses.cnrs.fr/wp-content/uploads/2025/01/cosmo_128.zip
+averaged over 4x4x4 blocks to 32^3 by testdata/make_cosmo3d_ic.py in the repository
+above, which writes the ic/ folder the namelist reads. The published snapshot is
+output_00003 (a = 0.10); the run itself (gas, self-gravity and AMR) is ours.
+SRC
+    fi
+
     # --exclude keeps macOS metadata out of a public artifact.
     # gzip -n suppresses the timestamp gzip would otherwise write into its header: without it,
     # stops meaning anything. NOTE the remaining caveat: tar still records each file's mtime, so
     # a checksum is reproducible only while the files are untouched. Restoring a file's CONTENT
     # after editing it does NOT restore its checksum. That is fine for a release — you repack
     # when something changes — but it means the manifest tracks mtime as well as content.
-    tar --exclude='.DS_Store' --exclude='._*' \
+    tar --exclude='.DS_Store' --exclude='._*' ${EXCL[@]+"${EXCL[@]}"} \
         -cf - -C "$ROOT" "$f" | gzip -n -6 > "$OUTDIR/$f.tar.gz"
     printf "    %-22s %s\n" "$f" "$(_mb "$OUTDIR/$f.tar.gz")"
 done
@@ -90,5 +107,7 @@ echo ">>> Total: $(find "$OUTDIR" -name '*.tar.gz' -exec stat -f '%z' {} \; \
     | awk '{s+=$1} END {printf "%.0f MB (what a full download costs)", s/1048576}')"
 echo
 echo "Next:"
-echo "  gh release create testdata-v1 --title 'Test fixtures v1' --notes-file testdata/RELEASE_NOTES.md"
-echo "  gh release upload testdata-v1 $OUTDIR/*.tar.gz"
+TAG="${FIXTURE_TAG:-testdata-v2}"
+echo "  gh release create $TAG --title 'Test fixtures ${TAG#testdata-}' --notes-file testdata/RELEASE_NOTES.md"
+echo "  gh release upload $TAG $OUTDIR/*.tar.gz"
+echo "then set $TAG as the default in testdata/fetch_fixtures.sh and add new names to its lists."

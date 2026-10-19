@@ -27,6 +27,10 @@ regardless of the order you list them in.
 ```@docs; canonical=false
 AbstractValidator
 MinMembers
+Bound
+VirialBelow
+MassAbove
+Custom
 ```
 
 ## Neighbour indices
@@ -38,6 +42,7 @@ rarely name one directly.
 AbstractNeighborIndex
 HashGrid
 CellLinkedList
+MortonGrid
 ```
 
 ## Testing without data

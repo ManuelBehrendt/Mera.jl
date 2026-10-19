@@ -125,7 +125,7 @@ has two separate `center` keywords that are easy to confuse.
 
 | | what it does | where it appears |
 |---|---|---|
-| **Region `center`** | *places a shape*: where the sphere sits, where the cylinder's axis runs | `Sphere(10; center=…)`, `subregion(gas, :sphere; center=…)`, `shellregion` |
+| **Region `center`** | *places a shape*: where the sphere sits, where the cylinder's axis runs | `sphere(10; center=…)`, `subregion(gas, :sphere; center=…)`, `shellregion` |
 | **`getvar` `center`** | *sets the coordinate origin* the derived quantity is measured about | `getvar(gas, :vϕ_cylinder; center=…)`, and `projection`, which passes its own `center` through to `getvar` |
 
 They are independent arguments, a region placed at one point can perfectly well be asked for
@@ -254,12 +254,24 @@ the cell mass:
 | Jeans length `:jeanslength` | ``\lambda_J = c_s\,\sqrt{\dfrac{3\pi}{32\,G\,\rho}}`` |
 | Jeans mass `:jeansmass` | ``M_J = \dfrac{4\pi}{3}\,\Big(\dfrac{\lambda_J}{2}\Big)^3\,\rho`` |
 | Jeans number `:jeansnumber` | ``N_J = \lambda_J/\Delta x`` |
+| Isothermal Jeans length `:jeanslength_iso` | ``\lambda_{J,\mathrm{iso}} = \sqrt{\dfrac{\pi\,c_\mathrm{iso}^2}{G\,\rho}}``, ``c_\mathrm{iso}^2 = P/\rho`` |
+| Adiabatic Jeans length `:jeanslength_ad` | ``\lambda_{J,\mathrm{ad}} = \sqrt{\dfrac{\pi\,\gamma P/\rho}{G\,\rho}} = \sqrt{\gamma}\,\lambda_{J,\mathrm{iso}}`` |
+| Cells per Jeans length `:jeansnumber_iso`, `:jeansnumber_ad` | ``N_J = \lambda_{J,\mathrm{iso}}/\Delta x``, ``\lambda_{J,\mathrm{ad}}/\Delta x`` |
+| Truelove Jeans number `:jeansnumber_truelove` | ``J = \Delta x/\lambda_{J,\mathrm{iso}}`` (Truelove et al. 1997: ``J \le 1/4``) |
 | Free-fall time `:freefall_time` | ``t_\mathrm{ff} = \sqrt{\dfrac{3\pi}{32\,G\,\rho}}`` (any time unit: `getvar(gas,:freefall_time,:Myr)`) |
 | Local virial parameter `:virial_parameter_local` | ``\alpha_\mathrm{vir} = \dfrac{5\,c_s^2\,\Delta x}{G\,m}`` |
 
 !!! note "Jeans convention"
     ``\lambda_J`` is one of several Jeans-length conventions in the literature; factors of order
     unity differ between them. `:jeansmass` and `:jeansnumber` are derived from this ``\lambda_J``.
+    It equals the sound-crossing distance in one free-fall time and is ``\sqrt{3\gamma/32}``
+    (≈ 0.40 for ``\gamma = 5/3``) times ``\lambda_{J,\mathrm{iso}}``.
+    For refinement studies use `:jeanslength_iso` / `:jeansnumber_iso`, which match the
+    RAMSES `jeans_refine` criterion (refine where ``N_J\,\Delta x \ge \lambda_{J,\mathrm{iso}}``),
+    and `:jeansnumber_truelove`, which is the *inverse* quantity ``J = 1/N_J``.
+    In a cosmological run RAMSES evaluates the same ``\lambda_{J,\mathrm{iso}}`` in its code units, with
+    ``G`` fixed by its cosmological unit system; Mera uses the physical ``G``. The two differ by a
+    constant factor close to one (1.0014 on the `yt_cosmo` test run), the same for every cell.
     The local virial parameter uses ``R\approx\Delta x`` (a cell-scale stability estimate).
 
 !!! tip "Star-formation efficiency"
@@ -274,76 +286,69 @@ the cell mass:
 *Data: **gravity** (`getgravity`), which stores the potential ``\phi`` (`:epot`) and the
 acceleration ``\mathbf a`` (`:ax, :ay, :az`).*
 
-!!! warning "`:epot` is the run's **total** potential, not the gas's own"
-    RAMSES solves Poisson once, for everything that gravitates. The ``\phi`` in `:epot` therefore
-    already contains the gas, the particles (stars and dark matter), the sinks, and any external
-    analytic potential the run was configured with. Mera stores it exactly as written.
+### What the field contains
 
-    What is in it is a property of the run, not of Mera. `gravity_type` in `&POISSON_PARAMS` says
-    which: `0` self-gravity only, `3` external potential only, `-3` external potential **and**
-    self-gravity. Both test galaxies used here are `-3`, so their ``\phi`` includes an external
-    halo that no amount of gas or particle data would reproduce:
+RAMSES solves Poisson once, for all the mass on the grid. So ``\phi`` is the **total**
+potential: gas, stars, dark matter, sinks, and any analytic density the run adds. It is not the
+potential of the gas alone.
 
-    ```julia
-    info.namelist_content["&POISSON_PARAMS"]["gravity_type"]
-    ```
-
-    Two consequences for the quantities below:
-
-    - ``m\,\phi`` is the energy of **that cell's gas** in the **total** field. It is not the
-      energy of the gas in its own field, and the difference is not small: particles carry 5.8 %
-      of the mass in the `mw_L10` box and dominate in a cosmological zoom.
-    - Summing ``m\,\phi`` over cells is **not** the system's gravitational self-energy. The table
-      below says why, along with the other questions a snapshot cannot answer.
-
-    "Total" in `:total_binding_energy` distinguishes it from `:specific_gravitational_energy`,
-    which is per unit mass. It does not mean the total for the system.
-
-### What gravity can and cannot answer today
-
-Mera pairs **gravity with hydro**. Everything below is the gas measured against the field the run
-produced, and that is the whole of what a snapshot supports without re-solving Poisson.
-
-**Available now**
-
-| | |
-|---|---|
-| the field itself | `:epot`, `:ax/:ay/:az` and their cylindrical and spherical components |
-| force on a gas cell | ``\mathbf F = m_\mathrm{gas}\,\mathbf a``, complete: `a` already contains every source |
-| energy of gas in that field | ``E = m_\mathrm{gas}\,\phi``, likewise complete |
-| local stability | `:jeanslength`, `:jeansmass`, `:virial_parameter_local`, built from the cell's own gas and never from ``\phi`` |
-
-These are correct as they stand. You can use the field without knowing which mass made it: the
-potential and the acceleration already contain every source.
-
-**Not available from a snapshot**
-
-| | why |
-|---|---|
-| splitting ``\phi`` or ``\mathbf a`` by source | RAMSES writes one summed field, `(:epot, :ax, :ay, :az)`. The decomposition is not in the output, and recovering it would mean solving Poisson again with a subset of the mass |
-| the self-binding of one structure | a clump's own binding needs the pairs *within* that clump. Summing ``-m\,\phi`` over its cells gives its binding to the whole galaxy and the external halo instead, a much larger and different number |
-| the system's gravitational self-energy | ``W = \tfrac12\int\rho\,\phi\,dV``. The sum of ``m\,\phi`` has no factor ½ and omits the particles' own binding |
-| forces or energies on **particles** | the gravity quantities pair with hydro only, and particles carry no potential column. Stars and dark matter contribute to ``\phi``, but Mera does not interpolate the field back onto them |
-
-**`profile`, `pdf` and `phase` on a gravity object.** They work, but they weight by `:mass` unless
-told otherwise, and gravity carries no density, so there is no mass on that object. Weight by the
-cells instead:
+The acceleration can contain more. An analytic external **force**, or sinks with a direct force
+(`mass_sink_direct_force` ≥ 0), are added to ``\mathbf a`` only, never to ``\phi``. The namelist
+says which case a run is:
 
 ```julia
-profile(gravity, :r_cylinder, :epot; center=[:bc], weight=:volume)
-phase(gravity, :epot, :a_magnitude; weight=:volume)
-pdf(gravity, :epot; weight=:volume, logbins=false)   # phi is negative, so no log bins
+info.namelist_content["&POISSON_PARAMS"]
 ```
 
-`hydro` and `particles` need none of this: both carry a mass, so the default weight works. To bring
-a hydro column onto the gravity object for `getvar` itself, pass `hydro_data=gethydro(info)` loaded
-over the same cells.
+| setting | ``\phi`` contains |
+|---|---|
+| default (`self_gravity=.true.`, or `gravity_type=0`) | all mass on the grid |
+| `gravity_rho_ana_type > 0` (or `gravity_type < 0`) | all mass on the grid plus an analytic density, e.g. an external halo |
+| `gravity_force_ana_type > 0` | the mass on the grid; the analytic force is in ``\mathbf a`` only |
+| `gravity_type > 0` (older namelists) | nothing, `:epot` is zero; the analytic force is in ``\mathbf a`` only |
 
+The tutorial galaxies use `gravity_type = -3`, so their ``\phi`` includes an external halo.
+
+### Units
+
+RAMSES writes ``\phi`` too small by a factor `boxlen`, because its solver works on a box of
+size 1. The acceleration is written correctly. Mera multiplies ``\phi`` by `boxlen` whenever it
+reads it: in `getvar`, the energies, projections and `dataoverview`. The raw column in
+`gravity.data` keeps RAMSES's value, so if you read it directly, multiply by `gravity.boxlen`
+yourself.
+
+| | code units | physical unit |
+|---|---|---|
+| potential `:epot` | ``\phi_\mathrm{file}\cdot\mathrm{boxlen}`` | × ``(\mathrm{unit\_l}/\mathrm{unit\_t})^2`` for `:erg_g`, also `:km2_s2`, `:J_kg` |
+| acceleration `:ax`, `:ay`, `:az` | as stored | × ``\mathrm{unit\_l}/\mathrm{unit\_t}^2`` for `:cm_s2`, also `:km_s2`, `:m_s2` |
+
+**Cosmological runs** need nothing extra. The snapshot's units already contain the scale
+factor, so both fields come out in the proper frame at that redshift. Note that ``\phi`` is then
+the **peculiar** potential (its source is ``\rho - \bar\rho``), and ``\mathbf a`` does not include
+the slowing of peculiar velocities by the expansion (``-H\mathbf v``).
+
+These values are checked against Poisson's equation in physical units, for `boxlen` 1 and 250
+and for a cosmological run.
+
+### Three things to keep in mind
+
+1. **The zero point of ``\phi`` is arbitrary.** A periodic box fixes ``\phi`` only up to a
+   constant, and an isolated box sets it from the mass inside the box only. Compare differences
+   of ``\phi`` between places, not single values.
+2. **The field in an output is one step old.** RAMSES writes an output before that step's
+   Poisson solve, so ``\phi`` and ``\mathbf a`` lag the gas and particles by one step. This is
+   small where things change slowly (about 1 % in a cosmological run at ``a = 0.1``), but large
+   around fast changes, such as a quickly accreting sink. The first output of a run has
+   ``\phi = 0`` and ``\mathbf a = 0``.
+3. **A snapshot cannot split the field by source.** ``m\,\phi`` is the energy of a gas cell in the
+   *total* field. So the sum of ``m\,\phi`` over a clump is its binding to everything, not its
+   self-binding, and it is not the self-energy ``W = \tfrac12\int\rho\,\phi\,dV`` either. Particles
+   have no potential column, and Mera does not interpolate the field onto them.
 
 ### From gravity alone
 
-These need nothing but the gravity object. Every component measured about an axis or a centre
-depends on `center`, exactly as the velocity components do.
+These need only the gravity object. Components about an axis or a centre depend on `center`, as
+for velocities.
 
 | Quantity | Formula |
 |---|---|
@@ -356,78 +361,63 @@ depends on `center`, exactly as the velocity components do.
 | Sph. azimuthal accel. `:aphi_sphere` | azimuthal component about the chosen centre |
 | Specific energy `:specific_gravitational_energy` | ``\phi`` itself, energy per unit mass |
 
-### Energy and force, which need the cell mass
-
-A potential is per unit mass, so an **energy** or a **force** needs the mass of the cell, and the
-mass lives on the hydro object rather than the gravity one. Pass both:
+For `profile`, `pdf` and `phase` on a gravity object, weight by `:volume`: gravity has no mass,
+and these weight by mass unless told otherwise.
 
 ```julia
-getvar(gravity, hydro, :Fg, :dyne)              # per cell
-projection(gravity, hydro, :Fg, :dyne)          # as a map
+profile(gravity, :r_cylinder, :epot; center=[:bc], weight=:volume)
+pdf(gravity, :epot; weight=:volume, logbins=false)   # phi is negative, so no log bins
 ```
 
-Either object order works in both calls, so `getvar(hydro, gravity, …)` and
-`projection(hydro, gravity, …)` do the same thing. The Greek component names have ASCII
-spellings too: `:Fphi_cylinder` is the same quantity as `:Fϕ_cylinder`, exactly as
-`:vphi_cylinder` is for velocity.
+### Energy and force, which need the cell mass
 
-Called on gravity alone these raise an error naming the fix, rather than guessing a mass. Load both
-over the identical `lmax` and ranges: Mera compares the cell indices of the two objects, not just
-how many there are, so a mass can never be paired with another cell's potential. Two different cuts
-holding the same number of cells are refused as well.
-
-On a **subregion** this matters twice over, because the cell fraction that weights boundary cells
-comes from the hydro object. Cut both with the same region value:
+The mass lives on the hydro object, so pass both, in either order:
 
 ```julia
-R  = Sphere(10.)
+getvar(gravity, hydro, :Fg, :dyne)          # per cell
+projection(gravity, hydro, :Fg, :dyne)      # as a map
+```
+
+Load both over the same cells (same `lmax` and ranges); Mera checks the cell indices and refuses
+a mismatch. For a subregion, cut both with the same region, because the boundary-cell fraction
+comes from the hydro object:
+
+```julia
+R = sphere(10.)
 getvar(subregion(gravity, R), subregion(hydro, R), :total_binding_energy, :erg)
 ```
 
-See [Subregions](api/subregions.md) for what the fraction is applied to.
-
 | Quantity | Formula | Unit |
 |---|---|---|
-| Potential energy `:gravitational_energy` | ``E = m\,\phi`` | `:erg` |
-| Binding energy `:total_binding_energy` | ``E_\mathrm{b} = -m\,\phi`` | `:erg` |
+| Potential energy `:gravitational_energy` | ``E = m\,\phi`` (negative where bound) | `:erg` |
+| Binding energy `:total_binding_energy` | ``E_\mathrm{b} = -m\,\phi`` (positive where bound) | `:erg` |
 | Force magnitude `:Fg` | ``F = m\,|\mathbf a|`` | `:dyne` |
 | Force components `:Fx, :Fy, :Fz` | ``F_i = m\,a_i`` | `:dyne` |
 | Cyl. radial force `:Fr_cylinder` | ``m\,a_{r,\mathrm{cyl}}`` | `:dyne` |
-| Cyl. azimuthal force `:Fϕ_cylinder` | ``m\,a_{\varphi,\mathrm{cyl}}`` | `:dyne` |
+| Cyl. azimuthal force `:Fϕ_cylinder` (or `:Fphi_cylinder`) | ``m\,a_{\varphi,\mathrm{cyl}}`` | `:dyne` |
 | In-plane force magnitude `:F_magnitude_cylinder` | ``m\,\sqrt{a_{r,\mathrm{cyl}}^2+a_{\varphi,\mathrm{cyl}}^2}`` | `:dyne` |
 | Sph. radial force `:Fr_sphere` | ``m\,a_{r,\mathrm{sph}}`` | `:dyne` |
 | Sph. polar force `:Fθ_sphere` | ``m\,a_{\theta,\mathrm{sph}}`` | `:dyne` |
 | Sph. azimuthal force `:Fϕ_sphere` | ``m\,a_{\varphi,\mathrm{sph}}`` | `:dyne` |
 
-Each force is the mass times the acceleration component **of the same name**, taken from that
-component rather than recomputed, so the two share one definition and one treatment of `center`.
-
-`:gravitational_energy` is negative where the cell is bound, following ``\phi``.
-`:total_binding_energy` is its negative, positive where bound, which is the sign binding energies
-are usually quoted in.
+"Total" in `:total_binding_energy` means energy rather than energy per mass. It is not the total
+of the system.
 
 ### Projecting a gravity field
 
-Gravity carries no mass and no density, so it cannot weight its own line-of-sight average. That is
-why there is no single-argument `projection(gravity, ...)`: the hydro object supplies the weight.
+Gravity has no mass to weight a line-of-sight average, so the hydro object supplies it:
 
 ```julia
-projection(hydro, gravity, :epot)                    # column-mass-weighted mean potential
-projection(hydro, gravity, :epot; weighting=[:volume])
+projection(hydro, gravity, :epot)                       # mass-weighted mean along each ray
+projection(hydro, gravity, :epot; weighting=[:volume])  # volume-weighted mean
 ```
 
-The result is a **weighted mean** along each ray, not a column integral, which is the right
-treatment for an intensive field: a sum would simply scale with the depth of the box. Note
-`weighting` takes a vector. Mass and volume weighting answer different questions and give
-different numbers, so state which one you used.
+The result is a weighted **mean**, not a column integral, which is right for a field like
+``\phi``. Mass and volume weighting give different numbers, so say which one you used.
 
 !!! note "Removed in 1.8: `:escape_speed` and `:gravitational_redshift`"
-    Both treated ``\phi`` as if its zero point were fixed at infinity. RAMSES does not fix it: the
-    potential carries an arbitrary offset, which is set by the boundary conditions and differs
-    between a periodic box, a zoom region and an isolated halo. ``\sqrt{-2\phi}`` is an escape
-    speed only if ``\phi \to 0`` far away, and ``\phi/c^2`` inherits the same offset. They
-    returned confident numbers that meant nothing without a stated reference level, so they were
-    withdrawn rather than left to be misread.
+    Both need ``\phi \to 0`` far away, and RAMSES does not fix the zero point (point 1 above).
+    They gave numbers that meant nothing without a reference level.
 
 ## Velocity dispersion and frames
 
@@ -463,8 +453,14 @@ dispersion by adding the **variances**, because a line profile is a convolution:
 ```
 
 This is the width for a particle of the mean mass ``\mu m_H``. A line is broadened by the mass of
-the *emitting* species, so for a species of mass ``m_X`` scale it by ``\sqrt{\mu m_H/m_X}``: CO is
-28 times heavier than hydrogen and so 5.3 times narrower.
+the *emitting* species, so for a species of mass ``m_X`` scale it by ``\sqrt{\mu m_H/m_X}``.
+
+Watch which baseline you are scaling from, because two are in circulation and they differ by more
+than a factor of two. Plain `:T` bakes in ``\mu \approx 1.32``, so with that value CO, at 28 times
+the mass of hydrogen, comes out **4.6 times narrower**. Scaling instead from a single hydrogen atom
+(``\mu = 1``) gives ``\sqrt{28} = 5.3``, and from ionized gas (``\mu = 0.6``) gives 6.8. Only the
+first is consistent with the width Mera actually returns. State the ``\mu`` you used whenever you
+quote such a factor.
 
 ### Subtracting an ordered flow
 
@@ -629,7 +625,7 @@ M_\mathrm{total} = \sum_i m_i .
 
 !!! note "On a split sub-region, `mᵢ` is the mass *inside the region*"
     `msum` sums whatever `getvar(obj, :mass)` returns, and that is boundary-aware. A sub-region
-    built from a **value-type region** (`subregion(gas, Sphere(10))`, `split=true` by default)
+    built from a **value-type region** (`subregion(gas, sphere(10))`, `split=true` by default)
     carries a per-cell `:fraction ∈ (0,1]`, the volume fraction of that cell lying inside the
     region, and `getvar` applies it:
 
@@ -725,13 +721,13 @@ field, or unweighted). Per bin, with members ``i``, weights ``w_i``, values ``y_
 | min / max / count / ``S_w`` | extrema, member count, summed weight (the mass/volume profile itself) |
 
 Also available: `var`, `neff`, optional bootstrap `mean_ci`/`median_ci` + `median_se` (`nboot>0`);
-bins `:linear` / `:log` / `:equal` (quantile-spaced, equal-population); `geometry=:spherical`/`:cylindrical`
+bins `:linear` / `:log` (base 10, so a `binsize` is a dex step) / `:equal` (quantile-spaced,
+equal-population); `geometry=:spherical`/`:cylindrical`
 adds `density = S_w/\text{shell volume}`; `cumulative` adds `cumsum` (e.g. enclosed mass ``M(<r)``);
-`normalize=:pdf` returns a normalised PDF. Two wrappers build on this:
+`normalize=:pdf` returns a normalised PDF. The dispersion wrappers build on this:
 
 | Quantity | Formula |
 |---|---|
-| Dynamical rotation curve `rotationcurve` | ``v_\mathrm{circ}(r) = \sqrt{G\,M(<r)/r}`` from the binned enclosed mass ``M(<r) = \sum_{r_i<r} m_i`` (also returns ``g = GM/r^2``) |
 | Kinematic dispersion `velocitydispersion` | the per-bin `std` of ``v_R, v_\phi, v_z`` → ``\sigma_R,\sigma_\phi,\sigma_z`` and total ``\sigma = \sqrt{\sigma_R^2+\sigma_\phi^2+\sigma_z^2}`` |
 | Total (turbulent ⊕ thermal) dispersion `velocitydispersion(…; thermal=true, mu=…)` | ``\sigma_\mathrm{turb,1D}=\sqrt{(\sigma_R^2+\sigma_\phi^2+\sigma_z^2)/3}``, thermal ``\sigma_\mathrm{th}=\sqrt{k_B\langle T\rangle/(\mu m_H)}``, total ``\sigma_\mathrm{tot}=\sqrt{\sigma_\mathrm{turb,1D}^2+\sigma_\mathrm{th}^2}``, Mach ``\mathcal{M}=\sigma_\mathrm{turb,1D}/\langle c_s\rangle`` |
 | Local de-streamed dispersion `localdispersion` | as above but the turbulent ``\sigma`` is the residual about the **per-patch** mean velocity (square `patchsize` tiles in ``x,y``), removes rotation/shear/streaming above the patch scale (TIGRESS/SILCC-style); also returns the anisotropy ``\sigma_z/\sigma_\mathrm{in\text{-}plane}`` and patch-to-patch percentile spread |
@@ -749,16 +745,28 @@ Conceptual guide and worked examples: [Profiles & Phase Diagrams](profiles_phase
 | Map | Formula (per pixel) |
 |---|---|
 | Surface density `:sd` | ``\Sigma = (\textstyle\sum m)/A_\mathrm{pix}`` (column mass / pixel area) |
-| Column mass `:mass` | ``\textstyle\sum m`` |
+| Column mass `:mass` (**grid data**) | ``\textstyle\sum m`` |
+| Column mass `:mass` (**particles**) | a mass-weighted **mean** particle mass by default; ``\textstyle\sum m`` only with `mode=:sum` |
 | Weighted-mean map, `mode=:standard` (default) | ``\langle q\rangle = \big(\textstyle\sum q\,w\big)\big/\big(\textstyle\sum w\big)`` |
-| Column sum, `mode=:sum` | ``\textstyle\sum q`` (extensive; conserves the total) |
-| Velocity dispersion ``\;`` `:σx :σy :σz :σ :σr_cylinder :σϕ_cylinder` (axis-aligned), `:σlos` (off-axis) | ``\sigma = \sqrt{\max\!\big(\langle v^2\rangle - \langle v\rangle^2,\;0\big)}`` |
+| Column sum, `mode=:sum` | grid data: ``\textstyle\sum q\,w`` (a plain ``\textstyle\sum q`` only for `:ekin`, `:etherm`, `:volume`); particles: ``\textstyle\sum q`` |
+| Velocity dispersion, **box frame** ``\;`` `:σx :σy :σz :σ :σr_cylinder :σϕ_cylinder :σr_sphere :σθ_sphere :σϕ_sphere` | ``\sigma = \sqrt{\max\!\big(\langle v^2\rangle - \langle v\rangle^2,\;0\big)}`` |
+| Velocity dispersion, **camera frame** ``\;`` `:σlos` `:σcamx` `:σcamy` (off-axis only) | the same formula, on ``v\cdot\hat{w}``, ``v\cdot\hat{r}``, ``v\cdot\hat{u}`` |
 
 The dispersion maps are built from two deposited maps, ``\langle v\rangle`` and ``\langle v^2\rangle``,
 so ``\sigma`` is the spread **about that pixel's own weighted-mean velocity**, the local
 line-of-sight (or component) dispersion, with the per-pixel mean (the bulk + rotation seen down that
-column) removed by construction; the ``\max(\cdot,0)`` guards round-off. The axis-aligned ``:σ*`` are
-map-only and need `direction=:x/:y/:z`; `:σlos` works for any off-axis line of sight.
+column) removed by construction; the ``\max(\cdot,0)`` guards round-off.
+
+Both frames work on an off-axis view. The **box-frame** set resolves the velocity along the
+simulation axes, so `:σz` is the spread along the box z whatever the camera is doing. The
+**camera-frame** set resolves it along the viewing direction and the two image axes, and exists
+only off-axis, because there is no camera basis on the axis-aligned path. The two describe one
+tensor in two frames, so their traces agree:
+``\sigma_{camx}^2 + \sigma_{camy}^2 + \sigma_{los}^2 = \sigma_x^2 + \sigma_y^2 + \sigma_z^2``
+per pixel.
+
+Note that `:σ` is the spread of the **speed**, ``\sqrt{\langle|v|^2\rangle - \langle|v|\rangle^2}``,
+which is not the tensor trace ``\langle|v|^2\rangle - |\langle v\rangle|^2`` and is smaller.
 
 ## Velocity dispersion: which σ am I getting?
 

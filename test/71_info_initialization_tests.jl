@@ -57,3 +57,44 @@ end
         end
     end
 end
+
+# grid_info.amr_header: the rest of the amr header (time steps, step counters, energy bookkeeping,
+# cosmology) that a restartable RAMSES output needs. It must match the file, be stored in mera
+# files, and mera files written before the field existed must still load AND save again.
+@testset "grid_info.amr_header" begin
+    R = SIMULATION_PATH
+    info = try
+        getinfo(300, joinpath(R, "RAMSES/mw_L10"), verbose=false)
+    catch e
+        @info "mw_L10 fixture unavailable, skipping" exception = e
+        nothing
+    end
+    if info !== nothing
+        h = info.grid_info.amr_header
+        @test h[:nstep_coarse] == info.grid_info.nstep_coarse
+        @test length(h[:dtold]) == length(h[:dtnew]) == info.grid_info.nlevelmax
+        @test all(isfinite, h[:dtold]) && all(isfinite, h[:dtnew])
+        @test isapprox(h[:t], info.time; rtol=1e-14)        # info_*.txt prints 15 digits only
+        @test isapprox(h[:aexp], info.aexp; rtol=1e-14)
+        @test h[:boxlen] == info.boxlen
+        @test length(h[:tout]) == h[:noutput]
+        # stored in mera files
+        gas = gethydro(info, lmax=info.levelmin, xrange=[0.45, 0.55], yrange=[0.45, 0.55],
+                       zrange=[0.45, 0.55], verbose=false, show_progress=false)
+        tmp = mktempdir()
+        savedata(gas, tmp, :write, verbose=false)
+        @test loaddata(300, tmp, :hydro, verbose=false).info.grid_info.amr_header == h
+    end
+    # a mera file written before the field existed: loads with an empty header, and re-saves
+    ts = get(DATASETS, :timeseries_sedov3d, nothing)
+    if ts !== nothing && isdir(ts.mera_path)
+        f = first(sort(filter(endswith(".jld2"), readdir(ts.mera_path))))
+        nout = parse(Int, match(r"output_(\d+)", f).captures[1])
+        old = loaddata(nout, ts.mera_path, :hydro, verbose=false)
+        @test old.info.grid_info.amr_header isa Dict{Symbol,Any}
+        tmp = mktempdir()
+        savedata(old, tmp, :write, verbose=false)
+        @test loaddata(nout, tmp, :hydro, verbose=false).info.grid_info.amr_header ==
+              old.info.grid_info.amr_header
+    end
+end

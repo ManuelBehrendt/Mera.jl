@@ -81,8 +81,8 @@ info = getinfo(2, "$MERA_EXAMPLES/RAMSES-PUBLIC/ramses_abc_flow");
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-09-14T15:13:42.228
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+[Mera]: 2026-09-26T20:42:01.801
 Code: RAMSES
 output [2] summary:
 mtime: 2026-08-26T15:14:12.234
@@ -166,7 +166,7 @@ println("Mach_alfven   : ", extrema(mA))
 ```
 [Mera] Hint: getvar(:v) has no `vcenter` — velocities are in the BOX frame.
              Pass vcenter=:auto for an object with bulk motion (`center=` sets the origin,
-             `vcenter=` the frame). On a halo streaming at ~200 km/s this shifted |J| by 34 %.
+             `vcenter=` the frame).
              (shown once per session; verbose(false) silences Mera's messages)
 |B|           : (0.0015395372898541501, 1.401162752947759)
 plasma beta   : (0.6807865656874684, 562546.4074980728)
@@ -302,9 +302,9 @@ fraction for the cells the boundary cuts, a magnetic energy summed over a sphere
 inside the sphere, not the energy of every cell the sphere touches.
 
 ```julia
-# CairoMakie also exports a `Sphere`, so qualify Mera's region type once the
-# plotting package is loaded. `Mera.Sphere` is unambiguous either way.
-region = Mera.Sphere(0.3; center=[:bc], range_unit=:standard)
+# The region constructors are lowercase, so no qualification is needed even with
+# plotting package is loaded. `sphere` is unambiguous either way.
+region = sphere(0.3; center=[:bc], range_unit=:standard)
 
 sph = subregion(gas, region, verbose=false)
 println("cells in the sphere   : ", length(sph.data))
