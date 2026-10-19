@@ -16,10 +16,10 @@ type: software
 authors:
   - family-names: Behrendt
     given-names: Manuel
-    # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO: insert ORCID before submission
+    orcid: "https://orcid.org/0000-0002-8759-941X"
     email: mera@manuelbehrendt.com
 version: 1.8.0
-date-released: "2026-06-16"   # TODO: set to the day v1.8.0 is actually tagged
+date-released: "2026-10-19"
 license: MIT
 repository-code: "https://github.com/ManuelBehrendt/Mera.jl"
 url: "https://manuelbehrendt.github.io/Mera.jl/stable/"
