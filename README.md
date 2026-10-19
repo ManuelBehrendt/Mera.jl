@@ -101,6 +101,10 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   an output. Mera rewrites it for any other number, also from a mera file when the original files
   are gone, and checks the result against RAMSES itself.
   [RAMSES restart](https://manuelbehrendt.github.io/Mera.jl/dev/07_2_multi_RAMSES_Restart/)
+- **Find structures with the method that suits your data.** Seven clump-finding algorithms behind
+  one call, with a boundedness test, a catalogue and its mass function, and synthetic fields with
+  known clumps to check a finder against.
+  [Clump finding](https://manuelbehrendt.github.io/Mera.jl/dev/clumpfind/)
 - **Read a snapshot once, then re-read it fast.** Save it in Mera's own format and it comes back
   much faster, from a much smaller file.
   [Benchmarks, and where they may not hold](https://manuelbehrendt.github.io/Mera.jl/dev/benchmarks/performance/)
@@ -114,16 +118,22 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
 - **Write a selection once and reuse it.** Keep the region, units and resolution in one bundle and
   hand it to every call, and short macros fold the common steps into a single line.
   [Pipelines](https://manuelbehrendt.github.io/Mera.jl/dev/pipelines/)
+- **Get a first look in one call.** `quicklook` summarises a snapshot you have never opened, within
+  a time budget, and reports you compose yourself say what they cost before they run.
+  [First look](https://manuelbehrendt.github.io/Mera.jl/dev/first_look/)
 - **Hear about a long job without watching it.** Mera can ring a bell, send an email or post to a
   Zulip channel when a run finishes, carrying the figures, the timings and, if something broke, the
   error.
   [Notifications](https://manuelbehrendt.github.io/Mera.jl/dev/notifications/)
-- **The whole analysis is here**: regions, units, projections, profiles, phase diagrams, clump
+- **The whole analysis is here**: regions, units, projections, profiles, phase diagrams, PDFs, clump
   finding, star formation, time series, movies and export.
 - **Every result remembers where it came from**: the version of Mera, the exact code it ran on and
   the snapshot you used. Fifteen public test simulations with known answers let you check your own
   installation.
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/dev/reproducibility/)
+- **Bring your own hydro code.** Readers plug into a registry, so a reader written in your own
+  package works with the whole analysis without changing Mera.
+  [Adding a reader](https://manuelbehrendt.github.io/Mera.jl/dev/adding_a_reader/)
 - **One language.** Julia from beginning to end, so the code you read is the code that runs. No
   plotting library is installed until you ask for a figure.
 
