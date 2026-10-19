@@ -32,6 +32,12 @@ time series and movies. It reads [RAMSES](https://github.com/ramses-organisation
 mesh refinement output natively, with hydro and MHD, particles, gravity, clumps, sinks and radiative
 transfer, and handles cosmological runs throughout.
 
+<img src="docs/src/assets/gallery/coin_small.gif" alt="A galaxy tipping from face-on to edge-on and tumbling, in surface density, line-of-sight velocity and temperature" width="640">
+
+<sub>A galaxy tipped from face-on onto its edge and spun like a coin, in surface density,
+line-of-sight velocity and temperature, made with Mera
+([the recipe](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/001_coin_flip_movie)).</sub>
+
 Underneath, a snapshot is one table: one row per AMR cell, one column per quantity, each row
 carrying its refinement level, so nothing is flattened onto a uniform grid first. You ask for
 physics rather than write formulas:
