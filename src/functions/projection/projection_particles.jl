@@ -930,6 +930,11 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                           :σθ_sphere   => [:vθ_sphere,   :vθ_sphere2],
                           :σϕ_sphere   => [:vϕ_sphere,   :vϕ_sphere2] )
 
+    # the velocity components a requested dispersion needs; with mode=:sum their mass-weighted
+    # means are kept apart in σ_mean, because the component maps themselves are sums
+    σ_deps_aa = Set{Symbol}(v for s in selected_vars if s in σcheck for v in σ_to_v[s])
+    σ_mean = Dict{Symbol,Matrix{Float64}}()
+
     for i in σcheck
         idx = findall(x->x==i, selected_vars) #[1]
         if length(idx) >= 1
@@ -1197,6 +1202,14 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         h = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), wv, newrange1, newrange2, closed; max_threads=max_threads)
                         selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
                         maps[Symbol(i_var)] = selected_unit != 1. ? h.weights .* selected_unit : h.weights
+                        # a dispersion needs the mass-weighted MEAN of its components, not the sum
+                        if i_var in σ_deps_aa
+                            mw = length(mask) == 1 ? select(filtered_data, :mass) : select(filtered_data, :mass) .* select(filtered_data, :mask)
+                            hq = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), qv .* mw, newrange1, newrange2, closed; max_threads=max_threads)
+                            hm = _hist2d(select(filtered_data, var_a), select(filtered_data, var_b), mw, newrange1, newrange2, closed; max_threads=max_threads)
+                            μ = hq.weights ./ hm.weights      # the same division as mode=:standard
+                            σ_mean[Symbol(i_var)] = selected_unit != 1. ? μ .* selected_unit : μ
+                        end
                         maps_unit[Symbol( string(i_var) )] = unit_name
                         maps_mode[Symbol( string(i_var) )] = :sum
                     else
@@ -1396,9 +1409,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     if !(haskey(maps, selected_v[1]) && haskey(maps, selected_v[2]))
                         throw(ErrorException("Missing velocity component maps for dispersion calculation."))
                     end
-                    iv  = maps[selected_v[1]]
+                    iv  = get(σ_mean, selected_v[1], maps[selected_v[1]])
                     iv_unit = maps_unit[Symbol( string(selected_v[1])  )]
-                    iv2 = maps[selected_v[2]]
+                    iv2 = get(σ_mean, selected_v[2], maps[selected_v[2]])
                     iv2_unit = maps_unit[Symbol( string(selected_v[2])  )]
                     if iv_unit == iv2_unit
                         diff_iv = iv2 .- iv .^2
@@ -1811,6 +1824,14 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                 g, _ = deposit(vals, ones_w)         # Σ value
                 m = g
                 mmode = :sum
+                # a dispersion still needs the mass-weighted mean of its components
+                if ivar in σ_deps
+                    gμ, wμ = deposit(vals, massv)
+                    μ = zeros(Float64, nx, ny)
+                    nzμ = wμ .> 0
+                    μ[nzμ] = gμ[nzμ] ./ wμ[nzμ]
+                    σ_raw[ivar] = μ
+                end
             else
                 g, w = deposit(vals, massv)          # Σ value·mass  /  Σ mass
                 m = zeros(Float64, nx, ny)
@@ -1820,7 +1841,7 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
             end
         end
         # raw (code-unit) component mean, for the dispersions assembled below
-        ivar in σ_deps && (σ_raw[ivar] = copy(m))
+        ivar in σ_deps && !haskey(σ_raw, ivar) && (σ_raw[ivar] = copy(m))
 
         selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
         maps[ivar]      = selected_unit != 1.0 ? m .* selected_unit : m

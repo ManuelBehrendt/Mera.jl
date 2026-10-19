@@ -2227,7 +2227,7 @@ thermal and turbulent line widths and the species-mass scaling in full.
 |---|---|---|
 | `:sd`, `:mass` | the total; `mode` is ignored | the same |
 | `:ekin`, `:etherm`, `:volume` | weighted mean | the plain total, Σ q |
-| velocity dispersions (`:σlos`, `:σz`, ...) | from weighted means | `:σlos`, `:σcamx`, `:σcamy` the same; the box-frame σ maps are not widths, so use `mode=:standard` |
+| velocity dispersions (`:σlos`, `:σz`, ...) | weighted mean; `mode` is ignored | the same |
 | any other quantity, e.g. `:T`, `:vx`, `:rho` | weighted mean, Σ q·w / Σ w | **Σ q·w**, not Σ q |
 
 `w` is the `weighting`: mass for hydro, volume for RT, unless you choose another one.

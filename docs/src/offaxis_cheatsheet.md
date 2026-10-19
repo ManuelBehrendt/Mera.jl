@@ -359,8 +359,8 @@ zero, and a mean that is just that one object.
 On particles `projection(part, :mass)` is the mass-weighted **mean particle mass**, because a
 particle has no volume. For the mass in each pixel use `mode=:sum`, or `:sd` times the pixel area.
 
-Ask for dispersions with `mode=:standard`. With `mode=:sum` the box-frame σ maps are not widths.
-The camera-frame `:σlos`, `:σcamx` and `:σcamy` ignore `mode`.
+Dispersions are always built from weighted means, whatever `mode` says: a width is not a sum.
+With `mode=:sum` the velocity components themselves (`:vx` and so on) are still sums.
 
 !!! note "`:sph` and `:voronoi` need a size for each particle"
     `:sph` spreads each particle over a kernel set by its smoothing length, and `:voronoi` gives

@@ -905,6 +905,29 @@ end
                                               pxsize=[2.,:kpc], verbose=false, show_progress=false)
     end
 
+    @testset "a dispersion is a width whatever mode says" begin
+        # With mode=:sum the box-frame σ maps used to be sqrt(Σv²w - (Σvw)²), the root of two sums,
+        # which is the width of nothing. They must equal the mode=:standard maps on every path,
+        # while the velocity components themselves stay sums.
+        kw = (center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        vars = [:σx, :σz, :σr_cylinder, :vx]
+        dp = DATASETS[:spiral_ugrid]
+        part = getparticles(getinfo(dp.output, dp.path, verbose=false), verbose=false,
+                            show_progress=false)
+        for (obj, path) in ((gas, (direction=:z,)), (gas, (los=[1.,2,3],)),
+                            (part, (direction=:z,)), (part, (los=[1.,2,3],)))
+            st = projection(obj, vars, :km_s; mode=:standard, path..., kw...)
+            sm = projection(obj, vars, :km_s; mode=:sum,      path..., kw...)
+            for v in (:σx, :σz, :σr_cylinder)
+                # axis-aligned particle maps are NaN where a pixel is empty, in both modes
+                @test isequal(isnan.(sm.maps[v]), isnan.(st.maps[v]))
+                @test filter(!isnan, sm.maps[v]) ≈ filter(!isnan, st.maps[v])
+                @test any(st.maps[v] .> 0)
+            end
+            @test !(sm.maps[:vx] ≈ st.maps[:vx])      # the component is still a sum
+        end
+    end
+
     @testset "one rule for up: every spelling of face-on and edge-on agrees" begin
         # Three pieces of code used to choose the roll of a view by three different rules: the
         # camera's up hint, the `inclination`/`azimuth` reference, and `face_on`/`edge_on`. So

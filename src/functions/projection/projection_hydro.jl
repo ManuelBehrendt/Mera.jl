@@ -1606,24 +1606,21 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                 selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
                 selected_v = σ_to_v[ivar]
 
-                # revert weighting for velocity dispersion calculation
-                if mode == :standard
-                    # Use final weights for proper weighted averages
-                    mask_nonzero_v1 = final_weights[selected_v[1]] .> 0
-                    mask_nonzero_v2 = final_weights[selected_v[2]] .> 0
-                    
-                    # Direct allocation for velocity arrays (no memory pool needed)
-                    iv = zeros(Float64, length1, length2)
-                    iv2 = zeros(Float64, length1, length2)
-                    
-                    iv[mask_nonzero_v1] = final_grids[selected_v[1]][mask_nonzero_v1] ./ final_weights[selected_v[1]][mask_nonzero_v1]
-                    iv2[mask_nonzero_v2] = final_grids[selected_v[2]][mask_nonzero_v2] ./ final_weights[selected_v[2]][mask_nonzero_v2]
-                    
+                # A dispersion is a width, so it is built from the weighted MEANS <v> and <v^2>
+                # whatever `mode` says. With mode=:sum the component maps stay sums; taking the
+                # root of sum(v^2 w) - sum(v w)^2 would not be the width of anything.
+                mask_nonzero_v1 = final_weights[selected_v[1]] .> 0
+                mask_nonzero_v2 = final_weights[selected_v[2]] .> 0
+                iv  = zeros(Float64, length1, length2)
+                iv2 = zeros(Float64, length1, length2)
+                iv[mask_nonzero_v1]  = final_grids[selected_v[1]][mask_nonzero_v1] ./ final_weights[selected_v[1]][mask_nonzero_v1]
+                iv2[mask_nonzero_v2] = final_grids[selected_v[2]][mask_nonzero_v2] ./ final_weights[selected_v[2]][mask_nonzero_v2]
+                if mode == :sum
+                    imaps[selected_v[1]] = final_grids[selected_v[1]]
+                    imaps[selected_v[2]] = final_grids[selected_v[2]]
+                else
                     imaps[selected_v[1]] = iv
                     imaps[selected_v[2]] = iv2
-                elseif mode == :sum
-                    iv  = imaps[selected_v[1]] = final_grids[selected_v[1]]  
-                    iv2 = imaps[selected_v[2]] = final_grids[selected_v[2]]  
                 end
                 delete!(data_dict, selected_v[1])
                 delete!(data_dict, selected_v[2])
@@ -1632,7 +1629,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                 imaps[ivar] = sqrt.(max.(iv2 .- iv .^2, 0.)) .* selected_unit  # max to avoid negative values from numerical errors
                 maps_unit[ivar] = unit_name
                 maps_weight[ivar] = weighting
-                maps_mode[ivar] = mode
+                maps_mode[ivar] = :standard
                 
                 # assign units 
                 selected_unit, unit_name= getunit(dataobject, selected_v[1], selected_vars, units, uname=true)
@@ -2103,7 +2100,17 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         # keep the RAW weighted mean of a dispersion component. sigma is formed from <v> and
         # <v^2> in code units and scaled once at the end, exactly as the axis-aligned path does;
         # scaling each component first would square the unit factor on the second moment.
-        ivar in σ_deps && (σ_raw[ivar] = copy(m))
+        # With mode=:sum, `m` holds the sum, so the mean is formed here from the same deposit.
+        if ivar in σ_deps
+            if mode == :sum
+                μ = zeros(Float64, nx, ny)
+                nzμ = wgrid .> 0
+                μ[nzμ] = grid[nzμ] ./ wgrid[nzμ]
+                σ_raw[ivar] = μ
+            else
+                σ_raw[ivar] = copy(m)
+            end
+        end
 
         selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
         imaps[ivar]       = m .* selected_unit
