@@ -137,12 +137,12 @@ getmask(obj, quantity::Symbol, pred; unit::Symbol=:standard, center=nothing,
     getmask(obj, region::AbstractRegion) -> BitVector
 
 A **geometric** selection mask: `true` for the rows inside `region`
-([`Sphere`](@ref), [`Cylinder`](@ref), [`Cuboid`](@ref), the shells, and anything built from
+([`sphere`](@ref), [`cylinder`](@ref), [`cuboid`](@ref), the shells, and anything built from
 them with `&`/`|`/`!`/`-`).
 
 `subregion`/`shellregion` return a new *object*; this returns the mask itself, so geometry
 composes with the `mask=` keyword that `getvar`, `projection`, `profile`, `phase`, `msum` and
-the statistics already accept — and with value-space conditions, via `&`:
+the statistics already accept, and with value-space conditions, via `&`:
 
 ```julia
 inner = getmask(gas, sphere(r200, center=halo_pos, range_unit=:kpc))
@@ -152,11 +152,11 @@ profile(gas, :r_sphere, :T; mask = inner & getmask(gas, :T, >(1e4); unit=:K))
 
 It uses the same containment test and AABB pruning as `subregion`, so a mask and a subregion
 always agree on which rows are in. Hand-rolling the radius arithmetic instead is where the
-`ckpc/h`-versus-normalised-centre confusion bites — `range_unit` is handled here once.
+`ckpc/h`-versus-normalised-centre confusion bites; `range_unit` is handled here once.
 
 Cells straddling the boundary are **in or out** by their centre; a mask has no room for the
-fractional membership `subregion(..., cell=true)` computes. Use `subregion` when the edge
-matters.
+fractional membership that `subregion(obj, region)` computes with its default `split=true`. Use
+`subregion` when the edge matters.
 """
 function getmask(obj, region::AbstractRegion)
     data = obj.data

@@ -225,7 +225,7 @@ export
     slice,
     CoveringGridResult,
 
-    # immersive 3-D visualisation (volume ray-caster)
+    # composable reports and previews
     report,
     preview,
     render,
@@ -355,7 +355,7 @@ export
 # enhanced I/O functions
     show_mera_cache_stats,
     clear_mera_cache!,
-# volume rendering
+    # export to ParaView
     export_vtk,
     # writing RAMSES outputs: any number of CPUs, from RAMSES files or from Mera data
     repartition,
