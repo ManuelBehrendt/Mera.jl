@@ -59,7 +59,7 @@ this in detail.
 
 ## What each one is
 
-Generated from namelists committed in [`testdata/namelists/`](../testdata/), so every one is
+Generated from namelists committed in [`testdata/namelists/`](https://github.com/ManuelBehrendt/Mera.jl/tree/master/testdata/namelists), so every one is
 reproducible from first principles given RAMSES itself. Each is checked against an **analytic
 oracle**, meaning something theory fixes independently of Mera.
 
