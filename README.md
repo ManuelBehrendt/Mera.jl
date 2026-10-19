@@ -4,6 +4,14 @@
 
 **Analyze RAMSES simulations at scale, in pure Julia.**
 
+<h3>
+  <a href="https://manuelbehrendt.github.io/Mera.jl/dev/">📖 Documentation</a> ·
+  <a href="https://manuelbehrendt.github.io/Mera.jl/dev/where_to_start/">Where to start</a> ·
+  <a href="#installation">Install</a> ·
+  <a href="https://manuelbehrendt.github.io/Mera.jl/dev/gallery/">Gallery</a> ·
+  <a href="https://manuelbehrendt.github.io/Mera.jl/dev/adding_a_reader/">Add a reader for your code</a>
+</h3>
+
 [![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)](https://github.com/ManuelBehrendt/Mera.jl/releases)
 [![CI](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI.yml)
 [![Documentation](https://img.shields.io/badge/docs-stable%20release-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/)
@@ -11,9 +19,11 @@
 [![coverage, CI tests](https://img.shields.io/codecov/c/github/ManuelBehrendt/Mera.jl?flag=ci-smoke&label=coverage%3A%20CI%20tests&color=blue)](https://codecov.io/gh/ManuelBehrendt/Mera.jl?flags[0]=ci-smoke)
 [![coverage, full suite](https://img.shields.io/codecov/c/github/ManuelBehrendt/Mera.jl?flag=local-full&label=coverage%3A%20full%20suite)](https://codecov.io/gh/ManuelBehrendt/Mera.jl?flags[0]=local-full)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
+[![works with Mera.jl](https://img.shields.io/badge/works%20with-Mera.jl-22D3C8?logo=julia&logoColor=white)](https://github.com/ManuelBehrendt/Mera.jl)
 
-<sub>What the badges mean: [the two coverage numbers](#the-two-coverage-numbers) and
-[what Aqua checks](#package-hygiene-the-aqua-badge).</sub>
+<sub>What the badges mean: [the two coverage numbers](#the-two-coverage-numbers),
+[what Aqua checks](#package-hygiene-the-aqua-badge), and
+[the badge for your own project](#get-involved).</sub>
 
 **MERA** is an analysis framework for astrophysical simulations, written in Julia. It covers the
 whole path from raw simulation output to a result you can publish: selecting regions, computing
@@ -172,9 +182,10 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 ### Loading and filtering
 - **`getinfo`**: simulation metadata (box size, time/redshift, grid structure, units)
 - **`gethydro` / `getparticles` / `getgravity` / `getrt` / `getclumps` / `getsinks`**: load each data
-  type, with optional spatial subregioning and refinement-level capping
-- **`subregion` / `shellregion`**: cuboid, sphere, cylinder and shell selections that preserve AMR
-  structure. Regions are values: combine them with `∩ ∪ \ !`, that is intersection, union,
+  type, with optional spatial subregioning and refinement-level capping; `getparticlemask` picks
+  stars, dark matter or another particle family
+- **`subregion` / `shellregion`**: cuboid, sphere, cylinder and shell selections (`cuboid`, `sphere`,
+  `cylinder`, `sphericalshell`, `cylindricalshell`) that preserve AMR structure. Regions are values: combine them with `∩ ∪ \ !`, that is intersection, union,
   difference and complement. If you would rather not type Unicode, `&`, `|`, `intersect`,
   `union`, `setdiff` and `!` do the same. Tilt a cylinder's
   axis, and boundary cells keep the fraction of themselves inside. `refine` / `refine_to`
@@ -192,8 +203,10 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
   variable, and what the files cost on disk
 - **`viewfields` / `viewallfields` / `viewdata`**: look inside any Mera object without knowing its
   type first
-- **`checkoutputs` / `checksimulations` / `printtime`**: which outputs exist, which are complete,
+- **`checkoutputs` / `checksimulations` / `gettime`**: which outputs exist, which are complete,
   and the time each one sits at
+- **`namelist` / `makefile` / `patchfile` / `timerfile`**: the run's namelist, compile settings,
+  patch files and timings, as RAMSES wrote them into the output
 
 ### Projections and grids
 - **`projection`**: mass-conserving 2-D maps of any quantity, on- or off-axis (arbitrary line of
@@ -203,8 +216,13 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
   `split=true`, cells cut by the `fov` window or a `depth` slab count by the fraction inside
 - **`volumerender` / `volumelook` / `volumeorbit` / `volumepath`**: volume rendering in Julia, with
   isosurfaces, tone curves and camera paths for movies
-- **`face_on` / `edge_on` / `rotation_frame` / `restframe`**: pick the frame before you project,
-  from the angular momentum of the gas or from a velocity you supply
+- **`face_on` / `edge_on` / `angmom` / `rotation_frame` / `restframe`**: pick the frame before you
+  project, from the angular momentum of the gas (or of several components together) or from a
+  velocity you supply
+- **`gridoverlay`**: the AMR cell boundaries as lines, to draw over a map
+- **Periodic boxes**: `:r_sphere_periodic`, `center_of_mass(...; periodic=true)`, regions with
+  `periodic=true`, and `periodic_recenter` to show a structure on a box face whole.
+  [Periodic boxes]({D}/periodic_boxes/)
 - **`covering_grid` / `slice` / `offaxis_slice`**: resample AMR onto a dense uniform grid for FFTs,
   power spectra, volume rendering, or machine-learning inputs. `covering_grid_memory` costs the
   grid in GB before you commit to allocating it
@@ -229,6 +247,7 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
   equal-count binning and bootstrap CIs; works on 3-D data **or** on a projected 2-D map, and can
   be run across a whole run
 - **`phase`**: 2-D weighted histograms (the classic ρ–T diagram, position–velocity, …)
+- **`pdf`**: mass- or volume-weighted probability density functions of any quantity
 
 ### Structure finding (7 algorithms behind one call)
 - **`clumpfind`**: one call backed by `ThresholdFoF` (the default), `DensityWatershed`,
@@ -237,21 +256,24 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 - **Gravitational boundedness**: Barnes–Hut self-potential, SUBFIND-style unbinding and tidal
   (Hill-radius) truncation
 - **`clumptable` / `clump_massfunction` / `clump_mass_fraction`**: the catalogue, its mass
-  function, and how much of the total mass the clumps hold
+  function, and how much of the total mass the clumps hold; `save_clumps` / `load_clumps` keep it
+- **`synthetic_clumps`**: real Mera objects with known clumps, built in memory, to try Mera or test a
+  finder without any simulation data
 
 ### Derived fields and units
 - **`getvar`**: derived quantities by name (`:T`, `:cs`, `:mach`, `:jeanslength`,
   `:vr_cylinder`, `:ekin`, `:jeansmass`, …); `getvar()` prints the full list
 - **`add_field`**: register a custom derived field once; it then works inside `projection`,
-  `profile` and `phase`. `list_fields`, `field_tree` and `getvar_requirements` show what exists and
-  what each field needs, which also drives selective I/O
+  `profile` and `phase`. `list_fields`, `field_tree`, `field_info` and `getvar_requirements` show
+  what exists and what each field needs, which also drives selective I/O
 - **`setcomposition!`**: set the hydrogen mass fraction and the mean molecular weight, the two
   numbers behind `:nH` and `:T`
 - **133 unit scale factors and 41 constants**, with `add_unit`, `list_units` and `getunit`
 
 ### Cosmological runs
 - **`cosmic_time` / `lookback_time` / `age_of_universe` / `formation_redshift`**: ages and
-  redshifts, with `iscosmological` to test a snapshot first
+  redshifts, with `iscosmological` to test a snapshot first; `stellar_age` and `formation_time` for
+  star particles
 - **`comoving_to_proper_length` / `comoving_to_proper_density`**, and the reverse, for converting
   either way
 - **`critical_density` / `mean_matter_density` / `baryon_fraction`**: the background the run sits in
@@ -264,6 +286,7 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 - **`savedata` / `loaddata`**: compressed MERA-file archive (LZ4/Zlib/Bzip2): smaller and faster to
   read than raw RAMSES. `convertdata` and `batch_convert_mera` convert a whole run
 - **`savemap` / `loadmap`**: keep a finished projection, with its provenance, instead of recomputing
+- **`upgrade_merafile`**: bring a MERA file written by an older version up to date
 - **`export_vtk`**: write AMR cells / particles to VTK for ParaView/VisIt
 
 ### Quick looks and reports
@@ -276,7 +299,8 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 - **`timeseries`**: run any reducer over every output with one snapshot in memory at a time; adds
   redshift and scale factor automatically on cosmological runs
 - **`getmovie` / `savemovie` / `rotation_sequence`**: animations from a sweep of outputs or of
-  viewing angles, with a fixed field of view so frames do not jitter
+  viewing angles, with a fixed field of view so frames do not jitter; `loadmovie`,
+  `moviefromframes` and `makethumb` reload, assemble and preview them
 
 ### Reproducibility
 - **`provenance` / `provenance_string`**: version, git branch and commit, a marker if the working
@@ -289,8 +313,12 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
   where your storage stops rewarding more of them
 - **`notifyme` / `bell` / `send_results`**: mail or Zulip when a long run finishes, with plots
   attached, or just a sound
-- **Plotting is a weak dependency**: Mera installs without it, and the plotting functions appear
-  once you load Makie
+- **Quiet when you want it**: `verbose(false)`, `showprogress(false)`, or `output_mode(false)` for
+  both
+- **Plotting is a weak dependency**: Mera installs without it, and the plotting functions
+  (`quicklookplot`, `overviewplot`, `clumpplot`, …) appear once you load Makie
+- **New readers plug in**: `register_reader!` adds a reader for another code's files without
+  touching the analysis. [Adding a reader]({D}/adding_a_reader/)
 
 ## Installation
 
@@ -512,6 +540,16 @@ when a new version ships and what moved in it.
 - **Report / request**: [Issues](https://github.com/ManuelBehrendt/Mera.jl/issues) for bugs and feature requests.
 - **Contribute**: see [CONTRIBUTING.md](CONTRIBUTING.md); bug reports, docs fixes, examples and new
   algorithms are all welcome.
+- **Add a reader for your simulation code**: the analysis never looks at the file format, so a
+  reader is the only piece a new code needs. [How to add a reader](https://manuelbehrendt.github.io/Mera.jl/dev/adding_a_reader/) walks
+  through it.
+- **Show that your project works with Mera**: paste the badge into your own README.
+
+  [![works with Mera.jl](https://img.shields.io/badge/works%20with-Mera.jl-22D3C8?logo=julia&logoColor=white)](https://github.com/ManuelBehrendt/Mera.jl)
+
+  ```markdown
+  [![works with Mera.jl](https://img.shields.io/badge/works%20with-Mera.jl-22D3C8?logo=julia&logoColor=white)](https://github.com/ManuelBehrendt/Mera.jl)
+  ```
 
 ## License
 
