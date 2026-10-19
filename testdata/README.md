@@ -127,7 +127,8 @@ namelist the data came from, and the RAMSES attribution. It is written at packag
 than by hand, so a regenerated fixture cannot ship without it.
 
 The generated fixtures are published as **assets on a `testdata-vN` release**, not committed to
-this repository (`testdata-v1`: eleven simulations, for Mera 1.8; `testdata-v2`: the same eleven
+this repository (`testdata-v1`: eleven simulations, for development versions before 1.8.0;
+`testdata-v2`: the same eleven
 plus `sedov3d_bisection`, `dm_gas3d_bisection`, `sedov3d_iogroups` and `cosmo3d`): Mera is registered, so tree contents ship in every `Pkg.add("Mera")` tarball and
 persist in git history.
 

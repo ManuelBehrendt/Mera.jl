@@ -1,7 +1,8 @@
 # download_testdata.jl — fetch the public RAMSES test simulations.
 #
 # These are the same simulations Mera's own test suite runs against, published as
-# assets on the `testdata-v2` GitHub release (`testdata-v1`, without the last four, for Mera 1.8). Each one carries a known answer:
+# assets on the `testdata-v2` GitHub release (`testdata-v1`, the first eleven, stays online for
+# development versions before 1.8.0). Each one carries a known answer:
 # either an analytic law that follows from its own setup, or reference values
 # published by the RAMSES developers. See testdata/README.md for how they are built.
 

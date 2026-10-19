@@ -25,9 +25,8 @@ repository-code: "https://github.com/ManuelBehrendt/Mera.jl"
 url: "https://manuelbehrendt.github.io/Mera.jl/stable/"
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.XXXXXXX   # TODO: the Zenodo CONCEPT DOI ("Cite all versions"), not the
-                                  # per-version DOI the latestdoi badge resolves to. Read it off the
-                                  # Zenodo record after the release is archived.
+    value: 10.5281/zenodo.3675254   # the Zenodo CONCEPT DOI ("Cite all versions"), not the
+                                    # per-version DOI the latestdoi badge resolves to
     description: Zenodo archive of Mera.jl
 keywords:
   - Julia

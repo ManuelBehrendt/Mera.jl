@@ -12,7 +12,7 @@ v2 adds four simulations and changes none: `sedov3d_bisection`, `dm_gas3d_bisect
 `cosmo3d`, a small cosmological run from RAMSES's own initial conditions (one snapshot; the initial
 conditions themselves are not included, `NOTICE.md` says where to get them). All four serve Mera's
 `repartition` and `writeramses`. The other eleven are the same data as in `testdata-v1`,
-which stays in place unchanged for Mera 1.8. The tag is versioned independently of the package:
+which stays in place unchanged for development versions before Mera 1.8.0. The tag is versioned independently of the package:
 it changes only when the set of simulations changes.
 
 ## Getting them
