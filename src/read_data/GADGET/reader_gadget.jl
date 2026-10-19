@@ -370,6 +370,11 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
         end
     end
     _fill_undefined!(info); createconstants!(info); createscales!(info)
+    # GADGET and AREPO gas is primordial hydrogen and helium (X = 0.76). Where a snapshot has no
+    # ElectronAbundance, :T falls back to the composition the object carries, so set it to neutral
+    # primordial gas, mu = 4/(1+3X) ≈ 1.22, instead of the RAMSES default mu = 1/X. The user can
+    # still change it with setcomposition!.
+    setcomposition!(info; X_frac=0.76, mu=4 / (1 + 3 * 0.76))
     # The run's parameter values, exposed through the same `namelist(info)` viewer RAMSES
     # uses. Two sources, in order of trust: the snapshot's own /Parameters group (travels
     # inside the file), then the parameters-usedvalues text file beside it. Both optional —
