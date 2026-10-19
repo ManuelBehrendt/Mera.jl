@@ -59,7 +59,8 @@ projection(gas, :sd, :Msol_pc2; inclination=60, azimuth=30,
 Every quantity comes in the unit you name. The same calls work on particles and clumps.
 
 On this `multicode` branch, version 2.0.0-DEV, Mera also reads **AREPO, GADGET, PLUTO, Athena++,
-FLASH**, **Chombo** and **AMReX/Quokka** through the same API. The branch is never registered, so
+FLASH**, **Chombo** and **AMReX/Quokka** through the same API. The AMReX/Quokka reader was
+contributed by [ChongChong He](https://github.com/chongchonghe). The branch is never registered, so
 it is installed by URL; the released 1.x line reads RAMSES only:
 
 ```julia-repl

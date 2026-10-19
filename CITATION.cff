@@ -10,8 +10,9 @@ abstract: >-
   with physical units, weighted profiles and phase diagrams, mass-conserving projections
   (axis-aligned and off-axis) and covering grids, a pluggable structure (clump/halo) finder, and a
   conservation-correct inflow/outflow flux-budget tool, all checked by a data-free correctness
-  oracle. This development line additionally reads PLUTO, Chombo, Athena++, FLASH, GADGET and
-  AREPO through the same registry and the same analysis layer, unchanged.
+  oracle. This development line additionally reads PLUTO, Chombo, Athena++, FLASH, GADGET, AREPO
+  and AMReX/Quokka through the same registry and the same analysis layer, unchanged. The
+  AMReX/Quokka reader was contributed by ChongChong He.
 type: software
 authors:
   - family-names: Behrendt

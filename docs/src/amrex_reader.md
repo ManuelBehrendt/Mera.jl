@@ -1,5 +1,10 @@
 # Reading AMReX / BoxLib and Quokka data (experimental)
 
+!!! note "Credits"
+    The AMReX and Quokka reader was contributed by
+    [ChongChong He](https://github.com/chongchonghe)
+    ([PR #273](https://github.com/ManuelBehrendt/Mera.jl/pull/273)).
+
 Mera's analysis layer is **code-blind**: it works on a generic uniform/AMR cell list, not on
 RAMSES file formats. This page adds two frontends, layered the way the codes themselves are:
 
