@@ -246,8 +246,9 @@ progressively being replaced by them, because a reviewer cannot obtain them.
 
 ## A note on unit scales
 
-Six of the eleven fixtures have `unit_l = unit_d = unit_t = 1` — `clumps3d`, `legacy_particles3d`,
-`mhdtube3d`, `ramses_abc_flow`, `sedov3d_amr` and `sedov3d_grav_part`. That degeneracy is worth
+Nine of the fifteen fixtures have `unit_l = unit_d = unit_t = 1`: `clumps3d`, `legacy_particles3d`,
+`mhdtube3d`, `ramses_abc_flow`, `sedov3d_amr`, `sedov3d_grav_part`, `sedov3d_bisection`,
+`dm_gas3d_bisection` and `sedov3d_iogroups`. That degeneracy is worth
 naming, because a scale of 1 makes a unit-conversion bug invisible: every conversion is the
 identity, so a wrong factor and a right one agree.
 

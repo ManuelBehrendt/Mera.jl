@@ -132,7 +132,7 @@ call.
 
 ## Checking Mera itself
 
-The versions being pinned is only useful if the package is right. Mera publishes eleven small test
+The versions being pinned is only useful if the package is right. Mera publishes fifteen small test
 simulations, each with a known answer, either a law that follows from its own setup or reference
 values published by the RAMSES developers:
 

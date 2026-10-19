@@ -250,7 +250,7 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 ### Reproducibility
 - **`provenance` / `provenance_string`**: version, git branch and commit, a marker if the working
   tree was dirty, the snapshot and its time. Travels inside saved maps and reports
-- **`download_testdata`**: eleven small public RAMSES simulations, each with a known answer, either
+- **`download_testdata`**: fifteen small public RAMSES simulations, each with a known answer, either
   an analytic law that follows from its setup or a reference value published by the RAMSES developers
 
 ### While you work

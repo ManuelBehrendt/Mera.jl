@@ -67,7 +67,7 @@ also total its own `msum`.
 
 ### Does the physics hold
 
-Prefer a case whose answer is known before you run it. `download_testdata()` fetches eleven small
+Prefer a case whose answer is known before you run it. `download_testdata()` fetches fifteen small
 public RAMSES simulations chosen for that: a Sedov blast whose radius grows as `t^(2/5)`, an MHD
 shock tube where a divergence-free field keeps `Bx` constant, four density blobs a clump finder
 must return as four, a Strömgren sphere with an analytic ionisation front, and three of RAMSES's

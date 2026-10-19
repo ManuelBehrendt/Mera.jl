@@ -41,7 +41,7 @@ in this API changes when they are present.
 
 ## Test simulations
 
-Mera publishes eleven small RAMSES simulations as a GitHub release. Each has a known answer, so
+Mera publishes fifteen small RAMSES simulations as a GitHub release. Each has a known answer, so
 they can be used to check an installation without a large download.
 
 ```@docs
