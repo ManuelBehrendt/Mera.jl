@@ -16,7 +16,7 @@ type: software
 authors:
   - family-names: Behrendt
     given-names: Manuel
-    # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO: insert ORCID before submission
+    orcid: "https://orcid.org/0000-0002-8759-941X"
     email: mera@manuelbehrendt.com
 version: 2.0.0-DEV
 date-released: "2026-06-16"   # TODO: unreleased development line; set on a 2.0 release
