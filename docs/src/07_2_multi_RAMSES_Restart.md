@@ -1242,6 +1242,13 @@ Each public test simulation goes through six routes: `repartition` to Hilbert on
 bisection on 5 ranks and to IO groups, and the same three with `writeramses` from a mera file.
 RAMSES does not run here; the files are compared with the original.
 
+To run this section yourself, download the test simulations first. `download_testdata()`
+returns a folder that the code below finds through `MERA_TEST_DATA`:
+
+```julia
+ENV["MERA_TEST_DATA"] = download_testdata()   # all 15 test simulations, 307 MB
+```
+
 How to read the table:
 
 - **repartition**, **mera file: leaves**: the largest difference over every variable, particle and
