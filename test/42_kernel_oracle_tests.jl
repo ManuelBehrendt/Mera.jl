@@ -39,6 +39,13 @@ using Statistics, LinearAlgebra, Random
         eg = Mera._bin_edges(x, nothing, :log, 10)
         @test length(eg) == 11 && all(eg .> 0)
         @test all(isapprox.(eg[2:end] ./ eg[1:end-1], eg[2]/eg[1]; rtol=1e-10))
+        # log: the outer edges are the exact data range, so no extreme value is lost. This minimum
+        # (a real gas density) rounded to 1.0800879367673929e-8 and fell outside every bin.
+        xl = [1.0800879367673925e-8, 3.0e-3, 96.25294139260016]
+        for el2 in (Mera._bin_edges(xl, nothing, :log, 140), Mera._bin_edges(xl, nothing, :log, 0; binsize=0.1))
+            @test el2[1] == minimum(xl) && el2[end] == maximum(xl)
+            @test all(v -> Mera._binindex(el2, v, length(el2) - 1) > 0, xl)
+        end
         # equal-count: each bin holds ~the same number of points
         ee = Mera._bin_edges(x, nothing, :equal, 10)
         memb = Mera._bin_members(x, ee, 10)

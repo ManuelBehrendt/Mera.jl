@@ -52,8 +52,12 @@ function _bin_edges(v, rng, scale::Symbol, n::Int; binsize=nothing)
         end
         hi <= 0 && throw(ArgumentError("log-scale upper bound must be positive (got $hi)"))
         hi <= lo && throw(ArgumentError("log-scale range is empty: lo=$lo ≥ hi=$hi"))
-        binsize === nothing && return 10.0 .^ range(log10(lo), log10(hi), length=n+1) |> collect
-        return 10.0 .^ _edges_by_step(log10(lo), log10(hi), Float64(binsize))   # binsize = dex step
+        e = binsize === nothing ? collect(10.0 .^ range(log10(lo), log10(hi), length=n+1)) :
+                                  10.0 .^ _edges_by_step(log10(lo), log10(hi), Float64(binsize))   # binsize = dex step
+        # 10^log10(v) is not always v: a first edge that rounds above the minimum drops the smallest
+        # value from every bin. Pin the outer edges to the exact range.
+        e[1] = lo; e[end] = hi
+        return e
     elseif scale === :equal
         binsize === nothing ||
             throw(ArgumentError("binsize is incompatible with scale=:equal (quantile bins have no fixed width); use nbins"))
