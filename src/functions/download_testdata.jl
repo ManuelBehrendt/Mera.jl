@@ -102,10 +102,12 @@ Julia's own package depot, so they survive between sessions. Pass `dir` to put
 them somewhere else.
 
 The layout matches what Mera's test suite looks for, so the returned directory
-can be handed straight to it to run the data-backed tests:
+can be handed straight to it. Set `MERA_SMOKE_ONLY` too: without it the suite
+also looks for the maintainer's unpublished runs and fails on missing data.
 
 ```julia
 ENV["MERA_TEST_DATA"] = download_testdata()   # or a subset by name
+ENV["MERA_SMOKE_ONLY"] = "1"                  # every test the public data can back
 using Pkg; Pkg.test("Mera")
 ```
 

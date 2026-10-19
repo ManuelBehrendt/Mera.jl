@@ -3,8 +3,8 @@ name: Fixtures
 # The data-backed tier. CI.yml runs only the data-free tests (MERA_SMOKE_ONLY=1) because the
 # runners have no simulation data; this workflow supplies that data by downloading the public
 # fixtures published as release assets, so the reader -> getvar -> region -> projection chain and
-# the RAMSES reference solutions are exercised on every push too, not only on the maintainer's
-# laptop.
+# the RAMSES reference solutions can be exercised on a runner too, not only on the maintainer's
+# laptop. For now it is started by hand (see `on:` below for why).
 #
 # The fixtures live as assets on the `testdata-v2` tag, NOT in the git tree: Mera is a registered
 # package, so anything committed here would be downloaded by every Pkg.add("Mera") and would stay
@@ -35,9 +35,9 @@ env:
 
 jobs:
   fixtures:
-    # `small` on every push (~130 MB); the nightly run adds ramses_smbh_bondi (165 MB), whose
-    # 40 published reference quantities are the most expensive to fetch and the least likely to
-    # regress from an ordinary code change.
+    # `small` (142 MB) leaves out ramses_smbh_bondi (165 MB), whose 40 published reference
+    # quantities are the most expensive to fetch and the least likely to regress from an ordinary
+    # code change; `all` includes it.
     name: Data-backed (${{ matrix.set }})
     runs-on: ubuntu-latest
     strategy:
