@@ -494,12 +494,13 @@ The badges above report two different measurements, not one number twice.
 | badge | what it covers | where it runs | when |
 |---|---|---|---|
 | **coverage: CI** | the data-free tier only | GitHub Actions | every push |
-| **coverage: full** | the whole suite, data-backed tier included | maintainer's machine, Julia 1.12 on macOS (Apple Silicon), with the simulation data mounted | before a release, uploaded by `scripts/run_local_coverage.sh` |
+| **coverage: full** | the whole suite, data-backed tier included | maintainer's machine, Julia 1.12 on macOS (Apple Silicon), with the simulation data mounted | before a release, uploaded by `scripts/run_local_coverage.sh` or `scripts/run_coverage_with_notebooks.sh` |
 
-Measured on 2026-08-27: the full suite covers **85.9%**, meaning 13 593 of 15 826 lines across 85
-source files, while the CI tests alone cover **31%**. The data-free tier that CI runs is 1 800
-assertions in about 100 seconds; with the simulation data present the same tier takes roughly 11
-minutes, because a few of its files opportunistically read every dataset they can find.
+Measured on 2026-10-20: the full suite covers **88.7%**, meaning 17 161 of 19 355 lines across 109
+source files, while the CI tests alone cover **33%**. With the tutorial notebooks run on top, the
+total is **89.8%**. The data-free tier that CI runs is about 2 150 tests in a few minutes; with
+the simulation data present the same tier takes roughly 11 minutes, because a few of its files
+opportunistically read every dataset they can find.
 
 They differ because the data-backed tier reads real RAMSES output, and that data is far larger than
 a hosted runner can hold. The readers, projections, region selection and mera-file round trips are

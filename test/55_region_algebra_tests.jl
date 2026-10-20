@@ -25,6 +25,26 @@ using IndexedTables   # used below; do not rely on another test file importing i
                     (0.4box)^3,  1e-4),
     )
 
+    @testset "classic shellregion: cell=true keeps the cells of both surfaces" begin
+        rin, rout = 0.15box, 0.30box
+        cellset(o) = Set(zip(select(o.data, :cx), select(o.data, :cy), select(o.data, :cz)))
+        for (shape, kw, reg) in ((:sphere,   (;),              sphericalshell(rin, rout; range_unit=:kpc)),
+                                 (:cylinder, (height=0.2box,), cylindricalshell(rin, rout, 0.2box; range_unit=:kpc)))
+            opts    = (radius=[rin, rout], center=[:bc], range_unit=:kpc, verbose=false, kw...)
+            whole   = shellregion(gas, shape; opts..., cell=true)
+            centre  = shellregion(gas, shape; opts..., cell=false)
+            outside = shellregion(gas, shape; opts..., cell=true, inverse=true)
+            exact   = subregion(gas, reg; verbose=false)
+            # every cell the exact shell touches, on the inner surface too, is kept whole
+            @test issubset(cellset(exact), cellset(whole))
+            @test vol(whole) >= vol(exact)                       # so whole cells are an upper bound
+            @test issubset(cellset(centre), cellset(whole))
+            # shell and inverse divide the box: nothing counted twice, nothing lost
+            @test length(whole.data) + length(outside.data) == length(gas.data)
+            @test isempty(intersect(cellset(whole), cellset(outside)))
+        end
+    end
+
     @testset "exact volumes vs analytic ($name)" for (name, reg, Vexact, tol) in cases
         s = subregion(gas, reg; split=true, verbose=false)
         w = subregion(gas, reg; split=false, verbose=false)
@@ -398,5 +418,17 @@ using IndexedTables   # used below; do not rely on another test file importing i
         @test length(subregion(gas, r0; verbose=false).data) ==
               length(subregion(gas, sphere(0.2box; range_unit=:kpc); verbose=false).data)
         @test_throws LoadError @eval @region wrong=1 begin; sphere(1.) end
+        # the block options reach the exported lowercase constructors, not only the type names
+        rp = @region unit=:pc center=[1., 2., 3.] begin
+            s = sphere(5.)
+            c = cylinder(5., 1.; range_unit=:kpc)          # explicit keyword wins
+            s ∪ c
+        end
+        @test rp.a.range_unit === :pc && rp.a.center == [1., 2., 3.]
+        @test rp.b.range_unit === :kpc && rp.b.center == [1., 2., 3.]
+        @test (@region unit=:Mpc begin cuboid(xrange=[0, 1], yrange=[0, 1], zrange=[0, 1]) end).range_unit === :Mpc
+        @test (@region unit=:pc begin sphericalshell(1., 2.) end).range_unit === :pc
+        @test (@region unit=:pc begin cylindricalshell(1., 2., 1.) end).range_unit === :pc
+        @test (@region unit=:pc begin Mera.Sphere(1.) end).range_unit === :pc
     end
 end

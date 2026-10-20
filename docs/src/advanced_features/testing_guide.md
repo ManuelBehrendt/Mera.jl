@@ -175,9 +175,27 @@ raises is left unchanged, so a failed run is safe to repeat.
 
 `scripts/run_coverage_with_notebooks.sh` adds the notebooks to the coverage: it runs the unit suite
 with coverage, then executes every notebook with a coverage kernel that records only this
-repository's source, and uploads the combined result under the `local-full-notebooks` flag. Its
-settings are `NOTEBOOK_DIR` (default `.../Mera-Docs/version_1.1`), `COV_KERNEL` (default
-`mera-docs-1.12-cov-1.12`) and `UPLOAD`. The kernels are made once with `IJulia.installkernel`:
+repository's source. With `UPLOAD=1` it uploads the suite alone under the `local-full` flag and
+the combined result under `local-full-notebooks`. Measured on 2026-10-20: the suite alone covers
+88.7% of the lines, the suite with the notebooks 89.8%.
+
+Its settings are `NOTEBOOK_DIR` (default `.../Mera-Docs/version_1.1`), `COV_KERNEL` (default
+`mera-docs-1.12-cov-mera`) and `UPLOAD`. The script stops at once if the kernel does not pass
+`--code-coverage` for this repository, because such a kernel runs for hours and records nothing.
+A long run can be split or resumed:
+
+| setting | does |
+|---|---|
+| `SKIP_SUITE=1` | skip the unit suite and merge the notebooks onto an earlier result (`coverage_suite.lcov`) |
+| `COV_BASE=file.lcov` | the earlier result to merge onto |
+| `NB_FROM=name` | start at this notebook, e.g. after the data drive went offline |
+
+The suite under coverage takes about two hours, the notebooks several more. Keep the machine awake
+(`caffeinate -dims ./scripts/run_coverage_with_notebooks.sh` on macOS): a sleeping laptop drops
+the data drive and the network, and the remaining notebooks are then skipped.
+
+The kernels are made once with `IJulia.installkernel`; set `COV_KERNEL` to the name that
+`jupyter kernelspec list` shows for the coverage kernel:
 
 ```julia
 using IJulia

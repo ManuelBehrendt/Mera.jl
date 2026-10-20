@@ -45,7 +45,7 @@ shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
   [:bc] or [:boxcenter], a point as [x, y, z], or mix them: [value, :bc, :bc]. A single 0.0
   component is fine (a sphere on the x = 0 face); only an all-zero centre triggers the note.
 - **`inverse`:** inverse the region selection = get the data outside of the region
-- **`cell`:** take intersecting cells of the region boarder into account (true) or only the cells-centers within the selected region (false)
+- **`cell`:** keep every cell the shell touches, on its inner and its outer surface (true, an upper bound), or only the cells whose centre lies in the shell (false). With `cell=true`, neighbouring shells share the cells on their common surface; `inverse=true` returns exactly the other cells
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of radius, height, direction, center, range_unit, verbose
 

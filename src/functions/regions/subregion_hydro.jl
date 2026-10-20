@@ -387,6 +387,24 @@ function get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell,
 end
 
 """
+    get_far_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell, periodic)
+
+Distance from the cylinder axis to the FARTHEST point of a cell (`cell=true`), or to the cell
+centre (`cell=false`). A classic cylindrical shell with `cell=true` keeps every cell it touches:
+the nearest point of the cell lies inside `r_out` and its farthest point outside `r_in`.
+"""
+function get_far_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell,
+                                 periodic=(false, false, false))
+    cell || return get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell, periodic)
+    level_factor = 2^level
+    axis_x = _nearest_image_center(cx_shift, (cx - 0.5) / level_factor, periodic[1])
+    axis_y = _nearest_image_center(cy_shift, (cy - 0.5) / level_factor, periodic[2])
+    far_x = max(abs(axis_x - (cx - 1.0) / level_factor), abs(axis_x - cx / level_factor))
+    far_y = max(abs(axis_y - (cy - 1.0) / level_factor), abs(axis_y - cy / level_factor))
+    return sqrt(far_x^2 + far_y^2)
+end
+
+"""
     get_height_cylinder(cz, level, cz_shift, cell)
 
 Calculate distance from cell to cylinder center plane for cylindrical subregion selection.
@@ -619,6 +637,26 @@ function get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell
         
         return sqrt((closest_x - center_x)^2 + (closest_y - center_y)^2 + (closest_z - center_z)^2)
     end
+end
+
+"""
+    get_far_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell, periodic)
+
+Distance from the sphere centre to the FARTHEST point of a cell (`cell=true`), or to the cell
+centre (`cell=false`). A classic spherical shell with `cell=true` keeps every cell it touches:
+the nearest point of the cell lies inside `r_out` and its farthest point outside `r_in`.
+"""
+function get_far_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell,
+                               periodic=(false, false, false))
+    cell || return get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell, periodic)
+    level_factor = 2^level
+    center_x = _nearest_image_center(cx_shift, (cx - 0.5) / level_factor, periodic[1])
+    center_y = _nearest_image_center(cy_shift, (cy - 0.5) / level_factor, periodic[2])
+    center_z = _nearest_image_center(cz_shift, (cz - 0.5) / level_factor, periodic[3])
+    far_x = max(abs(center_x - (cx - 1.0) / level_factor), abs(center_x - cx / level_factor))
+    far_y = max(abs(center_y - (cy - 1.0) / level_factor), abs(center_y - cy / level_factor))
+    far_z = max(abs(center_z - (cz - 1.0) / level_factor), abs(center_z - cz / level_factor))
+    return sqrt(far_x^2 + far_y^2 + far_z^2)
 end
 
 

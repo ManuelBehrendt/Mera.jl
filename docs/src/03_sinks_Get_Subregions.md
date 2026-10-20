@@ -177,16 +177,16 @@ the x < centre half of the box -> [5]
 One keyword exists on the region functions for **cell** data and is meaningless here:
 
 - `cell=` decides whether a cell straddling the border is taken whole or by its centre. A point does
-  not straddle anything, so it is accepted and ignored.
+  not straddle anything, so it has no effect.
 
-And one limitation that does apply, and that no keyword fixes:
+One more point concerns periodic boxes:
 
-!!! warning "Regions do not wrap at a periodic boundary"
-    A sphere or shell centred near a box face is **clipped** at the boundary, not wrapped. You get
-    the part inside the box and no warning, and a count or a total mass from it looks perfectly
-    reasonable. `getvar`'s `:r_sphere_periodic` applies the minimum-image convention on the quantity
-    side, so on a run where the object of interest straddles a face, select on that instead of on a
-    region.
+!!! note "Periodic boxes: pass `periodic=true`"
+    A sphere or shell centred near a box face is **clipped** at the boundary by default: you get
+    the part inside the box and no warning. In a periodic run, pass `periodic=true` to the classic
+    calls (`subregion(sinks, :sphere; …, periodic=true)`, `shellregion`) and the region wraps
+    around the faces. Region values like `sphere(10.)` never wrap. See
+    [Periodic Boxes](periodic_boxes.md).
 
 ## The result is a catalogue
 

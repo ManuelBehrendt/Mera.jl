@@ -45,7 +45,7 @@ function _region_value_type_hint(shape::Symbol; radius=0., height=0., xrange=[0.
                                  zrange=[0.,0.], center=[:bc], range_unit::Symbol=:standard, shell::Bool=false)
     eq = if shell
         shape === :sphere ? "sphericalshell($(radius[1]), $(radius[2]); center=$(center), range_unit=:$(range_unit))" :
-                            "cylinder(r_out, $(height); …) \\ cylinder(r_in, $(height); …)"
+                            "cylindricalshell($(radius[1]), $(radius[2]), $(height); center=$(center), range_unit=:$(range_unit))"
     elseif shape === :sphere
         "sphere($(radius); center=$(center), range_unit=:$(range_unit))"
     elseif shape === :cylinder || shape === :disc
@@ -57,7 +57,7 @@ function _region_value_type_hint(shape::Symbol; radius=0., height=0., xrange=[0.
          "regions also work as value types, with EXACT edge-cell splitting.",
          "subregion(data, $eq)",
          "gives exact getvar :mass/:volume/msum and composes with ∩ ∪ \\ !. The symbol form",
-         "above still works; pass split=false for classic whole cells. See ?subregion.")
+         "above still works and keeps whole cells; split=false gives the centre test. See ?subregion.")
     return
 end
 
@@ -636,7 +636,7 @@ function subregion(obj::SinkDataType, region::AbstractRegion; inverse::Bool=fals
 end
 
 # ---- @region: readability sugar for composite definitions --------------------------
-const _REGION_CTORS = Set([:Sphere, :Cuboid, :Cylinder, :SphericalShell, :CylindricalShell])
+const _REGION_CTORS = Set([:sphere, :cuboid, :cylinder, :sphericalshell, :cylindricalshell, :Sphere, :Cuboid, :Cylinder, :SphericalShell, :CylindricalShell])
 
 _region_ctor_name(f) = f isa Symbol ? f :
     (f isa Expr && f.head === :. && f.args[2] isa QuoteNode ? f.args[2].value : nothing)

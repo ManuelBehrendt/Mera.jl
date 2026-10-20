@@ -90,12 +90,12 @@ function shellregioncylinder(dataobject::GravDataType;
     if inverse == false
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) >= radius_in_shift &&
+                               _mask_rows(dataobject.data, (c, i) -> get_far_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) >= radius_in_shift &&
                                   get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) <= radius_out_shift &&
                                   get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) <= height_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) >= radius_in_shift &&
+                               _mask_rows(dataobject.data, (c, i) -> get_far_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) >= radius_in_shift &&
                                   get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) <= radius_out_shift &&
                                   get_height_cylinder(c.cz[i], lmax, cz_shift, cell) <= height_shift))
         end
@@ -104,12 +104,12 @@ function shellregioncylinder(dataobject::GravDataType;
         ranges = dataobject.ranges
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) < radius_in_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_far_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) < radius_in_shift ||
                                   get_radius_cylinder(c.cx[i], c.cy[i], c.level[i], cx_shift, cy_shift, cell, cflags) > radius_out_shift ||
                                   get_height_cylinder(c.cz[i], c.level[i], cz_shift, cell) > height_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) < radius_in_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_far_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) < radius_in_shift ||
                                   get_radius_cylinder(c.cx[i], c.cy[i], lmax, cx_shift, cy_shift, cell, cflags) > radius_out_shift ||
                                   get_height_cylinder(c.cz[i], lmax, cz_shift, cell) > height_shift))
         end
@@ -225,11 +225,11 @@ function shellregionsphere(dataobject::GravDataType;
     if inverse == false
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) >= radius_in_shift &&
+                               _mask_rows(dataobject.data, (c, i) -> get_far_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) >= radius_in_shift &&
                                 get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) <= radius_out_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) >= radius_in_shift &&
+                               _mask_rows(dataobject.data, (c, i) -> get_far_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) >= radius_in_shift &&
                                 get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) <= radius_out_shift))
         end
 
@@ -237,11 +237,11 @@ function shellregionsphere(dataobject::GravDataType;
         ranges = dataobject.ranges
         if isamr
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) < radius_in_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_far_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) < radius_in_shift ||
                                 get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], c.level[i], cx_shift, cy_shift, cz_shift, cell, pflags) > radius_out_shift))
         else # for uniform grid
             sub_data = _subset_table(dataobject.data,
-                               _mask_rows(dataobject.data, (c, i) -> get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) < radius_in_shift ||
+                               _mask_rows(dataobject.data, (c, i) -> get_far_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) < radius_in_shift ||
                                 get_radius_sphere(c.cx[i], c.cy[i], c.cz[i], lmax, cx_shift, cy_shift, cz_shift, cell, pflags) > radius_out_shift))
         end
     end

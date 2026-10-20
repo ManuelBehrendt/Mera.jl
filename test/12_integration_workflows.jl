@@ -282,13 +282,13 @@
     # ========================================================================
     # The "make a radial profile" workflow: iterate shellregion() over a
     # sequence of radius bins, call msum() on each shell, build the
-    # profile.  No dedicated Mera profile function exists; users
-    # assemble the loop themselves.  This testset locks in the
-    # workflow's basic invariants:
+    # profile.  `profile` does this directly; this tests the hand-made
+    # loop.  This testset locks in the workflow's basic invariants:
     #   * every shell returns positive mass
     #   * shells produce distinct mass values (no two shells return the
     #     same number, modulo accidental fixture symmetry)
-    #   * sum across shells is bounded above by msum(hydro) (shells do
+    #   * the centre-test shells (cell=false) tile, so their sum is bounded
+    #     above by msum(hydro) (shells do
     #     not cover the full box -- there are cells inside the innermost
     #     edge and outside the outermost edge)
     #
@@ -306,9 +306,14 @@
         end
         @test length(masses) == 3
         @test all(m -> m > 0, masses)
-        # The three shells together cover only part of the box -- their
-        # total must therefore be STRICTLY less than the full-box mass.
-        @test sum(masses) < msum(hydro)
+        # With cell=true each shell keeps every cell it touches, so neighbours share the cells on
+        # their common edge. The centre test (cell=false) gives each cell to one shell only: those
+        # shells tile, cover only part of the box, and sit inside the whole-cell shells.
+        centre = [msum(shellregion(hydro, :sphere, radius=[edges[i], edges[i+1]],
+                                   center=[:boxcenter], cell=false, verbose=false))
+                  for i in 1:length(edges)-1]
+        @test sum(centre) < msum(hydro)
+        @test all(masses .>= centre)
         # Distinct mass values -- the header comment promises "shells
         # produce distinct mass values".  Each shell covers a different
         # radial range so the masses should differ to machine precision

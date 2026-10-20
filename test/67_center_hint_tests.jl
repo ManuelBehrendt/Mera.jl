@@ -191,6 +191,13 @@
             @test key in Mera._HINT_SHOWN                                               # same set
         end
 
+        # the shell hint names the shell constructor, and split=false is the centre test
+        Mera.reset_hints()
+        out = capture_stdout(() -> Mera._region_value_type_hint(:cylinder; radius=[6., 10.], height=2.,
+                                                               center=[:bc], range_unit=:kpc, shell=true))
+        @test occursin("cylindricalshell(6.0, 10.0, 2.0", out)
+        @test occursin("split=false gives the centre test", out)
+
         # and one reset clears all of them together
         Mera.reset_hints()
         capture_stdout() do
