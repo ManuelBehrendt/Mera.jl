@@ -3,6 +3,11 @@
 Everything `subregion` and `shellregion` can do, on one page. The
 [Get Subregions tutorial](03_hydro_Get_Subregions.md) shows each item working, step by step.
 
+| function | cuts |
+|---|---|
+| `subregion` | a solid shape: box, cylinder or sphere. With a region value also a shell, and any combination of shapes |
+| `shellregion` | a hollow shell: spherical, or cylindrical (a ring of finite height) |
+
 Works the same on hydro, gravity and RT data. Particles, clumps and sinks are points; the rows
 below say where that changes something.
 
@@ -11,32 +16,74 @@ below say where that changes something.
 | | region value | classic symbol |
 |---|---|---|
 | call | `subregion(gas, sphere(10.))` | `subregion(gas, :sphere; radius=10.)` |
+| shells | `subregion(gas, sphericalshell(10., 20.))` | `shellregion(gas, :sphere; radius=[10., 20.])` |
 | default centre | box centre, `[:bc]` | box **corner**, `[0., 0., 0.]` |
 | default unit | `:kpc` | `:standard` (code units) |
 | boundary cells | split, with a `:fraction` per cell | whole cells (`cell=true`) or centre test (`cell=false`) |
 | combine with `∩ ∪ \ !` | yes | no |
-| tilted cylinder | yes, `axis=` | no, z only |
+| tilt (cylinder, cylindrical shell) | yes, `axis=[x, y, z]` | no, along z only |
 | wrap at periodic faces | no | yes, `periodic=true` |
 
 Use region values to measure. Use the classic form for quick looks, for periodic runs, and in
 older scripts.
 
+## `subregion` and `shellregion`
+
+Both work on every data type and return the same type as their input. `shellregion` takes the
+same classic keywords as `subregion`: `center`, `range_unit`, `cell`, `inverse`, `periodic`,
+`verbose` and `myargs`. A shell can be cut three ways:
+
+```julia
+subregion(gas, sphericalshell(10., 20.))      # region value: boundary cells split
+subregion(gas, sphere(20.) \ sphere(10.))     # the same shell as a difference, same sampling accuracy
+shellregion(gas, :sphere; radius=[10., 20.],  # classic: whole cells or centre test
+            center=[:bc], range_unit=:kpc)
+```
+
+The cylindrical shell in the same three forms:
+
+```julia
+subregion(gas, cylindricalshell(6., 10., 2.))                 # inner radius, outer radius, half-height
+subregion(gas, cylinder(10., 2.) \ cylinder(6., 2.))
+shellregion(gas, :cylinder; radius=[6., 10.], height=2., center=[:bc], range_unit=:kpc)
+```
+
+### Shell rules
+
+- `radius=[r_in, r_out]`: inner radius first. In `shellregion` both must be larger than zero;
+  for a full ball use a sphere.
+- `height` of a cylindrical shell is the half-height, as for the cylinder. The classic
+  cylindrical shell runs along z only; `cylindricalshell(…; axis=[x, y, z])` tilts it.
+- `shellregion(obj)` without a shape means `:cylinder`. Name the shape to be safe.
+- `inverse=true` selects everything outside the shell: the inside of `r_in` together with the
+  outside of `r_out`.
+- A shell has two surfaces. With `cell=true`, the classic shell keeps every cell that touches
+  its **outer** surface but drops every cell that touches its **inner** surface, so its mass is
+  not a bound and can be too high or too low. With `cell=false` the centre test applies on both
+  surfaces. `sphericalshell` and `cylindricalshell` split the cells of both surfaces.
+- A shell and the sphere (or cylinder) inside it share the inner surface. With region values
+  their masses add up exactly to the mass of the outer sphere.
+- `periodic=true` works with `shellregion`, as with `subregion`.
+
 ## Shapes
 
-| shape | region value | classic call |
-|---|---|---|
-| box | `cuboid(xrange=[a,b], yrange=[c,d], zrange=[e,f])` | `subregion(obj, :cuboid; xrange=, yrange=, zrange=)` |
-| cylinder | `cylinder(r, h)` | `subregion(obj, :cylinder; radius=r, height=h)` |
-| sphere | `sphere(r)` | `subregion(obj, :sphere; radius=r)` |
-| spherical shell | `sphericalshell(r_in, r_out)` | `shellregion(obj, :sphere; radius=[r_in, r_out])` |
-| cylindrical shell | `cylindricalshell(r_in, r_out, h)` | `shellregion(obj, :cylinder; radius=[r_in, r_out], height=h)` |
+| shape | region value | classic call | tilt |
+|---|---|---|---|
+| box | `cuboid(xrange=[a,b], yrange=[c,d], zrange=[e,f])` | `subregion(obj, :cuboid; xrange=, yrange=, zrange=)` | no, aligned with the axes |
+| cylinder | `cylinder(r, h)` | `subregion(obj, :cylinder; radius=r, height=h)` | region value: `axis=[x, y, z]`; classic: along z only |
+| sphere | `sphere(r)` | `subregion(obj, :sphere; radius=r)` | not needed |
+| spherical shell | `sphericalshell(r_in, r_out)` | `shellregion(obj, :sphere; radius=[r_in, r_out])` | not needed |
+| cylindrical shell | `cylindricalshell(r_in, r_out, h)` | `shellregion(obj, :cylinder; radius=[r_in, r_out], height=h)` | region value: `axis=[x, y, z]`; classic: along z only |
 
 - **`h` is the half-height.** `cylinder(12., 2.)` spans z from −2 to +2, so it is 4 kpc thick.
   The classic `height=` means the same.
 - Box ranges are measured from `center`. In the classic `:cuboid`, a range left out (or
   `[0, 0]`) means the full box along that axis.
-- `cylinder` and `cylindricalshell` take `axis=[x, y, z]`, any non-zero vector, for a tilted
-  shape. The classic `:cylinder` runs along z only; another `direction` is an error.
+- **Tilt.** `cylinder` and `cylindricalshell` take `axis=[x, y, z]`, any non-zero vector, and
+  then run along that direction: a disc tilted like the galaxy, a bar in the disc plane, a ring
+  seen at an angle. The axis also works inside combinations. A sphere and a spherical shell look
+  the same in every direction, and the box is always aligned with the axes. The classic
+  `:cylinder` and `shellregion(:cylinder)` run along z only; another `direction` is an error.
 - The classic `:disc` is another name for `:cylinder`.
 
 ## Placing a region
@@ -62,7 +109,7 @@ Only cell data (hydro, gravity, RT) have boundary cells. Particles, clumps and s
 |---|---|---|
 | split | region value, default `split=true` | exact, to the sampling accuracy of `nsub` |
 | centre test | `split=false`, or classic `cell=false` | an estimate; can be too high or too low |
-| whole cells | classic `cell=true` (the classic default) | always too high: an upper bound |
+| whole cells | classic `cell=true` (the classic default) | too high, an upper bound. Not for a classic shell: see Shell rules |
 
 With `split=true` each kept cell carries `:fraction ∈ (0, 1]`, the part of its volume inside the
 region.
@@ -88,6 +135,7 @@ gas is like** keep their value: density, temperature, velocity, potential. Detai
 | call | selects |
 |---|---|
 | `subregion(obj, region; inverse=true)` | everything outside |
+| `shellregion(obj, :sphere; radius=[r_in, r_out], inverse=true)` | everything outside the shell |
 | `subregion(obj, !region)` | the same, written into the region |
 | classic `inverse=true` | the same, for classic calls |
 
@@ -186,8 +234,9 @@ particles have no volume to split.
 1. **The cylinder height is a half-height.** `cylinder(r, 2.)` is 4 units thick.
 2. **The classic default centre is the box corner**, and the classic default unit is code units.
 3. **Region values do not wrap** at periodic faces. Use the classic call with `periodic=true`.
-4. **The centre test is not a bound.** Only whole cells give a guaranteed upper limit, and only
-   the split cut gives the measurement.
+4. **The centre test is not a bound**, and neither is a classic shell with `cell=true`. Whole
+   cells give an upper limit only for a box, cylinder or sphere. The split cut gives the
+   measurement.
 5. **A hole is hard to see** in a projection through the whole box: the line of sight still
    passes the gas in front of and behind it. Limit the depth, e.g. `zrange=` of the region.
 6. **A split edge looks soft in a map**, because each cut cell is drawn over its full size. The

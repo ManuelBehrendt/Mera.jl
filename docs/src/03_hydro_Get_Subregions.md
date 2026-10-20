@@ -12,8 +12,9 @@
 
 
 A subregion is a piece of the simulation box: a sphere around a galaxy, a slab around a disc,
-a shell around a halo. This page shows how to cut such pieces out of hydro data, how to measure
-them correctly, and how to combine them into any shape you need.
+a shell around a halo. This page shows how to cut such pieces out of hydro data with
+`subregion` and `shellregion`, how to measure them correctly, and how to combine them into any
+shape you need.
 
 Gravity and RT data work exactly the same way. Particles, clumps and sinks use the same calls;
 their own pages are linked at the bottom.
@@ -25,14 +26,15 @@ their own pages are linked at the bottom.
 
 | you want to | use |
 |---|---|
-| cut a box, a cylinder, a sphere, or a spherical or cylindrical shell | `subregion(gas, sphere(10.))` and the four other shapes |
+| cut a box, a cylinder or a sphere | `subregion(gas, sphere(10.))`, `cylinder(…)`, `cuboid(…)` |
+| cut a hollow shell, spherical or cylindrical | `subregion(gas, sphericalshell(10., 20.))`, `cylindricalshell(…)`, or the classic `shellregion(gas, :sphere; radius=[10., 20.])` |
 | count a boundary cell by the part of it that lies inside | the default, `split=true`: each boundary cell gets a `:fraction` |
 | keep whole cells instead | `split=false`, or `cell=true` / `cell=false` in the classic API |
 | select everything outside a region | `inverse=true`, or `!region` |
 | combine shapes | `∩` `∪` `\` `!`, and the `@region` block for long definitions |
-| tilt a cylinder or a cylindrical shell | `axis=[x, y, z]` |
+| tilt a cylinder or a cylindrical shell | `cylinder(…; axis=[x, y, z])`, `cylindricalshell(…; axis=[x, y, z])`. Spheres need no tilt; the box and the classic shapes stay aligned with the axes |
 | make the edge of a cut sharp in a map | `refine=k` or `refine_to=[length, unit]` |
-| wrap a region around the faces of a periodic box | the classic API with `periodic=true` |
+| wrap a region around the faces of a periodic box | classic `subregion` or `shellregion` with `periodic=true` |
 | cut particles with the same region | `subregion(part, region)` |
 | keep a cut for later sessions | `savedata` and `loaddata` |
 
@@ -44,16 +46,16 @@ Every cut returns an object of the same type as its input. `msum`, `getvar`, `pr
 The page goes from a first cut to complete measurements, one step at a time.
 
 1. **The first cut**: one sphere, from region to number.
-2. **The five shapes**: box, cylinder, sphere and the two shells.
+2. **The five shapes**: box, cylinder, sphere, and the two shells, with `subregion` or `shellregion`.
 3. **Placing a region**: the centre and the units.
 4. **Boundary cells**: why a smooth surface on an AMR grid needs care, and the three ways to treat it.
 5. **Inside and outside**: the inverse of a region.
 6. **Combining regions**: intersection, union, difference, complement, and the `@region` block.
-7. **Tilted regions**: cylinders along any axis.
+7. **Tilted regions**: cylinders and cylindrical shells along any axis.
 8. **A mass budget that balances**: zones of a galaxy whose masses add up exactly, for gas and stars.
 9. **Sharp edges for figures**: `refine` and `refine_to`.
 10. **Regions with a purpose**: shapes that answer a question, some placed by the data.
-11. **The classic API and periodic boxes**: `subregion(gas, :sphere; …)`, `shellregion`, `cell=`, `periodic=`.
+11. **The classic API and periodic boxes**: `subregion(gas, :sphere; …)`, `shellregion(gas, :sphere; …)`, `cell=`, `periodic=`.
 12. **Large data**: cut once, save, reload.
 
 Steps 1 to 6 are the basics and build on each other. Steps 7 to 12 can be read in any order.
@@ -197,17 +199,21 @@ because cut cells contribute only the part that lies inside.
 
 ## Step 2. The five shapes
 
-| shape | constructor | arguments |
-|---|---|---|
-| box | `cuboid(xrange=[a, b], yrange=[c, d], zrange=[e, f])` | ranges, measured from the centre |
-| cylinder | `cylinder(r, h)` | radius and **half-height**: the cylinder spans `±h` |
-| sphere | `sphere(r)` | radius |
-| spherical shell | `sphericalshell(r_in, r_out)` | inner and outer radius |
-| cylindrical shell | `cylindricalshell(r_in, r_out, h)` | inner and outer radius, half-height |
+| shape | constructor | arguments | tilt |
+|---|---|---|---|
+| box | `cuboid(xrange=[a, b], yrange=[c, d], zrange=[e, f])` | ranges, measured from the centre | no, aligned with the axes |
+| cylinder | `cylinder(r, h)` | radius and **half-height**: the cylinder spans `±h` | yes, `axis=` |
+| sphere | `sphere(r)` | radius | not needed |
+| spherical shell | `sphericalshell(r_in, r_out)` | inner and outer radius | not needed |
+| cylindrical shell | `cylindricalshell(r_in, r_out, h)` | inner and outer radius, half-height | yes, `axis=` |
 
 All five take `center=` and `range_unit=` (Step 3). The cylinder and the cylindrical shell also
-take `axis=` (Step 7). Note the half-height once and for all: `cylinder(12., 2.)` is 4 kpc
-thick.
+take `axis=[x, y, z]`, which tilts them along any direction (Step 7). Note the half-height once
+and for all: `cylinder(12., 2.)` is 4 kpc thick.
+
+The two shells have a second, classic form: `shellregion(gas, :sphere; radius=[r_in, r_out])`
+and `shellregion(gas, :cylinder; radius=[r_in, r_out], height=h)`. It keeps whole cells instead
+of splitting them, and its cylindrical shell runs along z only; Step 11 compares the two.
 
 Below, each shape is cut with the default centre and unit and drawn twice: from the top
 (face-on, along z) and from the side (edge-on, along x). The cylinder, named `disc_region`, is
@@ -1471,7 +1477,7 @@ fig
 identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10   vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_4.png)
 
 The rule holds, and the side view explains the top view: the blister adds gas only above the
 upper face, where the bright disc hides it from the top, while the chimney removes a full column
@@ -1618,8 +1624,8 @@ its inverse, and works on particles as well as on cells.
 
 ## Step 11. The classic API and periodic boxes
 
-Before the region values existed, Mera selected regions with a shape symbol. This interface is
-still fully supported. It keeps whole cells, it is the quickest way to make an exploratory cut,
+Before the region values existed, Mera selected regions with a shape symbol: `subregion` for the
+solid shapes and `shellregion` for the shells. This interface is still fully supported. It keeps whole cells, it is the quickest way to make an exploratory cut,
 and it keeps older scripts working.
 
 | region value | classic call |
@@ -1640,9 +1646,15 @@ What differs from the region values:
   API does this; region values are always clipped at the faces.
 - **Sizes.** Radii and heights must be larger than zero.
 
-Shared with the region values: `inverse=true` for the outside. `Mera.get_filtered_ranges` returns
-the bounding ranges of a classic cut. The classic cylinder below lands *above* the split disc
-mass, as whole cells must:
+`shellregion` takes the same keywords as `subregion`, with `radius=[r_in, r_out]`. Both radii
+must be larger than zero, and `inverse=true` selects the inside of `r_in` together with the
+outside of `r_out`. Without a shape, `shellregion(gas)` means `:cylinder`, so name the shape.
+
+`Mera.get_filtered_ranges` returns the bounding ranges of a classic cut. Below, the classic
+cylinder lands *above* the split disc, as whole cells must. The classic shell behaves
+differently at its two surfaces: `cell=true` keeps every cell that touches the **outer** surface,
+but drops every cell that touches the **inner** surface. Its error therefore has no fixed sign.
+Compare it with the split envelope of Step 8:
 
 ```julia
 cub_c = subregion(gas, :cuboid; xrange=[-12, 12], yrange=[-12, 12], zrange=[-2, 2],
@@ -1659,12 +1671,18 @@ println("classic cylinder (whole cells) : ", round(m_cylc, sigdigits=6), " Msol 
         round(100*(m_cylc/m_disc - 1), sigdigits=2),
         " % vs split disc: whole boundary cells, as in Step 4")
 
+m_shlc = msum(shl_c, :Msol)
+println("classic shellregion (cell=true) : ", round(m_shlc, sigdigits=6), " Msol   ",
+        round(100*(m_shlc/m_env - 1), sigdigits=2),
+        " % vs split envelope sphericalshell(10, 20), Step 8")
+
 xr_c, yr_c, zr_c = Mera.get_filtered_ranges(cyl_c)   # normalised [0,1] box fractions of the cut
 println("cut spans x ∈ ", round.(xr_c .* (gas.boxlen * kpc), sigdigits=4), " kpc (absolute)")
 ```
 
 ```
 classic cylinder (whole cells) : 2.29023e10 Msol   +0.3 % vs split disc: whole boundary cells, as in Step 4
+classic shellregion (cell=true) : 1.17949e10 Msol   -0.082 % vs split envelope sphericalshell(10, 20), Step 8
 cut spans x ∈ [12.0, 36.0] kpc (absolute)
 ```
 
@@ -1739,7 +1757,8 @@ with it (`obj = nothing; GC.gc()`) and keep only one in memory at a time.
 ## Which mode when
 
 - **Exploring?** Classic whole-cell cuts (`cell=true`) are the cheapest and show *all* gas near
-  the region. Their mass is an upper bound.
+  the region. For a box, cylinder or sphere their mass is an upper bound; for a classic shell it
+  is not, because the cells on its inner surface are dropped (Step 11).
 - **Fewest cells?** The centre test (`split=false`, or classic `cell=false`) keeps fewer cells
   and usually lands close to the split value, but with no guaranteed sign (Step 8, the ring).
   Treat it as an estimate.
@@ -1767,6 +1786,7 @@ union. Both are one-line `msum` checks. Use them in real analyses too.
 - Boundary cells are split by default: each gets a `:fraction`, and mass and volume use it.
   Whole cells over-count, the centre test can miss in either direction, and the split value is
   the one to quote.
+- Shells: `sphericalshell` and `cylindricalshell` with `subregion`, or the classic `shellregion`.
 - `inverse=true` or `!region` gives the outside; `∩ ∪ \ !` and `@region` build any shape; `axis=`
   tilts cylinders and cylindrical shells. Touching regions add up exactly.
 - `refine` and `refine_to` sharpen the drawn edge; they do not change the numbers.
