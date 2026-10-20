@@ -91,6 +91,7 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0 | Julia 1.12.7 | 2 threads
+[ Info: Mera v1.8.0
 cells loaded : 18966620
 box size     : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
@@ -293,7 +294,7 @@ sphericalshell      7754688 cells   1.18e10 Msol
 cylindricalshell    4084535 cells   8.032e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_10_6.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_10_4.png)
 
 Face-on, the box and the cylinder differ only in the corners; edge-on, both are the same ±2 kpc
 slab. The two shells show how a projection hides depth. Face-on, the cylindrical shell is a ring
@@ -527,12 +528,12 @@ fig
 
 ```
 nsub  points/cell     r = 10 kpc   r = 1.5 kpc   time, r = 10
-1     1                 -0.025 %        19.0 %          0.4 s
-2     8                 -0.096 %         3.0 %         0.59 s
-4     64                -0.026 %         0.9 %         0.27 s
-8     512              -0.0046 %        0.23 %         0.54 s
-16    4096            -0.00025 %       0.053 %         0.46 s
-32    32768           -0.00036 %        0.01 %         1.76 s
+1     1                 -0.025 %        19.0 %         0.45 s
+2     8                 -0.096 %         3.0 %         0.28 s
+4     64                -0.026 %         0.9 %         0.23 s
+8     512              -0.0046 %        0.23 %         0.44 s
+16    4096            -0.00025 %       0.053 %         0.37 s
+32    32768           -0.00036 %        0.01 %         1.31 s
 ```
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_20_3.png)
@@ -1536,7 +1537,7 @@ fig
 map mass removed by the display clip : 0.45 %  (cosmetic only: msum is untouched)
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_70_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_70_2.png)
 
 ## Step 10. Regions with a purpose
 
@@ -1576,7 +1577,7 @@ fig
 identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10   vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_3.png)
 
 The rule holds, and the side view explains the top view: the blister adds gas only above the
 upper face, where the bright disc hides it from the top, while the chimney removes a full column
@@ -1750,10 +1751,11 @@ must be larger than zero, and `inverse=true` selects the inside of `r_in` togeth
 outside of `r_out`. Without a shape, `shellregion(gas)` means `:cylinder`, so name the shape.
 
 `Mera.get_filtered_ranges` returns the bounding ranges of a classic cut. Below, the classic
-cylinder lands *above* the split disc, as whole cells must. The classic shell behaves
-differently at its two surfaces: `cell=true` keeps every cell that touches the **outer** surface,
-but drops every cell that touches the **inner** surface. Its error therefore has no fixed sign.
-Compare it with the split envelope of Step 8:
+cylinder and the classic spherical shell land *above* the split disc and the split envelope of
+Step 8, as whole cells must: `cell=true` keeps every cell that touches the region, on both
+surfaces of a shell. One consequence: classic regions that touch share the cells on their common
+surface, so nested classic shells do not add up. For a profile or a budget, use region values,
+or `cell=false`, which gives each cell to one shell only:
 
 ```julia
 cub_c = subregion(gas, :cuboid; xrange=[-12, 12], yrange=[-12, 12], zrange=[-2, 2],
@@ -1781,7 +1783,7 @@ println("cut spans x ∈ ", round.(xr_c .* (gas.boxlen * kpc), sigdigits=4), " k
 
 ```
 classic cylinder (whole cells) : 2.29023e10 Msol   +0.3 % vs split disc: whole boundary cells, as in Step 4
-classic shellregion (cell=true) : 1.17949e10 Msol   -0.082 % vs split envelope sphericalshell(10, 20), Step 8
+classic shellregion (cell=true) : 1.19429e10 Msol   1.2 % vs split envelope sphericalshell(10, 20), Step 8
 cut spans x ∈ [12.0, 36.0] kpc (absolute)
 ```
 
@@ -1856,8 +1858,8 @@ with it (`obj = nothing; GC.gc()`) and keep only one in memory at a time.
 ## Which mode when
 
 - **Exploring?** Classic whole-cell cuts (`cell=true`) are the cheapest and show *all* gas near
-  the region. For a box, cylinder or sphere their mass is an upper bound; for a classic shell it
-  is not, because the cells on its inner surface are dropped (Step 11).
+  the region. Their mass is an upper bound. Neighbouring whole-cell regions share their edge
+  cells, so they do not add up (Step 11).
 - **Fewest cells?** The centre test (`split=false`, or classic `cell=false`) keeps fewer cells
   and usually lands close to the split value, but with no guaranteed sign (Step 8, the ring).
   Treat it as an estimate.

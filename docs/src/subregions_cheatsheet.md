@@ -57,10 +57,13 @@ shellregion(gas, :cylinder; radius=[6., 10.], height=2., center=[:bc], range_uni
 - `shellregion(obj)` without a shape means `:cylinder`. Name the shape to be safe.
 - `inverse=true` selects everything outside the shell: the inside of `r_in` together with the
   outside of `r_out`.
-- A shell has two surfaces. With `cell=true`, the classic shell keeps every cell that touches
-  its **outer** surface but drops every cell that touches its **inner** surface, so its mass is
-  not a bound and can be too high or too low. With `cell=false` the centre test applies on both
-  surfaces. `sphericalshell` and `cylindricalshell` split the cells of both surfaces.
+- A shell has two surfaces. With `cell=true` the classic shell keeps every cell that touches
+  it, on both surfaces, like every other classic shape: its mass is an upper bound. With
+  `cell=false` the centre test applies on both surfaces. `sphericalshell` and
+  `cylindricalshell` split the cells of both surfaces.
+- **Nested classic shells overlap with `cell=true`**: neighbours share the cells on their common
+  edge, so a radial profile from them counts those cells twice. Use `cell=false` (each cell goes
+  to one shell) or region values (each cell is split between the shells).
 - A shell and the sphere (or cylinder) inside it share the inner surface. With region values
   their masses add up exactly to the mass of the outer sphere.
 - `periodic=true` works with `shellregion`, as with `subregion`.
@@ -109,7 +112,7 @@ Only cell data (hydro, gravity, RT) have boundary cells. Particles, clumps and s
 |---|---|---|
 | split | region value, default `split=true` | exact, to the sampling accuracy of `nsub` |
 | centre test | `split=false`, or classic `cell=false` | an estimate; can be too high or too low |
-| whole cells | classic `cell=true` (the classic default) | too high, an upper bound. Not for a classic shell: see Shell rules |
+| whole cells | classic `cell=true` (the classic default) | always too high: an upper bound |
 
 With `split=true` each kept cell carries `:fraction ∈ (0, 1]`, the part of its volume inside the
 region.
@@ -234,14 +237,16 @@ particles have no volume to split.
 1. **The cylinder height is a half-height.** `cylinder(r, 2.)` is 4 units thick.
 2. **The classic default centre is the box corner**, and the classic default unit is code units.
 3. **Region values do not wrap** at periodic faces. Use the classic call with `periodic=true`.
-4. **The centre test is not a bound**, and neither is a classic shell with `cell=true`. Whole
-   cells give an upper limit only for a box, cylinder or sphere. The split cut gives the
-   measurement.
-5. **A hole is hard to see** in a projection through the whole box: the line of sight still
+4. **The centre test is not a bound.** Only whole cells give a guaranteed upper limit, and only
+   the split cut gives the measurement.
+5. **Whole-cell regions that touch overlap.** Neighbouring classic shells, or a classic sphere
+   and the shell around it, share the cells on their common surface. For a budget or a profile,
+   use region values or `cell=false`.
+6. **A hole is hard to see** in a projection through the whole box: the line of sight still
    passes the gas in front of and behind it. Limit the depth, e.g. `zrange=` of the region.
-6. **A split edge looks soft in a map**, because each cut cell is drawn over its full size. The
+7. **A split edge looks soft in a map**, because each cut cell is drawn over its full size. The
    numbers are right; use `refine` or `refine_to` for the picture.
-7. **A cut of a cut** multiplies the fractions. Combine the regions with `∩` for the exact joint
+8. **A cut of a cut** multiplies the fractions. Combine the regions with `∩` for the exact joint
    fraction.
 
 ## Related
