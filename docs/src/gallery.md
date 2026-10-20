@@ -64,11 +64,11 @@ run it.
 
 <a class="gallery-card" href="https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery/006_where_is_the_grid_refined">
   <span class="gallery-thumb gallery-thumb-grid-refined" role="img"
-        aria-label="The cell edges of a galaxy's adaptive grid across a spiral arm, coloured by refinement level, over the gas density"></span>
+        aria-label="Every leaf cell of a galaxy's adaptive grid inside a cube on a spiral arm, drawn transparent in 3-D and coloured by refinement level"></span>
   <span class="gallery-title">Where is the grid refined?</span>
   <span class="gallery-meta">RAMSES · where a 154-million-cell galaxy run spends its cells: cells,
-  volume and mass per level, the level that holds the gas along every line of sight, the refined zone
-  seen from the side, the exact level in the mid-plane, and the cell edges drawn over the gas</span>
+  volume and mass per level, the level along every line of sight, the refined zone from the side, the
+  cell edges over the gas, and every leaf cell of a cube in 3-D, with a movie of it turning</span>
 </a>
 
 </div>
