@@ -4,7 +4,7 @@
 > data natively (hydro and MHD, particles, gravity, clumps, sinks, radiative transfer), holds a
 > snapshot as one table with one row per cell, and computes derived physics, regions, projections,
 > profiles, phase diagrams and structure catalogues from it. Documentation:
-> https://manuelbehrendt.github.io/Mera.jl/dev/
+> https://manuelbehrendt.github.io/Mera.jl/stable/
 
 This file is a compact grounding for an AI assistant. It is not a tutorial. It states the data
 model, the vocabulary, the mistakes that are easy to make, and how to check that an answer is
@@ -214,14 +214,14 @@ cubes, kinematic mock observations and their FITS export, a fly-through renderer
 
 ## Where to read more
 
-- Getting started and first look: https://manuelbehrendt.github.io/Mera.jl/dev/first_look/
-- How the numbers are computed: https://manuelbehrendt.github.io/Mera.jl/dev/computation_reference/
-- Masking and filtering: https://manuelbehrendt.github.io/Mera.jl/dev/05_multi_Masking_Filtering/
-- Off-axis projection: https://manuelbehrendt.github.io/Mera.jl/dev/06_offaxis_Projection/
-- Off-axis cheatsheet: https://manuelbehrendt.github.io/Mera.jl/dev/offaxis_cheatsheet/
-- Periodic boxes: https://manuelbehrendt.github.io/Mera.jl/dev/periodic_boxes/
-- Profiles and phase diagrams: https://manuelbehrendt.github.io/Mera.jl/dev/15_multi_Profiles_Phase/
-- Find the right function by task: https://manuelbehrendt.github.io/Mera.jl/dev/where_to_start/
-- Reproducibility: https://manuelbehrendt.github.io/Mera.jl/dev/reproducibility/
-- Complete worked recipes: https://manuelbehrendt.github.io/Mera.jl/dev/gallery/
-- Full API: https://manuelbehrendt.github.io/Mera.jl/dev/api/
+- Getting started and first look: https://manuelbehrendt.github.io/Mera.jl/stable/first_look/
+- How the numbers are computed: https://manuelbehrendt.github.io/Mera.jl/stable/computation_reference/
+- Masking and filtering: https://manuelbehrendt.github.io/Mera.jl/stable/05_multi_Masking_Filtering/
+- Off-axis projection: https://manuelbehrendt.github.io/Mera.jl/stable/06_offaxis_Projection/
+- Off-axis cheatsheet: https://manuelbehrendt.github.io/Mera.jl/stable/offaxis_cheatsheet/
+- Periodic boxes: https://manuelbehrendt.github.io/Mera.jl/stable/periodic_boxes/
+- Profiles and phase diagrams: https://manuelbehrendt.github.io/Mera.jl/stable/15_multi_Profiles_Phase/
+- Find the right function by task: https://manuelbehrendt.github.io/Mera.jl/stable/where_to_start/
+- Reproducibility: https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/
+- Complete worked recipes: https://manuelbehrendt.github.io/Mera.jl/stable/gallery/
+- Full API: https://manuelbehrendt.github.io/Mera.jl/stable/api/
