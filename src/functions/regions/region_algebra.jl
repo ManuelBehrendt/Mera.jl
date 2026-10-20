@@ -636,7 +636,7 @@ function subregion(obj::SinkDataType, region::AbstractRegion; inverse::Bool=fals
 end
 
 # ---- @region: readability sugar for composite definitions --------------------------
-const _REGION_CTORS = Set([:Sphere, :Cuboid, :Cylinder, :SphericalShell, :CylindricalShell])
+const _REGION_CTORS = Set([:sphere, :cuboid, :cylinder, :sphericalshell, :cylindricalshell, :Sphere, :Cuboid, :Cylinder, :SphericalShell, :CylindricalShell])
 
 _region_ctor_name(f) = f isa Symbol ? f :
     (f isa Expr && f.head === :. && f.args[2] isa QuoteNode ? f.args[2].value : nothing)

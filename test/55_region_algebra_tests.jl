@@ -398,5 +398,17 @@ using IndexedTables   # used below; do not rely on another test file importing i
         @test length(subregion(gas, r0; verbose=false).data) ==
               length(subregion(gas, sphere(0.2box; range_unit=:kpc); verbose=false).data)
         @test_throws LoadError @eval @region wrong=1 begin; sphere(1.) end
+        # the block options reach the exported lowercase constructors, not only the type names
+        rp = @region unit=:pc center=[1., 2., 3.] begin
+            s = sphere(5.)
+            c = cylinder(5., 1.; range_unit=:kpc)          # explicit keyword wins
+            s ∪ c
+        end
+        @test rp.a.range_unit === :pc && rp.a.center == [1., 2., 3.]
+        @test rp.b.range_unit === :kpc && rp.b.center == [1., 2., 3.]
+        @test (@region unit=:Mpc begin cuboid(xrange=[0, 1], yrange=[0, 1], zrange=[0, 1]) end).range_unit === :Mpc
+        @test (@region unit=:pc begin sphericalshell(1., 2.) end).range_unit === :pc
+        @test (@region unit=:pc begin cylindricalshell(1., 2., 1.) end).range_unit === :pc
+        @test (@region unit=:pc begin Mera.Sphere(1.) end).range_unit === :pc
     end
 end
