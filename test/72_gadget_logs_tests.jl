@@ -62,7 +62,8 @@ end
     end
 
     @testset "3. missing files never throw" begin
-        dir = mktempdir(); info = _logs_fixture_info(dir)     # no logs written at all
+        # no logs written at all; a fresh parent too, since the reader also searches there
+        dir = joinpath(mktempdir(), "run"); mkpath(dir); info = _logs_fixture_info(dir)
         @test (getlogs(info, :physics; verbose=false); true)
         r = getlogs(info, :physics; verbose=false)
         @test r isa NamedTuple && isempty(propertynames(r))
@@ -219,8 +220,11 @@ end
         @test "GFM" in flags && "COOLING" in flags && "BH_ADIOS_WIND" in flags
         @test issorted(flags)
 
-        # a snapshot lacking both groups still opens, and reports nothing rather than failing
-        d2 = mktempdir(); _mk(d2; withpars=false); i2 = getinfo(32, d2, verbose=false)
+        # a snapshot lacking both groups still opens, and reports nothing rather than failing.
+        # The reader also searches the run's parent folder, so give the run a fresh parent:
+        # in the shared temp folder, a parameter file from elsewhere would be found.
+        d2 = joinpath(mktempdir(), "run"); mkpath(d2); _mk(d2; withpars=false)
+        i2 = getinfo(32, d2, verbose=false)
         @test i2.namelist == false
         @test isempty(configflags(i2))
 
