@@ -25,6 +25,26 @@ using IndexedTables   # used below; do not rely on another test file importing i
                     (0.4box)^3,  1e-4),
     )
 
+    @testset "classic shellregion: cell=true keeps the cells of both surfaces" begin
+        rin, rout = 0.15box, 0.30box
+        cellset(o) = Set(zip(select(o.data, :cx), select(o.data, :cy), select(o.data, :cz)))
+        for (shape, kw, reg) in ((:sphere,   (;),              sphericalshell(rin, rout; range_unit=:kpc)),
+                                 (:cylinder, (height=0.2box,), cylindricalshell(rin, rout, 0.2box; range_unit=:kpc)))
+            opts    = (radius=[rin, rout], center=[:bc], range_unit=:kpc, verbose=false, kw...)
+            whole   = shellregion(gas, shape; opts..., cell=true)
+            centre  = shellregion(gas, shape; opts..., cell=false)
+            outside = shellregion(gas, shape; opts..., cell=true, inverse=true)
+            exact   = subregion(gas, reg; verbose=false)
+            # every cell the exact shell touches, on the inner surface too, is kept whole
+            @test issubset(cellset(exact), cellset(whole))
+            @test vol(whole) >= vol(exact)                       # so whole cells are an upper bound
+            @test issubset(cellset(centre), cellset(whole))
+            # shell and inverse divide the box: nothing counted twice, nothing lost
+            @test length(whole.data) + length(outside.data) == length(gas.data)
+            @test isempty(intersect(cellset(whole), cellset(outside)))
+        end
+    end
+
     @testset "exact volumes vs analytic ($name)" for (name, reg, Vexact, tol) in cases
         s = subregion(gas, reg; split=true, verbose=false)
         w = subregion(gas, reg; split=false, verbose=false)
