@@ -5,11 +5,11 @@
 **Analyze RAMSES simulations at scale, in pure Julia.**
 
 <h3>
-  <a href="https://manuelbehrendt.github.io/Mera.jl/dev/">📖 Documentation</a> ·
-  <a href="https://manuelbehrendt.github.io/Mera.jl/dev/where_to_start/">Where to start</a> ·
+  <a href="https://manuelbehrendt.github.io/Mera.jl/stable/">📖 Documentation</a> ·
+  <a href="https://manuelbehrendt.github.io/Mera.jl/stable/where_to_start/">Where to start</a> ·
   <a href="#installation">Install</a> ·
-  <a href="https://manuelbehrendt.github.io/Mera.jl/dev/gallery/">Gallery</a> ·
-  <a href="https://manuelbehrendt.github.io/Mera.jl/dev/adding_a_reader/">Add a reader for your code</a>
+  <a href="https://manuelbehrendt.github.io/Mera.jl/stable/gallery/">Gallery</a> ·
+  <a href="https://manuelbehrendt.github.io/Mera.jl/stable/adding_a_reader/">Add a reader for your code</a>
 </h3>
 
 [![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)](https://github.com/ManuelBehrendt/Mera.jl/releases)
@@ -103,52 +103,52 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   it, so the numbers are right at the edge without your having to think about it. When the *picture*
   matters too, `refine_to` subdivides those edge cells down to your pixel size, so a rendered
   boundary is as sharp as the map you are drawing.
-  [How it is measured](https://manuelbehrendt.github.io/Mera.jl/dev/computation_reference/)
+  [How it is measured](https://manuelbehrendt.github.io/Mera.jl/stable/computation_reference/)
 - **Look at your galaxy from any angle.** Mera projects the original cells, keeping the detail of
   the smallest ones, and the mass you measure stays the same at any angle, pixel size or thread
   count. Cells cut by the edge of the window or of a depth slab are split too, so a map holds
   exactly the mass inside it.
-  [Off-axis projection](https://manuelbehrendt.github.io/Mera.jl/dev/06_offaxis_Projection/)
+  [Off-axis projection](https://manuelbehrendt.github.io/Mera.jl/stable/06_offaxis_Projection/)
 - **See the volume, not only a map.** Render the gas in 3-D, with surfaces at the densities you
   choose and a camera that orbits or flies a path for a movie.
-  [Volume rendering](https://manuelbehrendt.github.io/Mera.jl/dev/17_multi_Volume_Rendering/)
+  [Volume rendering](https://manuelbehrendt.github.io/Mera.jl/stable/17_multi_Volume_Rendering/)
 - **Restart RAMSES on any number of CPUs.** RAMSES restarts only on the number of ranks that wrote
   an output. Mera rewrites it for any other number, also from a mera file when the original files
   are gone, and checks the result against RAMSES itself.
-  [RAMSES restart](https://manuelbehrendt.github.io/Mera.jl/dev/07_2_multi_RAMSES_Restart/)
+  [RAMSES restart](https://manuelbehrendt.github.io/Mera.jl/stable/07_2_multi_RAMSES_Restart/)
 - **Find structures with the method that suits your data.** Seven clump-finding algorithms behind
   one call, with a boundedness test, a catalogue and its mass function, and synthetic fields with
   known clumps to check a finder against.
-  [Clump finding](https://manuelbehrendt.github.io/Mera.jl/dev/clumpfind/)
+  [Clump finding](https://manuelbehrendt.github.io/Mera.jl/stable/clumpfind/)
 - **Read a snapshot once, then re-read it fast.** Save it in Mera's own format and it comes back
   much faster, from a much smaller file.
-  [Benchmarks, and where they may not hold](https://manuelbehrendt.github.io/Mera.jl/dev/benchmarks/performance/)
+  [Benchmarks, and where they may not hold](https://manuelbehrendt.github.io/Mera.jl/stable/benchmarks/performance/)
 - **Use your cores without writing parallel code.** Reading and projection are threaded already.
   Start Julia with more threads and Mera uses them. The guide also shows patterns for threading
   your own loops around Mera, and how to divide the threads between the two.
-  [Multi-threading](https://manuelbehrendt.github.io/Mera.jl/dev/multi-threading/multi-threading_intro/)
+  [Multi-threading](https://manuelbehrendt.github.io/Mera.jl/stable/multi-threading/multi-threading_intro/)
 - **Choose cells by physics, not by position in a list.** Select on temperature, density or any
   quantity Mera can compute, and join the conditions with and, or and not.
-  [Masking and filtering](https://manuelbehrendt.github.io/Mera.jl/dev/05_multi_Masking_Filtering/)
+  [Masking and filtering](https://manuelbehrendt.github.io/Mera.jl/stable/05_multi_Masking_Filtering/)
 - **Write a selection once and reuse it.** Keep the region, units and resolution in one bundle and
   hand it to every call, and short macros fold the common steps into a single line.
-  [Pipelines](https://manuelbehrendt.github.io/Mera.jl/dev/pipelines/)
+  [Pipelines](https://manuelbehrendt.github.io/Mera.jl/stable/pipelines/)
 - **Get a first look in one call.** `quicklook` summarises a snapshot you have never opened, within
   a time budget, and reports you compose yourself say what they cost before they run.
-  [First look](https://manuelbehrendt.github.io/Mera.jl/dev/first_look/)
+  [First look](https://manuelbehrendt.github.io/Mera.jl/stable/first_look/)
 - **Hear about a long job without watching it.** Mera can ring a bell, send an email or post to a
   Zulip channel when a run finishes, carrying the figures, the timings and, if something broke, the
   error.
-  [Notifications](https://manuelbehrendt.github.io/Mera.jl/dev/notifications/)
+  [Notifications](https://manuelbehrendt.github.io/Mera.jl/stable/notifications/)
 - **The whole analysis is here**: regions, units, projections, profiles, phase diagrams, PDFs, clump
   finding, star formation, time series, movies and export.
 - **Every result remembers where it came from**: the version of Mera, the exact code it ran on and
   the snapshot you used. Fifteen public test simulations with known answers let you check your own
   installation.
-  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/dev/reproducibility/)
+  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/)
 - **Bring your own hydro code.** Readers plug into a registry, so a reader written in your own
   package works with the whole analysis without changing Mera.
-  [Adding a reader](https://manuelbehrendt.github.io/Mera.jl/dev/adding_a_reader/)
+  [Adding a reader](https://manuelbehrendt.github.io/Mera.jl/stable/adding_a_reader/)
 - **One language.** Julia from beginning to end, so the code you read is the code that runs. No
   plotting library is installed until you ask for a figure.
 
@@ -413,7 +413,7 @@ the output number, run it. Two examples:
 
 More recipes:
 
-- **[Gallery](https://manuelbehrendt.github.io/Mera.jl/dev/gallery/)**, and the notebooks behind
+- **[Gallery](https://manuelbehrendt.github.io/Mera.jl/stable/gallery/)**, and the notebooks behind
   it in the [Notebooks repository](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1/gallery)
 
 Sharing the workflow behind a paper is especially welcome: it gives your own work a second life,
@@ -428,18 +428,18 @@ else has run one, then *checked* with the date.
 
 Contributions are welcome by pull request, or via
 [Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions). The
-**[full instructions are in the documentation](https://manuelbehrendt.github.io/Mera.jl/dev/gallery/#How-to-contribute-one)**,
+**[full instructions are in the documentation](https://manuelbehrendt.github.io/Mera.jl/stable/gallery/#How-to-contribute-one)**,
 including what the attribution block should contain and what makes a recipe usable by someone else.
 
 ## Documentation
 
-- **[Documentation & API reference](https://manuelbehrendt.github.io/Mera.jl/dev/)**
-- **[Where to start](https://manuelbehrendt.github.io/Mera.jl/dev/where_to_start/)**: one page from
+- **[Documentation & API reference](https://manuelbehrendt.github.io/Mera.jl/stable/)**
+- **[Where to start](https://manuelbehrendt.github.io/Mera.jl/stable/where_to_start/)**: one page from
   "I want to ..." to the function that does it, for the twenty things people do first
-- **New here?** Start with the Getting Started track: [First Steps](https://manuelbehrendt.github.io/Mera.jl/dev/00_multi_FirstSteps/),
-  [Coming from Other Tools](https://manuelbehrendt.github.io/Mera.jl/dev/switching_to_mera/), and
-  [Julia for Simulation Analysis](https://manuelbehrendt.github.io/Mera.jl/dev/julia_for_simulation_analysis/)
-- **Working with an AI assistant?** [Using an AI Assistant](https://manuelbehrendt.github.io/Mera.jl/dev/assistant/)
+- **New here?** Start with the Getting Started track: [First Steps](https://manuelbehrendt.github.io/Mera.jl/stable/00_multi_FirstSteps/),
+  [Coming from Other Tools](https://manuelbehrendt.github.io/Mera.jl/stable/switching_to_mera/), and
+  [Julia for Simulation Analysis](https://manuelbehrendt.github.io/Mera.jl/stable/julia_for_simulation_analysis/)
+- **Working with an AI assistant?** [Using an AI Assistant](https://manuelbehrendt.github.io/Mera.jl/stable/assistant/)
   has a short grounding file to give it, and the checks worth keeping in whatever it writes. Experimental
 - **[Tutorials](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs)**: step-by-step Jupyter notebooks
 - In the REPL, `?getvar` shows the docstring and `getvar()` (no args) prints the full derived-quantity catalogue
@@ -547,7 +547,7 @@ when a new version ships and what moved in it.
   the release notes say what changed in it. Read them before `pkg> up`, not after.
 - **Pin what a paper depends on.** A `Project.toml` and `Manifest.toml` in your analysis folder keep
   today's versions available whatever ships later. See
-  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/dev/reproducibility/).
+  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
 
 ## Get involved
 
@@ -559,7 +559,7 @@ when a new version ships and what moved in it.
 - **Contribute**: see [CONTRIBUTING.md](CONTRIBUTING.md); bug reports, docs fixes, examples and new
   algorithms are all welcome.
 - **Add a reader for your simulation code**: the analysis never looks at the file format, so a
-  reader is the only piece a new code needs. [How to add a reader](https://manuelbehrendt.github.io/Mera.jl/dev/adding_a_reader/) walks
+  reader is the only piece a new code needs. [How to add a reader](https://manuelbehrendt.github.io/Mera.jl/stable/adding_a_reader/) walks
   through it.
 - **Show that your project works with Mera**: paste the badge into your own README.
 
@@ -575,5 +575,5 @@ MIT, see [LICENSE](LICENSE).
 
 ---
 
-**Get started:** [manuelbehrendt.github.io/Mera.jl](https://manuelbehrendt.github.io/Mera.jl/dev/) ·
+**Get started:** [manuelbehrendt.github.io/Mera.jl](https://manuelbehrendt.github.io/Mera.jl/stable/) ·
 **Questions?** [open a discussion](https://github.com/ManuelBehrendt/Mera.jl/discussions)
