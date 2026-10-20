@@ -105,6 +105,7 @@ html.theme--documenter-dark .mera-tab-btn-active:hover {
 .gallery-thumb-probe { background-image: url("gallery/probe_thumb.png"); }
 .gallery-thumb-sweep { background-image: url("gallery/sweep_thumb.png"); }
 .gallery-thumb-ramses-any-rank-count { background-image: url("gallery/ramses_any_rank_count_thumb.png"); }
+.gallery-thumb-grid-refined { background-image: url("gallery/where_is_the_grid_refined_thumb.png"); }
 .gallery-card .gallery-title {
     display: block;
     font-weight: 600;
