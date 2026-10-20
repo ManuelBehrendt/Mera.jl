@@ -17,6 +17,9 @@
 # project on every invocation. Run from the repo root:
 #
 #     julia --project=. scripts/process_coverage.jl
+#
+# Set MERA_COV_MERGE=<file.lcov> to add the counts of an earlier run (e.g. the
+# test suite) to the .cov files found now (e.g. the notebooks).
 
 using Pkg
 
@@ -38,6 +41,14 @@ is_library(filename) = !any(p -> startswith(filename, p), EXCLUDED_PREFIXES)
 
 coverage_all = process_folder("src")
 coverage     = filter(c -> is_library(c.filename), coverage_all)
+
+merge_file = get(ENV, "MERA_COV_MERGE", "")
+if !isempty(merge_file)
+    isfile(merge_file) || error("MERA_COV_MERGE: $merge_file does not exist")
+    earlier  = filter(c -> is_library(c.filename), LCOV.readfile(merge_file))
+    coverage = merge_coverage_counts(coverage, earlier)
+    println("Merged with   : $merge_file")
+end
 
 if isempty(coverage)
     @warn "No .cov files found under src/ — was the suite run with --code-coverage?"
