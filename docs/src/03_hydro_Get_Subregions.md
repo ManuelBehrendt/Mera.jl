@@ -168,15 +168,30 @@ println("returned type       : ", typeof(hello).name.name, "  (same as gas: full
 println("cells selected      : ", length(hello.data), "  of ", length(gas.data))
 println("gas mass, r < 10 kpc: ", round(msum(hello, :Msol), sigdigits=5), " Msol")
 
-ph = proj(hello; xrange=[-11, 11], yrange=[-11, 11], pxsize=[0.1, :kpc])
+frame  = (xrange=[-11, 11], yrange=[-11, 11], pxsize=[0.1, :kpc])
+p_all  = proj(gas;   frame...)                            # the full box, for comparison
+ph     = proj(hello; frame...)                            # the cut
+# side view of the top of the sphere, where the surface crosses large cells far from the disc
+p_top  = proj(hello; direction=:x, yrange=[-4, 4], zrange=[6, 11], pxsize=[0.05, :kpc])
+cs_top = maximum(getvar(subregion(hello, cuboid(xrange=[-4, 4], yrange=[-4, 4], zrange=[9, 11]),
+                                  verbose=false), :cellsize, :kpc))
+println("largest cell at the top of the sphere: ", round(cs_top, digits=2), " kpc")
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(600, 470))
-ax  = Axis(fig[1, 1], title="first cut: sphere(10), boundary cells split")
-show_sd!(ax, ph, (-11, 11, -11, 11))
-arc!(ax, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1, linestyle=:dash)
-scalebar!(ax, -10, -10.3, 5)
-sd_bar!(fig[1, 2])
+fig = Figure(size=(1180, 430))
+ax1 = Axis(fig[1, 1], title="before: the full box, face-on")
+show_sd!(ax1, p_all, (-11, 11, -11, 11))
+ax2 = Axis(fig[1, 2], title="after: sphere(10), face-on")
+show_sd!(ax2, ph, (-11, 11, -11, 11))
+for ax in (ax1, ax2)
+    arc!(ax, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1, linestyle=:dash)
+end
+ax3 = Axis(fig[1, 3], title="after, edge-on: top of the sphere")
+show_sd!(ax3, p_top, (-4, 4, 6, 11))
+arc!(ax3, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1.2, linestyle=:dash)
+scalebar!(ax1, -10, -10.3, 5)
+scalebar!(ax3, -3.6, 6.3, 1)
+sd_bar!(fig[1, 4])
 fig
 ```
 
@@ -184,13 +199,22 @@ fig
 returned type       : HydroDataType  (same as gas: fully chainable)
 cells selected      : 11079571  of 18966620
 gas mass, r < 10 kpc: 1.821e10 Msol
+largest cell at the top of the sphere: 0.75 kpc
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_7_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_7_5.png)
 
 These three lines are the pattern of every cut on this page: a region, a result that works like
-the original data, and a number. The dashed circle is the exact sphere. The gas ends on it
-because cut cells contribute only the part that lies inside.
+the original data, and a number. The first two maps show what was cut out: the full box, and the
+sphere alone. Face-on, the edge follows the dashed circle, because the surface crosses small
+cells in the disc.
+
+The third map looks at the top of the sphere from the side, far above the disc, where the cells
+are large. Here the edge is soft and steps over several pixels. The split was applied, but only
+to the **numbers**: each cut cell carries its inside fraction, and `msum` uses it. The map does
+not cut the cells. It draws each cut cell over its full area, with its reduced mass, so the edge
+looks as coarse as the cells it crosses (up to the cell size printed above the figure). Step 9
+measures this and shows how to make the drawn edge sharp as well.
 
 !!! tip "Try it"
     Change the radius to `sphere(5.)` and run the cell again. The number of cells drops much
@@ -216,7 +240,8 @@ and `shellregion(gas, :cylinder; radius=[r_in, r_out], height=h)`. It keeps whol
 of splitting them, and its cylindrical shell runs along z only; Step 11 compares the two.
 
 Below, each shape is cut with the default centre and unit and drawn twice: from the top
-(face-on, along z) and from the side (edge-on, along x). The cylinder, named `disc_region`, is
+(face-on, along z) and from the side (edge-on, along x). The first column shows the uncut data
+for comparison. The cylinder, named `disc_region`, is
 the galaxy disc in later steps.
 
 ```julia
@@ -241,21 +266,22 @@ end
 
 disc   = cuts[2]                                   # the disc, used again later
 m_disc = msum(disc, :Msol)
-shape_maps = [(proj(c; xrange=[-21, 21], yrange=[-21, 21], pxsize=[0.2, :kpc]),
-           proj(c; direction=:x, yrange=[-21, 21], zrange=[-21, 21], pxsize=[0.2, :kpc]))
-          for c in cuts]
+two_views(c) = (proj(c; xrange=[-21, 21], yrange=[-21, 21], pxsize=[0.2, :kpc]),
+                proj(c; direction=:x, yrange=[-21, 21], zrange=[-21, 21], pxsize=[0.2, :kpc]))
+shape_maps = [two_views(gas); [two_views(c) for c in cuts]]    # the uncut data first
+panel_names = ["full box (uncut)"; first.(shapes)]
 cuts = nothing
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(1180, 520))
-for (k, ((name, _), (pf, pe))) in enumerate(zip(shapes, shape_maps))
+fig = Figure(size=(1300, 470))
+for (k, (name, (pf, pe))) in enumerate(zip(panel_names, shape_maps))
     show_sd!(Axis(fig[1, k], title=name), pf, (-21, 21, -21, 21))
     show_sd!(Axis(fig[2, k]), pe, (-21, 21, -21, 21))
 end
 Label(fig[1, 0], "face-on", rotation=π/2, tellheight=false)
 Label(fig[2, 0], "edge-on", rotation=π/2, tellheight=false)
 scalebar!(content(fig[2, 1]), -19, -19.5, 10)
-sd_bar!(fig[1:2, 6])
+sd_bar!(fig[1:2, 7])
 fig
 ```
 
@@ -461,28 +487,77 @@ curved surface it tests a grid of `nsub × nsub × nsub` points in each boundary
 and improve it with a larger `nsub`:
 
 ```julia
-v8    = sum(getvar(sph, :volume, :kpc3))
-sph32 = subregion(gas, sphere(10.; center=ctr, range_unit=:kpc); nsub=32, verbose=false)
-v32   = sum(getvar(sph32, :volume, :kpc3))
-v_ana = 4π/3 * 10.0^3
-sph32 = nothing
+# volume error of a split sphere against (4/3)πR³, for several nsub, on two spheres:
+#   the off-centre 10 kpc sphere from above (its surface crosses mostly small cells)
+#   a 1.5 kpc sphere 8 kpc above the disc (its surface crosses only large cells)
+spheres = [("r = 10 kpc, off centre",      sphere(10.;  center=ctr),            10.0),
+           ("r = 1.5 kpc, above the disc", sphere(1.5;  center=[:bc, :bc, 32.]), 1.5)]
+nsubs   = [1, 2, 4, 8, 16, 32]
+err     = Dict(name => Float64[] for (name, _, _) in spheres)
+tsec    = Float64[]
 
-println("(4/3) π R³                    : ", round(v_ana, sigdigits=6), " kpc³")
-println("split-cell volume, nsub = 8   : ", round(v8,  sigdigits=6), " kpc³   (",
-        round(100*(v8/v_ana - 1),  sigdigits=2), " %)")
-println("split-cell volume, nsub = 32  : ", round(v32, sigdigits=6), " kpc³   (",
-        round(100*(v32/v_ana - 1), sigdigits=2), " %)")
+for n in nsubs, (name, reg, R) in spheres
+    t = @elapsed cut = subregion(gas, reg; nsub=n, verbose=false)
+    push!(err[name], 100 * (sum(getvar(cut, :volume, :kpc3)) / (4π/3 * R^3) - 1))
+    R == 10.0 && push!(tsec, t)
+end
+
+println(rpad("nsub", 6), rpad("points/cell", 13), lpad("r = 10 kpc", 13), lpad("r = 1.5 kpc", 14), lpad("time, r = 10", 15))
+for (k, n) in enumerate(nsubs)
+    println(rpad(n, 6), rpad(n^3, 13),
+            lpad(string(round(err[spheres[1][1]][k], sigdigits=2), " %"), 13),
+            lpad(string(round(err[spheres[2][1]][k], sigdigits=2), " %"), 14),
+            lpad(string(round(tsec[k], digits=2), " s"), 15))
+end
+
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
+fig = Figure(size=(960, 340))
+ax1 = Axis(fig[1, 1], xscale=log2, yscale=log10, xticks=nsubs, xlabel="nsub",
+           ylabel="|volume error|  [%]", title="accuracy")
+for (name, _, _) in spheres
+    scatterlines!(ax1, nsubs, max.(abs.(err[name]), 1e-5); label=name)
+end
+hlines!(ax1, [0.01]; color=:gray, linestyle=:dash)
+axislegend(ax1; position=:lb, framevisible=false)
+ax2 = Axis(fig[1, 2], xscale=log2, xticks=nsubs, xlabel="nsub", ylabel="time  [s]",
+           title="cost, r = 10 kpc")
+scatterlines!(ax2, nsubs, tsec)
+fig
 ```
 
 ```
-(4/3) π R³                    : 4188.79 kpc³
-split-cell volume, nsub = 8   : 4188.6 kpc³   (-0.0046 %)
-split-cell volume, nsub = 32  : 4188.77 kpc³   (-0.00036 %)
+nsub  points/cell     r = 10 kpc   r = 1.5 kpc   time, r = 10
+1     1                 -0.025 %        19.0 %         0.52 s
+2     8                 -0.096 %         3.0 %         0.78 s
+4     64                -0.026 %         0.9 %         0.36 s
+8     512              -0.0046 %        0.23 %         0.61 s
+16    4096            -0.00025 %       0.053 %         0.45 s
+32    32768           -0.00036 %        0.01 %         1.78 s
 ```
 
-The small deviation comes from the few large cells on the far side of the sphere. A larger
-`nsub` reduces it and costs proportionally more time. Keep the default for normal work; raise it
-when a boundary crosses very large cells and the last digits matter.
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_20_3.png)
+
+**How to choose `nsub`.** `nsub=1` tests only the cell centre, so it is the centre test again.
+From there the error falls quickly. What sets it is the size of the cut cells compared with the
+region:
+
+- For the 10 kpc sphere, the surface crosses mostly small cells, and the default `nsub=8` is
+  already below a hundredth of a per cent (dashed line). At `nsub=1` and `2` the errors of the
+  single cells are large and cancel partly by chance, so the first points do not fall steadily.
+- For the small sphere above the disc, the surface crosses a few dozen cells as large as half
+  the radius. Each of them holds a large part of the volume, so the same `nsub` gives a much
+  larger error: 0.23 % at the default, and only `nsub=32` reaches a hundredth of a per cent.
+
+The time hardly changes up to `nsub=16`, because most of the work is the selection itself, not
+the sampling. At `nsub=32`, with 32 768 points per boundary cell, it starts to grow. A practical
+rule:
+
+1. Keep the default `nsub=8` for normal work.
+2. Compare the region with the cells on its boundary: `maximum(getvar(cut, :cellsize, :kpc))`.
+   If the region is only a few cells across, use `nsub=16` or `32`.
+3. When the last digits matter, check as here: cut a sphere or cylinder of the same size at the
+   same place and compare its volume with the exact value. A box aligned with the axes needs no
+   check: its fractions are exact for any `nsub`.
 
 Now the maps. The second row zooms onto the coarse west edge, because at full size the
 differences are smaller than a screen pixel. The dashed circle is the exact sphere.
@@ -1437,7 +1512,7 @@ fig
 map mass removed by the display clip : 0.45 %  (cosmetic only: msum is untouched)
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_70_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_70_3.png)
 
 ## Step 10. Regions with a purpose
 
@@ -1477,7 +1552,7 @@ fig
 identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10   vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_3.png)
 
 The rule holds, and the side view explains the top view: the blister adds gas only above the
 upper face, where the bright disc hides it from the top, while the chimney removes a full column
@@ -1571,7 +1646,7 @@ cluster sites [kpc, centre-relative]: [(-3.2, 8.8), (-3.2, -5.8), (-2.2, 3.8)]
 swiss-cheese disc: 1.5925e10 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_76_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_76_4.png)
 
 The crosses mark the sites the *particles* chose; the holes are where the *gas* was cut. The
 three spheres hold a few per cent of the disc volume but a much larger share of its mass,
