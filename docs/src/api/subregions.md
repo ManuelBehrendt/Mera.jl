@@ -61,12 +61,14 @@ total_photons = sum(getvar(s, :Np_total) .* getvar(s, :volume))
     cell indices of both objects, not only how many there are, so a different cut is refused even
     when it holds the same number of cells. The error names what to fix.
 
-!!! warning "Regions do not wrap at periodic boundaries"
-    Neither function applies the minimum-image convention. A sphere or shell centred near a box
-    face is clipped at the boundary rather than wrapped, silently: you get a partial region and a
-    total that looks plausible. `getvar`'s `:r_sphere_periodic` / `:r_cylinder_periodic` exist for
-    exactly this case on the quantity side, but there is no periodic region selector. On a run
-    where the object of interest straddles a face, select by periodic radius instead.
+!!! note "Periodic boxes: only the classic calls wrap"
+    `subregion(obj, :sphere; …, periodic=true)` and the other classic shapes, and `shellregion`,
+    wrap around the box faces on every data type. `periodic=(x=true, y=true, z=false)` wraps only
+    some axes, and a cylinder wraps only in its two radial directions. Region values
+    (`sphere(10.)` and the others) are always clipped at the faces. Mera never wraps on its own;
+    `info.boundaries` reports what the namelist says. See [Periodic Boxes](../periodic_boxes.md).
+
+Every shape, keyword and trap on one page: [Subregions cheatsheet](../subregions_cheatsheet.md).
 
 ## Exported Functions
 
@@ -85,7 +87,7 @@ total_photons = sum(getvar(s, :Np_total) .* getvar(s, :volume))
 - **Solid**: `subregion(data, :cylinder, ...)`
 - **Shell**: `shellregion(data, :cylinder, ...)`
 - **Shape**: Cylinder defined by radius and height
-- **Parameters**: `radius`, `height`, `center`, `direction` (:x, :y, :z)
+- **Parameters**: `radius`, `height` (half-height), `center`; along z only. For a tilted cylinder use `cylinder(r, h; axis=[x, y, z])`
 
 ### Spherical Regions
 - **Solid**: `subregion(data, :sphere, ...)`
@@ -123,6 +125,7 @@ shellregion(data, :sphere, radius=[8., 12.], range_unit=:kpc)
 - **`center`**: Spatial center coordinates `[x, y, z]`
 - **`range_unit`**: Units for spatial parameters (`:kpc`, `:pc`, `:Mpc`, `:standard`)
 - **`inverse`**: Select region outside the specified geometry
+- **`periodic`**: wrap the region around the box faces (`true`, or per axis `(x=true, y=true, z=false)`)
 - **`verbose`**: Control output verbosity
 
 ### Cuboid Parameters
@@ -130,8 +133,8 @@ shellregion(data, :sphere, radius=[8., 12.], range_unit=:kpc)
 
 ### Cylindrical Parameters  
 - **`radius`**: Cylinder radius (solid) or `[inner, outer]` (shell)
-- **`height`**: Cylinder height (total height is 2×height)
-- **`direction`**: Cylinder axis direction (`:x`, `:y`, `:z`)
+- **`height`**: half-height (the cylinder spans ±height, so its total height is 2×height)
+- **`direction`**: only `:z` is supported; another value is an error
 
 ### Spherical Parameters
 - **`radius`**: ball radius (solid) or `[inner, outer]` (shell)
