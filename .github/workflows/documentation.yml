@@ -8,6 +8,14 @@ on:
     tags: '*'
   pull_request:
 
+# master, multicode and tag builds all deploy to the same gh-pages branch. Run them one at a
+# time: pushed together, master and multicode once raced, and the second deploy was rejected.
+# GitHub keeps one running and one waiting run per group, so a third deploy started while two
+# are queued replaces the waiting one. Pull requests build without deploying and run freely.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('docs-pr-{0}', github.ref) || 'docs-deploy' }}
+  cancel-in-progress: false
+
 # Opt JS-based actions into Node.js 24 ahead of GitHub's forced switch (2026-06-16).
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
