@@ -14,8 +14,8 @@ the tests, so that it stays current.
 Most correctness checks run on small public RAMSES simulations whose correct answer is known in
 advance: a law that follows from the setup (a Sedov blast grows as t^(2/5)), a number published by
 the RAMSES developers, or an input file written by hand. A failure then points at Mera, not at the
-simulation. A few older tests still use the maintainer's larger research runs; those are not
-published and are being replaced by the public ones.
+simulation. The data-backed files, 37 of the 71, still run on the maintainer's larger research
+simulations; those are not published and are being replaced by the public ones.
 
 ## Running the tests
 
@@ -39,8 +39,8 @@ UPLOAD=1 ./scripts/run_local_coverage.sh
 Set `MERA_SMOKE_ONLY=1` in mode 2. Without it, the suite treats the data as complete and also looks
 for the maintainer's unpublished runs, which then fail as missing.
 
-Measured on 2026-10-19 on an Apple-silicon laptop, Julia 1.12: mode 3 runs about 7970 tests in
-about 24 minutes. Mode 1 runs about 2150 tests in a few minutes.
+Measured in October 2026 on an Apple-silicon laptop, Julia 1.12: mode 3 runs about 8000 tests in
+about 25 minutes. Mode 1 runs about 2170 tests in four to seven minutes, on GitHub Actions too.
 
 When no data is found, or `MERA_SMOKE_ONLY=1` is set, the data-backed files are skipped cleanly, so
 `Pkg.test("Mera")` passes for contributors without data too.
@@ -136,7 +136,7 @@ Five workflows live in `.github/workflows/`:
 |---|---|---|
 | `CI.yml` | push and pull request to `master` and `multicode` | the data-free block (`MERA_SMOKE_ONLY=1`) on Julia 1.10, 1.11, 1.12 and 1.13, each on Ubuntu, macOS and Windows: twelve jobs. Uploads the `ci-smoke` coverage from the 1.12 Ubuntu job |
 | `fixtures.yml` | manual (`workflow_dispatch`) | downloads the public simulations and runs their oracles. Manual for now: it can run on every push once each data-backed file checks for its own simulation |
-| `documentation.yml` | push, pull request, tags | builds this site and deploys it to <https://manuelbehrendt.github.io/Mera.jl> |
+| `documentation.yml` | push, pull request, tags | builds this site and deploys it to <https://manuelbehrendt.github.io/Mera.jl>. Deploys run one at a time, so pushing `master` and `multicode` together is safe |
 | `CompatHelper.yml` | daily | opens pull requests that raise the `[compat]` bounds in `Project.toml` |
 | `TagBot.yml` | registry comment | creates the GitHub release and tag once a version is registered |
 
@@ -146,12 +146,13 @@ failing the whole build.
 
 ## Coverage
 
-There are two coverage numbers, shown by the two badges above:
+The two badges above show the first two numbers; the third adds the tutorial notebooks:
 
 | flag | covers | where it runs |
 |---|---|---|
 | `ci-smoke` | the data-free block only | GitHub Actions, on every push |
-| `local-full` | the whole suite, with all data | the maintainer's machine, via `scripts/run_local_coverage.sh` |
+| `local-full` | the whole suite, with all data | the maintainer's machine, via `scripts/run_local_coverage.sh` or `scripts/run_coverage_with_notebooks.sh` |
+| `local-full-notebooks` | the whole suite plus the tutorial notebooks | the maintainer's machine, via `scripts/run_coverage_with_notebooks.sh` (see [Notebook tests](#Notebook-tests)) |
 
 `scripts/run_local_coverage.sh` removes old `*.cov` files, runs `Pkg.test("Mera"; coverage=true)`,
 and gathers the results into `coverage.lcov` with `scripts/process_coverage.jl`, which leaves out

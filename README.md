@@ -23,7 +23,8 @@
 
 <sub>What the badges mean: [the two coverage numbers](#the-two-coverage-numbers),
 [what Aqua checks](#package-hygiene-the-aqua-badge), and
-[the badge for your own project](#get-involved).</sub>
+[the badge for your own project](#get-involved). How the suite is built and run:
+[Testing Framework](https://manuelbehrendt.github.io/Mera.jl/stable/advanced_features/testing_guide/).</sub>
 
 **MERA** is an analysis framework for astrophysical simulations, written in Julia. It covers the
 whole path from raw simulation output to a result you can publish: selecting regions, computing
@@ -84,8 +85,9 @@ Every quantity comes in the unit you name. The same calls work on particles and 
 > checks worth running first. Testing a reader against a real simulation is the most useful thing a
 > collaborator can do, and it needs no prior knowledge of Mera.
 
-*Coverage is measured by the maintainer on a local run (the RAMSES test datasets are too large for
-GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see **Testing** below.*
+*Coverage is measured by the maintainer on a local run (the research simulations are too large for
+GitHub Actions) and uploaded to Codecov; see [Testing](#testing) below and the
+[Testing Framework](https://manuelbehrendt.github.io/Mera.jl/stable/advanced_features/testing_guide/) guide.*
 
 ## Why MERA?
 
@@ -451,6 +453,10 @@ RAMSES variant to support, or a gap to report? Please
 
 ## Testing
 
+> **The full guide: [Testing Framework](https://manuelbehrendt.github.io/Mera.jl/stable/advanced_features/testing_guide/)**: the four ways to run the suite, the public test
+> simulations and how to download them, what each block of tests proves, the CI workflows, and how
+> coverage is measured.
+
 MERA ships a tiered suite: data-free **smoke/oracle** tests that run on the full CI Julia matrix
 (1.10 / 1.11 / 1.12 / 1.13), and **data-backed** integration tests run locally against real RAMSES output.
 
@@ -463,7 +469,11 @@ means in each, and which simulation backs which test.
 # smoke/oracle tests only (what CI runs)
 MERA_SMOKE_ONLY=1 julia --project -e 'using Pkg; Pkg.test("Mera")'
 
-# full suite (requires the RAMSES test data)
+# with the public test simulations (downloaded once, 307 MB): every test they can back
+MERA_TEST_DATA="$(testdata/fetch_fixtures.sh --quiet)" MERA_SMOKE_ONLY=1 \
+    julia --project -e 'using Pkg; Pkg.test("Mera")'
+
+# full suite (requires the maintainer's research simulations as well)
 MERA_TEST_DATA=/path/to/Mera-Tests julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
@@ -489,7 +499,7 @@ The badges above report two different measurements, not one number twice.
 
 Measured on 2026-10-20: the full suite covers **88.7%**, meaning 17 161 of 19 355 lines across 109
 source files, while the CI tests alone cover **33%**. With the tutorial notebooks run on top, the
-total is **89.8%**. The data-free tier that CI runs is about 2 150 tests in a few minutes; with
+total is **89.8%**. The data-free tier that CI runs is about 2 170 tests in four to seven minutes; with
 the simulation data present the same tier takes roughly 11 minutes, because a few of its files
 opportunistically read every dataset they can find.
 
