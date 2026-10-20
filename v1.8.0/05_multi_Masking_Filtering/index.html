@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Mask/Filter/Meta · Mera.jl</title><meta name="title" content="Mask/Filter/Meta · Mera.jl"/><meta property="og:title" content="Mask/Filter/Meta · Mera.jl"/><meta property="twitter:title" content="Mask/Filter/Meta · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/05_multi_Masking_Filtering/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/05_multi_Masking_Filtering/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/05_multi_Masking_Filtering/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../assets/custom.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.svg" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../where_to_start/">Where to Start</a></li><li><a class="tocitem" href="../first_look/">First Look</a></li><li><a class="tocitem" href="../report/">Composable Reports</a></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><a class="tocitem" href="../switching_to_mera/">Coming from Other Tools</a></li><li><a class="tocitem" href="../julia_for_simulation_analysis/">Julia for Simulation Analysis</a></li><li><a class="tocitem" href="../reproducibility/">Reproducibility</a></li><li><a class="tocitem" href="../periodic_boxes/">Periodic Boxes</a></li><li><a class="tocitem" href="../troubleshooting/">Troubleshooting</a></li><li><a class="tocitem" href="../other_codes/">Other Simulation Codes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-6-1" type="checkbox"/><label class="tocitem" for="menuitem-6-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_gravity_First_Inspection/">Gravity</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../01_sinks_First_Inspection/">Sinks</a></li><li><a class="tocitem" href="../01_rt_First_Inspection/">RT</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_gravity_Load_Selections/">Gravity</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../02_sinks_Load_Selections/">Sinks</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-3" type="checkbox"/><label class="tocitem" for="menuitem-6-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../subregions_cheatsheet/">Cheatsheet</a></li><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_gravity_Get_Subregions/">Gravity</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../03_sinks_Get_Subregions/">Sinks</a></li></ul></li><li><a class="tocitem" href="../covering_grid/">Uniform Grid / Resampling</a></li><li><a class="tocitem" href="../09_multi_Cosmology/">Cosmological Runs</a></li><li><input class="collapse-toggle" id="menuitem-6-6" type="checkbox"/><label class="tocitem" for="menuitem-6-6"><span class="docs-label">Simulation Physics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../magnetic_fields/">Magnetic Fields (MHD)</a></li><li><a class="tocitem" href="../10_multi_RadiativeTransfer/">Radiative Transfer</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox" checked/><label class="tocitem" for="menuitem-7"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-7-1" type="checkbox"/><label class="tocitem" for="menuitem-7-1"><span class="docs-label">Quantities &amp; Fields</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../04_multi_Basic_Calculations/">Basic Calculations</a></li><li><a class="tocitem" href="../computation_reference/">How Quantities Are Computed</a></li><li><a class="tocitem" href="../units_and_constants/">Units &amp; Constants</a></li><li><a class="tocitem" href="../derived_fields/">Derived Fields &amp; add_field</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-2" type="checkbox" checked/><label class="tocitem" for="menuitem-7-2"><span class="docs-label">Selection, Statistics &amp; Metadata</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Mask/Filter/Meta</a><ul class="internal"><li><a class="tocitem" href="#1.-Selection-by-State"><span>1. Selection by State</span></a></li><li><a class="tocitem" href="#2.-A-Condition-Is-a-Quantity,-a-Threshold-and-a-Unit"><span>2. A Condition Is a Quantity, a Threshold and a Unit</span></a></li><li><a class="tocitem" href="#3.-Combining-Conditions"><span>3. Combining Conditions</span></a></li><li><a class="tocitem" href="#4.-Two-Shapes:-an-Object-or-a-Mask"><span>4. Two Shapes: an Object or a Mask</span></a></li><li><a class="tocitem" href="#5.-Masks-Inside-Mera&#39;s-Own-Functions"><span>5. Masks Inside Mera&#39;s Own Functions</span></a></li><li><a class="tocitem" href="#6.-Seeing-What-a-Filter-Keeps"><span>6. Seeing What a Filter Keeps</span></a></li><li><a class="tocitem" href="#7.-Place-Value"><span>7. Place × Value</span></a></li><li><a class="tocitem" href="#8.-Adding-a-Column-of-Your-Own"><span>8. Adding a Column of Your Own</span></a></li><li><a class="tocitem" href="#9.-Reference:-the-Raw-Table-Path"><span>9. Reference: the Raw Table Path</span></a></li><li><a class="tocitem" href="#10.-Practical-Guidance"><span>10. Practical Guidance</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../statistics/">Statistics (PDFs)</a></li><li><a class="tocitem" href="../15_multi_Profiles_Phase/">Profiles &amp; Phase Diagrams</a></li><li><a class="tocitem" href="../provenance/">Provenance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-3" type="checkbox"/><label class="tocitem" for="menuitem-7-3"><span class="docs-label">Structure Finding</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../clumpfind/">Clump Finding</a></li><li><a class="tocitem" href="../clumpfind_synthetic/">Clump Finding: Synthetic Example</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-4" type="checkbox"/><label class="tocitem" for="menuitem-7-4"><span class="docs-label">Star Formation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../sfr/">Star-Formation Rate</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-5" type="checkbox"/><label class="tocitem" for="menuitem-7-5"><span class="docs-label">Time Series &amp; Movies</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../timeseries/">Time Series (multi-snapshot)</a></li><li><a class="tocitem" href="../examples/LoadFromExistingOutputs/">Load from Existing Outputs</a></li><li><a class="tocitem" href="../movie/">Movies (getmovie)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Projection &amp; Maps</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../projection_which_tool/">Which tool?</a></li><li><a class="tocitem" href="../galaxyframe/">Auto-Frame (center &amp; orient)</a></li><li><input class="collapse-toggle" id="menuitem-8-3" type="checkbox"/><label class="tocitem" for="menuitem-8-3"><span class="docs-label">Axis-aligned (x/y/z)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-8-4" type="checkbox"/><label class="tocitem" for="menuitem-8-4"><span class="docs-label">Off-axis</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../offaxis_cheatsheet/">Cheatsheet</a></li><li><a class="tocitem" href="../06_offaxis_Projection/">Tutorial</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-8-5" type="checkbox"/><label class="tocitem" for="menuitem-8-5"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../17_multi_Volume_Rendering/">In Mera</a></li><li><a class="tocitem" href="../paraview/paraview_intro/">ParaView: Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">ParaView: Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">ParaView: Particles</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-9" type="checkbox"/><label class="tocitem" for="menuitem-9"><span class="docs-label">Data</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-9-1" type="checkbox"/><label class="tocitem" for="menuitem-9-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><a class="tocitem" href="../07_2_multi_RAMSES_Restart/">RAMSES restart, any CPUs</a></li><li><a class="tocitem" href="../examples/ExportImportData/">Export/Import (ASCII, binary)</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10" type="checkbox"/><label class="tocitem" for="menuitem-10"><span class="docs-label">Working Efficiently</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../bundled_arguments/">Bundling Arguments (myargs)</a></li><li><a class="tocitem" href="../pipelines/">Pipelines</a></li><li><a class="tocitem" href="../verbose_progress_switches/">Verbose &amp; Progress Switches</a></li><li><input class="collapse-toggle" id="menuitem-10-4" type="checkbox"/><label class="tocitem" for="menuitem-10-4"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../notifications/">Overview</a></li><li><a class="tocitem" href="../notifications/setup_and_usage/">Setup &amp; Usage</a></li><li><a class="tocitem" href="../notifications/examples/">Examples</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-11" type="checkbox"/><label class="tocitem" for="menuitem-11"><span class="docs-label">Performance &amp; Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">Multi-Threading</a></li><li><a class="tocitem" href="../benchmarks/performance/">Measured Performance</a></li><li><a class="tocitem" href="../benchmarks/run_your_own/">Run Your Own Benchmarks</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-12" type="checkbox"/><label class="tocitem" for="menuitem-12"><span class="docs-label">Julia &amp; Ecosystem</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../recommended_packages/">Recommended Packages</a></li><li><a class="tocitem" href="../quickreference/03_packages/">Finding &amp; Installing Packages</a></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia Cheat Sheet (all-in-one)</a></li><li><a class="tocitem" href="../quickreference/06_resources/">Resources &amp; Community</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-13" type="checkbox"/><label class="tocitem" for="menuitem-13"><span class="docs-label">Project &amp; Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../gallery/">Gallery &amp; Workflows</a></li><li><a class="tocitem" href="../assistant/">Using an AI Assistant</a></li><li><a class="tocitem" href="../adding_a_reader/">Adding a Reader</a></li><li><a class="tocitem" href="../advanced_features/testing_guide/">Testing Framework</a></li><li><a class="tocitem" href="../logo/">Logo</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-14" type="checkbox"/><label class="tocitem" for="menuitem-14"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../api/data_inspection/">Data Inspection</a></li><li><a class="tocitem" href="../api/data_loading/">Data Loading</a></li><li><a class="tocitem" href="../api/subregions/">Subregions</a></li><li><a class="tocitem" href="../api/calculations/">Calculations</a></li><li><a class="tocitem" href="../api/masking_filtering/">Masking &amp; Filtering</a></li><li><a class="tocitem" href="../api/structure_finding/">Structure Finding</a></li><li><a class="tocitem" href="../profiles_phase/">Profiles &amp; Phase</a></li><li><a class="tocitem" href="../api/projections/">Projections</a></li><li><a class="tocitem" href="../api/offaxis/">Off-axis Projection</a></li><li><a class="tocitem" href="../api/mera_files/">Mera-Files</a></li><li><a class="tocitem" href="../api/ramses_writer/">Writing RAMSES</a></li><li><a class="tocitem" href="../api/volume_rendering/">Volume Rendering</a></li><li><a class="tocitem" href="../api/multithreading/">Multi-Threading</a></li><li><a class="tocitem" href="../api/cosmology/">Cosmology</a></li><li><a class="tocitem" href="../api/movies/">Movies</a></li><li><a class="tocitem" href="../api/configuration/">Configuration</a></li><li><a class="tocitem" href="../api/notifications/">Notifications</a></li><li><a class="tocitem" href="../api/">Complete API</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Analysis &amp; Calculations</a></li><li><a class="is-disabled">Selection, Statistics &amp; Metadata</a></li><li class="is-active"><a href>Mask/Filter/Meta</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Mask/Filter/Meta</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><!-- GENERATED FILE. Do not edit this markdown.
+     Source notebook: 05_multi_Masking_Filtering.ipynb
+     Regenerate with: MERA_DIR=<repo checkout> ./render_docs.sh
+     Any edit here is lost the next time the docs are rendered. --><h1 id="5.-Masking-and-Filtering:-Selection-by-Value"><a class="docs-heading-anchor" href="#5.-Masking-and-Filtering:-Selection-by-Value">5. Masking &amp; Filtering: Selection by Value</a><a id="5.-Masking-and-Filtering:-Selection-by-Value-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Masking-and-Filtering:-Selection-by-Value" title="Permalink"></a></h1><div class="admonition is-success" id="Run-it-yourself-3d4172ec596dfb12"><header class="admonition-header">Run it yourself<a class="admonition-anchor" href="#Run-it-yourself-3d4172ec596dfb12" title="Permalink"></a></header><div class="admonition-body"><p>This page is also an executable <strong>Jupyter notebook</strong>: <a href="https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/05_multi_Masking_Filtering.ipynb">open / download <code>05_multi_Masking_Filtering.ipynb</code></a>. The notebooks run end-to-end and double as part of Mera&#39;s test suite.</p></div></div><p>The <a href="../03_hydro_Get_Subregions/">sub-region pages</a> select by <strong>place</strong>, a sphere, a cylinder, a slab. This page selects by <strong>state</strong>: temperature, density, age, speed, or any quantity Mera can derive. The two are independent, they compose in either order, and together they cover most of what &quot;give me <em>this</em> gas&quot; means.</p><p>Two verbs do the work, and the only difference is what they hand back:</p><table><tr><th style="text-align: left"></th><th style="text-align: left">returns</th><th style="text-align: left">use it when</th></tr><tr><td style="text-align: left"><code>filterdata(obj, condition)</code></td><td style="text-align: left">a <strong>new object</strong> of the same type</td><td style="text-align: left">you want to carry on working, project it, cut it, weigh it</td></tr><tr><td style="text-align: left"><code>getmask(obj, condition)</code></td><td style="text-align: left">a <strong><code>Vector{Bool}</code></strong> over the rows</td><td style="text-align: left">you want to pass <code>mask=</code> to a Mera function and keep the original object</td></tr></table><p>Everything else on this page is about writing the <em>condition</em>.</p><p><strong>Reading convention.</strong> Longer code cells are cut in two by a banner line:</p><pre><code class="nohighlight hljs"># ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──</code></pre><p>Everything above the banner is the Mera part; everything below is Makie decoration.</p><p><strong>On this page</strong></p><ol><li>selection by state</li><li>a condition is a quantity, a threshold and a unit</li><li>combining conditions</li><li>two shapes: an object or a mask</li><li>masks inside Mera&#39;s own functions</li><li>seeing what a filter keeps</li><li>place × value</li><li>adding a column of your own</li><li>reference: the raw table path</li><li>practical guidance</li></ol><h2 id="1.-Selection-by-State"><a class="docs-heading-anchor" href="#1.-Selection-by-State">1. Selection by State</a><a id="1.-Selection-by-State-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Selection-by-State" title="Permalink"></a></h2><p>This page runs on a snapshot of the AVALON disc galaxy, one of the maintainer&#39;s research simulations. It is not part of the public example set, so point the path below at a simulation of your own, or set <code>MERA_AVALON</code>; every call on the page works the same on other data.</p><p>The working set is a <strong>pre-cut window</strong>, stored as a Mera file so it reloads in one call: output 390, every cell inside ±12 × ±12 × ±6 kpc about the box centre, 37,055,386 of them, with the columns cut to the five hydro variables this page uses (<code>:rho</code>, <code>:vx</code>, <code>:vy</code>, <code>:vz</code>, <code>:p</code>). The box is 48 kpc across, the levels run from 6 to 12, and the snapshot sits at t = 580 Myr.</p><p>Gas and particles are both loaded, because filtering is not a hydro-only idea: particles filter on age, and on what kind of particle they are (§5).</p><pre><code class="language-julia hljs"># The AVALON run used here is the maintainer&#39;s own. Point AVALON at a snapshot of
+# your own, or set the MERA_AVALON environment variable.
+AVALON = get(ENV, &quot;MERA_AVALON&quot;, &quot;/Volumes/FASTStorage/Simulations/AVALONpaper/AV05CD/mera_masking&quot;)
+
+using Mera
+
+# A pre-cut window stored as a Mera file: ±12 x ±12 x ±6 kpc about the box centre,
+# five hydro variables, and every particle. One call, nothing to select at load time.
+gas       = loaddata(390, AVALON, :hydro;     verbose=false)
+particles = loaddata(390, AVALON, :particles; verbose=false)
+info      = gas.info
+
+println(&quot;gas cells      : &quot;, length(gas.data))
+println(&quot;star particles : &quot;, length(particles.data))
+println(&quot;box            : &quot;, round(gas.boxlen * info.scale.kpc, sigdigits=4),
+        &quot; kpc, levels &quot;, gas.lmin, &quot; to &quot;, gas.lmax)</code></pre><pre><code class="nohighlight hljs">*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0 | Julia 1.12.7 | 8 threads
+gas cells      : 37055386
+star particles : 627896
+box            : 48.0 kpc, levels 6 to 12</code></pre><pre><code class="language-julia hljs"># the two verbs, on the same condition
+hot  = filterdata(gas, Above(:T, 1e6, unit=:K), verbose=false)   # -&gt; a HydroDataType
+mask = getmask(gas,    Above(:T, 1e6, unit=:K))                   # -&gt; a Vector{Bool}
+
+println(&quot;filterdata → &quot;, typeof(hot).name.name, &quot;, &quot;, length(hot.data), &quot; cells&quot;)
+println(&quot;getmask    → &quot;, typeof(mask), &quot;, &quot;, count(mask), &quot; true of &quot;, length(mask))
+println()
+println(&quot;mass of hot gas, via the object : &quot;, round(msum(hot, :Msol), sigdigits=6), &quot; Msol&quot;)
+println(&quot;            ... via the mask    : &quot;, round(msum(gas, :Msol, mask=mask), sigdigits=6), &quot; Msol&quot;)
+println(&quot;identical                       : &quot;, msum(hot, :Msol) == msum(gas, :Msol, mask=mask))
+
+# `hot` stays alive to the end of §6, which draws it; `mask` is a BitVector, a few MB</code></pre><pre><code class="nohighlight hljs">filterdata → HydroDataType, 8423491 cells
+getmask    → BitVector, 8423491 true of 37055386
+mass of hot gas, via the object : 2.39909e7 Msol
+            ... via the mask    : 2.39909e7 Msol
+identical                       : true</code></pre><p>Same selection, same answer, two shapes. Which one you want depends on what comes next, §4 makes that concrete.</p><h2 id="2.-A-Condition-Is-a-Quantity,-a-Threshold-and-a-Unit"><a class="docs-heading-anchor" href="#2.-A-Condition-Is-a-Quantity,-a-Threshold-and-a-Unit">2. A Condition Is a Quantity, a Threshold and a Unit</a><a id="2.-A-Condition-Is-a-Quantity,-a-Threshold-and-a-Unit-1"></a><a class="docs-heading-anchor-permalink" href="#2.-A-Condition-Is-a-Quantity,-a-Threshold-and-a-Unit" title="Permalink"></a></h2><p><code>Above</code>, <code>Below</code>, <code>InRange</code> and <code>Equals</code> take a <strong>quantity name</strong>, a value, and the unit that value is in. The quantity may be a stored column (<code>:rho</code>) or anything <code>getvar</code> can <em>derive</em>, temperature, sound speed, Mach number, a cylindrical radius. That is the whole point: you write the physics, not the code that reconstructs it.</p><p><strong>Give the condition its frame.</strong> A condition names a quantity, and that quantity is computed by <code>getvar</code>, with <code>getvar</code>&#39;s defaults. A radius is then measured from the box corner, and a velocity-derived quantity such as <code>:mach</code> is in the box frame. Neither is what you want for a galaxy sitting in the middle of its box and turning, so pass <code>center</code> (with <code>center_unit</code>) and <code>vcenter</code> to <code>filterdata</code> and <code>getmask</code> exactly as you would pass them to <code>getvar</code>. They are handed straight through.</p><pre><code class="language-julia hljs"># Two of these conditions name a quantity that depends on where the galaxy is, or on how
+# fast it moves, so they are given a frame. The others do not have one.
+conds = [
+    (&quot;Above(:rho, 1, :nH)&quot;,            Above(:rho, 1, unit=:nH),                NamedTuple()),
+    (&quot;Below(:T, 1e3, :K)&quot;,             Below(:T, 1e3, unit=:K),                 NamedTuple()),
+    (&quot;Above(:cs, 20, :km_s)&quot;,          Above(:cs, 20, unit=:km_s),              NamedTuple()),
+    (&quot;Above(:mach, 1)&quot;,                Above(:mach, 1),                         (vcenter=:auto,)),
+    (&quot;InRange(:r_cylinder,0,10,:kpc)&quot;, InRange(:r_cylinder, 0, 10, unit=:kpc),  (center=[:bc],)),
+    (&quot;Equals(:level, gas.lmax)&quot;,       Equals(:level, gas.lmax),                NamedTuple()),
+]
+m_all = msum(gas, :Msol)
+println(rpad(&quot;condition&quot;, 32), rpad(&quot;frame&quot;, 16), rpad(&quot;cells&quot;, 12), &quot;mass share&quot;)
+println(&quot;-&quot;^72)
+for (name, c, kw) in conds
+    s     = filterdata(gas, c; verbose=false, kw...)
+    frame = isempty(kw) ? &quot;-&quot; : join([string(k, &quot;=&quot;, repr(v)) for (k, v) in pairs(kw)], &quot; &quot;)
+    println(rpad(name, 32), rpad(frame, 16), rpad(length(s.data), 12),
+            round(100 * msum(s, :Msol) / m_all, digits=1), &quot; %&quot;)
+end
+GC.gc()</code></pre><pre><code class="nohighlight hljs">condition                       frame           cells       mass share
+------------------------------------------------------------------------
+Above(:rho, 1, :nH)             -               8369634     62.7 %
+Below(:T, 1e3, :K)              -               3270752     47.4 %
+Above(:cs, 20, :km_s)           -               12035707    1.0 %
+Above(:mach, 1)                 vcenter=:auto   30533846    99.8 %
+InRange(:r_cylinder,0,10,:kpc)  center=[:bc]    31772889    81.2 %
+Equals(:level, gas.lmax)        -               14318440    59.0 %</code></pre><p>Note <code>:r_cylinder</code> in that list. A <em>geometric</em> quantity used as a value condition selects a cylinder, but by testing each cell&#39;s centre, with no boundary treatment, and only about the <code>center</code> you hand it. When the geometry is what you care about, use a region instead (§7); the exactness is worth it.</p><p>Two further selectors are worth knowing:</p><ul><li><code>Satisfies(:quantity, f)</code>, an arbitrary predicate, when a threshold is not enough.</li><li><code>IsFinite(:quantity)</code>, drops <code>NaN</code>/<code>Inf</code> before a statistic. Data hygiene, and cheap insurance.</li></ul><h2 id="3.-Combining-Conditions"><a class="docs-heading-anchor" href="#3.-Combining-Conditions">3. Combining Conditions</a><a id="3.-Combining-Conditions-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Combining-Conditions" title="Permalink"></a></h2><p><code>&amp;</code>, <code>|</code> and <code>!</code> compose conditions into one condition. Passing several conditions to <code>filterdata</code> ANDs them, which reads better for the common case.</p><pre><code class="language-julia hljs">cold_dense = filterdata(gas, Above(:rho, 1, unit=:nH) &amp; Below(:T, 1e5, unit=:K), verbose=false)
+either     = filterdata(gas, Above(:T, 1e6, unit=:K) | Above(:rho, 10, unit=:nH), verbose=false)
+not_cold   = filterdata(gas, !Below(:T, 1e3, unit=:K), verbose=false)
+# several arguments = AND, in a form that reads like a sentence; the frame serves both
+disc_cold  = filterdata(gas, InRange(:r_cylinder, 0, 15, unit=:kpc),
+                             Below(:T, 1e3, unit=:K), center=[:bc], verbose=false)
+
+for (n, o) in ((&quot;rho &gt; 1 nH  AND  T &lt; 1e5 K&quot;, cold_dense),
+               (&quot;T &gt; 1e6 K   OR   rho &gt; 10 nH&quot;, either),
+               (&quot;NOT (T &lt; 1e3 K)&quot;, not_cold),
+               (&quot;r &lt; 15 kpc  AND  T &lt; 1e3 K&quot;, disc_cold))
+    println(rpad(n, 30), rpad(length(o.data), 10), round(msum(o, :Msol), sigdigits=5), &quot; Msol&quot;)
+end
+
+# a condition and its complement partition the object exactly
+cold = filterdata(gas, Below(:T, 1e3, unit=:K), verbose=false)
+println()
+println(&quot;cold + not-cold cells : &quot;, length(cold.data) + length(not_cold.data),
+        &quot;   of &quot;, length(gas.data))
+println(&quot;cold + not-cold mass  : &quot;, round(msum(cold, :Msol) + msum(not_cold, :Msol), sigdigits=10))
+println(&quot;whole box mass        : &quot;, round(m_all, sigdigits=10))
+
+# `cold` stays for §6; the other selections are finished with
+cold_dense = nothing; either = nothing; not_cold = nothing; disc_cold = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">rho &gt; 1 nH  AND  T &lt; 1e5 K    8322439   4.1935e9 Msol
+T &gt; 1e6 K   OR   rho &gt; 10 nH  10253905  2.7792e9 Msol
+NOT (T &lt; 1e3 K)               33784634  3.5279e9 Msol
+r &lt; 15 kpc  AND  T &lt; 1e3 K    3270752   3.1769e9 Msol
+cold + not-cold cells : 37055386   of 37055386
+cold + not-cold mass  : 6.704844898e9
+whole box mass        : 6.704844898e9</code></pre><p>The partition is exact because <code>!</code> is a strict negation of the same test, no cell is counted twice and none is dropped. That check costs one line and catches a mis-specified threshold immediately.</p><p><strong>Adaptive and discrete selectors.</strong> Sometimes the threshold should come from the data rather than from you:</p><pre><code class="language-julia hljs">dense10 = filterdata(gas, AbovePercentile(:rho, 90), verbose=false)   # densest 10 % of cells
+faint   = filterdata(gas, BelowPercentile(:rho, 10), verbose=false)   # the most diffuse 10 %
+core    = filterdata(gas, Equals(:level, gas.lmax) &amp;
+                          AbovePercentile(:rho, 99), verbose=false)   # finest AND densest
+
+println(&quot;densest 10 % of cells : &quot;, rpad(length(dense10.data), 9),
+        round(100*msum(dense10, :Msol)/m_all, digits=1), &quot; % of the mass&quot;)
+println(&quot;faintest 10 %         : &quot;, rpad(length(faint.data), 9),
+        round(100*msum(faint, :Msol)/m_all, digits=3), &quot; %&quot;)
+println(&quot;finest level &amp; top 1 %: &quot;, rpad(length(core.data), 9),
+        round(100*msum(core, :Msol)/m_all, digits=1), &quot; %&quot;)
+
+dense10 = nothing; faint = nothing; core = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">densest 10 % of cells : 3705539  50.5 % of the mass
+faintest 10 %         : 3705539  0.073 %
+finest level &amp; top 1 %: 370554   20.1 %</code></pre><p><code>AbovePercentile(:rho, 90)</code> is <em>the densest tenth of the cells</em>, whatever the density scale of this simulation happens to be, the right tool when you have not looked at the numbers yet, or when the same script must run on several outputs.</p><h2 id="4.-Two-Shapes:-an-Object-or-a-Mask"><a class="docs-heading-anchor" href="#4.-Two-Shapes:-an-Object-or-a-Mask">4. Two Shapes: an Object or a Mask</a><a id="4.-Two-Shapes:-an-Object-or-a-Mask-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Two-Shapes:-an-Object-or-a-Mask" title="Permalink"></a></h2><p>Both verbs select the same rows. The choice is about what you do next.</p><p><strong><code>filterdata</code> returns an object</strong>, so it chains: project it, cut a region out of it, filter it again, weigh it. Use it when the selection <em>is</em> the thing you are studying.</p><p><strong><code>getmask</code> returns a <code>Vector{Bool}</code></strong> aligned with the original rows. Use it when you want a statistic <em>of the whole object</em> restricted to a subset, every Mera function with a <code>mask=</code> keyword takes it, or when you need several different subsets of one object without copying the data each time.</p><pre><code class="language-julia hljs">cond = Below(:rho, 1, unit=:nH)      # the diffuse gas: under one hydrogen atom per cm³
+
+# the object route: chains straight into other Mera verbs
+sel = filterdata(gas, cond, verbose=false)
+p   = projection(sel, :sd, :Msol_pc2; pxsize=[0.5, :kpc], center=[:bc],
+                 verbose=false, show_progress=false)
+println(&quot;object route : &quot;, length(sel.data), &quot; cells, map max Σ = &quot;,
+        round(maximum(p.maps[:sd]), sigdigits=4), &quot; Msol/pc²&quot;)
+
+# the mask route: the object stays whole, the statistic is restricted
+m = getmask(gas, cond)
+println(&quot;mask route   : &quot;, count(m), &quot; cells, mass = &quot;,
+        round(msum(gas, :Msol, mask=m), sigdigits=6), &quot; Msol&quot;)
+println(&quot;same mass    : &quot;, msum(sel, :Msol) == msum(gas, :Msol, mask=m))
+
+# masks are plain Bool vectors: combine them with the usual operators
+m2 = getmask(gas, Above(:T, 1e4, unit=:K))
+println()
+println(&quot;cells satisfying both : &quot;, count(m .&amp; m2))
+println(&quot;... same as one combined condition : &quot;,
+        count(m .&amp; m2) == count(getmask(gas, cond &amp; Above(:T, 1e4, unit=:K))))
+
+# `m` stays, §5 reuses it; the filtered copy and its map are done with
+sel = nothing; p = nothing; m2 = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">object route : 28685752 cells, map max Σ = 10.4 Msol/pc²
+mask route   : 28685752 cells, mass = 2.49945e9 Msol
+same mass    : true
+cells satisfying both : 16154492
+... same as one combined condition : true</code></pre><h2 id="5.-Masks-Inside-Mera&#39;s-Own-Functions"><a class="docs-heading-anchor" href="#5.-Masks-Inside-Mera&#39;s-Own-Functions">5. Masks Inside Mera&#39;s Own Functions</a><a id="5.-Masks-Inside-Mera&#39;s-Own-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Masks-Inside-Mera&#39;s-Own-Functions" title="Permalink"></a></h2><p>Every aggregate that takes a <code>mask=</code> keyword applies it to the rows before reducing. One condition, four statistics, gas and particles side by side:</p><pre><code class="language-julia hljs">mg = m                                                   # the §4 condition, already masked
+mp = getmask(particles, Below(:age, 100, unit=:Myr))     # young stars
+
+println(rpad(&quot;statistic&quot;, 34), rpad(&quot;all&quot;, 20), &quot;masked&quot;)
+println(&quot;-&quot;^70)
+println(rpad(&quot;gas  msum [Msol]&quot;, 34),
+        rpad(round(msum(gas, :Msol), sigdigits=6), 20),
+        round(msum(gas, :Msol, mask=mg), sigdigits=6))
+println(rpad(&quot;gas  centre of mass x [kpc]&quot;, 34),
+        rpad(round(center_of_mass(gas, :kpc)[1], digits=4), 20),
+        round(center_of_mass(gas, :kpc, mask=mg)[1], digits=4))
+println(rpad(&quot;gas  bulk velocity x [km/s]&quot;, 34),
+        rpad(round(bulk_velocity(gas, :km_s)[1], digits=3), 20),
+        round(bulk_velocity(gas, :km_s, mask=mg)[1], digits=3))
+println(rpad(&quot;part msum [Msol]&quot;, 34),
+        rpad(round(msum(particles, :Msol), sigdigits=6), 20),
+        round(msum(particles, :Msol, mask=mp), sigdigits=6))
+
+# wstat takes the mask the same way
+s_all = wstat(getvar(gas, :vx, :km_s), weight=getvar(gas, :mass))
+s_msk = wstat(getvar(gas, :vx, :km_s), weight=getvar(gas, :mass), mask=mg)
+println()
+println(&quot;gas ⟨vx⟩ mass-weighted [km/s] : all &quot;, round(s_all.mean, digits=3),
+        &quot;   masked &quot;, round(s_msk.mean, digits=3))
+
+mp = nothing; s_all = nothing; s_msk = nothing; GC.gc()   # the masks are BitVectors, a few MB</code></pre><pre><code class="nohighlight hljs">statistic                         all                 masked
+----------------------------------------------------------------------
+gas  msum [Msol]                  6.70484e9           2.49945e9
+gas  centre of mass x [kpc]       23.9998             24.0233
+gas  bulk velocity x [km/s]       -0.157              2.52
+part msum [Msol]                  5.03498e8           1.00609e8
+gas ⟨vx⟩ mass-weighted [km/s] : all -0.157   masked 2.52</code></pre><p>The mask must be as long as the object&#39;s row count, which is why it belongs to the object it came from, <code>getmask(gas, …)</code> cannot be passed to a particle function. Mixing them is the one mistake worth watching for.</p><h3 id="Selecting-by-what-a-particle-*is*"><a class="docs-heading-anchor" href="#Selecting-by-what-a-particle-*is*">Selecting by what a particle <em>is</em></a><a id="Selecting-by-what-a-particle-*is*-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-by-what-a-particle-*is*" title="Permalink"></a></h3><p>Everything above selects on a <strong>value</strong>, a density, an age, a speed. Particles also carry a <strong>type</strong>: RAMSES tags each one with a family code saying whether it is dark matter, a star, a sink-cloud marker, debris, or a tracer. <code>getparticlemask</code> turns that into the same kind of <code>Vector{Bool}</code> the rest of this page uses, so type and value conditions combine freely:</p><pre><code class="language-julia hljs">young_stars = getparticlemask(parts, :stars) .&amp; getmask(parts, Below(:age, 100, unit=:Myr))</code></pre><table><tr><th style="text-align: right">family</th><th style="text-align: right">code</th></tr><tr><td style="text-align: right">dark matter</td><td style="text-align: right">1</td></tr><tr><td style="text-align: right">star</td><td style="text-align: right">2</td></tr><tr><td style="text-align: right">cloud / sink</td><td style="text-align: right">3</td></tr><tr><td style="text-align: right">debris</td><td style="text-align: right">4</td></tr><tr><td style="text-align: right">other</td><td style="text-align: right">5</td></tr><tr><td style="text-align: right">tracer (test particle)</td><td style="text-align: right">≤ 0</td></tr></table><p>This run was written in the <strong>modern</strong> particle format, so it carries a <code>:family</code> column and the type is then just another quantity. A named type, a value condition on <code>:family</code>, and a filtered object all pick the same rows:</p><pre><code class="language-julia hljs"># three routes to the same particles, on this page&#39;s own data
+println(&quot;families present             : &quot;, Int.(sort(unique(getvar(particles, :family)))))
+println(&quot;getparticlemask(:stars)      : &quot;, count(getparticlemask(particles, :stars, verbose=false)))
+println(&quot;getmask(:family, ==(2.0))    : &quot;, count(getmask(particles, :family, ==(2.0))))
+println(&quot;filterdata(:family, ==(2.0)) : &quot;,
+        length(filterdata(particles, :family, ==(2.0), verbose=false).data), &quot; rows&quot;)
+println(&quot;dark matter / tracers here   : &quot;,
+        count(getparticlemask(particles, :dm, verbose=false)), &quot; / &quot;,
+        count(getparticlemask(particles, :tracer, verbose=false)))</code></pre><pre><code class="nohighlight hljs">families present             : [2]
+getparticlemask(:stars)      : 627896
+getmask(:family, ==(2.0))    : 627896
+filterdata(:family, ==(2.0)) : 627896 rows
+dark matter / tracers here   : 0 / 0</code></pre><p>Every particle in this galaxy is a star, so <code>:dm</code> and <code>:tracer</code> select nothing. One case is therefore missing: a <strong>tracer</strong>, a test particle advected by the flow without acting back on it. The small public test simulation below carries Monte-Carlo tracers, so that route can be shown too, on data anyone can download.</p><pre><code class="language-julia hljs"># the public test set, for the one particle type this galaxy has not got
+MERA_EXAMPLES = get(ENV, &quot;MERA_EXAMPLES&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests&quot;)
+tracer_run = &quot;$MERA_EXAMPLES/RAMSES-PUBLIC/sedov3d_grav_part&quot;
+if isdir(tracer_run)
+    tp = getparticles(getinfo(3, tracer_run, verbose=false), verbose=false, show_progress=false)
+    println(&quot;families present            : &quot;, Int.(sort(unique(getvar(tp, :family)))))
+    println(&quot;getparticlemask(:tracer)    : &quot;, count(getparticlemask(tp, :tracer, verbose=false)))
+    println(&quot;getmask(:family, ==(0))     : &quot;, count(getmask(tp, :family, ==(0.0))))
+    println(&quot;filterdata(:family, ==(0))  : &quot;,
+            length(filterdata(tp, :family, ==(0.0), verbose=false).data), &quot; rows&quot;)
+    # type and place compose, like everything else on this page
+    core = subregion(tp, sphere(0.15; range_unit=:standard), verbose=false)
+    println(&quot;tracers inside a sphere     : &quot;, count(getparticlemask(core, :tracer, verbose=false)),
+            &quot; of &quot;, length(core.data), &quot; particles in the region&quot;)
+    tp = nothing; core = nothing; GC.gc()
+else
+    println(&quot;fixture not installed: &quot;, tracer_run)
+end</code></pre><pre><code class="nohighlight hljs">families present            : [0]
+getparticlemask(:tracer)    : 124990
+getmask(:family, ==(0))     : 124990
+filterdata(:family, ==(0))  : 124990 rows
+tracers inside a sphere     : 1707 of 1707 particles in the region</code></pre><p>Three routes to the same rows, a named type, a value condition on <code>:family</code>, and a filtered object, and the type survives a <code>subregion</code>, so <em>where</em> and <em>what</em> compose in either order. The same holds through a mera-file round trip: <code>:family</code> and <code>:tag</code> are ordinary columns and are written and read back unchanged.</p><h2 id="6.-Seeing-What-a-Filter-Keeps"><a class="docs-heading-anchor" href="#6.-Seeing-What-a-Filter-Keeps">6. Seeing What a Filter Keeps</a><a id="6.-Seeing-What-a-Filter-Keeps-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Seeing-What-a-Filter-Keeps" title="Permalink"></a></h2><p>A condition is easier to trust when you can see it. Three filters on the same box, same colour scale:</p><pre><code class="language-julia hljs">using CairoMakie
+CairoMakie.activate!()
+
+# ─────────────────────────────────────────────────────────────────────
+# FIGURE INFRASTRUCTURE for the whole page, skim freely on first read.
+# The one Mera-relevant definition is `prj`: the projection defaults every panel reuses.
+# ─────────────────────────────────────────────────────────────────────
+# The colour limits are a starting guess for this run. Check them against the first
+# figure below and widen or narrow the range before comparing panels by eye.
+const SDLIM5 = (-2.0, 3.0)     # log10 Σ [Msol/pc²], one colour scale for every panel below
+
+function sdpanel!(ax, p; kpc=gas.info.scale.kpc)
+    xs = range(p.cextent[1]*kpc, p.cextent[2]*kpc; length=size(p.maps[:sd], 1))
+    ys = range(p.cextent[3]*kpc, p.cextent[4]*kpc; length=size(p.maps[:sd], 2))
+    heatmap!(ax, xs, ys, log10.(max.(p.maps[:sd], 10.0^SDLIM5[1]));
+             colormap=:inferno, colorrange=SDLIM5)
+    ax.aspect = DataAspect(); ax.backgroundcolor = :black; hidedecorations!(ax)
+    return ax
+end
+
+# the working set stops at ±12 kpc in x and y, so the maps stop there too
+prj(d; kw...) = projection(d, :sd, :Msol_pc2; direction=:z, center=[:bc], range_unit=:kpc,
+                           xrange=[-12, 12], yrange=[-12, 12], pxsize=[0.1, :kpc],
+                           verbose=false, show_progress=false, kw...)</code></pre><pre><code class="nohighlight hljs">prj (generic function with 1 method)</code></pre><pre><code class="language-julia hljs"># `cold` and `hot` were selected in §3 and §1; only the percentile cut is new here
+dense1 = filterdata(gas, AbovePercentile(:rho, 99), verbose=false)   # adaptive: densest 1 %
+
+for (n, o) in ((&quot;cold  T&lt;1e3 K &quot;, cold), (&quot;hot   T&gt;1e6 K &quot;, hot), (&quot;densest 1%    &quot;, dense1))
+    println(n, &quot;: &quot;, rpad(length(o.data), 10),
+            rpad(string(round(100*length(o.data)/length(gas.data), digits=1), &quot; % of cells&quot;), 18),
+            round(100*msum(o, :Msol)/m_all, digits=1), &quot; % of the mass&quot;)
+end
+
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
+fig = Figure(size=(1180, 420))
+sdpanel!(Axis(fig[1, 1], title=&quot;cold gas, T &lt; 10³ K, the star-forming phase&quot;), prj(cold))
+sdpanel!(Axis(fig[1, 2], title=&quot;hot gas, T &gt; 10⁶ K, smooth and volume-filling&quot;), prj(hot))
+sdpanel!(Axis(fig[1, 3], title=&quot;densest 1 % of cells (AbovePercentile)&quot;), prj(dense1))
+Colorbar(fig[1, 4]; colormap=:inferno, colorrange=SDLIM5, label=&quot;log₁₀ Σ  [Msol pc⁻²]&quot;)
+
+cold = nothing; hot = nothing; dense1 = nothing; GC.gc()
+fig</code></pre><pre><code class="nohighlight hljs">cold  T&lt;1e3 K : 3270752   8.8 % of cells    47.4 % of the mass
+hot   T&gt;1e6 K : 8423491   22.7 % of cells   0.4 % of the mass
+densest 1%    : 370554    1.0 % of cells    20.1 % of the mass</code></pre><p><img src="../05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_26_3.png" alt/></p><p>Three views of one simulation, on one colour scale, and the shares printed above say what each panel holds. The cold phase is filamentary and carries 47.4 % of the mass in 8.8 % of the cells; the hot phase is smooth and volume-filling, and it is the mirror image, 22.7 % of the cells holding 0.4 % of the mass; and the densest percentile, a <em>relative</em> threshold, isolates the clumps while holding 20.1 % of the mass, without anyone having to know this run&#39;s density scale.</p><p>Read the middle panel with the usual care: it is a column density, so a smooth map means the hot gas is spread along every line of sight, not that it is structureless in 3-D.</p><h2 id="7.-Place-Value"><a class="docs-heading-anchor" href="#7.-Place-Value">7. Place × Value</a><a id="7.-Place-Value-1"></a><a class="docs-heading-anchor-permalink" href="#7.-Place-Value" title="Permalink"></a></h2><p>Geometry and state are independent, so they compose, and the order cannot change the answer. Here the disc is cut as an <strong>exact split region</strong> (boundary cells carry their <code>:fraction</code>) and then partitioned by temperature.</p><pre><code class="language-julia hljs">disc_reg = cylinder(10., 2.; center=[:bc], range_unit=:kpc)   # radius, half-height [kpc]
+disc = subregion(gas, disc_reg, verbose=false)                # split: rim cells carry :fraction
+
+cold_d = filterdata(disc, Below(:T, 1e3, unit=:K), verbose=false)
+rest_d = filterdata(disc, !Below(:T, 1e3, unit=:K), verbose=false)
+
+m_c, m_r, m_d = msum(cold_d, :Msol), msum(rest_d, :Msol), msum(disc, :Msol)
+println(&quot;cold (&lt; 1e3 K) in the disc : &quot;, round(m_c, sigdigits=5), &quot; Msol&quot;)
+println(&quot;rest (≥ 1e3 K) in the disc : &quot;, round(m_r, sigdigits=5), &quot; Msol&quot;)
+println(&quot;cold + rest  vs  disc      : &quot;, round(m_c + m_r, sigdigits=9), &quot;  vs  &quot;,
+        round(m_d, sigdigits=9), &quot; Msol&quot;)
+println()
+# the other order gives the same rows
+other = subregion(filterdata(gas, Below(:T, 1e3, unit=:K), verbose=false), disc_reg, verbose=false)
+println(&quot;filter→region == region→filter cells : &quot;, length(other.data) == length(cold_d.data))
+
+# `cold_d` and `m_c` stay for the next two cells
+disc = nothing; rest_d = nothing; other = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">cold (&lt; 1e3 K) in the disc : 3.0897e9 Msol
+rest (≥ 1e3 K) in the disc : 2.3385e9 Msol
+cold + rest  vs  disc      : 5.42822765e9  vs  5.42822765e9 Msol
+filter→region == region→filter cells : true</code></pre><p>The partition still closes exactly <em>inside a split region</em>, <code>filterdata</code> preserves the <code>:fraction</code> column, so a half-inside boundary cell contributes its half to whichever phase it belongs to. That is the property that lets you mix the two selection styles without quietly losing mass at the rim.</p><p>The two edges in the map below are worth telling apart: the <strong>outer rim</strong> is geometric and smooth, feathered by the fraction weighting; the <strong>internal edges</strong> between cold and warm gas are value edges, and they are cell-sharp, because a cell either passes the temperature test or does not, there is no such thing as half a cell being cold.</p><pre><code class="language-julia hljs">p_cd = prj(cold_d)
+
+# ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
+fig = Figure(size=(640, 520))
+ax = Axis(fig[1, 1], title=&quot;cold gas inside the split disc, two kinds of edge&quot;)
+sdpanel!(ax, p_cd)
+arc!(ax, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1.2, linestyle=:dash)
+Colorbar(fig[1, 2]; colormap=:inferno, colorrange=SDLIM5, label=&quot;log₁₀ Σ  [Msol pc⁻²]&quot;)
+
+p_cd = nothing; cold_d = nothing; GC.gc()
+fig</code></pre><p><img src="../05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_31_1.png" alt/></p><pre><code class="language-julia hljs"># refine the geometric edge below the map&#39;s pixel size (0.1 kpc), so what limits the
+# drawn rim is the pixel grid and not the cells
+disc_px = subregion(gas, disc_reg; refine_to=[0.05, :kpc], verbose=false)
+cold_px = filterdata(disc_px, Below(:T, 1e3, unit=:K), verbose=false)
+
+fr = Mera.select(cold_px.data, :fraction)
+cs = getvar(cold_px, :cellsize, :kpc)
+println(&quot;largest straddling cell on the rim : &quot;,
+        round(maximum(cs[0.0 .&lt; fr .&lt; 1.0]), digits=3), &quot; kpc   (map-ready)&quot;)
+println(&quot;cold mass, refine_to vs plain      : &quot;, round(msum(cold_px, :Msol) / m_c, digits=5))
+
+disc_px = nothing; cold_px = nothing; fr = nothing; cs = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">largest straddling cell on the rim : 0.012 kpc   (map-ready)
+cold mass, refine_to vs plain      : 1.0</code></pre><p><code>refine_to</code> changes how sharply the boundary is <em>drawn</em>, not how much mass is inside it, the ratio above is 1 to five digits. The target here is 0.05 kpc, half the pixel of the maps on this page: the rim cells of this run are already finer than 0.1 kpc, so a coarser target would split nothing and change nothing. See §7 of the <a href="../03_hydro_Get_Subregions/">hydro sub-region page</a> for what it costs.</p><h2 id="8.-Adding-a-Column-of-Your-Own"><a class="docs-heading-anchor" href="#8.-Adding-a-Column-of-Your-Own">8. Adding a Column of Your Own</a><a id="8.-Adding-a-Column-of-Your-Own-1"></a><a class="docs-heading-anchor-permalink" href="#8.-Adding-a-Column-of-Your-Own" title="Permalink"></a></h2><p>Any array as long as the table can be pushed in as a new column and then used like a native one, projected, filtered, masked. <code>transform</code> adds it, <code>select … Not(…)</code> removes it again.</p><pre><code class="language-julia hljs">using Mera.IndexedTables      # the table verbs (transform, select, Not, columns) live here
+
+# one value per cell, in the gas rest frame: :mach is velocity-derived, so it needs a frame
+mach = getvar(gas, :mach; vcenter=:auto)
+gas.data = transform(gas.data, :mach =&gt; mach)   # push it onto the table (IndexedTables)
+println(&quot;columns now: &quot;, propertynames(Mera.columns(gas.data)))
+
+# it behaves like any other column from here on, and a stored column needs no frame
+supersonic = filterdata(gas, Above(:mach, 1), verbose=false)
+println(&quot;supersonic cells : &quot;, length(supersonic.data), &quot;  = &quot;,
+        round(100*length(supersonic.data)/length(gas.data), digits=1), &quot; % of the box&quot;)
+
+gas.data = select(gas.data, Not(:mach))         # and take it away again
+println(&quot;columns after removal: &quot;, propertynames(Mera.columns(gas.data)))
+
+mach = nothing; supersonic = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">columns now: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :mach)
+supersonic cells : 30533846  = 82.4 % of the box
+columns after removal: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p)</code></pre><p>Mera already derives <code>:mach</code> on demand, so this is not the way to <em>get</em> a Mach number, it is the way to attach something Mera cannot know about: a tracer, a label from an external catalogue, the output of your own model.</p><h2 id="9.-Reference:-the-Raw-Table-Path"><a class="docs-heading-anchor" href="#9.-Reference:-the-Raw-Table-Path">9. Reference: the Raw Table Path</a><a id="9.-Reference:-the-Raw-Table-Path-1"></a><a class="docs-heading-anchor-permalink" href="#9.-Reference:-the-Raw-Table-Path" title="Permalink"></a></h2><p>Underneath, a Mera object holds an <code>IndexedTable</code>, and every filter above can be written directly against it. This is the older interface. It is still the right tool when you need a predicate that is not a value condition, one that mixes columns, or calls out to your own function, and it keeps existing scripts working unchanged.</p><p>The trade-off: you work in <strong>code units</strong>, positions must be reconstructed by hand, and the result is a <em>table</em>, not a Mera object.</p><pre><code class="language-julia hljs"># ---- reading columns: three equivalent ways -------------------------------------------
+r1 = select(gas.data, :rho)                # IndexedTables
+r2 = getvar(gas, :rho)                     # Mera (same array, and unit-aware on request)
+vt = columns(gas.data, (:rho, :level))     # a NamedTuple of columns
+println(&quot;select == getvar : &quot;, r1 == r2, &quot;   columns() gives &quot;, propertynames(vt))
+
+# ---- filtering rows: a predicate on the table ------------------------------------------
+density = 3. / gas.scale.Msol_pc3          # threshold in CODE units, no unit= here
+filtered_db = filter(p -&gt; p.rho &gt;= density, gas.data)
+println(&quot;rows kept: &quot;, length(filtered_db), &quot; of &quot;, length(gas.data))
+
+# ---- using a filtered table ------------------------------------------------------------
+#  (a) pass it to getvar via `filtered_db`
+m_a = sum(getvar(gas, :mass, :Msol, filtered_db=filtered_db))
+#  (b) or rebuild a full Mera object from it
+gas_new = construct_datatype(filtered_db, gas)
+m_b = sum(getvar(gas_new, :mass, :Msol))
+#  (c) the value-space equivalent of the whole thing
+m_c2 = msum(filterdata(gas, Above(:rho, 3, unit=:Msol_pc3), verbose=false), :Msol)
+println(&quot;mass via filtered_db / construct_datatype / filterdata : &quot;,
+        round(m_a, sigdigits=8), &quot;  &quot;, round(m_b, sigdigits=8), &quot;  &quot;, round(m_c2, sigdigits=8))
+
+r1 = nothing; r2 = nothing; vt = nothing; gas_new = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">select == getvar : true   columns() gives (:rho, :level)
+rows kept: 62082 of 37055386
+mass via filtered_db / construct_datatype / filterdata : 4.610364e8  4.610364e8  4.610364e8</code></pre><pre><code class="language-julia hljs"># ---- multi-criteria on the raw table: geometry must be rebuilt by hand -----------------
+boxlen = info.boxlen
+cv     = boxlen / 2.                       # box centre, code units
+radius = 3. / gas.scale.kpc
+height = 2. / gas.scale.kpc
+
+# a cell&#39;s CENTRE is (cx - 0.5) * boxlen / 2^level, cx is the 1-based index on the level grid
+filtered_db = filter(p -&gt; p.rho &gt;= density &amp;&amp;
+                     sqrt(((p.cx - 0.5) * boxlen/2^p.level - cv)^2 +
+                          ((p.cy - 0.5) * boxlen/2^p.level - cv)^2) &lt;= radius &amp;&amp;
+                     abs((p.cz - 0.5) * boxlen/2^p.level - cv) &lt;= height, gas.data)
+println(&quot;hand-built cylinder + density : &quot;, length(filtered_db), &quot; rows, &quot;,
+        round(sum(getvar(gas, :mass, :Msol, filtered_db=filtered_db)), sigdigits=6), &quot; Msol&quot;)
+
+# the same thing as a region and a condition, units, exact boundary, and no geometry by hand
+reg = cylinder(3., 2.; center=[:bc], range_unit=:kpc)
+sel = filterdata(subregion(gas, reg, verbose=false), Above(:rho, 3, unit=:Msol_pc3), verbose=false)
+println(&quot;region × condition            : &quot;, length(sel.data), &quot; rows, &quot;,
+        round(msum(sel, :Msol), sigdigits=6), &quot; Msol   (split boundary)&quot;)
+
+sel = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">hand-built cylinder + density : 29798 rows, 2.2217e8 Msol
+region × condition            : 29847 rows, 2.22173e8 Msol   (split boundary)</code></pre><p>The two numbers differ, and the difference is the point of the sub-region pages: the hand-built version keeps whole cells whose centres pass the test, the region version weights the boundary cells by the fraction actually inside. Neither is &quot;wrong&quot;, they answer slightly different questions, but only one of them adds up when you put regions next to each other.</p><p><strong>Macros.</strong> <code>@filter</code> writes a single comparison compactly, and, applied to a Mera object rather than a table, routes through <code>filterdata</code>, so it returns an object and understands derived quantities:</p><pre><code class="language-julia hljs">finest   = @filter gas :level == gas.lmax          # Mera object → HydroDataType
+tbl_only = @filter gas.data :rho &gt;= density        # raw table → IndexedTable
+println(&quot;@filter on the object : &quot;, typeof(finest).name.name, &quot;, &quot;, length(finest.data), &quot; cells&quot;)
+println(&quot;@filter on the table  : &quot;, typeof(tbl_only).name.name, &quot;, &quot;, length(tbl_only), &quot; rows&quot;)
+
+# @apply chains several table-level conditions
+filtered_db = @apply gas.data begin
+    @where :rho &gt;= density
+    @where abs((:cz - 0.5) * boxlen/2^:level - cv) &lt;= height
+end
+println(&quot;@apply pipeline       : &quot;, length(filtered_db), &quot; rows&quot;)
+
+finest = nothing; tbl_only = nothing; filtered_db = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">@filter on the object : HydroDataType, 14318440 cells
+@filter on the table  : IndexedTable, 62082 rows
+@apply pipeline       : 62082 rows</code></pre><p><strong>The macro compares in code units.</strong> This is the one thing to know before reaching for <code>&gt;</code> and <code>&lt;</code> on a Mera object, and it is easy to miss because the condition <em>looks</em> physical. <code>@filter gas :T &gt; 1e4</code> does not mean ten thousand Kelvin: it means ten thousand in this run&#39;s code units, which here is about <code>6.8e9</code> K, hotter than anything in the box. Written with a unit the same number is a real temperature cut and keeps roughly half the cells, a completely different selection.</p><p>Nothing is broken about the macro. It is compact and it understands derived quantities, which is exactly what it is for. But a number without a unit is a statement about one particular run, so whenever the threshold is physical, say the unit and let <code>Above</code> or <code>Below</code> do the conversion.</p><pre><code class="language-julia hljs">macro_hot = @filter gas :T &gt; 1e4                             # 1e4 in CODE units, not Kelvin
+unit_hot  = filterdata(gas, Above(:T, 1e4, unit=:K), verbose=false)
+
+println(&quot;@filter gas :T &gt; 1e4        : &quot;, length(macro_hot.data), &quot; cells&quot;)
+println(&quot;Above(:T, 1e4, unit=:K)     : &quot;, length(unit_hot.data), &quot; cells   of &quot;, length(gas.data))
+println(&quot;1e4 code units is really    : &quot;, round(1e4 * gas.info.scale.K, sigdigits=4), &quot; K&quot;)
+println(&quot;this run&#39;s gas spans        : &quot;, round(minimum(getvar(gas, :T, :K)), sigdigits=3),
+        &quot; .. &quot;, round(maximum(getvar(gas, :T, :K)), sigdigits=3), &quot; K&quot;)
+
+macro_hot = nothing; unit_hot = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">@filter gas :T &gt; 1e4        : 0 cells
+Above(:T, 1e4, unit=:K)     : 16289680 cells   of 37055386
+1e4 code units is really    : 6.803e9 K
+this run&#39;s gas spans        : 12.0 .. 4.37e8 K</code></pre><pre><code class="language-julia hljs"># ---- hand-built masks, for comparison with getmask -------------------------------------
+thr = 4. / gas.scale.Msol_pc3
+mask_a = map(row -&gt; row.rho &lt; thr, gas.data)             # predicate over rows
+mask_b = getvar(gas, :rho, :Msol_pc3) .&lt; 4.              # broadcast over a getvar array
+mask_c = getmask(gas, Below(:rho, 4, unit=:Msol_pc3))    # the value-space verb
+
+println(&quot;all three agree : &quot;, mask_a == mask_b == mask_c, &quot;   (&quot;, count(mask_c), &quot; cells)&quot;)
+println(&quot;type            : &quot;, typeof(mask_c))
+
+mask_a = nothing; mask_b = nothing; mask_c = nothing; GC.gc()</code></pre><pre><code class="nohighlight hljs">all three agree : true   (37025375 cells)
+type            : BitVector</code></pre><p>All three produce the same <code>Vector{Bool}</code>. <code>getmask</code> is the one that states the unit, works on derived quantities, and composes with <code>&amp;</code> <code>|</code> <code>!</code>, the others are worth knowing because they are what to reach for when the test is not expressible as a condition on one quantity.</p><h2 id="10.-Practical-Guidance"><a class="docs-heading-anchor" href="#10.-Practical-Guidance">10. Practical Guidance</a><a id="10.-Practical-Guidance-1"></a><a class="docs-heading-anchor-permalink" href="#10.-Practical-Guidance" title="Permalink"></a></h2><p><strong>Say the unit.</strong> <code>Above(:rho, 1, unit=:nH)</code> is a statement about physics. <code>p.rho &gt;= 3.0</code> on the raw table, and <code>@filter gas :rho &gt;= 3.0</code> on the object, are both statements about this run&#39;s code units and will mean something different in the next simulation.</p><p><strong>Say the frame too.</strong> A condition is computed by <code>getvar</code>, so a radius needs a <code>center</code> and a velocity-derived quantity needs a <code>vcenter</code>. Leave them out and you measure from the box corner, in the box frame, which on a galaxy in the middle of its box is a selection nobody asked for (§2).</p><p><strong>Filter, then look.</strong> A condition is cheap and a map is cheap. §6 takes seconds and catches a threshold that selects nothing, or everything, before it becomes a result.</p><p><strong>Check the partition.</strong> A condition and its <code>!</code> must reproduce the parent&#39;s count and mass. One line, and it catches an inverted comparison immediately.</p><p><strong>Choose the shape deliberately.</strong> <code>filterdata</code> when the subset is the object of study; <code>getmask</code> when you want a statistic of the whole restricted to a part, or several subsets of one object without copying.</p><p><strong>Percentiles when the scale is unknown.</strong> <code>AbovePercentile(:rho, 99)</code> ports between simulations; <code>Above(:rho, 1e3, unit=:nH)</code> does not, unless you mean it absolutely.</p><p><strong>Geometry belongs in a region.</strong> <code>InRange(:r_cylinder, …)</code> works, given a <code>center</code>, but it is a centre test with no boundary treatment. If the geometry matters, cut it as a region (§7) and let the boundary cells carry their fractions.</p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><ul><li>Two verbs: <code>filterdata</code> returns an <strong>object</strong> you can carry on working with, <code>getmask</code> returns a <strong><code>Vector{Bool}</code></strong> for any Mera function that takes <code>mask=</code>. They select identically (§1, §4).</li><li>A condition is a <strong>quantity, a threshold and a unit</strong>, and the quantity can be anything <code>getvar</code> derives, temperature, sound speed, Mach number, age (§2).</li><li>A condition also takes <code>getvar</code>&#39;s <strong>frame</strong>: <code>center</code> for a quantity measured from a point, <code>vcenter</code> for one measured in a moving frame (§2).</li><li>Conditions compose with <code>&amp;</code>, <code>|</code>, <code>!</code>; several arguments mean AND; and <code>AbovePercentile</code>/<code>BelowPercentile</code> set the threshold from the data itself (§3).</li><li>Value selection and geometric selection are <strong>independent and commute</strong>, and <code>filterdata</code> preserves a split region&#39;s <code>:fraction</code>, so a mass budget still closes when you mix them (§7).</li><li>The raw <code>IndexedTables</code> path is still there for predicates that are not value conditions, at the price of code units and hand-built geometry (§9).</li></ul><p><strong>Continue with:</strong></p><ul><li><a href="../03_hydro_Get_Subregions/">Hydro sub-regions</a>, selection by place, exact cell splitting, and mass budgets.</li><li>The sibling sub-region pages for <a href="../03_particles_Get_Subregions/">particles</a>, <a href="../03_gravity_Get_Subregions/">gravity</a> and <a href="../03_clumps_Get_Subregions/">clumps</a>.</li><li><a href="../computation_reference/">How Quantities Are Computed</a>, the formula behind every quantity a condition can name.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../derived_fields/">« Derived Fields &amp; add_field</a><a class="docs-footer-nextpage" href="../statistics/">Statistics (PDFs) »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Tuesday 20 October 2026 13:26">Tuesday 20 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
