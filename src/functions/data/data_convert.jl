@@ -686,15 +686,27 @@ function convertdata(output::Int;
     overview["viewdata"] = viewdata(output, path=fpath, fname=fname, verbose=false) # Dataset metadata
     overview["size"] = mem                # Memory and storage information
 
-    # Store comprehensive statistics directly in the JLD2 file for future reference
+    # Store the statistics in the file. The timers go in as plain numbers: a stored TimerOutput
+    # object ties the file to that package's internal layout, and TimerOutputs 1.x cannot read
+    # the ones written under 0.5. The returned `overview` keeps the TimerOutput objects.
+    stored = copy(overview)
+    stored["TimerOutputs"] = Dict(k => _timer_table(v) for (k, v) in rw)
     jld2mode = "a+" # append mode to add metadata to existing file
     jldopen(fullpath, jld2mode) do f
-        f["convertstat"] = overview  # Store all statistics in file metadata
+        f["convertstat"] = stored
     end
 
     # Return complete statistics dictionary for immediate use
     return overview
 end
+
+# The sections of a TimerOutput as plain data, `name => (time_s, allocated_bytes, calls)`, so a
+# mera file never stores a TimerOutputs type (see the convertstat block above).
+_timer_table(t::TimerOutput) =
+    Dict{String,Any}(name => (TimerOutputs.time(sub) / 1e9, TimerOutputs.allocated(sub),
+                              TimerOutputs.ncalls(sub))
+                     for (name, sub) in t.inner_timers)
+_timer_table(x) = x
 
 # ============================================================================
 # HELPER FUNCTION: JLD2 FILE MODE DETERMINATION

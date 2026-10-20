@@ -447,7 +447,22 @@ else
 
             # convertstat should be present (written by convertdata)
             @test haskey(overview, "convertstat")
+            # ... and it stores the timings as plain data, never a TimerOutputs type, so the file
+            # stays readable whichever TimerOutputs version a reader has installed
+            timers = overview["convertstat"]["TimerOutputs"]
+            @test timers["reading"] isa Dict && timers["writing"] isa Dict
+            @test haskey(timers["reading"], "hydro")
+            t, bytes, calls = timers["reading"]["hydro"]
+            @test t > 0 && calls == 1
+            @test !occursin("TimerOutput", repr(typeof(timers["reading"])))
         end
+    end
+
+    @testset "viewdata survives unreadable conversion statistics" begin
+        # files from before 1.8.1 hold TimerOutput objects that a newer TimerOutputs cannot
+        # rebuild; the statistics are a report, so reading them must not stop viewdata
+        bad = Mera._read_convertstat(joinpath(mktempdir(), "no_such_file.jld2"))
+        @test bad isa Dict && haskey(bad, "unreadable")
     end
 
     # ========================================================================
