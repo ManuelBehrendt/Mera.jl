@@ -293,7 +293,7 @@ sphericalshell      7754688 cells   1.18e10 Msol
 cylindricalshell    4084535 cells   8.032e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_10_5.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_10_6.png)
 
 Face-on, the box and the cylinder differ only in the corners; edge-on, both are the same ±2 kpc
 slab. The two shells show how a projection hides depth. Face-on, the cylindrical shell is a ring
@@ -527,12 +527,12 @@ fig
 
 ```
 nsub  points/cell     r = 10 kpc   r = 1.5 kpc   time, r = 10
-1     1                 -0.025 %        19.0 %         0.52 s
-2     8                 -0.096 %         3.0 %         0.78 s
-4     64                -0.026 %         0.9 %         0.36 s
-8     512              -0.0046 %        0.23 %         0.61 s
-16    4096            -0.00025 %       0.053 %         0.45 s
-32    32768           -0.00036 %        0.01 %         1.78 s
+1     1                 -0.025 %        19.0 %          0.4 s
+2     8                 -0.096 %         3.0 %         0.59 s
+4     64                -0.026 %         0.9 %         0.27 s
+8     512              -0.0046 %        0.23 %         0.54 s
+16    4096            -0.00025 %       0.053 %         0.46 s
+32    32768           -0.00036 %        0.01 %         1.76 s
 ```
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_20_3.png)
@@ -1344,15 +1344,37 @@ println(rpad("disc direct", 12), lpad(string(round(m_disc, sigdigits=6)), 14),
 
 p_gasd = proj(disc; xrange=[-13, 13], yrange=[-13, 13], pxsize=[0.1, :kpc])
 stars_d = subregion(part, disc_region, verbose=false)
-sx = getvar(stars_d, :x, :kpc) .- 24.; sy = getvar(stars_d, :y, :kpc) .- 24.
+# the stars as a surface density on the same pixel grid as the gas
+p_star = projection(stars_d, :sd, :Msol_pc2; direction=:z, center=[:bc], range_unit=:kpc,
+                    xrange=[-13, 13], yrange=[-13, 13], pxsize=[0.2, :kpc],   # coarser: less particle noise
+                    verbose=false, show_progress=false)
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
-fig = Figure(size=(640, 520))
-ax = Axis(fig[1, 1], title="disc gas + its star particles: one region, two datatypes")
-show_sd!(ax, p_gasd, (-13, 13, -13, 13))
-scatter!(ax, sx[1:4:end], sy[1:4:end]; color=(:cyan, 0.15), markersize=1.2)   # every 4th star
-scalebar!(ax, -12, -12.3, 5)
-sd_bar!(fig[1, 2])
+# stellar Σ in an icy palette: opaque for the stars alone, and for the overlay a version that
+# shows only the dense clusters and fades to transparent, so the gas stays visible
+lsd   = log10.(max.(p_star.maps[:sd], 1e-6))
+vals  = sort(filter(>(-6), vec(lsd)))
+sthi  = vals[round(Int, 0.995 * length(vals))]
+STLIM = (sthi - 2.5, sthi)                                   # stars alone: 2.5 decades
+CLLIM = (sthi - 1.2, sthi)                                   # overlay: the densest 1.2 decades
+icy   = cgrad([RGBf(0.0, 0.0, 0.0), RGBf(0.10, 0.20, 0.50), RGBf(0.40, 0.65, 1.0),
+               RGBf(0.85, 0.94, 1.0), RGBf(1.0, 1.0, 1.0)])
+glow  = cgrad([RGBAf(0.55, 0.78, 1.0, 0.0), RGBAf(0.60, 0.82, 1.0, 0.35),
+               RGBAf(0.85, 0.94, 1.0, 0.8), RGBAf(1.0, 1.0, 1.0, 1.0)])
+xs = range(p_star.cextent[1]*kpc, p_star.cextent[2]*kpc; length=size(lsd, 1))
+ys = range(p_star.cextent[3]*kpc, p_star.cextent[4]*kpc; length=size(lsd, 2))
+
+fig = Figure(size=(1180, 520))
+ax1 = Axis(fig[1, 1], title="stars in the disc region")
+ax1.backgroundcolor = :black; ax1.aspect = DataAspect(); hidedecorations!(ax1)
+heatmap!(ax1, xs, ys, lsd; colormap=icy, colorrange=STLIM)
+limits!(ax1, -13, 13, -13, 13)
+ax2 = Axis(fig[1, 2], title="gas with its densest star clusters on top")
+show_sd!(ax2, p_gasd, (-13, 13, -13, 13))
+heatmap!(ax2, xs, ys, lsd; colormap=glow, colorrange=CLLIM)
+scalebar!(ax1, -12, -12.3, 5)
+Colorbar(fig[1, 3]; colormap=icy, colorrange=STLIM, label="log₁₀ Σ★  [Msol pc⁻²]")
+sd_bar!(fig[1, 4])
 fig
 ```
 
@@ -1374,7 +1396,9 @@ disc direct     2.28346e10      5.14581e9
 The stars tile the disc just like the gas. Particles are points, so each one belongs to exactly
 one zone, and the four zones add up to the disc by construction. The overlay shows why the
 ledger looks the way it does: the stars follow the dense gas they formed from, concentrated in
-the nucleus and along the clumps of the ring.
+the nucleus and along the clumps of the ring. The stars are drawn as a surface density on the
+same region as the gas, in their own colour scale. In the overlay only the densest star clusters
+are drawn, fading to transparent, so that the gas structure stays visible.
 
 ## Step 9. Sharp edges for figures
 
@@ -1552,7 +1576,7 @@ fig
 identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10   vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_4.png)
 
 The rule holds, and the side view explains the top view: the blister adds gas only above the
 upper face, where the bright disc hides it from the top, while the chimney removes a full column
