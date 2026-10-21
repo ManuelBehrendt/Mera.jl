@@ -4,6 +4,33 @@ Thank you for your interest in contributing to Mera.jl! This document provides g
 
 Participation in this project is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
+## Getting Help
+
+Questions, bug reports and feature ideas go to
+[GitHub Issues](https://github.com/ManuelBehrendt/Mera.jl/issues); please search first. Mera.jl
+is maintained by one person alongside research, so responses are best effort, usually within a
+few weeks. Support covers the latest 1.x release on Julia 1.10 (LTS) and newer. The `multicode`
+development branch is experimental and supported as time allows.
+
+## Governance
+
+Mera.jl is led by its maintainer, Manuel Behrendt, who decides on scope, reviews and merges pull
+requests, and makes releases. Every change goes through a pull request with passing CI.
+Contributors are credited in the README, the documentation and `CITATION.cff`. Anyone who
+contributes substantially over time can be invited as a co-maintainer.
+
+Releases follow [semantic versioning](https://semver.org), are registered in the Julia General
+registry and are archived on [Zenodo](https://doi.org/10.5281/zenodo.3675254).
+
+## Which Branch
+
+| branch | what goes there |
+|---|---|
+| `master` | the 1.x release line: RAMSES support and everything code-agnostic (analysis, regions, projections, units, IO, docs, fixes) |
+| `multicode` | the 2.0 development line: readers for other simulation codes, see [Adding a reader](https://manuelbehrendt.github.io/Mera.jl/stable/adding_a_reader/) |
+
+`multicode` receives everything from `master` by merge, so code-agnostic work belongs on `master`.
+
 ## Getting Started
 
 1. Fork the repository on GitHub
@@ -49,7 +76,7 @@ The suite is tiered, and the tier decides whether you need simulation data:
 | **2, data-backed** | integration against real RAMSES output: readers, projections, regions, conservation, round-trips | `MERA_TEST_DATA` | ~18 min |
 
 Tier 1 is the one that matters for a pull request: it runs anywhere, and it holds every analytic
-correctness check. CI runs only tier 1, on Julia 1.10 / 1.11 / 1.12 across Linux, macOS and Windows.
+correctness check. CI runs only tier 1, on Julia 1.10 to 1.13 across Linux, macOS and Windows.
 
 **[`test/README.md`](test/README.md) is the authoritative map**: which file proves what, which
 simulation backs which test, and every `MERA_*` environment variable. It is kept in step with the
@@ -104,6 +131,8 @@ simulations that are not distributed, and are meant to be read and adapted rathe
    ```bash
    git checkout -b feature/your-feature-name
    ```
+
+   Base it on the branch your change belongs to (see [Which Branch](#which-branch)).
 
 2. Make your changes and ensure tests pass:
    ```bash
