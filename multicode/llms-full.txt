@@ -56,6 +56,24 @@ Pkg.add("Mera")
 using Mera
 ```
 
+In the REPL, `using Mera` greets you with:
+
+```
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v2.0.0-DEV | Julia 1.13.2 | 8 threads
+```
+
+It shows the Mera version, the Julia version and how many threads Mera can use. With one thread,
+Mera adds a hint: start Julia with `julia -t 8` (or set `JULIA_NUM_THREADS=8`) to read and project
+in parallel. In scripts the greeting is a single `[ Info: Mera v2.0.0-DEV` line, and `MERA_QUIET=1`
+turns it off.
+
 Then run something on a real RAMSES simulation. `download_testdata` fetches one of Mera's public
 test simulations and hands you the path:
 
