@@ -29,6 +29,11 @@ for what each one implements and how far it has been exercised. Widening that is
 rather than core work, because the analysis layer is code-blind, so
 [contributions and bug reports](multicode.md#Help-us-widen-this) move it forward quickly.
 
+!!! tip "Need a feature for your research?"
+    If your project needs an analysis method, a RAMSES variant or a reader for another code that
+    Mera does not have yet, write to [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com).
+    I am happy to collaborate on extensions.
+
 ![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.png)
 
 *Computational astrophysicist analyzing AMR simulation data with MERA.jl's powerful visualization and analysis capabilities*

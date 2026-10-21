@@ -33,6 +33,12 @@ time series and movies. It reads [RAMSES](https://github.com/ramses-organisation
 mesh refinement output natively, with hydro and MHD, particles, gravity, clumps, sinks and radiative
 transfer, and handles cosmological runs throughout.
 
+<table><tr><td>
+
+**📑 On this page:** &nbsp;[Why MERA?](#why-mera) · [First look](#first-look) · [Quickstart](#quickstart) · [Core capabilities](#core-capabilities) · [Installation](#installation) · [Multiple dispatch](#one-name-many-types-multiple-dispatch) · [Recipes](#recipes-and-shared-workflows) · [Documentation](#documentation) · [Roadmap](#roadmap) · [Testing](#testing) · [Study music](#ambient-study-music) · [Staying up to date](#staying-up-to-date) · [Get involved](#get-involved) · [License](#license)
+
+</td></tr></table>
+
 <img src="docs/src/assets/gallery/coin_small.gif" alt="A galaxy tipping from face-on to edge-on and tumbling, in surface density, line-of-sight velocity and temperature" width="640">
 
 <sub>A galaxy tipped from face-on onto its edge and spun like a coin, in surface density,
@@ -58,6 +64,11 @@ projection(gas, :sd, :Msol_pc2; inclination=60, azimuth=30,
 ```
 
 Every quantity comes in the unit you name. The same calls work on particles and clumps.
+
+> **Need a feature for your research?** If your project needs an analysis method, a RAMSES variant
+> or a reader for another code that Mera does not have yet, write to
+> [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com). I am happy to collaborate on
+> extensions.
 
 On this `multicode` branch, version 2.0.0-DEV, Mera also reads **AREPO, GADGET, PLUTO, Athena++,
 FLASH**, **Chombo** and **AMReX/Quokka** through the same API. The AMReX/Quokka reader was
@@ -459,6 +470,8 @@ MERA is actively developed and its priorities are driven by user needs. Have a f
 RAMSES variant to support, or a gap to report? Please
 [open an issue](https://github.com/ManuelBehrendt/Mera.jl/issues) or start a
 [discussion](https://github.com/ManuelBehrendt/Mera.jl/discussions), and contributions and ideas are welcome.
+To discuss an extension for your own project in private, write to
+[mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com).
 
 ## Testing
 
@@ -561,6 +574,8 @@ when a new version ships and what moved in it.
 
 ## Get involved
 
+- **Collaborate**: if your research needs a feature or extension that Mera does not have yet, write
+  to [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com). I am happy to work on it together.
 - **Cite & star**: if MERA helps your research, please cite the
   [Zenodo DOI](https://zenodo.org/badge/latestdoi/229728152) and ⭐ the
   [repository](https://github.com/ManuelBehrendt/Mera.jl); it helps measure impact and sustain development.

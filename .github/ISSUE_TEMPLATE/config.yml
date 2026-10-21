@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Collaboration or a custom extension
+    url: https://github.com/ManuelBehrendt/Mera.jl#get-involved
+    about: Need a feature for your research? Write to mera@manuelbehrendt.com, I am happy to collaborate.
+  - name: Questions and show-and-tell
+    url: https://github.com/ManuelBehrendt/Mera.jl/discussions
+    about: Ask how to do something, or share what you made with Mera.
