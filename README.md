@@ -64,6 +64,13 @@ Every quantity comes in the unit you name. The same calls work on particles and 
 > [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com). I am happy to collaborate on
 > extensions.
 
+**On this page:** [Why MERA?](#why-mera) · [First look](#first-look) · [Quickstart](#quickstart) ·
+[Core capabilities](#core-capabilities) · [Installation](#installation) ·
+[Multiple dispatch](#one-name-many-types-multiple-dispatch) · [Recipes](#recipes-and-shared-workflows) ·
+[Documentation](#documentation) · [Roadmap](#roadmap) · [Testing](#testing) ·
+[Study music](#ambient-study-music) · [Staying up to date](#staying-up-to-date) ·
+[Get involved](#get-involved) · [License](#license)
+
 > ### Released and upcoming 1.x versions are **RAMSES-only**
 >
 > Support for **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** is in
