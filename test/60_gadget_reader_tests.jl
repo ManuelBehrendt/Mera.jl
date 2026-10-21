@@ -1330,4 +1330,36 @@ end
         @test sum(sph.maps[:sd]) * (info1.boxlen / 64)^2 ≈ msum(g1)
     end
 
+
+    # Off-axis camera-frame velocities with weighting=:sph used to fail ("not a column of this
+    # object"): the :sph branch only knew getvar quantities, while :vlos/:σlos are built from the
+    # camera. With every particle moving the same way, the map must be that one velocity's
+    # line-of-sight part everywhere, as the :mass branch gives, and the dispersion zero.
+    @testset "off-axis :vlos / :σlos with weighting=:sph and :voronoi" begin
+        fn = joinpath(dir, "snap_041.hdf5"); n = 60
+        h5open(fn, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 100.0; hg["NumPart_Total"] = UInt32[n, 0, 0, 0, 0, 0]; hg["MassTable"] = zeros(6)
+            hg["Time"] = 1.0
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = 50 .+ 4 .* (rand(3, n) .- 0.5)
+            g0["Velocities"]  = repeat([3.0, -2.0, 7.0], 1, n)
+            g0["Masses"] = fill(1.0, n); g0["Density"] = fill(0.5, n); g0["InternalEnergy"] = fill(100.0, n)
+            g0["ParticleIDs"] = collect(UInt32, 1:n)
+        end
+        gas = getparticles_gadget(getinfo_gadget(41, dir, verbose=false); families=[0], verbose=false)
+        v = (inclination=30, azimuth=20, center=[0.5, 0.5, 0.5], range_unit=:standard,
+             fov=0.05, fov_unit=:standard, res=200, verbose=false, show_progress=false)
+        for w in (:mass, :sph, :voronoi)
+            m  = projection(gas, :vlos; weighting=w, v...)
+            sd = projection(gas, :sd;   weighting=w, v...).maps[:sd]
+            expected = -sum([3.0, -2.0, 7.0] .* m.los)               # receding counts positive
+            vals = m.maps[:vlos][sd .> 0]
+            @test !isempty(vals) && all(isapprox.(vals, expected; atol=1e-8))
+        end
+        σ = filter(isfinite, projection(gas, :σlos; weighting=:sph, v...).maps[:σlos])
+        @test !isempty(σ) && maximum(σ) < 1e-6
+        @test_throws ArgumentError projection(gas, :σlos; weighting=:voronoi, v...)
+    end
+
 end

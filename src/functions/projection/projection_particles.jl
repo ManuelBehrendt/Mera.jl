@@ -1739,6 +1739,24 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
             hs = _sph_smoothing_lengths(cols,
                      s -> Float64.(getvar(dataobject, s)[sel]), pixsize)   # same α as the axis path
             for ivar in selected_vars
+                # camera-frame velocities (:vlos, :σlos, :vcamx, …) are not getvar fields; they
+                # come from `camvel` above. Kernel-weighted by mass, like any intensive field,
+                # and the dispersion from the second moment.
+                if ivar in _CAM_KINEMATICS
+                    usym   = req_unit(ivar)
+                    vscale = usym === :standard ? 1.0 : getunit(dataobject.info, usym)
+                    q   = camvel[cam_axis_of[ivar]]
+                    den = _sph_deposit(xc, yc, massv,      hs, e1, e2; max_threads=max_threads)
+                    num = _sph_deposit(xc, yc, q .* massv, hs, e1, e2; max_threads=max_threads)
+                    m = if ivar === :vlos || ivar === :vcamx || ivar === :vcamy
+                        num ./ den
+                    else
+                        num2 = _sph_deposit(xc, yc, q .^ 2 .* massv, hs, e1, e2; max_threads=max_threads)
+                        sqrt.(max.(num2 ./ den .- (num ./ den) .^ 2, 0.0))
+                    end
+                    maps[ivar] = m .* vscale; maps_unit[ivar] = usym; maps_mode[ivar] = :sph
+                    continue
+                end
                 su, un = getunit(dataobject, ivar, selected_vars, units, uname=true)
                 if ivar in sd_names
                     m = _sph_deposit(xc, yc, massv, hs, e1, e2; max_threads=max_threads) ./ pixel_area
@@ -1767,6 +1785,18 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
             verbose && println("Voronoi LOS samples (nlos): ", nlos_used,
                                nlos === nothing ? "" : " (set by keyword)")
             for ivar in selected_vars
+                if ivar in _CAM_KINEMATICS                 # column-weighted mean velocity only
+                    ivar in (:vlos, :vcamx, :vcamy) || throw(ArgumentError(
+                        "projection (particles): :$ivar is not available with weighting=:voronoi; " *
+                        "use weighting=:sph or :mass for velocity dispersions."))
+                    usym   = req_unit(ivar)
+                    vscale = usym === :standard ? 1.0 : getunit(dataobject.info, usym)
+                    colρ, colρv = _voronoi_los(xc, yc, zc, dens, camvel[cam_axis_of[ivar]], reff, e1, e2,
+                                               lo, hi, nlos_used; max_threads=max_threads)
+                    maps[ivar] = (colρv ./ colρ) .* vscale
+                    maps_unit[ivar] = usym; maps_mode[ivar] = :voronoi
+                    continue
+                end
                 su, un = getunit(dataobject, ivar, selected_vars, units, uname=true)
                 isstd = ivar in sd_names
                 vals  = isstd ? dens :
