@@ -12,6 +12,9 @@ is maintained by one person alongside research, so responses are best effort, us
 few weeks. Support covers the latest 1.x release on Julia 1.10 (LTS) and newer. The `multicode`
 development branch is experimental and supported as time allows.
 
+If your research needs a larger or project-specific extension, write to
+[mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com). I am happy to collaborate on it.
+
 ## Governance
 
 Mera.jl is led by its maintainer, Manuel Behrendt, who decides on scope, reviews and merges pull

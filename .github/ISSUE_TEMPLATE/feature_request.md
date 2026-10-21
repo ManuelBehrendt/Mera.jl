@@ -18,3 +18,6 @@ A clear and concise description of any alternative solutions or features you've 
 
 **Additional context**
 Add any other context or screenshots about the feature request here.
+
+**Need this for a research project?**
+Say so here, or write to mera@manuelbehrendt.com if you prefer to discuss it in private. I am happy to collaborate.

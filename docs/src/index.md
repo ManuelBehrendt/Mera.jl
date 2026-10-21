@@ -37,6 +37,11 @@ have never seen and it reports what is there and draws it.
     [contributions and bug reports](https://github.com/ManuelBehrendt/Mera.jl/issues) move it
     forward quickly.
 
+!!! tip "Need a feature for your research?"
+    If your project needs an analysis method, a RAMSES variant or a reader for another code that
+    Mera does not have yet, write to [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com).
+    I am happy to collaborate on extensions.
+
 ![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.png)
 
 *Computational astrophysicist analyzing AMR simulation data with MERA.jl's powerful visualization and analysis capabilities*

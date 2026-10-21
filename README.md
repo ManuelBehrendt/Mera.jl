@@ -59,6 +59,11 @@ projection(gas, :sd, :Msol_pc2; inclination=60, azimuth=30,
 
 Every quantity comes in the unit you name. The same calls work on particles and clumps.
 
+> **Need a feature for your research?** If your project needs an analysis method, a RAMSES variant
+> or a reader for another code that Mera does not have yet, write to
+> [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com). I am happy to collaborate on
+> extensions.
+
 > ### Released and upcoming 1.x versions are **RAMSES-only**
 >
 > Support for **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** is in
@@ -450,6 +455,8 @@ MERA is actively developed and its priorities are driven by user needs. Have a f
 RAMSES variant to support, or a gap to report? Please
 [open an issue](https://github.com/ManuelBehrendt/Mera.jl/issues) or start a
 [discussion](https://github.com/ManuelBehrendt/Mera.jl/discussions), and contributions and ideas are welcome.
+To discuss an extension for your own project in private, write to
+[mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com).
 
 ## Testing
 
@@ -552,6 +559,8 @@ when a new version ships and what moved in it.
 
 ## Get involved
 
+- **Collaborate**: if your research needs a feature or extension that Mera does not have yet, write
+  to [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com). I am happy to work on it together.
 - **Cite & star**: if MERA helps your research, please cite the
   [Zenodo DOI](https://zenodo.org/badge/latestdoi/229728152) and ⭐ the
   [repository](https://github.com/ManuelBehrendt/Mera.jl); it helps measure impact and sustain development.
