@@ -33,6 +33,12 @@ time series and movies. It reads [RAMSES](https://github.com/ramses-organisation
 mesh refinement output natively, with hydro and MHD, particles, gravity, clumps, sinks and radiative
 transfer, and handles cosmological runs throughout.
 
+<table><tr><td>
+
+**📑 On this page:** &nbsp;[Why MERA?](#why-mera) · [First look](#first-look) · [Quickstart](#quickstart) · [Core capabilities](#core-capabilities) · [Installation](#installation) · [Multiple dispatch](#one-name-many-types-multiple-dispatch) · [Recipes](#recipes-and-shared-workflows) · [Documentation](#documentation) · [Roadmap](#roadmap) · [Testing](#testing) · [Study music](#ambient-study-music) · [Staying up to date](#staying-up-to-date) · [Get involved](#get-involved) · [License](#license)
+
+</td></tr></table>
+
 <img src="docs/src/assets/gallery/coin_small.gif" alt="A galaxy tipping from face-on to edge-on and tumbling, in surface density, line-of-sight velocity and temperature" width="640">
 
 <sub>A galaxy tipped from face-on onto its edge and spun like a coin, in surface density,
@@ -63,13 +69,6 @@ Every quantity comes in the unit you name. The same calls work on particles and 
 > or a reader for another code that Mera does not have yet, write to
 > [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com). I am happy to collaborate on
 > extensions.
-
-**On this page:** [Why MERA?](#why-mera) · [First look](#first-look) · [Quickstart](#quickstart) ·
-[Core capabilities](#core-capabilities) · [Installation](#installation) ·
-[Multiple dispatch](#one-name-many-types-multiple-dispatch) · [Recipes](#recipes-and-shared-workflows) ·
-[Documentation](#documentation) · [Roadmap](#roadmap) · [Testing](#testing) ·
-[Study music](#ambient-study-music) · [Staying up to date](#staying-up-to-date) ·
-[Get involved](#get-involved) · [License](#license)
 
 > ### Released and upcoming 1.x versions are **RAMSES-only**
 >
