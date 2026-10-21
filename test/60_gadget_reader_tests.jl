@@ -1251,7 +1251,9 @@ end
                 end
             end
         end
-        blocks = ["POS" => pos, "VEL" => vel, "ID" => ids, "MASS" => mas,
+        # Pair{String,Any}: each block keeps its own element type. A plain [..] literal lets
+        # Julia 1.10 promote all blocks to one type and silently write the IDs as Float32.
+        blocks = Pair{String,Any}["POS" => pos, "VEL" => vel, "ID" => ids, "MASS" => mas,
                   "U" => u, "RHO" => rho, "HSML" => hsml]
         function check(path, output)
             @test Mera.detect_simcode(path) == :gadget
@@ -1275,7 +1277,7 @@ end
 
         # SnapFormat 2, big endian, double-precision positions, 64-bit IDs
         d2 = mkpath(joinpath(bdir, "f2"))
-        blocks2 = ["POS" => Float64.(pos), "VEL" => vel, "ID" => UInt64.(ids), "MASS" => mas,
+        blocks2 = Pair{String,Any}["POS" => Float64.(pos), "VEL" => vel, "ID" => UInt64.(ids), "MASS" => mas,
                    "U" => u, "RHO" => rho, "HSML" => hsml]
         write_gadget2(joinpath(d2, "snap_003"), npart, blocks2; format=2, swap=true)
         info2, g2 = check(d2, 3)
@@ -1284,14 +1286,14 @@ end
         # SnapFormat 2 labels make the order free and unknown blocks harmless
         d3 = mkpath(joinpath(bdir, "f3"))
         write_gadget2(joinpath(d3, "snapshot_003"), npart,
-                      ["POS" => pos, "VEL" => vel, "ID" => ids, "MASS" => mas, "ACCE" => Float32.(pos),
+                      Pair{String,Any}["POS" => pos, "VEL" => vel, "ID" => ids, "MASS" => mas, "ACCE" => Float32.(pos),
                        "HSML" => hsml, "RHO" => rho, "U" => u]; format=2)
         check(d3, 3)
 
         # cooling runs add NE and NH between RHO and HSML (SnapFormat 1, found by the header flag)
         d4 = mkpath(joinpath(bdir, "f4"))
         write_gadget2(joinpath(d4, "snapshot_003"), npart,
-                      ["POS" => pos, "VEL" => vel, "ID" => ids, "MASS" => mas,
+                      Pair{String,Any}["POS" => pos, "VEL" => vel, "ID" => ids, "MASS" => mas,
                        "U" => u, "RHO" => rho, "NE" => ne, "NH" => nh, "HSML" => hsml]; cooling=1)
         info4, g4 = check(d4, 3)
         @test getvar(g4, :ne) ≈ ne && getvar(g4, :nh) ≈ nh
@@ -1301,10 +1303,10 @@ end
         # a snapshot split over two files: snapshot_003.0 holds gas + DM, snapshot_003.1 the stars
         d5 = mkpath(joinpath(bdir, "f5"))
         write_gadget2(joinpath(d5, "snapshot_003.0"), [3, 2, 0, 0, 0, 0],
-                      ["POS" => pos[:, 1:5], "VEL" => vel[:, 1:5], "ID" => ids[1:5], "MASS" => mas[1:3],
+                      Pair{String,Any}["POS" => pos[:, 1:5], "VEL" => vel[:, 1:5], "ID" => ids[1:5], "MASS" => mas[1:3],
                        "U" => u, "RHO" => rho, "HSML" => hsml]; nfiles=2, npart_total=npart)
         write_gadget2(joinpath(d5, "snapshot_003.1"), [0, 0, 0, 0, 2, 0],
-                      ["POS" => pos[:, 6:7], "VEL" => vel[:, 6:7], "ID" => ids[6:7], "MASS" => mas[4:5]];
+                      Pair{String,Any}["POS" => pos[:, 6:7], "VEL" => vel[:, 6:7], "ID" => ids[6:7], "MASS" => mas[4:5]];
                       nfiles=2, npart_total=npart)
         @test length(Mera._gadget_files(3, d5)) == 2
         check(d5, 3)
@@ -1312,7 +1314,7 @@ end
         # every mass in the header: no MASS block at all, and that is not an error
         d6 = mkpath(joinpath(bdir, "f6"))
         write_gadget2(joinpath(d6, "snapshot_000"), [0, 2, 0, 0, 0, 0],
-                      ["POS" => pos[:, 4:5], "VEL" => vel[:, 4:5], "ID" => ids[4:5]])
+                      Pair{String,Any}["POS" => pos[:, 4:5], "VEL" => vel[:, 4:5], "ID" => ids[4:5]])
         dm = getparticles(getinfo(0, d6; verbose=false); verbose=false)
         @test getvar(dm, :mass) == [1.5, 1.5] && getvar(dm, :id) == [201, 202]
 
