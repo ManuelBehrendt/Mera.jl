@@ -365,6 +365,28 @@ using Pkg
 Pkg.add("Mera")
 ```
 
+Load it, and Mera greets you in the REPL:
+
+```julia
+using Mera
+```
+
+```
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.1 | Julia 1.13.2 | 8 threads
+```
+
+It shows the Mera version, the Julia version and how many threads Mera can use. With one thread,
+Mera adds a hint: start Julia with `julia -t 8` (or set `JULIA_NUM_THREADS=8`) to read and project
+in parallel. In scripts the greeting is a single `[ Info: Mera v1.8.1` line, and `MERA_QUIET=1`
+turns it off.
+
 For collaborators, the in-development multi-code version (2.0, see the note at the top) is
 installed from the branch, noting the `#multicode` suffix in the `pkg>` form:
 
