@@ -615,4 +615,30 @@ end
         @test isnan(cosmic_time(info, -0.1))
         @test isnan(cosmic_time(info, 0.0))
     end
+
+    # Off-axis camera-frame velocities with weighting=:sph used to fail ("not a column of this
+    # object"): the :sph branch only knew getvar quantities, while :vlos/:σlos are built from the
+    # camera. With every particle moving the same way, the map must be that one velocity's
+    # line-of-sight part wherever there is mass, and the dispersion zero.
+    @testset "off-axis :vlos / :σlos with weighting=:sph" begin
+        info = _zoom_info(boxlen=1.0)
+        rng  = Random.MersenneTwister(5)
+        n    = 500
+        p = _zoom_particles(info; x=0.5 .+ 0.02 .* randn(rng, n), y=0.5 .+ 0.02 .* randn(rng, n),
+                            z=0.5 .+ 0.02 .* randn(rng, n), vx=fill(3.0, n), vy=fill(-2.0, n),
+                            vz=fill(7.0, n), mass=fill(1.0, n))
+        p.data = IndexedTables.transform(p.data, :subfind_hsml => fill(0.01, n))
+        v = (inclination=30, azimuth=20, center=[0.5, 0.5, 0.5], fov=0.1, fov_unit=:standard,
+             res=100, verbose=false, show_progress=false)
+        for w in (:mass, :sph)
+            m  = projection(p, :vlos; weighting=w, v...)
+            sd = projection(p, :sd;   weighting=w, v...).maps[:sd]
+            expected = -sum([3.0, -2.0, 7.0] .* m.los)               # receding counts positive
+            vals = m.maps[:vlos][sd .> 0]
+            @test !isempty(vals) && all(isapprox.(vals, expected; atol=1e-8))
+        end
+        σ = filter(isfinite, projection(p, :σlos; weighting=:sph, v...).maps[:σlos])
+        @test !isempty(σ) && maximum(σ) < 1e-6
+    end
+
 end
