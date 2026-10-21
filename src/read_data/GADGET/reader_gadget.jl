@@ -40,6 +40,10 @@ const _GADGET_STAR_FIELDS = (("GFM_StellarFormationTime", :aform),
 
 const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("ElectronAbundance", :ne),
                             ("StarFormationRate", :sfr),
+                            # the SPH smoothing length GADGET used for this particle (the radius at
+                            # which its kernel reaches zero). Moving-mesh AREPO does not write it;
+                            # `weighting=:sph` prefers it over the volume estimate when present.
+                            ("SmoothingLength", :hsml),
                             ("NeutralHydrogenAbundance", :nh), ("Machnumber", :mach),
                             # zoom runs track how much of a cell's mass came from the
                             # high-resolution region — the gas counterpart of the
@@ -107,6 +111,9 @@ function _is_gadget_h5(fn::String)
     catch; return false; end
 end
 
+# a GADGET snapshot in either format: HDF5 (SnapFormat 3) or binary (SnapFormat 1 and 2)
+_is_gadget_snapshot(fn::AbstractString) = _is_gadget_h5(String(fn)) || _is_gadget_binary(fn)
+
 # The GADGET HDF5 layout is shared by several codes; name the actual producer from header/group
 # markers so getinfo reports the real code (AREPO ≠ plain GADGET). AREPO (incl. IllustrisTNG) writes
 # a compile-time-flags group; SWIFT sets a `Header/Code` attribute. Falls back to GADGET.
@@ -154,20 +161,48 @@ function _gadget_files(output::Int, path::String)
         sibs = filter(f -> startswith(f, pre) && _gadget_chunknum(f) >= 0, readdir(dirname(path)))
         return [joinpath(dirname(path), f) for f in sort(sibs, by=_gadget_chunknum)]
     end
-    isdir(path) || error("GADGET: $path is neither an .hdf5 file nor a directory.")
+    if isfile(path) && _is_gadget_binary(path)            # a binary snapshot file, or one chunk of it
+        m = match(r"^(.*_\d+)\.\d+$", basename(path))
+        m === nothing && return [path]
+        pre = m.captures[1] * "."
+        sibs = filter(f -> startswith(f, pre) && _gadget_bin_chunknum(f) >= 0, readdir(dirname(path)))
+        return [joinpath(dirname(path), f) for f in sort(sibs, by=_gadget_bin_chunknum)]
+    end
+    isdir(path) || error("GADGET: $path is neither a snapshot file nor a directory.")
     tag = lpad(output, 3, '0')
     snapdir = joinpath(path, "snapdir_$tag")                # TNG-style chunk directory
     isdir(snapdir) && return _gadget_files(output, snapdir)
     cands = filter(f -> endswith(lowercase(f), ".hdf5") &&
                         (occursin("_$tag.", f) || occursin("_$tag", f)), readdir(path))
+    # GADGET-2 binary snapshots carry no extension: `snapshot_005`, or `snapshot_005.0 … .K`
+    if isempty(cands)
+        bins = _gadget_bin_files(output, path)
+        isempty(bins) || return bins
+    end
     isempty(cands) && (cands = filter(f -> endswith(lowercase(f), ".hdf5"), readdir(path)))
-    isempty(cands) && error("GADGET: no .hdf5 snapshot in $path")
+    isempty(cands) && error("GADGET: no snapshot for output $output in $path " *
+                            "(looked for HDF5 `*_$tag.hdf5` and binary `*_$tag` / `*_$tag.K`)")
     chunks = filter(f -> _gadget_chunknum(f) >= 0, cands)
     files = isempty(chunks) ? [sort(cands)[1]] : sort(chunks, by=_gadget_chunknum)
     return [joinpath(path, f) for f in files]
 end
 
 _gadget_file(output::Int, path::String) = first(_gadget_files(output, path))
+
+# binary snapshot files of `output` in `path`: one file `<base>_NNN`, or chunks `<base>_NNN.K`.
+# The number may be padded to more than three digits, so match the parsed value, not the text.
+function _gadget_bin_files(output::Int, path::String)
+    single = String[]; chunks = String[]
+    for f in readdir(path)
+        m = match(r"_(\d+)(\.(\d+))?$", f)
+        (m === nothing || parse(Int, m.captures[1]) != output) && continue
+        fn = joinpath(path, f)
+        (isfile(fn) && _is_gadget_binary(fn)) || continue
+        m.captures[3] === nothing ? push!(single, fn) : push!(chunks, fn)
+    end
+    isempty(chunks) || return sort(chunks, by=_gadget_bin_chunknum)
+    return isempty(single) ? String[] : [first(sort(single))]
+end
 
 _gadget_attr(h, k, default) = haskey(h, k) ? read(h[k]) : default
 
@@ -281,7 +316,7 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
     fns = _gadget_files(output, path)
     fn = first(fns)
     info = InfoType(); info.descriptor = _external_descriptor()
-    h5open(fn, "r") do f
+    _gadget_open(fn) do f
         h = attributes(f["Header"])
         npart  = _gadget_npart_total(h)
         nfsp   = Int(_gadget_attr(h, "NumFilesPerSnapshot", 1))
@@ -324,7 +359,7 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
         info.mtime = Dates.unix2datetime(round(Int, mtime(fn))); info.ctime = info.mtime
         if verbose
             printtime("", verbose)
-            println("Code: ", info.simcode)
+            println("Code: ", info.simcode, f isa _GBinFile ? "  (binary snapshot, SnapFormat 1/2)" : "")
             println("output: ", output, "  time: ", round(time, sigdigits=5),
                     haskey(h, "Redshift") ? "  redshift: " * string(round(Float64(read(h["Redshift"])), sigdigits=4)) : "")
             println("boxlen = ", info.boxlen)
@@ -511,7 +546,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
     has_bfield = false
     if 0 in want
         for fn in fns
-            found = h5open(fn, "r") do f
+            found = _gadget_open(fn) do f
                 haskey(f, "PartType0") || return false
                 for (ds, sym) in _GADGET_GAS_FIELDS
                     haskey(f["PartType0"], ds) && _wanted(sym) &&
@@ -533,7 +568,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
     # the doubling disappears. With a window that count is only an UPPER bound, and hinting it would
     # eagerly reserve the whole snapshot for what may be a tiny selection, so we deliberately don't.
     if fullbox
-        ntot = h5open(first(fns), "r") do f
+        ntot = _gadget_open(first(fns)) do f
             np = _gadget_npart_total(attributes(f["Header"]))
             sum(Int64[np[pt + 1] for pt in want if 0 <= pt <= 5]; init = Int64(0))
         end
@@ -546,7 +581,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
     starcols = Tuple{String,Symbol}[]
     if 4 in want
         for fn in fns
-            found = h5open(fn, "r") do f
+            found = _gadget_open(fn) do f
                 haskey(f, "PartType4") || return false
                 for (ds, sym) in _GADGET_STAR_FIELDS
                     haskey(f["PartType4"], ds) && _wanted(sym) &&
@@ -561,7 +596,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
     # is created if ANY requested family carries the dataset, and filled per-family below.
     anycols = Tuple{String,Symbol}[]
     for fn in fns
-        found = h5open(fn, "r") do f
+        found = _gadget_open(fn) do f
             hit = false
             for (ds, sym) in _GADGET_ANY_FIELDS
                 any(pt -> pt in want && haskey(f, "PartType$pt") && haskey(f["PartType$pt"], ds), 0:5) || continue
@@ -583,7 +618,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
            Progress(length(fns); desc="Reading chunks: ", dt=0.2, showspeed=true, barlen=50) :
            nothing
     for fn in fns
-    h5open(fn, "r") do f
+    _gadget_open(fn) do f
         masstable = Float64.(_gadget_attr(attributes(f["Header"]), "MassTable", zeros(6)))
         nthis = Int64.(_gadget_attr(attributes(f["Header"]), "NumPart_ThisFile", zeros(Int64, 6)))
         for pt in want

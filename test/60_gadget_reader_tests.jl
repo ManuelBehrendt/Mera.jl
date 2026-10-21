@@ -1211,4 +1211,123 @@ end
         end
     end
 
+
+    # GADGET-2 writes binary snapshots unless the parameter file says SnapFormat 3. Both binary
+    # layouts are read through the same reader: SnapFormat 1 (blocks found by order and size) and
+    # SnapFormat 2 (each block labelled). The writer below follows the GADGET-2 user guide, so the
+    # files are what the code itself writes; the values are checked against what was written.
+    @testset "GADGET-2 binary snapshots (SnapFormat 1 and 2)" begin
+        bdir = mktempdir()
+        # npart: 3 gas, 2 DM (mass in the header), 2 stars (per-particle masses)
+        npart = [3, 2, 0, 0, 2, 0]; mt = [0.0, 1.5, 0.0, 0.0, 0.0, 0.0]
+        pos = Float32[10 20 30 40 50 60 70; 11 21 31 41 51 61 71; 12 22 32 42 52 62 72]
+        vel = Float32[1 2 3 4 5 6 7; -1 -2 -3 -4 -5 -6 -7; 0 0 0 0 0 0 0]
+        ids = UInt32[101, 102, 103, 201, 202, 401, 402]
+        mas = Float32[0.1, 0.2, 0.3, 0.7, 0.8]                       # gas, then stars
+        u   = Float32[100, 200, 400]; rho = Float32[0.5, 1.0, 2.0]; hsml = Float32[3, 4, 5]
+        ne  = Float32[1.1, 0.5, 0.0]; nh = Float32[0.0, 0.5, 1.0]
+
+        function write_gadget2(fn, npart_file, blocks; format=1, swap=false, cooling=0,
+                               nfiles=1, npart_total=npart_file, masstable=mt)
+            cv(x) = swap ? bswap(x) : x
+            open(fn, "w") do io
+                wint(v) = write(io, cv(Int32(v)))
+                function record(label, bytes)
+                    if format == 2
+                        wint(8); write(io, rpad(label, 4)); wint(length(bytes) + 8); wint(8)
+                    end
+                    wint(length(bytes)); write(io, bytes); wint(length(bytes))
+                end
+                h = IOBuffer(); w(x) = write(h, cv(x))
+                foreach(n -> w(Int32(n)), npart_file); foreach(m -> w(Float64(m)), masstable)
+                w(1.0); w(0.0); w(Int32(0)); w(Int32(0))                  # time, z, sfr, feedback
+                foreach(n -> w(UInt32(n)), npart_total)
+                w(Int32(cooling)); w(Int32(nfiles)); w(100.0); w(0.0); w(0.0); w(1.0)
+                w(Int32(0)); w(Int32(0)); foreach(_ -> w(UInt32(0)), 1:6); w(Int32(0))
+                write(h, zeros(UInt8, 256 - position(h)))
+                record("HEAD", take!(h))
+                for (label, a) in blocks
+                    record(label, collect(reinterpret(UInt8, vec(cv.(a)))))
+                end
+            end
+        end
+        blocks = ["POS" => pos, "VEL" => vel, "ID" => ids, "MASS" => mas,
+                  "U" => u, "RHO" => rho, "HSML" => hsml]
+        function check(path, output)
+            @test Mera.detect_simcode(path) == :gadget
+            info = getinfo(output, path; verbose=false)
+            @test info.simcode == "GADGET" && info.boxlen == 100.0
+            @test :hsml in info.particles_variable_list && :T in info.particles_variable_list
+            p = getparticles(info; verbose=false)
+            @test getvar(p, :x) ≈ pos[1, :] && getvar(p, :vy) ≈ vel[2, :]
+            @test getvar(p, :id) == ids && getvar(p, :family) == [0, 0, 0, 1, 1, 4, 4]
+            @test getvar(p, :mass) ≈ [0.1, 0.2, 0.3, 1.5, 1.5, 0.7, 0.8]   # DM from the MassTable
+            g = getparticles(info; families=[0], verbose=false)
+            @test getvar(g, :rho) ≈ rho && getvar(g, :u) ≈ u && getvar(g, :hsml) ≈ hsml
+            @test getvar(g, :volume) ≈ [0.1, 0.2, 0.3] ./ rho  rtol=1e-6      # stored as Float32
+            return info, g
+        end
+
+        # SnapFormat 1, little endian, single precision, 32-bit IDs; a directory and a file path
+        d1 = mkpath(joinpath(bdir, "f1")); write_gadget2(joinpath(d1, "snapshot_003"), npart, blocks)
+        info1, g1 = check(d1, 3)
+        check(joinpath(d1, "snapshot_003"), 3)
+
+        # SnapFormat 2, big endian, double-precision positions, 64-bit IDs
+        d2 = mkpath(joinpath(bdir, "f2"))
+        blocks2 = ["POS" => Float64.(pos), "VEL" => vel, "ID" => UInt64.(ids), "MASS" => mas,
+                   "U" => u, "RHO" => rho, "HSML" => hsml]
+        write_gadget2(joinpath(d2, "snap_003"), npart, blocks2; format=2, swap=true)
+        info2, g2 = check(d2, 3)
+        @test getvar(g2, :T, :K) ≈ getvar(g1, :T, :K)                  # same physics either way
+
+        # SnapFormat 2 labels make the order free and unknown blocks harmless
+        d3 = mkpath(joinpath(bdir, "f3"))
+        write_gadget2(joinpath(d3, "snapshot_003"), npart,
+                      ["POS" => pos, "VEL" => vel, "ID" => ids, "MASS" => mas, "ACCE" => Float32.(pos),
+                       "HSML" => hsml, "RHO" => rho, "U" => u]; format=2)
+        check(d3, 3)
+
+        # cooling runs add NE and NH between RHO and HSML (SnapFormat 1, found by the header flag)
+        d4 = mkpath(joinpath(bdir, "f4"))
+        write_gadget2(joinpath(d4, "snapshot_003"), npart,
+                      ["POS" => pos, "VEL" => vel, "ID" => ids, "MASS" => mas,
+                       "U" => u, "RHO" => rho, "NE" => ne, "NH" => nh, "HSML" => hsml]; cooling=1)
+        info4, g4 = check(d4, 3)
+        @test getvar(g4, :ne) ≈ ne && getvar(g4, :nh) ≈ nh
+        γ = 5/3; XH = 0.76; μ = 4 ./ (1 .+ 3XH .+ 4XH .* ne)            # :T uses the electron abundance
+        @test getvar(g4, :T, :K) ≈ (γ - 1) .* u .* info4.scale.T_mu .* μ
+
+        # a snapshot split over two files: snapshot_003.0 holds gas + DM, snapshot_003.1 the stars
+        d5 = mkpath(joinpath(bdir, "f5"))
+        write_gadget2(joinpath(d5, "snapshot_003.0"), [3, 2, 0, 0, 0, 0],
+                      ["POS" => pos[:, 1:5], "VEL" => vel[:, 1:5], "ID" => ids[1:5], "MASS" => mas[1:3],
+                       "U" => u, "RHO" => rho, "HSML" => hsml]; nfiles=2, npart_total=npart)
+        write_gadget2(joinpath(d5, "snapshot_003.1"), [0, 0, 0, 0, 2, 0],
+                      ["POS" => pos[:, 6:7], "VEL" => vel[:, 6:7], "ID" => ids[6:7], "MASS" => mas[4:5]];
+                      nfiles=2, npart_total=npart)
+        @test length(Mera._gadget_files(3, d5)) == 2
+        check(d5, 3)
+
+        # every mass in the header: no MASS block at all, and that is not an error
+        d6 = mkpath(joinpath(bdir, "f6"))
+        write_gadget2(joinpath(d6, "snapshot_000"), [0, 2, 0, 0, 0, 0],
+                      ["POS" => pos[:, 4:5], "VEL" => vel[:, 4:5], "ID" => ids[4:5]])
+        dm = getparticles(getinfo(0, d6; verbose=false); verbose=false)
+        @test getvar(dm, :mass) == [1.5, 1.5] && getvar(dm, :id) == [201, 202]
+
+        # a broken record marker is reported, not read as garbage
+        bad = joinpath(mkpath(joinpath(bdir, "bad")), "snapshot_000")
+        write_gadget2(bad, npart, blocks)
+        bytes = read(bad); bytes[end] ⊻= 0xff; write(bad, bytes)
+        @test_throws ErrorException Mera._gbin_scan(bad)
+
+        # weighting=:sph uses the stored SPH smoothing length (half of it: GADGET's kernel ends
+        # at h, Mera's at 2h). Mass is conserved for particles well inside the field.
+        hs = Mera._sph_smoothing_lengths([:hsml, :volume], s -> s === :hsml ? Float64.(hsml) : [9.0, 9, 9], 0.1)
+        @test hs ≈ 0.5 .* hsml
+        sph = projection(g1, :sd, res=64, weighting=:sph, verbose=false, show_progress=false)
+        @test sum(sph.maps[:sd]) * (info1.boxlen / 64)^2 ≈ msum(g1)
+    end
+
 end

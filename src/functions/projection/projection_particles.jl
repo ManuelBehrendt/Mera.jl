@@ -3,8 +3,12 @@
 
 # Smoothing lengths for `weighting=:sph`, in code units, floored at one pixel.
 #
-# TWO SOURCES, in order:
+# THREE SOURCES, in order:
 #
+#   :hsml          — SPH gas (GADGET, GIZMO): the smoothing length the simulation itself used.
+#                    GADGET's kernel reaches zero at r = h (Springel 2005, eq. 4), Mera's M4
+#                    kernel at r = 2h (`_m4kernel(q)` is zero from q = 2), so Mera's h is half
+#                    of the stored value. Preferred over :volume, which only estimates it.
 #   :volume        — gas cells. h = α·(3V/4π)^⅓ resolves each Voronoi cell's own footprint.
 #   :subfind_hsml  — COLLISIONLESS particles, which have no volume. SUBFIND already computed a
 #                    local smoothing length for its density estimate, and Mera reads it for all
@@ -21,7 +25,10 @@
 # reads as structure. Coarsening pixels only shifts the beat frequency. See the "Zoom
 # Simulations" page: a map of boundary particles is not meaningful at any pixel size.
 function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
-    if :volume in cols
+    if :hsml in cols
+        h = getcol(:hsml)
+        return max.(0.5 .* Float64.(h), pixsize)
+    elseif :volume in cols
         Vc = getcol(:volume)
         return max.(α .* (3.0 .* Vc ./ (4 * pi)) .^ (1/3), pixsize)
     elseif :subfind_hsml in cols

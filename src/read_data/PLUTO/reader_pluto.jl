@@ -65,7 +65,7 @@ function detect_simcode(path::String)
         rdr.detect(path) && return rdr.code
     end
     (isfile(path) && endswith(lowercase(path), ".athdf")) && return :athena
-    (isfile(path) && _is_gadget_h5(path)) && return :gadget
+    (isfile(path) && _is_gadget_snapshot(path)) && return :gadget
     (isfile(path) && _is_flash_h5(path)) && return :flash
     (isfile(joinpath(path, "grid.out")) && isfile(joinpath(path, "dbl.out"))) && return :pluto
     isdir(path) && any(f -> endswith(lowercase(f), ".athdf"), readdir(path)) && return :athena
@@ -87,6 +87,15 @@ function detect_simcode(path::String)
             for c in filter(f -> endswith(lowercase(f), ".hdf5"), readdir(joinpath(path, d)))
                 _is_gadget_h5(joinpath(path, d, c)) && return :gadget
             end
+            for c in filter(f -> occursin(r"_\d+(\.\d+)?$", f), readdir(joinpath(path, d)))
+                _is_gadget_binary(joinpath(path, d, c)) && return :gadget
+            end
+        end
+        # GADGET-2 binary snapshots have no extension (`snapshot_005`, `snapshot_005.0`). Only
+        # files named like that are opened, and only their first eight bytes are read.
+        for c in filter(f -> occursin(r"_\d+(\.\d+)?$", f), readdir(path))
+            fn = joinpath(path, c)
+            isfile(fn) && _is_gadget_binary(fn) && return :gadget
         end
     end
     return :ramses

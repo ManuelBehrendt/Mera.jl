@@ -512,6 +512,7 @@ include("read_data/Athena/reader_athena.jl") # Athena++ frontend (HDF5 .athdf Me
 include("read_data/FLASH/reader_flash.jl")   # FLASH frontend (HDF5 PARAMESH leaf blocks)
 include("read_data/AMReX/reader_amrex.jl")   # AMReX/BoxLib plotfile container (Header + FABs)
 include("read_data/AMReX/reader_quokka.jl")  # Quokka layer on top of the AMReX container
+include("read_data/GADGET/binary_gadget.jl")   # GADGET-2 binary snapshots (SnapFormat 1/2)
 include("read_data/GADGET/reader_gadget.jl")
 include("read_data/GADGET/groupcat_gadget.jl") # GADGET/GIZMO/… frontend (HDF5 particles)
 include("read_data/GADGET/logs_gadget.jl")   # run-time ASCII logs (sfr.txt, …)

@@ -9,7 +9,8 @@
 
 Mera's analysis layer is **code-blind**, so a reader only has to fill the standard structs. This
 page adds a **frontend for the [GADGET](https://wwwmpa.mpa-garching.mpg.de/gadget4/) HDF5 snapshot
-format**, also written by **GIZMO, AREPO, SWIFT, EAGLE and IllustrisTNG**, so [`getvar`](@ref),
+format**, also written by **GIZMO, AREPO, SWIFT, EAGLE and IllustrisTNG**, and for the older
+**GADGET-2 binary formats** (see [below](#GADGET-2-binary-snapshots)), so [`getvar`](@ref),
 [`projection`](@ref), [`msum`](@ref), [`center_of_mass`](@ref) and the rest run on its **particles**
 unchanged.
 
@@ -24,6 +25,7 @@ unchanged.
     (`PartType0`, e.g. AREPO/TNG) the cell fields present in the file are read as columns, 
     `Density→:rho`, `InternalEnergy→:u`, `ElectronAbundance→:ne`, `GFM_Metallicity→:metallicity`,
     `StarFormationRate→:sfr`, `NeutralHydrogenAbundance→:nh`, `Machnumber→:mach`,
+    the SPH `SmoothingLength→:hsml` (GADGET, GIZMO),
     the SUBFIND per-particle set `SubfindVelDisp/Density/DMDensity/Hsml→:subfind_*` (note
     `:subfind_veldisp` is the local **dark-matter** dispersion, not the gas dispersion, see
     the [AREPO page](arepo_reader.md)), the `MagneticField`
@@ -39,7 +41,8 @@ unchanged.
 
 ## Usage
 
-`getinfo` / `getparticles` **auto-detect** GADGET from the HDF5 `Header` group:
+`getinfo` / `getparticles` **auto-detect** GADGET, from the HDF5 `Header` group or from the
+first record of a binary snapshot:
 
 ```julia
 using Mera
@@ -275,6 +278,39 @@ exercise:
 
 The total is taken from the header, so for a full-box load the columns are sized once up front
 instead of grown per chunk.
+
+### GADGET-2 binary snapshots
+
+GADGET-2, and the many codes built on it, write **binary** snapshots unless the parameter file
+sets `SnapFormat 3` (HDF5). Both binary layouts are read, with the same calls and the same
+columns as an HDF5 file:
+
+```julia
+info = getinfo(5, "/path/to/run")    # finds snapshot_005, or snapshot_005.0 … .K
+gas  = getparticles(info; families=[0])
+getvar(gas, :T, :K); getvar(gas, :hsml, :pc)
+```
+
+- **`SnapFormat 2`** labels every block (`POS `, `RHO `, …), so blocks are found by name, in any
+  order, and blocks Mera does not use (accelerations, time steps) are skipped.
+- **`SnapFormat 1`** has no labels. Blocks are identified by the order GADGET writes them and by
+  their size: `POS`, `VEL`, `ID`, `MASS` (only for types whose mass is not in the header's
+  `MassTable`), then for gas `U`, `RHO`, `NE` and `NH` when `Flag_Cooling` is set, `HSML`, and
+  `SFR` when `Flag_Sfr` is set. A block is accepted only if its size matches the particles it
+  should hold. Codes that add their own blocks in other places are safer in `SnapFormat 2`.
+- Byte order (little or big endian), single or double precision and 32- or 64-bit IDs are
+  detected per block. Multi-file snapshots (`snapshot_005.0 … .K`) are read chunk by chunk, like
+  their HDF5 counterpart.
+- A binary file records **no units**, so GADGET's defaults are used (1 kpc/h, 10¹⁰ M☉/h, 1 km/s)
+  and `getinfo` says so. Pass `unit_length=`, `unit_density=` or `unit_velocity=` if the run used
+  others.
+- Only the first block for each name is used. Initial-conditions files with entropy instead of
+  internal energy (`Flag_Entropy_ICs`) leave out `:u`, rather than read entropy as energy.
+
+**SPH smoothing length.** When the gas carries `:hsml`, `projection(...; weighting=:sph)` uses it
+instead of estimating one from `:volume`. GADGET's kernel reaches zero at `r = h`
+([Springel 2005](https://ui.adsabs.harvard.edu/abs/2005MNRAS.364.1105S)), while Mera's kernel
+reaches zero at twice its own `h`, so half of the stored value is used.
 
 ## Worked example: the yt GadgetDiskGalaxy sample
 
