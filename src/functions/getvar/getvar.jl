@@ -321,9 +321,9 @@ the photon number density `:Np<g>` and the flux components `:Fx<g>`, `:Fy<g>`, `
 - **`:Fmag<g>`**         flux magnitude |F_g| = √(Fx²+Fy²+Fz²)            [code units]
 - **`:Np_total`**        photon number density summed over all groups     [code units]
 - **`:reducedflux<g>`**  reduced flux f = |F_g| / (c·Np_g), dimensionless in [0,1] (1 = free-streaming beam, 0 = isotropic)
-- **`:Np<g>_cgs`**       physical photon number density = Np_g · unit_np   [photons cm⁻³]
+- **`:Np<g>_cgs`**       physical photon number density = Np_g · unit_pf / c̃   [photons cm⁻³] (RAMSES-RT stores Np as c̃·N, c̃ the reduced light speed of the cell's level)
 - **`:Fmag<g>_cgs`**     physical flux magnitude = |F_g| · unit_pf         [photons cm⁻² s⁻¹]
-- **`:photon_energy_density<g>`**  radiation energy density of group g = Np_g · unit_np · egy_g  [erg cm⁻³] (egy_g = mean photon energy from `info.descriptor.rt[:group_egy]`)
+- **`:photon_energy_density<g>`**  radiation energy density of group g = N_g · egy_g  [erg cm⁻³], N_g as in `:Np<g>_cgs` (egy_g = mean photon energy from `info.descriptor.rt[:group_egy]`)
 - **`:rad_energy_density`**        total radiation energy density summed over all groups  [erg cm⁻³]
 
 The per-group photon properties parsed from `info_rt` (mean energy, energy bounds,
@@ -367,7 +367,7 @@ quantities (`:xHII`, `:xHI`, `:n_*`, `:em_recomb`) require an RT run and error o
 
 | quantity (per photon group i / ion) | Mera |
 |---|---|
-| photon number density | `getvar(rt, :Np`i`)` (× `unit_np` → `:Np`i`_cgs`) |
+| photon number density | `getvar(rt, :Np`i`)` (stored as c̃·N; physical N in `:Np`i`_cgs`) |
 | photon flux components | `getvar(rt, :Fx`i`/:Fy`i`/:Fz`i`)` (magnitude `:Fmag`i``) |
 | reduced flux (M1 closure) | `:reducedflux`i`` |
 | HII ionization fraction | `getvar(gas, :xHII)` |

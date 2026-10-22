@@ -8,12 +8,15 @@ on:
     tags: '*'
   pull_request:
 
-# master, multicode and tag builds all deploy to the same gh-pages branch. Run them one at a
-# time: pushed together, master and multicode once raced, and the second deploy was rejected.
-# GitHub keeps one running and one waiting run per group, so a third deploy started while two
-# are queued replaces the waiting one. Pull requests build without deploying and run freely.
+# master, multicode and tag builds all deploy to the same gh-pages branch. Run the branch
+# builds one at a time: pushed together, master and multicode once raced, and the second deploy
+# was rejected. GitHub keeps one running and one waiting run per group, and a newer run REPLACES
+# the waiting one. That is harmless for branches (the newer build has the newer docs) but not
+# for a release: the v1.8.1 tag build was waiting behind master and was cancelled by a multicode
+# push, so `stable` stayed on 1.8.0. Tags therefore get their own group and are never replaced
+# by a branch push. Pull requests build without deploying and run freely.
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('docs-pr-{0}', github.ref) || 'docs-deploy' }}
+  group: ${{ github.event_name == 'pull_request' && format('docs-pr-{0}', github.ref) || (startsWith(github.ref, 'refs/tags/') && 'docs-deploy-tags' || 'docs-deploy') }}
   cancel-in-progress: false
 
 # Opt JS-based actions into Node.js 24 ahead of GitHub's forced switch (2026-06-16).
