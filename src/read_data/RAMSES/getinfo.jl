@@ -488,6 +488,14 @@ function readrtfile1!(dataobject::InfoType)
             _rtset("unit_np",    9,  Float64)
             _rtset("unit_pf",    10, Float64)
             _rtset("rt_c_frac",  11, Float64)
+            # RAMSES writes one light-speed fraction per level, levelmin to nlevelmax
+            # (they differ with a variable speed of light); keep them all.
+            let s = get(kv, "rt_c_frac", nothing)
+                if s !== nothing
+                    v = [x for x in (tryparse(Float64, t) for t in split(s)) if x !== nothing]
+                    isempty(v) || (descriptor_list[:rt_c_frac_levels] = v)
+                end
+            end
             _rtset("n_star",     13, Float64)
             _rtset("T2_star",    14, Float64)
             _rtset("g_star",     15, Float64)

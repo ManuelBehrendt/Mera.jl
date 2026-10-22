@@ -24,6 +24,8 @@
 # on the full CI matrix. The data block runs on the rt_stromgren RAMSES-RT
 # output (ramses-2025.05); a separate block checks the non-RT guards.
 
+using Statistics
+
 @testset "RT API surface (data-free)" begin
     @test isdefined(Mera, :getrt)
     @test isdefined(Mera, :RtDataType)
@@ -121,23 +123,24 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             rf = getvar(rt, :reducedflux1)
             @test all(0.0 .<= rf .<= 1.0 + 1e-9)
 
-            # physical conversions = code value × descriptor unit
+            # physical conversions. RAMSES-RT stores the photon density in flux units,
+            # c̃·N in code units, so N [cm⁻³] = Np · unit_pf / c̃ (rt_output_hydro.f90).
             rtd = info.descriptor.rt
-            if haskey(rtd, :unit_np)
-                @test getvar(rt, :Np1_cgs) ≈ Np1 .* rtd[:unit_np]
-            end
+            cred = rtd[:rt_c_frac] * info.constants.c
+            @test rtd[:rt_c_frac_levels] == fill(rtd[:rt_c_frac], length(rtd[:rt_c_frac_levels]))
+            @test getvar(rt, :Np1_cgs) ≈ Np1 .* rtd[:unit_pf] ./ cred
             if haskey(rtd, :unit_pf)
                 @test getvar(rt, :Fmag1_cgs) ≈ getvar(rt, :Fmag1) .* rtd[:unit_pf]
             end
 
             # radiation energy density: parsed mean photon energies + total
-            if haskey(rtd, :group_egy) && haskey(rtd, :unit_np)
+            if haskey(rtd, :group_egy)
                 egy = rtd[:group_egy]
                 @test length(egy) == ng
                 @test all(egy .> 0.0)                     # mean photon energy [eV] is positive
-                # per-group energy density = Np·unit_np·egy[eV→erg]
+                # per-group energy density = N·egy[eV→erg]
                 u1 = getvar(rt, :photon_energy_density1)
-                @test u1 ≈ Np1 .* rtd[:unit_np] .* (egy[1] * info.constants.eV)
+                @test u1 ≈ getvar(rt, :Np1_cgs) .* (egy[1] * info.constants.eV)
                 @test all(u1 .>= 0.0)
                 # total equals the sum of the per-group densities (independent recompute)
                 usum = sum(getvar(rt, Symbol("photon_energy_density$g")) for g in 1:ng)
@@ -300,11 +303,11 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             @test_throws ErrorException getvar(rt, Symbol("reducedflux", ng + 1))
             @test_throws ErrorException getvar(rt, Symbol("photon_energy_density", ng + 1))
             # missing descriptor keys → guarded errors
-            g2 = deepcopy(rt); delete!(g2.info.descriptor.rt, :unit_np)
-            @test_throws ErrorException getvar(g2, :Np1_cgs)
-            @test_throws ErrorException getvar(g2, :rad_energy_density)
             g3 = deepcopy(rt); delete!(g3.info.descriptor.rt, :unit_pf)
             @test_throws ErrorException getvar(g3, :Fmag1_cgs)
+            @test_throws ErrorException getvar(g3, :Np1_cgs)
+            @test_throws ErrorException getvar(g3, :rad_energy_density)
+            @test_throws ErrorException getvar(g3, :Gamma_HI)
             # reduced flux is always finite (Np==0 guard avoids 0/0 NaN)
             @test all(isfinite, getvar(rt, :reducedflux1))
         end
@@ -342,11 +345,22 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             cred = rtd[:rt_c_frac] * info.constants.c
             pg   = info.descriptor.rtPhotonGroups
 
-            # Γ_HI: ≥0, equals Σ over groups, matches c_red·(Np·unit_np)·σ_csn for group 1
+            # Γ_HI: ≥0, equals Σ over groups, matches c̃·N·σ_csn for group 1
             Γ = getvar(rt, :Gamma_HI)
             @test all(Γ .>= 0.0)
             @test Γ ≈ sum(getvar(rt, Symbol("Gamma_HI", g)) for g in 1:ng)
-            @test getvar(rt, :Gamma_HI1) ≈ getvar(rt, :Np1) .* (rtd[:unit_np] * cred * pg[1][:csn_cm2][1])
+            @test getvar(rt, :Gamma_HI1) ≈ cred .* getvar(rt, :Np1_cgs) .* pg[1][:csn_cm2][1]
+
+            # a variable speed of light: N follows the c̃ of each cell's level, Γ = c̃·N·σ
+            # does not depend on it
+            vs = deepcopy(rt)
+            nl = length(rtd[:rt_c_frac_levels])
+            vs.info.descriptor.rt[:rt_c_frac_levels] = [2 * rtd[:rt_c_frac]; fill(rtd[:rt_c_frac], max(nl - 1, 1))]
+            lv = :level in propertynames(rt.data.columns) ? getvar(rt, :level) : fill(rt.lmax, length(rt.data))
+            atmin = lv .== info.levelmin
+            @test any(atmin)
+            @test getvar(vs, :Np1_cgs)[atmin] ≈ getvar(rt, :Np1_cgs)[atmin] ./ 2
+            @test getvar(vs, :Gamma_HI) ≈ Γ
 
             # photoheating: ≥0 and equals the per-group sum
             @test all(getvar(rt, :photoheating_HI) .>= 0.0)
@@ -362,11 +376,13 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             @test pion ≈ getvar(rt, :Gamma_HI) .* getvar(gas, :n_HI)
             @test getvar(rt, :ionization_balance, hydro_data=gas) ≈ pion .- getvar(gas, :recomb_rate)
 
-            # ionized core is near photoionization equilibrium (order unity) — validates c_red
-            core = getvar(gas, :xHII) .> 0.9
-            @test count(core) > 0
-            ratio = (pion ./ getvar(gas, :recomb_rate))[core]
-            @test any(x -> 0.2 < x < 5.0, ratio)
+            # the ionized core is in photoionization equilibrium: photoionizations balance
+            # recombinations. This checks the photon density conversion (a factor
+            # c̃/unit_v = 3.07 too high before it read Np as c̃·N).
+            core = getvar(gas, :xHII) .> 0.99
+            @test count(core) > 100
+            ratio = median((pion ./ getvar(gas, :recomb_rate))[core])
+            @test 0.7 < ratio < 1.4
 
             # guard: combined quantities require hydro_data
             @test_throws ErrorException getvar(rt, :photoionizations)

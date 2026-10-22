@@ -7,13 +7,21 @@ function check_rt_group(dataobject, g::Int, var)
     return nothing
 end
 
-# Reduced speed of light [cm/s] used by RAMSES-RT for the photon–matter interaction
-# rates (rt_c_frac · c). In the reduced-light-speed approximation the stored photon
-# density already reflects c_red, so c_red·N·σ is the physical rate. Falls back to the
-# full c if the descriptor lacks rt_c_frac.
-function _rt_cred(dataobject)
-    fc = get(dataobject.info.descriptor.rt, :rt_c_frac, 1.0)
-    return fc * dataobject.info.constants.c
+# The physical photon number density [photons cm^-3] per unit of the stored Np, a number
+# or one value per cell. RAMSES-RT writes the photon density "in flux units", c̃·N in
+# code units (rt_output_hydro.f90), so N = Np · unit_pf / c̃, with unit_pf = unit_np·unit_v
+# and c̃ the reduced light speed of the cell's level (it can differ per level). A rate
+# c̃·N·σ needs no c̃: it is Np · unit_pf · σ.
+function _rt_np_cgs(dataobject, masked_data, var)
+    rtd = dataobject.info.descriptor.rt
+    haskey(rtd, :unit_pf) || error("getvar :$var needs descriptor :unit_pf (RT info_rt).")
+    c = dataobject.info.constants.c
+    fr = get(rtd, :rt_c_frac_levels, [get(rtd, :rt_c_frac, 1.0)])
+    all(==(fr[1]), fr) && return rtd[:unit_pf] / (fr[1] * c)
+    lmin = dataobject.info.levelmin
+    lv = :level in propertynames(masked_data.columns) ? select(masked_data, :level) :
+         fill(dataobject.lmax, length(masked_data))
+    return [rtd[:unit_pf] / (fr[clamp(l - lmin + 1, 1, length(fr))] * c) for l in lv]
 end
 
 # Fetch a hydro variable aligned to the RT cells (same load); index by the RT mask if one
@@ -192,10 +200,10 @@ function get_data(dataobject::RtDataType,
             end
             vars_dict[:Np_total] = total .* selected_unit
 
-        # Reduced photon flux per group: f_g = |F_g| / (c·Np_g). In RAMSES code units
-        # unit_pf/unit_np equals the (reduced) light speed, so the dimensionless reduced
-        # flux is simply |F_g|/Np_g, bounded to [0,1] (1 = free-streaming beam,
-        # 0 = isotropic field). Cells with Np_g == 0 return 0.
+        # Reduced photon flux per group: f_g = |F_g| / (c̃·N_g). RAMSES-RT stores the photon
+        # density in flux units (c̃·N), so the dimensionless reduced flux is simply
+        # |F_g|/Np_g, bounded to [0,1] (1 = free-streaming beam, 0 = isotropic field).
+        # Cells with Np_g == 0 return 0.
         elseif (m = match(r"^reducedflux(\d+)$", string(i))) !== nothing
             g = m.captures[1]
             check_rt_group(dataobject, parse(Int, g), i)
@@ -205,14 +213,12 @@ function get_data(dataobject::RtDataType,
             fz = select(masked_data, Symbol("Fz" * g))
             vars_dict[i] = @. ifelse(np > 0, sqrt(fx^2 + fy^2 + fz^2) / np, 0.0)   # dimensionless [0,1]
 
-        # Physical photon number density per group [photons cm^-3] = Np_g · unit_np
-        # (unit_np from the RT descriptor, info_rt).
+        # Physical photon number density per group [photons cm^-3] = Np_g · unit_pf / c̃
+        # (the stored Np is c̃·N; see _rt_np_cgs).
         elseif (m = match(r"^Np(\d+)_cgs$", string(i))) !== nothing
             g = m.captures[1]
             check_rt_group(dataobject, parse(Int, g), i)
-            rtd = dataobject.info.descriptor.rt
-            haskey(rtd, :unit_np) || error("getvar :$i needs descriptor :unit_np (RT info_rt).")
-            vars_dict[i] = select(masked_data, Symbol("Np" * g)) .* rtd[:unit_np]   # [photons cm^-3], fixed cgs
+            vars_dict[i] = select(masked_data, Symbol("Np" * g)) .* _rt_np_cgs(dataobject, masked_data, i)   # [photons cm^-3], fixed cgs
 
         # Physical photon flux magnitude per group [photons cm^-2 s^-1] = |F_g| · unit_pf
         # (unit_pf from the RT descriptor, info_rt).
@@ -227,75 +233,74 @@ function get_data(dataobject::RtDataType,
             vars_dict[i] = @. sqrt(fx^2 + fy^2 + fz^2) * rtd[:unit_pf]   # [photons cm^-2 s^-1], fixed cgs
 
         # Radiation (photon) energy density per group [erg cm^-3]
-        #   u_g = Np_g · unit_np · (egy_g · eV) ,
+        #   u_g = N_g · (egy_g · eV) ,
         # with egy_g the mean photon energy of group g [eV] from the RT
-        # descriptor (:group_egy) and Np_g·unit_np the physical photon density.
+        # descriptor (:group_egy) and N_g the physical photon density (:Np<g>_cgs).
         elseif (m = match(r"^photon_energy_density(\d+)$", string(i))) !== nothing
             g = parse(Int, m.captures[1])
             rtd = dataobject.info.descriptor.rt
-            (haskey(rtd, :unit_np) && haskey(rtd, :group_egy)) ||
-                error("getvar :$i needs descriptor :unit_np and :group_egy (RT info_rt).")
+            haskey(rtd, :group_egy) ||
+                error("getvar :$i needs descriptor :group_egy (RT info_rt).")
             g <= length(rtd[:group_egy]) ||
                 error("getvar :$i: simulation has only $(length(rtd[:group_egy])) photon group(s).")
             egy_erg = rtd[:group_egy][g] * dataobject.info.constants.eV   # [erg] per photon
-            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* rtd[:unit_np] .* egy_erg   # [erg cm^-3], fixed cgs
+            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* _rt_np_cgs(dataobject, masked_data, i) .* egy_erg   # [erg cm^-3], fixed cgs
 
         # Total radiation energy density summed over all photon groups [erg cm^-3]
         elseif i == :rad_energy_density
             rtd = dataobject.info.descriptor.rt
-            (haskey(rtd, :unit_np) && haskey(rtd, :group_egy)) ||
-                error("getvar :rad_energy_density needs descriptor :unit_np and :group_egy (RT info_rt).")
+            haskey(rtd, :group_egy) ||
+                error("getvar :rad_energy_density needs descriptor :group_egy (RT info_rt).")
             eV = dataobject.info.constants.eV
             total = select(masked_data, :Np1) .* 0.0
             for g in 1:length(rtd[:group_egy])
                 total = total .+ select(masked_data, Symbol("Np$g")) .* (rtd[:group_egy][g] * eV)
             end
-            vars_dict[:rad_energy_density] = total .* rtd[:unit_np]   # [erg cm^-3], fixed cgs
+            vars_dict[:rad_energy_density] = total .* _rt_np_cgs(dataobject, masked_data, i)   # [erg cm^-3], fixed cgs
 
         # ── Radiation–matter rates ───────────────────────────────────────────────
-        # Photoionization rate of HI for group g [s^-1] = c_red · (Np_g·unit_np) · σ_csn,g(HI)
-        # (reduced-light-speed rate; σ_csn from rtPhotonGroups[g][:csn_cm2][1] = HI).
+        # Photoionization rate of HI for group g [s^-1] = c̃ · N_g · σ_csn,g(HI) = Np_g · unit_pf · σ
+        # (the stored Np is c̃·N, see _rt_np_cgs; σ_csn from rtPhotonGroups[g][:csn_cm2][1] = HI).
         elseif (m = match(r"^Gamma_HI(\d+)$", string(i))) !== nothing
             g = parse(Int, m.captures[1]); check_rt_group(dataobject, g, i)
             rtd = dataobject.info.descriptor.rt
-            haskey(rtd, :unit_np) || error("getvar :$i needs descriptor :unit_np (RT info_rt).")
+            haskey(rtd, :unit_pf) || error("getvar :$i needs descriptor :unit_pf (RT info_rt).")
             csn = dataobject.info.descriptor.rtPhotonGroups[g][:csn_cm2][1]
-            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* (rtd[:unit_np] * _rt_cred(dataobject) * csn)
+            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* (rtd[:unit_pf] * csn)
 
         # Total HI photoionization rate summed over groups [s^-1]
         elseif i == :Gamma_HI
             rtd = dataobject.info.descriptor.rt
-            haskey(rtd, :unit_np) || error("getvar :Gamma_HI needs descriptor :unit_np (RT info_rt).")
+            haskey(rtd, :unit_pf) || error("getvar :Gamma_HI needs descriptor :unit_pf (RT info_rt).")
             pg = dataobject.info.descriptor.rtPhotonGroups
-            cred_np = _rt_cred(dataobject) * rtd[:unit_np]
             total = select(masked_data, :Np1) .* 0.0
             for g in 1:(dataobject.info.nvarrt ÷ 4)
-                total = total .+ select(masked_data, Symbol("Np$g")) .* (cred_np * pg[g][:csn_cm2][1])
+                total = total .+ select(masked_data, Symbol("Np$g")) .* (rtd[:unit_pf] * pg[g][:csn_cm2][1])
             end
             vars_dict[:Gamma_HI] = total
 
         # Photoheating rate of HI for group g [erg s^-1] per HI atom
-        #   = c_red · (Np_g·unit_np) · σ_cse,g(HI) · (egy_g − 13.6 eV)
+        #   = c̃ · N_g · σ_cse,g(HI) · (egy_g − 13.6 eV) = Np_g · unit_pf · σ_cse · (egy_g − 13.6 eV)
         elseif (m = match(r"^photoheating_HI(\d+)$", string(i))) !== nothing
             g = parse(Int, m.captures[1]); check_rt_group(dataobject, g, i)
             rtd = dataobject.info.descriptor.rt
-            (haskey(rtd, :unit_np) && haskey(rtd, :group_egy)) ||
-                error("getvar :$i needs descriptor :unit_np and :group_egy (RT info_rt).")
+            (haskey(rtd, :unit_pf) && haskey(rtd, :group_egy)) ||
+                error("getvar :$i needs descriptor :unit_pf and :group_egy (RT info_rt).")
             cse = dataobject.info.descriptor.rtPhotonGroups[g][:cse_cm2][1]
             exc = max(rtd[:group_egy][g] - 13.6, 0.0) * dataobject.info.constants.eV   # excess [erg]
-            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* (rtd[:unit_np] * _rt_cred(dataobject) * cse * exc)
+            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* (rtd[:unit_pf] * cse * exc)
 
         # Total HI photoheating rate per HI atom [erg s^-1]
         elseif i == :photoheating_HI
             rtd = dataobject.info.descriptor.rt
-            (haskey(rtd, :unit_np) && haskey(rtd, :group_egy)) ||
-                error("getvar :photoheating_HI needs descriptor :unit_np and :group_egy (RT info_rt).")
+            (haskey(rtd, :unit_pf) && haskey(rtd, :group_egy)) ||
+                error("getvar :photoheating_HI needs descriptor :unit_pf and :group_egy (RT info_rt).")
             pg = dataobject.info.descriptor.rtPhotonGroups
-            cred_np = _rt_cred(dataobject) * rtd[:unit_np]; eV = dataobject.info.constants.eV
+            eV = dataobject.info.constants.eV
             total = select(masked_data, :Np1) .* 0.0
             for g in 1:(dataobject.info.nvarrt ÷ 4)
                 exc = max(rtd[:group_egy][g] - 13.6, 0.0) * eV
-                total = total .+ select(masked_data, Symbol("Np$g")) .* (cred_np * pg[g][:cse_cm2][1] * exc)
+                total = total .+ select(masked_data, Symbol("Np$g")) .* (rtd[:unit_pf] * pg[g][:cse_cm2][1] * exc)
             end
             vars_dict[:photoheating_HI] = total
 
