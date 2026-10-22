@@ -372,6 +372,54 @@ end
         @test getvar(getparticles_gadget(info2; families=[0], verbose=false), :vx) == [10.0, 20.0]  # no √a
     end
 
+    # The real AREPO fixtures are all at z = 0, where a = 1 and every a-power is invisible. This
+    # writes a z = 3 MHD snapshot and checks B and Potential against the IllustrisTNG data
+    # specification, computed here from the raw header numbers, not from Mera's scale factors:
+    #   B [G]      = B_code · h/a² · √(UnitMass/UnitLength) / (UnitLength/UnitVelocity)
+    #   φ [(km/s)²] = Potential / a      (on every particle type)
+    @testset "cosmological MHD and Potential at a ≠ 1 (z = 3)" begin
+        mktempdir() do d
+            a, h = 0.25, 0.7
+            UL, UM, UV = 3.085678e21, 1.989e43, 1.0e5
+            Bc  = Float32[2.0 0.5; 0.0 -1.0; 1.0 3.0]                  # (3, 2): gas cells
+            rho = Float32[4.0, 0.25]
+            h5open(joinpath(d, "snap_007.hdf5"), "w") do f
+                hg = attributes(create_group(f, "Header"))
+                hg["BoxSize"] = 1000.0; hg["NumPart_Total"] = UInt32[2, 0, 0, 0, 2, 0]; hg["MassTable"] = zeros(6)
+                hg["Time"] = a; hg["Redshift"] = 1 / a - 1; hg["HubbleParam"] = h
+                hg["Omega0"] = 0.3; hg["OmegaLambda"] = 0.7
+                hg["UnitLength_in_cm"] = UL; hg["UnitMass_in_g"] = UM; hg["UnitVelocity_in_cm_per_s"] = UV
+                create_group(f, "Config")                                 # mark it AREPO
+                g0 = create_group(f, "PartType0")
+                g0["Coordinates"] = Float64[100 200; 100 200; 100 200]; g0["Velocities"] = zeros(Float32, 3, 2)
+                g0["Masses"] = Float32[1.0, 1.0]; g0["Density"] = rho; g0["InternalEnergy"] = Float32[100.0, 100.0]
+                g0["ParticleIDs"] = UInt32[1, 2]; g0["MagneticField"] = Bc; g0["Potential"] = Float32[-8.0, -4.0]
+                g4 = create_group(f, "PartType4")
+                g4["Coordinates"] = Float64[300 400; 300 400; 300 400]; g4["Velocities"] = zeros(Float32, 3, 2)
+                g4["Masses"] = Float32[1.0, 1.0]; g4["ParticleIDs"] = UInt32[3, 4]; g4["Potential"] = Float32[-6.0, -2.0]
+            end
+            info = getinfo(7, d, verbose=false)
+            @test info.aexp == a && Mera.iscosmological(info)
+
+            gas = getparticles(info; families=[0], verbose=false)
+            Bunit = h / a^2 * sqrt(UM / UL) / (UL / UV)                    # TNG spec, Gauss per code unit
+            for (k, c) in enumerate((:bx, :by, :bz))
+                @test getvar(gas, c, :Gauss) ≈ Float64.(Bc[k, :]) .* Bunit rtol=1e-6
+            end
+            Bphys = vec(sqrt.(sum(Float64.(Bc).^2; dims=1))) .* Bunit
+            @test getvar(gas, :bmag, :Gauss) ≈ Bphys rtol=1e-6
+            @test getvar(gas, :pmag, :Ba) ≈ Bphys.^2 ./ 8π rtol=1e-6          # B²/8π, Gaussian units
+            rhophys = Float64.(rho) .* UM / UL^3 * h^2 / a^3
+            @test getvar(gas, :rho, :g_cm3) ≈ rhophys rtol=1e-6
+            @test getvar(gas, :v_alfven, :km_s) ≈ Bphys ./ sqrt.(4π .* rhophys) ./ 1e5 rtol=1e-6
+
+            # the potential is divided by a on gas AND on stars (an all-family field)
+            @test getvar(gas, :gpot) ≈ [-8.0, -4.0] ./ a
+            st = getparticles(info; families=[4], verbose=false)
+            @test getvar(st, :gpot) ≈ [-6.0, -2.0] ./ a
+        end
+    end
+
     @testset "volume-weighted particle projection Σ(qV)/ΣV (gas)" begin
         # two gas cells at the same position ⇒ one filled pixel = the weighted mean of their T
         fn = joinpath(dir, "snap_007.hdf5")
