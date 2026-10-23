@@ -123,19 +123,6 @@ function extract_column_data(vars_1D, pos_1D, cpus_1D, nvarh_corr, nvarh_i_list,
 end
 
 
-"""
-    gethydro(info::InfoType, var::Symbol; kwargs...)
-    gethydro(info::InfoType, vars::Vector{Symbol}; kwargs...)
-    gethydro(info::InfoType; vars=[:all], kwargs...)
-
-Load leaf-cell hydro variables from a RAMSES output described by an `InfoType`.
-Supports spatial sub-selection (`xrange/yrange/zrange`, `center`, `range_unit`),
-level restriction (`lmax`), variable filtering (`vars` or single `var`), basic data
-sanitation (`smallr`, `smallc`, negative value checks), progress + verbosity
-control, and explicit thread limiting (`max_threads`).  Returns a `HydroDataType`
-containing an IndexedTable plus metadata (selected variables, scales, ranges).
-See extended docstring below for full argument reference and examples.
-"""
 function gethydro(dataobject::InfoType, var::Symbol;
                     lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],
@@ -198,120 +185,77 @@ function gethydro(dataobject::InfoType, vars::Array{Symbol,1};
 end
 
 """
-#### Read the leaf-cells of the hydro-data:
-- select variables
-- limit to a maximum level
-- limit to a spatial range
-- multi-threading
-- set a minimum density or sound speed
-- check for negative values in density and thermal pressure
-- print the name of each data-file before reading it
-- toggle verbose mode
-- toggle progress bar
-- pass a struct with arguments (myargs)
+    gethydro(info::InfoType; vars=[:all], kwargs...) -> HydroDataType
+    gethydro(info::InfoType, var::Symbol; kwargs...) -> HydroDataType
+    gethydro(info::InfoType, vars::Vector{Symbol}; kwargs...) -> HydroDataType
 
+Load the hydro cells of a RAMSES output into a table in memory.
 
+Each row is one leaf cell: its refinement level, its integer position on that level, and one
+column per hydro variable, in code units. Cells refined beyond `lmax` are returned at level
+`lmax`, with the values RAMSES stores for them. The output files are read in parallel, one group
+of files per thread.
+
+# Arguments
+- `info::InfoType`: the output to read, from [`getinfo`](@ref).
+- `var`, `vars`: the variables to load, in any order. `:all` (the default) loads every hydro
+  variable: `:rho`, `:vx`, `:vy`, `:vz`, `:p`, the magnetic field of MHD runs, and the passive
+  scalars. Scalars carry the names from `hydro_file_descriptor.txt` when the output has one
+  (e.g. `:metallicity`), otherwise positional names (`:var6`, `:var7`, ...); positional names
+  always work. `:cpu` adds the number of the file each cell came from.
+
+# Keywords
+Selection:
+- `lmax::Real = info.levelmax`: the deepest level to read.
+- `xrange`, `yrange`, `zrange`: `[min, max]` of the region to read, in `range_unit` and relative
+  to `center`. `missing` (the default) means the full extent.
+- `center = [0, 0, 0]`: the origin of the ranges, in `range_unit`. `[:bc]` is the box centre;
+  single components can be `:bc`, e.g. `[:bc, :bc, 12.0]`.
+- `range_unit::Symbol = :standard`: the unit of the ranges and the centre. `:standard` means
+  fractions of the box (0 to 1); any length unit in `info.scale` works, e.g. `:kpc` or `:pc`.
+
+Value checks:
+- `smallr::Real = 0`: raise densities below this value to it, in code units. `0` switches it off.
+- `smallc::Real = 0`: the same floor for the thermal pressure (the name follows RAMSES).
+- `check_negvalues::Bool = false`: count negative densities and pressures and report them.
+  Used only where the matching floor is off.
+
+Output and performance:
+- `max_threads::Int = Threads.nthreads()`: the most threads to use for reading.
+- `verbose::Bool = true`: print a summary of what is read.
+- `show_progress::Bool = true`: show a progress bar.
+- `print_filenames::Bool = false`: print each file name as it is read.
+- `myargs::ArgumentsType`: set `lmax`, the ranges, `center`, `range_unit`, `verbose` and
+  `show_progress` in one object. A keyword given directly takes precedence.
+
+# Returns
+A `HydroDataType` with
+- `data`: the table, with the columns `:level`, `:cx`, `:cy`, `:cz` and then the variables;
+- `info`, `scale`: the simulation information and its unit scales;
+- `lmin`, `lmax`, `boxlen`, `ranges`: the levels and the region that were read;
+- `selected_hydrovars`, `used_descriptors`, `smallr`, `smallc`: the options used.
+
+Derived quantities, positions and units come from [`getvar`](@ref), not from the table.
+
+# Examples
 ```julia
-gethydro(dataobject::InfoType;
-            lmax::Real=dataobject.levelmax,
-            vars::Array{Symbol,1}=[:all],
-            xrange::Array{<:Any,1}=[missing, missing],
-            yrange::Array{<:Any,1}=[missing, missing],
-            zrange::Array{<:Any,1}=[missing, missing],
-            center::CenterType=[0., 0., 0.],
-            range_unit::Symbol=:standard,
-            smallr::Real=0.,
-            smallc::Real=0.,
-            check_negvalues::Bool=false,
-            print_filenames::Bool=false,
-            verbose::Bool=true,
-            show_progress::Bool=true,
-            myargs::ArgumentsType=ArgumentsType(),
-            max_threads::Int=Threads.nthreads())
-```
-#### Returns an object of type HydroDataType, containing the hydro-data table, the selected options and the simulation ScaleType and summary of the InfoType
-```julia
-return HydroDataType()
+julia> info = getinfo(300, "path/to/simulation");
 
-# get an overview of the returned fields:
-# e.g.:
-julia> info = getinfo(100)
-julia> gas  = gethydro(info)
-julia> viewfields(gas)
-#or:
-julia> fieldnames(gas)
-```
+julia> gas = gethydro(info);                       # every variable, the whole box
 
+julia> gas = gethydro(info, [:rho, :p]; lmax=8);   # two variables, down to level 8
 
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
-##### Predefined/Optional Keywords:
-- **`lmax`:** the maximum level to be read from the data
-- **`var(s)`:** the selected hydro variables in arbitrary order: :all (default), :cpu, :rho, :vx, :vy, :vz, :p, and the passive scalars. When the output has a `hydro_file_descriptor.txt`, the scalars carry their descriptor names (e.g. :metallicity, :scalar_00, :scalar_01...); without a descriptor they are positional (:var6, :var7...). Positional :varN selectors keep working in either case.
-- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
-- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
-- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
-- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`smallr`:** set lower limit for density; zero means inactive
-- **`smallc`:** set lower limit for thermal pressure; zero means inactive
-- **`check_negvalues`:** check loaded data of "rho" and "p" on negative values; false by default
-- **`print_filenames`:** print on screen the current processed hydro file of each CPU
-- **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
-- **`show_progress`:** print progress bar on screen
-- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
-- **`max_threads`: give a maximum number of threads that is smaller or equal to the number of assigned threads in the running environment
+julia> propertynames(gas.data.columns)
+(:level, :cx, :cy, :cz, :rho, :p)
 
+julia> gas = gethydro(info; xrange=[-10, 10], yrange=[-10, 10], zrange=[-2, 2],
+                      center=[:bc], range_unit=:kpc);   # a 20 x 20 x 4 kpc slab
 
-### Defined Methods - function defined for different arguments
-- gethydro( dataobject::InfoType; ...) # no given variables -> all variables loaded
-- gethydro( dataobject::InfoType, var::Symbol; ...) # one given variable -> no array needed
-- gethydro( dataobject::InfoType, vars::Array{Symbol,1}; ...)  # several given variables -> array needed
-
-
-#### Examples
-```julia
-# read simulation information
-julia> info = getinfo(420)
-
-# Example 1:
-# read hydro data of all variables, full-box, all levels
-julia> gas = gethydro(info)
-
-# Example 2:
-# read hydro data of all variables up to level 8
-# data range 20x20x4 kpc; ranges are given in kpc relative to the box (here: 48 kpc) center at 24 kpc
-julia> gas = gethydro(    info,
-                          lmax=8,
-                          xrange=[-10.,10.],
-                          yrange=[-10.,10.],
-                          zrange=[-2.,2.],
-                          center=[24., 24., 24.],
-                          range_unit=:kpc )
-
-# Example 3:
-# give the center of the box by simply passing: center = [:bc] or center = [:boxcenter]
-# this is equivalent to center=[24.,24.,24.] in Example 2
-# the following combination is also possible: e.g. center=[:bc, 12., 34.], etc.
-julia> gas = gethydro(    info,
-                          lmax=8,
-                          xrange=[-10.,10.],
-                          yrange=[-10.,10.],
-                          zrange=[-2.,2.],
-                          center=[33., bc:, 10.],
-                          range_unit=:kpc )
-
-# Example 4:
-# read hydro data of the variables density and the thermal pressure, full-box, all levels
-julia> gas = gethydro( info, [:rho, :p] ) # use array for the variables
-
-# Example 5:
-# read hydro data of the single variable density, full-box, all levels
-julia> gas = gethydro( info, :rho ) # no array for a single variable needed
-...
+julia> getvar(gas, :mass, :Msol)                   # cell masses in solar masses
 ```
 
+See also [`getinfo`](@ref), [`getvar`](@ref), [`subregion`](@ref), [`projection`](@ref),
+[`savedata`](@ref).
 """
 function gethydro(dataobject::InfoType;
                     lmax::Real=dataobject.levelmax,

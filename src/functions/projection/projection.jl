@@ -1,19 +1,9 @@
 """
     projection()
 
-Display an overview of variable symbols accepted by the projection interface for
-hydro and particle data as well as derived quantities. This zero-argument form is a
-helper to discover valid field names before calling one of the many method
-overloads such as:
+Print the quantities that can be projected, for cells and for particles, and return nothing.
 
-    projection(hydro::HydroDataType, :rho; direction=:z, res=256)
-    projection(particles::PartDataType, [:mass, :vz]; weighting=:mass)
-
-Actual data projections are implemented in specialized method definitions located
-in `projection_hydro.jl` and `projection_particles.jl` (and gravity combo variants).
-Those methods accept keywords like `direction`, `res`, `xrange`, `yrange`, `zrange`,
-`center`, `weighting`, `show_progress`, and unit selection arguments.  This summary
-call prints the canonical / alias variable names and returns nothing.
+The projections themselves are the methods `projection(data, var, ...)`.
 """
 function projection()
     println("Predefined vars for projections:")

@@ -377,24 +377,6 @@ end
 
 # ========== CONVENIENCE OVERLOADS FOR HYDRO + GRAVITY DATA ==========
 
-"""
-#### Combined Hydro + Gravity Projection Functions
-
-These convenience overloads accept both HydroDataType and GravDataType arguments,
-enabling access to gravity-derived quantities while maintaining hydro mass weighting.
-
-```julia
-# Single variable projection
-projection(hydro, gravity, :epot)                    # Gravity potential with hydro weighting
-projection(hydro, gravity, :rho, :g_cm3)            # Hydro density (works as before)
-
-# Multiple variables with same units  
-projection(hydro, gravity, [:epot, :rho], :standard) # Mixed gravity/hydro variables
-
-# Multiple variables with different units
-projection(hydro, gravity, [:epot, :rho], [:erg, :g_cm3]) # Custom units per variable
-```
-"""
 # Either order works. `getvar` reads gravity-first (you are asking the gravity object for a
 # quantity, hydro only supplies the mass) while `projection` grew up hydro-first (hydro supplies
 # the geometry and the weight). Rather than break one of the two released spellings, both are
@@ -432,542 +414,118 @@ end
 
 
 """
-# AMR Hydro Projection Functions
+    projection(data, var::Symbol, unit::Symbol=:standard; kwargs...) -> AMRMapsType
+    projection(data, vars::Vector{Symbol}, units::Vector{Symbol}; kwargs...) -> AMRMapsType
+    projection(data, vars::Vector{Symbol}, unit::Symbol=:standard; kwargs...) -> AMRMapsType
+    projection(gas::HydroDataType, grav::GravDataType, var_or_vars, unit_or_units; kwargs...)
+    projection(part::PartDataType, ...) -> PartMapsType     # see the particle method below
+    projection()
 
-This module provides high-performance functionality for projecting AMR (Adaptive Mesh Refinement) 
-hydrodynamic simulation data onto regular 2D grids. The projection engine handles multi-level AMR 
-data with proper coordinate transformations, geometric mapping, and optimized parallel processing.
+Project cells onto a map, along a box axis or along any line of sight.
 
-## Architecture Overview
+`data` is a hydro or RT object, or a selection made from one. Every cell is deposited onto the
+pixels it covers, on every level the object holds, so the total mass of a map is conserved to
+round-off, for any pixel size and number of threads. `:sd` gives the surface density; any other
+quantity a weighted mean along the line of sight. `projection()` prints the quantities that can
+be projected.
 
-The projection system uses **variable-based parallelization** where each thread processes one
-variable across all AMR levels. This approach eliminates the costly combining phase that
-traditional chunked parallelization requires, resulting in significant performance improvements.
+# Arguments
+- `data`: the cells to project, from [`gethydro`](@ref) or `getrt`, or a selection.
+- `var`, `vars`: one quantity, or several, e.g. `:sd`, `:rho`, `:T`, `:vx`, `:σz`; off-axis also
+  `:vlos` and `:σlos`.
+- `unit`, `units`: the unit of each map, e.g. `:Msol_pc2`, `:g_cm3`, `:K`, `:km_s`; `:standard`
+  means code units. They can also be given as the keywords `unit` and `units`.
+- `grav`: a gravity object for gravity quantities such as `:epot`, projected on the cells of the
+  hydro object `gas`. The two objects can be given in either order.
 
-!!! note "Cosmological runs"
-    For a cosmological simulation, lengths, extents and (surface) densities here
-    are in the **proper (physical) frame** at the snapshot's scale factor `aexp`
-    (RAMSES `unit_l`/`unit_d` are proper). Convert to comoving with the
-    `proper_to_comoving_*` helpers (× or ÷ powers of `aexp`). The cosmology-aware
-    derived gas field `:overdensity` (= ρ/ρ̄_b − 1) can be projected like any
-    other hydro variable.
+# Keywords
+Map grid:
+- `pxsize = [value, unit]`: the size of a pixel, e.g. `[50, :pc]`; the preferred way to set the
+  resolution. The pixel is `boxlen/ceil(boxlen/pxsize)`, exactly `pxsize` when it divides the box.
+- `res`: the number of pixels across the **whole box**, so a window of a tenth of the box gives a
+  tenth of `res` pixels. Default `2^lmax`.
+- `lmax = data.lmax`: sets the default `res`; it does not coarsen the data.
 
-### Key Design Principles:
-- **Thread Safety**: No shared mutable state between threads
-- **Memory Efficiency**: Direct allocation without memory pools  
-- **Performance**: Variable-based parallelization eliminates combining overhead
-- **Conservation**: Mass-preserving cell-to-pixel mapping
-- **Flexibility**: Support for multiple projection directions and coordinate systems
+Region:
+- `xrange`, `yrange`, `zrange`: `[min, max]` of the volume to project, in `range_unit` and
+  relative to `center`; `missing` means the full extent. Off-axis these are world-space ranges.
+- `center = [0, 0, 0]`: the centre of the map, in `range_unit`; `[:bc]` is the box centre.
+- `range_unit::Symbol = :standard`: `:standard` means fractions of the box; any length unit in
+  `info.scale` works, e.g. `:kpc`.
+- `mask`: a `Bool` vector with one entry per cell, e.g. from [`getmask`](@ref); only cells marked
+  `true` are projected.
 
-## Core Functionality
+View (give one of these ways; without any, the axis-aligned view runs):
+- `direction::Symbol = :z`: `:x`, `:y`, `:z`, or `:faceon`/`:edgeon` for a disc, oriented by its
+  angular momentum.
+- `inclination`, `azimuth`, `axis`: tilt the view away from a reference `axis` (`:z` by default,
+  `:angmom` for the object's own spin, or a vector) and turn it about that axis.
+  `position_angle` rolls the finished image. `angle_unit = :deg` (or `:rad`).
+- `los`, `up`: the line of sight as a vector, and optionally the up direction of the image.
+- `theta`, `phi`: spherical angles of the line of sight; deprecated since 1.8, removed in 2.0.
+- `angmom_radius = [r, unit]`: compute the `:angmom`, `:faceon` and `:edgeon` orientation from a
+  sphere about `center` only.
 
-### Data Projection Features:
-- **Multi-resolution mapping**: Projects AMR cells from different refinement levels onto uniform grids
-- **Variable projection**: Supports density, surface density, velocity, pressure, temperature and derived quantities
-- **Flexible grid sizing**: Custom resolution, pixel size, or automatic sizing based on AMR levels
-- **Spatial filtering**: Range-based data selection in x, y, z dimensions with thin slice support
-- **Weighting schemes**: Mass weighting (default), volume weighting, or custom weighting functions
-- **Direction control**: Project along x, y, or z directions with proper coordinate remapping
+Off-axis frame:
+- `fov`, `fov_unit = :standard`, `aperture = :circle`: a frame of half-width `fov` fixed in the
+  camera plane, the same at every angle; `aperture=:square` fills the rectangle, and
+  `fov=[wx, wy]` makes it rectangular.
+- `depth`, `depth_unit = :standard`: keep a slab of this half-thickness along the line of sight.
+- `split::Bool = false`, `refine::Int = 0`, `refine_to`: weight cells cut by the `depth` slab or
+  the `fov` sphere by the fraction inside, and subdivide them for a sharper edge.
+- `binning::Symbol = :overlap`, `nmax::Int = 64`: how a rotated cell is shared among pixels;
+  `:exact` is the reference, `:cic` and `:ngp` are fast previews.
 
-### AMR-Specific Features:
-- **Conservative mapping**: Mass-conserving cell-to-pixel mapping with geometric overlap calculations
-- **Level-specific processing**: Individual handling of each AMR refinement level for accuracy
-- **Boundary handling**: Robust treatment of cell boundaries and partial overlaps
-- **Coordinate transformations**: Automatic handling of different AMR coordinate systems
+Averaging:
+- `weighting = [:mass]`: the weight of the mean, `[:quantity]` or `[:quantity, unit]`, e.g.
+  `[:volume]`. RT objects default to `[:volume]`, since their cells carry no mass.
+- `mode::Symbol = :standard`: `:standard` gives the weighted mean, `:sum` the weighted sum per
+  pixel. `:sd` and `:mass` are not affected.
+- `data_center = center`, `data_center_unit`: the origin of the map axes and of cylindrical and
+  spherical quantities, when it should differ from `center`.
+- `gravity_data`: a gravity object, as an alternative to passing `grav` as an argument.
 
-## Main Projection Function
+Output and performance:
+- `max_threads::Int = Threads.nthreads()`: the most threads to use.
+- `verbose::Bool = true`, `verbose_threads::Bool = false`: print a summary, or also the use of
+  the threads.
+- `show_progress::Bool = true`: show a progress bar.
+- `myargs::ArgumentsType`: set common keywords in one object; a keyword given directly takes
+  precedence.
 
-Create high-performance 2D projections of AMR hydro data with full control over resolution, 
-spatial ranges, and processing options. This function automatically selects between sequential 
-and variable-based parallel processing based on data characteristics.
+# Returns
+An `AMRMapsType` (also called `HydroMapsType`) with
+- `maps`: a `Dict` of 2-D arrays, one per quantity, with `maps_unit`, `maps_mode` and
+  `maps_weight` describing each;
+- `extent`, `cextent`: the map edges `[xmin, xmax, ymin, ymax]` in code length, from the box
+  corner or from the centre; [`getextent`](@ref)`(map, :kpc)` converts them;
+- `pixsize`: the pixel size in code length;
+- `ranges`: the projected region in fractions of the box; `center`, and off-axis the camera
+  `los`, `up` and `cam_right`;
+- `lmin`, `lmax`, `lmax_projected`, `boxlen`, `scale`, `info`.
 
-### Function Signature
+In a cosmological run, lengths and densities are proper (physical) at the scale factor of the
+snapshot. The details of off-axis frames, depth, partial cells and deposits are on the
+Off-axis API page; the RT and gravity forms on the Projections API page.
 
+# Examples
 ```julia
-projection(dataobject::HydroDataType, vars::Array{Symbol,1};
-           units::Array{Symbol,1}=[:standard],
-           lmax::Real=dataobject.lmax,
-           res::Union{Real, Missing}=missing,
-           pxsize::Array{<:Any,1}=[missing, missing],
-           mask::Union{Vector{Bool}, MaskType}=[false],
-           direction::Symbol=:z,
-           los::Union{Array{<:Real,1}, Nothing}=nothing,
-           up::Union{Array{<:Real,1}, Nothing}=nothing,
-           theta::Union{Real, Nothing}=nothing,
-           phi::Union{Real, Nothing}=nothing,
-           inclination::Union{Real, Nothing}=nothing,
-           azimuth::Union{Real, Nothing}=nothing,
-           position_angle::Union{Real, Nothing}=nothing,
-           axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
-           angle_unit::Symbol=:deg,
-           binning::Symbol=:overlap,
-           nmax::Int=64,
-           fov=nothing,
-           fov_unit::Symbol=:standard,
-           aperture::Symbol=:circle,
-           depth=nothing,
-           depth_unit::Symbol=:standard,
-           angmom_radius=nothing,
-           split::Bool=false,
-           refine::Int=0,
-           refine_to=nothing,
-           weighting::Array{<:Any,1}=[:mass, missing],
-           mode::Symbol=:standard,
-           xrange::Array{<:Any,1}=[missing, missing],
-           yrange::Array{<:Any,1}=[missing, missing],
-           zrange::Array{<:Any,1}=[missing, missing],
-           center::CenterType=[0., 0., 0.],
-           range_unit::Symbol=:standard,
-           data_center::CenterType=[missing, missing, missing],
-           data_center_unit::Symbol=:standard,
-           verbose::Bool=true,
-           show_progress::Bool=true,
-           verbose_threads::Bool=false,
-           max_threads::Int=Threads.nthreads(),
-           myargs::ArgumentsType=ArgumentsType())
+julia> m = projection(gas, :sd, :Msol_pc2; pxsize=[50, :pc], xrange=[-10, 10],
+                      yrange=[-10, 10], zrange=[-2, 2], center=[:bc], range_unit=:kpc);
 
-return AMRMapsType
+julia> size(m.maps[:sd]), getextent(m, :kpc; center=true)   # 400 x 400 pixels, ±10 kpc
+
+julia> m = projection(gas, [:rho, :T], [:g_cm3, :K]; pxsize=[100, :pc], center=[:bc]);
+
+julia> m = projection(gas, :sd, :Msol_pc2; direction=:edgeon, angmom_radius=[10, :kpc],
+                      fov=20, fov_unit=:kpc, aperture=:square, center=[:bc],
+                      range_unit=:kpc, pxsize=[100, :pc]);    # an edge-on disc
+
+julia> m = projection(gas, grav, :epot);                     # gravity on the gas cells
 ```
 
-### Arguments
-
-#### Required Parameters:
-- **`dataobject::HydroDataType`**: AMR hydro simulation data loaded by Mera.jl
-  - Must contain spatial coordinates and hydro variables
-  - Supports RAMSES, ENZO, and other AMR formats
-- **`vars::Array{Symbol,1}`**: Variables to project (e.g., [:rho, :vx, :vy] or [:sd])
-  - Multiple variables trigger automatic variable-based parallelization
-  - Single variables use optimized sequential processing
-
-#### Grid Resolution Control:
-- **`res::Union{Real, Missing}`**: pixel count per dimension **across the whole box**, so the
-  pixel size is `boxlen/res` and a *windowed* projection returns only the pixels the window
-  covers (a ±5 kpc window in a 100 kpc box at `res=64` gives an 8×8 map, not 64×64). This is
-  why `res` pairs with `lmax` (`res = 2^lmax`). Use `pxsize=[size, unit]` to set the pixel
-  size directly and get a window-sized map.
-  - Higher values increase precision but require more memory
-  - Recommended: 256-1024 for most applications
-- **`lmax::Real`**: Use 2^lmax pixels when res not specified (default: dataobject.lmax)
-  - Automatically matches finest AMR level resolution
-- **`pxsize::Array`**: Physical pixel size `[value, unit]` (overrides res/lmax)
-  - Direct control over spatial resolution
-  - The effective pixel is `boxlen/ceil(boxlen/pxsize)` — exactly the requested size only
-    when it divides the box length (both the axis-aligned and off-axis paths share this)
-  - Pixel COUNTS still differ between paths at the same `pxsize`: axis-aligned maps frame
-    the requested window (or the object's stored ranges) on the box-anchored lattice,
-    while off-axis maps auto-fit the rotated data's bounding box plus an AMR-aware border
-    (one pixel + half the coarsest selected cell per side) — pin the frame explicitly if
-    you need comparable map dimensions
-
-#### Spatial Range Control:
-- **`xrange/yrange/zrange::Array`**: Spatial bounds [min, max] relative to center
-  - Define the physical region to project (e.g., [-10, 10] for ±10 units)
-  - Units controlled by range_unit parameter
-- **`center::Array`**: Projection center coordinates (use [:bc] for box center)
-  - Can be physical coordinates or special values like [:bc], [:com]
-- **`range_unit::Symbol`**: Units for ranges/center (:kpc, :Mpc, :pc, :standard, etc.)
-  - Ensures consistent spatial scaling across different simulations
-- **`direction::Symbol`**: Axis-aligned projection direction (:x, :y, :z)
-  - Determines which spatial dimension is integrated over
-  - Also accepts the disk presets `:faceon` / `:edgeon` (off-axis, see below)
-
-#### Off-axis projection (arbitrary line of sight):
-Give any of the following to project along an arbitrary line of sight instead of an axis.
-When none are given, the axis-aligned path above runs unchanged. **Angles are in degrees by
-default** (`angle_unit=:rad` to switch).
-There are five ways to say where the camera looks, and they are alternatives: give exactly one.
-Which to reach for:
-
-- an **object** you want face-on or inclined → `inclination`/`azimuth` with `axis=:angmom`
-- a **box-aligned** view → `direction=:x/:y/:z`
-- a direction you already hold as a **vector**, e.g. one frozen from an earlier snapshot so a time
-  series keeps a fixed orientation → `los=`
-- **spherical angles in the box frame**, the usual physics convention → `theta`/`phi`. This is the
-  same family as `los=`; `theta`/`phi` name the direction with two angles instead of three
-  components, and unlike `inclination`/`azimuth` it is measured from the box axes rather than from a
-  reference axis you choose.
-
-- **`inclination`, `azimuth`** (user-oriented): tilt the view. `position_angle` is **not** an
-  alias of `azimuth`: `azimuth` turns the camera about the reference axis and changes the line
-  of sight, while `position_angle` rolls the finished image about it and leaves `m.los` alone
-  away from a reference `axis` by `inclination` (0°⇒down the axis, 90°⇒⟂ to it) and rotate
-  around it by `azimuth`.
-- **`axis`**: reference axis for inclination/azimuth. Default `:z` (box vertical — assumes
-  nothing about the contents, good for clouds/filaments/cosmic web). `:angmom` measures from the
-  object's own angular momentum `L` (then 0°=face-on, 90°=edge-on); or give `:x`/`:y`/a 3-vector.
-  NOTE: `:angmom` (and `:faceon`/`:edgeon`) are only a meaningful "disk normal" for a **rotating
-  disk**, and `L` is computed about `center` — so center on the object (its centre of mass) for
-  `L` to be the true spin; off-centre it is contaminated by bulk motion.
-- **`direction=:faceon`/`:edgeon`**: shortcuts for `inclination=0`/`90` with `axis=:angmom`.
-- **`los::Vector`**: explicit line-of-sight (viewing) direction, e.g. `los=[1,1,1]` (need not be normalized)
-- **`theta`, `phi`**: spherical angles about the box axes; `los=[sinθcosφ, sinθsinφ, cosθ]`.
-- **`up::Vector`**: optional camera up-vector. With `inclination`/`azimuth` the default keeps
-  the reference axis upright. With `los`/`theta`/`phi` and no `up`, the hint is world **+z**,
-  falling back to **+y** when the line of sight is itself the z axis, so a box-axis `los`
-  reproduces the matching `direction=` preset.
-- **`angle_unit::Symbol`**: `:deg` (default) or `:rad`
-- **`binning::Symbol`**: how rotated cells are deposited onto the camera plane —
-  - `:overlap` (default) — per-cell footprint supersampling (`ns = ceil(cellsize/pixel)` sub-points
-    per cube axis, capped at `nmax`); AMR-aligned (no moiré, no interior holes), converges to
-    `:exact`, and is usually *faster* than `:exact`. Cells coarser than the `nmax` cap (`ns` would
-    exceed `nmax`) deposit each sub-cell as a footprint-sized top-hat so they still tile the camera
-    plane without gaps — fine cells keep the sharp ±1px deposit.
-  - `:exact` — analytic box-spline footprint: integrates the line-of-sight column (chord length
-    through the cube) over each pixel exactly; no supersampling cap, the reference for fidelity.
-  - `:cic` — fast preview, bilinear deposit of cell centres; speckles/moiré on coarse AMR cells
-  - `:ngp` — fast preview, nearest-pixel deposit (sharp)
-- **`nmax::Int`**: `:overlap` supersampling cap (default `64`) — max sub-points per cube axis.
-  Raise for fewer artifacts on very coarse cells (slower, ∝ `nmax³`), lower for speed.
-
-  All are mass-conserving. Off-axis supports the standard hydro/RT fields, `:sd`/`:mass`, the
-  velocity dispersions (box frame and camera frame) and the `:ncell` counter. Only `:r_cylinder`,
-  `:r_sphere` and `:ϕ` still need an axis direction: they describe the pixel's own geometry, and
-  an off-axis pixel is a slanted column with no single value.
-
-#### Data Processing Options:
-- **`weighting::Array`**: Variable for weighting `[quantity, unit]` (default: `[:mass]`)
-  - Controls how cell values are averaged: mass-weighted, volume-weighted, etc.
-  - e.g. `[:volume]` for a volume-weighted average, or `[:mass]` (default)
-- **`mode::Symbol`**: Processing mode (:standard or :sum)
-  - :standard → weighted averages (typical for intensive quantities)
-  - :sum → accumulative totals (for extensive quantities like mass)
-- **`mask::Union{Vector{Bool}, MaskType}`**: Boolean mask to exclude cells
-  - Filter out unwanted regions or apply custom selection criteria
-- **`units::Array{Symbol,1}`**: Output units for projected variables
-  - Convert results to desired physical units automatically
-
-#### Advanced Options:
-- **`data_center/data_center_unit`**: Alternative center for data calculations
-  - When different from projection center (useful for coordinate transformations)
-- **`verbose::Bool`**: Print diagnostic information during processing (default: true)
-  - Shows progress, memory usage, and basic threading information
-- **`show_progress::Bool`**: Display progress bar for level-by-level processing (default: true)
-  - Visual feedback for long-running projections
-- **`verbose_threads::Bool`**: Show detailed multithreading diagnostics (default: false)
-  - Enable for debugging parallel performance or thread behavior
-- **`myargs::ArgumentsType`**: Struct to pass multiple arguments simultaneously
-  - Convenient for passing common parameter sets
-
-### Method Variants
-
-The projection function supports multiple calling patterns for convenience:
-
-```julia
-# Single variable projection
-projection(dataobject, :rho)                    # Density with default settings
-projection(dataobject, :rho, unit=:g_cm3)      # Density in specific units
-
-# Multiple variables with same units  
-projection(dataobject, [:v, :vx, :vy], :km_s) # Multiple vars, single unit
-
-# Multiple variables with different units
-projection(dataobject, [:rho, :sd], [:g_cm3, :Msol_pc2]) # Different units per variable
-
-# Surface density projection (special handling)
-projection(dataobject, :sd, :Msol_pc2)         # Surface density in solar masses per pc²
-```
-
-### Usage Examples
-
-#### Basic Density Projection
-```julia
-# Simple density map of full simulation box (sequential processing)
-density_map = projection(gas, :rho, unit=:g_cm3, res=512)
-
-# High resolution central region with optimal settings
-density_map = projection(gas, :rho, unit=:g_cm3, 
-                        xrange=[-10, 10], yrange=[-10, 10], 
-                        center=[:bc], range_unit=:kpc, res=1024)
-```
-
-#### Multi-Variable Analysis (Parallel Processing)
-```julia
-# Velocity field analysis (automatic variable-based parallelization)
-velocity_maps = projection(gas, [:vx, :vy, :vz], unit=:km_s,
-                          direction=:z, res=512)
-# Output: 🧵 Using parallel processing with 3 threads (one per variable)
-
-# Combined density and velocity (optimal parallel performance)
-hydro_maps = projection(gas, [:rho, :vx, :vy], [:g_cm3, :km_s, :km_s],
-                       xrange=[-5, 5], yrange=[-5, 5], 
-                       center=[:bc], range_unit=:kpc)
-# Output: ✅ Parallel projection completed successfully
-```
-
-#### Advanced AMR Projections
-```julia
-# High-precision thin slice (demonstrates AMR coordinate handling)
-thin_slice = projection(gas, :sd, :Msol_pc2,
-                       zrange=[0.49, 0.51], center=[:bc],
-                       range_unit=:standard, direction=:z, res=1024)
-
-# Volume-weighted projection for physical accuracy
-volume_proj = projection(gas, :rho, 
-                        weighting=[:volume, :cm3],
-                        mode=:sum, res=512)
-
-# Large multi-variable projection (optimal parallel performance)
-comprehensive = projection(gas, [:rho, :vx, :vy, :vz, :cs], 
-                          [:g_cm3, :km_s, :km_s, :km_s, :km_s],
-                          res=2048, verbose_threads=true)
-# Shows detailed threading diagnostics for performance analysis
-```
-
-#### Direction-Specific Projections
-```julia
-# X-direction projection (YZ plane) - parallel processing for multiple variables
-x_proj = projection(gas, [:rho, :vx], [:g_cm3, :km_s],
-                   direction=:x, yrange=[-10, 10], zrange=[-5, 5],
-                   center=[:bc], range_unit=:kpc)
-
-# Y-direction projection (XZ plane) - sequential processing for single variable
-y_proj = projection(gas, :sd, :Msol_pc2,
-                   direction=:y, xrange=[-20, 20], zrange=[-10, 10],
-                   center=[:bc], range_unit=:kpc)
-```
-
-#### Threading Control and Performance Monitoring
-```julia
-# Basic thread information (always shown with verbose=true)
-density_map = projection(gas, :rho, :g_cm3, res=512)
-# Output: Available threads: 8
-#         Requested max_threads: 8
-#         Processing mode: Sequential (single variable)
-
-# Detailed threading diagnostics for performance analysis
-multi_var = projection(gas, [:rho, :vx, :vy, :vz], res=1024, 
-                      verbose_threads=true)
-# Output: Available threads: 8
-#         Requested max_threads: 8
-#         Processing mode: Variable-based parallel (4 threads)
-#         🧵 Thread allocation: rho→T1, vx→T2, vy→T3, vz→T4
-#         ✅ Parallel projection completed successfully
-#         Performance: 2.1M cells/sec, Efficiency: 91.7%
-#
-# Note: verbose_threads=true shows detailed per-thread performance metrics
-```
-
-# Hide all output with verbose=false
-density_map = projection(gas, :rho, :g_cm3, res=512, 
-                         verbose=false)  # No threading output at all
-```
-
-#### Physical Pixel Size Control (pxsize)
-```julia
-# High-resolution projection with 10 pc pixels
-high_res = projection(gas, :rho, :g_cm3,
-                     pxsize=[10., :pc], 
-                     xrange=[-1, 1], yrange=[-1, 1], 
-                     center=[:bc], range_unit=:kpc)
-
-# Ultra-high resolution with 1 pc pixels for detailed structure
-ultra_high = projection(gas, :sd, :Msol_pc2,
-                       pxsize=[1., :pc],
-                       xrange=[-500, 500], yrange=[-500, 500],
-                       center=[:bc], range_unit=:pc)
-
-# Large-scale map with 100 pc pixels for overview
-overview = projection(gas, [:rho, :temperature], [:g_cm3, :K],
-                     pxsize=[100., :pc],
-                     xrange=[-10, 10], yrange=[-10, 10],
-                     center=[:bc], range_unit=:kpc)
-
-# Custom units: 0.1 kpc (100 pc) pixels  
-custom_scale = projection(gas, :vx, :km_s,
-                         pxsize=[0.1, :kpc],
-                         xrange=[-5, 5], yrange=[-5, 5],
-                         center=[:bc], range_unit=:kpc)
-
-# Very fine scale: sub-parsec resolution
-fine_detail = projection(gas, :density, :g_cm3,
-                        pxsize=[0.1, :pc],
-                        xrange=[-10, 10], yrange=[-10, 10], 
-                        center=[:bc], range_unit=:pc)
-```
-
-### Return Value
-
-Returns `AMRMapsType` (alias: `HydroMapsType`) containing:
-- **`.maps`**: Dictionary of projected variable maps (2D arrays)
-- **`.extent`**: extent `[xmin, xmax, ymin, ymax]` in **code length** units. The map *values* may be
-  physical (e.g. `:Msol_pc2`); the axes are NOT — multiply by `proj.scale.kpc`/`.pc`/… for a physical
-  plotting extent, or use [`getextent`](@ref)`(proj, :kpc)`. `.cextent` is the same, centred on `.center`.
-- **`.pixsize`**: pixel size in **code length** units (× `proj.scale.<unit>` for physical)
-- **`.lmax_projected`**: Maximum AMR level included in projection
-- **`.ranges`**: normalized `[0,1]` coordinate ranges (this is the fractional field, unlike `.extent`)
-- **`.center`**: projection centre as a **box fraction** (0 to 1), not a length. Off-axis it
-  records the resolved centre; on the axis-aligned path it comes back empty. A `slice`
-  result's `.center` is a different quantity with the same name, in code units
-
-### Radiative transfer (RT) projections
-
-The same `projection` function accepts an `RtDataType` object (`rt = getrt(info)`)
-and shares the AMR engine above. Two RT-specific behaviours apply:
-
-- **Default weighting is `:volume`** (not `:mass`): RT fields carry no cell mass, so
-  a mass weight is meaningless. Passing `weighting=[:mass]` is silently promoted to
-  `[:volume]`. Override explicitly with e.g. `weighting=[:Np1]` to flux-weight by the
-  photon density.
-- **`mode=:standard`** (default) gives the **volume-weighted average** of the field
-  along the line of sight (per pixel). **`mode=:sum`** gives the volume-weighted
-  **sum** per pixel — i.e. Σ q·V_cell over the column, so for `:Np1` (a number
-  density) it is proportional to the **total photon count** projected onto each
-  pixel (the whole map sums to the box photon number), not the column density
-  ∫q dz. For a mass-style **column density** use a `HydroDataType` with `:sd`
-  (which divides by the pixel area); RT fields have no `:sd` analogue.
-
-Typical RT maps:
-```julia
-rt  = getrt(info)
-gas = gethydro(info)
-
-# Photon-count map of group 1 (volume-weighted sum per pixel)
-np_sum = projection(rt, :Np1, mode=:sum, center=[:bc], range_unit=:kpc)
-
-# Reduced-flux map (beam vs. isotropic), volume-weighted average
-fmap = projection(rt, :reducedflux1, center=[:bc])
-
-# Mock recombination-line emission map (∝ ∫ n_HII² dz) — a HYDRO quantity
-em = projection(gas, :em_recomb, mode=:sum, center=[:bc], range_unit=:kpc)
-
-# Ionization map xHII (hydro passive scalar located via the RT descriptor)
-xmap = projection(gas, :xHII, center=[:bc])
-```
-
-RT photon fields and the hydro ionization state live on **separate** objects; project
-each on its own object (analogous to gravity vs. hydro). Use `getvar(rt, …)` /
-`getvar(gas, …)` for the per-cell quantities documented under `getvar`.
-
-Off-axis projections:
-
-!!! note "`xrange`/`yrange`/`zrange` are WORLD-space; `fov` is camera-space"
-    The ranges select a **box in simulation coordinates**, and the off-axis frame is the bounding
-    box of that region *after rotation*. Two consequences that surprise people:
-
-    * omit `zrange` and the **full box depth** folds into the image height as you tilt — a
-      ±22 kpc window came out ±45 kpc at i=30° and ±55 kpc at i=60° on a 100 kpc box;
-    * the window's own **faces are visible** as straight edges across the map, because a sight
-      line just outside the box clips only a corner of it.
-
-    Neither is an error — it is what a world-space selection looks like from an angle — but if
-    you want a *fixed camera-plane frame*, use `fov` instead:
-
-    ```julia
-    # world-space box: frame grows with tilt, window faces visible
-    projection(gas, :sd; inclination=60, xrange=[-22,22], yrange=[-22,22], range_unit=:kpc)
-
-    # camera-plane frame: identical at every angle (rotation-invariant sphere selection)
-    projection(gas, :sd; inclination=60, fov=22, fov_unit=:kpc, aperture=:square)
-    ```
-
-    `aperture=:circle` (default) frames a sphere of radius `fov`, so the frame's corners are
-    empty; `aperture=:square` selects radius `√2·fov` and crops to the ±`fov` square, giving a
-    full rectangular frame that is **pixel-identical at every viewing angle** — what a gallery or
-    an orbit sequence needs. Mera points this out once per session when it sees an off-axis view
-    with a windowed `xrange`/`yrange` and no `zrange`.
-
-    !!! note "`fov` integrates a chord, not a slab"
-        Because the selection is a sphere of radius `R` (`fov`, or `√2·fov` for `:square`), a ray
-        at in-plane distance `d` from the centre integrates `depth(d) = 2√(R² − d²)`. The column
-        is deepest on axis and falls to **zero at the frame boundary** — for `:square` that is the
-        four corners, which sit exactly on the sphere. On a 100 kpc box, `fov=15, :square` gives
-        42.4 kpc of depth at the centre, 30.0 kpc at the middle of an edge and 0 at the corners.
-
-        `depth` fixes this when it matters: it cuts along the **line of sight** itself, so the
-        column integrates the same distance everywhere in the frame.
-
-!!! note "Camera-space depth: `depth` / `depth_unit`"
-    `depth=2, depth_unit=:kpc` keeps a slab of half-thickness 2 kpc about `center`, measured
-    **along the viewing direction**. `depth=[-2, 6]` is an explicit window, so the foreground and
-    the background need not match. Every other window (`xrange`/`yrange`/`zrange`) is world space
-    and therefore does not follow the camera; this one does, which is what an off-axis column
-    density needs if it is to mean a fixed depth.
-
-    It applies to off-axis views only. On a box-axis view the line of sight IS a box axis, so
-    `zrange` already cuts exactly this slab, and `depth` raises there and says so.
-
-!!! note "Partial cells: `split`, `refine`, `refine_to`"
-    Every off-axis cut keeps a cell **whole** if its centre is inside and drops it whole
-    otherwise. `split=true` weights it instead by the fraction of its volume that really is
-    inside the `depth` slab or the `fov` sphere, which is what makes stacked slabs re-sum and a
-    small aperture hold the right mass.
-
-    `split` fixes the total; it does not move the mass. A half-in cell still deposits its
-    (reduced) share over its whole footprint, so the edge is still a staircase. `refine=N`
-    octree-subdivides the cells the `fov` **sphere** crosses, localising the boundary to
-    `cellsize/2^N` so the rendered edge sharpens; `refine_to=[length, unit]` subdivides until the
-    boundary cells reach a target size instead. Both need `fov` and `split=true`, and both
-    conserve: refining moves mass, it does not create any. Cost grows with the boundary area, at
-    most `8^N` per boundary cell.
-
-    For a region you select yourself, `subregion` takes the same `split`/`refine`/`refine_to`.
-
-!!! note "A rectangular frame: `fov=[wx, wy]`"
-    `fov` is normally one half-width and the frame is square. Two half-widths give a rectangle,
-    which is what an edge-on disc wants: in a square frame most of the pixels are empty sky.
-    Requires `aperture=:square`, because a rectangle has no single radius while `:circle` selects
-    a disc, which has one. A scalar `fov` behaves exactly as before.
-
-!!! note "Orienting on a region: `angmom_radius`"
-    `axis=:angmom` and the `direction=:faceon`/`:edgeon` presets compute the orientation from the
-    angular momentum of **the data that gets drawn**, about `center`: the object you pass, after
-    `mask`, and inside the `fov` sphere when `fov` is given. `depth` and
-    `xrange`/`yrange`/`zrange` do not narrow it. Load a whole box and the sum is
-    dominated by the material with the longest lever arm, which is usually not the disc you meant.
-    `angmom_radius=[10, :kpc]` restricts that sum to a sphere about `center`. For an axis from
-    other data (all components, or a selection you do not want to draw), compute it with
-    [`angmom`](@ref) and pass it as `axis=L`.
-
-    The vector is per object: gas and stars each have their own, so `:faceon` on one is a
-    different camera from `:faceon` on the other.
-
-!!! note "How well sampled is a pixel: `:ncell` and `:npart`"
-    Ask for `:ncell` (cells) or `:npart` (particles) alongside any other variable and the result
-    carries a map of what fed each pixel, filled by the same deposit as the value. The meaning
-    depends on the kernel: `:ngp` counts one per cell or particle, so the map sums to exactly how
-    many there were; `:cic` counts one per pixel of its 2x2 stencil; `:overlap` counts one per
-    sub-point and `:exact` one per pixel covered, so for those two it reads as sampling density
-    rather than an object tally.
-
-    The count is what separates a pixel you can quote from one built out of a single object: a
-    pixel holding one particle has no spread, so its dispersion is exactly zero.
-        Harmless for an object centred in frame, but make `fov` comfortably larger than any
-        diffuse column, profile or scale height you intend to measure.
-
-`binning` chooses how a rotated cell is shared among pixels. **The default `:overlap` is already
-the accurate one** — reach for `:cic`/`:ngp` only when you want a fast preview. All four conserve
-the total; they differ in *where* they put it:
-
-| `binning` | | |
-|---|---|---|
-| `:overlap` | **default** | footprint supersampling — AMR-aligned, no moiré, converges to `:exact` |
-| `:exact` | reference | analytic box-spline footprint; the fidelity yardstick |
-| `:cic` | preview | bilinear deposit of the cell centre; speckles/moiré on coarse cells |
-| `:ngp` | fastest | nearest-pixel deposit of the cell centre |
-
-```julia
-gas = gethydro(info)
-
-# Look along an arbitrary line of sight (accurate `:overlap` deposit, by default)
-m = projection(gas, :sd, :Msol_pc2, los=[1,1,1], center=[:bc], range_unit=:kpc)
-
-# Explicitly ask for a fast preview instead
-m = projection(gas, :sd, :Msol_pc2, los=[1,1,1], binning=:cic, center=[:bc])
-
-# Spherical angles instead of a vector (degrees)
-m = projection(gas, :sd, theta=60, phi=30, angle_unit=:deg, center=[:bc])
-
-# Disk seen face-on / edge-on (line of sight from the gas angular momentum)
-fo = projection(gas, :sd, direction=:faceon, center=[:bc], range_unit=:kpc)
-eo = projection(gas, :sd, direction=:edgeon, center=[:bc], range_unit=:kpc)
-```
-
-The off-axis camera basis is stored on the returned map (`m.los`, `m.up`, `m.cam_right`,
-`m.center`; `m.direction == :offaxis`). The cell→pixel deposit uses the standard
-nearest-grid-point / cloud-in-cell assignment scheme (Hockney & Eastwood 1988,
-*Computer Simulation Using Particles*); `:overlap` extends CIC with per-cell footprint
-supersampling. All deposits conserve the projected total to machine precision.
-
+See also [`slice`](@ref), [`getextent`](@ref), [`getvar`](@ref), [`subregion`](@ref),
+[`profile`](@ref).
 """
 function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],

@@ -251,169 +251,45 @@ end
 
 
 """
-#### Project variables or derived quantities from the **particle-dataset**:
-- projection to a grid related to a given level
-- overview the list of predefined quantities with: projection()
-- select variable(s) and their unit(s)
-- limit to a maximum range
-- give the spatial center (with units) of the data within the box (relevant e.g. for radius dependency)
-- relate the coordinates to a direction (x,y,z) — or project along an arbitrary
-  **off-axis line of sight** via `los=[..]`, spherical angles `theta`/`phi`
-  (`angle_unit=:rad`/`:deg`), or the disk presets `direction=:faceon`/`:edgeon`
-  (line of sight from the particle angular momentum). The off-axis camera basis is
-  stored on the returned map (`.los`, `.up`, `.cam_right`, `.center`; `.direction==:offaxis`).
-- **`thickness` / `thickness_unit`, `offset` / `offset_unit`:** project a **slab** rather than
-  the full depth. A cutting plane through point particles is empty by construction (a particle
-  has no extent), so the useful analogue of a slice is a projection of finite depth along the
-  line of sight: `thickness` sets that depth and `offset` moves the slab, the same way `offset`
-  moves the plane in [`offaxis_slice`](@ref). Both default to `range_unit`. A non-positive
-  `thickness` is refused rather than silently returning an empty map.
+    projection(part::PartDataType, var::Symbol, unit::Symbol=:standard; kwargs...) -> PartMapsType
+    projection(part::PartDataType, vars::Vector{Symbol}, units::Vector{Symbol}; kwargs...)
+    projection(part::PartDataType, vars::Vector{Symbol}, unit::Symbol=:standard; kwargs...)
 
-  Point particles have no footprint, so `binning=:cic` (default) / `:ngp` apply
-  (`:overlap` and `:exact` fall back to `:cic`). See the hydro `projection` docstring for details.
-- select between mass (default), volume, SPH-kernel, or Voronoi (nearest-generator) weighting
-- pass a mask to exclude elements (cells/particles/...) from the calculation
-- toggle verbose mode
-- toggle progress bar
-- pass a struct with arguments (myargs)
+Project particles onto a map, along a box axis or along any line of sight.
 
+The keywords of the grid method above apply, for the map grid, the region, the view, `fov` and
+the output, with these differences:
 
+- `binning::Symbol = :cic`: point particles are deposited by `:cic` or `:ngp`; `:overlap` and
+  `:exact` fall back to `:cic`.
+- `weighting::Symbol = :mass`: a symbol, not an array. `:mass` or `:volume` deposit each particle
+  at its position. For gas cells with a `:volume` (moving-mesh and SPH codes), `:sph` smears each
+  over a kernel of size `sph_alpha`·(3V/4π)^⅓ (`sph_alpha = 1.5`), and `:voronoi` samples each line
+  of sight through the nearest cell, with `nlos` samples. `:sph` also works for collisionless
+  particles with a `:subfind_hsml` column.
+- `mode::Symbol = :standard`: the mass-weighted mean per pixel; `:sum` gives the total, so
+  `projection(part, :mass, :Msol; mode=:sum)` is a mass map.
+- `parttypes = [:all]`: `[:stars]` or `[:dm]` projects one family, which also sets the
+  orientation of `:faceon`/`:edgeon`.
+- `thickness`, `thickness_unit`, `offset`, `offset_unit`: project a slab of this depth along the
+  line of sight, moved by `offset`; particles have no `depth`, `split`, `refine` or `nmax`.
+- `ref_time = info.time`: the time from which stellar ages are counted, in code units.
+
+# Returns
+A `PartMapsType` with the same fields as the grid result, and `ref_time`.
+
+# Examples
 ```julia
-projection(   dataobject::PartDataType, vars::Array{Symbol,1};
-                units::Array{Symbol,1}=[:standard],
-                lmax::Real=dataobject.lmax,
-                res::Union{Real, Missing}=missing,
-                pxsize::Array{<:Any,1}=[missing, missing],
-                mask=[false],
-                direction::Symbol=:z,
-                los::Union{Array{<:Real,1}, Nothing}=nothing,
-                up::Union{Array{<:Real,1}, Nothing}=nothing,
-                theta::Union{Real, Nothing}=nothing,
-                phi::Union{Real, Nothing}=nothing,
-                inclination::Union{Real, Nothing}=nothing,
-                azimuth::Union{Real, Nothing}=nothing,
-                position_angle::Union{Real, Nothing}=nothing,
-                axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
-                angle_unit::Symbol=:deg,
-                binning::Symbol=:cic,
-                fov=nothing,
-                fov_unit::Symbol=:standard,
-                aperture::Symbol=:circle,
-                parttypes::Array{Symbol,1}=[:all],
-                thickness=nothing,
-                thickness_unit::Symbol=:standard,
-                offset=nothing,
-                offset_unit::Symbol=:standard,
-                angmom_radius=nothing,
-                max_threads::Int=Threads.nthreads(),
-                weighting::Symbol=:mass,
-                sph_alpha::Real=1.5,
-                mode::Symbol=:standard,
-                angmom_radius=nothing,
-                xrange::Array{<:Any,1}=[missing, missing],
-                yrange::Array{<:Any,1}=[missing, missing],
-                zrange::Array{<:Any,1}=[missing, missing],
-                center::CenterType=[0., 0., 0.],
-                range_unit::Symbol=:standard,
-                data_center::CenterType=[missing, missing, missing],
-                data_center_unit::Symbol=:standard,
-                ref_time::Real=dataobject.info.time,
-                verbose::Bool=true,
-                show_progress::Bool=true,
-                myargs::ArgumentsType=ArgumentsType()  )
+julia> m = projection(part, :sd, :Msol_pc2; parttypes=[:stars], pxsize=[100, :pc],
+                      center=[:bc], range_unit=:kpc);
 
-return PartMapsType
+julia> m = projection(part, :mass, :Msol; mode=:sum, pxsize=[1, :kpc]);   # mass per pixel
 
+julia> m = projection(gas_cells, :sd; weighting=:sph, sph_alpha=2.0);     # smoother kernels
 ```
 
-
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "PartDataType"
-- **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function projection(), dataobject.data)
-##### Predefined/Optional Keywords:
-- **`unit(s)`:** return the variable in given units
-- **`pxsize``:** creates maps with the given pixel size in physical/code units (dominates over: res, lmax) : pxsize=[physical size (Number), physical unit (Symbol)]
-- **`res`**: pixel count per dimension **across the whole box** (so the pixel size is
-  `boxlen/res`); if not given, `lmax` selects it as `2^lmax`. A *windowed* projection therefore
-  returns only the pixels the window covers — use `pxsize=[size, unit]` for a window-sized map.
-- **`lmax`:** create maps with 2^lmax pixels for each dimension
-- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
-- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
-- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
-- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`weighting`:** select between `:mass` weighting (default), `:volume` weighting, or `:sph`
-  (smear each cell over an M4 kernel sized from its `:volume`; mass-conserving; needs a `:volume` column),
-  or `:voronoi` (nearest-generator: sample each LOS through the nearest cell — sharp, genuinely
-  moving-mesh; intensive maps exact, surface density approximate)
-- **`sph_alpha`:** `:sph` only. Sets the kernel size for cells that carry a `:volume`:
-  h = `sph_alpha`·(3V/4π)^⅓, default 1.5. A larger value gives a smoother map; the total mass does
-  not change, because each kernel is renormalised on the pixel grid. It is not applied to
-  `:subfind_hsml`, which is already a smoothing length.
-- **`mode`:** `:standard` (default) returns a weighted mean; `:sum` returns the per-pixel
-  **total**. This is how you get a real mass map from points: `projection(part, :mass, :Msol;
-  mode=:sum)` sums to the mass of everything projected. The default is a mean because a particle
-  has no volume to make `:mass` extensive, so the default map is the mass-weighted mean particle
-  mass, useful as a mass-spectrum and equal-mass check but not a budget.
-- **`angmom_radius`:** restrict the orientation sum behind `direction=:faceon`/`:edgeon` and
-  `axis=:angmom` to a sphere about `center`, e.g. `[10, :kpc]`. Without it the sum runs over
-  everything loaded, where the outer material has the longest lever arm. `mask` and `parttypes`
-  also narrow it, so `parttypes=[:dm], direction=:faceon` orients on the dark matter alone.
-  [`angmom`](@ref) returns the vector itself if you want to compute it once and reuse it.
-- **`nlos`:** number of samples along each line of sight, `:voronoi` only. By default Mera steps at
-  the scale of the *cells* — `min(pixsize, ½·median(V)^⅓)`, capped at 4096 — because stepping at
-  pixel scale walks over whole cells whenever cells are smaller than a pixel. Set it only to trade
-  accuracy for speed, or to check convergence; `verbose=true` reports the value used.
-- **`:sph` totals depend on how tightly the frame crops the data.** Each cell is smeared over an M4
-  kernel and only the part landing on in-frame pixels is deposited — the wings that fall outside are
-  dropped, which is physical, not a bug. So the same data in a tighter frame keeps less mass: on one
-  test field `∫Σ dA / M` was 1.000000 at half-widths 0.50/0.40/0.33 of the box, 0.9934 at 0.31 and
-  0.9604 at 0.30, as the frame started clipping the kernel. This is also why an axis-aligned and an
-  off-axis `:sph` map of the same data can differ by ~1 %: the two routes frame differently (the
-  off-axis extent is derived from the rotated data, not from your window). Compare them with
-  `los=[0,0,1], up=[0,1,0]`, which makes the off-axis camera reproduce the axis-aligned geometry —
-  the disagreement then drops to ~0.01 %, and `:mass` agrees exactly. Leave margin around the data
-  if you want the total to be frame-independent.
-- **`:voronoi` on a cutout does not lose mass, even though `∫Σ dA` looks short of `msum`.**
-  The two count different things: `msum` adds the *whole* mass of every cell whose generator lies
-  in the region, including the part of that cell sticking out through the boundary, while the map
-  integrates only what is actually inside. The shortfall is therefore a surface-to-volume effect
-  and falls off as 1/L — measured on an AREPO zoom at 4.2 %, 3.4 %, 1.8 %, 1.0 % for half-widths of
-  200, 400, 800, 1600 ckpc/h. Refining `nlos` does not remove it (it converges to the same value),
-  because it is not a sampling error. `:mass` does not show it only because point deposition dumps
-  each cell's entire mass at its generator. To integrate a sub-volume exactly, select a region
-  larger than the one you measure.
-- **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
-- **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`direction`:** axis-aligned `:x`, `:y`, `:z`, or the disk presets `:faceon`/`:edgeon`
-- **off-axis view (any line of sight):** `inclination`/`azimuth` (+ `axis=:z`/`:angmom`/vector),
-  `los=[lx,ly,lz]`, or `theta`/`phi`; `position_angle` rolls the image; `angle_unit=:deg` (default)
-  or `:rad`. See the hydro `projection` docstring for the full description; for point particles
-  `binning=:overlap` falls back to `:cic`.
-- **`fov` / `fov_unit` / `aperture`:** camera-plane framing, identical to the hydro path — `fov` is
-  the frame **half-width** and selects a sphere about `center` (radius `fov`, or `√2·fov` for
-  `aperture=:square`, which crops to a full rectangle that is pixel-identical at every viewing
-  angle). Use it instead of `xrange`/`yrange` whenever frames must be comparable across angles or
-  snapshots, and give `fov_unit` explicitly — it defaults to `:standard`, a box fraction. Note the
-  sphere means a summed quantity integrates a chord that shrinks to zero at the frame boundary; see
-  the hydro `projection` docstring.
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-- **`ref_time`:** the age quantity relative to a given time (code_units); default relative to the loaded snapshot time
-- **`show_progress`:** print progress bar on screen
-- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
-
-### Defined Methods - function defined for different arguments
-
-- projection( dataobject::PartDataType, var::Symbol; ...) # one given variable
-- projection( dataobject::PartDataType, var::Symbol, unit::Symbol; ...) # one given variable with its unit
-- projection( dataobject::PartDataType, vars::Array{Symbol,1}; ...) # several given variables -> array needed
-- projection( dataobject::PartDataType, vars::Array{Symbol,1}, units::Array{Symbol,1}; ...) # several given variables and their corresponding units -> both arrays
-- projection( dataobject::PartDataType, vars::Array{Symbol,1}, unit::Symbol; ...)  # several given variables that have the same unit -> array for the variables and a single Symbol for the unit
-
-
-#### Examples
-...
+The `:sph` and `:voronoi` totals and their dependence on the frame are explained on the
+Projections API page.
 """
 function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             parttypes::Array{Symbol,1}=[:all],

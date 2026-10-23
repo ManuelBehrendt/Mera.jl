@@ -59,49 +59,47 @@ function savedata( dataobject::DataSetType, path::String;
 end
 
 """
-#### Save loaded simulation data into a compressed/uncompressed JLD2 format:
-- write new file; add datatype to existing file
-- running number is taken from original RAMSES folders
-- use different compression methods
-- add a string to describe the simulation
-- toggle verbose mode
+    savedata(data; fmode, path="./", kwargs...)
+    savedata(data, fmode::Symbol; path="./", kwargs...)
+    savedata(data, path::String; fmode, kwargs...)
+    savedata(data, path::String, fmode::Symbol; kwargs...)
 
+Save a Mera data object to a compressed JLD2 file, a "Mera file", which reloads much faster
+than the original RAMSES output.
+
+One file per output holds any number of data types (hydro, particles, gravity, clumps, RT,
+sinks). The file is named after the output number, e.g. `output_00300.jld2`, and keeps the
+table together with the simulation information and the options it was loaded with.
+
+# Arguments
+- `data`: the object to save, from [`gethydro`](@ref), [`getparticles`](@ref),
+  [`getgravity`](@ref), [`getclumps`](@ref), `getrt` or `getsinks`.
+- `fmode::Symbol`: what to do with the file. **Nothing is written unless it is given**, so a
+  file is never overwritten by accident.
+  - `:write`: create the file, or replace an existing one.
+  - `:append`: add a further data type to an existing file. A data type that is already in the
+    file is not replaced; that raises an error.
+- `path::String = "./"`: the folder to write to.
+
+# Keywords
+- `fname = "output_"`: the start of the file name; the five-digit output number follows.
+- `compress`: LZ4 compression is on by default; `compress=false` switches it off. Older
+  compressor objects are accepted, and Zlib or Bzip2 fall back to LZ4 with a warning.
+- `comments`: a text stored with the data, e.g. a description of the simulation.
+- `dataformat::Symbol = :JLD2`: the only format.
+- `merafile_version::Float64 = 1.0`: the file layout version; there is only one.
+- `verbose::Bool = true`: print what is written.
+
+# Examples
 ```julia
-function savedata( dataobject::DataSetType;
-                    path::String="./",
-                    fname = "output_",
-                    fmode::Any=nothing,
-                    dataformat::Symbol=:JLD2,
-                    compress::Any=nothing,
-                    comments::Any=nothing,
-                    merafile_version::Float64=1.,
-                    verbose::Bool=true)
-return 
+julia> savedata(gas, :write; path="mera_files/");     # new file output_00300.jld2
 
+julia> savedata(part, :append; path="mera_files/");   # add the particles to it
+
+julia> viewdata(300; path="mera_files/")              # what the file holds
 ```
 
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "HydroDataType", "PartDataType", "GravDataType", "ClumpDataType", "RtDataType", "SinkDataType"
-- **`fmode`:** nothing is written/appended by default to avoid overwriting files by accident. Need: fmode=:write (new file, or overwrite an existing file); fmode=:append adds a further datatype to an existing file. Re-appending a datatype that is already stored in the file is not supported and raises an error (existing datatypes are not overwritten in place).
-##### Predefined/Optional Keywords:
-- **`path`:** path to save the file; default is local path.
-- **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.
-- **`dataformat`:** currently, only JLD2 can be selected.
-- **`compress`:** by default LZ4 compression is activated. `compress=false` deactivates it.
-This build (JLD2 0.6) compresses with LZ4 (best ratio); a legacy `LZ4FrameCompressor()` is accepted,
-and `ZlibCompressor()`/`Bzip2Compressor()` fall back to LZ4 with a warning.
-- **`comments`:** add a string that includes e.g. a description about your simulation
-- **`merafile_version`:** default: 1.; current only version
-- **`verbose`:** print timestamp and further information on screen; default: true
-
-### Defined Methods - function defined for different arguments
-
-- savedata( dataobject::DataSetType; ...) # note: fmode needs to be given for action!
-- savedata( dataobject::DataSetType, fmode::Symbol; ...) 
-- savedata( dataobject::DataSetType, path::String; ...) 
-- savedata( dataobject::DataSetType, path::String, fmode::Symbol; ...)
-
+See also [`loaddata`](@ref), [`viewdata`](@ref), [`infodata`](@ref), [`convertdata`](@ref).
 """
 function savedata( dataobject::DataSetType;
                     path::String="./",

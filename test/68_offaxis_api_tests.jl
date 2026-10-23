@@ -80,7 +80,7 @@
 
     @testset "world-space ranges vs camera-plane fov: the docstring says both" begin
         d = join(string.(values(Base.Docs.meta(Mera)[Base.Docs.Binding(Mera, :projection)].docs)), "\n")
-        @test occursin("WORLD-space", d)          # what xrange/yrange/zrange actually are
+        @test occursin(r"world-space"i, d)        # what xrange/yrange/zrange actually are
         @test occursin("fov", d) && occursin("aperture", d)
         @test occursin("aperture=:square", d)
     end
@@ -178,7 +178,7 @@
         # The docstring used to label the no-`binning` example a "fast CIC preview" while the
         # default is the ACCURATE :overlap. Pin the claim so it cannot drift again.
         d = join(string.(values(Base.Docs.meta(Mera)[Base.Docs.Binding(Mera, :projection)].docs)), "\n")
-        @test occursin("`:overlap` | **default**", d)     # the table marks the real default
+        @test occursin("binning::Symbol = :overlap", d)   # the docstring states the real default
         for k in (":overlap", ":exact", ":cic", ":ngp")   # all four kernels are described
             @test occursin(k, d)
         end
