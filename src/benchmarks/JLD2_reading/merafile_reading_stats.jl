@@ -6,6 +6,9 @@ Time repeated reads of a compressed mera/JLD2 file and print the resulting stati
 
 Used to produce the Mera-Files reading benchmark in the documentation. It reads the same
 output `num_repeats` times, so point it at a small dataset.
+
+Returns `(stats, t_total, t_hydro, t_gravity, t_particles)`: a `Dict` of statistics and the read
+time of each repetition, in seconds.
 """
 function run_merafile_benchmark(path::String, output::Int, num_repeats::Int=10)
     println("Starting Benchmark: Reading compressed MERA files from $path (output $output)")

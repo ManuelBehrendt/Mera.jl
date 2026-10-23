@@ -567,6 +567,8 @@ end
 ```julia
 function viewmodule(modulename::Module)
 ```
+
+Returns the names, as a `Vector{Symbol}`.
 """
 function viewmodule(modulename::Module)
     println()

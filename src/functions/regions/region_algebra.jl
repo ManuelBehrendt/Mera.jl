@@ -140,23 +140,35 @@ sphere(radius::Real; kwargs...) = Sphere(radius; kwargs...)
 
 """    sphericalshell(r_in, r_out; center=[:bc], range_unit=:kpc)
 
-The shell `r_in ≤ |r| ≤ r_out` (in `range_unit`) about `center`."""
+The shell `r_in ≤ |r| ≤ r_out` (in `range_unit`) about `center`.
+
+Returns a region value, for [`subregion`](@ref) and the region operators `∩`, `∪`, `\\` and `!`.
+"""
 sphericalshell(r_in::Real, r_out::Real; kwargs...) = SphericalShell(r_in, r_out; kwargs...)
 
 """    cylinder(radius, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
-A cylinder of cylindrical `radius` spanning `±height` along `axis` (`height` is the half-height)."""
+A cylinder of cylindrical `radius` spanning `±height` along `axis` (`height` is the half-height).
+
+Returns a region value, for [`subregion`](@ref) and the region operators `∩`, `∪`, `\\` and `!`.
+"""
 cylinder(radius::Real, height::Real; kwargs...) = Cylinder(radius, height; kwargs...)
 
 """    cylindricalshell(r_in, r_out, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
-A cylindrical shell `r_in ≤ r_cyl ≤ r_out` of half-height `height` along `axis`."""
+A cylindrical shell `r_in ≤ r_cyl ≤ r_out` of half-height `height` along `axis`.
+
+Returns a region value, for [`subregion`](@ref) and the region operators `∩`, `∪`, `\\` and `!`.
+"""
 cylindricalshell(r_in::Real, r_out::Real, height::Real; kwargs...) =
     CylindricalShell(r_in, r_out, height; kwargs...)
 
 """    cuboid(; xrange, yrange, zrange, center=[:bc], range_unit=:kpc)
 
-An axis-aligned box; `xrange`/`yrange`/`zrange` are `[lo, hi]` offsets from `center`."""
+An axis-aligned box; `xrange`/`yrange`/`zrange` are `[lo, hi]` offsets from `center`.
+
+Returns a region value, for [`subregion`](@ref) and the region operators `∩`, `∪`, `\\` and `!`.
+"""
 cuboid(; kwargs...) = Cuboid(; kwargs...)
 
 # physical center (handles :bc) + a length→normalised factor, exactly as prepranges does.

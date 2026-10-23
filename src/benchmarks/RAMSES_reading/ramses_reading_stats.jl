@@ -209,6 +209,9 @@ thread setting to build the scaling curve.
 `runs` (3) is the number of timed repetitions, `lmax` limits the level read (all by default),
 `max_threads` the threads (`0`, the default, uses all), and `outdir` the folder for the saved
 statistics (the current folder by default).
+
+Returns a `Dict` with the thread configuration and the timings of each component; the same is
+saved in `outdir`.
 """
 function run_reading_benchmark(output_number, path; runs::Int=3, lmax=missing,
                                outdir::AbstractString=pwd(), max_threads::Int=0,

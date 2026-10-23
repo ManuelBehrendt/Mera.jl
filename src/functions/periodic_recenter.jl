@@ -50,6 +50,8 @@ heatmap(q.extent[1:2], q.extent[3:4], q.maps[:sd])
 ```
 
 See also: [`projection`](@ref).
+
+Returns a new map of the same type, with the maps and extents shifted.
 """
 function periodic_recenter(m::DataMapsType; center::CenterType=[0., 0., 0.],
                            direction::Symbol=:z, range_unit::Symbol=:standard,

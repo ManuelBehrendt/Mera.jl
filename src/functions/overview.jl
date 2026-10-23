@@ -18,6 +18,8 @@ printtime("Starting calculation")
 # Override verbose setting
 printtime("Debug info", true)
 ```
+
+Returns `nothing`.
 """
 function printtime(text::String="", verbose::Bool=verbose_mode)
     if verbose

@@ -73,6 +73,10 @@ Use it to check a [`repartition`](@ref) (the values must be identical), a round 
 A → B → A, or two restarts of the same run on different numbers of ranks. With
 `leaves_only=true` only leaf cells are compared, which is the right test for an output
 written by [`writeramses`](@ref), whose refined cells are rebuilt from their children.
+
+Returns a `CompareResult` with the fields `same_tree`, `ngrids`, `maxdiff`, `nparticles`,
+`particle_ids_match`, `particle_maxdiff`, `families_a`, `families_b`, `nmatched`, `nsinks` and
+`sink_maxdiff`.
 """
 compareramses(output::Integer, path_a::AbstractString, path_b::AbstractString; kwargs...) =
     RamsesWriter.compare_outputs(_ramses_output_dir(output, path_a),

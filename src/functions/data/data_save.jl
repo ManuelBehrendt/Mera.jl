@@ -100,6 +100,8 @@ julia> viewdata(300; path="mera_files/")              # what the file holds
 ```
 
 See also [`loaddata`](@ref), [`viewdata`](@ref), [`infodata`](@ref), [`convertdata`](@ref).
+
+Returns `nothing`.
 """
 function savedata( dataobject::DataSetType;
                     path::String="./",

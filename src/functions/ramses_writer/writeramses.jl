@@ -520,6 +520,8 @@ of the file again. With `parents=true` complete gravity data also gets the
 stored values of its refined cells (see `getgravity(...; parents=true)`).
 Old files load fine without this; the upgrade makes them self-contained,
 e.g. for writing a RAMSES restart after the simulation is deleted.
+
+Returns the data types that were upgraded, as a `Vector{Symbol}`.
 """
 function upgrade_merafile(output::Integer, path::AbstractString;
                           datatypes=[:hydro, :gravity, :particles, :rt, :clumps, :sinks],

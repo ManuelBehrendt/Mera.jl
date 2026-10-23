@@ -6,6 +6,8 @@
 ```julia
 viewfields(object)
 ```
+
+Prints the fields and returns `nothing`.
 """
 function viewfields(object::InfoType)
 
@@ -288,6 +290,8 @@ info = getinfo(1, "path/to/sim")
 namelist(info)               # show all namelist blocks
 namelist(info.namelist_content)  # equivalent, passing the Dict directly
 ```
+
+Prints the namelist and returns `nothing`.
 """
 function namelist(object::InfoType)
     println()
@@ -330,6 +334,8 @@ end
 ```julia
 makefile(object::InfoType)
 ```
+
+Prints the file and returns `nothing`.
 """
 function makefile(object::InfoType)
     println()
@@ -353,6 +359,8 @@ end
 ```julia
 timerfile(object::InfoType)
 ```
+
+Prints the file and returns `nothing`.
 """
 function timerfile(object::InfoType)
     println()
@@ -377,6 +385,8 @@ end
 ```julia
 patchfile(object::InfoType)
 ```
+
+Prints the file and returns `nothing`.
 """
 function patchfile(object::InfoType)
     println()
@@ -401,6 +411,8 @@ end
 ```julia
 viewallfields(dataobject::InfoType)
 ```
+
+Prints the fields and returns `nothing`.
 """
 function viewallfields(dataobject::InfoType)
     viewfields(dataobject)

@@ -68,6 +68,9 @@ julia> export_vtk(stars, "vtk/stars"; scalars=[:mass, :age], scalars_unit=[:Msol
 ```
 
 See also [`savedata`](@ref).
+
+Returns, for cells, the written paths `(scalar_files, vector_files, scalar_vtm, vector_vtm)`,
+with `vector_vtm` empty without a vector; for particles, `nothing`.
 """
 function export_vtk(
     dataobject::HydroDataType, outprefix::String;

@@ -3288,6 +3288,8 @@ handling, and geometric precision suitable for production scientific computing.
     show_threading_info()
 
 Display information about Julia threading configuration and recommendations.
+
+Returns `nothing`.
 """
 function show_threading_info()
     println("🧵 JULIA THREADING INFORMATION")

@@ -14,7 +14,11 @@ round-trip via [`loadreport`](@ref)), `:file` (a `.jld2` + `_summary.txt` bundle
 Keywords per backend: `io` (default `stdout`) for `:ascii`; `filename` (default
 `"quickreport.jld2"`) for `:jld2`; for `:file`, `prefix` (default `"quickreport"`) and `mode`,
 which is `:bundle` (writes `<prefix>.jld2` and `<prefix>_summary.txt`) or `:dir` (a folder
-`<prefix>` with `report.jld2` and `summary.txt`). `verbose=true` prints where it was written."""
+`<prefix>` with `report.jld2` and `summary.txt`). `verbose=true` prints where it was written.
+
+Returns, per backend: the report for `:ascii`; the file name for `:jld2`; for `:file` the named
+tuple `(jld2, summary)` of the written files; for `:plot` the figure.
+"""
 render(r::QuickReport, backend::Symbol; kwargs...) = render(r, Val(backend); kwargs...)
 
 render(r::QuickReport, ::Val{:ascii}; io::IO=stdout, verbose::Bool=true) = (_render_ascii(r, io); r)

@@ -179,6 +179,9 @@ end
     configure_adaptive_io(simulation_path::String, output_num::Int; verbose=true)
 
 Automatically configure I/O settings based on simulation characteristics.
+
+Returns `true` when the settings were applied, `false` when the simulation could not be analysed
+and the defaults are kept.
 """
 function configure_adaptive_io(simulation_path::String, output_num::Int; verbose=true)
     if verbose
@@ -246,6 +249,9 @@ end
                           test_sizes=[32768, 65536, 131072, 262144], verbose=true)
 
 Benchmark different buffer sizes to find the optimal setting for this specific simulation.
+
+Returns a `Dict` with `"optimal_buffer"`, `"optimal_time"` and `"all_results"`, or `nothing`
+when no buffer size could be timed.
 """
 function benchmark_buffer_sizes(simulation_path::String, output_num::Int; 
                                test_sizes=[32768, 65536, 131072, 262144], verbose=true)
@@ -348,6 +354,9 @@ end
     smart_io_setup(simulation_path::String, output_num::Int; benchmark=false, verbose=true)
 
 Intelligent I/O setup that combines analysis and optional benchmarking.
+
+Returns `true` when the automatic analysis worked and the settings were applied, `false`
+otherwise.
 """
 function smart_io_setup(simulation_path::String, output_num::Int; benchmark=false, verbose=true)
     if verbose

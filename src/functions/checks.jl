@@ -128,6 +128,8 @@ verbose(false)    # quiet
 verbose()         # prints "verbose_mode: false"
 verbose(nothing)  # back to per-function control
 ```
+
+Returns the new setting; without an argument it prints the current one.
 """
 function verbose(mode::Union{Bool,Nothing})
         global verbose_mode = mode
@@ -164,6 +166,8 @@ showprogress(false)   # suppress all progress bars
 showprogress()        # prints "showprogress_mode: false"
 showprogress(nothing) # restore per-function defaults
 ```
+
+Returns the new setting; without an argument it prints the current one.
 """
 function showprogress(mode::Union{Bool,Nothing})
         global showprogress_mode = mode
@@ -192,6 +196,8 @@ output_mode(false)    # quiet: no messages, no progress bars, anywhere
 output_mode(nothing)  # back to per-function control
 output_mode()         # show current state
 ```
+
+Returns `nothing`; without an argument it prints the current settings.
 """
 function output_mode(mode::Union{Bool,Nothing})
     verbose(mode)
