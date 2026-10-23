@@ -111,7 +111,7 @@ makedocs(modules = [Mera],
 		search_size_threshold_warn = 5_000_000,   # ~4.8 MiB; default was 500 KiB
 		assets = ["assets/custom.css", "assets/custom.js"],
 		canonical = "https://manuelbehrendt.github.io/Mera.jl/",
-		footer = "© $(_YEAR) Manuel Behrendt. Built with [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) and [Julia](https://julialang.org). ",
+		footer = "© $(_YEAR) Manuel Behrendt. Built with [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) and [Julia](https://julialang.org). [Privacy](https://manuelbehrendt.github.io/Mera.jl/stable/privacy/): page views are counted without cookies or personal data.",
 		collapselevel = 1,  # Optimize section collapsing for left sidebar
 		mathengine = Documenter.KaTeX(),  # Better math rendering performance
 		repolink = "https://github.com/ManuelBehrendt/Mera.jl"),  # Add repository link
@@ -298,7 +298,8 @@ makedocs(modules = [Mera],
                             "Using an AI Assistant" => "assistant.md",
                           "Adding a Reader"     => "adding_a_reader.md",
                           "Testing Framework"   => "advanced_features/testing_guide.md",
-                          "Logo"                => "logo.md"],
+                          "Logo"                => "logo.md",
+                          "Privacy"             => "privacy.md"],
 
                       # --- one home for all the formerly-scattered per-topic API pages ---
                       "API Reference" => Any[

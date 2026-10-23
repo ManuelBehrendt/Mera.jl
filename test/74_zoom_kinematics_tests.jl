@@ -634,6 +634,72 @@ end
         @test occursin("volume", vout)
     end
 
+    @testset "sph_alpha sets the :sph kernel size; the deposit matches a direct sum" begin
+        info = _zoom_info(boxlen=1.0)
+        rng  = Random.MersenneTwister(5)
+        n    = 2000
+        x = 0.5 .+ 0.08 .* randn(rng, n); y = 0.5 .+ 0.08 .* randn(rng, n); z = 0.5 .+ 0.08 .* randn(rng, n)
+        V = fill(4π / 3 * 0.01^3, n)                        # r_eff = 0.01, pixel = 1/64
+        gas = _zoom_particles(info; x=x, y=y, z=z, vx=zeros(n), vy=zeros(n), vz=zeros(n),
+                              mass=fill(1.0, n), rho=1.0 ./ V, volume=V)
+        res = 64; pa = (1/res)^2
+        sd(a; kw...) = projection(gas, :sd; weighting=:sph, sph_alpha=a, res=res,
+                                  verbose=false, show_progress=false, kw...).maps[:sd]
+
+        # the default is 1.5, and every α conserves mass while the data sit well inside the frame
+        @test projection(gas, :sd; weighting=:sph, res=res, verbose=false,
+                         show_progress=false).maps[:sd] == sd(1.5)
+        maps = [sd(a) for a in (1.5, 3.0, 6.0)]
+        for m in maps
+            @test sum(m) * pa ≈ Float64(n)  rtol=1e-10
+        end
+        # a larger kernel spreads the same mass wider: lower peak, fewer empty pixels
+        @test maximum(maps[1]) > maximum(maps[2]) > maximum(maps[3])
+        @test count(iszero, maps[1]) > count(iszero, maps[2]) > count(iszero, maps[3])
+
+        # the off-axis route honours it too. Its frame hugs the data, so the widest kernels lose
+        # their outer wings off the map (see the `:sph` note in the docstring): allow 1 %.
+        off(a) = projection(gas, :sd; weighting=:sph, sph_alpha=a, los=[0, 0, 1], up=[0, 1, 0],
+                            res=res, verbose=false, show_progress=false)
+        o1, o6 = off(1.5), off(6.0)
+        @test maximum(o6.maps[:sd]) < maximum(o1.maps[:sd])
+        @test sum(o6.maps[:sd]) * o6.pixsize^2 ≈ Float64(n)  rtol=1e-2
+
+        # :subfind_hsml is already a smoothing length, so α does not touch it
+        dmh = _zoom_particles(info; x=x, y=y, z=z, vx=zeros(n), vy=zeros(n), vz=zeros(n), mass=fill(1.0, n))
+        dmh.data = IndexedTables.transform(dmh.data, :subfind_hsml => fill(0.02, n))
+        hs(a) = projection(dmh, :sd; weighting=:sph, sph_alpha=a, res=res,
+                           verbose=false, show_progress=false).maps[:sd]
+        @test hs(6.0) == hs(1.5)
+
+        withenv("MERA_PROJECTION_STRICT" => "1") do
+            for bad in (0.0, -1.0, Inf)
+                @test_throws ArgumentError projection(gas, :sd; weighting=:sph, sph_alpha=bad,
+                                                      res=16, verbose=false, show_progress=false)
+            end
+        end
+
+        # the deposit visits only the circular support, row by row. Check it against a direct sum
+        # over the whole grid, with particles inside, on the edge, outside and spanning many pixels
+        e  = collect(range(0.0, 10.0; length=33)); d = 10.0 / 32
+        xs = [5.0, 0.0, 10.0, -0.4, 3.3, 7.77]; ys = [5.0, 5.0, 10.0, 2.0, 9.9, 1.23]
+        ws = [1.0, 2.0, 3.0, 1.5, 0.7, 4.0];   hs_ = [0.5, 1.0, 0.8, 0.6, 2.5, d]
+        g = Mera._sph_deposit(xs, ys, ws, hs_, e, e; max_threads=1)
+        ref = zeros(32, 32)
+        for p in eachindex(xs)
+            k(i, j) = (q = hypot(e[1] + (i - 0.5)d - xs[p], e[1] + (j - 0.5)d - ys[p]) / hs_[p];
+                       q < 1 ? 1 - 1.5q^2 + 0.75q^3 : q < 2 ? 0.25(2 - q)^3 : 0.0)
+            r = ceil(Int, 2hs_[p] / d) + 2                   # full footprint, also off the grid
+            ic = floor(Int, (xs[p] - e[1]) / d) + 1; jc = floor(Int, (ys[p] - e[1]) / d) + 1
+            tot = sum(k(i, j) for i in ic-r:ic+r, j in jc-r:jc+r)
+            for i in 1:32, j in 1:32
+                ref[i, j] += ws[p] * k(i, j) / tot
+            end
+        end
+        @test g ≈ ref  rtol=1e-12
+        @test Mera._sph_deposit(xs, ys, ws, hs_, e, e; max_threads=4) ≈ g  rtol=1e-12
+    end
+
     @testset "clumping: C = <n²>/<n>², and cell-vs-grid are different quantities" begin
         info = _zoom_info(boxlen=1.0)
 
