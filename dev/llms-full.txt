@@ -1536,6 +1536,44 @@ neutral and contributes no electrons). `:xH2`/`:n_H2` require an H₂-chemistry 
 HII region. `:recomb_rate` uses the RT-aware temperature `:T_rt` (clamped to ``\ge 1\,\mathrm{K}`` in
 the ``\alpha_B`` power law) and pairs with the RT photoionization rate for ionization-balance checks.
 
+### Photon fields and radiation rates
+
+*Data: **rt** (`getrt`), per photon group `g`; the combined terms also need the matching hydro object.*
+
+RAMSES-RT stores, per group, the photon density `:Np<g>` and the flux components `:Fx<g>`,
+`:Fy<g>`, `:Fz<g>`, in code units. The stored photon density is ``\tilde c\,N``, with ``\tilde c``
+the reduced light speed of the cell's level, so the physical density divides by it.
+
+| Quantity | Mera | Definition and unit |
+|---|---|---|
+| flux magnitude | `:Fmag<g>` | ``\lvert F_g\rvert = \sqrt{F_x^2+F_y^2+F_z^2}``, code units |
+| total photon density | `:Np_total` | sum of `:Np<g>` over the groups, code units |
+| reduced flux | `:reducedflux<g>` | ``\lvert F_g\rvert / (\tilde c\,N_g)``, from 0 (isotropic) to 1 (free-streaming beam) |
+| physical photon density | `:Np<g>_cgs` | ``N_g = N_{p,g}\cdot\mathrm{unit}_{pf}/\tilde c``, photons cm⁻³ |
+| physical flux | `:Fmag<g>_cgs` | ``\lvert F_g\rvert\cdot\mathrm{unit}_{pf}``, photons cm⁻² s⁻¹ |
+| energy density of a group | `:photon_energy_density<g>` | ``N_g\,\epsilon_g``, erg cm⁻³ |
+| total radiation energy density | `:rad_energy_density` | sum over the groups, erg cm⁻³ |
+| HI photoionization rate | `:Gamma_HI<g>`, `:Gamma_HI` | per group and total, s⁻¹ |
+| HI photoheating rate | `:photoheating_HI<g>`, `:photoheating_HI` | per HI atom, erg s⁻¹ |
+| photoionizations | `:photoionizations` | ``\Gamma_\mathrm{HI}\,n_\mathrm{HI}``, cm⁻³ s⁻¹ (needs hydro) |
+| ionization balance | `:ionization_balance` | photoionizations minus recombinations, cm⁻³ s⁻¹; near 0 in equilibrium (needs hydro) |
+
+The mean photon energy ``\epsilon_g``, the energy bounds and the cross-sections of each group come
+from `info_rt` and are in `info.descriptor.rtPhotonGroups` (`[g][:egy_eV]`, `[:csn_cm2]`,
+`[:cse_cm2]`, `[:L0_eV]`, `[:L1_eV]`, `[:spec2group]`). The rates use ``\tilde c\,N\,\sigma``, which
+needs no ``\tilde c`` since the stored value already contains it.
+
+The combined terms are requested on the RT object together with a hydro object that covers the
+same cells (same `lmax` and ranges); Mera checks that the cells match:
+
+```julia
+rt  = getrt(info);  gas = gethydro(info)
+Γ   = getvar(rt, :Gamma_HI)                              # photoionization rate [1/s]
+bal = getvar(rt, :ionization_balance, hydro_data=gas)    # Γ n_HI − α_B n_e n_HII [cm^-3 s^-1]
+```
+
+Other hydro variables can be fetched on the RT cells the same way, with `hydro_data=gas`.
+
 ## Cell size & volume
 
 *Data: any **AMR cell** type, hydro, gravity or RT. `:cellsize` is AMR-only; `:volume` is
