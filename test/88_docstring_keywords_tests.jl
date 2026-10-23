@@ -16,16 +16,13 @@ const KNOWN_GAPS = Dict{Symbol,Vector{Symbol}}(
     :add_field => [:optional, :variants],
     :benchmark_conversion => [:max_threads],
     :calibrate! => [:verbose],
-    :center_of_mass => [:periodic],
     :clumpfind => [:backend],
     :clumping => [:max_bins],
     :createscales => [:X_frac, :mu],
-    :export_vtk => [:interpolate_higher_levels, :lmax, :lmin, :max_cells],
     :getinfo => [:code],
     :getvar_requirements => [:include_optional],
     :gridoverlay => [:angle_unit],
     :localdispersion => [:center_unit],
-    :notifyme => [:include_stacktrace],
     :offaxis_slice => [:angle_unit, :azimuth, :direction, :mask, :phi, :position_angle, :theta,
                        :up, :verbose, :xrange, :yrange],
     :phase => [:range_unit],
@@ -55,11 +52,20 @@ const KNOWN_GAPS = Dict{Symbol,Vector{Symbol}}(
 
 _isdev(m) = occursin("/src/dev/", replace(string(m.file), '\\' => '/'))
 
+# The raw text of every docstring of `name`. Read from the docstring store, as test 68 does:
+# `Base.Docs.doc(::Binding)` is internal and no longer exists in Julia 1.13.
+function _docstring_text(name::Symbol)
+    store = Base.Docs.meta(Mera)
+    b = Base.Docs.Binding(Mera, name)
+    haskey(store, b) || return ""
+    return join([join(string.(d.text), "") for d in values(store[b].docs)], "\n")
+end
+
 # the keywords of `f` that its docstring does not name
 function _undocumented_keywords(name::Symbol)
     f = getfield(Mera, name)
     ms = [m for m in methods(f) if parentmodule(m) === Mera && !_isdev(m)]
-    doc = string(Base.Docs.doc(Base.Docs.Binding(Mera, name)))
+    doc = _docstring_text(name)
     kws = unique(reduce(vcat, Base.kwarg_decl.(ms); init=Symbol[]))
     return sort([k for k in kws if !startswith(string(k), "_") && !endswith(string(k), "...") &&
                  !occursin(Regex("\\b" * string(k) * "\\b"), doc)])
@@ -89,9 +95,11 @@ end
     @test isempty(new_gaps)
     @test isempty(fixed)
 
-    # the eleven core functions were rewritten in October 2026 and have no gaps at all
+    # the functions rewritten in October 2026 have no gaps at all
     for n in (:gethydro, :getparticles, :getgravity, :getclumps, :getvar, :projection,
-              :getpositions, :getvelocities, :getextent, :savedata, :loaddata)
+              :getpositions, :getvelocities, :getextent, :savedata, :loaddata,
+              :subregion, :shellregion, :msum, :center_of_mass, :com, :bulk_velocity,
+              :average_velocity, :wstat, :gettime, :viewdata, :export_vtk)
         @test isempty(_undocumented_keywords(n))
     end
 end
