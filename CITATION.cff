@@ -18,8 +18,8 @@ authors:
     given-names: Manuel
     orcid: "https://orcid.org/0000-0002-8759-941X"
     email: mera@manuelbehrendt.com
-version: 1.8.2
-date-released: "2026-10-22"
+version: 1.8.3
+date-released: "2026-10-23"
 license: MIT
 repository-code: "https://github.com/ManuelBehrendt/Mera.jl"
 url: "https://manuelbehrendt.github.io/Mera.jl/stable/"
