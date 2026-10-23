@@ -53,6 +53,9 @@ second, so `sweet_spot` was 16, which costs twice the cores for five percent mor
 reading_sweep(250, "/data/sim"; lmax=11)
 reading_sweep(250, "/data/sim"; threads=[1,4,8,16], runs=1)
 ```
+
+`verbose=true` prints the settings of the sweep, and a note when a thread count exceeds the
+threads allocated to the job.
 """
 function reading_sweep(output::Int, path::AbstractString;
                        threads::Union{Nothing,AbstractVector{<:Integer}}=nothing,

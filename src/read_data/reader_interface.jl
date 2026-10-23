@@ -97,6 +97,9 @@ accepts `vars=[…]` and reads only what those columns need. `gethydro` then for
 user's `vars`. By default it refuses a `vars=` it cannot honour, rather than silently
 returning every variable. Only claim this when the reader really reads less. A format whose
 records interleave every field cannot.
+
+`logs` is the optional function that reads the run-time log files of the code, like the other
+capability functions (`info`, `hydro`, `particles`, ...).
 """
 function register_reader!(code::Symbol; simcodes::Vector{String},
                           name::String=String(code),

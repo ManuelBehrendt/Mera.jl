@@ -750,6 +750,9 @@ send_results("Key results ready!", ["figure1.png", "data.csv", "summary.txt"])
 send_results("Paper plots ready!", "./figures/", 
              zulip_channel="publications", zulip_topic="Paper 1 - Figures")
 ```
+
+`max_file_size` (25 MB) is the largest attachment sent; larger files are skipped with a
+warning. Images are resized and compressed toward 1 MB instead.
 """
 function send_results(msg::String, source; 
                      file_pattern=r"\.(png|jpg|jpeg|gif|svg|webp|bmp|tiff|tif)$"i,
@@ -947,6 +950,9 @@ timed_notify("Complex analysis", () -> analyze_galaxy_formation(),
 timed_notify("Simulation run #47", () -> run_simulation(params), 
              zulip_channel="simulations", zulip_topic="Run Times")
 ```
+
+`max_file_size` (25 MB) is the largest attachment sent; larger files are skipped with a
+warning. Images are resized and compressed toward 1 MB instead.
 """
 function timed_notify(task_name::String, code_block::Function; 
                      zulip_channel="timing", zulip_topic="Execution Times",
@@ -1178,6 +1184,9 @@ result = safe_execute("Critical simulation step",
     run_critical_simulation_step()
 end
 ```
+
+`max_file_size` (25 MB) is the largest attachment sent; larger files are skipped with a
+warning. Images are resized and compressed toward 1 MB instead.
 """
 function safe_execute(task_description::String, code_block::Function;
                      zulip_channel="errors", zulip_topic="Exception Reports",

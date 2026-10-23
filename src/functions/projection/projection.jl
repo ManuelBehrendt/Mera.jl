@@ -584,6 +584,11 @@ and sweeping `offset` produces the frames of a fly-through. `offset_unit` defaul
 **Prefer `slice`**: it is the one name for a cutting plane, axis-aligned or off-axis, and it is
 what the documentation uses. See [`slice`](@ref) for the full description, the view keywords, and
 why empty (NaN) pixels are expected.
+
+It takes the view keywords of [`slice`](@ref): `los`, `up`, `inclination`, `azimuth`, `axis`,
+`position_angle`, `direction`, `angle_unit` (`:deg` by default) and the deprecated `theta`/`phi`;
+the frame keywords `center` (the box centre by default), `range_unit`, `xrange`, `yrange`, `res`
+and `pxsize`; and `mask` and `verbose`.
 """
 function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
         los=nothing, theta=nothing, phi=nothing, inclination=nothing, azimuth=nothing,
@@ -948,6 +953,9 @@ is typically ~1.5–2× faster for an orbit movie (it runs that many projections
 proportionally more transient memory; results are identical to round-off).
 
 Returns a `Vector` of map objects — one per angle — ready to montage or animate.
+
+`pxsize = [value, unit]` sets the pixel size instead of `res`. `verbose` is accepted for
+compatibility but has no effect: the frames are always made quietly.
 """
 function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbol=:azimuth,
         angles, axis=:angmom, inclination::Real=0, fov=nothing, fov_unit::Symbol=:standard,

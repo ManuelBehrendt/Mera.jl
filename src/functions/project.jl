@@ -25,6 +25,9 @@ _smart_res(lmax::Integer; cap::Int=1024) = min(2^clamp(Int(lmax), 0, 31), cap)
   exactly what the projection (and its weighting / view) needs.
 * All other keywords (`direction`, `los`, `center`, `range_unit`, `weight`, `mode`, `pxsize`, …) are
   forwarded to [`projection`](@ref); the return value is the same map object.
+
+`verbose=true` prints what is read and a note when the default resolution is coarser than the
+finest level.
 """
 function project(data::HydroPartType, var::Symbol, unit::Symbol=:standard;
                  res=nothing, verbose::Bool=true, kwargs...)

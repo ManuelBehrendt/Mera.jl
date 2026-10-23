@@ -561,6 +561,9 @@ A `NamedTuple` with `xedges`, `yedges` (bin edges), `H` (the `nbx × nby` summed
 `xvar`/`yvar`, `weight`, `weight_unit`, `xunit`/`yunit`, and `source=:data`. With `normalize`, also
 `fraction`/`pdf`. With a `cvar`: `mean` (and, for a non-`:mean` `cstat`, the corresponding
 `std`/`median`/`min`/`max`/`quantiles`/`custom` grids), plus `cvar`/`cunit`.
+
+`range_unit` and `center_unit` are two names for the unit of `center` (`:standard` means
+fractions of the box); when both are given, `center_unit` is used.
 """
 function phase(dataobject, xvar::Symbol, yvar::Symbol, cvar=nothing; weight::Union{Symbol,AbstractVector}=:mass,
         nbins=(100,100), xrange=nothing, yrange=nothing, xscale::Symbol=:linear, yscale::Symbol=:linear,
@@ -799,6 +802,9 @@ per-radial-bin), see [`localdispersion`](@ref).
     rest-frame; it still includes sub-pixel / along-the-line-of-sight ordered motion (beam smearing).
     Note these two are also physically different quantities — a 3-D velocity *component* vs a projected
     line-of-sight dispersion.
+
+`range_unit` and `center_unit` are two names for the unit of `center` (`:standard` means
+fractions of the box); when both are given, `center_unit` is used.
 """
 function velocitydispersion(dataobject; rvar::Symbol=:r_cylinder,
         components=(:vr_cylinder, :vϕ_cylinder, :vz), weight::Union{Symbol,AbstractVector}=:mass,
@@ -920,6 +926,9 @@ Per the supplied region it returns the mass-weighted aggregate:
   scatter, suitable as error bars. Only patches with ≥ `min_cells_per_patch` cells enter the percentiles.
 
 `mu` is the tracer mean molecular weight in H-atom masses (`2.33` molecular, `1.0` atomic, `0.6` ionized).
+
+`range_unit` and `center_unit` are two names for the unit of `center` (`:standard` means
+fractions of the box); when both are given, `center_unit` is used.
 """
 function localdispersion(dataobject; patchsize=[500.0, :pc],
         components=(:vr_cylinder, :vϕ_cylinder, :vz), weight::Union{Symbol,AbstractVector}=:mass,
@@ -1127,6 +1136,13 @@ Returns `xedges`, `yedges`, `zedges`, `H` (and `mean` with `cvar`; `fraction`/`p
 plus `weight`/`weight_unit`. As in [`phase`](@ref), `H` is the summed weight in `weight_unit`,
 which defaults to `:standard` = **code units** — pass e.g. `weight_unit=:Msol` to sum in solar
 masses instead of relabelling afterwards.
+
+`xbinsize`, `ybinsize`, `zbinsize` set a bin width instead of a number of bins, in the axis unit
+or as `[value, unit]`; on a `:log` axis a plain number of dex. With `cvar`, `cstat` (`:mean` by
+default; `:std`, `:median`, `:min`, `:max`, `:quantiles`, `:full` or a function `f(values,
+weights)`) adds per-bin statistics, and `quantiles` sets the levels returned with them.
+`range_unit` and `center_unit` are two names for the unit of `center` (`:standard` means
+fractions of the box); when both are given, `center_unit` is used.
 """
 function profile3d(dataobject, xvar::Symbol, yvar::Symbol, zvar::Symbol, cvar=nothing;
         weight::Union{Symbol,AbstractVector}=:mass, nbins=(50,50,50),

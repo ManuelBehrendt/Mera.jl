@@ -249,6 +249,9 @@ Note a scale of exactly `1.0` cannot detect an inverted conversion (`x*1 == x/1`
 `scale.kpc` is 1 will not catch a reciprocal bug.
 
 See also [`createscales!`](@ref), [`createconstants`](@ref), [`getunit`](@ref).
+
+`X_frac` (0.76) is the hydrogen mass fraction behind `:nH`, and `mu` (1/`X_frac`) the mean molecular
+weight behind temperatures in `:K`; see [`setcomposition!`](@ref) to change them on an `InfoType`.
 """
 function createscales(dataobject::InfoType; X_frac::Real=0.76, mu::Real=1/X_frac)
     unit_l = dataobject.unit_l

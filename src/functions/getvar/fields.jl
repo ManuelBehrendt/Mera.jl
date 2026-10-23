@@ -245,6 +245,9 @@ The sorted set of **physical stored variables** that must be read to compute `va
 getvar_requirements(:hydro, :ekin)        # [:rho, :vx, :vy, :vz]
 getvar_requirements(:hydro, [:sd, :T])    # [:rho, :p]   (:sd is an alias of surface density → :rho)
 ```
+
+With `include_optional=true` the optional columns are added too (see [`getvar_optional`](@ref)),
+for a caller that would rather read a little more than get the fallback result.
 """
 function getvar_requirements(kind::Symbol, vars; include_optional::Bool=false)
     kind = _canon_kind(kind)
@@ -317,6 +320,10 @@ projection(gas, :vmag2)
 ```
 
 See also [`delete_field`](@ref), [`list_fields`](@ref).
+
+`optional` lists columns that change the result when they are loaded but are not needed, as
+described for [`getvar_optional`](@ref); `variants` is a short text, shown in the field listings,
+that says how the result differs with and without them.
 """
 function add_field(name::Symbol, compute::Function;
                    depends_on::AbstractVector{Symbol}=Symbol[],

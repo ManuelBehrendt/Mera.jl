@@ -131,6 +131,9 @@ benchmark_conversion(path, 7)
     snapshot in memory. On a large output, pass `components=[:hydro]` first.
 
 See also: [`run_reading_benchmark`](@ref), [`run_merafile_benchmark`](@ref).
+
+`max_threads` limits the threads used; `0` (the default) uses all available threads, at most the
+allocated CPUs.
 """
 function benchmark_conversion(path::AbstractString, output::Int;
                               merapath::AbstractString=mktempdir(),

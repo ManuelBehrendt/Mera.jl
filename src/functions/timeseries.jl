@@ -61,6 +61,8 @@ ts = timeseries("/data/sim/timeseries_sedov3d_mera",
 ```
 
 See also [`checkoutputs`](@ref), [`gettime`](@ref), [`gethydro`](@ref), [`loaddata`](@ref).
+
+`smallr` is a density floor passed to [`gethydro`](@ref) for each snapshot; `0` switches it off.
 """
 function timeseries(path::String, reducer;
                     datatype::Symbol = :hydro,

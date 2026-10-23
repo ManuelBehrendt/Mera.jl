@@ -358,6 +358,10 @@ so they use the whole directory cheaply. The throughput test reads file contents
 once per thread level per run, so it samples `nfiles` files rather than the whole
 snapshot: on a large output, reading everything at every thread level would move
 hundreds of gigabytes. Raise `nfiles` for a larger sample if the storage can take it.
+
+`max_threads` is the largest thread count tested (all available threads, at most the allocated
+CPUs, by default), and `logenv=true` first prints the environment: time, host, Julia and Mera
+versions, system.
 """
 function run_benchmark(folder; runs=1, nfiles::Int=64,
                        max_threads::Int=min(Threads.nthreads(), allocated_cpus()),

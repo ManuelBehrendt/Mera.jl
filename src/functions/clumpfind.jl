@@ -1155,6 +1155,9 @@ cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH,
 cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4);
                   validators=[MinMembers(20), Bound(:tree; iterative=true), VirialBelow(2.0)])
 ```
+
+`backend` chooses the neighbour search, e.g. `backend=MortonGrid`; the default is `CellLinkedList`.
+All backends find the same pairs and differ only in speed.
 """
 function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=:kpc,
                    mass_unit::Symbol=:Msol, min_members::Int=1, mask=[false],

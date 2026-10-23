@@ -9,7 +9,12 @@
 
 Render a [`QuickReport`] to a backend: `:ascii` (text dashboard, default), `:jld2` (full
 round-trip via [`loadreport`](@ref)), `:file` (a `.jld2` + `_summary.txt` bundle), or `:plot`
-(requires a Makie package extension — `using CairoMakie`)."""
+(requires a Makie package extension: `using CairoMakie`).
+
+Keywords per backend: `io` (default `stdout`) for `:ascii`; `filename` (default
+`"quickreport.jld2"`) for `:jld2`; for `:file`, `prefix` (default `"quickreport"`) and `mode`,
+which is `:bundle` (writes `<prefix>.jld2` and `<prefix>_summary.txt`) or `:dir` (a folder
+`<prefix>` with `report.jld2` and `summary.txt`). `verbose=true` prints where it was written."""
 render(r::QuickReport, backend::Symbol; kwargs...) = render(r, Val(backend); kwargs...)
 
 render(r::QuickReport, ::Val{:ascii}; io::IO=stdout, verbose::Bool=true) = (_render_ascii(r, io); r)

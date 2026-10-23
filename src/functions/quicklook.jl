@@ -174,6 +174,9 @@ Not a replacement for [`getinfo`](@ref). With `read=false` the two report much t
 but `getinfo` returns the `InfoType` that `gethydro`, `getparticles` and the other readers require, so
 it is what a script calls. `quicklook` returns a `QuickLookResult` and is what you call on a directory
 you have not seen before.
+
+`X_frac` and `mu` set the gas composition used for `:nH` and temperatures, as in
+[`setcomposition!`](@ref); by default the run's own values are kept.
 """
 function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                    read::Bool=true, res::Int=256, lmax=nothing, particle_subsample::Real=1.0,

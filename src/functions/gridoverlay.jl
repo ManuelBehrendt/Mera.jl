@@ -44,6 +44,8 @@ p  = projection(gas, :sd)
 go = gridoverlay(gas; level=:max)         # the finest-cell grid, where it exists
 # overlay go.segments on the heatmap of p.maps[:sd]
 ```
+
+`angle_unit` (`:deg` or `:rad`) is the unit of the view angles, as in [`projection`](@ref).
 """
 function gridoverlay(dataobject; level=:max, direction::Symbol=:z,
                      los=nothing, up=nothing, theta=nothing, phi=nothing,
