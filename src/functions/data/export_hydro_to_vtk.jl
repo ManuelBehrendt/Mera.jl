@@ -1,59 +1,3 @@
-"""
-#### Export hydro data to VTK format for visualization in tools like ParaView.
-- export data that is present in your database and can be processed by getvar() (done internally)
-- select scalar(s) and their unit(s)
-- select a vector and its unit (like velocity)
-- export data in log10
-- creates binary files with optional compression
-- supports multi-threading
--> generating per-level VTU files for scalar and optionally vector data 
-and creates corresponding VTM multiblock container files to reference these VTU files.
-
-```julia
-export_vtk(
-    dataobject::HydroDataType, outprefix::String;
-    scalars::Vector{Symbol} = [:rho],
-    scalars_unit::Vector{Symbol} = [:nH],
-    scalars_log10::Bool=false,
-    vector::Array{<:Any,1}=[missing, missing, missing],
-    vector_unit::Symbol = :km_s,
-    vector_name::String = "velocity",
-    vector_log10::Bool=false,
-    positions_unit::Symbol = :standard,
-    lmin::Int = dataobject.lmin,
-    lmax::Int = dataobject.lmax,
-    chunk_size::Int = 50000,
-    compress::Bool = true,
-    interpolate_higher_levels::Bool = true,
-    max_cells::Int = 100_000_000,
-    verbose::Bool = true,
-    myargs::ArgumentsType=ArgumentsType()
-)
-```
-
-#### Arguments
-##### Required:
-- `dataobject::HydroDataType`: The AMR data structure from MERA.jl containing variables like level, position, and physical quantities.
-- `outprefix::String`: The base path and prefix for output files (e.g., "output/data" will create files like "output/data_L0.vtu").
-
-##### Predefined/Optional Keywords:
-- **`scalars`:** List of scalar variables to export (default is :rho);  from the database or a predefined quantity (see field: info, function getvar(), dataobject.data)
-- **`scalars_unit`**: Sets the unit for the list of scalars (default is hydrogen number density in cm^-3).
-- **`scalars_log10`:** Apply log10 to the scalars (default false).
-- **`vector`:** List of vector component variables to export (default is missing); exports vector data as separate VTU files
-- **`vector_unit`:** Sets the unit for the vector components (default is km/s).
-- **`vector_name`:** The name of the vector field in the VTK file (default: "velocity").
-- **`vector_log10`:** Apply log10 to the vector components (default: false).
-- **`positions_unit`:** Sets the unit of the cell positions (default: code units); usefull in paraview to select regions 
-- **`lmin`:** Minimum AMR level to process (default: simulations lmin); smaller levels are excluded in export
-- **`lmax`:** Maximum AMR level to process (default: simulations lmax); existing higher levels are interpolated down if interpolate_higher_levels is true, otherwise excluded from export
-- **`chunk_size::Int = 50000`:** Size of data chunks for processing (currently unused but reserved for future optimizations).
-- **`compress`:** If `true` (default), enable compression.
-- **`interpolate_higher_levels`:** If `true`, interpolate data from higher levels down to given `lmax` .
-- **`max_cells`:** Maximum number of cells to export per level (caps output if exceeded, prioritizing denser regions), (default: 100_000_000)
-- **`verbose`:** If `true` (default), print detailed progress and diagnostic messages.
-
-"""
 # Safe element-wise log10 for VTK export, shared by the hydro and particle exporters: log10(v) for
 # v>0, -30.0 for v==0 (instead of -Inf), and log10(|v|) for v<0 (with a count warning). This never
 # emits NaN/Inf — the previous `log10.()` broadcast on possibly-≤0 data produced NaN/-Inf that were
@@ -75,6 +19,56 @@ function _safe_log10_vtk(raw, label::AbstractString; verbose::Bool=false)
     return out
 end
 
+"""
+    export_vtk(gas::HydroDataType, outprefix::String; scalars=[:rho], scalars_unit=[:nH], kwargs...)
+    export_vtk(part::PartDataType, outprefix::String; scalars=[:mass], scalars_unit=[:Msol], kwargs...)
+
+Write cells or particles to VTK files, for 3-D viewers such as ParaView.
+
+Cells are written as points at their centres, one file per level (`<outprefix>_L<level>.vtu`,
+and `<outprefix>_vec_L<level>.vtu` for a vector), with multiblock files that collect them
+(`<outprefix>_scalar.vtm`, `<outprefix>_vector.vtm`). Particles are written as points to one file, `<outprefix>.vtu`.
+
+# Arguments
+- `gas`, `part`: the data to export, or a selection.
+- `outprefix::String`: the start of the file names, with its folder, e.g. `"vtk/galaxy"`.
+
+# Keywords
+Data:
+- `scalars`, `scalars_unit`: the quantities to write and one unit each; anything
+  [`getvar`](@ref) computes. Defaults: `[:rho]` in `[:nH]` for cells, `[:mass]` in `[:Msol]`
+  for particles.
+- `scalars_log10::Bool = false`: write log10 of the scalars. Zero becomes -30, and negative
+  values are written as log10 of their absolute value, with a count of them.
+- `vector = [missing, missing, missing]`: three components of a vector, e.g. `[:vx, :vy, :vz]`.
+- `vector_unit::Symbol = :km_s`, `vector_name = "velocity"`, `vector_log10::Bool = false`: its
+  unit, its name in the file, and log10.
+- `positions_unit::Symbol = :standard`: the unit of the positions; `:standard` means code length.
+
+Levels (cells only):
+- `lmin = gas.lmin`, `lmax = gas.lmax`: the levels to write.
+- `interpolate_higher_levels::Bool = true`: average cells finer than `lmax` onto level `lmax`;
+  with `false` they are left out.
+- `max_cells::Int = 100_000_000`: the most points per level; above it, the points with the
+  most finer cells under them are kept.
+
+Limits and output:
+- `max_particles::Int = 100_000_000`: particles only; the first `max_particles` rows are written.
+- `compress::Bool`: compress the files; on by default for cells, off for particles.
+- `chunk_size::Int = 50000`: not used at present.
+- `verbose::Bool = true`: print progress.
+- `myargs::ArgumentsType`: set `verbose` in one object.
+
+# Examples
+```julia
+julia> export_vtk(gas, "vtk/galaxy"; scalars=[:rho, :T], scalars_unit=[:nH, :K],
+                  scalars_log10=true, vector=[:vx, :vy, :vz], positions_unit=:kpc)
+
+julia> export_vtk(stars, "vtk/stars"; scalars=[:mass, :age], scalars_unit=[:Msol, :Myr])
+```
+
+See also [`savedata`](@ref).
+"""
 function export_vtk(
     dataobject::HydroDataType, outprefix::String;
     scalars::Vector{Symbol} = [:rho],

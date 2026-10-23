@@ -393,45 +393,61 @@ end
 const _CellData = Union{HydroDataType, GravDataType, RtDataType}
 
 """
-    subregion(obj, region::AbstractRegion; split=true, inverse=false, nsub=8, verbose=true)
+    subregion(data, region; split=true, inverse=false, nsub=8, refine=0, refine_to=nothing,
+              verbose=true) -> same type as data
 
-Select the data covered by a composable `region` ([`Sphere`](@ref), [`Cuboid`](@ref),
-[`Cylinder`](@ref), [`SphericalShell`](@ref), or any boolean combination `∩`/`∪`/`\\`/`!`).
-Works on hydro, gravity, RT (AMR cells) and particle data.
+Select the part of `data` inside a region, counting cells cut by the boundary by the part that
+lies inside. This is the recommended form.
 
-For **AMR cell** data with `split=true` (default) each kept cell carries an exact
-`:fraction ∈ (0,1]` — the volume fraction inside the region — and `getvar(:mass)` /
-`getvar(:volume)` / `msum` report the **exact in-region totals** (no boundary over/under-
-counting). With `split=false` whole cells are kept by a centre-inside test (the classic
-behaviour) and no `:fraction` is attached. `nsub` (default 8) is the per-axis sub-sampling of
-boundary cells for curved/composite regions (diminishing returns past ~8).
+A region is a value made by [`sphere`](@ref), [`cuboid`](@ref), [`cylinder`](@ref),
+[`sphericalshell`](@ref) or [`cylindricalshell`](@ref), or a combination of regions with `∩`,
+`∪`, `\\` and `!`. With `split=true` each kept cell stores the fraction of its volume inside
+(`:fraction`), and `getvar(:mass)`, `getvar(:volume)` and [`msum`](@ref) use it, so totals are
+the amounts inside the boundary and neighbouring regions add up exactly. Works on hydro,
+gravity, RT, particle, clump and sink data.
 
-For **particle** data the region is a point-membership test (particles are points — there is
-no fractional volume, so `split`/`nsub` do not apply). `inverse=true` selects the complement.
+# Arguments
+- `data`: the object to select from, or an earlier selection; fractions of repeated cuts multiply.
+- `region`: the region, e.g. `sphere(10; center=[:bc], range_unit=:kpc)`.
 
-**Accuracy.** With `split=true` an axis-aligned `Cuboid` is analytic (per-axis overlap product) and
-matches the exact volume to floating point; curved boundaries are sub-sampled `nsub` per axis and
-measure ``-0.0015`` % on a 10 kpc sphere. For comparison, on the same sphere the centre test lands
-``+0.18`` % off with no guaranteed sign, and whole cells ``+12`` % over — an upper bound whose size
-is set by the cell size *at the boundary*, not by the region. The "How Quantities Are Computed"
-page carries the full accuracy table.
+# Keywords
+- `split::Bool = true`: store the fraction inside for cells on the boundary. `false` keeps a cell
+  whole when its centre lies inside. For particles the default is `false`: points need no
+  fraction, and `split=true` is allowed only for gas cells with a `:volume` (moving-mesh and SPH
+  codes), sized as a sphere of the same volume. Clumps and sinks have no `split`.
+- `inverse::Bool = false`: select the outside instead; with `split`, the fractions are `1 - f`.
+- `nsub::Int = 8`: sample points per axis for cells on a curved or combined boundary. A cuboid
+  along the box axes is computed exactly.
+- `refine::Int = 0`: cell data only. Subdivide the boundary cells, as an octree, up to this many
+  levels, so the boundary is placed to `cellsize/2^refine` and maps of the selection have sharper
+  edges. Totals do not change. The cost grows with the boundary area, at most ``8^{refine}`` per
+  boundary cell; 2 or 3 is usually enough.
+- `refine_to = [length, unit]`: subdivide each boundary cell until its children are no larger
+  than this, e.g. the `pxsize` of a later map. Not together with `refine`.
+- `verbose::Bool = true`: print what is selected.
 
-`refine::Int=0` (AMR cell data, `split=true` only) **geometrically subdivides** the
-boundary-straddling cells up to `refine` levels: each straddling cell is replaced by its
-octree children (rows at `level+1` with the parent's field values — exact for the
-piecewise-constant AMR data), children fully inside keep `fraction = 1`, children fully
-outside are dropped, and still-straddling children recurse. Integrals (`msum`, volumes)
-are unchanged — they were already exact through `:fraction` — but the selection boundary
-becomes localised to `cellsize/2^refine`, so projections and maps of the sub-region render
-correspondingly sharper edges. Cost grows with the boundary area (≤ 8^refine per boundary
-cell; 2–3 is usually plenty).
+# Returns
+An object of the same type as `data`, holding only the selected rows; cell data with `split=true`
+also has the `:fraction` column.
 
-`refine_to = [length, unit]` (e.g. `[0.05, :kpc]`; a plain number means code units) is the
-target-size variant: each straddling cell picks its OWN depth so its children are no larger
-than the given length — match it to a projection's `pxsize` and the rendered boundary
-becomes pixel-sharp regardless of the local AMR level. Mutually exclusive with `refine`;
-per-cell depth is capped at 10. Cost grows as (cellsize/target)³ per boundary cell, so
-scope the call to the area you will actually render.
+On a 10 kpc sphere the split volume is off by -0.0015 %, the centre test by +0.18 % with no
+fixed sign, and whole cells by +12 %. For small regions the centre test is off by several per
+cent; the table is on the Computation Reference page.
+
+# Examples
+```julia
+julia> s = subregion(gas, sphere(10; center=[:bc], range_unit=:kpc));
+
+julia> msum(s, :Msol)                                         # the mass inside 10 kpc
+
+julia> disc = cylinder(15, 2; center=[:bc], range_unit=:kpc);
+
+julia> ring = subregion(gas, disc ∩ !sphere(5; center=[:bc], range_unit=:kpc));
+
+julia> stars = subregion(part, sphere(10; center=[:bc], range_unit=:kpc));
+```
+
+See also [`shellregion`](@ref), [`msum`](@ref), [`getmask`](@ref), [`filterdata`](@ref).
 """
 function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
                    inverse::Bool=false, nsub::Int=8, refine::Int=0,

@@ -33,37 +33,35 @@ Generates specialized code for each unit type, eliminating function call overhea
 end
 
 """
-#### Calculate the total mass of any ContainMassDataSetType:
+    msum(data, unit::Symbol=:standard; mask=[false]) -> Float64
 
+Return the total mass of the cells, particles or clumps in `data`.
+
+The sum of `getvar(data, :mass)`, so it counts only the part of each cell inside a region: a
+selection made with a region value, `subregion(gas, sphere(10))`, stores the fraction of each
+boundary cell that lies inside, and the mass uses it. Neighbouring regions therefore add up
+exactly. Selections by the loaders' ranges or the older `subregion(gas, :sphere; ...)` keep whole
+cells, and particles and clumps are points.
+
+# Arguments
+- `data`: any Mera object with masses, e.g. from [`gethydro`](@ref) or [`getparticles`](@ref),
+  or a selection.
+- `unit::Symbol = :standard`: the unit of the result, e.g. `:Msol` or `:g`; `:standard` means
+  code units. It can also be given as the keyword `unit`.
+
+# Keywords
+- `mask`: a `Bool` vector with one entry per row; only rows marked `true` are counted.
+
+# Examples
 ```julia
-msum(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
+julia> msum(gas, :Msol)                               # all the gas
 
-return Float64
+julia> msum(subregion(gas, sphere(10; center=[:bc])), :Msol)   # inside 10 kpc
+
+julia> msum(gas, :Msol; mask=getvar(gas, :T, :K) .< 1e4)       # the cold gas
 ```
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "ContainMassDataSetType"
 
-##### Optional Keywords:
-- **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units)  :Msol, :Mearth, :Mjupiter, :g, :kg  (of typye Symbol) ..etc. ; see for defined mass-scales viewfields(info.scale)
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
-  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
-  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
-  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
-  the run is periodic (`info.boundaries`).
-
-#### Sub-regions: the sum is boundary-aware
-`msum` sums `getvar(obj, :mass)`, which honours the per-cell `:fraction` attached by a
-**value-type** sub-region (`subregion(gas, sphere(10))`, `split=true` by default): a boundary cell
-contributes `fraction * rho * volume`, i.e. only the part of it inside the region. So the result is
-the mass **inside the boundary**, and adjacent regions add up exactly. Interior cells carry
-`fraction = 1` and are unaffected.
-
-Cuts made any other way carry no `:fraction` and therefore count whole boundary cells: the loaders'
-`xrange/yrange/zrange`, the classic symbol `subregion`/`shellregion`, `covering_grid`. Particles and
-clumps are points and have no fraction at all. See [`subregion`](@ref).
-
+See also [`center_of_mass`](@ref), [`subregion`](@ref), [`getvar`](@ref).
 """
 function msum(dataobject::ContainMassDataSetType, unit::Symbol; mask::MaskType=[false])
     return msum(dataobject, unit=unit, mask=mask)
@@ -108,29 +106,6 @@ Uses compile-time template generation for maximum performance.
     end
 end
 
-"""
-#### Calculate the center-of-mass of any ContainMassDataSetType:
-
-```julia
-center_of_mass(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
-
-return Tuple{Float64, Float64, Float64,}
-```
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "ContainMassDataSetType"
-
-##### Optional Keywords:
-- **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
-  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
-  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
-  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
-  the run is periodic (`info.boundaries`).
-
-
-"""
 # --- periodic centre of mass ------------------------------------------------
 #
 # A plain mass-weighted mean assumes the box has an inside and an outside. On a
@@ -174,6 +149,39 @@ function _center_of_mass_periodic(dataobject, unit::Symbol, mask, periodic)
     end
 end
 
+"""
+    center_of_mass(data, unit::Symbol=:standard; mask=[false], periodic=false) -> (x, y, z)
+    center_of_mass([gas, part], unit::Symbol=:standard; mask=[[false], [false]]) -> (x, y, z)
+
+Return the mass-weighted mean position of the cells, particles or clumps in `data`, measured
+from the box corner. `com` is a short name for it.
+
+Given a vector of objects, e.g. gas and stars, it returns their joint centre of mass.
+
+# Arguments
+- `data`: any Mera object with masses, or a vector of hydro and particle objects.
+- `unit::Symbol = :standard`: the unit of the result, e.g. `:kpc`; `:standard` means code
+  length. It can also be given as the keyword `unit`.
+
+# Keywords
+- `mask`: a `Bool` vector with one entry per row; only rows marked `true` count. For a vector of
+  objects, one mask per object.
+- `periodic = false`: average on a periodic box, with the circular mean (Bai & Breen 2008), so a
+  structure that crosses a face of the box is not averaged to the middle of the box. `true` for
+  all three axes, or per axis as `(x=true, y=true, z=false)` or a 3-tuple. `getinfo` reports
+  whether a run is periodic (`info.boundaries`). Single objects only.
+
+# Examples
+```julia
+julia> center_of_mass(gas, :kpc)
+
+julia> center_of_mass([gas, part], :kpc)              # gas and particles together
+
+julia> center_of_mass(clump, :kpc; periodic=true)     # an object on the box boundary
+```
+
+See also [`bulk_velocity`](@ref), [`msum`](@ref).
+"""
 function center_of_mass(dataobject::ContainMassDataSetType, unit::Symbol; mask::MaskType=[false], periodic=false)
     return center_of_mass(dataobject, unit=unit, mask=mask, periodic=periodic)
 end
@@ -194,27 +202,10 @@ end
 
 
 """
-#### Calculate the center-of-mass of any ContainMassDataSetType:
+    com(data, unit::Symbol=:standard; kwargs...) -> (x, y, z)
 
-```julia
-com(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
-
-return Tuple{Float64, Float64, Float64,}
-```
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "ContainMassDataSetType"
-
-##### Optional Keywords:
-- **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
-  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
-  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
-  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
-  the run is periodic (`info.boundaries`).
-
-
+A short name for [`center_of_mass`](@ref), with the same arguments and keywords (`mask`,
+`periodic`).
 """
 function com(dataobject::ContainMassDataSetType, unit::Symbol; mask::MaskType=[false], periodic=false)
     return center_of_mass(dataobject, unit, mask=mask, periodic=periodic)
@@ -283,24 +274,6 @@ Uses template-based loop generation with compile-time optimization.
     end
 end
 
-"""
-#### Calculate the joint center-of-mass of any HydroPartType:
-
-```julia
-center_of_mass(dataobject::Array{HydroPartType,1}, unit::Symbol; mask::MaskArrayAbstractType=[[false],[false]])
-
-return Tuple{Float64, Float64, Float64,}
-```
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "Array{HydroPartType,1}""
-
-##### Optional Keywords:
-- **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`mask`:** needs to be of type MaskArrayAbstractType which contains two entries with supertype of Array{Bool,1} or BitArray{1} and the length of the database (rows)
-
-
-"""
 function center_of_mass(dataobject::Array{HydroPartType,1}, unit::Symbol; mask::MaskArrayAbstractType=[[false],[false]])
     return  center_of_mass(dataobject; unit=unit, mask=mask)
 end
@@ -315,24 +288,6 @@ function center_of_mass(dataobject::Array{HydroPartType,1}; unit::Symbol=:standa
 end
 
 
-"""
-#### Calculate the joint center-of-mass of any HydroPartType:
-
-```julia
-com(dataobject::Array{HydroPartType,1}, unit::Symbol; mask::MaskArrayAbstractType=[[false],[false]])
-
-return Tuple{Float64, Float64, Float64,}
-```
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "Array{HydroPartType,1}""
-
-##### Optional Keywords:
-- **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`mask`:** needs to be of type MaskArrayAbstractType which contains two entries with supertype of Array{Bool,1} or BitArray{1} and the length of the database (rows)
-
-
-"""
 function com(dataobject::Array{HydroPartType,1}, unit::Symbol; mask::MaskArrayAbstractType=[[false],[false]])
     return  center_of_mass(dataobject, unit, mask=mask)
 end
@@ -462,27 +417,33 @@ Generates specialized code for each weighting scheme at compile time.
 end
 
 """
-#### Calculate the average velocity (w/o mass-weight) of any ContainMassDataSetType:
+    bulk_velocity(data, unit::Symbol=:standard; weighting=:mass, mask=[false]) -> (vx, vy, vz)
 
+Return the mean velocity of the cells, particles or clumps in `data`, weighted by mass by default.
+
+This is the velocity of the frame that `getvar(...; vcenter=:auto)` subtracts. `average_velocity`
+is another name for it.
+
+# Arguments
+- `data`: any Mera object with masses and velocities, or a selection.
+- `unit::Symbol = :standard`: the unit of the result, e.g. `:km_s`; `:standard` means code units.
+  It can also be given as the keyword `unit`.
+
+# Keywords
+- `weighting::Symbol = :mass`: `:mass`, `:volume` (hydro only) or `:no` for a plain mean. Any
+  other value raises an error.
+- `mask`: a `Bool` vector with one entry per row; only rows marked `true` count.
+
+# Examples
 ```julia
-bulk_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, weighting::Symbol=:mass, mask::MaskType=[false])
+julia> bulk_velocity(gas, :km_s)
 
-return Tuple{Float64, Float64, Float64,}
+julia> v0 = bulk_velocity(stars, :km_s; mask=getvar(stars, :r_sphere, :kpc; center=[:bc]) .< 10);
+
+julia> getvar(stars, :vϕ_cylinder, :km_s; center=[:bc], vcenter=v0, vunit=:km_s)
 ```
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "ContainMassDataSetType"
 
-##### Optional Keywords:
-- **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units)  :km_s, :m_s, :cm_s (of typye Symbol) ..etc. ; see for defined velocity-scales viewfields(info.scale)
-- **`weighting`:** use different weightings: :mass (default), :volume (hydro), :no
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
-  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
-  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
-  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
-  the run is periodic (`info.boundaries`).
-
+See also [`center_of_mass`](@ref), [`getvar`](@ref).
 """
 function bulk_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting::Symbol=:mass, mask::MaskType=[false])
     return bulk_velocity(dataobject, unit=unit, weighting=weighting, mask=mask)
@@ -499,27 +460,10 @@ function bulk_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standar
 end
 
 """
-#### Calculate the average velocity (w/o mass-weight) of any ContainMassDataSetType:
+    average_velocity(data, unit::Symbol=:standard; weighting=:mass, mask=[false]) -> (vx, vy, vz)
 
-```julia
-average_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, weighting::Symbol=:mass, mask::MaskType=[false])
-
-return Tuple{Float64, Float64, Float64,}
-```
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "ContainMassDataSetType"
-
-##### Optional Keywords:
-- **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units)  :km_s, :m_s, :cm_s (of typye Symbol) ..etc. ; see for defined velocity-scales viewfields(info.scale)
-- **`weighting`:** use different weightings: :mass (default), :volume (hydro), :no
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-- **`periodic`:** treat the box as periodic when averaging positions. `false` (default) keeps the
-  plain mass-weighted mean. `true` applies it to all three axes; a run that wraps in some directions
-  only takes `(x=true, y=true, z=false)` or a 3-tuple. Needed whenever the structure touches a face:
-  without it, a clump on the boundary averages to the middle of the box. `getinfo` reports whether
-  the run is periodic (`info.boundaries`).
-
+Another name for [`bulk_velocity`](@ref), with the same arguments and keywords (`weighting`,
+`mask`).
 """
 function average_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting::Symbol=:mass, mask::MaskType=[false])
     return bulk_velocity(dataobject, unit, weighting=weighting, mask=mask)
@@ -533,21 +477,33 @@ end
 
 
 """
-#### Calculate statistical values w/o weighting of any Array:
+    wstat(values::Vector{<:Real}, weight::Vector{<:Real}=[1.0]; mask=[false]) -> WStatType
 
+Return summary statistics of `values`, optionally weighted.
+
+With weights, the mean, median and standard deviation are weighted; the skewness and kurtosis are
+computed about the weighted mean without weights. The standard deviation is the population value
+(divided by N, not N - 1), and the kurtosis is the excess kurtosis, 0 for a Gaussian.
+
+# Arguments
+- `values`: the numbers, e.g. from [`getvar`](@ref).
+- `weight`: one weight per value, e.g. the cell masses. It can also be given as the keyword
+  `weight`; without it all values count equally.
+
+# Keywords
+- `mask`: a `Bool` vector with one entry per value; only values marked `true` count.
+
+# Returns
+A `WStatType` with the fields `mean`, `median`, `std`, `skewness`, `kurtosis`, `min` and `max`.
+
+# Examples
 ```julia
-wstat(array::Array{<:Real,1}; weight::Array{<:Real,1}=[1.], mask::MaskType=[false])
+julia> s = wstat(getvar(gas, :T, :K), getvar(gas, :mass));   # mass-weighted temperature
 
-WStatType(mean, median, std, skewness, kurtosis, min, max)
+julia> s.mean, s.median, s.std
 ```
-#### Arguments
-##### Required:
-- **`array`:** Array needs to be of type: "<:Real"
 
-##### Optional Keywords:
-- **`weight`:** Array needs to be of type: "<:Real" (can be used w/o keyword)
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the Array
-
+See also [`average_mweighted`](@ref), [`getvar`](@ref).
 """
 function wstat(array::Array{<:Real,1}, weight::Array{<:Real,1}; mask::MaskType=[false])
     return  wstat(array, weight=weight, mask=mask)

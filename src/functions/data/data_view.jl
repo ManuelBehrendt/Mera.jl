@@ -13,33 +13,33 @@ end
 
 
 """
-#### Get overview of stored datatypes:
-- compression
-- versions of the used/loaded compression
-- MERA/MERA-file version
-- compressed/uncompressed data size
-- returns stored conversion statistics, when available (created by convertdata-function) 
+    viewdata(output::Int, path::String="./"; fname="output_", showfull=false, verbose=true) -> Dict
 
+Show what a Mera file written by [`savedata`](@ref) contains, without loading the data.
+
+For each stored data type it reports the Mera and file versions, the compression, the size on
+disk and in memory, and the conversion statistics when the file was made by [`convertdata`](@ref).
+
+# Arguments
+- `output::Int`: the output number in the file name, e.g. `300` for `output_00300.jld2`.
+- `path::String = "./"`: the folder of the file; also a keyword.
+
+# Keywords
+- `fname = "output_"`: the start of the file name, as given to [`savedata`](@ref).
+- `showfull::Bool = false`: also print the full tree of the file.
+- `verbose::Bool = true`: print the overview.
+
+# Returns
+A `Dict` with one entry per stored data type (e.g. `"hydro"`, `"particles"`) and `"FileSize"`.
+
+# Examples
 ```julia
-function viewdata(output::Int;
-        path::String="./",
-        fname = "output_",
-        showfull::Bool=false,
-        verbose::Bool=true)
+julia> viewdata(300, "mera_files/");
 
-return overview (dictionary)
+julia> keys(viewdata(300, "mera_files/"; verbose=false))
 ```
 
-#### Arguments
-##### Required:
-- **`output`:** output number
-- **`datatype`:** :hydro, :particles, :gravity, :clumps, :rt or :sinks
-
-##### Predefined/Optional Keywords:
-- **`path`:** the path to the output JLD2 file relative to the current folder or absolute path
-- **`fname`:** "output_"-> filename = "output_***.jld2" by default, can be changed to "myname***.jld2"
-- **`showfull`:** shows the full data tree of the datafile
-- **`verbose:`:** informations are printed on the screen by default
+See also [`savedata`](@ref), [`loaddata`](@ref), [`infodata`](@ref).
 """
 function viewdata(output::Int;
                     path::String="./",
