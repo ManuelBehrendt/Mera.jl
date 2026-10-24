@@ -159,6 +159,25 @@ SHA-256 it was written with; `sidecaroverview("results/")` lists every sidecar i
 `sidecar=false` turns them off for one call; [`sidecar`](@ref)`(false)` for the session.
 [Sharing results](export_sidecars.md) walks through all of it on a real simulation.
 
+### Threads
+
+The number of threads Julia runs with can change the last digits of some results, never more.
+Measured at 1, 2, 4 and 8 threads, and checked by the test suite:
+
+| result | same thread count, run again | different thread count |
+|:--|:--|:--|
+| reading: `gethydro`, `getparticles`, ... | identical | identical |
+| axis-aligned hydro `projection` | identical | identical |
+| `clumpfind` | identical | identical |
+| off-axis `projection`, particle `projection` | identical | round-off: below 10⁻¹⁴ relative, 5·10⁻¹² for a dispersion |
+| `volumerender` | identical | round-off: 10⁻¹⁷ in the colours |
+
+So a result repeats exactly when it is computed again with the same number of threads. The
+off-axis, particle and volume renderings split the cells into one chunk per thread and add the
+partial images; with a different thread count the additions happen in a different order, which
+moves the last bits. Every sidecar records the thread count (`julia_threads`), so the condition
+for an exact repeat is written down with the result.
+
 ## Checking Mera itself
 
 The versions being pinned is only useful if the package is right. Mera publishes fifteen small test
@@ -236,6 +255,7 @@ Two places to watch on a periodic run, because neither wraps:
 - [ ] both are committed
 - [ ] Julia is started with `--project=`
 - [ ] the Julia version is recorded
+- [ ] the number of threads is recorded (every sidecar does), for results that must repeat bit for bit
 - [ ] `provenance` output is saved with each result (the sidecar does this for every file Mera writes)
 - [ ] the scripts or notebooks that made the results are published next to them
 - [ ] for camera views, the viewing vectors (`m.los`, `m.up`, or the `angmom` axis) are saved too

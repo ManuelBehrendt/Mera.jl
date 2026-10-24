@@ -110,6 +110,7 @@ if isempty(_focus)
         tinclude("86_ramses_writer_tests.jl")   # repartition / writeramses: RAMSES files reproduced, values bit-identical
         tinclude("88_docstring_keywords_tests.jl")  # data-free: every keyword is named in its docstring
         tinclude("89_export_sidecar_tests.jl")     # exportdata formats read back by independent readers; sidecars
+        tinclude("90_thread_reproducibility_tests.jl")  # what the thread count may and may not change
         tinclude("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
         tinclude("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
         tinclude("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities
