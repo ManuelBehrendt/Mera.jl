@@ -170,6 +170,10 @@ export
     readsidecar,
     sidecaroverview,
     SidecarRecord,
+    simulationrecord,
+    writesimulationrecord,
+    datacite,
+    SimulationRecord,
     makethumb,
     Provenance,
 
@@ -564,6 +568,7 @@ include("functions/movie.jl")
 # sidecars and export to other tools (after movie.jl: they dispatch on MeraMovie)
 include("functions/export/sidecar.jl")
 include("functions/export/sidecar_read.jl")
+include("functions/export/simulation_record.jl")
 include("functions/export/npy.jl")
 include("functions/export/exportdata.jl")
 # ============================================

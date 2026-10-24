@@ -73,6 +73,9 @@ provenance
 provenance_string
 mera_build
 mera_install
+simulationrecord
+writesimulationrecord
+datacite
 quicklook
 quicklookplot
 ```

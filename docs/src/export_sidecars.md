@@ -200,7 +200,7 @@ r = readsidecar("fig3_maps.h5")
 
 ```
 Sidecar of fig3_maps.h5  (hdf5, projection)  data file: unchanged
-  written      2026-10-24 19:02 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-24 19:26 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
@@ -283,7 +283,7 @@ readsidecar("output_00300.jld2")
 
 ```
 Sidecar of output_00300.jld2  (jld2, mera_file)  data file: unchanged
-  written      2026-10-24 19:02 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-24 19:26 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
@@ -305,15 +305,15 @@ recs = sidecaroverview(".");
 9 sidecars in .
 file               kind        format  snapshot             time       written (UTC)     data file
 -----------------  ----------  ------  -------------------  ---------  ----------------  ---------
-cells.npz          namedtuple  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
-fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
-fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
-fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
-fig3_maps.npz      projection  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
-fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
-fig3_sd.npy        projection  npy     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
-fig4_profile.csv   profile     csv     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
-output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
+cells.npz          namedtuple  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
+fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
+fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
+fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
+fig3_maps.npz      projection  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
+fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
+fig3_sd.npy        projection  npy     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
+fig4_profile.csv   profile     csv     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
+output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
 ```
 
 ## Has a file changed?
@@ -389,6 +389,162 @@ This page is built from a checkout of the Mera repository, so it says `:checkout
 installation the same cell says `:registry` and `registered : true`. The short form is
 [`mera_build`](@ref), which is also the version field of every provenance line.
 
+## Describing the simulation
+
+A sidecar describes a result. [`simulationrecord`](@ref) describes the simulation behind it:
+the code, box and resolution, units, cosmology, which physics was on, what the outputs hold, and
+the SHA-256 of the run's input files. For RAMSES the physics comes from the namelist, with the
+Fortran values cleaned up (comments removed, `.true.` and numbers parsed).
+
+```julia
+rec = simulationrecord(info)
+```
+
+```
+Simulation record of mw_L10 (RAMSES), output 300
+  box          48 kpc (48 in code units), 3-D
+  resolution   levels 6..10, finest cell 46.875 pc
+  time         445.89 Myr
+  physics      hydro (hllc), gravity, particles, cooling, star formation, feedback
+  contents     hydro, gravity, particles
+  input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
+```
+
+```julia
+rec["physics"]["summary"]["star_formation"]
+```
+
+```
+OrderedCollections.OrderedDict{String, Any} with 4 entries:
+  "T2_star"  => 0
+  "eps_star" => 0.01
+  "m_star"   => 1
+  "n_star"   => 10.0
+```
+
+Given the simulation folder instead, the record also lists every output with its time and size
+on disk, and the outputs at which the namelist changed, for a run restarted with new settings:
+
+```julia
+run = simulationrecord(joinpath(MERA_EXAMPLES, "RAMSES/mw_L10"))
+```
+
+```
+simulationrecord: 1 output of mw_L10
+```
+
+```
+Simulation record of mw_L10 (RAMSES), output 300
+  box          48 kpc (48 in code units), 3-D
+  resolution   levels 6..10, finest cell 46.875 pc
+  time         445.89 Myr
+  physics      hydro (hllc), gravity, particles, cooling, star formation, feedback
+  contents     hydro, gravity, particles
+  run          1 outputs (300..300), 445.89..445.89 Myr, 5.682 GB
+  input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
+```
+
+```julia
+for o in run["run"]["output_list"]
+    println("output ", o["output"], "   ", round(o["time_myr"], sigdigits=5), " Myr   ",
+            round(o["bytes"] / 1e9, sigdigits=3), " GB")
+end
+```
+
+```
+output 300   445.89 Myr   6.1 GB
+```
+
+To publish the simulation itself, [`datacite`](@ref) turns the record into DataCite metadata,
+the format data repositories and DOI registration use. Mera fills in what it knows: the
+technical description, sizes, formats, the creation date, and the RAMSES paper as related work.
+You supply who made it, a title and a license, as keywords or in a `simulation.toml` next to the
+simulation, so they are written once per run.
+
+```julia
+meta = datacite(run; creators=["Behrendt, Manuel"], title="Isolated Milky-Way-like disc galaxy",
+                license="CC-BY-4.0", keywords=["galaxy", "interstellar medium"],
+                file="datacite.json")
+print(read("datacite.json", String))
+```
+
+```
+{
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "types": {
+        "resourceTypeGeneral": "Dataset",
+        "resourceType": "Simulation output"
+    },
+    "titles": [
+        {
+            "title": "Isolated Milky-Way-like disc galaxy"
+        }
+    ],
+    "creators": [
+        {
+            "name": "Behrendt, Manuel",
+            "nameType": "Personal",
+            "familyName": "Behrendt",
+            "givenName": "Manuel"
+        }
+    ],
+    "publisher": {
+        "name": "Zenodo"
+    },
+    "publicationYear": "2026",
+    "subjects": [
+        {
+            "subject": "galaxy"
+        },
+        {
+            "subject": "interstellar medium"
+        },
+        {
+            "subject": "numerical simulation"
+        },
+        {
+            "subject": "RAMSES"
+        }
+    ],
+    "dates": [
+        {
+            "date": "2025-06-21",
+            "dateType": "Created"
+        }
+    ],
+    "language": "en",
+    "descriptions": [
+        {
+            "description": "RAMSES simulation, 3-D; box 48 kpc; AMR levels 6 to 10 (finest cell 46.875 pc); physics: hydro (hllc), gravity, particles, cooling, star formation, feedback; 1 output at 445.89 Myr. Described with Mera 1.8.3 (simulationrecord).",
+            "descriptionType": "TechnicalInfo"
+        }
+    ],
+    "sizes": [
+        "1 output",
+        "5.682 GB"
+    ],
+    "formats": [
+        "RAMSES output files"
+    ],
+    "rightsList": [
+        {
+            "rights": "CC-BY-4.0",
+            "rightsIdentifier": "CC-BY-4.0",
+            "rightsIdentifierScheme": "SPDX",
+            "schemeUri": "https://spdx.org/licenses/"
+        }
+    ],
+    "relatedIdentifiers": [
+        {
+            "relatedIdentifier": "10.1051/0004-6361:20011817",
+            "relatedIdentifierType": "DOI",
+            "relationType": "References",
+            "resourceTypeGeneral": "JournalArticle"
+        }
+    ]
+}
+```
+
 ## FITS
 
 FITS export needs the FITSIO package. It is not installed with Mera, since most users never write
@@ -408,6 +564,7 @@ end
 ```
 
 ```
+[ Info: Mera v1.8.3
 exportdata: T, sd → fig3_maps.fits  (+ fig3_maps.fits.meta.json)
 BUNIT  = Msol_pc2
 CTYPE1 = X
@@ -513,6 +670,7 @@ it, and publish it next to the results.
 - [ ] check the folder with `sidecaroverview(dir; verify=true)`
 - [ ] use `anonymize=true` if the simulation path should not be public
 - [ ] put the data files, their sidecars and the scripts or notebooks in one record, e.g. on Zenodo
+- [ ] describe the simulation with `simulationrecord`, and `datacite` if it is published too
 - [ ] commit the `Project.toml` and `Manifest.toml` of the analysis (see [Reproducibility](reproducibility.md))
 
 ## See also

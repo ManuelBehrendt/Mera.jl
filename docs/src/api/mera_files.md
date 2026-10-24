@@ -43,6 +43,7 @@ SHA-256; [`sidecaroverview`](@ref) lists every sidecar in a folder. The tutorial
 readsidecar
 sidecaroverview
 SidecarRecord
+SimulationRecord
 ```
 
 ## Conversion

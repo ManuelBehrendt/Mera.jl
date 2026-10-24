@@ -18,7 +18,7 @@
 # ====================================================================================
 
 # The complete set of registrable entry points.
-const _READER_CAPABILITIES = (:info, :hydro, :particles, :gravity, :rt, :clumps, :groups, :logs)
+const _READER_CAPABILITIES = (:info, :hydro, :particles, :gravity, :rt, :clumps, :groups, :logs, :physics)
 
 struct SimReader
     code::Symbol                  # registry key, e.g. :pluto (the getinfo `code=` value)
@@ -100,6 +100,12 @@ records interleave every field cannot.
 
 `logs` is the optional function that reads the run-time log files of the code, like the other
 capability functions (`info`, `hydro`, `particles`, ...).
+
+`physics` is the optional function `info -> OrderedDict` that describes which physics a run
+used, for [`simulationrecord`](@ref). It returns a `"summary"` with the keys `hydro`, `mhd`,
+`gravity`, `particles`, `radiative_transfer`, `cooling`, `star_formation`, `feedback` and
+`sinks` (each `false`, `true`, a dictionary of settings, or `nothing` when unknown), and may add
+the code's own parameters next to it.
 """
 function register_reader!(code::Symbol; simcodes::Vector{String},
                           name::String=String(code),
@@ -113,11 +119,12 @@ function register_reader!(code::Symbol; simcodes::Vector{String},
                           gravity::Union{Function,Nothing}=nothing,
                           rt::Union{Function,Nothing}=nothing,
                           clumps::Union{Function,Nothing}=nothing,
-                          logs::Union{Function,Nothing}=nothing)
+                          logs::Union{Function,Nothing}=nothing,
+                          physics::Union{Function,Nothing}=nothing)
     isempty(simcodes) && error("register_reader!: `simcodes` must name at least one InfoType.simcode string.")
     funcs = Dict{Symbol,Function}()
     for (cap, f) in pairs((info=info, hydro=hydro, particles=particles, groups=groups,
-                           gravity=gravity, rt=rt, clumps=clumps, logs=logs))
+                           gravity=gravity, rt=rt, clumps=clumps, logs=logs, physics=physics))
         f === nothing || (funcs[cap] = f)
     end
     for s in simcodes
