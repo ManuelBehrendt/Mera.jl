@@ -155,6 +155,7 @@ record of what it did, so publish it next to the results.
 To read one back, `readsidecar("fig3.h5")` prints it and says whether `fig3.h5` still matches the
 SHA-256 it was written with; `sidecaroverview("results/")` lists every sidecar in a folder.
 `sidecar=false` turns them off for one call; [`sidecar`](@ref)`(false)` for the session.
+[Sharing results](export_sidecars.md) walks through all of it on a real simulation.
 
 ## Checking Mera itself
 

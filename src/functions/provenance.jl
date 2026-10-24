@@ -265,7 +265,7 @@ end
 
 provenance(x) = hasproperty(x, :info) ? provenance(x.info) :
     throw(ArgumentError(
-        "provenance: a $(typeof(x).name.name) carries no `.info`. Apply it to a data object " *
+        "provenance: this $(typeof(x).name.name) carries no `.info`. Apply it to a data object " *
         "(hydro/particles/gravity/clumps/RT), a projection map, a profile, phase or pdf of " *
         "either, a galaxy frame, or an InfoType. For a result without it (a timeseries table, " *
         "a pdf of a plain array, a getvar array), take provenance of the source data object."))

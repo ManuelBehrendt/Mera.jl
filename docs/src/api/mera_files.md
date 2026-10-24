@@ -35,7 +35,8 @@ recorded. `sidecar=false` on a call, or [`sidecar`](@ref)`(false)` for the whole
 it off.
 
 [`readsidecar`](@ref) prints one sidecar and checks that its data file still matches the recorded
-SHA-256; [`sidecaroverview`](@ref) lists every sidecar in a folder.
+SHA-256; [`sidecaroverview`](@ref) lists every sidecar in a folder. The tutorial
+[Sharing results](../export_sidecars.md) shows them on a real simulation.
 
 ```@docs; canonical=false
 readsidecar
