@@ -128,7 +128,6 @@ function optimize_image_for_zulip(image_path::String; max_dimension=1024, max_fi
         if current_size <= max_file_size
             # Still check image dimensions if we have ImageTransformations
             try
-                @eval using ImageTransformations, FileIO, Images
                 img = load(image_path)
                 img_size = size(img)
                 max_current_dim = max(img_size...)
@@ -158,7 +157,6 @@ function optimize_image_for_zulip(image_path::String; max_dimension=1024, max_fi
         end
         
         # File is too large - try to optimize
-        @eval using ImageTransformations, FileIO, Images
         img = load(image_path)
         img_size = size(img)
         max_current_dim = max(img_size...)

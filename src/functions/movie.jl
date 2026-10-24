@@ -2,7 +2,7 @@
 # getmovie / savemovie — turn a projection-over-outputs into movie frames
 #
 #   getmovie(path, quantity; <view kwargs>)   -> MeraMovie  (a stack of 2D maps + metadata)
-#   savemovie(movie, "out.gif"; …)            -> animated GIF (uses the bundled FileIO/Images)
+#   savemovie(movie, "out.gif"; …)            -> animated GIF (FileIO with ImageMagick)
 #
 # Builds on the timeseries machinery (one snapshot resident at a time, RAM-safe) and the
 # projection engine. Frame orientation/region is whatever you pass to projection (axis-
@@ -369,7 +369,7 @@ end
               clip=(0.0, 1.0), fps=10, tags=nothing, annotate=true, save_frames=nothing,
               verbose=true) -> file
 
-Write a [`MeraMovie`](@ref) to an **animated GIF** (`file`), using the bundled FileIO/Images
+Write a [`MeraMovie`](@ref) to an **animated GIF** (`file`), using FileIO with ImageMagick
 (no extra package needed). Each frame is normalised over a colour range and mapped through a
 colormap.
 

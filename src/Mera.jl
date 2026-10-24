@@ -44,7 +44,6 @@ using StructArrays
 using ProgressMeter
 using StatsBase
 using OnlineStats
-using Images
 using ImageTransformations
 using ImageTransformations.Interpolations
 using Colors           # RGB/parse/Colorant for the immersive ray-caster (image assembly)
