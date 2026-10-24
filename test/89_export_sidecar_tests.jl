@@ -264,6 +264,47 @@ _sidecar_json(file) = _J.read(read(Mera._sidecar_file(file), String))
         @test _sidecar_json(f("m.h5"))["environment"]["mera_install"]["source"] == string(mi.source)
     end
 
+    @testset "the analysis part: environment and script" begin
+        ad = mktempdir()
+        proj = joinpath(ad, "Project.toml")
+        write(proj, "[deps]\nMera = \"02f895e8-fdb1-4346-8fe6-c721699f5126\"\nHDF5 = \"f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f\"\n")
+        write(joinpath(ad, "Manifest.toml"), """
+            manifest_format = "2.0"
+            [[deps.Mera]]
+            uuid = "02f895e8-fdb1-4346-8fe6-c721699f5126"
+            version = "1.8.3"
+            repo-url = "https://github.com/ManuelBehrendt/Mera.jl"
+            repo-rev = "master"
+            [[deps.HDF5]]
+            uuid = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
+            version = "0.17.4"
+            """)
+        script = joinpath(ad, "analysis.jl")
+        write(script, "# my analysis\nusing Mera\n")
+        a = Mera._sidecar_analysis(; script=(kind="script", path=script), project=proj)
+        @test a["environment"]["project_sha256"] == bytes2hex(open(Mera.SHA.sha256, proj))
+        @test a["environment"]["manifest"] == "Manifest.toml"
+        @test a["environment"]["packages"]["Mera"] == "1.8.3 (repo master)"
+        @test a["environment"]["packages"]["HDF5"] == "0.17.4"
+        @test a["script"]["name"] == "analysis.jl"
+        @test a["script"]["sha256"] == bytes2hex(open(Mera.SHA.sha256, script))
+        @test !haskey(a["script"], "text")                       # the text only on request
+        a2 = Mera._sidecar_analysis(; script=(kind="script", path=script), project=proj,
+                                    include_script=true, anonymize=true)
+        @test a2["script"]["text"] == "# my analysis\nusing Mera\n"
+        @test a2["script"]["path"] == joinpath("...", splitpath(ad)[end], "analysis.jl")
+        @test Mera._sidecar_analysis(; script=nothing, project=nothing)["script"] === nothing
+
+        nbfile = joinpath(ad, "nb.ipynb")
+        write(nbfile, """{"cells": [{"cell_type": "markdown", "source": ["# title"]},
+                                      {"cell_type": "code", "source": ["x = 1\\n", "y = 2"]},
+                                      {"cell_type": "code", "source": ["z = 3"]}]}""")
+        @test Mera._notebook_code(nbfile) == "x = 1\ny = 2\n\n# ----\n\nz = 3"
+
+        @test haskey(_sidecar_json(f("m.h5")), "analysis")      # every sidecar carries it
+        @test occursin("environment", sprint(show, MIME"text/plain"(), readsidecar(f("m.h5"))))
+    end
+
     @testset "profile and phase carry info" begin
         @test profile(gas, :r_cylinder, :rho).info === gas.info
         @test profile(p, :sd).info === p.info

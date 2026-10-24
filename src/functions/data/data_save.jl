@@ -9,6 +9,7 @@ function savedata( dataobject::DataSetType, fmode::Symbol;
                     sidecar::Bool=true,
                     anonymize::Bool=false,
                     note::AbstractString="",
+                    include_script::Bool=false,
                     verbose::Bool=true)
 
         return savedata( dataobject,
@@ -22,6 +23,7 @@ function savedata( dataobject::DataSetType, fmode::Symbol;
                             sidecar=sidecar,
                             anonymize=anonymize,
                             note=note,
+                            include_script=include_script,
                             verbose=verbose)
 end
 
@@ -34,6 +36,7 @@ function savedata( dataobject::DataSetType, path::String, fmode::Symbol;
                     sidecar::Bool=true,
                     anonymize::Bool=false,
                     note::AbstractString="",
+                    include_script::Bool=false,
                     verbose::Bool=true)
 
         return savedata( dataobject,
@@ -47,6 +50,7 @@ function savedata( dataobject::DataSetType, path::String, fmode::Symbol;
                             sidecar=sidecar,
                             anonymize=anonymize,
                             note=note,
+                            include_script=include_script,
                             verbose=verbose)
 end
 
@@ -60,6 +64,7 @@ function savedata( dataobject::DataSetType, path::String;
                     sidecar::Bool=true,
                     anonymize::Bool=false,
                     note::AbstractString="",
+                    include_script::Bool=false,
                     verbose::Bool=true)
 
         return savedata( dataobject,
@@ -73,6 +78,7 @@ function savedata( dataobject::DataSetType, path::String;
                             sidecar=sidecar,
                             anonymize=anonymize,
                             note=note,
+                            include_script=include_script,
                             verbose=verbose)
 end
 
@@ -111,6 +117,9 @@ table together with the simulation information and the options it was loaded wit
   switch [`sidecar`](@ref) overrides this keyword.
 - `anonymize::Bool = false`: in the sidecar, keep only the last two parts of the simulation path.
 - `note::String = ""`: a free text stored in the sidecar.
+- `include_script::Bool = false`: also store the full text of the running script (or the code
+  cells of the notebook) in the sidecar. Its name and SHA-256 are always recorded, when Julia
+  knows the script.
 - `verbose::Bool = true`: print what is written.
 
 # Examples
@@ -137,6 +146,7 @@ function savedata( dataobject::DataSetType;
                     sidecar::Bool=true,
                     anonymize::Bool=false,
                     note::AbstractString="",
+                    include_script::Bool=false,
                     verbose::Bool=true)
 
         verbose = checkverbose(verbose)
@@ -214,7 +224,8 @@ function savedata( dataobject::DataSetType;
         end
         checksidecar(sidecar) &&
             _savedata_sidecar(fpath, dataobject, datatype, column_names, ctype, comments,
-                              jld2mode == "w"; anonymize=anonymize, note=note)
+                              jld2mode == "w"; anonymize=anonymize, note=note,
+                              include_script=include_script)
     end
 
 
@@ -368,7 +379,7 @@ end
 # The sidecar of a Mera file lists every data type in it. An append adds this one to the list
 # read from the existing sidecar; a fresh write starts the list again.
 function _savedata_sidecar(fpath, dataobject, datatype, column_names, ctype, comments, fresh::Bool;
-                           anonymize::Bool=false, note::AbstractString="")
+                           anonymize::Bool=false, note::AbstractString="", include_script::Bool=false)
     prior = fresh ? OrderedDict{String,Any}() : get(_read_sidecar_result(fpath), "contents", Dict())
     contents = OrderedDict{String,Any}(string(k) => v for (k, v) in prior)
     field(f) = hasproperty(dataobject, f) ? getproperty(dataobject, f) : nothing
@@ -383,5 +394,6 @@ function _savedata_sidecar(fpath, dataobject, datatype, column_names, ctype, com
     result = OrderedDict{String,Any}("format" => "jld2", "kind" => "mera_file",
                                      "layout" => "a Mera file: reload with loaddata",
                                      "contents" => contents)
-    return _write_sidecar(fpath, result, dataobject; anonymize=anonymize, note=note)
+    return _write_sidecar(fpath, result, dataobject; anonymize=anonymize, note=note,
+                          include_script=include_script)
 end

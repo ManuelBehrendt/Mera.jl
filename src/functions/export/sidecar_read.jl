@@ -194,6 +194,17 @@ function Base.show(io::IO, ::MIME"text/plain", r::SidecarRecord)
     end
     inp = _sc_get(d, "input_files")
     inp === nothing || println(io, "  input files  ", join(string.(keys(inp)), ", "), " (SHA-256 recorded)")
+    scr = _sc_get(d, "analysis", "script")
+    if scr !== nothing
+        println(io, "  script       ", _sc_get(scr, "name"), " (", _sc_get(scr, "kind"), ", SHA-256 recorded",
+                _sc_get(scr, "text") === nothing ? "" : ", text included", ")")
+    end
+    man = _sc_get(d, "analysis", "environment", "manifest")
+    if man !== nothing
+        pk = _sc_get(d, "analysis", "environment", "packages")
+        println(io, "  environment  ", _sc_get(d, "analysis", "environment", "path"), ": Project.toml and ", man,
+                " (SHA-256 recorded)", pk === nothing ? "" : ", $(length(pk)) packages")
+    end
     lines = _sc_contents(d)
     for (k, l) in enumerate(lines)
         println(io, k == 1 ? "  contents     " : "               ", l)

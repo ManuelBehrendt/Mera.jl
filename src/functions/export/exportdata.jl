@@ -391,7 +391,7 @@ end
 """
     exportdata(result, file; format=:auto, vars=nothing, source=nothing,
                length_unit=:standard, sidecar=true, anonymize=false, note="",
-               verbose=true) -> String
+               include_script=false, verbose=true) -> String
 
 Write a Mera result to a file that other tools read, and a sidecar `<file>.meta.json` that
 records what it holds and where it came from.
@@ -435,6 +435,9 @@ file holds plain arrays; the sidecar holds the provenance, the units and the env
 - `anonymize::Bool = false`: in the sidecar, keep only the last two parts of the simulation path.
   The host name is never recorded.
 - `note::String = ""`: a free text stored in the sidecar, e.g. which figure this is.
+- `include_script::Bool = false`: also store the full text of the running script (or the code
+  cells of the notebook) in the sidecar. Its name and SHA-256 are always recorded, when Julia
+  knows the script.
 - `verbose::Bool = true`: print what was written.
 
 Python and other C-order readers see the axes of an HDF5 or JLD2 array reversed (a Julia
@@ -464,7 +467,8 @@ See also [`savemap`](@ref), [`savedata`](@ref), [`provenance`](@ref), [`export_v
 """
 function exportdata(result, file::AbstractString; format::Symbol=:auto, vars=nothing,
                     source=nothing, length_unit::Symbol=:standard, sidecar::Bool=true,
-                    anonymize::Bool=false, note::AbstractString="", verbose::Bool=true)
+                    anonymize::Bool=false, note::AbstractString="", include_script::Bool=false,
+                    verbose::Bool=true)
     verbose = checkverbose(verbose)
     fmt = _export_format(file, format)
     s = _select_export(_exportset(result; length_unit=length_unit), vars)
@@ -482,7 +486,7 @@ function exportdata(result, file::AbstractString; format::Symbol=:auto, vars=not
         desc = merge(OrderedDict{String,Any}("format" => string(fmt), "layout" => _EXPORT_LAYOUT[fmt]),
                      _export_meta(s))
         sc = _write_sidecar(file, desc, source === nothing ? s.info : source;
-                            anonymize=anonymize, note=note)
+                            anonymize=anonymize, note=note, include_script=include_script)
     end
     verbose && println("exportdata: ", join(keys(s.arrays), ", "), " → ", file,
                        sc === nothing ? "" : "  (+ $(basename(sc)))")

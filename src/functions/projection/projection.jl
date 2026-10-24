@@ -1046,7 +1046,8 @@ end
 
 
 """
-    savemap(p::DataMapsType, filename; sidecar=true, anonymize=false, note="", verbose=true) -> String
+    savemap(p::DataMapsType, filename; sidecar=true, anonymize=false, note="", include_script=false,
+            verbose=true) -> String
     loadmap(filename; verbose=true) -> DataMapsType
 
 Save / load a projection result (an `AMRMapsType`/`PartMapsType` from [`projection`](@ref)) to a
@@ -1069,19 +1070,23 @@ map from it. Reload it with Mera; to hand a map to Python or another tool, use [
   overrides this keyword.
 - `anonymize::Bool = false`: in the sidecar, keep only the last two parts of the simulation path.
 - `note::String = ""`: a free text stored in the sidecar.
+- `include_script::Bool = false`: also store the full text of the running script (or the code
+  cells of the notebook) in the sidecar. Its name and SHA-256 are always recorded, when Julia
+  knows the script.
 - `verbose::Bool = true`: print what was saved.
 
 Returns the file name written, as a `String`.
 """
 function savemap(p::DataMapsType, filename::AbstractString; sidecar::Bool=true,
-                 anonymize::Bool=false, note::AbstractString="", verbose::Bool=true)
+                 anonymize::Bool=false, note::AbstractString="", include_script::Bool=false,
+                 verbose::Bool=true)
     fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
     JLD2.jldsave(fn; meramap = p)
     if checksidecar(sidecar)
         result = merge(OrderedDict{String,Any}("format" => "jld2",
                            "layout" => "the Mera map object ($(nameof(typeof(p)))): reload with loadmap"),
                        _export_meta(_exportset(p)))
-        _write_sidecar(fn, result, p; anonymize=anonymize, note=note)
+        _write_sidecar(fn, result, p; anonymize=anonymize, note=note, include_script=include_script)
     end
     verbose && println("Saved projection maps $(collect(keys(p.maps))) → ", fn)
     return fn

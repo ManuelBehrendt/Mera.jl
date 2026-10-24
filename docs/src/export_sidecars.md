@@ -186,16 +186,25 @@ exportdata: rho, T, level → cells.npz  (+ cells.npz.meta.json)
 [`readsidecar`](@ref) prints what a sidecar says. It also checks that the data file still matches
 the SHA-256 recorded when it was written.
 
+!!! info "SHA-256 in short"
+    A SHA-256 is a fingerprint of a file: 64 characters computed from every byte of it. Change a
+    single byte and the fingerprint is completely different, and two different files practically
+    never share one. So when a file's SHA-256 matches the one in its sidecar, it is the file that
+    was written. It says nothing about whether the content is right, only that it is unchanged.
+    Outside Julia, `shasum -a 256 fig3_maps.h5` (macOS) or `sha256sum fig3_maps.h5` (Linux)
+    computes the same fingerprint.
+
 ```julia
 r = readsidecar("fig3_maps.h5")
 ```
 
 ```
 Sidecar of fig3_maps.h5  (hdf5, projection)  data file: unchanged
-  written      2026-10-24 18:44 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-24 19:02 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
+  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
   contents     x [kpc] 481
                y [kpc] 481
                T [K] 481×481
@@ -216,6 +225,7 @@ The sidecar is plain JSON, with these parts:
 | `result` | what the file holds: arrays, shapes, units, the map geometry, and the format's layout |
 | `source` | the [provenance](provenance.md) of the snapshot |
 | `input_files` | SHA-256 of the run's `namelist.txt`, `makefile.txt`, `patches.txt`, `compilation.txt` |
+| `analysis` | the Julia environment of your analysis and the script that ran (see below) |
 | `environment` | Julia and Mera version, how Mera was installed, OS, CPU model, thread counts |
 | `note` | your text |
 
@@ -273,10 +283,11 @@ readsidecar("output_00300.jld2")
 
 ```
 Sidecar of output_00300.jld2  (jld2, mera_file)  data file: unchanged
-  written      2026-10-24 18:44 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-24 19:02 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
+  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
   contents     hydro: 1136840 rows, 11 columns
   sidecar      output_00300.jld2.meta.json
 ```
@@ -294,15 +305,15 @@ recs = sidecaroverview(".");
 9 sidecars in .
 file               kind        format  snapshot             time       written (UTC)     data file
 -----------------  ----------  ------  -------------------  ---------  ----------------  ---------
-cells.npz          namedtuple  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 18:44  present
-fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-24 18:44  present
-fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 18:44  present
-fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 18:44  present
-fig3_maps.npz      projection  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 18:44  present
-fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 18:44  present
-fig3_sd.npy        projection  npy     mw_L10/output_00300  445.9 Myr  2026-10-24 18:44  present
-fig4_profile.csv   profile     csv     mw_L10/output_00300  445.9 Myr  2026-10-24 18:44  present
-output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 18:44  present
+cells.npz          namedtuple  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
+fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
+fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
+fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
+fig3_maps.npz      projection  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
+fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
+fig3_sd.npy        projection  npy     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
+fig4_profile.csv   profile     csv     mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
+output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 19:02  present
 ```
 
 ## Has a file changed?
@@ -397,7 +408,6 @@ end
 ```
 
 ```
-[ Info: Mera v1.8.3
 exportdata: T, sd → fig3_maps.fits  (+ fig3_maps.fits.meta.json)
 BUNIT  = Msol_pc2
 CTYPE1 = X
@@ -423,14 +433,82 @@ sidecar(nothing);
 sidecar written: false
 ```
 
-## What a sidecar cannot record
+## The analysis around the result
 
-A function you wrote yourself, such as the reducer of a [`timeseries`](@ref) or a
-[`add_field`](@ref) kernel, appears in a sidecar only by name. What it did is in your script or
-notebook, so that script is part of the record: publish it next to the results.
+A result also depends on the analysis that made it: your script, and the versions of every
+package it used. The `analysis` part of the sidecar records both.
+
+* **The environment.** The SHA-256 of the active `Project.toml` and `Manifest.toml`, and the
+  version of each package in the project. With those two files, anyone can rebuild exactly the
+  packages that ran (`pkg> instantiate`); the fingerprints show they have the right ones.
+* **The script.** Run as `julia analysis.jl`, or in JupyterLab or Jupyter Notebook 7 (which tell
+  the kernel the notebook's path), the sidecar names the script and stores its SHA-256. With
+  `include_script=true` it also stores the full text, or the code cells of a notebook. That is off
+  by default, since a script may hold private paths or notes.
+
+```julia
+for (name, version) in r["analysis"]["environment"]["packages"]
+    println(rpad(name, 16), version)
+end
+```
+
+```
+ArrayInterface  7.28.1
+BenchmarkTools  1.8.0
+CSVFiles        1.0.2
+CairoMakie      0.15.13
+CodecZlib       0.7.8
+ColorSchemes    3.31.0
+Conda           1.10.3
+DelimitedFiles  1.9.1
+FITSIO          0.17.5
+FileIO          1.20.0
+FortranFiles    0.6.2
+GZip            0.7.1
+HDF5            0.17.3
+JLD             0.13.5
+MAT             0.12.1
+Mera            1.8.3 (path)
+NPZ             0.4.3
+PyCall          1.96.4
+PyPlot          2.11.6
+Revise          3.16.2
+Serialization   1.11.0
+StructArrays    0.4.2
+TimerOutputs    0.5.29
+```
+
+This page is executed by `nbconvert`, which does not tell the kernel which notebook it runs, so
+here the script is not recorded:
+
+```julia
+r["analysis"]["script"] === nothing
+```
+
+```
+true
+```
+
+Run as a script, the same part reads like this:
+
+```json
+"script": {
+    "kind": "script",
+    "name": "analysis.jl",
+    "path": "/home/me/projects/galaxy/analysis.jl",
+    "sha256": "3f9a…"
+}
+```
+
+**What is still not recorded.** Code typed into the REPL leaves no file behind, and VS Code
+notebooks do not pass their path on. And a function you wrote yourself, such as the reducer of a
+[`timeseries`](@ref) or an [`add_field`](@ref) kernel, appears only by name: the result does not
+keep the code that made it. In those cases the script or notebook is still the record, so keep
+it, and publish it next to the results.
 
 **Before you publish figure data:**
 
+- [ ] run the analysis as a script, or in JupyterLab, so the sidecars name it
 - [ ] export each figure's data with `exportdata`, with a `note` naming the figure
 - [ ] check the folder with `sidecaroverview(dir; verify=true)`
 - [ ] use `anonymize=true` if the simulation path should not be public

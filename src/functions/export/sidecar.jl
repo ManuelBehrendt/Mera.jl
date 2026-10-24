@@ -120,14 +120,82 @@ function _write_json(file::AbstractString, d)
     return file
 end
 
+# ---- the analysis that called Mera --------------------------------------------------
+#
+# A sidecar also records the analysis around the result: the Julia environment (Project.toml and
+# Manifest.toml, their SHA-256, and the versions of the project's packages) and the script that
+# ran, when Julia knows it. With the environment files a reader can rebuild the exact packages;
+# with the script's SHA-256 they can check they have the script that made the file. The script's
+# text is stored only on request (`include_script=true`): a script may hold private paths or notes.
+
+# The script that is running: `julia analysis.jl`, or a notebook whose path Jupyter passes to the
+# kernel (JupyterLab and Notebook 7 set JPY_SESSION_NAME). `nothing` in the REPL, in VS Code
+# notebooks and under nbconvert, which do not say.
+function _analysis_script()
+    !isempty(PROGRAM_FILE) && isfile(PROGRAM_FILE) && return (kind="script", path=abspath(PROGRAM_FILE))
+    nb = get(ENV, "JPY_SESSION_NAME", "")
+    !isempty(nb) && isfile(nb) && return (kind="notebook", path=abspath(nb))
+    return nothing
+end
+
+# The code of a notebook: its code cells, in order, without outputs.
+function _notebook_code(path::AbstractString)
+    nb = JSON3.read(read(path, String))
+    cells = [join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code"]
+    return join(cells, "\n\n# ----\n\n")
+end
+
+# "1.8.3", "1.8.3 (repo master)", "1.8.3 (path)", or "stdlib", from a Manifest.toml entry
+function _package_version(e::AbstractDict)
+    v = get(e, "version", nothing)
+    v === nothing && return "stdlib"
+    haskey(e, "repo-url") && return "$v (repo $(get(e, "repo-rev", "default branch")))"
+    haskey(e, "path") && return "$v (path)"
+    return String(v)
+end
+
+function _sidecar_analysis(; script=_analysis_script(), project=Base.active_project(),
+                           include_script::Bool=false, anonymize::Bool=false)
+    d = OrderedDict{String,Any}()
+    if project !== nothing && isfile(project)
+        man = something(try Base.project_file_manifest_path(project) catch; nothing end, "")
+        env = OrderedDict{String,Any}(
+            "path"            => _sidecar_simpath(dirname(project), anonymize),
+            "project_sha256"  => _sha256_file(project),
+            "manifest"        => isfile(man) ? basename(man) : nothing,
+            "manifest_sha256" => isfile(man) ? _sha256_file(man) : nothing)
+        if isfile(man)
+            deps = get(TOML.parsefile(man), "deps", Dict())
+            direct = sort!(collect(keys(get(TOML.parsefile(project), "deps", Dict()))))
+            env["packages"] = OrderedDict{String,Any}(
+                name => (haskey(deps, name) ? _package_version(first(deps[name])) : nothing) for name in direct)
+        end
+        d["environment"] = env
+    end
+    if script === nothing
+        d["script"] = nothing
+    else
+        sc = OrderedDict{String,Any}(
+            "kind"   => script.kind,
+            "name"   => basename(script.path),
+            "path"   => _sidecar_simpath(script.path, anonymize),
+            "sha256" => _sha256_file(script.path))
+        include_script &&
+            (sc["text"] = script.kind == "notebook" ? _notebook_code(script.path) : read(script.path, String))
+        d["script"] = sc
+    end
+    return d
+end
+
 """
-    _write_sidecar(file, result, source; anonymize=false, note="", verbose=false)
+    _write_sidecar(file, result, source; anonymize=false, note="", include_script=false, verbose=false)
 
 Write `<file>.meta.json` and return its path, or `nothing` if it could not be written (a warning
 says why). `result` is a dictionary describing the file's content.
 """
 function _write_sidecar(file::AbstractString, result::AbstractDict, source;
-                        anonymize::Bool=false, note::AbstractString="", verbose::Bool=false)
+                        anonymize::Bool=false, note::AbstractString="", include_script::Bool=false,
+                        verbose::Bool=false)
     sc = _sidecar_file(file)
     try
         d = OrderedDict{String,Any}(
@@ -139,6 +207,7 @@ function _write_sidecar(file::AbstractString, result::AbstractDict, source;
             "result"      => result,
             "source"      => _sidecar_source(source; anonymize=anonymize),
             "input_files" => _sidecar_input_files(source),
+            "analysis"    => _sidecar_analysis(include_script=include_script, anonymize=anonymize),
             "environment" => _sidecar_environment())
         isempty(note) || (d["note"] = String(note))
         _write_json(sc, d)

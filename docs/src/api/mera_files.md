@@ -29,8 +29,9 @@ exportdata
 
 Next to every saved or exported file Mera writes a sidecar, `<file>.meta.json`: what the file
 holds and in which units, the SHA-256 of the file, the provenance of the snapshot, the SHA-256 of
-the run's `namelist.txt`, `makefile.txt`, `patches.txt` and `compilation.txt`, and the Julia,
-Mera, CPU and thread count that ran. It is JSON, so any language reads it. The host name is never
+the run's `namelist.txt`, `makefile.txt`, `patches.txt` and `compilation.txt`, the Julia, Mera,
+CPU and thread count that ran, and the analysis around it: the SHA-256 of your `Project.toml`
+and `Manifest.toml` and of the script that ran. It is JSON, so any language reads it. The host name is never
 recorded. `sidecar=false` on a call, or [`sidecar`](@ref)`(false)` for the whole session, turns
 it off.
 

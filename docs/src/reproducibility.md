@@ -143,8 +143,10 @@ exportdata(m, "fig3.h5"; length_unit=:kpc, note="Figure 3")
 
 The sidecar holds the provenance of the snapshot, the units and geometry of the result, the
 SHA-256 of the file itself and of the run's `namelist.txt`, `makefile.txt`, `patches.txt` and
-`compilation.txt`, and the environment: Julia and Mera version, operating system, CPU model and
-thread counts. Publish it with the data, for example in the same Zenodo record. It is JSON, so a
+`compilation.txt`, the environment that ran (Julia and Mera version, operating system, CPU model,
+thread counts), and the analysis around it: the SHA-256 of your `Project.toml` and `Manifest.toml`,
+the versions of your project's packages, and the script that ran, by name and SHA-256
+(`include_script=true` also stores its text). Publish it with the data, for example in the same Zenodo record. It is JSON, so a
 reader needs neither Julia nor Mera.
 
 Two things it does not record. The host name is left out on purpose, and `anonymize=true` also
