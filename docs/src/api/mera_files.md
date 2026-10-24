@@ -5,8 +5,8 @@ object far faster than re-reading the simulation. The narrative guides are
 [Mera-Files](../07_multi_Mera_Files.md) and [Converter](../07_1_multi_Mera_Files_Converter.md).
 
 The file stores the Julia object, so it is a Julia-side format: reload it with
-[`loaddata`](@ref), not with `h5py`. To hand data to another language use
-[`export_vtk`](@ref) or write the columns out yourself.
+[`loaddata`](@ref), not with `h5py`. To hand results to another language use
+[`exportdata`](@ref) (below), or [`export_vtk`](@ref) for ParaView and VisIt.
 
 ## Save & load
 
@@ -15,6 +15,32 @@ savedata
 loaddata
 viewdata
 infodata
+```
+
+## Export for other tools
+
+[`exportdata`](@ref) writes a projection, a profile, phase or pdf, a timeseries table, a movie,
+or plain arrays to `.h5`, `.jld2`, `.csv`, `.npy`, `.npz`, `.json` or `.fits` (the last after
+`using FITSIO`). The file holds plain arrays that Python, IDL or a spreadsheet read directly.
+
+```@docs; canonical=false
+exportdata
+```
+
+Next to every saved or exported file Mera writes a sidecar, `<file>.meta.json`: what the file
+holds and in which units, the SHA-256 of the file, the provenance of the snapshot, the SHA-256 of
+the run's `namelist.txt`, `makefile.txt`, `patches.txt` and `compilation.txt`, and the Julia,
+Mera, CPU and thread count that ran. It is JSON, so any language reads it. The host name is never
+recorded. `sidecar=false` on a call, or [`sidecar`](@ref)`(false)` for the whole session, turns
+it off.
+
+[`readsidecar`](@ref) prints one sidecar and checks that its data file still matches the recorded
+SHA-256; [`sidecaroverview`](@ref) lists every sidecar in a folder.
+
+```@docs; canonical=false
+readsidecar
+sidecaroverview
+SidecarRecord
 ```
 
 ## Conversion

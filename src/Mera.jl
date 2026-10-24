@@ -51,6 +51,7 @@ using ColorSchemes     # named colormaps for the immersive ray-caster
 using FileIO
 using HDF5            # Chombo / PLUTO-AMR reader (read_data/PLUTO/reader_chombo.jl)
 using JSON3
+import SHA            # SHA-256 of saved files and run inputs, in the sidecars
 using HTTP
 using MacroTools
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
@@ -88,11 +89,26 @@ showprogress(nothing)   # hand control back to the per-call keywords
 """
 global showprogress_mode = nothing
 
+"""
+Global switch controlling whether saves and exports write a sidecar `<file>.meta.json`.
+
+`nothing` (the default) leaves each function on its own `sidecar` keyword, which is `true`;
+setting `true` or `false` overrides them all. Prefer [`sidecar`](@ref) to change it.
+
+```julia
+sidecar(false)     # no sidecar files from savedata, savemap, savemovie, exportdata
+sidecar(nothing)   # hand control back to the per-call keywords
+```
+"""
+global sidecar_mode = nothing
+
 export
     verbose_mode,
     verbose,
     showprogress_mode,
     showprogress,
+    sidecar_mode,
+    sidecar,
     output_mode,
 # data reader
     getunit,
@@ -149,6 +165,11 @@ export
     provenance,
     provenance_string,
     mera_build,
+    mera_install,
+    exportdata,
+    readsidecar,
+    sidecaroverview,
+    SidecarRecord,
     makethumb,
     Provenance,
 
@@ -540,6 +561,11 @@ include("functions/statistics.jl")
 include("functions/provenance.jl")
 include("functions/thumbnail.jl")
 include("functions/movie.jl")
+# sidecars and export to other tools (after movie.jl: they dispatch on MeraMovie)
+include("functions/export/sidecar.jl")
+include("functions/export/sidecar_read.jl")
+include("functions/export/npy.jl")
+include("functions/export/exportdata.jl")
 # ============================================
 
 

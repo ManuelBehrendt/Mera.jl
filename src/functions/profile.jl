@@ -415,6 +415,8 @@ Returns `x` (centres), `edges`, `count`, `sum` (Σ weight), `sumw2` (Σ weight²
 `yvar`** also weighted `mean`, `std`, `sem` (standard error on the mean via Kish `neff`), `min`,
 `max`, `median`, a `quantiles` matrix (`nbins × length(qlevels)`), and the weighted shape moments
 `skewness` and `kurtosis` (**excess** kurtosis — 0 for a Gaussian). (`bootstrap` adds the CI fields.)
+Every result also carries the names and units it was made with (`xvar`, `yvar`, `xunit`, `unit`,
+`weight`) and the snapshot's `info`, so [`provenance`](@ref) and [`exportdata`](@ref) work on it.
 """
 function profile(dataobject, xvar::Symbol, yvar=nothing;
         weight::Union{Symbol,AbstractVector}=:mass, nbins::Int=50, xrange=nothing, scale::Symbol=:linear,
@@ -436,14 +438,16 @@ function profile(dataobject, xvar::Symbol, yvar=nothing;
         res = _profileNd(x, w, ys, yvars, nbins, xrange, scale, quantiles;
                          edges=edges, geometry=geometry, cumulative=cumulative, statistic=statistic, normalize=normalize,
                          binsize=bsz, nboot=bootstrap, ci_level=confidence_level, ci_method=ci, rng=rng)
-        return merge(res, (weight=_wprov(weight), xvar=xvar, yvar=yvars, xunit=xunit, unit=unit, source=:data))
+        return merge(res, (weight=_wprov(weight), xvar=xvar, yvar=yvars, xunit=xunit, unit=unit, source=:data,
+                           info=dataobject.info))
     end
     y = yvar === nothing ? nothing :
         Float64.(getvar(dataobject, yvar, unit, center=center, center_unit=cu))[sel]
     res = _profile1d(x, w, y, nbins, xrange, scale, quantiles;
                      edges=edges, geometry=geometry, cumulative=cumulative, statistic=statistic, normalize=normalize,
                      binsize=bsz, nboot=bootstrap, ci_level=confidence_level, ci_method=ci, rng=rng)
-    return merge(res, (weight=_wprov(weight), xvar=xvar, yvar=yvar, xunit=xunit, unit=unit, source=:data))
+    return merge(res, (weight=_wprov(weight), xvar=xvar, yvar=yvar, xunit=xunit, unit=unit, source=:data,
+                       info=dataobject.info))
 end
 
 # validate the bootstrap request and build a seeded RNG (deterministic), or `nothing` when off.
@@ -478,8 +482,8 @@ via the map's `scale`). `edges`, `geometry`
 
 # Returns
 The same per-bin statistic fields as the data [`profile`](@ref) method, plus `var` (the binned map
-variable), `xvar`, `weight`, `xunit`, `unit` (the mapped variable's unit, from the projection), and
-`source=:map`.
+variable), `xvar`, `weight`, `xunit`, `unit` (the mapped variable's unit, from the projection),
+`source=:map`, and the map's `info`.
 """
 function profile(m::DataMapsType, var::Symbol; xvar::Symbol=:r, weight::Union{Symbol,AbstractVector}=:none,
         nbins::Int=50, xrange=nothing, scale::Symbol=:linear,
@@ -523,7 +527,8 @@ function profile(m::DataMapsType, var::Symbol; xvar::Symbol=:r, weight::Union{Sy
     # carry the mapped variable's unit (from the projection) so the return matches data-`profile`'s
     # contract, which also reports `unit`.
     munit = isdefined(m, :maps_unit) ? get(m.maps_unit, var, :standard) : :standard
-    return merge(res, (var=var, xvar=xvar, weight=_wprov(weight), xunit=xunit, unit=munit, source=:map))
+    return merge(res, (var=var, xvar=xvar, weight=_wprov(weight), xunit=xunit, unit=munit, source=:map,
+                       info=m.info))
 end
 
 """
@@ -560,7 +565,8 @@ also returns a per-bin weighted `quantiles` array (`nbx × nby × length(quantil
 A `NamedTuple` with `xedges`, `yedges` (bin edges), `H` (the `nbx × nby` summed-weight grid),
 `xvar`/`yvar`, `weight`, `weight_unit`, `xunit`/`yunit`, and `source=:data`. With `normalize`, also
 `fraction`/`pdf`. With a `cvar`: `mean` (and, for a non-`:mean` `cstat`, the corresponding
-`std`/`median`/`min`/`max`/`quantiles`/`custom` grids), plus `cvar`/`cunit`.
+`std`/`median`/`min`/`max`/`quantiles`/`custom` grids), plus `cvar`/`cunit`. The snapshot's
+`info` comes along, so [`provenance`](@ref) and [`exportdata`](@ref) work on the result.
 
 `range_unit` and `center_unit` are two names for the unit of `center` (`:standard` means
 fractions of the box); when both are given, `center_unit` is used.
@@ -583,10 +589,12 @@ function phase(dataobject, xvar::Symbol, yvar::Symbol, cvar=nothing; weight::Uni
     x = x[sel]; y = y[sel]; w = w[sel]
     cv = cvar === nothing ? nothing :
          Float64.(getvar(dataobject, cvar, cunit, center=center, center_unit=cu))[sel]
-    return _phase2d(x, y, w, cv, nbx, nby, xrange, yrange, xscale, yscale;
-                    xedges=xedges, yedges=yedges, normalize=normalize, cstat=cstat, quantiles=quantiles,
-                    xbinsize=xbsz, ybinsize=ybsz,
-                    weight=_wprov(weight), weight_unit=weight_unit)
+    res = _phase2d(x, y, w, cv, nbx, nby, xrange, yrange, xscale, yscale;
+                   xedges=xedges, yedges=yedges, normalize=normalize, cstat=cstat, quantiles=quantiles,
+                   xbinsize=xbsz, ybinsize=ybsz,
+                   weight=_wprov(weight), weight_unit=weight_unit)
+    return merge(res, (xvar=xvar, yvar=yvar, cvar=cvar, xunit=xunit, yunit=yunit, cunit=cunit,
+                       source=:data, info=dataobject.info))
 end
 
 """
@@ -597,7 +605,8 @@ end
 
 # Returns
 The same fields as the data [`phase`](@ref) method (`xedges`, `yedges`, `H`, the `cstat` grids when
-a `cvar` is given, and `fraction`/`pdf` when normalized), with `source=:map`. `weight_unit` is
+a `cvar` is given, and `fraction`/`pdf` when normalized), with `xvar`, `yvar`, `cvar`, the map's
+`info` and `source=:map`. `weight_unit` is
 `:count` for `:none`/`:area` (`H` counts pixels) and `:unknown` for a map key, whose unit the map
 does not record.
 """
@@ -621,11 +630,12 @@ function phase(m::DataMapsType, xvar::Symbol, yvar::Symbol, cvar=nothing; weight
     # `:area` weights pixels equally, exactly like `:none` → H is a pixel count. Any other map key
     # carries the map's own unit, which the map does not record → :unknown rather than a wrong guess.
     wu = (weight === :none || weight === :area) ? :count : :unknown
-    return _phase2d(x[fin], y[fin], w[fin], cv === nothing ? nothing : cv[fin],
-                    nbx, nby, xrange, yrange, xscale, yscale;
-                    xedges=xedges, yedges=yedges, normalize=normalize, cstat=cstat, quantiles=quantiles,
-                    xbinsize=_mapbs(xbinsize), ybinsize=_mapbs(ybinsize),
-                    weight=_wprov(weight), weight_unit=wu)
+    res = _phase2d(x[fin], y[fin], w[fin], cv === nothing ? nothing : cv[fin],
+                   nbx, nby, xrange, yrange, xscale, yscale;
+                   xedges=xedges, yedges=yedges, normalize=normalize, cstat=cstat, quantiles=quantiles,
+                   xbinsize=_mapbs(xbinsize), ybinsize=_mapbs(ybinsize),
+                   weight=_wprov(weight), weight_unit=wu)
+    return merge(res, (xvar=xvar, yvar=yvar, cvar=cvar, source=:map, info=m.info))
 end
 
 # per-bin statistics of a colour field `cv` over precomputed FLAT member-index lists — dimension-

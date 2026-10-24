@@ -179,6 +179,38 @@ function showprogress()
 end
 
 
+# global sidecar mode ===========================
+checksidecar(sidecar::Bool) = sidecar_mode === nothing ? sidecar : sidecar_mode
+
+"""
+    sidecar(mode::Union{Bool,Nothing})
+    sidecar()
+
+Set or show the global sidecar mode. A sidecar is the small `<file>.meta.json` that
+[`savedata`](@ref), [`savemap`](@ref), [`savemovie`](@ref) and [`exportdata`](@ref) write
+next to each file, with the provenance, units and environment of the result.
+
+`sidecar(false)` stops all of them from writing one, `sidecar(true)` makes all of them write
+one (the per-function `sidecar=` keyword is then ignored), and `sidecar(nothing)` reverts to each
+function's own keyword (the neutral default; the keywords default to `true`). `sidecar()` with
+no argument prints the current state.
+
+```julia
+sidecar(false)    # no sidecar files
+sidecar()         # prints "sidecar_mode: false"
+sidecar(nothing)  # back to per-function control
+```
+
+Returns the new setting; without an argument it prints the current one.
+"""
+function sidecar(mode::Union{Bool,Nothing})
+    global sidecar_mode = mode
+    return mode
+end
+
+sidecar() = println("sidecar_mode: ", sidecar_mode)
+
+
 # global output master switch (verbose + progressbar at once) ===========================
 """
     output_mode(mode::Union{Bool,Nothing})

@@ -14,6 +14,17 @@ showprogress
 output_mode
 ```
 
+## Sidecar files
+
+Every file that `savedata`, `savemap`, `savemovie` and `exportdata` write gets a small readable
+`<file>.meta.json` next to it, with the provenance, the units and the environment that ran. Each
+function has a `sidecar` keyword; this switch overrides all of them at once.
+
+```@docs
+sidecar
+sidecar_mode
+```
+
 ## Persistent Configuration
 
 Settings that survive between sessions, stored in a configuration file rather

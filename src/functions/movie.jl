@@ -367,7 +367,7 @@ end
 """
     savemovie(m::MeraMovie, file="movie.gif"; colormap=:fire, log=true, colorrange=:global,
               clip=(0.0, 1.0), fps=10, tags=nothing, annotate=true, save_frames=nothing,
-              verbose=true) -> file
+              source=nothing, sidecar=true, anonymize=false, note="", verbose=true) -> file
 
 Write a [`MeraMovie`](@ref) to an **animated GIF** (`file`), using FileIO with ImageMagick
 (no extra package needed). Each frame is normalised over a colour range and mapped through a
@@ -404,6 +404,13 @@ with [`moviefromframes`](@ref) — or fed to `ffmpeg` for an MP4.
 [`loadmovie`](@ref). Same Julia-native way [`savemap`](@ref) persists a map;
 nothing is re-rendered, so it round-trips exactly.
 
+**Sidecar.** With `sidecar=true` (the default; the global switch [`sidecar`](@ref) overrides it)
+a readable `<file>.meta.json` is written next to the movie: frames, outputs, times, units, the
+rendering settings and the environment. A movie does not carry its simulation path, so pass
+`source` (the `InfoType` or a data object of the run) to record the provenance too.
+`anonymize=true` keeps only the last two parts of that path; `note` is a free text stored in the
+sidecar.
+
 ```julia
 savemovie(m, "density.gif"; tags=:time, fps=12)
 savemovie(m, "density.gif"; tags=(:output, :time), tag_position=:bottomright, tag_color=:yellow)
@@ -415,10 +422,13 @@ function savemovie(m::MeraMovie, file::AbstractString="movie.gif";
                    colormap=:fire, log::Bool=true, colorrange=:global, clip=(0.0, 1.0),
                    fps::Real=10, tags=nothing, annotate::Bool=true,
                    tag_scale=:auto, tag_position=:topleft, tag_color=:white,
-                   save_frames=nothing, verbose::Bool=true)
+                   save_frames=nothing, source=nothing, sidecar::Bool=true,
+                   anonymize::Bool=false, note::AbstractString="", verbose::Bool=true)
     isempty(m.frames) && error("savemovie: the movie has no frames.")
     if endswith(file, ".jld2")            # persist the MeraMovie object (no rendering) → loadmovie
         JLD2.jldsave(file; meramovie = m)
+        checksidecar(sidecar) &&
+            _movie_sidecar(file, m, "jld2", nothing, source; anonymize=anonymize, note=note)
         verbose && println("Saved MeraMovie ($(length(m)) frames) → ", file)
         return file
     end
@@ -474,9 +484,32 @@ function savemovie(m::MeraMovie, file::AbstractString="movie.gif";
 
     cube = cat(rgbs...; dims=3)
     FileIO.save(file, cube; fps=fps)
+    if checksidecar(sidecar)
+        rendering = OrderedDict{String,Any}("colormap" => string(colormap), "log" => log,
+                                            "colorrange" => colorrange isa Symbol ? colorrange : collect((lo, hi)),
+                                            "clip" => collect(clip), "fps" => fps)
+        _movie_sidecar(file, m, "gif", rendering, source; anonymize=anonymize, note=note)
+    end
     verbose && println("savemovie: wrote $(length(m)) frames → $file",
                        sf === nothing ? "" : "  (+ PNG frames in $sf)")
     return file
+end
+
+function _movie_sidecar(file, m::MeraMovie, format::String, rendering, source;
+                        anonymize::Bool=false, note::AbstractString="")
+    result = OrderedDict{String,Any}(
+        "format"     => format,
+        "kind"       => "movie",
+        "frames"     => length(m),
+        "frame_size" => collect(size(m.frames[1])),
+        "quantity"   => m.quantity,
+        "unit"       => m.unit,
+        "outputs"    => m.outputs,
+        "times"      => m.times,
+        "time_unit"  => m.time_unit,
+        "extent"     => m.extent)
+    rendering === nothing || (result["rendering"] = rendering)
+    return _write_sidecar(file, result, source; anonymize=anonymize, note=note)
 end
 
 # per-frame normalisation fallback (used only when colorrange==:perframe)

@@ -1046,14 +1046,13 @@ end
 
 
 """
-    savemap(p::DataMapsType, filename; verbose=true) -> String
+    savemap(p::DataMapsType, filename; sidecar=true, anonymize=false, note="", verbose=true) -> String
     loadmap(filename; verbose=true) -> DataMapsType
 
 Save / load a projection result (an `AMRMapsType`/`PartMapsType` from [`projection`](@ref)) to a
-JLD2 file — a lightweight, Julia-native persistence format (the `.jld2` extension is added if
-missing). The whole object round-trips: every map and
-its unit, the `extent`/`pixsize`, the off-axis camera basis, and the simulation `info` — so a
-reloaded map still plots, re-projects, and carries [`provenance`](@ref).
+JLD2 file, a lightweight Julia-native format (the `.jld2` extension is added if missing). The
+whole object round-trips: every map and its unit, the `extent`/`pixsize`, the off-axis camera
+basis, and the simulation `info`, so a reloaded map still plots, re-projects, and carries [`provenance`](@ref).
 
 ```julia
 p = projection(gas, [:sd, :vx])
@@ -1061,11 +1060,29 @@ savemap(p, "maps.jld2")
 p2 = loadmap("maps.jld2")        # AMRMapsType, identical to p
 ```
 
-The file uses the HDF5 container but stores the Julia object and is LZ4-compressed by default, so `h5py` cannot reconstruct the map from it. Reload with Mera; to hand a map to Python, write the array out yourself or use `export_vtk`. Older HDF5 readers.
+The file uses the HDF5 container but stores the Julia object, so `h5py` cannot reconstruct the
+map from it. Reload it with Mera; to hand a map to Python or another tool, use [`exportdata`](@ref).
+
+# Keywords
+- `sidecar::Bool = true`: also write `<file>.meta.json`, a readable record of the maps, their
+  units and geometry, the provenance and the environment. The global switch [`sidecar`](@ref)
+  overrides this keyword.
+- `anonymize::Bool = false`: in the sidecar, keep only the last two parts of the simulation path.
+- `note::String = ""`: a free text stored in the sidecar.
+- `verbose::Bool = true`: print what was saved.
+
+Returns the file name written, as a `String`.
 """
-function savemap(p::DataMapsType, filename::AbstractString; verbose::Bool=true)
+function savemap(p::DataMapsType, filename::AbstractString; sidecar::Bool=true,
+                 anonymize::Bool=false, note::AbstractString="", verbose::Bool=true)
     fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
     JLD2.jldsave(fn; meramap = p)
+    if checksidecar(sidecar)
+        result = merge(OrderedDict{String,Any}("format" => "jld2",
+                           "layout" => "the Mera map object ($(nameof(typeof(p)))): reload with loadmap"),
+                       _export_meta(_exportset(p)))
+        _write_sidecar(fn, result, p; anonymize=anonymize, note=note)
+    end
     verbose && println("Saved projection maps $(collect(keys(p.maps))) → ", fn)
     return fn
 end

@@ -130,6 +130,32 @@ together with the provenance. One thing is not recorded: `direction=:faceon`, `:
 and pass it back in. The [off-axis cheatsheet](offaxis_cheatsheet.md#Reproducing-a-map) shows the
 call.
 
+### Sidecar files
+
+Every file Mera writes for you, a Mera file from [`savedata`](@ref), a map from [`savemap`](@ref),
+a movie from [`savemovie`](@ref) or an export from [`exportdata`](@ref), gets a readable record
+next to it:
+
+```julia
+exportdata(m, "fig3.h5"; length_unit=:kpc, note="Figure 3")
+# writes fig3.h5 and fig3.h5.meta.json
+```
+
+The sidecar holds the provenance of the snapshot, the units and geometry of the result, the
+SHA-256 of the file itself and of the run's `namelist.txt`, `makefile.txt`, `patches.txt` and
+`compilation.txt`, and the environment: Julia and Mera version, operating system, CPU model and
+thread counts. Publish it with the data, for example in the same Zenodo record. It is JSON, so a
+reader needs neither Julia nor Mera.
+
+Two things it does not record. The host name is left out on purpose, and `anonymize=true` also
+shortens the simulation path to its last two parts. And a function you wrote yourself, such as the
+reducer of a [`timeseries`](@ref), appears only by name: the script or notebook that ran is the
+record of what it did, so publish it next to the results.
+
+To read one back, `readsidecar("fig3.h5")` prints it and says whether `fig3.h5` still matches the
+SHA-256 it was written with; `sidecaroverview("results/")` lists every sidecar in a folder.
+`sidecar=false` turns them off for one call; [`sidecar`](@ref)`(false)` for the session.
+
 ## Checking Mera itself
 
 The versions being pinned is only useful if the package is right. Mera publishes fifteen small test
@@ -207,6 +233,7 @@ Two places to watch on a periodic run, because neither wraps:
 - [ ] both are committed
 - [ ] Julia is started with `--project=`
 - [ ] the Julia version is recorded
-- [ ] `provenance` output is saved with each result
+- [ ] `provenance` output is saved with each result (the sidecar does this for every file Mera writes)
+- [ ] the scripts or notebooks that made the results are published next to them
 - [ ] for camera views, the viewing vectors (`m.los`, `m.up`, or the `angmom` axis) are saved too
 - [ ] the simulation output and its path are named in the script, not typed by hand each run

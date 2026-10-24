@@ -6,6 +6,9 @@ function savedata( dataobject::DataSetType, fmode::Symbol;
                     compress::Any=nothing,
                     comments::Any=nothing,
                     merafile_version::Float64=1.,
+                    sidecar::Bool=true,
+                    anonymize::Bool=false,
+                    note::AbstractString="",
                     verbose::Bool=true)
 
         return savedata( dataobject,
@@ -16,6 +19,9 @@ function savedata( dataobject::DataSetType, fmode::Symbol;
                             compress=compress,
                             comments=comments,
                             merafile_version=merafile_version,
+                            sidecar=sidecar,
+                            anonymize=anonymize,
+                            note=note,
                             verbose=verbose)
 end
 
@@ -25,6 +31,9 @@ function savedata( dataobject::DataSetType, path::String, fmode::Symbol;
                     compress::Any=nothing,
                     comments::Any=nothing,
                     merafile_version::Float64=1.,
+                    sidecar::Bool=true,
+                    anonymize::Bool=false,
+                    note::AbstractString="",
                     verbose::Bool=true)
 
         return savedata( dataobject,
@@ -35,6 +44,9 @@ function savedata( dataobject::DataSetType, path::String, fmode::Symbol;
                             compress=compress,
                             comments=comments,
                             merafile_version=merafile_version,
+                            sidecar=sidecar,
+                            anonymize=anonymize,
+                            note=note,
                             verbose=verbose)
 end
 
@@ -45,6 +57,9 @@ function savedata( dataobject::DataSetType, path::String;
                     compress::Any=nothing,
                     comments::Any=nothing,
                     merafile_version::Float64=1.,
+                    sidecar::Bool=true,
+                    anonymize::Bool=false,
+                    note::AbstractString="",
                     verbose::Bool=true)
 
         return savedata( dataobject,
@@ -55,6 +70,9 @@ function savedata( dataobject::DataSetType, path::String;
                             compress=compress,
                             comments=comments,
                             merafile_version=merafile_version,
+                            sidecar=sidecar,
+                            anonymize=anonymize,
+                            note=note,
                             verbose=verbose)
 end
 
@@ -88,6 +106,11 @@ table together with the simulation information and the options it was loaded wit
 - `comments`: a text stored with the data, e.g. a description of the simulation.
 - `dataformat::Symbol = :JLD2`: the only format.
 - `merafile_version::Float64 = 1.0`: the file layout version; there is only one.
+- `sidecar::Bool = true`: also write `output_XXXXX.jld2.meta.json`, a readable record of the
+  data types in the file, their provenance and the environment; an append adds to it. The global
+  switch [`sidecar`](@ref) overrides this keyword.
+- `anonymize::Bool = false`: in the sidecar, keep only the last two parts of the simulation path.
+- `note::String = ""`: a free text stored in the sidecar.
 - `verbose::Bool = true`: print what is written.
 
 # Examples
@@ -111,6 +134,9 @@ function savedata( dataobject::DataSetType;
                     compress::Any=nothing,
                     comments::Any=nothing,
                     merafile_version::Float64=1.,
+                    sidecar::Bool=true,
+                    anonymize::Bool=false,
+                    note::AbstractString="",
                     verbose::Bool=true)
 
         verbose = checkverbose(verbose)
@@ -186,6 +212,9 @@ function savedata( dataobject::DataSetType;
             f[dt * "/data"] = dataobject
             f[dt * "/info"] = dataobject.info
         end
+        checksidecar(sidecar) &&
+            _savedata_sidecar(fpath, dataobject, datatype, column_names, ctype, comments,
+                              jld2mode == "w"; anonymize=anonymize, note=note)
     end
 
 
@@ -333,4 +362,26 @@ function check_datasource(dataobject::DataSetType)
     end
 
     return datatype, use_descriptor, descriptor_names
+end
+
+
+# The sidecar of a Mera file lists every data type in it. An append adds this one to the list
+# read from the existing sidecar; a fresh write starts the list again.
+function _savedata_sidecar(fpath, dataobject, datatype, column_names, ctype, comments, fresh::Bool;
+                           anonymize::Bool=false, note::AbstractString="")
+    prior = fresh ? OrderedDict{String,Any}() : get(_read_sidecar_result(fpath), "contents", Dict())
+    contents = OrderedDict{String,Any}(string(k) => v for (k, v) in prior)
+    field(f) = hasproperty(dataobject, f) ? getproperty(dataobject, f) : nothing
+    contents[string(datatype)] = OrderedDict{String,Any}(
+        "columns"     => string.(column_names),
+        "rows"        => length(dataobject.data),
+        "lmin"        => field(:lmin),
+        "lmax"        => field(:lmax),
+        "ranges"      => field(:ranges),
+        "compression" => string(ctype),
+        "comments"    => comments === nothing ? nothing : string(comments))
+    result = OrderedDict{String,Any}("format" => "jld2", "kind" => "mera_file",
+                                     "layout" => "a Mera file: reload with loaddata",
+                                     "contents" => contents)
+    return _write_sidecar(fpath, result, dataobject; anonymize=anonymize, note=note)
 end

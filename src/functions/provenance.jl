@@ -10,53 +10,189 @@
 # InfoType that every data object and projection map already carries.
 # ====================================================================================
 
-# Which Mera actually ran.
+# Which Mera actually ran, and how it was installed.
 #
-# `pkgversion` reports the same number for a registry install and for a checkout of a branch, so a
-# result produced on a development version would claim a release. This detects a git checkout and
-# records the branch and commit, and flags a working tree with uncommitted changes, because then the
-# commit alone does not identify what ran. On a normal install it returns just the version.
+# `pkgversion` reports the same number for a registry install, an install of a branch from GitHub
+# (`pkg> add Mera#master`) and a git checkout, so a result produced on a development version would
+# claim a release. Three sources tell them apart:
+#   - a git checkout (`pkg> dev`, or this repository): branch, commit, uncommitted changes, via git;
+#   - otherwise the Manifest.toml entry of Mera: `repo-url`/`repo-rev` for a branch install,
+#     `path` for a local path, neither for a registry install, and always the content hash
+#     `git-tree-sha1`;
+#   - the registry, which stores the same tree hash for every registered version, so comparing the
+#     two says whether the code is exactly a registered release.
 #
-# Never throws: git may be absent, the checkout may be unreadable, the package may be inside a
-# system image. Any failure falls back to the plain version. Cached, since it shells out.
-const _MERA_BUILD = Ref{String}("")
+# Never throws: git may be absent, the checkout unreadable, the package inside a system image, the
+# local registry copy older than the version. Anything unknown is `nothing`. Cached, since it shells
+# out and reads the registry.
+const _MERA_INSTALL = Ref{Any}(nothing)
+const _MERA_REGISTERED = Ref{Any}(:unset)
+
+# A URL without credentials (`https://user:token@host/...` -> `https://host/...`).
+_strip_credentials(url) = url === nothing ? nothing : replace(String(url), r"//[^/@]+@" => "//")
+
+# The install record from a Manifest.toml entry of Mera.
+function _install_from_entry(e::AbstractDict)
+    tree = get(e, "git-tree-sha1", nothing)
+    haskey(e, "path") && return (source=:path, tree_hash=tree)
+    haskey(e, "repo-url") &&
+        return (source=:repository, url=_strip_credentials(e["repo-url"]), rev=get(e, "repo-rev", nothing),
+                tree_hash=tree)
+    return (source=:registry, tree_hash=tree)
+end
+
+# Mera's entry in the first manifest on the load path that has it.
+function _manifest_entry()
+    uuid = string(Base.PkgId(@__MODULE__).uuid)
+    for env in Base.load_path()
+        proj = Base.env_project_file(env)
+        proj isa String && isfile(proj) || continue
+        man = something(Base.project_file_manifest_path(proj), "")
+        isfile(man) || continue
+        d = TOML.parsefile(man)
+        deps = get(d, "deps", d)
+        for e in get(deps, "Mera", Any[])
+            e isa AbstractDict && get(e, "uuid", "") == uuid && return e
+        end
+    end
+    return nothing
+end
+
+function _mera_install_base()
+    _MERA_INSTALL[] === nothing || return _MERA_INSTALL[]
+    info = (source=:unknown,)
+    try
+        dir = pkgdir(@__MODULE__)
+        # `ispath`, not `isdir`: in a git WORKTREE `.git` is a small file pointing at the main
+        # repository, not a directory. `isdir` missed it, so a worktree build was stamped with
+        # the plain release number, which is the exact mix-up this function exists to prevent.
+        if dir !== nothing && ispath(joinpath(dir, ".git"))
+            git(args...) = readchomp(`git -C $dir $args`)
+            url = try _strip_credentials(git("remote", "get-url", "origin")) catch; nothing end
+            info = (source=:checkout, branch=git("rev-parse", "--abbrev-ref", "HEAD"),
+                    commit=git("rev-parse", "--short", "HEAD"),
+                    dirty=!isempty(git("status", "--porcelain")), url=url,
+                    tree_hash=git("rev-parse", "HEAD^{tree}"))
+        else
+            e = _manifest_entry()
+            e === nothing || (info = _install_from_entry(e))
+        end
+    catch
+    end
+    return _MERA_INSTALL[] = info
+end
+
+# The tree hash the registry stores for version `v`, or `nothing` if no reachable registry has it.
+function _registered_tree(v::VersionNumber)
+    uuid = Base.PkgId(@__MODULE__).uuid
+    for reg in Pkg.Registry.reachable_registries()
+        haskey(reg.pkgs, uuid) || continue
+        entry = reg.pkgs[uuid]
+        # Julia 1.13 takes the registry as a first argument, earlier versions only the entry.
+        info = hasmethod(Pkg.Registry.registry_info, Tuple{typeof(reg),typeof(entry)}) ?
+               Pkg.Registry.registry_info(reg, entry) : Pkg.Registry.registry_info(entry)
+        vi = get(info.version_info, v, nothing)
+        vi === nothing || return string(vi.git_tree_sha1)
+    end
+    return nothing
+end
+
+# true: the code is exactly the registered release of its version; false: it differs (or has
+# uncommitted changes); nothing: unknown (no tree hash, or the local registry copy lacks the version).
+function _mera_registered(base)
+    _MERA_REGISTERED[] === :unset || return _MERA_REGISTERED[]
+    r = try
+        tree = get(base, :tree_hash, nothing)
+        if get(base, :dirty, false) === true
+            false
+        elseif tree === nothing
+            nothing
+        else
+            reg = _registered_tree(pkgversion(@__MODULE__))
+            reg === nothing ? nothing : reg == tree
+        end
+    catch
+        nothing
+    end
+    return _MERA_REGISTERED[] = r
+end
+
+const _INSTALL_FIELDS = (:source, :branch, :commit, :dirty, :url, :rev, :tree_hash)
+
+"""
+    mera_install() -> NamedTuple
+
+How the running Mera was installed, and whether it is exactly a registered release.
+
+Fields: `version`, `source`, `registered`, and where they apply `branch`, `commit`, `dirty`,
+`url`, `rev`, `tree_hash` (`nothing` where they do not).
+
+| `source` | installed with | also recorded |
+|:--|:--|:--|
+| `:registry` | `pkg> add Mera` | `tree_hash` |
+| `:repository` | `pkg> add Mera#master`, `add https://github.com/.../Mera.jl#multicode` | `url`, `rev` (the branch or commit asked for), `tree_hash` |
+| `:checkout` | a git checkout: `pkg> dev Mera`, or the repository itself | `branch`, `commit`, `dirty` (uncommitted changes), `url`, `tree_hash` |
+| `:path` | `pkg> dev /some/folder` without git | `tree_hash` if any |
+| `:unknown` | none of the above could be read | |
+
+`registered` compares the code's git tree hash with the one the Julia registry stores for this
+version. `true` means the code is exactly the registered release, also when it was installed from
+a branch. `false` means it differs, or the checkout has uncommitted changes. `nothing` means
+unknown, e.g. when the local copy of the registry is older than the version (`pkg> registry up`).
+A URL is recorded without any credentials in it.
+
+Every sidecar stores this record. [`mera_build`](@ref) gives the short form.
+
+```julia
+mera_install()
+# (version = v"1.8.3", source = :registry, registered = true, branch = nothing, ...)
+```
+
+Never throws; anything that cannot be read is `nothing`.
+"""
+function mera_install()
+    base = _mera_install_base()
+    rest = NamedTuple{_INSTALL_FIELDS}(Tuple(get(base, f, nothing) for f in _INSTALL_FIELDS))
+    return merge((version=pkgversion(@__MODULE__), source=base.source, registered=_mera_registered(base)),
+                 Base.structdiff(rest, NamedTuple{(:source,)}))
+end
+
 function _mera_build()
     v = string(pkgversion(@__MODULE__))
     # The documentation is rendered from a git checkout, so without this every provenance line on
     # the site would carry a branch and a commit that change with each commit. `MERA_PROVENANCE_PLAIN`
     # asks for the plain version, and the pages then show what a reader of the release would see.
     get(ENV, "MERA_PROVENANCE_PLAIN", "") in ("1", "true") && return v
-    isempty(_MERA_BUILD[]) || return _MERA_BUILD[]
-    out = try
-        dir = pkgdir(@__MODULE__)
-        # `ispath`, not `isdir`: in a git WORKTREE `.git` is a small file pointing at the main
-        # repository, not a directory. `isdir` missed it, so a worktree build was stamped with
-        # the plain release number, which is the exact mix-up this function exists to prevent.
-        if dir !== nothing && ispath(joinpath(dir, ".git"))
-            rev    = readchomp(`git -C $dir rev-parse --short HEAD`)
-            branch = readchomp(`git -C $dir rev-parse --abbrev-ref HEAD`)
-            dirty  = isempty(readchomp(`git -C $dir status --porcelain`)) ? "" : " +uncommitted"
-            "$v (dev $branch @ $rev$dirty)"
-        else
-            v
-        end
-    catch
-        v
+    b = _mera_install_base()
+    if b.source === :checkout
+        return "$v (dev $(b.branch) @ $(b.commit)$(b.dirty ? " +uncommitted" : ""))"
+    elseif b.source === :repository
+        tree = b.tree_hash === nothing ? "" : " @ tree $(first(b.tree_hash, 7))"
+        return "$v (repo $(something(b.rev, "default branch"))$tree)"
+    elseif b.source === :path
+        return "$v (local path)"
     end
-    return _MERA_BUILD[] = out
+    return v
 end
 
 """
     mera_build() -> String
 
-Which Mera actually ran, as a string. On a registered install this is the version, `"1.8.0"`.
-On a git checkout it adds the branch and the commit, and marks a working tree with uncommitted
-changes, `"1.8.0 (dev master @ 3a91f2c +uncommitted)"`, because `pkgversion` alone reports the
-same version either way and cannot tell a release from somebody's branch.
+Which Mera actually ran, as a short string. `pkgversion` alone reports the same version for every
+kind of install, so this adds where the code came from:
+
+| install | string |
+|:--|:--|
+| registered release, `pkg> add Mera` | `"1.8.3"` |
+| a branch from GitHub, `pkg> add Mera#master` | `"1.8.3 (repo master @ tree 62c57b9)"` |
+| a git checkout, `pkg> dev Mera` | `"1.8.3 (dev master @ 3a91f2c +uncommitted)"` |
+| a local folder without git | `"1.8.3 (local path)"` |
 
 Use it when you share a script or a notebook, so a reader knows what produced the result. It is
-the version field of [`provenance_string`](@ref). Set `MERA_PROVENANCE_PLAIN=1` to force the plain
-version. Never throws: if git is absent or the checkout is unreadable, it falls back to the version.
+the version field of [`provenance_string`](@ref); [`mera_install`](@ref) gives the full record,
+including whether the code is exactly the registered release. Set `MERA_PROVENANCE_PLAIN=1` to
+force the plain version. Never throws: if git or the manifest cannot be read, it falls back to the
+version.
 """
 mera_build() = _mera_build()
 
@@ -102,8 +238,8 @@ Provenance(v::VersionNumber, path, output, simcode, cosmological, time_myr, reds
 
 Build a [`Provenance`](@ref) record from an `InfoType` or from any result that carries one:
 a **data object** (`gethydro`/`getparticles`/`getgravity`/`getclumps`/`getrt`, and any
-subregion of one), a [`projection`](@ref) map, a [`pdf`](@ref) of a data object or map, or a
-galaxy frame from [`face_on`](@ref). Deterministic: it reads only the snapshot's own metadata,
+subregion of one), a [`projection`](@ref) map, a [`profile`](@ref), [`phase`](@ref) or
+[`pdf`](@ref) of a data object or map, or a galaxy frame from [`face_on`](@ref). Deterministic: it reads only the snapshot's own metadata,
 so it is safe to compare across runs.
 
 ```julia
@@ -111,12 +247,14 @@ gas = gethydro(getinfo(100, "/data/sim"))
 provenance(gas)                      # data object
 provenance(projection(gas, :sd))     # projection map
 provenance(pdf(gas, :rho))           # a pdf keeps the snapshot it came from
+provenance(profile(gas, :r_sphere, :rho))   # so do profile and phase
 provenance(gas.info)                 # the InfoType directly
 ```
 
-A result that carries no `.info` throws an `ArgumentError`: a [`profile`](@ref) or
-[`phase`](@ref), a [`timeseries`](@ref) table, or a `pdf` of a plain array. Take the provenance
-of the data object you computed it from.
+A result that carries no `.info` throws an `ArgumentError`: a [`timeseries`](@ref) table, a
+`pdf` of a plain array, or a plain value such as a [`getvar`](@ref) array. Take the provenance of
+the data object you computed it from. To store it with a file, see [`exportdata`](@ref): every
+saved or exported file gets a sidecar that holds it.
 """
 function provenance(info::InfoType)
     Provenance(pkgversion(@__MODULE__), _mera_build(), info.path, round(Int, info.output), String(info.simcode),
@@ -128,9 +266,9 @@ end
 provenance(x) = hasproperty(x, :info) ? provenance(x.info) :
     throw(ArgumentError(
         "provenance: a $(typeof(x).name.name) carries no `.info`. Apply it to a data object " *
-        "(hydro/particles/gravity/clumps/RT), a projection map, a pdf of either, a galaxy " *
-        "frame, or an InfoType. For a result without it (profile, phase, timeseries, a pdf " *
-        "of a plain array), take provenance of the source data object."))
+        "(hydro/particles/gravity/clumps/RT), a projection map, a profile, phase or pdf of " *
+        "either, a galaxy frame, or an InfoType. For a result without it (a timeseries table, " *
+        "a pdf of a plain array, a getvar array), take provenance of the source data object."))
 
 # Human-readable snapshot time: redshift (+ age) for cosmological runs, else Myr/Gyr.
 function _prov_age(p::Provenance)

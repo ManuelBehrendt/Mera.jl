@@ -108,7 +108,7 @@ if DATA_AVAILABLE && isdir(MV_PATH)
             f = joinpath(d, "out.gif")
             @test savemovie(m, f; colormap=:fire, log=true) == f
             @test isfile(f) && filesize(f) > 0
-            @test readdir(d) == ["out.gif"]                          # only the GIF, no scratch frames
+            @test readdir(d) == ["out.gif", "out.gif.meta.json"]     # the GIF and its sidecar, no scratch frames
             # variants: gray + per-frame range, explicit range, custom colormap
             @test isfile(savemovie(m, joinpath(d, "g.gif"); colormap=:gray, colorrange=:perframe))
             @test isfile(savemovie(m, joinpath(d, "r.gif"); colorrange=(-3.0, 1.0)))
@@ -144,7 +144,7 @@ if DATA_AVAILABLE && isdir(MV_PATH)
         mktempdir() do d
             f = joinpath(d, "m.jld2")
             @test savemovie(m, f; verbose=false) == f            # .jld2 → stores the object
-            @test readdir(d) == ["m.jld2"]                       # no GIF / frames written
+            @test readdir(d) == ["m.jld2", "m.jld2.meta.json"]   # the object and its sidecar, no GIF / frames
             m2 = loadmovie(f; verbose=false)
             @test m2 isa MeraMovie
             @test length(m2) == length(m) && m2.frames == m.frames

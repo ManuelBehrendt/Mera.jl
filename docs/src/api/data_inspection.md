@@ -72,6 +72,7 @@ register_reader!
 provenance
 provenance_string
 mera_build
+mera_install
 quicklook
 quicklookplot
 ```
