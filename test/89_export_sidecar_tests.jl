@@ -349,20 +349,63 @@ _sidecar_json(file) = _J.read(read(Mera._sidecar_file(file), String))
         end
     end
 
-    @testset "hints: shared environment, uncommitted Mera" begin
+    @testset "hints: the first sidecar, shared environment, uncommitted Mera" begin
         shared = joinpath(first(DEPOT_PATH), "environments", "v$(VERSION.major).$(VERSION.minor)", "Project.toml")
         own = joinpath(mktempdir(), "Project.toml")
         @test Mera._shared_environment(shared) && Mera._shared_environment(nothing)
         @test !Mera._shared_environment(own)
-        @test_logs (:info, r"shared Julia environment") (:info, r"uncommitted changes") Mera._sidecar_hints((dirty=true,); project=shared)
-        @test_logs Mera._sidecar_hints((dirty=false,); project=own)            # nothing to say
-        @test_logs Mera._sidecar_hints((source=:registry,); project=own)
+        Mera.reset_hints()
+        out = capture_stdout() do; Mera._sidecar_hints((dirty=true,); project=shared); end
+        @test occursin("shared Julia environment", out) && occursin("meraproject", out)
+        @test occursin("uncommitted changes", out)
+        @test isempty(strip(capture_stdout() do; Mera._sidecar_hints((dirty=true,); project=shared); end))  # once
+        Mera.reset_hints()
+        @test isempty(strip(capture_stdout() do; Mera._sidecar_hints((dirty=false,); project=own); end))
+        @test isempty(strip(capture_stdout() do; Mera._sidecar_hints((source=:registry,); project=own); end))
+
+        # the first sidecar of a session says what it is; writesidecar, asked for, does not
+        hd = mktempdir()
+        Mera.reset_hints()
+        out = capture_stdout() do; exportdata(p, joinpath(hd, "a.h5"); verbose=false); end
+        @test occursin("a.h5.meta.json records where a.h5 came from", out) && occursin("sidecar(false)", out)
+        @test !occursin("records where", capture_stdout() do; exportdata(p, joinpath(hd, "b.h5"); verbose=false); end)
+        Mera.reset_hints()
+        write(joinpath(hd, "c.png"), "x")
+        @test !occursin("records where", capture_stdout() do; writesidecar(joinpath(hd, "c.png"), p; verbose=false); end)
+
+        Mera.reset_hints()
         try
-            verbose(false)
-            @test_logs Mera._sidecar_hints((dirty=true,); project=shared)      # verbose(false) silences
+            verbose(false)                                                  # silences all of them
+            out = capture_stdout() do
+                Mera._sidecar_hints((dirty=true,); project=shared)
+                exportdata(p, joinpath(hd, "d.h5"))
+            end
+            @test isempty(strip(out))
         finally
             verbose(nothing)
+            Mera.reset_hints()
         end
+    end
+
+    @testset "MERA_SIDECAR environment variable" begin
+        ed = mktempdir()
+        withenv("MERA_SIDECAR" => "0") do
+            @test Mera.checksidecar(true) == false
+            exportdata(p, joinpath(ed, "e0.h5"); verbose=false)
+            @test !isfile(joinpath(ed, "e0.h5.meta.json"))
+            try
+                sidecar(true)                                               # the session switch wins
+                @test Mera.checksidecar(false) == true
+            finally
+                sidecar(nothing)
+            end
+        end
+        for v in ("false", "OFF", " no ")
+            withenv("MERA_SIDECAR" => v) do; @test Mera.checksidecar(true) == false; end
+        end
+        withenv("MERA_SIDECAR" => "1") do; @test Mera.checksidecar(false) == true; end
+        withenv("MERA_SIDECAR" => "maybe") do; @test Mera.checksidecar(false) == false; end   # unknown: the keyword
+        withenv("MERA_SIDECAR" => nothing) do; @test Mera.checksidecar(true) == true; end
     end
 
     @testset "save_clumps writes a sidecar" begin

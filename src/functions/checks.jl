@@ -180,15 +180,23 @@ end
 
 
 # global sidecar mode ===========================
-checksidecar(sidecar::Bool) = sidecar_mode === nothing ? sidecar : sidecar_mode
+# The session switch wins, then the MERA_SIDECAR environment variable, then the call's keyword.
+function checksidecar(sidecar::Bool)
+    sidecar_mode === nothing || return sidecar_mode
+    env = lowercase(strip(get(ENV, "MERA_SIDECAR", "")))
+    env in ("0", "false", "no", "off") && return false
+    env in ("1", "true", "yes", "on") && return true
+    return sidecar
+end
 
 """
     sidecar(mode::Union{Bool,Nothing})
     sidecar()
 
 Set or show the global sidecar mode. A sidecar is the small `<file>.meta.json` that
-[`savedata`](@ref), [`savemap`](@ref), [`savemovie`](@ref) and [`exportdata`](@ref) write
-next to each file, with the provenance, units and environment of the result.
+[`savedata`](@ref), [`savemap`](@ref), [`savemovie`](@ref), [`save_clumps`](@ref),
+[`exportdata`](@ref) and [`writesidecar`](@ref) write next to each file, with the provenance,
+units and environment of the result.
 
 `sidecar(false)` stops all of them from writing one, `sidecar(true)` makes all of them write
 one (the per-function `sidecar=` keyword is then ignored), and `sidecar(nothing)` reverts to each
@@ -200,6 +208,11 @@ sidecar(false)    # no sidecar files
 sidecar()         # prints "sidecar_mode: false"
 sidecar(nothing)  # back to per-function control
 ```
+
+Without changing a script, the environment variable `MERA_SIDECAR` does the same for every
+session: `MERA_SIDECAR=0 julia analysis.jl` writes no sidecars (also `false`, `no`, `off`), and
+`1`, `true`, `yes` or `on` writes them for every call. `sidecar(true)` or `sidecar(false)` in
+the session wins over it.
 
 Returns the new setting; without an argument it prints the current one.
 """

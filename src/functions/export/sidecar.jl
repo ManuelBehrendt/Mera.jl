@@ -188,14 +188,15 @@ function _sidecar_analysis(; script=_analysis_script(), project=Base.active_proj
 end
 
 """
-    _write_sidecar(file, result, source; anonymize=false, note="", include_script=false, verbose=false)
+    _write_sidecar(file, result, source; anonymize=false, note="", include_script=false, verbose=false,
+                   explain=true)
 
 Write `<file>.meta.json` and return its path, or `nothing` if it could not be written (a warning
 says why). `result` is a dictionary describing the file's content.
 """
 function _write_sidecar(file::AbstractString, result::AbstractDict, source;
                         anonymize::Bool=false, note::AbstractString="", include_script::Bool=false,
-                        verbose::Bool=false)
+                        verbose::Bool=false, explain::Bool=true)
     sc = _sidecar_file(file)
     try
         d = OrderedDict{String,Any}(
@@ -212,6 +213,7 @@ function _write_sidecar(file::AbstractString, result::AbstractDict, source;
         isempty(note) || (d["note"] = String(note))
         _write_json(sc, d)
         verbose && println("  sidecar → ", sc)
+        explain && _sidecar_explain(file, sc)
         _sidecar_hints(d["environment"]["mera_install"])
         return sc
     catch e
@@ -222,8 +224,9 @@ end
 
 # ---- hints, once per session --------------------------------------------------------
 #
-# A sidecar is only as good as what it can record. Two common set-ups weaken it, and both are
-# easy to fix, so the first sidecar of a session says so. Silenced by verbose(false).
+# The first sidecar of a session says what the new file is. And a sidecar is only as good as
+# what it can record: two common set-ups weaken it, both easy to fix, so Mera says so once.
+# Mera's usual hints: once per session, silenced by verbose(false).
 
 # true when Julia runs in the shared environment (~/.julia/environments/v1.x), which changes
 # whenever any package is added, so its Manifest says little about one analysis
@@ -234,18 +237,24 @@ function _shared_environment(project=Base.active_project())
 end
 
 function _sidecar_hints(install; project=Base.active_project())
-    checkverbose(true) || return nothing
     if _shared_environment(project)
-        @info """The sidecar records the shared Julia environment, which changes whenever a package \
-                 is added. For an analysis you want to repeat, give it its own environment: \
-                 `] activate .` in the analysis folder, then `] add Mera`.""" maxlog = 1
+        hint(:sidecar_shared_environment,
+             "The sidecar records the shared Julia environment, which changes whenever a package is added.",
+             "For an analysis you want to repeat, give it its own folder and environment:",
+             "meraproject(\"my_analysis\"), then start Julia there with julia --project=.")
     end
     if get(install, :dirty, nothing) === true
-        @info """Mera runs from a checkout with uncommitted changes, so the sidecar cannot say \
-                 exactly which code ran. Commit the changes before making results you publish.""" maxlog = 1
+        hint(:sidecar_uncommitted_mera,
+             "Mera runs from a checkout with uncommitted changes, so the sidecar cannot say which code ran.",
+             "Commit the changes before making results you publish.")
     end
     return nothing
 end
+
+# The first sidecar of a session says what the new file is and how to stop it.
+_sidecar_explain(file, sc) =
+    hint(:sidecar_written, "$(basename(sc)) records where $(basename(file)) came from.",
+         "readsidecar(\"$(basename(file))\") shows it; sidecar(false) stops writing them.")
 
 # The `result` entry of an existing sidecar, or an empty one.
 function _read_sidecar_result(file::AbstractString)
@@ -347,7 +356,8 @@ function writesidecar(file::AbstractString, source=nothing; note::AbstractString
     made = Any[_sidecar_made_from(s) for s in items if s !== nothing]
     isempty(made) || (result["made_from"] = several ? made : only(made))
     src = several ? _SidecarSources(items) : source
-    sc = _write_sidecar(file, result, src; anonymize=anonymize, note=note, include_script=include_script)
+    sc = _write_sidecar(file, result, src; anonymize=anonymize, note=note, include_script=include_script,
+                        explain=false)                       # asked for, so it needs no explaining
     verbose && sc !== nothing && println("Sidecar written → ", sc)
     return sc
 end
