@@ -11,6 +11,21 @@ by a referee who has your script. That needs four things, and Mera supports each
     Set this up **before** you start analysing, not after. Reconstructing which versions produced a
     figure six months ago is difficult; recording it as you go costs nothing.
 
+!!! tip "FAIR in 5 lines"
+    Start Julia in the analysis folder with `julia --project=.` (the first time: `] add Mera`),
+    so the analysis has its own environment. Then:
+
+    ```julia
+    exportdata(m, "fig3.h5")                            # 1. saves write their sidecar by themselves
+    save("fig3.png", fig); writesidecar("fig3.png", m)  # 2. a figure: one more line
+    readsidecar("fig3.png")                             # 3. where a file came from
+    sidecaroverview(".")                                # 4. all files of the analysis
+    citation(gas; file="software.bib")                  # 5. the exact versions to cite
+    ```
+
+    Nothing has to be switched on. Once per session Mera says when the record is weak, for
+    example when Julia runs in the shared environment. The rest of this page explains each part.
+
 | what you need | how |
 |---|---|
 | the same package versions | a **Julia project**, described on this page |
@@ -133,12 +148,16 @@ call.
 ### Sidecar files
 
 Every file Mera writes for you, a Mera file from [`savedata`](@ref), a map from [`savemap`](@ref),
-a movie from [`savemovie`](@ref) or an export from [`exportdata`](@ref), gets a readable record
-next to it:
+a movie from [`savemovie`](@ref), a clump catalogue from [`save_clumps`](@ref) or an export from
+[`exportdata`](@ref), gets a readable record next to it. A figure is saved by the plotting
+package, so it needs one more line, [`writesidecar`](@ref):
 
 ```julia
 exportdata(m, "fig3.h5"; length_unit=:kpc, note="Figure 3")
 # writes fig3.h5 and fig3.h5.meta.json
+
+save("fig3.png", fig)                  # Makie
+writesidecar("fig3.png", m)            # writes fig3.png.meta.json
 ```
 
 The sidecar holds the provenance of the snapshot, the units and geometry of the result, the
@@ -157,6 +176,8 @@ record of what it did, so publish it next to the results.
 To read one back, `readsidecar("fig3.h5")` prints it and says whether `fig3.h5` still matches the
 SHA-256 it was written with; `sidecaroverview("results/")` lists every sidecar in a folder.
 `sidecar=false` turns them off for one call; [`sidecar`](@ref)`(false)` for the session.
+Once per session Mera also says when a sidecar cannot record enough: when Julia runs in the
+shared environment instead of one for the analysis, or Mera itself has uncommitted changes.
 [Sharing results](export_sidecars.md) walks through all of it on a real simulation.
 
 ### Threads
@@ -258,5 +279,7 @@ Two places to watch on a periodic run, because neither wraps:
 - [ ] the number of threads is recorded (every sidecar does), for results that must repeat bit for bit
 - [ ] `provenance` output is saved with each result (the sidecar does this for every file Mera writes)
 - [ ] the scripts or notebooks that made the results are published next to them
+- [ ] every figure file has a sidecar (`writesidecar` right after the save)
+- [ ] the software is cited at its exact version (`citation(gas)` gives the BibTeX)
 - [ ] for camera views, the viewing vectors (`m.los`, `m.up`, or the `angmom` axis) are saved too
 - [ ] the simulation output and its path are named in the script, not typed by hand each run

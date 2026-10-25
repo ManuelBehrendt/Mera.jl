@@ -109,6 +109,8 @@ not how many pixels there are.
 |:---|:---|:---|
 | to record what produced a number | `provenance(obj)`, `provenance_string`, `mera_build` | [Provenance](provenance.md) |
 | someone else to reproduce it | a `Project.toml` beside the script, and its `Manifest.toml` | [Reproducibility](reproducibility.md) |
+| every result file to say where it came from | `exportdata`, `writesidecar` after saving a figure, `sidecaroverview` | [Sharing Results & Sidecars](export_sidecars.md) |
+| to cite the exact versions I used | `citation(gas; file="software.bib")` | [Reproducibility](reproducibility.md) |
 | to check I did not invert a condition | `filterdata` with the condition and with its `!`: together they must give the whole object's cell count and mass | [Masking & Filtering](05_multi_Masking_Filtering.md) |
 | to know how a number is computed before I quote it | (reading only) | [How Quantities Are Computed](computation_reference.md) |
 

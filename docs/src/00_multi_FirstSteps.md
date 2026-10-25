@@ -594,6 +594,29 @@ Data completeness: 50.0%
 📊 Completeness: 50.0%
 ```
 
+## Make your results repeatable from the start
+
+A result is worth more when you, a co-author or a referee can trace it back: which snapshot,
+which Mera version, which script. Mera records this for you; it costs a few lines a day.
+
+!!! tip "FAIR in 5 lines"
+    Start Julia in the analysis folder with `julia --project=.` (the first time: `] add Mera`),
+    so the analysis has its own environment. Then:
+
+    ```julia
+    exportdata(m, "fig3.h5")                            # 1. saves write their sidecar by themselves
+    save("fig3.png", fig); writesidecar("fig3.png", m)  # 2. a figure: one more line
+    readsidecar("fig3.png")                             # 3. where a file came from
+    sidecaroverview(".")                                # 4. all files of the analysis
+    citation(gas; file="software.bib")                  # 5. the exact versions to cite
+    ```
+
+    Nothing has to be switched on. Once per session Mera says when the record is weak, for
+    example when Julia runs in the shared environment.
+
+[Reproducibility](reproducibility.md) explains the environment, and
+[Sharing Results & Sidecars](export_sidecars.md) shows each line on a real simulation.
+
 ## Function Quick Reference
 
 Now that you have run the workflow, here is the same ground as a lookup table, the calls

@@ -30,6 +30,21 @@ Two features answer this:
     ([Pfalzner et al. 2026](https://arxiv.org/abs/2602.08416)). The sidecar records that without
     extra work, every time you save.
 
+!!! tip "FAIR in 5 lines"
+    Start Julia in the analysis folder with `julia --project=.` (the first time: `] add Mera`),
+    so the analysis has its own environment. Then:
+
+    ```julia
+    exportdata(m, "fig3.h5")                            # 1. saves write their sidecar by themselves
+    save("fig3.png", fig); writesidecar("fig3.png", m)  # 2. a figure: one more line
+    readsidecar("fig3.png")                             # 3. where a file came from
+    sidecaroverview(".")                                # 4. all files of the analysis
+    citation(gas; file="software.bib")                  # 5. the exact versions to cite
+    ```
+
+    Nothing has to be switched on. Once per session Mera says when the record is weak, for
+    example when Julia runs in the shared environment.
+
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
 # MERA_EXAMPLES environment variable; every path below is built from it.
@@ -200,7 +215,7 @@ r = readsidecar("fig3_maps.h5")
 
 ```
 Sidecar of fig3_maps.h5  (hdf5, projection)  data file: unchanged
-  written      2026-10-24 19:26 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-25 05:42 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
@@ -269,7 +284,8 @@ exportdata: T, sd → fig3_public.h5  (+ fig3_public.h5.meta.json)
 
 ## Mera files and maps get sidecars too
 
-[`savedata`](@ref), [`savemap`](@ref) and [`savemovie`](@ref) write a sidecar as well. For a Mera
+[`savedata`](@ref), [`savemap`](@ref), [`savemovie`](@ref) and [`save_clumps`](@ref) write a
+sidecar as well. For a Mera
 file it lists every data type in the file; an `:append` adds to the list. Here a small sphere
 around the centre keeps the file small.
 
@@ -283,13 +299,59 @@ readsidecar("output_00300.jld2")
 
 ```
 Sidecar of output_00300.jld2  (jld2, mera_file)  data file: unchanged
-  written      2026-10-24 19:26 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-25 05:43 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
   environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
   contents     hydro: 1136840 rows, 11 columns
   sidecar      output_00300.jld2.meta.json
+```
+
+## Figures
+
+A figure is saved by the plotting package, so Mera does not see it. One more line,
+[`writesidecar`](@ref), gives it the same record, taken from the result it shows:
+
+```julia
+using CairoMakie
+fig = Figure(size=(520, 420))
+ax = Axis(fig[1, 1]; aspect=DataAspect(), xlabel="x [pixel]", ylabel="y [pixel]")
+hm = heatmap!(ax, log10.(m.maps[:sd]))
+Colorbar(fig[1, 2], hm; label="log10 Σ [Msol/pc²]")
+save("fig3.png", fig)
+
+writesidecar("fig3.png", m; note="Figure 3");
+fig
+```
+
+```
+Sidecar written → fig3.png.meta.json
+```
+
+![](export_sidecars_files/export_sidecars_23_3.png)
+
+For a figure with several panels, pass all its results, `writesidecar("fig4.pdf", [m1, m2, m3])`;
+the sidecar then lists the snapshot of each panel. Read back, it shows what the figure was made
+from:
+
+```julia
+readsidecar("fig3.png")
+```
+
+```
+Sidecar of fig3.png  (png, figure)  data file: unchanged
+  written      2026-10-25 05:43 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
+  input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
+  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
+  contents     x [standard] 481
+               y [standard] 481
+               T [K] 481×481
+               sd [Msol_pc2] 481×481
+  note         Figure 3
+  sidecar      fig3.png.meta.json
 ```
 
 ## An overview of a folder
@@ -302,18 +364,19 @@ recs = sidecaroverview(".");
 ```
 
 ```
-9 sidecars in .
+10 sidecars in .
 file               kind        format  snapshot             time       written (UTC)     data file
 -----------------  ----------  ------  -------------------  ---------  ----------------  ---------
-cells.npz          namedtuple  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
-fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
-fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
-fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
-fig3_maps.npz      projection  npz     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
-fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
-fig3_sd.npy        projection  npy     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
-fig4_profile.csv   profile     csv     mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
-output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-24 19:26  present
+cells.npz          namedtuple  npz     mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
+fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
+fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-25 05:42  present
+fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 05:42  present
+fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
+fig3_maps.npz      projection  npz     mw_L10/output_00300  445.9 Myr  2026-10-25 05:42  present
+fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
+fig3_sd.npy        projection  npy     mw_L10/output_00300  445.9 Myr  2026-10-25 05:42  present
+fig4_profile.csv   profile     csv     mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
+output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
 ```
 
 ## Has a file changed?
@@ -342,8 +405,9 @@ recs = sidecaroverview("."; verify=true, verbose=false)
 ```
 
 ```
-9-element Vector{Pair{String, Symbol}}:
+10-element Vector{Pair{String, Symbol}}:
          "cells.npz" => :unchanged
+          "fig3.png" => :unchanged
      "fig3_maps.csv" => :changed
       "fig3_maps.h5" => :unchanged
     "fig3_maps.jld2" => :unchanged
@@ -545,6 +609,42 @@ print(read("datacite.json", String))
 }
 ```
 
+## What to cite
+
+[`citation`](@ref) gives the BibTeX for Mera at the exact version that runs, and the papers of
+the code behind the data. For RAMSES that is the code paper, plus the MHD and RT papers when the
+run used them. On a saved file it takes the Mera version recorded in the sidecar.
+
+```julia
+citation(gas)
+```
+
+```
+@software{Mera_1_8_3,
+  author  = {Behrendt, Manuel},
+  title   = {Mera.jl: Fast, conservation-correct, code-agnostic analysis of astrophysical simulations in Julia},
+  version = {1.8.3},
+  year    = {2026},
+  doi     = {10.5281/zenodo.3675254},
+  url     = {https://github.com/ManuelBehrendt/Mera.jl}
+}
+
+@article{Teyssier2002,
+  author  = {Teyssier, Romain},
+  title   = {Cosmological hydrodynamics with adaptive mesh refinement. A new high resolution code called RAMSES},
+  journal = {Astronomy and Astrophysics},
+  volume  = {385},
+  pages   = {337--364},
+  year    = {2002},
+  doi     = {10.1051/0004-6361:20011817}
+}
+
+```
+
+```julia
+citation("fig3.png"; file="software.bib");
+```
+
 ## FITS
 
 FITS export needs the FITSIO package. It is not installed with Mera, since most users never write
@@ -564,7 +664,6 @@ end
 ```
 
 ```
-[ Info: Mera v1.8.3
 exportdata: T, sd → fig3_maps.fits  (+ fig3_maps.fits.meta.json)
 BUNIT  = Msol_pc2
 CTYPE1 = X
@@ -667,10 +766,12 @@ it, and publish it next to the results.
 
 - [ ] run the analysis as a script, or in JupyterLab, so the sidecars name it
 - [ ] export each figure's data with `exportdata`, with a `note` naming the figure
+- [ ] give each figure file its sidecar with `writesidecar`
 - [ ] check the folder with `sidecaroverview(dir; verify=true)`
 - [ ] use `anonymize=true` if the simulation path should not be public
 - [ ] put the data files, their sidecars and the scripts or notebooks in one record, e.g. on Zenodo
 - [ ] describe the simulation with `simulationrecord`, and `datacite` if it is published too
+- [ ] cite the software with the BibTeX from `citation`
 - [ ] commit the `Project.toml` and `Manifest.toml` of the analysis (see [Reproducibility](reproducibility.md))
 
 ## See also
