@@ -157,12 +157,15 @@ function mera_install()
                  Base.structdiff(rest, NamedTuple{(:source,)}))
 end
 
+# The release view: what a user of the registered release sees. The documentation is rendered
+# from a git checkout, so without it every page would show a branch and a commit that change with
+# each commit, and hints meant for developers. `MERA_PROVENANCE_PLAIN=1` asks for the release view;
+# everything that shows the checkout (the provenance line, the uncommitted-changes hint) checks it.
+_release_view() = get(ENV, "MERA_PROVENANCE_PLAIN", "") in ("1", "true")
+
 function _mera_build()
     v = string(pkgversion(@__MODULE__))
-    # The documentation is rendered from a git checkout, so without this every provenance line on
-    # the site would carry a branch and a commit that change with each commit. `MERA_PROVENANCE_PLAIN`
-    # asks for the plain version, and the pages then show what a reader of the release would see.
-    get(ENV, "MERA_PROVENANCE_PLAIN", "") in ("1", "true") && return v
+    _release_view() && return v
     b = _mera_install_base()
     if b.source === :checkout
         return "$v (dev $(b.branch) @ $(b.commit)$(b.dirty ? " +uncommitted" : ""))"
@@ -295,7 +298,8 @@ Mera v1.8.0 (dev master @ 3a91f2c +uncommitted) | mw_L10/output_00300 | 445.89 M
 ```
 
 Set the environment variable `MERA_PROVENANCE_PLAIN=1` to force the plain version, which is how
-these pages are rendered.
+these pages are rendered. It also hides the hint that Mera has uncommitted changes, so the pages
+show what a user of the release sees.
 """
 provenance_string(p::Provenance) =
     "Mera v$(p.mera_build) | $(basename(rstrip(p.path, '/')))/output_$(lpad(p.output, 5, '0')) " *

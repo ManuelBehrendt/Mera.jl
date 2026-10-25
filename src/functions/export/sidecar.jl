@@ -243,7 +243,7 @@ function _sidecar_hints(install; project=Base.active_project())
              "For an analysis you want to repeat, give it its own folder and environment:",
              "meraproject(\"my_analysis\"), then start Julia there with julia --project=.")
     end
-    if get(install, :dirty, nothing) === true
+    if get(install, :dirty, nothing) === true && !_release_view()      # a release has no checkout
         hint(:sidecar_uncommitted_mera,
              "Mera runs from a checkout with uncommitted changes, so the sidecar cannot say which code ran.",
              "Commit the changes before making results you publish.")

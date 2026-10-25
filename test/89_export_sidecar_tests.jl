@@ -355,10 +355,17 @@ _sidecar_json(file) = _J.read(read(Mera._sidecar_file(file), String))
         @test Mera._shared_environment(shared) && Mera._shared_environment(nothing)
         @test !Mera._shared_environment(own)
         Mera.reset_hints()
-        out = capture_stdout() do; Mera._sidecar_hints((dirty=true,); project=shared); end
+        out = withenv("MERA_PROVENANCE_PLAIN" => nothing) do        # the developer view
+            capture_stdout() do; Mera._sidecar_hints((dirty=true,); project=shared); end
+        end
         @test occursin("shared Julia environment", out) && occursin("meraproject", out)
         @test occursin("uncommitted changes", out)
         @test isempty(strip(capture_stdout() do; Mera._sidecar_hints((dirty=true,); project=shared); end))  # once
+        Mera.reset_hints()
+        out = withenv("MERA_PROVENANCE_PLAIN" => "1") do            # the release view, as in the docs
+            capture_stdout() do; Mera._sidecar_hints((dirty=true,); project=own); end
+        end
+        @test isempty(strip(out))
         Mera.reset_hints()
         @test isempty(strip(capture_stdout() do; Mera._sidecar_hints((dirty=false,); project=own); end))
         @test isempty(strip(capture_stdout() do; Mera._sidecar_hints((source=:registry,); project=own); end))
