@@ -65,7 +65,7 @@ const _J91 = Mera.JSON3
         c = citation()
         @test c isa Text
         bib = string(c)
-        @test occursin("@software{Mera_$(replace(v, '.' => '_'))", bib)
+        @test occursin("@software{Mera_$(replace(v, r"[^0-9A-Za-z]" => "_"))", bib)
         @test occursin("version = {$v}", bib) && occursin("doi     = {10.5281/zenodo.3675254}", bib)
         @test count("@", bib) == 1                                         # Mera alone
         d = mktempdir()
