@@ -23,8 +23,10 @@ by a referee who has your script. That needs four things, and Mera supports each
     bundle("."; simulation=info)                        # 5. before publishing: one record, and the BibTeX
     ```
 
-    Nothing has to be switched on. Once per session Mera says when the record is weak, for
-    example when Julia runs in the shared environment. The rest of this page explains each part.
+    Nothing has to be switched on. The first save of a session prints one line naming the new
+    sidecar. If Julia runs without a project of its own, Mera says so once: the sidecar then
+    records the shared environment, which changes with every package you add anywhere, so it
+    cannot tell which versions made your result. The rest of this page explains each part.
 
 | what you need | how |
 |---|---|
@@ -189,8 +191,12 @@ breaks a save, since a sidecar that cannot be written becomes a warning. Switch 
 `sidecar(false)` at the top of a script when the number of files matters, for example on a
 cluster with a file quota, or without touching the script: `MERA_SIDECAR=0 julia analysis.jl`.
 Use `anonymize=true` when the simulation path should not be public.
-Once per session Mera also says when a sidecar cannot record enough: when Julia runs in the
-shared environment instead of one for the analysis, or Mera itself has uncommitted changes.
+
+Two set-ups make a sidecar less useful, and Mera says so the first time it meets them in a
+session. If Julia runs in the shared environment (the `@v1.12` prompt) instead of the analysis's
+own project, the recorded `Manifest.toml` changes whenever you add any package, so it no longer
+says which versions made the result. If Mera runs from a checkout with uncommitted changes, the
+recorded commit is not the code that ran.
 [Sharing results](export_sidecars.md) walks through all of it on a real simulation.
 
 ### Threads

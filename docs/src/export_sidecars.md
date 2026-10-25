@@ -42,8 +42,10 @@ Two features answer this:
     bundle("."; simulation=info)                        # 5. before publishing: one record, and the BibTeX
     ```
 
-    Nothing has to be switched on. Once per session Mera says when the record is weak, for
-    example when Julia runs in the shared environment.
+    Nothing has to be switched on. The first save of a session prints one line naming the new
+    sidecar. If Julia runs without a project of its own, Mera says so once: the sidecar then
+    records the shared environment, which changes with every package you add anywhere, so it
+    cannot tell which versions made your result.
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the

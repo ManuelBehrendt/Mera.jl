@@ -611,8 +611,10 @@ which Mera version, which script. Mera records this for you; it costs a few line
     bundle("."; simulation=info)                        # 5. before publishing: one record, and the BibTeX
     ```
 
-    Nothing has to be switched on. Once per session Mera says when the record is weak, for
-    example when Julia runs in the shared environment.
+    Nothing has to be switched on. The first save of a session prints one line naming the new
+    sidecar. If Julia runs without a project of its own, Mera says so once: the sidecar then
+    records the shared environment, which changes with every package you add anywhere, so it
+    cannot tell which versions made your result.
 
 [Reproducibility](reproducibility.md) explains the environment, and
 [Sharing Results & Sidecars](export_sidecars.md) shows each line on a real simulation.
