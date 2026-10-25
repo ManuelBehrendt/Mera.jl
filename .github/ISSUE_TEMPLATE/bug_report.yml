@@ -1,0 +1,51 @@
+name: Bug report
+description: Mera gives a wrong result, an error, or does something unexpected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting. A short example that shows the problem helps most. If you can,
+        reproduce it on one of the public test simulations, which `download_testdata()` fetches,
+        so the problem can be checked without your data.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Code to reproduce it
+      description: The shortest code that shows the problem, and the simulation it runs on.
+      render: julia
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Error message or output
+      description: The full error with its stack trace, or the output that looks wrong.
+      render: text
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions
+      description: >
+        Paste the output of `using Mera; mera_install()` and of `versioninfo()`.
+        On Mera 1.8 or older, use `pkgversion(Mera)` instead of `mera_install()`.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: simulation
+    attributes:
+      label: Simulation code and version
+      description: For example RAMSES 2025.05, or RAMSES stable-19.10.
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: Operating system, number of threads, size of the data, or other details that may matter.

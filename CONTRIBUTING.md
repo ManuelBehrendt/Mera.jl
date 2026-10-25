@@ -151,13 +151,15 @@ simulations that are not distributed, and are meant to be read and adapted rathe
 
 ## Reporting Issues
 
-When reporting issues, please include:
+The [bug report form](https://github.com/ManuelBehrendt/Mera.jl/issues/new/choose) asks for what
+is needed:
 
-- Julia version (`julia --version`)
-- Mera.jl version
-- Minimal reproducible example
-- Expected vs actual behavior
-- Full error message and stack trace
+- what happened, and what you expected
+- the shortest code that shows it, ideally on a public test simulation (`download_testdata()`)
+- the full error message and stack trace
+- the output of `mera_install()` (`pkgversion(Mera)` on 1.8 and older) and `versioninfo()`
+
+A security problem should not go into a public issue: see [SECURITY.md](SECURITY.md).
 
 ## Questions?
 
