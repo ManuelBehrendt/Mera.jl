@@ -30,7 +30,7 @@ registry and are archived on [Zenodo](https://doi.org/10.5281/zenodo.3675254).
 | branch | what goes there |
 |---|---|
 | `master` | the 1.x release line: RAMSES support and everything code-agnostic (analysis, regions, projections, units, IO, docs, fixes) |
-| `multicode` | the 2.0 development line: readers for other simulation codes, see [Adding a reader](https://manuelbehrendt.github.io/Mera.jl/stable/adding_a_reader/) |
+| `multicode` | the development line for readers of other simulation codes, see [Adding a reader](https://manuelbehrendt.github.io/Mera.jl/stable/adding_a_reader/) |
 
 `multicode` receives everything from `master` by merge, so code-agnostic work belongs on `master`.
 

@@ -11,7 +11,7 @@ abstract: >-
   (axis-aligned and off-axis) and covering grids, a pluggable structure (clump/halo) finder, and a
   conservation-correct inflow/outflow flux-budget tool, all checked by a data-free correctness
   oracle. Readers for PLUTO, Chombo, Athena++, FLASH, GADGET and AREPO are in development on the
-  multicode branch and are not part of a 1.x release.
+  multicode branch and are not yet part of a release.
 type: software
 authors:
   - family-names: Behrendt

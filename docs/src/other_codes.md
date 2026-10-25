@@ -1,7 +1,7 @@
 # Other Simulation Codes (in development)
 
-Mera 1.x is **RAMSES only**. Support for other simulation codes is in active development for
-version 2.0 and lives on the `multicode` branch. This page is the single place that says what
+The released versions of Mera read **RAMSES only**. Readers for other simulation codes are in
+active development and live on the `multicode` branch. This page is the single place that says what
 exists, what does not, and how to try it.
 
 !!! note "Working on the frontends?"

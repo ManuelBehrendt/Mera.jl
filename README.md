@@ -70,12 +70,12 @@ Every quantity comes in the unit you name. The same calls work on particles and 
 > [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com). I am happy to collaborate on
 > extensions.
 
-> ### Released and upcoming 1.x versions are **RAMSES-only**
+> ### The released versions read **RAMSES**
 >
-> Support for **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** is in
-> active development for **version 2.0**, on the `multicode` branch. AMReX/BoxLib is also the
-> container used by Castro, Nyx and WarpX. It is not part of any 1.x release.
-> For collaborators to try it:
+> Readers for **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** are in
+> active development through the same reader interface, on the `multicode` branch. AMReX/BoxLib is
+> also the container used by Castro, Nyx and WarpX. They are not part of a release yet.
+> For collaborators to try them:
 >
 > In the Julia REPL, press `]` for the package manager:
 >
@@ -396,8 +396,8 @@ Mera adds a hint: start Julia with `julia -t 8` (or set `JULIA_NUM_THREADS=8`) t
 in parallel. In scripts the greeting is a single `[ Info: Mera v1.9.0` line, and `MERA_QUIET=1`
 turns it off.
 
-For collaborators, the in-development multi-code version (2.0, see the note at the top) is
-installed from the branch, noting the `#multicode` suffix in the `pkg>` form:
+For collaborators, the readers for other codes (see the note at the top) are installed from the
+branch, noting the `#multicode` suffix in the `pkg>` form:
 
 ```julia-repl
 pkg> add https://github.com/ManuelBehrendt/Mera.jl#multicode
@@ -492,8 +492,8 @@ including what the attribution block should contain and what makes a recipe usab
 
 **1.x, RAMSES.** Continued depth on the RAMSES path: analysis, performance and documentation.
 
-**2.0, multiple simulation codes.** AREPO, GADGET, PLUTO, Athena++, FLASH, Chombo and AMReX/Quokka
-behind the same API, developed on the `multicode` branch. What each reader does today is listed in
+**Other simulation codes.** AREPO, GADGET, PLUTO, Athena++, FLASH, Chombo and AMReX/Quokka behind
+the same API, developed openly on the `multicode` branch until they are released. What each reader does today is listed in
 [Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/multicode/multicode/), and readers
 are credited to the people who wrote them.
 
