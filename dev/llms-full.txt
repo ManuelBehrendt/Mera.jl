@@ -27,11 +27,11 @@ Formats are read through a registry rather than hard-wired, so the analysis work
 never learns which code produced it. `quicklook` is the quickest way in: point it at a snapshot you
 have never seen and it reports what is there and draws it.
 
-!!! warning "Released and upcoming 1.x versions are RAMSES-only"
-    Support for **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** is in
-    active development for **version 2.0**, on the `multicode` branch. AMReX/BoxLib is also the
-    container used by Castro, Nyx and WarpX. It is not part of any 1.x release, and nothing on these
-    pages depends on it.
+!!! warning "The released versions read RAMSES"
+    Readers for **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka** are in
+    active development through the same reader interface, on the `multicode` branch. AMReX/BoxLib
+    is also the container used by Castro, Nyx and WarpX. They are not part of a release yet, and
+    nothing on these pages depends on them.
 
     For collaborators who want to try it:
 
