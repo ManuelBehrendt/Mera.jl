@@ -150,6 +150,11 @@ GitHub Actions) and uploaded to Codecov; see [Testing](#testing) below and the
   the snapshot you used. Fifteen public test simulations with known answers let you check your own
   installation.
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/)
+- **Every saved file says where it came from** *(from 1.9)*. Next to each file Mera writes, a small
+  readable `.meta.json` records the snapshot, the units, the SHA-256 of the file, your script and
+  your package versions, with no extra work. Before you publish, one call turns the folder into a
+  single record that Zenodo reads, with the BibTeX of the exact versions you used.
+  [Sharing results](https://manuelbehrendt.github.io/Mera.jl/dev/export_sidecars/)
 - **Bring your own hydro code.** Readers plug into a registry, so a reader written in your own
   package works with the whole analysis without changing Mera.
   [Adding a reader](https://manuelbehrendt.github.io/Mera.jl/stable/adding_a_reader/)
@@ -309,6 +314,8 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 - **`savemap` / `loadmap`**: keep a finished projection, with its provenance, instead of recomputing
 - **`upgrade_merafile`**: bring a MERA file written by an older version up to date
 - **`export_vtk`**: write AMR cells / particles to VTK for ParaView/VisIt
+- **`exportdata`** *(from 1.9)*: a map, profile, phase diagram, table or movie as HDF5, CSV,
+  NumPy (`.npy`/`.npz`), JSON or FITS, for Python and other tools
 
 ### Quick looks and reports
 - **`quicklook`**: point it at a snapshot you have never seen. Budgeted read, maps along all three
@@ -328,6 +335,16 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
   tree was dirty, the snapshot and its time. Travels inside saved maps and reports
 - **`download_testdata`**: fifteen small public RAMSES simulations, each with a known answer, either
   an analytic law that follows from its setup or a reference value published by the RAMSES developers
+- **Sidecar files** *(from 1.9)*: every save and export writes a readable `<file>.meta.json`;
+  `writesidecar` adds one to a figure, `readsidecar` and `sidecaroverview` read them back and
+  notice files changed since
+- **`bundle` / `meraproject` / `citation`** *(from 1.9)*: an analysis folder with its own
+  environment from the start, one RO-Crate record of it before publishing, and the BibTeX of
+  Mera and the RAMSES papers your run needs
+- **`simulationrecord` / `datacite`** *(from 1.9)*: describe a simulation (code, resolution,
+  physics, input files) and turn it into DataCite metadata for a data repository
+- **Same thread count, same result** *(from 1.9, tested)*: every result repeats bit for bit; across
+  thread counts reads and axis-aligned maps stay identical and the rest differs only at round-off
 
 ### While you work
 - **Threads** on reads, off-axis projections and multi-quantity projections; `reading_sweep` finds
@@ -582,7 +599,8 @@ when a new version ships and what moved in it.
 - **Check before you upgrade.** `pkg> status --outdated` shows what a new version would change, and
   the release notes say what changed in it. Read them before `pkg> up`, not after.
 - **Pin what a paper depends on.** A `Project.toml` and `Manifest.toml` in your analysis folder keep
-  today's versions available whatever ships later. See
+  today's versions available whatever ships later; from 1.9, `meraproject("my_analysis")` starts
+  such a folder for you. See
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
 
 ## Get involved
@@ -592,6 +610,7 @@ when a new version ships and what moved in it.
 - **Cite & star**: if MERA helps your research, please cite the
   [Zenodo DOI](https://zenodo.org/badge/latestdoi/229728152) and ⭐ the
   [repository](https://github.com/ManuelBehrendt/Mera.jl); it helps measure impact and sustain development.
+  From 1.9, `citation()` prints the BibTeX for the exact version you use.
 - **Ask**: [Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions) for questions and show-and-tell.
 - **Report / request**: [Issues](https://github.com/ManuelBehrendt/Mera.jl/issues) for bugs and feature requests.
 - **Contribute**: see [CONTRIBUTING.md](CONTRIBUTING.md); bug reports, docs fixes, examples and new
