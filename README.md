@@ -147,14 +147,14 @@ GitHub Actions) and uploaded to Codecov; see [Testing](#testing) below and the
 - **The whole analysis is here**: regions, units, projections, profiles, phase diagrams, PDFs, clump
   finding, star formation, time series, movies and export.
 - **Every result remembers where it came from, and so does every file you save**: the version of
-  Mera, the exact code it ran on and the snapshot you used. *From 1.9* each file Mera writes gets a
+  Mera, the exact code it ran on and the snapshot you used. Each file Mera writes also gets a
   small readable `.meta.json` next to it, with the units, the file's SHA-256, your script and your
   package versions. Before you publish, one call turns the folder into a single record that Zenodo
   reads, with the BibTeX of the exact versions you used. These are the records that guidelines for
   FAIR data (findable, accessible, interoperable, reusable) ask for, written without extra work.
   Fifteen public test simulations with known answers let you check your own installation.
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/) ·
-  [Sharing Results & Sidecars](https://manuelbehrendt.github.io/Mera.jl/dev/export_sidecars/)
+  [Sharing Results & Sidecars](https://manuelbehrendt.github.io/Mera.jl/stable/export_sidecars/)
 - **Bring your own hydro code.** Readers plug into a registry, so a reader written in your own
   package works with the whole analysis without changing Mera.
   [Adding a reader](https://manuelbehrendt.github.io/Mera.jl/stable/adding_a_reader/)
@@ -314,9 +314,9 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 - **`savemap` / `loadmap`**: keep a finished projection, with its provenance, instead of recomputing
 - **`upgrade_merafile`**: bring a MERA file written by an older version up to date
 - **`export_vtk`**: write AMR cells / particles to VTK for ParaView/VisIt
-- **`exportdata`** *(from 1.9)*: a map, profile, phase diagram, table or movie as HDF5, CSV,
+- **`exportdata`**: a map, profile, phase diagram, table or movie as HDF5, CSV,
   NumPy (`.npy`/`.npz`), JSON or FITS, for Python and other tools.
-  [Exporting data](https://manuelbehrendt.github.io/Mera.jl/dev/exporting_data/)
+  [Exporting data](https://manuelbehrendt.github.io/Mera.jl/stable/exporting_data/)
 
 ### Quick looks and reports
 - **`quicklook`**: point it at a snapshot you have never seen. Budgeted read, maps along all three
@@ -336,15 +336,15 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
   tree was dirty, the snapshot and its time. Travels inside saved maps and reports
 - **`download_testdata`**: fifteen small public RAMSES simulations, each with a known answer, either
   an analytic law that follows from its setup or a reference value published by the RAMSES developers
-- **Sidecar files** *(from 1.9)*: every save and export writes a readable `<file>.meta.json`;
+- **Sidecar files**: every save and export writes a readable `<file>.meta.json`;
   `writesidecar` adds one to a figure, `readsidecar` and `sidecaroverview` read them back and
   notice files changed since
-- **`meraproject` / `bundle` / `citation`** *(from 1.9)*: an analysis folder with its own
+- **`meraproject` / `bundle` / `citation`**: an analysis folder with its own
   environment from the start, one RO-Crate record of it before publishing, and the BibTeX of
   Mera and the RAMSES papers your run needs
-- **`simulationrecord` / `datacite`** *(from 1.9)*: describe a simulation (code, resolution,
+- **`simulationrecord` / `datacite`**: describe a simulation (code, resolution,
   physics, input files) and turn it into DataCite metadata for a data repository
-- **Same thread count, same result** *(from 1.9, tested)*: every result repeats bit for bit; across
+- **Same thread count, same result** *(tested)*: every result repeats bit for bit; across
   thread counts reads and axis-aligned maps stay identical and the rest differs only at round-off
 
 ### While you work
@@ -388,12 +388,12 @@ using Mera
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.3 | Julia 1.13.2 | 8 threads
+Mera v1.9.0 | Julia 1.13.2 | 8 threads
 ```
 
 It shows the Mera version, the Julia version and how many threads Mera can use. With one thread,
 Mera adds a hint: start Julia with `julia -t 8` (or set `JULIA_NUM_THREADS=8`) to read and project
-in parallel. In scripts the greeting is a single `[ Info: Mera v1.8.3` line, and `MERA_QUIET=1`
+in parallel. In scripts the greeting is a single `[ Info: Mera v1.9.0` line, and `MERA_QUIET=1`
 turns it off.
 
 For collaborators, the in-development multi-code version (2.0, see the note at the top) is
@@ -600,7 +600,7 @@ when a new version ships and what moved in it.
 - **Check before you upgrade.** `pkg> status --outdated` shows what a new version would change, and
   the release notes say what changed in it. Read them before `pkg> up`, not after.
 - **Pin what a paper depends on.** A `Project.toml` and `Manifest.toml` in your analysis folder keep
-  today's versions available whatever ships later; from 1.9, `meraproject("my_analysis")` starts
+  today's versions available whatever ships later; `meraproject("my_analysis")` starts
   such a folder for you. See
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/).
 
@@ -611,7 +611,7 @@ when a new version ships and what moved in it.
 - **Cite & star**: if MERA helps your research, please cite the
   [Zenodo DOI](https://zenodo.org/badge/latestdoi/229728152) and ⭐ the
   [repository](https://github.com/ManuelBehrendt/Mera.jl); it helps measure impact and sustain development.
-  From 1.9, `citation()` prints the BibTeX for the exact version you use.
+  `citation()` prints the BibTeX for the exact version you use.
 - **Ask**: [Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions) for questions and show-and-tell.
 - **Report / request**: [Issues](https://github.com/ManuelBehrendt/Mera.jl/issues) for bugs and feature requests.
 - **Contribute**: see [CONTRIBUTING.md](CONTRIBUTING.md); bug reports, docs fixes, examples and new
