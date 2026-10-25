@@ -90,8 +90,7 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 2 threads
-[ Info: Mera v1.8.0
+Mera v1.8.3 | Julia 1.12.7 | 4 threads
 cells loaded : 18966620
 box size     : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
@@ -528,12 +527,12 @@ fig
 
 ```
 nsub  points/cell     r = 10 kpc   r = 1.5 kpc   time, r = 10
-1     1                 -0.025 %        19.0 %         0.45 s
-2     8                 -0.096 %         3.0 %         0.28 s
-4     64                -0.026 %         0.9 %         0.23 s
-8     512              -0.0046 %        0.23 %         0.44 s
-16    4096            -0.00025 %       0.053 %         0.37 s
-32    32768           -0.00036 %        0.01 %         1.31 s
+1     1                 -0.025 %        19.0 %         0.33 s
+2     8                 -0.096 %         3.0 %         0.25 s
+4     64                -0.026 %         0.9 %         0.22 s
+8     512              -0.0046 %        0.23 %         0.37 s
+16    4096            -0.00025 %       0.053 %         0.36 s
+32    32768           -0.00036 %        0.01 %         1.21 s
 ```
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_20_3.png)
@@ -1839,13 +1838,16 @@ tmpdir = mktempdir()
 savedata(win, tmpdir; fmode=:write, verbose=false)
 back = loaddata(400, tmpdir, :hydro, verbose=false)
 
-fsz = sum(filesize, readdir(tmpdir; join=true)) / 1024^2
+fsz = sum(filesize, filter(endswith(".jld2"), readdir(tmpdir; join=true))) / 1024^2
 println("working file  : ", round(fsz, digits=1), " MB   (", length(back.data), " cells)")
 println("mass, window  : ", round(msum(win,  :Msol), sigdigits=8), " Msol")
 println("mass, reloaded: ", round(msum(back, :Msol), sigdigits=8), " Msol")
 ```
 
 ```
+[Mera] Hint: output_00400.jld2.meta.json records where output_00400.jld2 came from.
+             readsidecar("output_00400.jld2") shows it; sidecar(false) stops writing them.
+             (shown once per session; verbose(false) silences Mera's messages)
 working file  : 147.5 MB   (17957496 cells)
 mass, window  : 2.7966433e10 Msol
 mass, reloaded: 2.7966433e10 Msol

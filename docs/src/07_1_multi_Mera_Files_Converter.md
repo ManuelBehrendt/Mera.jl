@@ -92,9 +92,9 @@ println("JLD2 target   : ", jld_dir)
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
+Mera v1.8.3 | Julia 1.12.7 | 4 threads
 RAMSES source : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d
-JLD2 target   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_zahY7p
+JLD2 target   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_4q78hm
 ```
 
 ## Step 1, convert a RAMSES output to a Mera file
@@ -111,7 +111,7 @@ println("size           : ", round(filesize(jld_file)/1024^2, digits=2), " MB")
 ```
 
 ```
-[Mera]: 2026-08-31T13:49:15.171
+[Mera]: 2026-10-25T11:20:52.005
 Requested datatypes: [:hydro]
 Max threads: 4 of 4 available
 Threading applied to: hydro, gravity, particles
@@ -125,20 +125,23 @@ reading/writing lmax: 6 of 6
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
 -----------------------------------
 - hydro (threaded: max_threads=4)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.39  s/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.40  s/it)
 ✓ File processing complete! Combining results...
+[Mera] Hint: output_00001.jld2.meta.json records where output_00001.jld2 came from.
+             readsidecar("output_00001.jld2") shows it; sidecar(false) stops writing them.
+             (shown once per session; verbose(false) silences Mera's messages)
 Final Statistics:
 ================
-- total folder size: 2.158 MB
-- selected data size: 2.147 MB
-- peak memory used: 2.276 MB
-- compressed file size: 128.459 KB
-- compression ratio: 0.058
-- data reduction: 94.2%
-- total processing time: 8.25 seconds
+- total folder size: 2.159 MB
+- selected data size: 2.148 MB
+- peak memory used: 2.279 MB
+- compressed file size: 142.094 KB
+- compression ratio: 0.065
+- data reduction: 93.6%
+- total processing time: 9.3 seconds
 - effective threads: 4
-wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_zahY7p/output_00001.jld2
-size           : 0.15 MB
+wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_4q78hm/output_00001.jld2
+size           : 0.16 MB
 ```
 
 Inspect the written file with `viewdata` and read it back with `loaddata`, the round-trip
@@ -153,7 +156,7 @@ println("total mass     : ", round(msum(gas, :Msol), sigdigits=4), " Msol")
 ```
 
 ```
-[Mera]: 2026-08-31T13:49:24.746
+[Mera]: 2026-10-25T11:21:02.644
 Mera-file output_00001.jld2 contains:
 Datatype: hydro
 merafile_version: 1.0
@@ -164,21 +167,21 @@ JLD2: VersionNumber[v"0.6.5"]
 CodecBzip2: VersionNumber[v"0.8.5"]
 JLD2compatible_versions: (lower = v"0.1.0", upper = v"0.3.0")
 CodecLz4: VersionNumber[v"0.4.6"]
-Mera: VersionNumber[v"1.8.0"]
+Mera: VersionNumber[v"1.8.3"]
 -------------------------
-Memory: 2.2761926651000977 MB (uncompressed)
+Memory: 2.278575897216797 MB (uncompressed)
 -----------------------------------
 convert stat: true
 -----------------------------------
-Total file size: 154.882 KB
+Total file size: 166.322 KB
 -----------------------------------
-[Mera]: 2026-08-31T13:49:25.276
+[Mera]: 2026-10-25T11:21:03.140
 Open Mera-file output_00001.jld2:
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
-Memory used for data table :2.2740488052368164 MB
+Memory used for data table :2.2764320373535156 MB
 -------------------------------------------------------
 cells loaded   : 32768
 total mass     : 6.284e-35 Msol
@@ -280,13 +283,13 @@ println("converted dir  : ", sort(readdir(converted_dir)))
 ================================================================================
 Safe Multithreaded JLD2 Batch Converter with Safety Margin Monitoring
 ================================================================================
-Input directory:  /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_zahY7p
-Output directory: /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_Dpz4jU
+Input directory:  /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_4q78hm
+Output directory: /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_ebds5n
 Output range:     1 to 3
 System Memory Information:
   Total memory: 32.0 GB
-  Available memory: 8.5 GB
-  Current usage: 73.4%
+  Available memory: 10.5 GB
+  Current usage: 67.1%
   Safety limit: 80.0%
   ✅ Current memory usage within safety margin
 Requested threads: 1
@@ -298,7 +301,7 @@ Files to be converted (3 total):
   - output_00002.jld2 (output 2)
   - output_00003.jld2 (output 3)
 Starting multithreaded conversion with safety margin monitoring...
-[3/3] Processing: output_00003.jld2 100%|█████████████████████| Time: 0:00:00 ( 0.24  s/it)
+[3/3] Processing: output_00003.jld2 100%|█████████████████████| Time: 0:00:01 ( 0.34  s/it)
 ================================================================================
 Conversion Summary with Safety Margin Report
 ================================================================================
@@ -307,15 +310,20 @@ Successfully converted:   3
 Failed conversions:       0
 Skipped files:            0
 Safety margin violations: 0
-Total conversion time:    0.8 seconds
-Average time per file:    0.27 seconds
+Total conversion time:    1.1 seconds
+Average time per file:    0.37 seconds
 Threads used:             1
-Final memory usage:       73.5%
+Final memory usage:       67.9%
 ✅ No safety margin violations detected during conversion.
 Conversion complete!
-return dict    : Dict{String, Real}("conversion_time" => 0.8097329139709473, "success" => 3, "threads_used" => 1, "final_memory_usage_percent" => 73.49481582641602, "failed" => 0, "skipped" => 0, "safety_violations" => 0)
-converted dir  : ["output_00001.jld2", "output_00002.jld2", "output_00003.jld2"]
+return dict    : Dict{String, Real}("conversion_time" => 1.124377965927124, "success" => 3, "threads_used" => 1, "final_memory_usage_percent" => 67.86975860595703, "failed" => 0, "skipped" => 0, "safety_violations" => 0)
+converted dir  : ["output_00001.jld2", "output_00001.jld2.meta.json", "output_00002.jld2", "output_00002.jld2.meta.json", "output_00003.jld2", "output_00003.jld2.meta.json"]
 ```
+
+Next to each converted file the listing shows its sidecar, such as `output_00001.jld2.meta.json`:
+a small readable record of what the file holds, where its data came from and which file it was
+converted from, see [Sharing Results & Sidecars](export_sidecars.md). `convertdata` above wrote
+one for each file in `jld_dir` too.
 
 The returned `Dict` summarises the run, keys include `"success"`, `"failed"`,
 `"skipped"`, `"safety_violations"`, `"conversion_time"`, `"threads_used"`, and
@@ -347,21 +355,21 @@ println("mass   (orig / converted) : ",
 ```
 
 ```
-[Mera]: 2026-08-31T13:49:37.285
+[Mera]: 2026-10-25T11:21:06.676
 Open Mera-file output_00001.jld2:
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
-Memory used for data table :2.2740488052368164 MB
+Memory used for data table :2.2764320373535156 MB
 -------------------------------------------------------
-[Mera]: 2026-08-31T13:49:37.291
+[Mera]: 2026-10-25T11:21:06.682
 Open Mera-file output_00001.jld2:
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
-Memory used for data table :2.2740488052368164 MB
+Memory used for data table :2.2764320373535156 MB
 -------------------------------------------------------
 cells  (orig / converted) : 32768 / 32768
 mass   (orig / converted) : 6.28425e-35 / 6.28425e-35

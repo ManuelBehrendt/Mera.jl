@@ -45,6 +45,18 @@ projection(dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1}, 
 projection(dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1}, unit::Symbol)
 ```
 
+RT fields carry no cell mass, so two things differ from hydro:
+
+- the default weighting is `[:volume]`, and `weighting=[:mass]` is turned into it; weight by a
+  field instead with e.g. `weighting=[:Np1]`;
+- `mode=:standard` gives the volume-weighted mean along the line of sight, and `mode=:sum` the
+  volume-weighted sum ``\sum q\,V`` per pixel. For a number density such as `:Np1` the whole map
+  then adds up to the photon number of the box; it is not a column density. A column density of
+  mass comes from a hydro object with `:sd`.
+
+The ionization state (`:xHII`, `:em_recomb`, ...) is a hydro quantity and is projected on the
+hydro object, e.g. `projection(gas, :em_recomb; mode=:sum)` for a mock recombination map.
+
 ### Gravity (combined form)
 
 Gravity quantities are projected by passing the gravity object alongside the hydro one, the
@@ -130,6 +142,32 @@ projection(dataobject::PartDataType, vars::Array{Symbol,1}, unit::Symbol)
 off-axis `:vlos`/`:σlos`, `:vcamx`/`:σcamx`, `:vcamy`/`:σcamy`, `:npart`
 
 **Tutorial**: [Particle Projections](../06_particles_Projection.md), complete examples and usage
+
+#### Weighting particles and gas cells: `:mass`, `:volume`, `:sph`, `:voronoi`
+
+`:mass` (the default) and `:volume` deposit each particle at its position. For gas cells of
+moving-mesh and SPH codes, which carry a `:volume`, two further choices spread them out:
+
+- `:sph` smears each cell over an M4 kernel with ``h = \alpha\,(3V/4\pi)^{1/3}``, `sph_alpha`
+  (default 1.5), at least one pixel. Collisionless particles can use it through `:subfind_hsml`,
+  which is used as it is. The deposit is renormalised on the pixel grid, so the mass is conserved
+  for any ``h``, but only the part that lands on the frame is kept. The same data in a tighter frame
+  therefore holds less mass: on one test field ``\int\Sigma\,dA/M`` was 1.000000 at half-widths of
+  0.50, 0.40 and 0.33 of the box, 0.9934 at 0.31 and 0.9604 at 0.30, as the frame started to clip
+  the kernels. This is also why an axis-aligned and an off-axis `:sph` map can differ by about 1 %:
+  the two frame the data differently. With `los=[0, 0, 1], up=[0, 1, 0]` the off-axis camera
+  reproduces the axis-aligned geometry and the difference drops to about 0.01 %. Leave a margin
+  around the data if the total must not depend on the frame.
+- `:voronoi` samples each line of sight through the nearest cell generator, which follows the
+  moving-mesh cells. Intensive maps are exact; the surface density is approximate. On a cutout,
+  ``\int\Sigma\,dA`` falls short of [`msum`](@ref) without losing mass: `msum` adds the whole mass of
+  every cell whose generator lies inside, including the part of the cell outside the boundary,
+  while the map integrates only what is inside. The difference falls off as 1/L: on an AREPO zoom
+  it was 4.2 %, 3.4 %, 1.8 % and 1.0 % for half-widths of 200, 400, 800 and 1600 ckpc/h. To
+  integrate a sub-volume exactly, select a region larger than the one you measure. `nlos` sets
+  the number of samples along each line of sight; by default Mera steps at the scale of the
+  cells, `min(pixsize, ½·median(V)^⅓)`, at most 4096 steps, and `verbose=true` reports the value
+  used. Set it only to trade accuracy for speed or to check convergence.
 
 ## Quick Usage Examples
 

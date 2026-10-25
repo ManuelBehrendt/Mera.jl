@@ -11,10 +11,31 @@ by a referee who has your script. That needs four things, and Mera supports each
     Set this up **before** you start analysing, not after. Reconstructing which versions produced a
     figure six months ago is difficult; recording it as you go costs nothing.
 
+!!! tip "FAIR in 5 lines"
+    FAIR stands for Findable, Accessible, Interoperable and Reusable: results that others can
+    find, open with their own tools, and repeat. Mera does most of the work: every file it saves
+    gets a *sidecar*, a small `<file>.meta.json` next to it that records which snapshot, code and
+    package versions made the file.
+
+    Start each analysis in its own folder: `meraproject("galaxy_paper")` makes it, then start
+    Julia there with `julia --project=.` (the first time: `] instantiate`). The folder keeps its
+    own list of package versions, so the sidecars can record exactly what ran. Then:
+
+    ```julia
+    exportdata(m, "fig3.h5")                            # 1. saves write their sidecar by themselves
+    save("fig3.png", fig); writesidecar("fig3.png", m)  # 2. a figure: one more line
+    readsidecar("fig3.png")                             # 3. where a file came from
+    sidecaroverview(".")                                # 4. all files of the analysis
+    bundle("."; simulation=info)                        # 5. before publishing: one record, and the BibTeX
+    ```
+
+    Nothing else has to be switched on. If you skip the first step, Mera reminds you once.
+    The rest of this page explains each part.
+
 | what you need | how |
 |---|---|
 | the same package versions | a **Julia project**, described on this page |
-| a record of what produced a number | [`provenance`](provenance.md) |
+| a record of what produced a number | [`provenance`](provenance.md) on an object, a sidecar next to each saved file, `bundle` for a folder: [Sharing Results & Sidecars](export_sidecars.md) |
 | the formula behind a derived quantity | [How Quantities Are Computed](computation_reference.md) |
 | confidence the package itself is correct | [test simulations with known answers](index.md#About-the-data-in-these-tutorials) |
 
@@ -53,6 +74,11 @@ The difference between them matters:
 
 **`Manifest.toml` is what makes a result reproducible.** Keep it next to your script and commit it
 to version control.
+
+Mera can also start the folder for you: `meraproject("my_analysis")` writes a `Project.toml`
+with the Mera you run now, a first `analysis.jl`, an `analysis.toml` for the title, authors and
+license, and a short README. `] instantiate` in that folder then installs Mera there and writes
+the `Manifest.toml`.
 
 ## Start Julia in the project
 
@@ -129,6 +155,72 @@ together with the provenance. One thing is not recorded: `direction=:faceon`, `:
 `fov` sphere), so a different load or selection gives a different camera. For a result you want to repeat, store the vector ([`angmom`](@ref), or `m.los` and `m.up`)
 and pass it back in. The [off-axis cheatsheet](offaxis_cheatsheet.md#Reproducing-a-map) shows the
 call.
+
+### Sidecar files
+
+Every file Mera writes for you, a Mera file from [`savedata`](@ref), a map from [`savemap`](@ref),
+a movie from [`savemovie`](@ref), a clump catalogue from [`save_clumps`](@ref) or an export from
+[`exportdata`](@ref), gets a readable record next to it. A figure is saved by the plotting
+package, so it needs one more line, [`writesidecar`](@ref):
+
+```julia
+exportdata(m, "fig3.h5"; length_unit=:kpc, note="Figure 3")
+# writes fig3.h5 and fig3.h5.meta.json
+
+save("fig3.png", fig)                  # Makie
+writesidecar("fig3.png", m)            # writes fig3.png.meta.json
+```
+
+The sidecar holds the provenance of the snapshot, the units and geometry of the result, the
+SHA-256 of the file itself and of the run's `namelist.txt`, `makefile.txt`, `patches.txt` and
+`compilation.txt`, the environment that ran (Julia and Mera version, operating system, CPU model,
+thread counts), and the analysis around it: the SHA-256 of your `Project.toml` and `Manifest.toml`,
+the versions of your project's packages, and the script that ran, by name and SHA-256
+(`include_script=true` also stores its text). Publish it with the data, for example in the same Zenodo record. It is JSON, so a
+reader needs neither Julia nor Mera.
+
+Two things it does not record. The host name is left out on purpose, and `anonymize=true` also
+shortens the simulation path to its last two parts. And a function you wrote yourself, such as the
+reducer of a [`timeseries`](@ref), appears only by name: the script or notebook that ran is the
+record of what it did, so publish it next to the results.
+
+To read one back, `readsidecar("fig3.h5")` prints it and says whether `fig3.h5` still matches the
+SHA-256 it was written with; `sidecaroverview("results/")` lists every sidecar in a folder.
+`sidecar=false` turns them off for one call; [`sidecar`](@ref)`(false)` for the session.
+
+**Why they are on by default.** A record helps only if it exists when someone asks for it, often
+a year later, and a feature that has to be switched on is mostly never switched on. A sidecar
+costs little: about 5 KB, one short line the first time a session writes one, and it never
+breaks a save, since a sidecar that cannot be written becomes a warning. Switch them off with
+`sidecar(false)` at the top of a script when the number of files matters, for example on a
+cluster with a file quota, or without touching the script: `MERA_SIDECAR=0 julia analysis.jl`.
+Use `anonymize=true` when the simulation path should not be public.
+
+Two set-ups make a sidecar less useful, and Mera says so the first time it meets them in a
+session. If Julia runs in the shared environment (the `@v1.12` prompt) instead of the analysis's
+own project, the recorded `Manifest.toml` changes whenever you add any package, so it no longer
+says which versions made the result. If Mera runs from a checkout with uncommitted changes, the
+recorded commit is not the code that ran.
+[Sharing Results & Sidecars](export_sidecars.md) walks through all of it on a real simulation.
+
+### Threads
+
+The number of threads Julia runs with can change the last digits of some results, never more.
+Measured at 1, 2, 4 and 8 threads, and checked by the test suite:
+
+| result | same thread count, run again | different thread count |
+|:--|:--|:--|
+| reading: `gethydro`, `getparticles`, ... | identical | identical |
+| axis-aligned hydro `projection` | identical | identical |
+| `clumpfind` | identical | identical |
+| off-axis `projection`, particle `projection` | identical | round-off: below 10⁻¹⁴ relative, 5·10⁻¹² for a dispersion |
+| `volumerender` | identical | round-off: 10⁻¹⁷ in the colours |
+
+So a result repeats exactly when it is computed again with the same number of threads. The
+off-axis, particle and volume renderings split the cells into one chunk per thread and add the
+partial images; with a different thread count the additions happen in a different order, which
+moves the last bits. Every sidecar records the thread count (`julia_threads`), so the condition
+for an exact repeat is written down with the result.
 
 ## Checking Mera itself
 
@@ -207,6 +299,11 @@ Two places to watch on a periodic run, because neither wraps:
 - [ ] both are committed
 - [ ] Julia is started with `--project=`
 - [ ] the Julia version is recorded
-- [ ] `provenance` output is saved with each result
+- [ ] the number of threads is recorded (every sidecar does), for results that must repeat bit for bit
+- [ ] `provenance` output is saved with each result (the sidecar does this for every file Mera writes)
+- [ ] the scripts or notebooks that made the results are published next to them
+- [ ] every figure file has a sidecar (`writesidecar` right after the save)
+- [ ] the software is cited at its exact version (`citation(gas)` gives the BibTeX)
+- [ ] the published folder has its `ro-crate-metadata.json` (`bundle(".")`)
 - [ ] for camera views, the viewing vectors (`m.los`, `m.up`, or the `angmom` axis) are saved too
 - [ ] the simulation output and its path are named in the script, not typed by hand each run

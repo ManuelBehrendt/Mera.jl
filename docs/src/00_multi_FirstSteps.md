@@ -594,6 +594,34 @@ Data completeness: 50.0%
 📊 Completeness: 50.0%
 ```
 
+## Make your results repeatable from the start
+
+A result is worth more when you, a co-author or a referee can trace it back: which snapshot,
+which Mera version, which script. Mera records this for you; it costs a few lines a day.
+
+!!! tip "FAIR in 5 lines"
+    FAIR stands for Findable, Accessible, Interoperable and Reusable: results that others can
+    find, open with their own tools, and repeat. Mera does most of the work: every file it saves
+    gets a *sidecar*, a small `<file>.meta.json` next to it that records which snapshot, code and
+    package versions made the file.
+
+    Start each analysis in its own folder: `meraproject("galaxy_paper")` makes it, then start
+    Julia there with `julia --project=.` (the first time: `] instantiate`). The folder keeps its
+    own list of package versions, so the sidecars can record exactly what ran. Then:
+
+    ```julia
+    exportdata(m, "fig3.h5")                            # 1. saves write their sidecar by themselves
+    save("fig3.png", fig); writesidecar("fig3.png", m)  # 2. a figure: one more line
+    readsidecar("fig3.png")                             # 3. where a file came from
+    sidecaroverview(".")                                # 4. all files of the analysis
+    bundle("."; simulation=info)                        # 5. before publishing: one record, and the BibTeX
+    ```
+
+    Nothing else has to be switched on. If you skip the first step, Mera reminds you once.
+
+[Reproducibility](reproducibility.md) explains the environment, and
+[Sharing Results & Sidecars](export_sidecars.md) shows each line on a real simulation.
+
 ## Function Quick Reference
 
 Now that you have run the workflow, here is the same ground as a lookup table, the calls

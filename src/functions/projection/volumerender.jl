@@ -178,6 +178,10 @@ Resolve how a quantity looks: the colour range, the colour map, and how opaque t
 * `tau_unit_length=[100, :pc]` sets what full opacity means: optical depth 1 over that length.
   Without it the strength is taken from the data, so that the median optical depth of the map is
   `tau_target`.
+* `background` is the colour behind the gas: `:black` (default), `:white`, any colour name, or a
+  colour.
+* `mask` and `verbose` apply to the automatic strength only: it uses the cells marked `true`, and
+  `verbose=true` prints the projection behind it.
 
 The view keywords (`direction`, `inclination`, `axis`, `center`, `range_unit`, `pxsize`, `res`,
 `xrange`…) are only used for that automatic strength, so pass the ones you will render with.
@@ -311,6 +315,11 @@ View keywords are those of the off-axis
 `angle_unit`, `xrange`/`yrange`/`zrange`, `center`, `range_unit`, `pxsize` or `res`, `mask`,
 `verbose`, `max_threads`.
 
+The look keywords `unit`, `scale`, `colorrange`, `percentiles`, `colormap`, `opacity`, `opacity_gamma`, `iso`,
+`iso_width`, `iso_alpha`, `exposure`, `tone`, `tau_unit_length`, `tau_target` and `background` are those of [`volumelook`](@ref); with `look=` they are not
+used. `supersample=:auto` renders at up to four times finer pixels where cells are smaller than a
+pixel and averages them back, within about 1.5 GB of memory; an integer sets the factor.
+
 This is an illustration, not a measurement: the colours and opacity are choices. For physical
 maps, such as a surface density or an optical depth, use [`projection`](@ref). Mera's hints about
 velocity frames and centres are silenced while a picture is made, since they are about physics
@@ -359,6 +368,11 @@ moviefromframes("frames", "orbit.gif"; fps=25)
 `sweep` is `:azimuth`, `:inclination` or `:position_angle`. `parallel_frames=true` renders frames
 concurrently with one thread each, which fills the cores when there are many frames and uses more
 memory.
+
+The look keywords `unit`, `scale`, `colorrange`, `percentiles`, `colormap`, `opacity`, `opacity_gamma`, `iso`,
+`iso_width`, `iso_alpha`, `exposure`, `tone`, `tau_unit_length`, `tau_target` and `background` are those of [`volumelook`](@ref), resolved once for all frames.
+`supersample`, `verbose` and `max_threads` work as in [`volumerender`](@ref); other keywords go to
+the view.
 """
 function volumeorbit(dataobject::HydroDataType, quantity::Symbol; angles=0:2:358,
                      sweep::Symbol=:azimuth, inclination::Real=70, axis=:angmom,
@@ -437,6 +451,12 @@ moviefromframes("frames", "path.gif"; fps=30)
 
 The camera is orthographic: it looks at the object from outside and cannot fly through it. For a
 camera inside the gas you need a perspective renderer.
+
+The look keywords `unit`, `scale`, `colorrange`, `percentiles`, `colormap`, `opacity`, `opacity_gamma`, `iso`,
+`iso_width`, `iso_alpha`, `exposure`, `tone`, `tau_unit_length`, `tau_target` and `background` are those of [`volumelook`](@ref), resolved once from the first
+keyframe. `res` is the number of pixels across every frame. `supersample`, `verbose` and
+`max_threads` work as in [`volumerender`](@ref), and `parallel_frames=true` renders frames
+concurrently with one thread each.
 
 For a plain turn around an object use [`volumeorbit`](@ref), which needs no keyframes.
 """
@@ -547,18 +567,6 @@ function _volume_crop_square(m::VolumeRenderType, fov_code; npix::Union{Nothing,
     return VolumeRenderType(m.image[rows, cols], m.alpha[rows, cols], m.value[rows, cols], m.look,
                             m.supersample, [cx - h, cx + h, cy - h, cy + h], m.pixsize, m.los, m.up,
                             m.cam_right, m.center, m.boxlen, m.scale, m.info)
-end
-
-# Run `f` with Mera's messages off, then restore the setting. Used for the internal camera
-# setup, which would otherwise emit hints meant for someone computing physics.
-function _quietly(f)
-    old = Mera.verbose_mode
-    try
-        verbose(false)
-        return f()
-    finally
-        verbose(old)
-    end
 end
 
 # ------------------------------------------------------------------------------------

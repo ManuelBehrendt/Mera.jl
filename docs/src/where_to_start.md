@@ -85,6 +85,7 @@ in any new script:
 | a density PDF, mass- or volume-weighted | `pdf` | [Statistics](statistics.md) |
 | a uniform grid for an FFT or a power spectrum | `covering_grid`, `covering_grid_memory` | [Covering Grid](covering_grid.md) |
 | to open it in ParaView | `export_vtk` | [ParaView](paraview/paraview_intro.md) |
+| the map or profile in Python, a spreadsheet or DS9 | `exportdata(m, "fig3.h5")`; also `.csv`, `.npy`, `.fits` | [Exporting Data](exporting_data.md) |
 
 Use `pxsize=[value, :unit]` rather than `res=`: it says how large a pixel is in physical units,
 not how many pixels there are.
@@ -107,8 +108,12 @@ not how many pixels there are.
 
 | I want to … | start with | read |
 |:---|:---|:---|
-| to record what produced a number | `provenance(obj)`, `provenance_string`, `mera_build` | [Provenance](provenance.md) |
-| someone else to reproduce it | a `Project.toml` beside the script, and its `Manifest.toml` | [Reproducibility](reproducibility.md) |
+| to record what produced a number | `provenance(obj)`, `provenance_string`, `mera_build`, `mera_install` | [Provenance](provenance.md) |
+| someone else to reproduce it | `meraproject("my_analysis")` at the start, or a `Project.toml` beside the script, and its `Manifest.toml` | [Reproducibility](reproducibility.md) |
+| every result file to say where it came from | `exportdata`, `writesidecar` after saving a figure, `sidecaroverview` | [Sharing Results & Sidecars](export_sidecars.md) |
+| to cite the exact versions I used | `citation(gas; file="software.bib")` | [What to cite](export_sidecars.md#What-to-cite) |
+| to describe the simulation itself, or publish it with a DOI | `simulationrecord`, `datacite` | [Describing the simulation](export_sidecars.md#Describing-the-simulation) |
+| to publish an analysis folder as one record | `bundle("."; simulation=info)` | [One record for the whole folder](export_sidecars.md#One-record-for-the-whole-folder) |
 | to check I did not invert a condition | `filterdata` with the condition and with its `!`: together they must give the whole object's cell count and mass | [Masking & Filtering](05_multi_Masking_Filtering.md) |
 | to know how a number is computed before I quote it | (reading only) | [How Quantities Are Computed](computation_reference.md) |
 

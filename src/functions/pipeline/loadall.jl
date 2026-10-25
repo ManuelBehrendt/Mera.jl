@@ -182,6 +182,8 @@ Keyword arguments are passed through:
 ```julia
 @loadall path 300 hydro particles lmax=10 range_unit=:kpc
 ```
+
+Returns the same named tuple as [`loadall`](@ref), so `nt = @loadall path 300 hydro` also works.
 """
 macro loadall(path, output, args...)
     names, kws = Symbol[], Any[]

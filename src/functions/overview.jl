@@ -18,6 +18,8 @@ printtime("Starting calculation")
 # Override verbose setting
 printtime("Debug info", true)
 ```
+
+Returns `nothing`.
 """
 function printtime(text::String="", verbose::Bool=verbose_mode)
     if verbose
@@ -1039,48 +1041,32 @@ function _gettime(info::InfoType, unit::Symbol)
 end
 
 """
-    gettime(output::Real; path::String="./", unit::Symbol=:standard)
-    gettime(dataobject::DataSetType; unit::Symbol=:standard)
-    gettime(dataobject::InfoType, unit::Symbol=:standard)
+    gettime(output::Real, path::String="./", unit::Symbol=:standard) -> Float64
+    gettime(data, unit::Symbol=:standard) -> Float64
 
-Get the physical simulation time in selected units. Returns a `Float64`.
+Return the time of a snapshot, in any time unit.
 
-For a **cosmological** run (see [`iscosmological`](@ref)) `info.time` is conformal
-time, so `gettime` instead returns the **age of the universe** at the snapshot's
-scale factor (from [`cosmology`](@ref)), converted to `unit`. Supported units for
-cosmological runs: `:Gyr`, `:Myr`, `:yr`, `:s` (`:standard` ⇒ seconds). For a
-non-cosmological run the behaviour is unchanged (`info.time` scaled to `unit`).
+For a run without cosmology this is the simulation time. For a cosmological run (see
+[`iscosmological`](@ref)) RAMSES stores a conformal time, so `gettime` returns the age of the
+universe at the snapshot's scale factor instead, from [`cosmology`](@ref).
 
+# Arguments
+- `output`: an output number, read from `path` (a keyword or the second argument, default `"./"`).
+- `data`: an `InfoType` from [`getinfo`](@ref), or any Mera data object.
+- `unit::Symbol = :standard`: the unit of the result, e.g. `:Myr` or `:Gyr`; also a keyword.
+  `:standard` means code units, and seconds for a cosmological run, which supports only `:Gyr`,
+  `:Myr`, `:yr` and `:s`.
+
+# Examples
 ```julia
-gettime(1, path="/path/to/sim", unit=:Myr)
-gettime(gas, unit=:Gyr)
-gettime(info, :Myr)
+julia> gettime(info, :Myr)
+
+julia> gettime(gas, :Gyr)
+
+julia> gettime(300, "path/to/simulation", :Myr)    # without loading anything first
 ```
 
-#### Arguments Function 1
-##### Required:
-- **`output`:** give the output-number of the simulation
-
-##### Predefined/Optional Keywords:
-- **`path`:** the path to the output folder relative to the current folder or absolute path
-- **`unit`:** return the variable in given unit
-
-
-#### Arguments Function 2
-##### Required:
-- **`dataobject`:** needs to be of type: "DataSetType"
-
-##### Predefined/Optional Keywords:
-- **`unit`:** return the variable in given unit
-
-
-#### Arguments Function 3
-##### Required:
-- **`dataobject`:** needs to be of type: "InfoType"
-
-##### Predefined/Optional Keywords:
-- **`unit`:** return the variable in given unit
-
+See also [`getinfo`](@ref), [`cosmology`](@ref).
 """
 function gettime(output::Real; path::String="./", unit::Symbol=:standard)
     info = getinfo(output, path, verbose=false)

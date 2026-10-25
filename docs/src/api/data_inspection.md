@@ -72,6 +72,11 @@ register_reader!
 provenance
 provenance_string
 mera_build
+mera_install
+simulationrecord
+writesimulationrecord
+datacite
+citation
 quicklook
 quicklookplot
 ```

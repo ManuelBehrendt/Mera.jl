@@ -108,6 +108,8 @@ end
     reset_auto_optimization!()
 
 Reset the automatic optimization state, forcing re-optimization on next data load.
+
+Returns `nothing`.
 """
 function reset_auto_optimization!()
     MERA_AUTO_OPTIMIZATION_APPLIED[] = false
@@ -118,6 +120,8 @@ end
     show_auto_optimization_status()
 
 Display the current status of automatic I/O optimization.
+
+Returns `nothing`.
 """
 function show_auto_optimization_status()
     println("🔧 AUTOMATIC I/O OPTIMIZATION STATUS")

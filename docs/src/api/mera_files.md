@@ -5,8 +5,8 @@ object far faster than re-reading the simulation. The narrative guides are
 [Mera-Files](../07_multi_Mera_Files.md) and [Converter](../07_1_multi_Mera_Files_Converter.md).
 
 The file stores the Julia object, so it is a Julia-side format: reload it with
-[`loaddata`](@ref), not with `h5py`. To hand data to another language use
-[`export_vtk`](@ref) or write the columns out yourself.
+[`loaddata`](@ref), not with `h5py`. To hand results to another language use
+[`exportdata`](@ref) (below), or [`export_vtk`](@ref) for ParaView and VisIt.
 
 ## Save & load
 
@@ -15,6 +15,52 @@ savedata
 loaddata
 viewdata
 infodata
+```
+
+## Export for other tools
+
+[`exportdata`](@ref) writes a projection, a profile, phase or pdf, a timeseries table, a movie,
+or plain arrays to `.h5`, `.jld2`, `.csv`, `.npy`, `.npz`, `.json` or `.fits` (the last after
+`using FITSIO`). The file holds plain arrays that Python, IDL or a spreadsheet read directly.
+The tutorial [Exporting Data](../exporting_data.md) shows each format and how to read it in Python.
+
+```@docs; canonical=false
+exportdata
+```
+
+Next to every saved or exported file Mera writes a sidecar, `<file>.meta.json`: what the file
+holds and in which units, the SHA-256 of the file, the provenance of the snapshot, the SHA-256 of
+the run's `namelist.txt`, `makefile.txt`, `patches.txt` and `compilation.txt`, the Julia, Mera,
+CPU and thread count that ran, and the analysis around it: the SHA-256 of your `Project.toml`
+and `Manifest.toml` and of the script that ran. It is JSON, so any language reads it. The host name is never
+recorded. `sidecar=false` on a call, or [`sidecar`](@ref)`(false)` for the whole session, turns
+it off; so does the environment variable `MERA_SIDECAR=0`, without changing a script. The first
+sidecar of a session prints one line saying what the new file is. Mera also says once when the
+sidecar cannot pin down what ran: in the shared environment the recorded `Manifest.toml` changes
+with every package you add, and in a Mera checkout with uncommitted changes the recorded commit is
+not the code that ran.
+
+A figure is saved by the plotting package, so Mera does not see it: call
+[`writesidecar`](@ref) right after the save to give it the same record, taken from the results
+it shows. [`save_clumps`](@ref) writes a sidecar too; pass `source=` to record the snapshot.
+
+[`readsidecar`](@ref) prints one sidecar and checks that its data file still matches the recorded
+SHA-256; [`sidecaroverview`](@ref) lists every sidecar in a folder. The tutorial
+[Sharing results](../export_sidecars.md) shows them on a real simulation.
+
+Before publishing, [`bundle`](@ref) joins the sidecars of an analysis folder into one
+[RO-Crate](https://www.researchobject.org/ro-crate/) record, `ro-crate-metadata.json`, with a
+`software.bib` to cite. [`meraproject`](@ref) starts a new analysis folder with its own
+environment, so the sidecars record exactly the packages that ran.
+
+```@docs; canonical=false
+writesidecar
+readsidecar
+sidecaroverview
+bundle
+meraproject
+SidecarRecord
+SimulationRecord
 ```
 
 ## Conversion

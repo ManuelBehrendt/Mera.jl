@@ -54,80 +54,74 @@ function getgravity(dataobject::InfoType, vars::Array{Symbol,1};
 end
 
 """
-Read gravity leaf-cells with optional spatial selection and multithreading.
+    getgravity(info::InfoType; vars=[:all], kwargs...) -> GravDataType
+    getgravity(info::InfoType, var::Symbol; kwargs...) -> GravDataType
+    getgravity(info::InfoType, vars::Vector{Symbol}; kwargs...) -> GravDataType
 
-- Select variables (e.g., :epot, :ax, :ay, :az; include :cpu to add CPU column)
-- Limit to a maximum refinement level (lmax)
-- Select by spatial range around a center in a chosen unit
-- Parallel file processing (configurable max_threads) with progress bar
-- Verbose output with timestamps and table memory overview
-- Pass an ArgumentsType struct (myargs) to override multiple keywords at once
+Load the gravity cells of a RAMSES output (potential and acceleration) into a table in memory.
 
+Each row is one leaf cell: its refinement level, its integer position on that level, and one
+column per gravity variable, as stored by RAMSES. Cells refined beyond `lmax` are returned at
+level `lmax`. The output files are read in parallel, one group of files per thread.
+
+# Arguments
+- `info::InfoType`: the output to read, from [`getinfo`](@ref).
+- `var`, `vars`: the variables to load, in any order. `:all` (the default) loads `:epot`, `:ax`,
+  `:ay` and `:az`; names without a descriptor are positional (`:grav5`, ...). `:cpu` adds the
+  number of the file each cell came from.
+
+# Keywords
+Selection:
+- `lmax::Real = info.levelmax`: the deepest level to read.
+- `xrange`, `yrange`, `zrange`: `[min, max]` of the region to read, in `range_unit` and relative
+  to `center`. `missing` (the default) means the full extent. A cell is kept when its centre
+  lies inside.
+- `center = [0, 0, 0]`: the origin of the ranges, in `range_unit`. `[:bc]` is the box centre;
+  single components can be `:bc`, e.g. `[:bc, :bc, 12.0]`.
+- `range_unit::Symbol = :standard`: the unit of the ranges and the centre. `:standard` means
+  fractions of the box (0 to 1); any length unit in `info.scale` works, e.g. `:kpc` or `:pc`.
+
+Restarts:
+- `parents::Bool = false`: also keep the values RAMSES stores for refined cells. Needed only to
+  write a restart with [`writeramses`](@ref) that continues to round-off; it requires the whole
+  box, all levels and all variables.
+
+Output and performance:
+- `max_threads::Int = Threads.nthreads()`: the most threads to use for reading.
+- `verbose::Bool = true`: print a summary of what is read.
+- `show_progress::Bool = true`: show a progress bar.
+- `print_filenames::Bool = false`: print each file name as it is read.
+- `myargs::ArgumentsType`: set `lmax`, the ranges, `center`, `range_unit`, `verbose` and
+  `show_progress` in one object. A keyword given directly takes precedence.
+
+# Returns
+A `GravDataType` with
+- `data`: the table, with the columns `:level`, `:cx`, `:cy`, `:cz` and then the variables;
+- `info`, `scale`: the simulation information and its unit scales;
+- `lmin`, `lmax`, `boxlen`, `ranges`: the levels and the region that were read;
+- `selected_gravvars`, `used_descriptors`: the options used.
+
+Read the values through [`getvar`](@ref), not from the table: RAMSES stores the potential short
+by a factor `boxlen`, and `getvar(grav, :epot)` corrects it.
+
+# Examples
 ```julia
-getgravity(dataobject::InfoType;
-        lmax::Real=dataobject.levelmax,
-        vars::Array{Symbol,1}=[:all],
-        xrange::Array{<:Any,1}=[missing, missing],
-        yrange::Array{<:Any,1}=[missing, missing],
-        zrange::Array{<:Any,1}=[missing, missing],
-        center::CenterType=[0., 0., 0.],
-        range_unit::Symbol=:standard,
-        print_filenames::Bool=false,
-        verbose::Bool=true,
-        show_progress::Bool=true,
-        myargs::ArgumentsType=ArgumentsType(),
-        max_threads::Int=Threads.nthreads())
+julia> info = getinfo(300, "path/to/simulation");
+
+julia> grav = getgravity(info);                     # every variable, the whole box
+
+julia> grav = getgravity(info, :epot; lmax=8);      # the potential, down to level 8
+
+julia> propertynames(grav.data.columns)
+(:level, :cx, :cy, :cz, :epot)
+
+julia> grav = getgravity(info; xrange=[-5, 5], yrange=[-5, 5], zrange=[-2, 2],
+                         center=[:bc], range_unit=:kpc);   # a 10 x 10 x 4 kpc slab
+
+julia> getvar(grav, :epot)                          # the corrected potential
 ```
 
-Returns a GravDataType with:
-- data: IndexedTable with position columns (:cx,:cy,:cz), optionally :level and/or :cpu, followed by selected variables
-- info, lmin, lmax, boxlen, ranges, selected_gravvars, used_descriptors, scale
-
-Arguments
-- Required
-    - dataobject: InfoType from getinfo
-- Keywords
-    - lmax: maximum refinement level to read (validated against the dataset)
-    - vars: gravity variables to load; default [:all]. Known names include :epot, :ax, :ay, :az. Include :cpu to add CPU column.
-    - xrange, yrange, zrange: [min,max] in units of range_unit relative to center; use missing to skip. Zero-length [0,0] is expanded to full box.
-    - center: selection center; default [0.,0.,0.]; you can use symbols like [:bc] for box center (also combinations like [val, :bc, :bc]).
-    - range_unit: units for ranges/center (e.g., :standard, :kpc, :pc, :Mpc, :km, :cm; Symbol)
-    - print_filenames: print each processed file path
-    - verbose: print timestamps and summaries
-    - show_progress: show a progress bar during reading
-    - myargs: ArgumentsType struct to override lmax, ranges, center, range_unit, verbose, show_progress
-    - max_threads: cap threads used for table creation and column extraction (≤ available threads)
-    - parents: also keep the stored values of the refined (parent) cells, which RAMSES computes on
-      their own level, not as averages; kept in `used_descriptors[:parents]` and saved in mera
-      files. Only needed to write a restart with [`writeramses`](@ref) that continues to round-off.
-      Needs the whole box, all levels and all variables.
-
-Defined methods
-- getgravity(dataobject::InfoType; ...)               # no vars → all variables loaded
-- getgravity(dataobject::InfoType, var::Symbol; ...)  # single variable (Symbol)
-- getgravity(dataobject::InfoType, vars::Array{Symbol,1}; ...)  # multiple variables
-
-Examples
-```julia
-# Read all gravity variables at all levels, whole box
-g = getgravity(info)
-
-# Read only potential and acceleration components within a kpc-scale box around the center
-g = getgravity(info, vars=[:epot, :ax, :ay, :az],
-                             xrange=[-5,5], yrange=[-5,5], zrange=[-2,2],
-                             center=[:bc], range_unit=:kpc)
-
-# Include CPU column
-g = getgravity(info, vars=[:cpu, :epot])
-
-# Override several keywords at once via myargs
-g = getgravity(info, myargs=ArgumentsType(lmax=12, range_unit=:kpc, verbose=false))
-```
-
-Important notes
-- Spatial selection is evaluated at cell centers (:cx,:cy,:cz).
-- AMR vs uniform grid affects included columns and primary key: AMR adds :level.
-- Variable names can also come from file descriptors; unknown indices are named :gravN.
+See also [`getinfo`](@ref), [`getvar`](@ref), [`gethydro`](@ref), [`subregion`](@ref).
 """
 function getgravity(dataobject::InfoType;
                    lmax::Real=dataobject.levelmax,

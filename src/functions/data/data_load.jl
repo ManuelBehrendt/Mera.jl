@@ -76,48 +76,53 @@ end
 
 
 """
-#### Read stored simulation data into a dataobject:
-- supported datatypes: HydroDataType, PartDataType, GravDataType, ClumpDataType
-- select a certain data range (data is fully loaded; the selected subregion is returned)
-- toggle verbose mode
+    loaddata(output::Int, datatype::Symbol; path="./", kwargs...)
+    loaddata(output::Int, path::String, datatype::Symbol; kwargs...)
+    loaddata(output::Int; datatype, path="./", kwargs...)
+    loaddata(output::Int, path::String; datatype, kwargs...)
 
+Load one data type from a Mera file written by [`savedata`](@ref).
+
+The stored table is read in full; a region given by the ranges is then cut out. Files written
+by any earlier Mera version can be read.
+
+# Arguments
+- `output::Int`: the output number in the file name, e.g. `300` for `output_00300.jld2`.
+- `datatype::Symbol`: the data type to load: `:hydro`, `:particles`, `:gravity`, `:clumps`,
+  `:rt` or `:sinks`. It is required, as a positional argument or as a keyword.
+- `path::String = "./"`: the folder of the file.
+
+# Keywords
+Selection:
+- `xrange`, `yrange`, `zrange`: `[min, max]` of the region to keep, in `range_unit` and relative
+  to `center`. `missing` (the default) means the full extent.
+- `center = [0, 0, 0]`: the origin of the ranges, in `range_unit`. `[:bc]` is the box centre.
+- `range_unit::Symbol = :standard`: the unit of the ranges and the centre. `:standard` means
+  fractions of the box (0 to 1); any length unit in `info.scale` works, e.g. `:kpc`.
+
+File:
+- `fname = "output_"`: the start of the file name, as given to [`savedata`](@ref).
+- `regenerate_scales::Bool = true`: recompute the physical constants and unit scales with the
+  current Mera version. `false` keeps exactly what was stored.
+
+Output:
+- `verbose::Bool = true`: print what is read.
+- `myargs::ArgumentsType`: set the ranges, `center`, `range_unit` and `verbose` in one object.
+  A keyword given directly takes precedence.
+
+# Returns
+The stored object, e.g. a `HydroDataType` for `:hydro`, the same as the function that first
+read it returned.
+
+# Examples
 ```julia
-function loaddata(output::Int; path::String="./",
-            fname = "output_",
-            datatype::Symbol,
-            xrange::Array{<:Any,1}=[missing, missing],
-            yrange::Array{<:Any,1}=[missing, missing],
-            zrange::Array{<:Any,1}=[missing, missing],
-            center::CenterType=[0., 0., 0.],
-            range_unit::Symbol=:standard,
-            verbose::Bool=true,
-            myargs::ArgumentsType=ArgumentsType() )
+julia> gas = loaddata(300, :hydro; path="mera_files/");
 
-return dataobject
-
+julia> part = loaddata(300, "mera_files/", :particles; xrange=[-10, 10], yrange=[-10, 10],
+                       zrange=[-2, 2], center=[:bc], range_unit=:kpc);
 ```
 
-#### Arguments
-##### Required:
-- **`output`:** output number
-- **`datatype`:** :hydro, :particles, :gravity, :clumps, :rt or :sinks
-##### Predefined/Optional Keywords:
-- **`path`:** path to the file; default is local path.
-- **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.
-- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
-- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
-- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
-- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of xrange, yrange, zrange, center, range_unit, verbose
-- **`verbose`:** print timestamp and further information on screen; default: true
-
-### Defined Methods - function defined for different arguments
-
-- loaddata(output::Int64; ...) # opens first datatype in the file
-- loaddata(output::Int64, datatype::Symbol; ...)
-- loaddata(output::Int64, path::String; ...)
-- loaddata(output::Int64, path::String, datatype::Symbol; ...)
-
+See also [`savedata`](@ref), [`viewdata`](@ref), [`infodata`](@ref).
 """
 function loaddata(output::Int; path::String="./",
                     fname = "output_",

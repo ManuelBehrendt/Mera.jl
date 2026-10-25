@@ -37,6 +37,8 @@ bell("chime")     # a glassy three-note chime
 bell(4)           # the 4th sound in bell(:list)
 bell(:list)       # print the numbered catalogue of available sounds
 ```
+
+Returns `nothing`.
 """
 function bell(sound = nothing)
     sounddir  = joinpath(@__DIR__, "../sounds/")
@@ -126,7 +128,6 @@ function optimize_image_for_zulip(image_path::String; max_dimension=1024, max_fi
         if current_size <= max_file_size
             # Still check image dimensions if we have ImageTransformations
             try
-                @eval using ImageTransformations, FileIO, Images
                 img = load(image_path)
                 img_size = size(img)
                 max_current_dim = max(img_size...)
@@ -156,7 +157,6 @@ function optimize_image_for_zulip(image_path::String; max_dimension=1024, max_fi
         end
         
         # File is too large - try to optimize
-        @eval using ImageTransformations, FileIO, Images
         img = load(image_path)
         img_size = size(img)
         max_current_dim = max(img_size...)
@@ -750,6 +750,11 @@ send_results("Key results ready!", ["figure1.png", "data.csv", "summary.txt"])
 send_results("Paper plots ready!", "./figures/", 
              zulip_channel="publications", zulip_topic="Paper 1 - Figures")
 ```
+
+`max_file_size` (25 MB) is the largest attachment sent; larger files are skipped with a
+warning. Images are resized and compressed toward 1 MB instead.
+
+Returns `nothing`.
 """
 function send_results(msg::String, source; 
                      file_pattern=r"\.(png|jpg|jpeg|gif|svg|webp|bmp|tiff|tif)$"i,
@@ -947,6 +952,9 @@ timed_notify("Complex analysis", () -> analyze_galaxy_formation(),
 timed_notify("Simulation run #47", () -> run_simulation(params), 
              zulip_channel="simulations", zulip_topic="Run Times")
 ```
+
+`max_file_size` (25 MB) is the largest attachment sent; larger files are skipped with a
+warning. Images are resized and compressed toward 1 MB instead.
 """
 function timed_notify(task_name::String, code_block::Function; 
                      zulip_channel="timing", zulip_topic="Execution Times",
@@ -1055,6 +1063,9 @@ for i in 1:1000
     end
 end
 ```
+
+It is called for its effect: it updates `tracker` and sends a notification when a threshold is
+passed. Its return value has no meaning.
 """
 function update_progress!(tracker::Dict, current_item::Int, custom_message::String="")
     tracker[:current] = current_item
@@ -1128,6 +1139,8 @@ tracker = create_progress_tracker(1000, task_name="Simulation")
 # ... do work with update_progress! calls ...
 complete_progress!(tracker, "All galaxies processed successfully!")
 ```
+
+Returns `nothing`.
 """
 function complete_progress!(tracker::Dict, final_message::String=""; include_summary=true)
     total_time = time() - tracker[:start_time]
@@ -1178,6 +1191,12 @@ result = safe_execute("Critical simulation step",
     run_critical_simulation_step()
 end
 ```
+
+`max_file_size` (25 MB) is the largest attachment sent; larger files are skipped with a
+warning. Images are resized and compressed toward 1 MB instead.
+
+Returns the value of the function. On an error it sends the notification and then raises the
+error again.
 """
 function safe_execute(task_description::String, code_block::Function;
                      zulip_channel="errors", zulip_topic="Exception Reports",

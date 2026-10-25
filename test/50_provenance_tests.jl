@@ -100,7 +100,7 @@ end
     dir = pkgdir(Mera)
     plain = get(ENV, "MERA_PROVENANCE_PLAIN", "") in ("1", "true")
     if dir !== nothing && ispath(joinpath(dir, ".git")) && !plain
-        Mera._MERA_BUILD[] = ""                       # drop any cached answer
+        Mera._MERA_INSTALL[] = nothing                # drop any cached answer
         b = mera_build()
         @test occursin("(dev ", b)                    # a checkout is never reported as the release
         @test occursin(" @ ", b)                      # and it names the commit

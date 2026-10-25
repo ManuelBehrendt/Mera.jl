@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest something Mera should do, or do differently.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do
+      description: The analysis or task, and what stops you from doing it with Mera today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How it could work
+      description: The function or option you imagine, for example a call and what it returns.
+  - type: textarea
+    id: now
+    attributes:
+      label: What you do now
+      description: A workaround, another tool, or code of your own that does part of it.
+  - type: textarea
+    id: research
+    attributes:
+      label: Is it for a research project?
+      description: >
+        Say so here, or write to mera@manuelbehrendt.com if you prefer to discuss it in private.
+        I am happy to collaborate.

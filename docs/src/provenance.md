@@ -16,6 +16,14 @@ Mera version, what units produced this?* `provenance` answers it. It reads the m
 Mera result already carries (its `InfoType`) and returns a compact, **deterministic** record.
 You can print it, compare it in a test, or put it on a figure or into a log.
 
+Mera keeps one record of where a result came from, at three levels:
+
+| level | the record | page |
+|:--|:--|:--|
+| one object | `provenance(gas)`, carried in memory by every Mera result | [Provenance](provenance.md) |
+| one file | a sidecar, `<file>.meta.json`, next to every file Mera saves | [Sharing Results & Sidecars](export_sidecars.md) |
+| one folder | `bundle(".")`, one record of a whole analysis, for publishing | [Sharing Results & Sidecars](export_sidecars.md#One-record-for-the-whole-folder) |
+
 !!! note "One part of a larger picture"
     A provenance record says what produced a number. It does not, by itself, let someone rebuild
     the software that produced it. For that you also need the package versions pinned in a Julia
@@ -43,8 +51,8 @@ gas = gethydro(info, verbose=false, show_progress=false);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-09-17T16:27:17.273
+Mera v1.9.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-10-25T13:50:56.942
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -98,7 +106,7 @@ println(p)
 
 ```
 Provenance:
-  Mera version : v1.8.0
+  Mera version : v1.9.0
   simulation   : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   output       : 300  (RAMSES, written 2025-06-21T18:31:24.020)
   time         : 445.89 Myr
@@ -108,8 +116,8 @@ Provenance:
 
 ## Which build ran
 
-`pkgversion` reports the same version whether Mera came from the registry or from a checkout of
-a branch. A result made on a development version would then look like it was made on the release.
+`pkgversion` reports the same version whether Mera came from the registry, from a branch installed
+from GitHub, or from a checkout. A result made on a development version would then look like it was made on the release.
 [`mera_build`](@ref) closes that gap, and its value is the version field of every record.
 
 ```julia
@@ -117,16 +125,18 @@ mera_build()
 ```
 
 ```
-"1.8.0"
+"1.9.0"
 ```
 
-On a normal install it is just the version, as above. On a git checkout it adds the branch and the
-commit. It also marks a working tree with uncommitted changes, because then the commit alone does
-not say what ran:
+On a normal install it is just the version, as above. A branch installed from GitHub
+(`pkg> add Mera#master`) adds the branch and the content hash of the code. A git checkout adds the
+branch and the commit, and marks a working tree with uncommitted changes, because then the commit
+alone does not say what ran:
 
 ```
-Mera v1.8.0 (dev master @ 3a91f2c) | mw_L10/output_00300 | 445.89 Myr | ...
-Mera v1.8.0 (dev my-feature @ 4f2a9c1 +uncommitted) | mw_L10/output_00300 | 445.89 Myr | ...
+Mera v1.9.0 (repo master @ tree 62c57b9) | mw_L10/output_00300 | 445.89 Myr | ...
+Mera v1.9.0 (dev master @ 3a91f2c) | mw_L10/output_00300 | 445.89 Myr | ...
+Mera v1.9.0 (dev my-feature @ 4f2a9c1 +uncommitted) | mw_L10/output_00300 | 445.89 Myr | ...
 ```
 
 This keeps a shared script honest about what produced it. The [Gallery](gallery.md) uses the
@@ -135,6 +145,36 @@ same line in its attribution block, so a reader can tell a released Mera from so
 Set `MERA_PROVENANCE_PLAIN=1` to force the plain version. These pages are rendered that way, so
 they show a release rather than the checkout the documentation was built from.
 
+[`mera_install`](@ref) gives the full record: how Mera was installed, the branch or commit where
+that applies, and whether the code is exactly the registered release.
+
+| `source` | installed with |
+|:--|:--|
+| `:registry` | `pkg> add Mera` |
+| `:repository` | `pkg> add Mera#master`, or a URL with a branch |
+| `:checkout` | a git checkout, `pkg> dev Mera` |
+| `:path` | a local folder without git |
+
+`registered` compares the code's content hash with the one the Julia registry stores for this
+version: `true` means the code is exactly the registered release, also when it came from a branch;
+`false` means it differs or has uncommitted changes; `nothing` means unknown, for example when the
+local copy of the registry is older than the version.
+
+```julia
+mi = mera_install()
+println("source     : ", mi.source)
+println("registered : ", mi.registered)
+```
+
+```
+source     : checkout
+registered : nothing
+```
+
+This page is built from a checkout of the repository, so it says `:checkout`; on a normal
+installation it says `:registry`. Every [sidecar](export_sidecars.md) stores this record next to the
+file it describes.
+
 ## What it records
 
 Every field is read from the snapshot's own metadata, plus the Mera build:
@@ -142,7 +182,7 @@ Every field is read from the snapshot's own metadata, plus the Mera build:
 | field | meaning |
 |:--|:--|
 | `mera_version` | the Mera version number |
-| `mera_build` | the version, plus branch and commit on a git checkout |
+| `mera_build` | the version, plus the branch and commit (git checkout) or branch and content hash (branch install) |
 | `path`, `output` | the simulation folder and the output number |
 | `simcode` | the code that wrote the output |
 | `cosmological` | `true` for a cosmological run |
@@ -160,8 +200,8 @@ end
 ```
 
 ```
-mera_version = v"1.8.0"
-mera_build   = "1.8.0"
+mera_version = v"1.9.0"
+mera_build   = "1.9.0"
 path         = "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10"
 output       = 300
 simcode      = "RAMSES"
@@ -196,7 +236,7 @@ println("aexp           : ", pc.aexp)
 
 ```
 Provenance:
-  Mera version : v1.8.0
+  Mera version : v1.9.0
   simulation   : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/yt_cosmo
   output       : 80  (RAMSES, written 2026-06-01T07:42:48.561)
   time         : z=0.1426  (aexp=0.8752, age 11.925 Gyr)
@@ -218,8 +258,8 @@ println(provenance_string(cinfo))
 ```
 
 ```
-Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-Mera v1.8.0 | yt_cosmo/output_00080 | z=0.14256 | L=1.0 ndim=3 lmin=6 lmax=16 | ScalesType003
+Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+Mera v1.9.0 | yt_cosmo/output_00080 | z=0.14256 | L=1.0 ndim=3 lmin=6 lmax=16 | ScalesType003
 ```
 
 ## Where it applies
@@ -228,7 +268,7 @@ Mera v1.8.0 | yt_cosmo/output_00080 | z=0.14256 | L=1.0 ndim=3 lmin=6 lmax=16 | 
 
 * every data object, and any subregion of one
 * a [`projection`](@ref) map
-* a [`pdf`](@ref) of a data object or a map
+* a [`profile`](@ref), [`phase`](@ref) or [`pdf`](@ref) of a data object or a map
 * a galaxy frame from [`face_on`](@ref) or [`edge_on`](@ref)
 
 The record describes the **snapshot**, not the selection. A subregion, or a read of one
@@ -250,21 +290,22 @@ println("gravity    : ", provenance_string(grav))
 ```
 
 ```
-InfoType   : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-map        : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-pdf        : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-particles  : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-gravity    : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+InfoType   : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+map        : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+pdf        : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+particles  : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+gravity    : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
 ```
 
-A result without `.info` cannot know its snapshot: a [`profile`](@ref) or [`phase`](@ref), a
-[`timeseries`](@ref) table, or a `pdf` of a plain array. `provenance` then throws an
-`ArgumentError` that says so. Take the provenance of the data object you computed it from.
+A plain value cannot know its snapshot: a [`getvar`](@ref) array, a [`timeseries`](@ref) table,
+or a `pdf` of a plain array. `provenance` then throws an `ArgumentError` that says so. Take the
+provenance of the data object you computed it from, or, when you save such values, pass that object
+to [`exportdata`](@ref) as `source`.
 
 ```julia
-prof = profile(gas, :r_cylinder, :rho; nbins=10, center=[:bc])
+rho = getvar(gas, :rho)
 try
-    provenance(prof)
+    provenance(rho)
 catch err
     println(sprint(showerror, err))
 end
@@ -273,8 +314,8 @@ println("use the source instead : ", provenance_string(gas))
 ```
 
 ```
-ArgumentError: provenance: a NamedTuple carries no `.info`. Apply it to a data object (hydro/particles/gravity/clumps/RT), a projection map, a pdf of either, a galaxy frame, or an InfoType. For a result without it (profile, phase, timeseries, a pdf of a plain array), take provenance of the source data object.
-use the source instead : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+ArgumentError: provenance: this Array carries no `.info`. Apply it to a data object (hydro/particles/gravity/clumps/RT), a projection map, a profile, phase or pdf of either, a galaxy frame, or an InfoType. For a result without it (a timeseries table, a pdf of a plain array, a getvar array), take provenance of the source data object.
+use the source instead : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
 ```
 
 ## Deterministic
@@ -296,6 +337,7 @@ identical to the first read : true
 ## See also
 
 * [`getinfo`](@ref), the `InfoType` the record is read from
+* [Sharing results](export_sidecars.md), where the record goes into the sidecar of every saved or exported file
 * [Reproducibility](reproducibility.md), how the record fits with a pinned project and test simulations
 * [MERA files](07_multi_Mera_Files.md), where the `scale_type` version matters when loading older files
 * [Gallery](gallery.md), which puts the provenance line in the attribution block of its recipes

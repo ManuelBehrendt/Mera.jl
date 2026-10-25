@@ -70,116 +70,75 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
 end
 
 """
-#### Read the particle-data
-- select variables
-- limit to a spatial range
-- multi-threading
-- print the name of each data-file before reading it
-- toggle verbose mode
-- toggle progress bar
-- pass a struct with arguments (myargs)
+    getparticles(info::InfoType; vars=[:all], kwargs...) -> PartDataType
+    getparticles(info::InfoType, var::Symbol; kwargs...) -> PartDataType
+    getparticles(info::InfoType, vars::Vector{Symbol}; kwargs...) -> PartDataType
 
+Load the particles of a RAMSES output (dark matter, stars, sinks, tracers) into a table in memory.
+
+Each row is one particle: its position, its identity and one column per particle variable, in
+code units. The output files are read in parallel, one group of files per thread.
+
+# Arguments
+- `info::InfoType`: the output to read, from [`getinfo`](@ref).
+- `var`, `vars`: the variables to load, in any order. `:all` (the default) loads every particle
+  variable of the output, e.g. `:vx`, `:vy`, `:vz`, `:mass`, `:birth`, `:metals`. `:cpu` adds the
+  number of the file each particle came from.
+
+# Keywords
+Selection:
+- `xrange`, `yrange`, `zrange`: `[min, max]` of the region to read, in `range_unit` and relative
+  to `center`. `missing` (the default) means the full extent.
+- `center = [0, 0, 0]`: the origin of the ranges, in `range_unit`. `[:bc]` is the box centre;
+  single components can be `:bc`, e.g. `[:bc, :bc, 12.0]`.
+- `range_unit::Symbol = :standard`: the unit of the ranges and the centre. `:standard` means
+  fractions of the box (0 to 1); any length unit in `info.scale` works, e.g. `:kpc` or `:pc`.
+- `stars::Bool = true`: `false` drops the star particles. They are found by `:family == 2` in
+  current RAMSES outputs and by `:birth > 0` in older ones, so that column must be loaded.
+- `subsample::Real = 1.0`: read only every n-th output file, with n = 1/`subsample`. Each file
+  holds one part of the box, so the result is a patchy subset, not a random sample: use it for
+  quick looks at very large runs.
+- `lmax`: ignored for particles; a warning says so if it is set.
+
+Output and performance:
+- `max_threads::Int = Threads.nthreads()`: the most threads to use for reading.
+- `presorted::Bool = true`: sort the table by position and identity, which makes later
+  selections faster.
+- `verbose::Bool = true`: print a summary of what is read.
+- `show_progress::Bool = true`: show a progress bar.
+- `print_filenames::Bool = false`: print each file name as it is read.
+- `myargs::ArgumentsType`: set the ranges, `center`, `range_unit`, `verbose` and
+  `show_progress` in one object. A keyword given directly takes precedence.
+
+# Returns
+A `PartDataType` with
+- `data`: the table, with the columns `:level`, `:x`, `:y`, `:z`, `:id` (in current outputs
+  also `:family` and `:tag`) and then the variables;
+- `info`, `scale`: the simulation information and its unit scales;
+- `lmin`, `lmax`, `boxlen`, `ranges`: the levels and the region that were read;
+- `selected_partvars`, `used_descriptors`: the options used.
+
+Derived quantities, ages and units come from [`getvar`](@ref), not from the table.
+
+# Examples
 ```julia
-function getparticles( dataobject::InfoType;
-                    lmax::Real=dataobject.levelmax,          # Maximum refinement level to read
-                    vars::Array{Symbol,1}=[:all],            # Variables to read (:all for all available)
-                    stars::Bool=true,                        # Include star particles
-                    xrange::Array{<:Any,1}=[missing, missing], # X spatial range [min, max]
-                    yrange::Array{<:Any,1}=[missing, missing], # Y spatial range [min, max]
-                    zrange::Array{<:Any,1}=[missing, missing], # Z spatial range [min, max]
-                    center::CenterType=[0., 0., 0.],     # Center point for ranges
-                    range_unit::Symbol=:standard,            # Units for ranges (:standard, :kpc, etc.)
-                    presorted::Bool=true,                    # Sort output table by key variables
-                    print_filenames::Bool=false,             # Print each CPU file being read
-                    verbose::Bool=true,                      # Print progress information
-                    show_progress::Bool=true,                # Show progress bar
-                    max_threads::Int=Threads.nthreads(),     # Number of threads for parallel processing
-                    myargs::ArgumentsType=ArgumentsType() ) # Struct to override default arguments
-```
-#### Returns an object of type PartDataType, containing the particle-data table, the selected and the simulation ScaleType and summary of the InfoType
-```julia
-return PartDataType()
+julia> info = getinfo(300, "path/to/simulation");
 
-# get an overview of the returned fields:
-# e.g.:
-julia> info = getinfo(100)
-julia> particles  = getparticles(info)
-julia> viewfields(particles)
-#or:
-julia> fieldnames(particles)
-```
+julia> part = getparticles(info);                       # every variable, the whole box
 
+julia> part = getparticles(info, [:mass, :birth]);      # two variables
 
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
-##### Predefined/Optional Keywords:
-- **`lmax`:** maximum AMR level to load (default: `info.levelmax`)
-- **`stars`:** include star particles (default: `true`). Set `stars=false` to
-  drop star particles from the returned table. On the new RAMSES particle
-  format (pversion > 0) this drops rows with `family == 2`; on the legacy
-  format (no `:family` column) it drops rows with `birth > 0` (RAMSES
-  convention for stellar formation time). Requires the `:family` (new) or
-  `:birth` (legacy) column to be in the loaded variable subset.
-- **`var(s)`:** the selected particle variables in arbitrary order: :all (default), :cpu, :mass, :vx, :vy, :vz, :birth :metals, ...
-- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
-- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
-- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
-- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`presorted`:** presort data according to the key vars (by default)
-- **`print_filenames`:** print on screen the current processed particle file of each CPU
-- **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
-- **`show_progress`:** print progress bar on screen
-- **`myargs`:** an ArgumentsType struct to override multiple keywords at once: lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
-- **`max_threads`: give a maximum number of threads that is smaller or equal to the number of assigned threads in the running environment
+julia> propertynames(part.data.columns)
+(:level, :x, :y, :z, :id, :family, :tag, :mass, :birth)
 
-### Defined Methods - function defined for different arguments
-- getparticles( dataobject::InfoType; ...) # no given variables -> all variables loaded
-- getparticles( dataobject::InfoType, var::Symbol; ...) # one given variable -> no array needed
-- getparticles( dataobject::InfoType, vars::Array{Symbol,1}; ...)  # several given variables -> array needed
+julia> dm = getparticles(info; stars=false, xrange=[-10, 10], yrange=[-10, 10],
+                         zrange=[-2, 2], center=[:bc], range_unit=:kpc);   # no stars, a slab
 
-
-#### Examples
-```julia
-# read simulation information
-julia> info = getinfo(420)
-
-# Example 1:
-# read particle data of all variables, full-box, all levels
-julia> particles = getparticles(info)
-
-# Example 2:
-# read particle data of all variables
-# data range 20x20x4 kpc; ranges are given in kpc relative to the box (here: 48 kpc) center at 24 kpc
-julia> particles = getparticles( info,
-                                  xrange=[-10., 10.],
-                                  yrange=[-10., 10.],
-                                  zrange=[-2., 2.],
-                                  center=[24., 24., 24.],
-                                  range_unit=:kpc )
-
-# Example 3:
-# give the center of the box by simply passing: center = [:bc] or center = [:boxcenter]
-# this is equivalent to center=[24.,24.,24.] in Example 2
-# the following combination is also possible: e.g. center=[:bc, 12., 34.], etc.
-julia> particles = getparticles(    info,
-                                    xrange=[-10.,10.],
-                                    yrange=[-10.,10.],
-                                    zrange=[-2.,2.],
-                                    center=[33., :bc, 10.],
-                                    range_unit=:kpc )
-
-# Example 4:
-# read particle data of the variables mass and the birth-time, full-box, all levels
-julia> particles = getparticles( info, [:mass, :birth] ) # use array for the variables
-
-# Example 5:
-# read particle data of the single variable mass, full-box, all levels
-julia> particles = getparticles( info, :mass ) # no array for a single variable needed
-...
+julia> getvar(part, :age, :Myr)                         # stellar ages
 ```
 
+See also [`getinfo`](@ref), [`getvar`](@ref), [`subregion`](@ref), [`projection`](@ref),
+[`gethydro`](@ref).
 """
 function getparticles( dataobject::InfoType;
                     lmax::Real=dataobject.levelmax,

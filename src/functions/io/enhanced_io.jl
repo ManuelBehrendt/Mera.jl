@@ -77,6 +77,8 @@ report how many entries were dropped.
 Useful when a simulation folder changed on disk during a session and you want the next
 `getinfo` to re-read it rather than reuse what it saw earlier. See
 [`show_mera_cache_stats`](@ref) to inspect the cache first.
+
+Returns `nothing`.
 """
 function clear_mera_cache!()
     if @isdefined(MERA_INFO_CACHE)
@@ -96,6 +98,8 @@ behind each one.
 
 Use it to check whether a [`getinfo`](@ref) call was served from cache before reaching for
 [`clear_mera_cache!`](@ref).
+
+Returns `nothing`.
 """
 function show_mera_cache_stats()
     if !@isdefined(MERA_INFO_CACHE) || isempty(MERA_INFO_CACHE)

@@ -61,6 +61,9 @@ in `cm⁻³`.
     counted as genuine voids, which is right for a box and wrong for a sphere.
 
 See also [`getvar`](@ref) for `:cellsize`, and the Zoom Simulations page.
+
+`max_bins = 5e7` is a guard against a grid that would not fit in memory: a request for more bins
+raises an error that names the likely cause (often a `grid_unit` mix-up).
 """
 function clumping(dataobject::DataSetType;
                   weight::Symbol=:volume,

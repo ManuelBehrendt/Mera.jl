@@ -28,6 +28,8 @@ physics, code units) and the result is a **new object of the same type**. If `ob
 hot = @filter gas :rho >= 1e2     # Mera object → HydroDataType of the matching cells
 sub = @filter gas.data :rho >= 1e2  # raw table → filtered table (classic behaviour)
 ```
+
+Returns a new object of the same type for a Mera object, or the filtered table for a raw table.
 """
 macro filter(table, expr)
     (expr isa Expr && expr.head == :call && length(expr.args) == 3) ||
@@ -50,7 +52,22 @@ macro filter(table, expr)
 end
 
 """
-Find examples in the Mera Documentation for: filter data with pipeline macros
+    @where table :column op value
+    @where table expression_of_columns op value
+
+Keep the rows of a table whose columns satisfy one comparison.
+
+Column names are written as symbols and can be combined in an expression, e.g.
+`@where tbl abs((:cz - 0.5) * boxlen / 2^:level - cv) <= height`; other names are taken from the
+surrounding code. It works on the raw table (`gas.data`), in code units, and is mostly used
+inside [`@apply`](@ref) to chain several conditions. For a Mera object and derived quantities,
+use [`@filter`](@ref) or [`filterdata`](@ref).
+
+Returns the filtered table.
+
+```julia
+dense = @where gas.data :rho >= 100.0
+```
 """
 macro where(table, expr)
     if expr isa Expr && expr.head == :call && length(expr.args) == 3
@@ -73,7 +90,25 @@ macro where(table, expr)
 end
 
 """
-Find examples in the Mera Documentation for: filter data with pipeline macros
+    @apply table begin
+        @where condition_1
+        @where condition_2
+        ...
+    end
+
+Apply several [`@where`](@ref) conditions to a raw table, one after the other.
+
+Each line in the block must be an `@where` comparison; anything else raises an error. Like
+`@where`, it works on the table (`gas.data`) in code units.
+
+Returns the rows that satisfy every condition, as a table.
+
+```julia
+disc = @apply gas.data begin
+    @where :rho >= density
+    @where abs((:cz - 0.5) * boxlen / 2^:level - cv) <= height
+end
+```
 """
 macro apply(table, block)
     if block.head != :block

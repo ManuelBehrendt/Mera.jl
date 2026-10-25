@@ -452,6 +452,8 @@ cosmic_time(info, [gc.aexp for gc in cats])   # …across every catalogue
 ```
 
 See also [`lookback_time`](@ref), [`age_of_universe`](@ref).
+
+Returns a `Float64` in `unit` for a single `a`, or a vector for a vector of scale factors.
 """
 function cosmic_time(info::InfoType, a; unit::Symbol=:Gyr)
     H0_cgs = info.H0 * 1.0e5 / info.constants.Mpc                # 1/s
@@ -472,6 +474,8 @@ snapshot instead. Scalar or array.
 lookback_time(info, 0.2276)                  # Gyr since z = 3.39, from today
 lookback_time(info, 0.1,  from=info.aexp)    # …from this snapshot instead
 ```
+
+Returns a `Float64` in `unit` for a single `a`, or a vector for a vector of scale factors.
 """
 function lookback_time(info::InfoType, a; unit::Symbol=:Gyr, from::Real=1.0)
     t_from = cosmic_time(info, Float64(from); unit=unit)
@@ -487,5 +491,7 @@ The age of the universe **today** (`a = 1`) for this run's cosmology — `cosmic
 A natural sanity check on a run's cosmological parameters, and one people otherwise compute by
 hand: a Planck-like ΛCDM gives ≈ 13.8 Gyr, so a value far from it means the parameters read
 from the header are not what you assumed.
+
+Returns a `Float64` in `unit`.
 """
 age_of_universe(info::InfoType; unit::Symbol=:Gyr) = cosmic_time(info, 1.0; unit=unit)

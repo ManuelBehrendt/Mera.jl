@@ -271,8 +271,12 @@ Stars, dark matter and clumps are points, so there is nothing to split. See
 
 **Results you can defend.** Pin versions with a `Project.toml` and `Manifest.toml` in your own
 analysis project, and record what produced each number with [`provenance`](provenance.md). See
-[Reproducibility](reproducibility.md) for how the pieces fit together. VTK
-export preserves AMR structure for ParaView and VisIt.
+[Reproducibility](reproducibility.md) for how the pieces fit together. Every file Mera saves or
+exports gets a small readable sidecar, `<file>.meta.json`, with the snapshot, the units, the
+SHA-256 of the file, your script and your package versions, and `bundle` turns a finished analysis
+folder into one record for a data repository: see
+[Sharing Results & Sidecars](export_sidecars.md). VTK export preserves AMR structure for ParaView
+and VisIt.
 
 Mera supports RAMSES stable-17.09 through stable-19.10, and the 2025.05 and 2026.05 releases. The
 public test simulations are produced with RAMSES 2026.05 and checked against its own reference
@@ -322,6 +326,8 @@ If you already know what you want to compute:
 | cut out a spatial region | [Get Subregions](03_hydro_Get_Subregions.md) |
 | compute masses and other quantities | [Basic Calculations](04_multi_Basic_Calculations.md) |
 | store or share a snapshot | [MERA Files](07_multi_Mera_Files.md) |
+| hand a map or profile to Python or another tool | [Exporting Data](exporting_data.md) |
+| publish results with the record of where they came from | [Sharing Results & Sidecars](export_sidecars.md) |
 | make it faster | [Multi-Threading](multi-threading/multi-threading_intro.md) |
 | know what it costs before you run it | [Performance](benchmarks/performance.md) |
 | look up a function | [Complete API](api.md) |
@@ -337,9 +343,11 @@ Coming from another analysis tool, or new to Julia:
 
 ## Citation
 
-If you use MERA in your research, please cite it using the DOI badge above. This supports
-continued development and helps other researchers discover the tool. Click the badge for BibTeX
-format. Please also star the [GitHub repository](https://github.com/ManuelBehrendt/Mera.jl).
+If you use MERA in your research, please cite it. This supports continued development and helps
+other researchers discover the tool. `citation()` prints the BibTeX for the exact Mera version you
+use, and `citation(gas)` adds the RAMSES papers your run needs, such as the RT or MHD paper. The
+DOI badge above leads to the same record on Zenodo. Please also star the
+[GitHub repository](https://github.com/ManuelBehrendt/Mera.jl).
 
 ## Community and support
 

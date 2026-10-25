@@ -245,6 +245,9 @@ The sorted set of **physical stored variables** that must be read to compute `va
 getvar_requirements(:hydro, :ekin)        # [:rho, :vx, :vy, :vz]
 getvar_requirements(:hydro, [:sd, :T])    # [:rho, :p]   (:sd is an alias of surface density → :rho)
 ```
+
+With `include_optional=true` the optional columns are added too (see [`getvar_optional`](@ref)),
+for a caller that would rather read a little more than get the fallback result.
 """
 function getvar_requirements(kind::Symbol, vars; include_optional::Bool=false)
     kind = _canon_kind(kind)
@@ -317,6 +320,10 @@ projection(gas, :vmag2)
 ```
 
 See also [`delete_field`](@ref), [`list_fields`](@ref).
+
+`optional` lists columns that change the result when they are loaded but are not needed, as
+described for [`getvar_optional`](@ref); `variants` is a short text, shown in the field listings,
+that says how the result differs with and without them.
 """
 function add_field(name::Symbol, compute::Function;
                    depends_on::AbstractVector{Symbol}=Symbol[],
@@ -347,6 +354,8 @@ end
 
 Remove a previously [`add_field`](@ref)-registered field. `datatypes=:all` (default)
 removes it from every kind; otherwise pass a kind symbol or collection.
+
+Returns `nothing`.
 """
 function delete_field(name::Symbol; datatypes=:all)
     kinds = datatypes === :all ? collect(keys(USER_FIELDS)) :
@@ -453,6 +462,8 @@ end
 
 The registration record `(; compute, depends_on, unit, description)` for a user field,
 or `nothing` if it isn't registered for that `kind`.
+
+Returns that record as a named tuple, or `nothing` for an unknown name.
 """
 field_info(name::Symbol; kind::Symbol=:hydro) = _field_info(name, _canon_kind(kind))
 function _field_info(name::Symbol, kind::Symbol)
@@ -664,7 +675,10 @@ add_unit(name::Symbol, factor::Real) = (USER_UNITS[name] = Float64(factor); noth
 
 """    delete_unit(name::Symbol)
 
-Remove a custom unit registered with [`add_unit`](@ref)."""
+Remove a custom unit registered with [`add_unit`](@ref).
+
+Returns `nothing`.
+"""
 delete_unit(name::Symbol) = (delete!(USER_UNITS, name); nothing)
 
 """    list_units() -> Vector{Symbol}
@@ -702,6 +716,8 @@ end
     field_tree(kind::Symbol, var::Symbol; io=stdout)
 
 Pretty-print the dependency tree of a derived field down to its raw leaves (cycle-safe).
+
+Prints to `io` and returns `nothing`.
 """
 function field_tree(kind::Symbol, var::Symbol; io::IO=stdout)
     function walk(v, prefix, isroot, last, seen)

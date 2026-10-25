@@ -107,6 +107,8 @@ configure_mera_io(buffer_size="32KB", large_buffers=false)
 - `"128KB"`: Large simulations (200-500 CPU files)
 - `"256KB"`: Very large simulations (500-1000 CPU files)
 - `"512KB"`: Huge simulations (> 1000 CPU files)
+
+Returns `true`.
 """
 function configure_mera_io(; buffer_size="auto", cache=true, large_buffers=true, show_config=true)
     # Parse buffer size
@@ -159,6 +161,8 @@ Large buffers:   Enabled ✅
 Cache entries:   3 files cached
 Status:          Optimized for large simulations
 ```
+
+Returns `nothing`.
 """
 function show_mera_config()
     println("🔧 MERA I/O CONFIGURATION")
@@ -218,6 +222,8 @@ julia> reset_mera_io()
 ✅ Cache cleared (0 entries removed)
 ✅ Settings reset to defaults
 ```
+
+Returns `nothing`.
 """
 function reset_mera_io()
     println("🔄 MERA I/O RESET")

@@ -1,0 +1,363 @@
+# ====================================================================================
+# Sidecar files: a readable record next to every saved or exported file
+#
+#   fig3.h5  ->  fig3.h5.meta.json
+#
+# Written by savedata, savemap, savemovie and exportdata. The sidecar says what the file holds,
+# which snapshot it came from (the provenance), which input files the run used (their SHA-256),
+# and what ran (Julia, Mera, threads, CPU). It is JSON, so any language reads it and DataCite or
+# RO-Crate tools can take it over.
+#
+# Privacy: the host name is never recorded. The simulation path is kept in full, because it is
+# what traces the data; `anonymize=true` keeps only its last two parts.
+#
+# A sidecar must never make a save fail. Missing metadata (a synthetic object has no path) is
+# recorded as missing, and any error while writing the sidecar becomes a warning.
+# ====================================================================================
+
+const SIDECAR_SCHEMA = "mera-sidecar/1"
+
+_sidecar_file(file::AbstractString) = string(file, ".meta.json")
+
+# The input files of a RAMSES run that define it: the setup, the build and the code patches.
+const _SIDECAR_INPUT_FILES = ("namelist.txt", "makefile.txt", "patches.txt", "compilation.txt")
+
+function _sidecar_environment()
+    cpu = try strip(Sys.cpu_info()[1].model) catch; "unknown" end
+    return OrderedDict{String,Any}(
+        "julia_version" => string(VERSION),
+        "mera_version"  => string(pkgversion(@__MODULE__)),
+        "mera_build"    => _mera_build(),
+        "mera_install"  => mera_install(),
+        "os"            => string(Sys.KERNEL),
+        "machine"       => Sys.MACHINE,
+        "cpu_model"     => cpu,
+        "cpu_threads"   => Sys.CPU_THREADS,
+        "julia_threads" => Threads.nthreads(),
+        "blas_threads"  => LinearAlgebra.BLAS.get_num_threads())
+end
+
+# The InfoType behind a result, or `nothing`.
+_sidecar_info(x::InfoType) = x
+_sidecar_info(::Nothing) = nothing
+_sidecar_info(x) = (hasproperty(x, :info) && getproperty(x, :info) isa InfoType) ? x.info : nothing
+
+function _sidecar_simpath(path::AbstractString, anonymize::Bool)
+    anonymize || return String(path)
+    parts = splitpath(rstrip(String(path), '/'))
+    return joinpath("...", parts[max(1, end - 1):end]...)
+end
+
+# Where the result came from. A complete provenance when the InfoType has it, otherwise the
+# fields that are defined, marked `"complete": false`.
+function _sidecar_source(x; anonymize::Bool=false)
+    info = _sidecar_info(x)
+    info === nothing && return nothing
+    p = try
+        provenance(info)
+    catch
+        d = OrderedDict{String,Any}("complete" => false)
+        for f in (:path, :output, :simcode, :boxlen, :ndim, :levelmin, :levelmax, :time, :aexp)
+            isdefined(info, f) || continue
+            v = getfield(info, f)
+            d[f === :path ? "simulation_path" : f === :time ? "time_code" : string(f)] =
+                f === :path ? _sidecar_simpath(v, anonymize) : v
+        end
+        return d
+    end
+    d = OrderedDict{String,Any}(
+        "complete"        => true,
+        "summary"         => provenance_string(p),
+        "simulation_path" => _sidecar_simpath(p.path, anonymize),
+        "output"          => p.output,
+        "simcode"         => p.simcode,
+        "cosmological"    => p.cosmological,
+        "time_myr"        => p.time_myr,
+        "redshift"        => p.cosmological ? p.redshift : nothing,
+        "aexp"            => p.aexp,
+        "boxlen"          => p.boxlen,
+        "ndim"            => p.ndim,
+        "levelmin"        => p.levelmin,
+        "levelmax"        => p.levelmax,
+        "scale_type"      => string(p.scale_type),
+        "output_written"  => string(p.file_ctime))
+    isdefined(info, :scale) && (d["code_length_kpc"] = info.scale.kpc)
+    return d
+end
+
+# SHA-256 of the run's input files, when the output folder holds them.
+function _sidecar_input_files(x)
+    info = _sidecar_info(x)
+    (info === nothing || !isdefined(info, :fnames)) && return nothing
+    dir = info.fnames.output
+    files = OrderedDict{String,Any}()
+    for name in _SIDECAR_INPUT_FILES
+        f = joinpath(dir, name)
+        isfile(f) && (files[name] = OrderedDict("sha256" => _sha256_file(f)))
+    end
+    return isempty(files) ? nothing : files
+end
+
+_sha256_file(f::AbstractString) = bytes2hex(open(SHA.sha256, f))
+
+# JSON has no NaN, Inf, Symbol or tuple: map everything to what it has.
+_jsonsafe(x::AbstractFloat) = isfinite(x) ? x : nothing
+_jsonsafe(x::Union{Integer,Bool,AbstractString,Nothing}) = x
+_jsonsafe(::Missing) = nothing
+_jsonsafe(x::Symbol) = string(x)
+_jsonsafe(x::AbstractDict) = OrderedDict{String,Any}(string(k) => _jsonsafe(v) for (k, v) in x)
+_jsonsafe(x::NamedTuple) = OrderedDict{String,Any}(string(k) => _jsonsafe(v) for (k, v) in pairs(x))
+_jsonsafe(x::Union{AbstractVector,Tuple}) = Any[_jsonsafe(v) for v in x]
+# a matrix as a list of rows, so that json[i][j] is A[i, j]
+_jsonsafe(x::AbstractArray) = Any[_jsonsafe(collect(selectdim(x, 1, i))) for i in axes(x, 1)]
+_jsonsafe(x) = string(x)
+
+function _write_json(file::AbstractString, d)
+    open(file, "w") do io
+        JSON3.pretty(io, JSON3.write(_jsonsafe(d)))
+        println(io)
+    end
+    return file
+end
+
+# ---- the analysis that called Mera --------------------------------------------------
+#
+# A sidecar also records the analysis around the result: the Julia environment (Project.toml and
+# Manifest.toml, their SHA-256, and the versions of the project's packages) and the script that
+# ran, when Julia knows it. With the environment files a reader can rebuild the exact packages;
+# with the script's SHA-256 they can check they have the script that made the file. The script's
+# text is stored only on request (`include_script=true`): a script may hold private paths or notes.
+
+# The script that is running: `julia analysis.jl`, or a notebook whose path Jupyter passes to the
+# kernel (JupyterLab and Notebook 7 set JPY_SESSION_NAME). `nothing` in the REPL, in VS Code
+# notebooks and under nbconvert, which do not say.
+function _analysis_script()
+    !isempty(PROGRAM_FILE) && isfile(PROGRAM_FILE) && return (kind="script", path=abspath(PROGRAM_FILE))
+    nb = get(ENV, "JPY_SESSION_NAME", "")
+    !isempty(nb) && isfile(nb) && return (kind="notebook", path=abspath(nb))
+    return nothing
+end
+
+# The code of a notebook: its code cells, in order, without outputs.
+function _notebook_code(path::AbstractString)
+    nb = JSON3.read(read(path, String))
+    cells = [join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code"]
+    return join(cells, "\n\n# ----\n\n")
+end
+
+# "1.8.3", "1.8.3 (repo master)", "1.8.3 (path)", or "stdlib", from a Manifest.toml entry
+function _package_version(e::AbstractDict)
+    v = get(e, "version", nothing)
+    v === nothing && return "stdlib"
+    haskey(e, "repo-url") && return "$v (repo $(get(e, "repo-rev", "default branch")))"
+    haskey(e, "path") && return "$v (path)"
+    return String(v)
+end
+
+function _sidecar_analysis(; script=_analysis_script(), project=Base.active_project(),
+                           include_script::Bool=false, anonymize::Bool=false)
+    d = OrderedDict{String,Any}()
+    if project !== nothing && isfile(project)
+        man = something(try Base.project_file_manifest_path(project) catch; nothing end, "")
+        env = OrderedDict{String,Any}(
+            "path"            => _sidecar_simpath(dirname(project), anonymize),
+            "project_sha256"  => _sha256_file(project),
+            "manifest"        => isfile(man) ? basename(man) : nothing,
+            "manifest_sha256" => isfile(man) ? _sha256_file(man) : nothing)
+        if isfile(man)
+            deps = get(TOML.parsefile(man), "deps", Dict())
+            direct = sort!(collect(keys(get(TOML.parsefile(project), "deps", Dict()))))
+            env["packages"] = OrderedDict{String,Any}(
+                name => (haskey(deps, name) ? _package_version(first(deps[name])) : nothing) for name in direct)
+        end
+        d["environment"] = env
+    end
+    if script === nothing
+        d["script"] = nothing
+    else
+        sc = OrderedDict{String,Any}(
+            "kind"   => script.kind,
+            "name"   => basename(script.path),
+            "path"   => _sidecar_simpath(script.path, anonymize),
+            "sha256" => _sha256_file(script.path))
+        include_script &&
+            (sc["text"] = script.kind == "notebook" ? _notebook_code(script.path) : read(script.path, String))
+        d["script"] = sc
+    end
+    return d
+end
+
+"""
+    _write_sidecar(file, result, source; anonymize=false, note="", include_script=false, verbose=false,
+                   explain=true)
+
+Write `<file>.meta.json` and return its path, or `nothing` if it could not be written (a warning
+says why). `result` is a dictionary describing the file's content.
+"""
+function _write_sidecar(file::AbstractString, result::AbstractDict, source;
+                        anonymize::Bool=false, note::AbstractString="", include_script::Bool=false,
+                        verbose::Bool=false, explain::Bool=true)
+    sc = _sidecar_file(file)
+    try
+        d = OrderedDict{String,Any}(
+            "schema"      => SIDECAR_SCHEMA,
+            "created_utc" => string(Dates.now(Dates.UTC)),
+            "file"        => OrderedDict{String,Any}("name" => basename(file),
+                                                     "bytes" => filesize(file),
+                                                     "sha256" => _sha256_file(file)),
+            "result"      => result,
+            "source"      => _sidecar_source(source; anonymize=anonymize),
+            "input_files" => _sidecar_input_files(source),
+            "analysis"    => _sidecar_analysis(include_script=include_script, anonymize=anonymize),
+            "environment" => _sidecar_environment())
+        isempty(note) || (d["note"] = String(note))
+        _write_json(sc, d)
+        verbose && println("  sidecar → ", sc)
+        explain && _sidecar_explain(file, sc)
+        _sidecar_hints(d["environment"]["mera_install"])
+        return sc
+    catch e
+        @warn "Could not write the sidecar $sc; the data file itself was written." exception = e
+        return nothing
+    end
+end
+
+# ---- hints, once per session --------------------------------------------------------
+#
+# The first sidecar of a session says what the new file is. And a sidecar is only as good as
+# what it can record: two common set-ups weaken it, both easy to fix, so Mera says so once.
+# Mera's usual hints: once per session, silenced by verbose(false).
+
+# true when Julia runs in the shared environment (~/.julia/environments/v1.x), which changes
+# whenever any package is added, so its Manifest says little about one analysis
+function _shared_environment(project=Base.active_project())
+    project === nothing && return true
+    shared = joinpath(first(DEPOT_PATH), "environments")
+    return startswith(abspath(project), abspath(shared) * Base.Filesystem.path_separator)
+end
+
+function _sidecar_hints(install; project=Base.active_project())
+    if _shared_environment(project)
+        hint(:sidecar_shared_environment,
+             "The sidecar records the shared Julia environment, which changes whenever a package is added.",
+             "For an analysis you want to repeat, give it its own folder and environment:",
+             "meraproject(\"my_analysis\"), then start Julia there with julia --project=.")
+    end
+    if get(install, :dirty, nothing) === true && !_release_view()      # a release has no checkout
+        hint(:sidecar_uncommitted_mera,
+             "Mera runs from a checkout with uncommitted changes, so the sidecar cannot say which code ran.",
+             "Commit the changes before making results you publish.")
+    end
+    return nothing
+end
+
+# The first sidecar of a session says what the new file is and how to stop it.
+_sidecar_explain(file, sc) =
+    hint(:sidecar_written, "$(basename(sc)) records where $(basename(file)) came from.",
+         "readsidecar(\"$(basename(file))\") shows it; sidecar(false) stops writing them.")
+
+# The `result` entry of an existing sidecar, or an empty one.
+function _read_sidecar_result(file::AbstractString)
+    sc = _sidecar_file(file)
+    isfile(sc) || return OrderedDict{String,Any}()
+    try
+        r = JSON3.read(read(sc, String), OrderedDict{String,Any})
+        return haskey(r, "result") ? OrderedDict{String,Any}(r["result"]) : OrderedDict{String,Any}()
+    catch
+        return OrderedDict{String,Any}()
+    end
+end
+
+# ---- a sidecar for any file ----------------------------------------------------------
+#
+# Figures are saved by the plotting package, so Mera never sees them. `writesidecar` gives such a
+# file the same record, taken from the Mera results it was made from.
+
+const _FIGURE_FORMATS = ("png", "pdf", "svg", "eps", "jpg", "jpeg", "gif", "tif", "tiff", "webp")
+
+# Several sources of one file, e.g. the panels of a figure. The sidecar then holds a list.
+struct _SidecarSources
+    items::Vector{Any}
+end
+
+_sidecar_source(s::_SidecarSources; anonymize::Bool=false) =
+    Any[_sidecar_source(x; anonymize=anonymize) for x in s.items]
+
+function _sidecar_input_files(s::_SidecarSources)
+    files = Any[_sidecar_input_files(x) for x in s.items]
+    return all(isnothing, files) ? nothing : files
+end
+
+# What a source holds: its arrays and units when exportdata can describe it, else its type.
+function _sidecar_made_from(x)
+    try
+        return _export_meta(_exportset(x))
+    catch
+        d = OrderedDict{String,Any}("type" => string(nameof(typeof(x))))
+        x isa DataSetType && (d["rows"] = length(x.data))
+        return d
+    end
+end
+
+"""
+    writesidecar(file, source=nothing; note="", anonymize=false, include_script=false, verbose=true)
+
+Write the sidecar `<file>.meta.json` for a file that Mera did not write itself, typically a
+figure saved with Makie, PyPlot or Plots. The sidecar is the same as for [`exportdata`](@ref):
+the SHA-256 of the file, the provenance of the snapshot, the input files of the run, the
+analysis environment and script, and the Julia and Mera that ran.
+
+Call it right after the save:
+```julia
+save("fig3.png", fig)               # Makie
+writesidecar("fig3.png", p)         # p: the projection shown in the figure
+```
+
+# Arguments
+- `file::String`: an existing file.
+- `source`: the Mera result the file shows (a projection, profile, data object, movie or
+  `InfoType`), or a vector of them for a figure with several panels. With `nothing` the
+  sidecar still records the file, the analysis and the environment, but no snapshot.
+
+# Keywords
+- `note::String = ""`: a free text stored in the sidecar, e.g. "Figure 3 of the paper".
+- `anonymize::Bool = false`: keep only the last two parts of the simulation path.
+- `include_script::Bool = false`: also store the full text of the running script (or the code
+  cells of the notebook). Its name and SHA-256 are always recorded, when Julia knows the script.
+- `verbose::Bool = true`: print the sidecar's path.
+
+# Returns
+The sidecar's path as a `String`, or `nothing` when sidecars are switched off with
+[`sidecar`](@ref)`(false)` or the sidecar could not be written (a warning says why). An existing
+sidecar of the file is replaced.
+
+# Examples
+```julia
+writesidecar("fig3.png", p; note="Figure 3")
+writesidecar("evolution.pdf", [p10, p20, p30])   # one panel per snapshot
+readsidecar("fig3.png")                          # read it back
+```
+
+See also [`readsidecar`](@ref), [`sidecaroverview`](@ref), [`exportdata`](@ref).
+"""
+function writesidecar(file::AbstractString, source=nothing; note::AbstractString="",
+                      anonymize::Bool=false, include_script::Bool=false, verbose::Bool=true)
+    verbose = checkverbose(verbose)
+    isfile(file) || throw(ArgumentError("\"$file\" does not exist: save the file first, then write its sidecar"))
+    if !checksidecar(true)
+        verbose && println("Sidecars are switched off with sidecar(false): nothing written.")
+        return nothing
+    end
+    several = source isa Tuple || (source isa AbstractVector && !(eltype(source) <: Number))
+    items = several ? Any[s for s in source] : Any[source]
+    ext = lowercase(lstrip(last(splitext(file)), '.'))
+    result = OrderedDict{String,Any}("kind" => ext in _FIGURE_FORMATS ? "figure" : "file",
+                                     "format" => isempty(ext) ? nothing : ext)
+    made = Any[_sidecar_made_from(s) for s in items if s !== nothing]
+    isempty(made) || (result["made_from"] = several ? made : only(made))
+    src = several ? _SidecarSources(items) : source
+    sc = _write_sidecar(file, result, src; anonymize=anonymize, note=note, include_script=include_script,
+                        explain=false)                       # asked for, so it needs no explaining
+    verbose && sc !== nothing && println("Sidecar written → ", sc)
+    return sc
+end

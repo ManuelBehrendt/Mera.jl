@@ -1,65 +1,57 @@
 """
-### Cutout sub-regions of the data base of DataSetType
-- select shape of a region
-- select size of a region (with or w/o intersecting cells)
-- give the spatial center (with units) of the data relative to the full box
-- relate the coordinates to a direction (x,y,z)
-- inverse the selected region
-- pass a struct with arguments (myargs)
+    subregion(data, shape::Symbol=:cuboid; xrange, yrange, zrange, radius, height, center,
+              range_unit=:standard, cell=true, inverse=false, periodic=false, kwargs...)
 
+Select the part of `data` inside a box, cylinder or sphere given by a shape name.
+
+This older form keeps whole cells and stores no fractions, so totals over the region are not
+exact at the boundary. Prefer the region form, `subregion(data, sphere(...))`, which counts
+boundary cells by the part inside; Mera mentions it once per session.
+
+# Arguments
+- `data`: any Mera data object or a selection.
+- `shape::Symbol = :cuboid`: `:cuboid`, `:sphere`, or `:cylinder` (also `:disc`).
+
+# Keywords
+Shape:
+- `xrange`, `yrange`, `zrange`: `[min, max]` of a `:cuboid`, in `range_unit` and relative to
+  `center`; `missing` means the full extent.
+- `radius`: the radius of a `:sphere` or `:cylinder`, in `range_unit`.
+- `height`: the half-height of a `:cylinder`, from -`height` to +`height` about `center`.
+- `direction::Symbol = :z`: the axis of a `:cylinder`; only `:z` is supported, others raise an error.
+
+Position:
+- `center = [0, 0, 0]`: in `range_unit`. The default is the box corner, which is right for a
+  `:cuboid` with absolute ranges; for a sphere or cylinder give `[:bc]` for the box centre, or a
+  point `[x, y, z]`, or mix them, e.g. `[:bc, :bc, 12.0]`.
+- `range_unit::Symbol = :standard`: `:standard` means fractions of the box; any length unit in
+  `info.scale` works, e.g. `:kpc`.
+- `periodic = false`: wrap the region around the faces of a periodic box, `true` for all axes or
+  per axis as `(x=true, y=true, z=false)`. Without it, the part outside the box is dropped, so a
+  sphere on a face is a hemisphere. Cylinders wrap in their two radial axes only.
+
+Selection:
+- `cell::Bool = true`: cell data only. `true` keeps every cell the boundary touches; `false`
+  keeps a cell when its centre lies inside.
+- `inverse::Bool = false`: select the outside instead.
+- `verbose::Bool = true`: print what is selected.
+- `myargs::ArgumentsType`: set the ranges, `radius`, `height`, `direction`, `center`,
+  `range_unit` and `verbose` in one object. A keyword given directly takes precedence.
+
+# Returns
+An object of the same type as `data`, holding only the selected rows.
+
+# Examples
 ```julia
-subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
-            xrange::Array{<:Any,1}=[missing, missing],  # cuboid
-            yrange::Array{<:Any,1}=[missing, missing],  # cuboid
-            zrange::Array{<:Any,1}=[missing, missing],  # cuboid
+julia> s = subregion(gas, :sphere; radius=10, center=[:bc], range_unit=:kpc);
 
-            radius::Real=0.,              # cylinder, sphere
-            height::Real=0.,              # cylinder
-            direction::Symbol=:z,         # cylinder
+julia> s = subregion(gas, :cylinder; radius=15, height=2, center=[:bc], range_unit=:kpc);
 
-            center::CenterType=[0.,0.,0.],     # all
-            range_unit::Symbol=:standard,           # all
-            cell::Bool=true,                        # hydro, gravity and RT (AMR cell data)
-            inverse::Bool=false,                    # all
-    periodic=false,                         # all
-            verbose::Bool=true,             # all
-            myargs::ArgumentsType=ArgumentsType() ) # all
+julia> s = subregion(gas, :cuboid; xrange=[-5, 5], yrange=[-5, 5], zrange=[-1, 1],
+                     center=[:bc], range_unit=:kpc, cell=false);
 ```
 
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "DataSetType"
-- **`shape`:** select between region shapes: :cuboid, :cylinder/:disc, :sphere
-##### Predefined/Optional Keywords:
-**For cuboid region, related to a given center:**
-- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
-- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
-- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
-
-**For cylindrical region, related to a given center:**
-- **`radius`:** the radius between [0., radius] in units given by argument `range_unit` and relative to the given `center`
-- **`height`:** the hight above and below a plane [-height, height] in units given by argument `range_unit` and relative to the given `center`
-- **`direction`:** todo
-
-**For spherical region, related to a given center:**
-- **`radius`:** the radius between [0., radius] in units given by argument `range_unit` and relative to the given `center`
-
-**Keywords related to all region shapes**
-- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.] — the box
-  CORNER. That is the right origin for `:cuboid`, whose ranges are absolute box
-  coordinates. For the distance-based shapes (`:sphere`, `:cylinder`, the shell forms) it
-  places the region at the corner, so only the part inside the box is kept; that is a valid
-  region but rarely the intent, and Mera says so once per shape. Give the box centre as
-  [:bc] or [:boxcenter], a point as [x, y, z], or mix them: [value, :bc, :bc]. A single 0.0
-  component is fine (a sphere on the x = 0 face); only an all-zero centre triggers the note.
-- **`inverse`:** inverse the region selection = get the data outside of the region
-- **`cell`:** take intersecting cells of the region boarder into account (true) or only the cells-centers within the selected region (false)
-- **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
-- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of xrange, yrange, zrange, radius, height, direction, center, range_unit, verbose
-
-
-
+See also [`shellregion`](@ref), and the region form of `subregion` above.
 """
 function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
     xrange::Array{<:Any,1}=[missing, missing],  # cuboid

@@ -45,120 +45,64 @@ end
 
 
 """
-#### Read the clump-data:
-- selected variables
-- limited to a spatial range
-- print the name of each data-file before reading it
-- toggle verbose mode
-- pass a struct with arguments (myargs)
+    getclumps(info::InfoType; vars=[:all], kwargs...) -> ClumpDataType
+    getclumps(info::InfoType, vars::Vector{Symbol}; kwargs...) -> ClumpDataType
 
+Load the clump catalogue that the RAMSES clump finder (PHEW) wrote with an output.
+
+Each row is one clump, with one column per entry of the clump files, parsed as `Float64`. For
+clumps found by Mera itself on any data, use [`clumpfind`](@ref) instead.
+
+# Arguments
+- `info::InfoType`: the output to read, from [`getinfo`](@ref).
+- `vars`: the columns to read. `[:all]` (the default) takes the names from the file header,
+  e.g. `:index`, `:lev`, `:parent`, `:ncell`, `:peak_x`, `:peak_y`, `:peak_z`, `:rho_av`,
+  `:mass_cl`. A custom list must follow the order of the file columns; it may be shorter, to
+  read the first columns only, or longer, when the files hold more columns than the header
+  names. Names with a dash are written `Symbol("rho-")`.
+
+# Keywords
+Selection:
+- `xrange`, `yrange`, `zrange`: `[min, max]` of the region, in `range_unit` and relative to
+  `center`. A clump is kept when its peak (`:peak_x`, `:peak_y`, `:peak_z`) lies inside, so
+  these columns must be read; the extent of the clump is not tested.
+- `center = [0, 0, 0]`: the origin of the ranges, in `range_unit`. `[:bc]` is the box centre;
+  single components can be `:bc`, e.g. `[:bc, :bc, 12.0]`.
+- `range_unit::Symbol = :standard`: the unit of the ranges and the centre. `:standard` means
+  fractions of the box (0 to 1); any length unit in `info.scale` works, e.g. `:kpc` or `:pc`.
+
+Output:
+- `verbose::Bool = true`: print a summary of what is read.
+- `print_filenames::Bool = false`: print each file name as it is read.
+- `myargs::ArgumentsType`: set the ranges, `center`, `range_unit` and `verbose` in one object.
+  A keyword given directly takes precedence.
+
+# Returns
+A `ClumpDataType` with
+- `data`: the table, one row per clump, with the columns read;
+- `info`, `scale`: the simulation information and its unit scales;
+- `boxlen`, `ranges`: the region that was read;
+- `selected_clumpvars`, `used_descriptors`: the options used.
+
+# Examples
 ```julia
-getclumps(  dataobject::InfoType;
-            vars::Array{Symbol,1}=[:all],
-            xrange::Array{<:Any,1}=[missing, missing],
-            yrange::Array{<:Any,1}=[missing, missing],
-            zrange::Array{<:Any,1}=[missing, missing],
-            center::CenterType=[0., 0., 0.],
-            range_unit::Symbol=:standard,
-            print_filenames::Bool=false,
-            verbose::Bool=true,
-            myargs::ArgumentsType=ArgumentsType() )
-```
-#### Returns an object of type ClumpDataType, containing the clump-data table, the selected options and the simulation ScaleType and summary of the InfoType
-```julia
-return ClumpDataType()
+julia> info = getinfo(300, "path/to/simulation");
 
-# get an overview of the returned fields:
-# e.g.:
-julia> info = getinfo(100)
-julia> clumps  = getclumps(info)
-julia> viewfields(clumps)
-#or:
-julia> fieldnames(clumps)
-```
+julia> clumps = getclumps(info);                    # all columns, the whole box
 
+julia> propertynames(clumps.data.columns)
+(:index, :halo, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"),
+ Symbol("rho+"), :rho_av, :mass_cl, :relevance)
 
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
-##### Predefined/Optional Keywords:
-- **`vars`:** Currently, the length of the loaded variable list can be modified *(see examples below).
- - **`vars`:** List of clump columns to read; default `[:all]` uses the file header. The order must match the columns in the clump files. You may specify fewer names (to read a subset) or more names if the data contains more columns than listed in the header.
-- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
-- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
-- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
- - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
-     Note: spatial filtering uses the columns :peak_x, :peak_y, :peak_z. If you set any ranges, ensure these columns are included in `vars` (or use `vars=[:all]`).
-- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of type Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`print_filenames`:** print on screen the current processed clump file of each CPU
-- **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
-- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of xrange, yrange, zrange, center, range_unit, verbose
+julia> clumps = getclumps(info, [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]);
 
-#### Important notes
-- Spatial selection is applied to the clump peak position only (columns `:peak_x`, `:peak_y`, `:peak_z`). It does not test the full clump extent/volume.
-- All clump columns are parsed as `Float64` from the text files. Cast to other types as needed after loading.
-- Column names with dashes in the header must be requested as symbols with quotes, e.g. `Symbol("rho-")` and `Symbol("rho+")`.
-- For faster I/O, pass a smaller `vars` list to read only the columns you need.
-- When supplying a custom `vars` list, ensure the data files contain at least that many columns and that the order matches the file columns; otherwise parsing will fail.
+julia> clumps = getclumps(info; xrange=[-10, 10], yrange=[-10, 10], zrange=[-2, 2],
+                          center=[:bc], range_unit=:kpc);   # clumps peaking in a slab
 
-### Defined Methods - function defined for different arguments
-- getclumps(dataobject::InfoType; ...) # no given variables -> all variables loaded
-- getclumps(dataobject::InfoType, vars::Array{Symbol,1}; ...)  # one or several given variables -> array needed
-
-
-
-
-#### Examples
-```julia
-# read simulation information
-julia> info = getinfo(420)
-
-# Example 1:
-# read clump data of all variables, full-box
-julia> clumps = getclumps(info)
-
-# Example 2:
-# read clump data of all variables
-# data range 20x20x4 kpc; ranges are given in kpc relative to the box (here: 48 kpc) center at 24 kpc
-julia> clumps = getclumps(    info,
-                              xrange=[-10.,10.],
-                              yrange=[-10.,10.],
-                              zrange=[-2.,2.],
-                              center=[24., 24., 24.],
-                              range_unit=:kpc )
-
-# Example 3:
-# give the center of the box by simply passing: center = [:bc] or center = [:boxcenter]
-# this is equivalent to center=[24.,24.,24.] in Example 2
-# the following combination is also possible: e.g. center=[:bc, 12., 34.], etc.
-julia> clumps = getclumps(  info,
-                            xrange=[-10.,10.],
-                            yrange=[-10.,10.],
-                            zrange=[-2.,2.],
-                            center=[33., :bc, 10.],
-                            range_unit=:kpc )
-
-# Example 4:
-# Load less than the found 12 columns from the header of the clump files;
-# Pass an array with the variables to the keyword argument *vars*.
-# The order of the variables has to be consistent with the header in the clump files:
-julia> clumps = getclumps(info, [ :index, :lev, :parent, :ncell,
-                                 :peak_x, :peak_y, :peak_z ])
-
-# Example 5:
-# Load more than the found 12 columns from the header of the clump files.
-# E.g. the list can be extended with more names if there are more columns
-# in the data than given by the header in the files.
-# The order of the variables has to be consistent with the header in the clump files:
-julia> clumps = getclumps(info, [   :index, :lev, :parent, :ncell,
-                                    :peak_x, :peak_y, :peak_z,
-                                    Symbol("rho-"), Symbol("rho+"),
-                                    :rho_av, :mass_cl, :relevance,
-                                    :vx, :vy, :vz ])
-...
+julia> getvar(clumps, :mass_cl, :Msol)              # clump masses in solar masses
 ```
 
+See also [`getinfo`](@ref), [`getvar`](@ref), [`clumpfind`](@ref).
 """
 function getclumps(dataobject::InfoType;
                     vars::Array{Symbol,1}=[:all],

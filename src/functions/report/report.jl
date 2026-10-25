@@ -132,7 +132,10 @@ CombinedCard(datatypes::AbstractVector, compute::Function; kwargs...) =
 
 """    baryon_fraction(; label="baryon_fraction")
 
-Cross-datatype card: (gas + stars) / (gas + stars + dark matter), reading hydro + particles."""
+Cross-datatype card: (gas + stars) / (gas + stars + dark matter), reading hydro + particles.
+
+Returns a `CombinedCard`, to pass to [`report`](@ref).
+"""
 baryon_fraction(; label::String="baryon_fraction") =
     CombinedCard([:hydro, :particles], unit=:fraction, label=label) do d
         gas   = sum(getvar(d[:hydro], :mass, :Msol))
@@ -144,7 +147,10 @@ baryon_fraction(; label::String="baryon_fraction") =
 
 """    clump_mass_fraction(; label="clump_mass_fraction")
 
-Cross-datatype card: total clump mass / total gas mass, reading clumps + hydro."""
+Cross-datatype card: total clump mass / total gas mass, reading clumps + hydro.
+
+Returns a `CombinedCard`, to pass to [`report`](@ref).
+"""
 clump_mass_fraction(; label::String="clump_mass_fraction") =
     CombinedCard([:clumps, :hydro], unit=:fraction, label=label) do d
         sum(getvar(d[:clumps], :mass, :Msol)) / sum(getvar(d[:hydro], :mass, :Msol))

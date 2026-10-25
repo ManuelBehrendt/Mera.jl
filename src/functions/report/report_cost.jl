@@ -148,7 +148,10 @@ end
 
 Actively calibrate the cost model for this machine/output by running a tiny report (one coarse
 level + small projection/phase/profile/scalar) and learning the timing coefficients. ~0.5–3 s,
-once. (The model also self-calibrates passively after every real [`report`](@ref).)"""
+once. (The model also self-calibrates passively after every real [`report`](@ref).)
+
+`verbose=true` prints the report runs and the calibrated correction.
+"""
 function calibrate!(output::Int; path::String=".", budget::Int=200_000, verbose::Bool=false)
     cards = ReportCard[
         ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=128, center=[:bc]),

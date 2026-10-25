@@ -520,6 +520,8 @@ of the file again. With `parents=true` complete gravity data also gets the
 stored values of its refined cells (see `getgravity(...; parents=true)`).
 Old files load fine without this; the upgrade makes them self-contained,
 e.g. for writing a RAMSES restart after the simulation is deleted.
+
+Returns the data types that were upgraded, as a `Vector{Symbol}`.
 """
 function upgrade_merafile(output::Integer, path::AbstractString;
                           datatypes=[:hydro, :gravity, :particles, :rt, :clumps, :sinks],
@@ -559,6 +561,9 @@ function upgrade_merafile(output::Integer, path::AbstractString;
     fname = "output_" * lpad(output, 5, '0') * ".jld2"
     isfile(joinpath(tmp, fname)) || error("[Mera]: upgraded file was not written")
     mv(joinpath(tmp, fname), joinpath(path, fname); force=true)
+    # the new sidecar describes the upgraded file; an old one would carry the old SHA-256
+    sc = _sidecar_file(fname)
+    isfile(joinpath(tmp, sc)) && mv(joinpath(tmp, sc), joinpath(path, sc); force=true)
     rm(tmp; recursive=true)
     verbose && println("[Mera]: upgraded $(upgraded) in ", path)
     return upgraded

@@ -105,7 +105,31 @@ reset_hints() = (lock(_HINT_LOCK) do; empty!(_HINT_SHOWN); end; nothing)
 
 
 # global verbose mode ===========================
+
+# Mera's messages are off while any `_quietly` block runs. A counter rather than saving and
+# restoring the global setting: blocks run on several threads at once (the frames of
+# `rotation_sequence`), and the last one to finish used to restore another block's `false`,
+# which silenced Mera for the rest of the session.
+const _QUIET_DEPTH = Threads.Atomic{Int}(0)
+
+"""
+    _quietly(f)
+
+Internal. Run `f` with Mera's messages off, without touching the user's `verbose` setting. Used
+for internal steps, such as the camera set-up, that would otherwise print hints meant for someone
+computing physics. Safe to call from several threads at once.
+"""
+function _quietly(f)
+    Threads.atomic_add!(_QUIET_DEPTH, 1)
+    try
+        return f()
+    finally
+        Threads.atomic_sub!(_QUIET_DEPTH, 1)
+    end
+end
+
 function checkverbose(verbose::Bool)
+    _QUIET_DEPTH[] > 0 && return false
     if verbose_mode != nothing
         verbose = copy(verbose_mode)
     end
@@ -128,6 +152,8 @@ verbose(false)    # quiet
 verbose()         # prints "verbose_mode: false"
 verbose(nothing)  # back to per-function control
 ```
+
+Returns the new setting; without an argument it prints the current one.
 """
 function verbose(mode::Union{Bool,Nothing})
         global verbose_mode = mode
@@ -164,6 +190,8 @@ showprogress(false)   # suppress all progress bars
 showprogress()        # prints "showprogress_mode: false"
 showprogress(nothing) # restore per-function defaults
 ```
+
+Returns the new setting; without an argument it prints the current one.
 """
 function showprogress(mode::Union{Bool,Nothing})
         global showprogress_mode = mode
@@ -173,6 +201,51 @@ end
 function showprogress()
     println("showprogress_mode: ", showprogress_mode)
 end
+
+
+# global sidecar mode ===========================
+# The session switch wins, then the MERA_SIDECAR environment variable, then the call's keyword.
+function checksidecar(sidecar::Bool)
+    sidecar_mode === nothing || return sidecar_mode
+    env = lowercase(strip(get(ENV, "MERA_SIDECAR", "")))
+    env in ("0", "false", "no", "off") && return false
+    env in ("1", "true", "yes", "on") && return true
+    return sidecar
+end
+
+"""
+    sidecar(mode::Union{Bool,Nothing})
+    sidecar()
+
+Set or show the global sidecar mode. A sidecar is the small `<file>.meta.json` that
+[`savedata`](@ref), [`savemap`](@ref), [`savemovie`](@ref), [`save_clumps`](@ref),
+[`exportdata`](@ref) and [`writesidecar`](@ref) write next to each file, with the provenance,
+units and environment of the result.
+
+`sidecar(false)` stops all of them from writing one, `sidecar(true)` makes all of them write
+one (the per-function `sidecar=` keyword is then ignored), and `sidecar(nothing)` reverts to each
+function's own keyword (the neutral default; the keywords default to `true`). `sidecar()` with
+no argument prints the current state.
+
+```julia
+sidecar(false)    # no sidecar files
+sidecar()         # prints "sidecar_mode: false"
+sidecar(nothing)  # back to per-function control
+```
+
+Without changing a script, the environment variable `MERA_SIDECAR` does the same for every
+session: `MERA_SIDECAR=0 julia analysis.jl` writes no sidecars (also `false`, `no`, `off`), and
+`1`, `true`, `yes` or `on` writes them for every call. `sidecar(true)` or `sidecar(false)` in
+the session wins over it.
+
+Returns the new setting; without an argument it prints the current one.
+"""
+function sidecar(mode::Union{Bool,Nothing})
+    global sidecar_mode = mode
+    return mode
+end
+
+sidecar() = println("sidecar_mode: ", sidecar_mode)
 
 
 # global output master switch (verbose + progressbar at once) ===========================
@@ -192,6 +265,8 @@ output_mode(false)    # quiet: no messages, no progress bars, anywhere
 output_mode(nothing)  # back to per-function control
 output_mode()         # show current state
 ```
+
+Returns `nothing`; without an argument it prints the current settings.
 """
 function output_mode(mode::Union{Bool,Nothing})
     verbose(mode)

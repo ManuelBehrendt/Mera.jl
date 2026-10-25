@@ -23,6 +23,9 @@ For a first impression of an unfamiliar output rather than an object to work wit
 [`quicklook`](@ref): it reports the same header facts and then reads a budgeted sample to
 add projections along all three axes, a phase diagram and a mass budget. Use `getinfo` in
 a script, `quicklook` when you open a directory and want to know what is in it.
+
+`code = :auto` detects which simulation code wrote the output; give it, e.g. `code=:ramses`, to
+skip the detection.
 """
 function getinfo end
 

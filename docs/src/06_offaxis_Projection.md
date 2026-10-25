@@ -125,7 +125,7 @@ println("threads      : ", Threads.nthreads())
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 8 threads
+Mera v1.8.3 | Julia 1.12.7 | 8 threads
 cells loaded : 51500562
 stars loaded : 627896
 box length   : 48.0 kpc
@@ -635,7 +635,7 @@ end
              These are WORLD-space bounds, so after rotation the full box depth folds into
              the image. Pass `zrange`, or `fov=<half-width>` for a fixed camera frame.
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-10-11T19:18:25.952
+[Mera]: 2026-10-25T11:27:00.225
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -805,7 +805,7 @@ fov asked  delivered  frame [px]   extent [kpc]        central depth [kpc]
 23         16.66      (134, 134)   33.33 x 33.33       47.1
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_23_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_23_2.png)
 
 Four widths, one camera. The frame shrinks in pixels as `fov` shrinks, because the pixel size
 is held fixed, and the **column gets shallower** with it: the selection is a sphere, so halving
@@ -860,13 +860,13 @@ maprow([p.map for p in panmaps], :sd,
 
 ```
 center                t [s]   extent [kpc]                  mass in frame [Msol]
-centre                5.8     [-10.3, 10.3, -10.3, 10.3]    5.453e9
-8 kpc along x         3.8     [-10.4, 10.4, -10.4, 10.4]    3.699e9
-8 kpc along y         3.0     [-10.4, 10.4, -10.4, 10.4]    3.692e9
-12 kpc out, corner    0.8     [-10.8, 10.8, -10.8, 10.8]    5.032e8
+centre                5.3     [-10.3, 10.3, -10.3, 10.3]    5.453e9
+8 kpc along x         3.7     [-10.4, 10.4, -10.4, 10.4]    3.699e9
+8 kpc along y         2.8     [-10.4, 10.4, -10.4, 10.4]    3.692e9
+12 kpc out, corner    1.0     [-10.8, 10.8, -10.8, 10.8]    5.032e8
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_26_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_26_3.png)
 
 The same idea as a movie. The camera keeps one direction and one field of view, and the centre
 walks across the box, so the galaxy drifts through the frame and out the other side. This is the
@@ -1230,7 +1230,7 @@ angle gas to gas+stars   0.05 arcmin
 both maps on the joint axis: gas (166, 166)  stars (163, 163)   same camera: true
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_40_5.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_40_6.png)
 
 The angle between the gas and stellar axes is the number that decides whether this matters. A
 few arcminutes, as here, and any of the three axes gives the same picture. Degrees, which is what
@@ -1375,12 +1375,12 @@ level 10.0:  cell 0.0469  kpc  →  9.4 pixels per cell at pxsize = 0.005 kpc
 level 11.0:  cell 0.0234  kpc  →  4.7 pixels per cell at pxsize = 0.005 kpc
 level 12.0:  cell 0.0117  kpc  →  2.3 pixels per cell at pxsize = 0.005 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       35.0 %     1.432     0.4154
-cic       12.8 %     1.248     0.2669
-overlap   0.0 %      2.455     0.0128
-exact     0.0 %      9.079     0.0
+ngp       35.0 %     1.269     0.4154
+cic       12.8 %     1.189     0.2669
+overlap   0.0 %      2.592     0.0128
+exact     0.0 %      9.006     0.0
 stars     empty px   time [s]  what it does
-ngp       65.7 %     0.02      whole star in the nearest pixel
+ngp       65.7 %     0.01      whole star in the nearest pixel
 cic       38.4 %     0.01      bilinear over 2x2
 stars in this window: 183796
   binning=:overlap  returns the :cic map exactly: true
@@ -3539,8 +3539,9 @@ hexagonal footprints, so it tells you where and how big cells are, not what shap
 have.
 
 ```julia
-savemap(fo, joinpath(tempdir(), "faceon_sd.jld2"), verbose=false)
-fo2 = loadmap(joinpath(tempdir(), "faceon_sd.jld2"), verbose=false)
+mapfile = joinpath(mktempdir(), "faceon_sd.jld2")   # a fresh folder for the map and its sidecar
+savemap(fo, mapfile, verbose=false)
+fo2 = loadmap(mapfile, verbose=false)
 
 println("camera survives the round trip : ", fo2.los == fo.los && fo2.up == fo.up)
 println(".center (box fraction)         : ", round.(fo.center, digits=3))
@@ -3549,6 +3550,9 @@ println(".direction                     : ", fo.direction)
 ```
 
 ```
+[Mera] Hint: faceon_sd.jld2.meta.json records where faceon_sd.jld2 came from.
+             readsidecar("faceon_sd.jld2") shows it; sidecar(false) stops writing them.
+             (shown once per session; verbose(false) silences Mera's messages)
 camera survives the round trip : true
 .center (box fraction)         : [0.5, 0.5, 0.5]
 .maps_lmax off-axis            : empty (by design)

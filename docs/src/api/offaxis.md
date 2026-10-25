@@ -191,6 +191,118 @@ projection(gas, :sd, inclination=60, azimuth=30 + 90, axis=:z)
     keywords: without adding 90 to the angle the picture comes out turned by a quarter turn,
     and nothing reports an error.
 
+## Frames, depth and partial cells
+
+These notes apply to grid data (hydro, gravity, RT) and, where marked, to particles.
+
+### `xrange`/`yrange`/`zrange` are world space; `fov` is camera space
+
+The ranges select a box in simulation coordinates, and the off-axis frame is the bounding box of
+that region after rotation. Two consequences surprise people:
+
+* omit `zrange` and the full depth of the box folds into the image height as you tilt: a ±22 kpc
+  window came out ±45 kpc at 30° and ±55 kpc at 60° on a 100 kpc box;
+* the window's own faces are visible as straight edges across the map, because a sight line just
+  outside the box clips only a corner of it.
+
+Neither is an error, it is what a world-space selection looks like from an angle. For a frame
+fixed in the camera plane, use `fov`:
+
+```julia
+# world-space box: the frame grows with tilt, the window faces are visible
+projection(gas, :sd; inclination=60, xrange=[-22, 22], yrange=[-22, 22], range_unit=:kpc)
+
+# camera-plane frame: identical at every angle
+projection(gas, :sd; inclination=60, fov=22, fov_unit=:kpc, aperture=:square)
+```
+
+`aperture=:circle` (the default) frames a sphere of radius `fov`, so the corners of the frame are
+empty. `aperture=:square` selects radius `√2·fov` and crops to the ±`fov` square: a full
+rectangular frame that is identical, pixel for pixel, at every viewing angle, which is what a
+gallery or an orbit sequence needs. Give `fov_unit` explicitly: it defaults to `:standard`, a
+fraction of the box. Mera points this out once per session when it sees an off-axis view with a
+windowed `xrange`/`yrange` and no `zrange`. The same holds for particles.
+
+### `fov` integrates a chord, not a slab
+
+Because the selection is a sphere of radius ``R`` (`fov`, or `√2·fov` for `:square`), a ray at
+distance ``d`` from the centre in the image plane integrates a depth ``2\sqrt{R^2 - d^2}``. The
+column is deepest on the axis and falls to zero at the boundary of the frame, which for `:square`
+are the four corners. On a 100 kpc box, `fov=15, aperture=:square` gives 42.4 kpc of depth at the
+centre, 30.0 kpc at the middle of an edge and 0 at the corners. This is harmless for an object in
+the middle of the frame, but make `fov` comfortably larger than any diffuse column, profile or
+scale height you want to measure, or use `depth`.
+
+### A fixed depth along the line of sight: `depth`, `depth_unit`
+
+`depth=2, depth_unit=:kpc` keeps a slab of half-thickness 2 kpc about `center`, measured along
+the viewing direction; `depth=[-2, 6]` is an explicit window, so the foreground and the
+background need not match. The column then integrates the same distance everywhere in the frame.
+It applies to off-axis views of grid data only: on a box-axis view the line of sight is a box
+axis, so `zrange` already cuts this slab, and `depth` raises an error that says so. For particles
+the same idea is `thickness`/`offset`: a cutting plane through point particles is empty, so the
+useful analogue of a slice is a projection of finite depth.
+
+### Partial cells: `split`, `refine`, `refine_to`
+
+Every off-axis cut keeps a cell whole if its centre is inside and drops it whole otherwise.
+`split=true` weights it instead by the fraction of its volume that lies inside the `depth` slab or
+the `fov` sphere, which is what makes stacked slabs add up and a small aperture hold the right
+mass.
+
+`split` fixes the total; it does not move the mass. A half-inside cell still deposits its reduced
+share over its whole footprint, so the edge is still a staircase. `refine=N` subdivides the cells
+the `fov` sphere crosses, as an octree, so the boundary is placed to `cellsize/2^N` and the edge
+sharpens; `refine_to=[length, unit]` subdivides until the boundary cells reach a target size.
+Both need `fov` and `split=true`, and both conserve: refining moves mass, it does not create any.
+The cost grows with the boundary area, at most a factor ``8^N`` per boundary cell. For a region
+you select yourself, [`subregion`](@ref) takes the same `split`, `refine` and `refine_to`.
+
+### A rectangular frame: `fov=[wx, wy]`
+
+`fov` is normally one half-width and the frame is square. Two half-widths give a rectangle, which
+suits an edge-on disc, where most pixels of a square frame would be empty. It requires
+`aperture=:square`, because `:circle` selects a disc, which has a single radius.
+
+### Orienting on a region: `angmom_radius`
+
+`axis=:angmom` and the presets `direction=:faceon`/`:edgeon` compute the orientation from the
+angular momentum of the data that is drawn, about `center`: the object you pass, after `mask`,
+and inside the `fov` sphere when `fov` is given. `depth` and the ranges do not narrow it. For a
+whole box the sum is dominated by the material with the longest lever arm, which is usually not
+the disc you meant. `angmom_radius=[10, :kpc]` restricts the sum to a sphere about `center`. For
+an axis from other data, compute it with [`angmom`](@ref) and pass it as `axis=L`. The vector
+belongs to each object: gas and stars have their own, so `:faceon` on one is a different camera
+from `:faceon` on the other. For particles, `parttypes` narrows it too.
+
+### How well sampled is a pixel: `:ncell` and `:npart`
+
+Ask for `:ncell` (cells) or `:npart` (particles) together with any other quantity, and the result
+carries a map of what fed each pixel, filled by the same deposit as the value. The meaning
+depends on the deposit: `:ngp` counts one per cell or particle, so the map adds up to exactly how
+many there were; `:cic` counts one per pixel of its 2×2 stencil; `:overlap` counts one per
+sub-point and `:exact` one per pixel covered, so for those two it reads as a sampling density. A
+pixel built from a single particle has no spread, so its dispersion is exactly zero; the count
+tells such pixels apart.
+
+### How a rotated cell is shared among pixels: `binning`
+
+The default `:overlap` is already the accurate choice; use `:cic` or `:ngp` only for a fast
+preview. All four conserve the total; they differ in where they put it.
+
+| `binning` | use | method |
+|---|---|---|
+| `:overlap` | default | the cell footprint sampled with `ceil(cellsize/pixel)` points per axis, at most `nmax`; follows the AMR cells without moiré, and converges to `:exact` |
+| `:exact` | reference | the analytic column through the cube, integrated over each pixel |
+| `:cic` | preview | bilinear deposit of the cell centre; speckles or moiré on coarse cells |
+| `:ngp` | fastest | nearest-pixel deposit of the cell centre |
+
+Cells coarser than the `nmax` limit deposit each sub-cell as a footprint-sized top-hat, so they
+still cover the image without gaps. Raise `nmax` for fewer artefacts on very coarse cells (the
+cost grows as ``n_\mathrm{max}^3``). For point particles only `:cic` (the default) and `:ngp`
+apply; `:overlap` and `:exact` fall back to `:cic`. The deposits follow the nearest-grid-point
+and cloud-in-cell schemes of Hockney & Eastwood (1988), *Computer Simulation Using Particles*.
+
 ## Line-of-sight maps
 
 [`slice`](@ref) is **the** cutting-plane function and the name the documentation uses: with

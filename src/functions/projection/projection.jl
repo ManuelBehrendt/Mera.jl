@@ -1,19 +1,9 @@
 """
     projection()
 
-Display an overview of variable symbols accepted by the projection interface for
-hydro and particle data as well as derived quantities. This zero-argument form is a
-helper to discover valid field names before calling one of the many method
-overloads such as:
+Print the quantities that can be projected, for cells and for particles, and return nothing.
 
-    projection(hydro::HydroDataType, :rho; direction=:z, res=256)
-    projection(particles::PartDataType, [:mass, :vz]; weighting=:mass)
-
-Actual data projections are implemented in specialized method definitions located
-in `projection_hydro.jl` and `projection_particles.jl` (and gravity combo variants).
-Those methods accept keywords like `direction`, `res`, `xrange`, `yrange`, `zrange`,
-`center`, `weighting`, `show_progress`, and unit selection arguments.  This summary
-call prints the canonical / alias variable names and returns nothing.
+The projections themselves are the methods `projection(data, var, ...)`.
 """
 function projection()
     println("Predefined vars for projections:")
@@ -594,6 +584,11 @@ and sweeping `offset` produces the frames of a fly-through. `offset_unit` defaul
 **Prefer `slice`**: it is the one name for a cutting plane, axis-aligned or off-axis, and it is
 what the documentation uses. See [`slice`](@ref) for the full description, the view keywords, and
 why empty (NaN) pixels are expected.
+
+It takes the view keywords of [`slice`](@ref): `los`, `up`, `inclination`, `azimuth`, `axis`,
+`position_angle`, `direction`, `angle_unit` (`:deg` by default) and the deprecated `theta`/`phi`;
+the frame keywords `center` (the box centre by default), `range_unit`, `xrange`, `yrange`, `res`
+and `pxsize`; and `mask` and `verbose`.
 """
 function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
         los=nothing, theta=nothing, phi=nothing, inclination=nothing, azimuth=nothing,
@@ -958,6 +953,9 @@ is typically ~1.5–2× faster for an orbit movie (it runs that many projections
 proportionally more transient memory; results are identical to round-off).
 
 Returns a `Vector` of map objects — one per angle — ready to montage or animate.
+
+`pxsize = [value, unit]` sets the pixel size instead of `res`. `verbose` is accepted for
+compatibility but has no effect: the frames are always made quietly.
 """
 function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbol=:azimuth,
         angles, axis=:angmom, inclination::Real=0, fov=nothing, fov_unit::Symbol=:standard,
@@ -1048,14 +1046,14 @@ end
 
 
 """
-    savemap(p::DataMapsType, filename; verbose=true) -> String
+    savemap(p::DataMapsType, filename; sidecar=true, anonymize=false, note="", include_script=false,
+            verbose=true) -> String
     loadmap(filename; verbose=true) -> DataMapsType
 
 Save / load a projection result (an `AMRMapsType`/`PartMapsType` from [`projection`](@ref)) to a
-JLD2 file — a lightweight, Julia-native persistence format (the `.jld2` extension is added if
-missing). The whole object round-trips: every map and
-its unit, the `extent`/`pixsize`, the off-axis camera basis, and the simulation `info` — so a
-reloaded map still plots, re-projects, and carries [`provenance`](@ref).
+JLD2 file, a lightweight Julia-native format (the `.jld2` extension is added if missing). The
+whole object round-trips: every map and its unit, the `extent`/`pixsize`, the off-axis camera
+basis, and the simulation `info`, so a reloaded map still plots, re-projects, and carries [`provenance`](@ref).
 
 ```julia
 p = projection(gas, [:sd, :vx])
@@ -1063,11 +1061,33 @@ savemap(p, "maps.jld2")
 p2 = loadmap("maps.jld2")        # AMRMapsType, identical to p
 ```
 
-The file uses the HDF5 container but stores the Julia object and is LZ4-compressed by default, so `h5py` cannot reconstruct the map from it. Reload with Mera; to hand a map to Python, write the array out yourself or use `export_vtk`. Older HDF5 readers.
+The file uses the HDF5 container but stores the Julia object, so `h5py` cannot reconstruct the
+map from it. Reload it with Mera; to hand a map to Python or another tool, use [`exportdata`](@ref).
+
+# Keywords
+- `sidecar::Bool = true`: also write `<file>.meta.json`, a readable record of the maps, their
+  units and geometry, the provenance and the environment. The global switch [`sidecar`](@ref)
+  overrides this keyword.
+- `anonymize::Bool = false`: in the sidecar, keep only the last two parts of the simulation path.
+- `note::String = ""`: a free text stored in the sidecar.
+- `include_script::Bool = false`: also store the full text of the running script (or the code
+  cells of the notebook) in the sidecar. Its name and SHA-256 are always recorded, when Julia
+  knows the script.
+- `verbose::Bool = true`: print what was saved.
+
+Returns the file name written, as a `String`.
 """
-function savemap(p::DataMapsType, filename::AbstractString; verbose::Bool=true)
+function savemap(p::DataMapsType, filename::AbstractString; sidecar::Bool=true,
+                 anonymize::Bool=false, note::AbstractString="", include_script::Bool=false,
+                 verbose::Bool=true)
     fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
     JLD2.jldsave(fn; meramap = p)
+    if checksidecar(sidecar)
+        result = merge(OrderedDict{String,Any}("format" => "jld2",
+                           "layout" => "the Mera map object ($(nameof(typeof(p)))): reload with loadmap"),
+                       _export_meta(_exportset(p)))
+        _write_sidecar(fn, result, p; anonymize=anonymize, note=note, include_script=include_script)
+    end
     verbose && println("Saved projection maps $(collect(keys(p.maps))) → ", fn)
     return fn
 end

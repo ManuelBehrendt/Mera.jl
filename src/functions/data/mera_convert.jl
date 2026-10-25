@@ -345,7 +345,7 @@ This is the core conversion function called by each thread.
 """
 function convert_single_file_safe(old_path::String, new_path::String, file_index::Int,
                                  total_files::Int, safety_margin::Float64;
-                                 compress=nothing)
+                                 compress=nothing, sidecar::Bool=true)
     try
         # ============================================================================
         # PRE-CONVERSION SAFETY CHECK
@@ -401,6 +401,7 @@ function convert_single_file_safe(old_path::String, new_path::String, file_index
         else
             JLD2.save(new_path, data; compress=ctype)
         end
+        checksidecar(sidecar) && _convert_sidecar(new_path, old_path, data, ctype)
         
         # ============================================================================
         # MEMORY CLEANUP
@@ -428,6 +429,31 @@ function convert_single_file_safe(old_path::String, new_path::String, file_index
         end
         return false  # Signal conversion failure
     end
+end
+
+# The converted file gets the sidecar that savedata writes: every data type in the file with the
+# provenance of its snapshot (a Mera file stores the data objects, so it is all there), plus the
+# file it was converted from.
+function _convert_sidecar(new_path::String, old_path::String, data, ctype)
+    objs = sort!([(String(chop(k; tail=5)), v) for (k, v) in data
+                  if k isa AbstractString && endswith(k, "/data") && v isa DataSetType]; by=first)
+    contents = OrderedDict{String,Any}()
+    for (dt, obj) in objs
+        field(f) = hasproperty(obj, f) ? getproperty(obj, f) : nothing
+        contents[dt] = OrderedDict{String,Any}(
+            "columns"     => string.(collect(colnames(obj.data))),
+            "rows"        => length(obj.data),
+            "lmin"        => field(:lmin),
+            "lmax"        => field(:lmax),
+            "ranges"      => field(:ranges),
+            "compression" => string(ctype))
+    end
+    result = OrderedDict{String,Any}("format" => "jld2", "kind" => "mera_file",
+                                     "layout" => "a Mera file: reload with loaddata",
+                                     "contents" => contents,
+                                     "converted_from" => OrderedDict{String,Any}(
+                                         "name" => basename(old_path), "bytes" => filesize(old_path)))
+    return _write_sidecar(new_path, result, isempty(objs) ? nothing : last(first(objs)))
 end
 
 # ================================================================================
@@ -555,6 +581,9 @@ This function coordinates the entire conversion process including:
   (default: `nothing` → `LZ4FrameCompressor()`). Pass `false` to write
   uncompressed files, or a specific codec instance (`LZ4FrameCompressor()`,
   `ZlibCompressor()`, `Bzip2Compressor()`) for finer control.
+- `sidecar`: also write `<file>.meta.json` next to each converted file, as `savedata` does: the
+  data types it holds, the provenance of the snapshot, the environment, and the file it was
+  converted from (default: `true`). The global switch [`sidecar`](@ref) overrides it.
 
 # Safety Margin System
 
@@ -617,7 +646,7 @@ function batch_convert_mera(input_dir::String, output_dir::String,
                                    max_threads::Int=DEFAULT_MAX_THREADS,
                                    skip_existing::Bool=true,
                                    show_confirmation::Bool=true,
-                                   compress=nothing)
+                                   compress=nothing, sidecar::Bool=true)
     
     # ============================================================================
     # INITIALIZATION AND HEADER DISPLAY
@@ -825,7 +854,7 @@ function batch_convert_mera(input_dir::String, output_dir::String,
         # ========================================================================
         
         if convert_single_file_safe(old_path, new_path, i, length(target_files),
-                                    safety_margin; compress=compress)
+                                    safety_margin; compress=compress, sidecar=sidecar)
             Threads.atomic_add!(success_count, 1)  # Thread-safe increment
         else
             Threads.atomic_add!(failed_count, 1)   # Thread-safe increment

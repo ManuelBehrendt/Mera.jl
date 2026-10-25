@@ -186,213 +186,100 @@ end
 
 
 """
-#### Get variables or derived quantities from the dataset:
-- overview the list of predefined quantities with: getinfo()
-- select variable(s) and their unit(s)
-- give the spatial center (with units) of the data within the box (relevant e.g. for radius dependency)
-- relate the coordinates to a direction (x,y,z)
-- pass a modified database
-- pass a mask to exclude elements (cells/particles/...) from the calculation
+    getvar(data, var::Symbol, unit::Symbol=:standard; kwargs...) -> Vector{Float64}
+    getvar(data, vars::Vector{Symbol}, units::Vector{Symbol}; kwargs...) -> Dict
+    getvar(data, vars::Vector{Symbol}, unit::Symbol=:standard; kwargs...) -> Dict
+    getvar(grav_or_rt, gas::HydroDataType, var_or_vars, unit_or_units; kwargs...)
+    getvar()
 
-!!! note "`center` here is the coordinate origin — and it defaults to the box corner"
-    `getvar`'s `center` sets the ORIGIN about which frame-relative quantities are
-    measured: `:r_sphere`, `:r_cylinder`, `:ϕ`, the `v*_sphere`/`v*_cylinder`,
-    `a*_sphere`/`a*_cylinder`, `mach_*` and angular-momentum families. It is a
-    **different argument** from the `center` that places a region
-    (`sphere(10; center=[:bc])`) and it defaults to `[0.,0.,0.]`, the box **corner**.
+Return a stored variable or a derived quantity for every cell, particle or clump of `data`, in
+any unit.
 
-    For absolute positions (`:x`, `:y`, `:z`) the corner is the right default — those
-    are the simulation's own coordinates. For the frame-relative quantities it is
-    almost never intended, and the wrong origin returns a plausible number rather than
-    an error, so Mera mentions it once per quantity per session. Pass `center=[:bc]`
-    for the box centre, or `center=[x,y,z]` with `center_unit=:kpc` for another point;
-    pass the same origin you gave the region. `verbose(false)` silences the reminder.
+Stored columns (e.g. `:rho`, `:vx`) are returned as they are; derived quantities (e.g. `:mass`,
+`:T`, `:r_sphere`, `:vϕ_cylinder`, `:lz`) are computed on request. `getvar()` without arguments
+prints the list of quantities; the formulas are on the Computation Reference page.
 
-    ```julia
-    getvar(gas, :r_sphere, :kpc)                  # about the box CORNER (reminder shown)
-    getvar(gas, :r_sphere, :kpc, center=[:bc])    # about the box centre
-    getvar(gas, :x, :kpc)                         # absolute coordinates — no reminder
-    ```
+# Arguments
+- `data`: any Mera data object, e.g. from [`gethydro`](@ref), [`getparticles`](@ref),
+  [`getgravity`](@ref), `getrt` or [`getclumps`](@ref), or a selection made from one.
+- `var`, `vars`: one quantity, or several.
+- `unit`, `units`: the unit of the result, one for all or one per quantity, e.g. `:Msol`,
+  `:km_s`, `:K`, `:g_cm3`. `:standard` (the default) means code units. They can also be given as
+  the keywords `unit` and `units`.
+- `gas`: for gravity energies and forces, and for the RT rates that need the gas state, the hydro
+  object of the same cells; see the notes below. The two objects can be given in either order.
 
-!!! note "`:mass` and `:volume` are boundary-aware on a split sub-region"
-    A sub-region built from a **value-type** region (`subregion(gas, sphere(10))`, `split=true` by
-    default) carries a per-cell `:fraction ∈ (0,1]` — how much of that cell lies inside the region.
-    `getvar(:volume)` returns `fraction * cellsize^3` and `getvar(:mass)` returns
-    `fraction * rho * volume`, so totals are the amount **inside the boundary** rather than the sum
-    over every cell the boundary touches, and adjacent regions add exactly. Interior cells have
-    `fraction = 1` and are unaffected.
+# Keywords
+Frame:
+- `center = [0, 0, 0]`: the origin for quantities measured about a point or an axis, such as
+  radii, cylindrical and spherical velocities and angular momenta. `[:bc]` is the box centre.
+- `center_unit::Symbol = :standard`: the unit of `center`; `:standard` means fractions of the box.
+- `direction::Symbol = :z`: the axis of cylindrical quantities; it also comes last in Cartesian
+  output, as for [`getpositions`](@ref).
+- `vcenter = nothing`: the velocity of the frame for velocity quantities: a vector
+  `[vx, vy, vz]` in `vunit`, `:auto` for the bulk velocity of `data` ([`bulk_velocity`](@ref)), or
+  a function `f(x, y, z)` of the position (code units, from `center`) for an ordered flow such as
+  rotation. Without it, velocities are in the frame of the box.
+- `vunit::Symbol = :standard`: the unit of `vcenter`.
 
-    Cuts made any other way attach no `:fraction` and so count whole boundary cells — the loaders'
-    `xrange/yrange/zrange`, the classic symbol `subregion`/`shellregion`, `covering_grid` — and
-    particles/clumps are points, with no fraction by construction. See [`subregion`](@ref) and
-    [`msum`](@ref).
+Selection:
+- `mask`: a `Bool` vector with one entry per row; only rows marked `true` are returned.
+- `filtered_db`: a table derived from `data.data`, used instead of it.
+
+Particles:
+- `ref_time = info.time`: the time from which stellar ages are counted, in code units.
+
+# Returns
+A `Vector{Float64}` for one quantity, a `Dict` of vectors, keyed by quantity, for several.
+
+!!! note "`center` is the origin of the frame, and it defaults to the box corner"
+    This `center` is a different argument from the `center` that places a region, as in
+    `sphere(10; center=[:bc])`. For positions `:x`, `:y`, `:z` the corner is right: they are the
+    simulation's own coordinates. For radii, rotation and angular momentum it is almost never
+    meant, and gives a plausible but wrong number, so Mera reminds you once per quantity. Give
+    the same origin as the region.
+
+!!! note "`:mass` and `:volume` count only the part inside a region"
+    A selection made with a region value, `subregion(gas, sphere(10))`, stores for each cell the
+    fraction that lies inside (`:fraction`). `:volume` and `:mass` use it, so totals are the
+    amounts inside the boundary, and neighbouring regions add up exactly. Selections by the
+    loaders' ranges or the older `subregion(gas, :sphere; ...)` keep whole cells.
 
 !!! note "Gravity energies and forces need the hydro object"
-    A potential is energy **per unit mass** and an acceleration is force **per unit mass**, so
-    `:gravitational_energy`, `:total_binding_energy`, `:Fg` and the `:F…` components need the cell
-    mass. Gravity carries no density, so that mass comes from the hydro object and both are passed:
+    A potential is an energy per unit mass and an acceleration a force per unit mass, so
+    `:gravitational_energy`, `:total_binding_energy`, `:Fg` and the force components need the
+    mass of each cell, which only the hydro object has: `getvar(grav, gas, :total_binding_energy,
+    :erg)`. Load both with the same `lmax` and ranges, and cut both with the same region; Mera
+    checks that the cells match. RAMSES stores the potential short by a factor `boxlen`;
+    `getvar(grav, :epot)` corrects it, while the raw column in `grav.data` keeps the stored value.
 
-    ```julia
-    getvar(gravity, hydro, :total_binding_energy, :erg)   # either object order works
-    ```
+!!! note "Radiative transfer"
+    Photon fields (`:Np<g>`, `:Np<g>_cgs`, fluxes, `:reducedflux<g>`, energy densities) and the
+    rates `:Gamma_HI` and `:photoheating_HI` are requested on the RT object; the ionization state
+    (`:xHII`, `:n_e`, `:mu`, `:T_rt`, `:recomb_rate`) on the hydro object of the RT run; the
+    coupling terms `:photoionizations` and `:ionization_balance` on the RT object with
+    `hydro_data=gas`. In RT runs use `:T_rt`, which takes the local mean molecular weight; plain
+    `:T` assumes a constant one. All formulas are in the RT section of the Computation Reference.
 
-    The two must describe the **same cells**: load them with the same `lmax` and ranges, and on a
-    sub-region cut both with the same region value, because the boundary `:fraction` that weights
-    the mass is the hydro object's. Mera compares the cell indices of the two, so a mismatched pair
-    is refused rather than pairing a mass with another cell's potential.
-
-    `:epot` is the run's **total** potential: all the mass on the grid (gas, particles, sinks) and
-    any analytic density added to the Poisson source, so `m * phi` is that cell's gas measured in
-    the total field. An analytic external force is added to the acceleration only, never to
-    `:epot`. The Gravity section of the Computation Reference says what follows from that, and
-    what a snapshot cannot tell you.
-
-    RAMSES stores the potential short by a factor `boxlen` (its force is stored correctly).
-    `getvar` multiplies by `boxlen`, so `:epot` and the energies built from it are the physical
-    potential. The raw `:epot` column in `gravity.data` keeps RAMSES's value.
-
-
+# Examples
 ```julia
-getvar(   dataobject::DataSetType, var::Symbol;
-        filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-        center::CenterType=[0.,0.,0.],
-        center_unit::Symbol=:standard,
-        direction::Symbol=:z,
-        unit::Symbol=:standard,
-        mask::MaskType=[false],
-        ref_time::Real=dataobject.info.time)
+julia> gas = gethydro(info);
 
-return Array{Float64,1}
+julia> getvar(gas, :mass, :Msol)                         # cell masses in solar masses
 
+julia> d = getvar(gas, [:mass, :T], [:Msol, :K]);        # several quantities
+
+julia> d[:T]
+
+julia> getvar(gas, [:vx, :vy, :vz], :km_s);              # the same unit for all
+
+julia> getvar(gas, :vϕ_cylinder, :km_s; center=[:bc], vcenter=:auto)   # rotation about the centre
+
+julia> getvar(grav, gas, :total_binding_energy, :erg)    # needs gravity and hydro
 ```
 
-
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "DataSetType"
-- **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function getvar(), dataobject.data)
-##### Predefined/Optional Keywords:
-- **`filtered_db`:** pass a filtered or manipulated database together with the corresponding DataSetType object (required argument)
-- **`center`:** in units given by argument `center_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`direction`:** todo
-- **`unit(s)`:** return the variable in given units
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-- **`ref_time`:** reference zero-time for particle age calculation
-
-### Defined Methods - function defined for different arguments
-- getvar(   dataobject::DataSetType, var::Symbol; ...) # one given variable -> returns 1d array
-- getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol; ...) # one given variable with its unit -> returns 1d array
-- getvar(   dataobject::DataSetType, vars::Array{Symbol,1}; ...) # several given variables -> array needed -> returns dictionary with 1d arrays
-- getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Symbol,1}; ...) # several given variables and their corresponding units -> both arrays -> returns dictionary with 1d arrays
-- getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol; ...) # several given variables that have the same unit -> array for the variables and a single Symbol for the unit -> returns dictionary with 1d arrays
-
-#### Examples
-```julia
-# read simulation information
-julia> info = getinfo(420)
-julia> gas = gethydro(info)
-
-# Example 1: get the mass for each cell of the hydro data (1dim array)
-mass1 = getvar(gas, :mass)  # in [code units]
-mass = getvar(gas, :mass) * gas.scale.Msol # scale the result from code units to solar masses
-mass = getvar(gas, :mass, unit=:Msol) # unit calculation, provided by a keyword argument
-mass = getvar(gas, :mass, :Msol) # unit calculation provided by an argument
-
-
-# Example 2: get the mass and |v| (several variables) for each cell of the hydro data
-quantities = getvar(gas, [:mass, :v]) # in [code units]
-returns: Dict{Any,Any} with 2 entries:
-  :mass => [8.9407e-7, 8.9407e-7, 8.9407e-7, 8.9407e-7, 8.9407e-7, 8.9407e-7, 8…
-  :v => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  2.28274e-7, 2.…
-
-quantities = getvar(gas, [:mass, :v], units=[:Msol, :km_s]) # unit calculation, provided by a keyword argument
-quantities = getvar(gas, [:mass, :v], [:Msol, :km_s]) # unit calculation provided by an argument
-
-# Example 3: get several variables in the same units by providing a single argument
-quantities = getvar(gas, [:vx, :vy, :vz], :km_s)
-...
-```
-
-#### Radiative transfer (RT) quantities
-For an RT run (`rt = getrt(info)`) the stored variables are, per photon group `g`,
-the photon number density `:Np<g>` and the flux components `:Fx<g>`, `:Fy<g>`, `:Fz<g>`
-(code units). Derived RT quantities on the RT object:
-- **`:Fmag<g>`**         flux magnitude |F_g| = √(Fx²+Fy²+Fz²)            [code units]
-- **`:Np_total`**        photon number density summed over all groups     [code units]
-- **`:reducedflux<g>`**  reduced flux f = |F_g| / (c·Np_g), dimensionless in [0,1] (1 = free-streaming beam, 0 = isotropic)
-- **`:Np<g>_cgs`**       physical photon number density = Np_g · unit_pf / c̃   [photons cm⁻³] (RAMSES-RT stores Np as c̃·N, c̃ the reduced light speed of the cell's level)
-- **`:Fmag<g>_cgs`**     physical flux magnitude = |F_g| · unit_pf         [photons cm⁻² s⁻¹]
-- **`:photon_energy_density<g>`**  radiation energy density of group g = N_g · egy_g  [erg cm⁻³], N_g as in `:Np<g>_cgs` (egy_g = mean photon energy from `info.descriptor.rt[:group_egy]`)
-- **`:rad_energy_density`**        total radiation energy density summed over all groups  [erg cm⁻³]
-
-The per-group photon properties parsed from `info_rt` (mean energy, energy bounds,
-photoionization cross-sections, species→group map) are available in
-`info.descriptor.rtPhotonGroups` (`[g][:egy_eV]`, `[:csn_cm2]`, `[:cse_cm2]`,
-plus `[:L0_eV]`, `[:L1_eV]`, `[:spec2group]`).
-
-The ionization fractions are passive **hydro** scalars (located via the RT descriptor
-`info.descriptor.rt[:iIons]`); request them on the hydro object (`gas = gethydro(info)`):
-- **`:xHII`, `:xHeII`, `:xHeIII`**  ionization fractions (dimensionless)
-- **`:xHI`**                        neutral atomic-hydrogen fraction (a *stored* scalar with H2 chemistry, else the closure 1 − xHII; dimensionless)
-- **`:xH2`**                        molecular-hydrogen fraction = (1 − xHI − xHII)/2 (**H2-chemistry runs only**; ½ ⇒ fully molecular)
-- **`:n_HII`, `:n_HI`, `:n_e`, `:n_H2`**  HII / HI / free-electron / H₂ number density  [cm⁻³] (`:n_H2` is H2-chemistry only)
-- **`:em_recomb`**                  recombination-emissivity proxy ∝ nₑ·n_HII ≈ n_HII²  [cm⁻⁶] (project with `mode=:sum` for a mock emission map)
-- **`:mu`**                         RT-aware mean molecular weight from the ionization (and, with H2 chemistry, molecular) state **and metallicity**: μ = 1/[X_H·hₚ + (X_He/4)(1+xHeII+2xHeIII) + Z/A_Z], where hₚ = 1+xHII (no H2) or xHI+2·xHII+xH2 (H2); X_H/X_He scaled by the local metal mass fraction Z (the `:metallicity` scalar, 0 if absent) and A_Z≈16. Metal free electrons are neglected (RT does not track metal ionization).
-
-!!! note "H₂-enabled RAMSES-RT runs"
-    With molecular-hydrogen chemistry (Nickerson et al. 2018) RAMSES stores an extra `xHI`
-    scalar *before* `xHII`, so the species order becomes `[xHI, xHII, xHeII, xHeIII]` and
-    `nIons` is even. Mera detects this from `nIons` (`isH2 = iseven(nIons)`, `isHe = nIons≥3`)
-    and remaps `:xHII`/`:xHeII`/`:xHeIII`/`:n_*`/`:mu`/`:T_rt` accordingly, and exposes `:xHI`,
-    `:xH2`, `:n_H2`. (Standard non-H₂ runs are unchanged.)
-- **`:T_rt`**                       gas temperature [K] using the **local** μ (= (P/ρ)·scale.T_mu·μ). Plain `:T` (unit=:K) bakes in a *constant* μ (= scale.K/scale.T_mu ≈ 1/0.76 ≈ 1.32, the fixed primordial default — independent of the run's X), so it over-estimates the ionized-gas temperature by μ_const/μ_local (e.g. ≈1.32/0.5 ≈ 2.6× for fully-ionized pure hydrogen). Prefer `:T_rt` for RT runs.
-
-```julia
-rt   = getrt(info)
-gas  = gethydro(info)
-f    = getvar(rt, :reducedflux1)                 # reduced flux of group 1
-nphot = getvar(rt, :Np1_cgs)                     # physical photon density [cm^-3]
-xHII = getvar(gas, :xHII)                        # ionization fraction (hydro scalar)
-ne   = getvar(gas, :n_e)                         # free-electron density [cm^-3]
-T    = getvar(gas, :T_rt)                        # RT-aware temperature [K] (local μ)
-```
-
-`:mu` and `:T_rt` also work on **non-RT** hydro runs: without tracked ionization
-fractions they fall back to the constant μ Mera's temperature scaling assumes
-(μ = scale.K/scale.T_mu), so there `:T_rt` equals `getvar(:T, :K)`. The other RT
-quantities (`:xHII`, `:xHI`, `:n_*`, `:em_recomb`) require an RT run and error otherwise.
-
-**RAMSES-RT field reference** (physical quantity → Mera accessor):
-
-| quantity (per photon group i / ion) | Mera |
-|---|---|
-| photon number density | `getvar(rt, :Np`i`)` (stored as c̃·N; physical N in `:Np`i`_cgs`) |
-| photon flux components | `getvar(rt, :Fx`i`/:Fy`i`/:Fz`i`)` (magnitude `:Fmag`i``) |
-| reduced flux (M1 closure) | `:reducedflux`i`` |
-| HII ionization fraction | `getvar(gas, :xHII)` |
-| HeII / HeIII fractions | `:xHeII` / `:xHeIII` |
-| HII / HI / electron density | `:n_HII` / `:n_HI` / `:n_e` |
-
-**Radiation–matter rates** (RT object; use the reduced light speed `rt_c_frac·c`):
-- **`:Gamma_HI<g>`**, **`:Gamma_HI`**  HI photoionization rate per group / total  [s⁻¹]
-- **`:photoheating_HI<g>`**, **`:photoheating_HI`**  HI photoheating rate per HI atom  [erg s⁻¹]
-
-**Recombination** (hydro object): **`:recomb_rate`** = α_B(T)·nₑ·n_HII  [cm⁻³ s⁻¹] (case-B, RT-aware T).
-
-**Combined radiation+gas** — request on the RT object with the matching `hydro_data` (both
-loaded over the same cells); Mera asserts the cell sets align:
-- **`:photoionizations`** = Γ_HI·n_HI  [cm⁻³ s⁻¹]
-- **`:ionization_balance`** = photoionizations − recombinations (≈0 in local equilibrium)
-
-```julia
-rt  = getrt(info);  gas = gethydro(info)            # same lmax/ranges → aligned cells
-Γ   = getvar(rt, :Gamma_HI)                          # photoionization rate [1/s]
-bal = getvar(rt, :ionization_balance, hydro_data=gas)  # Γ·n_HI − α_B·nₑ·n_HII  [cm^-3 s^-1]
-```
-Most RT quantities are single-object (photon fields on `rt`, ionization state on `gas`); only
-the coupling terms above need both. For other hydro variables you may also pass
-`hydro_data=gas` to `getvar(rt, …)` to fetch them aligned to the RT cells.
+See also [`getpositions`](@ref), [`getvelocities`](@ref), [`msum`](@ref), [`subregion`](@ref),
+[`bulk_velocity`](@ref).
 """
 function getvar(   dataobject::DataSetType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
@@ -516,34 +403,6 @@ end
 
 # ========== GRAVITY-SPECIFIC GETVAR FUNCTIONS WITH HYDRO DATA SUPPORT ==========
 
-"""
-#### Get gravity data with optional hydro data for advanced energy analysis
-
-**Arguments:**
-- **`dataobject`:** needs to be of type: "GravDataType"
-- **`var`:** select a variable from the database or a predefined quantity
-
-**Keyword Arguments:**
-- **`hydro_data`:** optional hydro data object for energy calculations that require density/mass
-- **`center`:** center position (default: [0.,0.,0.])
-- **`direction`:** direction for cylindrical coordinates (default: :z)
-- ...
-
-**Examples:**
-```julia
-# Basic gravity analysis
-grav_data = getvar(grav, :epot)
-
-# Advanced energy analysis with hydro data (keyword syntax)
-energy_density = getvar(grav, :gravitational_energy_density, hydro_data=hydro)
-binding_energy = getvar(grav, :gravitational_binding_energy, hydro_data=hydro)
-
-# NEW: Simplified positional syntax
-jeans_mass = getvar(grav, hydro, :jeansmass, :Msol)
-thermal_energy = getvar(grav, hydro, :etherm, :erg)
-mixed_analysis = getvar(grav, hydro, [:epot, :T, :jeanslength], [:erg, :K, :pc])
-```
-"""
 function getvar(   dataobject::GravDataType, var::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
@@ -777,21 +636,6 @@ end
 
 # ========== NEW API: GRAVITY + HYDRO WITH POSITIONAL ARGUMENTS ==========
 
-"""
-#### Get gravity data with hydro data as second positional argument
-
-**New simplified syntax:**
-```julia
-# Single variable with unit
-getvar(grav, hydro, :jeansmass, :Msol)
-
-# Multiple variables with units  
-getvar(grav, hydro, [:jeansmass, :epot], [:Msol, :erg])
-
-# Multiple variables with same unit
-getvar(grav, hydro, [:T, :cs], :K)
-```
-"""
 # Mirror of the pair below, so the two objects may be given in either order. See the note in
 # projection_hydro.jl: getvar reads gravity-first, projection hydro-first, and both spellings are
 # already released, so each accepts the other's order rather than one of them breaking.
@@ -964,33 +808,34 @@ end
 
 
 """
-#### Get the x,y,z positions from the dataset (cells/particles/clumps/...):
-```julia
-getpositions( dataobject::DataSetType, unit::Symbol;
-        direction::Symbol=:z,
-        center::CenterType=[0., 0., 0.],
-        center_unit::Symbol=:standard,
-        mask::MaskType=[false])
+    getpositions(data, unit=:standard; center=[0, 0, 0], center_unit=:standard,
+                 direction=:z, mask=[false]) -> (x, y, z)
 
-return x, y, z
+Return the positions of the cells, particles or clumps of `data` as three vectors.
+
+A short form of `getvar(data, [:x, :y, :z]; units=[unit, unit, unit], ...)`.
+
+# Arguments
+- `data`: any Mera data object, e.g. from [`gethydro`](@ref) or [`getparticles`](@ref).
+- `unit::Symbol = :standard`: the unit of the result, e.g. `:kpc`. `:standard` means code
+  length. It can also be given as the keyword `unit`.
+
+# Keywords
+- `center = [0, 0, 0]`: the origin of the positions, in `center_unit`. `[:bc]` is the box centre.
+- `center_unit::Symbol = :standard`: the unit of `center`; `:standard` means fractions of the box.
+- `direction::Symbol = :z`: the axis that comes last. `:x` returns `(z, y, x)` and `:y` returns
+  `(z, x, y)`, so the chosen axis plays the role of `z`, as the line of sight in a projection.
+- `mask`: a `Bool` vector with one entry per row; only rows marked `true` are returned.
+
+# Returns
+A tuple of three `Vector{Float64}`.
+
+# Examples
+```julia
+julia> x, y, z = getpositions(gas, :kpc; center=[:bc]);   # in kpc, from the box centre
 ```
 
-
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "DataSetType"
-##### Predefined/Optional Keywords:
-- **`center`:** in unit given by argument `center_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`direction`:** todo
-- **`unit`:** return the variables in given unit
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-
-### Defined Methods - function defined for different arguments
-
-- getpositions( dataobject::DataSetType; ...) # one given dataobject
-- getpositions( dataobject::DataSetType, unit::Symbol; ...) # one given dataobject and position unit
-
+See also [`getvelocities`](@ref), [`getextent`](@ref), [`getvar`](@ref).
 """
 function getpositions( dataobject::DataSetType, unit::Symbol;
                         direction::Symbol=:z,
@@ -1032,27 +877,35 @@ end
 
 
 """
-#### Get the vx,vy,vz velocities from the dataset (cells/particles/clumps/...):
-```julia
-function getvelocities( dataobject::DataSetType, unit::Symbol;
-    mask::MaskType=[false])
+    getvelocities(data, unit=:standard; direction=:z, center=[0, 0, 0],
+                  center_unit=:standard, mask=[false]) -> (vx, vy, vz)
 
-return vx, vy, vz
+Return the velocities of the cells, particles or clumps of `data` as three vectors.
+
+A short form of `getvar(data, [:vx, :vy, :vz]; units=[unit, unit, unit], ...)`.
+
+# Arguments
+- `data`: any Mera data object with velocities, e.g. from [`gethydro`](@ref) or
+  [`getparticles`](@ref).
+- `unit::Symbol = :standard`: the unit of the result, e.g. `:km_s`. `:standard` means code
+  units. It can also be given as the keyword `unit`.
+
+# Keywords
+- `direction::Symbol = :z`: the axis that comes last. `:x` returns `(vz, vy, vx)` and `:y`
+  returns `(vz, vx, vy)`, as for [`getpositions`](@ref).
+- `center`, `center_unit`: passed on to [`getvar`](@ref); they do not change the Cartesian
+  velocities.
+- `mask`: a `Bool` vector with one entry per row; only rows marked `true` are returned.
+
+# Returns
+A tuple of three `Vector{Float64}`.
+
+# Examples
+```julia
+julia> vx, vy, vz = getvelocities(gas, :km_s);
 ```
 
-
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "DataSetType"
-##### Predefined/Optional Keywords:
-- **`unit`:** return the variables in given unit
-- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-
-### Defined Methods - function defined for different arguments
-
-- getvelocities( dataobject::DataSetType; ...) # one given dataobject
-- getvelocities( dataobject::DataSetType, unit::Symbol; ...) # one given dataobject and velocity unit
-
+See also [`getpositions`](@ref), [`getvar`](@ref).
 """
 function getvelocities( dataobject::DataSetType, unit::Symbol;
     direction::Symbol=:z,
@@ -1115,31 +968,31 @@ end
 
 
 """
-#### Get the extent of the dataset-domain:
-```julia
-function getextent( dataobject::DataSetType;
-                     unit::Symbol=:standard,
-                     center::CenterType=[0., 0., 0.],
-                     center_unit::Symbol=:standard,
-                     direction::Symbol=:z)
+    getextent(data, unit=:standard; center=[0, 0, 0], center_unit=:standard,
+              direction=:z) -> ((xmin, xmax), (ymin, ymax), (zmin, zmax))
 
-return (xmin, xmax), (ymin ,ymax ), (zmin ,zmax )
+Return the region that `data` was read from, as three `(min, max)` pairs.
+
+The region is the one selected when loading (or by [`subregion`](@ref)), not the extent of the
+cells that happen to be in it. For the extent of a map, use `getextent(map, unit)`.
+
+# Arguments
+- `data`: any Mera data object, e.g. from [`gethydro`](@ref).
+- `unit::Symbol = :standard`: the unit of the result, e.g. `:kpc`. `:standard` means code
+  length. It can also be given as the keyword `unit`.
+
+# Keywords
+- `center = [0, 0, 0]`: the origin of the result, in `center_unit`. `[:bc]` is the box centre.
+- `center_unit::Symbol = :standard`: the unit of `center`; `:standard` means fractions of the box.
+- `direction::Symbol = :z`: the axis that comes last, as for [`getpositions`](@ref).
+
+# Examples
+```julia
+julia> getextent(gas, :kpc; center=[:bc])
+((-24.0, 24.0), (-24.0, 24.0), (-24.0, 24.0))
 ```
 
-
-#### Arguments
-##### Required:
-- **`dataobject`:** needs to be of type: "DataSetType"
-##### Predefined/Optional Keywords:
-- **`center`:** in unit given by argument `center_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`direction`:** todo
-- **`unit`:** return the variables in given unit
-
-### Defined Methods - function defined for different arguments
-- getextent( dataobject::DataSetType; # one given variable
-- getextent( dataobject::DataSetType, unit::Symbol; ...) # one given variable with its unit
-
+See also [`getpositions`](@ref), [`subregion`](@ref).
 """
 function getextent( dataobject::DataSetType, unit::Symbol;
                      center::CenterType=[0., 0., 0.],
