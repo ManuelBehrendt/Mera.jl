@@ -29,7 +29,7 @@ infodata(output_num, &quot;jld2_path&quot;, :hydro)           # Data type info</
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads</code></pre><h2 id="Load-the-Data-From-Ramses"><a class="docs-heading-anchor" href="#Load-the-Data-From-Ramses">Load the Data From Ramses</a><a id="Load-the-Data-From-Ramses-1"></a><a class="docs-heading-anchor-permalink" href="#Load-the-Data-From-Ramses" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Example-data root. Point this at your own simulation folder, or set the
+Mera v1.8.3 | Julia 1.12.7 | 4 threads</code></pre><h2 id="Load-the-Data-From-Ramses"><a class="docs-heading-anchor" href="#Load-the-Data-From-Ramses">Load the Data From Ramses</a><a id="Load-the-Data-From-Ramses-1"></a><a class="docs-heading-anchor-permalink" href="#Load-the-Data-From-Ramses" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Example-data root. Point this at your own simulation folder, or set the
 # MERA_EXAMPLES environment variable; every path below is built from it.
 MERA_EXAMPLES = get(ENV, &quot;MERA_EXAMPLES&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests&quot;);
 
@@ -37,7 +37,7 @@ info = getinfo(300,  &quot;$MERA_EXAMPLES/RAMSES/mw_L10&quot;);
 gas  = gethydro(info, verbose=false, show_progress=false);
 part = getparticles(info, verbose=false, show_progress=false);
 grav = getgravity(info, verbose=false, show_progress=false);
-# the same applies for clump-data...</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:49:45.763
+# the same applies for clump-data...</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:12:15.112
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -70,11 +70,12 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: (&quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
 -------------------------------------------------------
+boundaries:       not periodic (&amp;BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
-=======================================================</code></pre><h2 id="Store-the-Data-Into-JLD2-Files"><a class="docs-heading-anchor" href="#Store-the-Data-Into-JLD2-Files">Store the Data Into JLD2 Files</a><a id="Store-the-Data-Into-JLD2-Files-1"></a><a class="docs-heading-anchor-permalink" href="#Store-the-Data-Into-JLD2-Files" title="Permalink"></a></h2><p>The running number is taken from the original RAMSES outputs.</p><pre><code class="language-julia hljs">savedata(gas, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:07.698
+=======================================================</code></pre><h2 id="Store-the-Data-Into-JLD2-Files"><a class="docs-heading-anchor" href="#Store-the-Data-Into-JLD2-Files">Store the Data Into JLD2 Files</a><a id="Store-the-Data-Into-JLD2-Files-1"></a><a class="docs-heading-anchor-permalink" href="#Store-the-Data-Into-JLD2-Files" title="Permalink"></a></h2><p>The running number is taken from the original RAMSES outputs.</p><pre><code class="language-julia hljs">savedata(gas, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:13:36.448
 Not existing file: output_00300.jld2
 Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
 -----------------------------------
@@ -86,7 +87,7 @@ I/O mode: nothing  -  Compression: false
 -----------------------------------
 -----------------------------------
 Memory size: 2.321 GB (uncompressed)
------------------------------------</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; The hydro data was not written into the file to prevent overwriting existing files.</p><p>The following argument is mandatory: <strong>fmode=:write</strong> &lt;/div&gt;</p><pre><code class="language-julia hljs">savedata(gas, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, fmode=:write);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:09.054
+-----------------------------------</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; The hydro data was not written into the file to prevent overwriting existing files.</p><p>The following argument is mandatory: <strong>fmode=:write</strong> &lt;/div&gt;</p><pre><code class="language-julia hljs">savedata(gas, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, fmode=:write);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:13:38.204
 Create file: output_00300.jld2
 Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
 -----------------------------------
@@ -100,12 +101,15 @@ JLD2  0.6.5
 CodecBzip2  0.8.5
 CodecZlib  0.7.8
 CodecLz4  0.4.6
-Mera  1.8.0
+Mera  1.8.3
+[Mera] Hint: output_00300.jld2.meta.json records where output_00300.jld2 came from.
+             readsidecar(&quot;output_00300.jld2&quot;) shows it; sidecar(false) stops writing them.
+             (shown once per session; verbose(false) silences Mera&#39;s messages)
 -----------------------------------
 Memory size: 2.321 GB (uncompressed)
 Total file size: 1.275 GB
------------------------------------</code></pre><p>Add/Append further datatypes:</p><pre><code class="language-julia hljs">savedata(part, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, fmode=:append);
-savedata(grav, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, fmode=:append);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:17.436
+-----------------------------------</code></pre><p>Next to <code>output_00300.jld2</code>, Mera also writes <code>output_00300.jld2.meta.json</code>, its sidecar: a small readable record of what the file holds and where it came from, with the snapshot, the SHA-256 of the file and the Julia and Mera that ran. <code>readsidecar(file)</code> prints it; an <code>:append</code> below adds each new data type to it. <a href="../export_sidecars/">Sharing Results &amp; Sidecars</a> explains it in full.</p><p>Add/Append further datatypes:</p><pre><code class="language-julia hljs">savedata(part, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, fmode=:append);
+savedata(grav, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, fmode=:append);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:13:53.020
 Create file: output_00300.jld2
 Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
 -----------------------------------
@@ -119,12 +123,12 @@ JLD2  0.6.5
 CodecBzip2  0.8.5
 CodecZlib  0.7.8
 CodecLz4  0.4.6
-Mera  1.8.0
+Mera  1.8.3
 -----------------------------------
-Memory size: 38.449 MB (uncompressed)
+Memory size: 38.512 MB (uncompressed)
 Total file size: 1.306 GB
 -----------------------------------
-[Mera]: 2026-08-31T13:51:18.653
+[Mera]: 2026-10-25T09:13:58.345
 Create file: output_00300.jld2
 Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
 -----------------------------------
@@ -138,11 +142,11 @@ JLD2  0.6.5
 CodecBzip2  0.8.5
 CodecZlib  0.7.8
 CodecLz4  0.4.6
-Mera  1.8.0
+Mera  1.8.3
 -----------------------------------
 Memory size: 1.688 GB (uncompressed)
 Total file size: 2.158 GB
------------------------------------</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; It is not possible to exchange stored data; only writing into a new file or appending is supported. &lt;/div&gt;</p><h2 id="Overview-of-Stored-Data"><a class="docs-heading-anchor" href="#Overview-of-Stored-Data">Overview of Stored Data</a><a id="Overview-of-Stored-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Overview-of-Stored-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">vd = viewdata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:23.101
+-----------------------------------</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; It is not possible to exchange stored data; only writing into a new file or appending is supported. &lt;/div&gt;</p><h2 id="Overview-of-Stored-Data"><a class="docs-heading-anchor" href="#Overview-of-Stored-Data">Overview of Stored Data</a><a id="Overview-of-Stored-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Overview-of-Stored-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">vd = viewdata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:14:11.740
 Mera-file output_00300.jld2 contains:
 Datatype: particles
 merafile_version: 1.0
@@ -153,9 +157,9 @@ JLD2: VersionNumber[v&quot;0.6.5&quot;]
 CodecBzip2: VersionNumber[v&quot;0.8.5&quot;]
 JLD2compatible_versions: (lower = v&quot;0.1.0&quot;, upper = v&quot;0.3.0&quot;)
 CodecLz4: VersionNumber[v&quot;0.4.6&quot;]
-Mera: VersionNumber[v&quot;1.8.0&quot;]
+Mera: VersionNumber[v&quot;1.8.3&quot;]
 -------------------------
-Memory: 38.449326515197754 MB (uncompressed)
+Memory: 38.511982917785645 MB (uncompressed)
 Datatype: gravity
 merafile_version: 1.0
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
@@ -165,9 +169,9 @@ JLD2: VersionNumber[v&quot;0.6.5&quot;]
 CodecBzip2: VersionNumber[v&quot;0.8.5&quot;]
 JLD2compatible_versions: (lower = v&quot;0.1.0&quot;, upper = v&quot;0.3.0&quot;)
 CodecLz4: VersionNumber[v&quot;0.4.6&quot;]
-Mera: VersionNumber[v&quot;1.8.0&quot;]
+Mera: VersionNumber[v&quot;1.8.3&quot;]
 -------------------------
-Memory: 1.6880828058347106 GB (uncompressed)
+Memory: 1.6881439564749599 GB (uncompressed)
 Datatype: hydro
 merafile_version: 1.0
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
@@ -177,9 +181,9 @@ JLD2: VersionNumber[v&quot;0.6.5&quot;]
 CodecBzip2: VersionNumber[v&quot;0.8.5&quot;]
 JLD2compatible_versions: (lower = v&quot;0.1.0&quot;, upper = v&quot;0.3.0&quot;)
 CodecLz4: VersionNumber[v&quot;0.4.6&quot;]
-Mera: VersionNumber[v&quot;1.8.0&quot;]
+Mera: VersionNumber[v&quot;1.8.3&quot;]
 -------------------------
-Memory: 2.321106629446149 GB (uncompressed)
+Memory: 2.321167817339301 GB (uncompressed)
 -----------------------------------
 convert stat: false
 -----------------------------------
@@ -188,7 +192,7 @@ Total file size: 2.158 GB
   &quot;particles&quot; =&gt; Dict{Any, Any}(&quot;versions&quot;=&gt;Dict{Any, Any}(&quot;CodecZlib&quot;=&gt;Version…
   &quot;FileSize&quot;  =&gt; (2.158, &quot;GB&quot;)
   &quot;gravity&quot;   =&gt; Dict{Any, Any}(&quot;versions&quot;=&gt;Dict{Any, Any}(&quot;CodecZlib&quot;=&gt;Version…
-  &quot;hydro&quot;     =&gt; Dict{Any, Any}(&quot;versions&quot;=&gt;Dict{Any, Any}(&quot;CodecZlib&quot;=&gt;Version…</code></pre><p>Information about the content, etc. is returned in a dictionary.</p><p>Get a detailed tree-view of the data-file:</p><pre><code class="language-julia hljs">vd = viewdata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, showfull=true)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:23.781
+  &quot;hydro&quot;     =&gt; Dict{Any, Any}(&quot;versions&quot;=&gt;Dict{Any, Any}(&quot;CodecZlib&quot;=&gt;Version…</code></pre><p>Information about the content, etc. is returned in a dictionary.</p><p>Get a detailed tree-view of the data-file:</p><pre><code class="language-julia hljs">vd = viewdata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, showfull=true)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:14:12.426
 Mera-file output_00300.jld2 contains:
  ├─📂 hydro
  │  ├─🔢 data
@@ -247,9 +251,9 @@ JLD2: VersionNumber[v&quot;0.6.5&quot;]
 CodecBzip2: VersionNumber[v&quot;0.8.5&quot;]
 JLD2compatible_versions: (lower = v&quot;0.1.0&quot;, upper = v&quot;0.3.0&quot;)
 CodecLz4: VersionNumber[v&quot;0.4.6&quot;]
-Mera: VersionNumber[v&quot;1.8.0&quot;]
+Mera: VersionNumber[v&quot;1.8.3&quot;]
 -------------------------
-Memory: 38.449326515197754 MB (uncompressed)
+Memory: 38.511982917785645 MB (uncompressed)
 Datatype: gravity
 merafile_version: 1.0
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
@@ -259,9 +263,9 @@ JLD2: VersionNumber[v&quot;0.6.5&quot;]
 CodecBzip2: VersionNumber[v&quot;0.8.5&quot;]
 JLD2compatible_versions: (lower = v&quot;0.1.0&quot;, upper = v&quot;0.3.0&quot;)
 CodecLz4: VersionNumber[v&quot;0.4.6&quot;]
-Mera: VersionNumber[v&quot;1.8.0&quot;]
+Mera: VersionNumber[v&quot;1.8.3&quot;]
 -------------------------
-Memory: 1.6880828058347106 GB (uncompressed)
+Memory: 1.6881439564749599 GB (uncompressed)
 Datatype: hydro
 merafile_version: 1.0
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
@@ -271,9 +275,9 @@ JLD2: VersionNumber[v&quot;0.6.5&quot;]
 CodecBzip2: VersionNumber[v&quot;0.8.5&quot;]
 JLD2compatible_versions: (lower = v&quot;0.1.0&quot;, upper = v&quot;0.3.0&quot;)
 CodecLz4: VersionNumber[v&quot;0.4.6&quot;]
-Mera: VersionNumber[v&quot;1.8.0&quot;]
+Mera: VersionNumber[v&quot;1.8.3&quot;]
 -------------------------
-Memory: 2.321106629446149 GB (uncompressed)
+Memory: 2.321167817339301 GB (uncompressed)
 -----------------------------------
 convert stat: false
 -----------------------------------
@@ -282,7 +286,7 @@ Total file size: 2.158 GB
   &quot;particles&quot; =&gt; Dict{Any, Any}(&quot;versions&quot;=&gt;Dict{Any, Any}(&quot;CodecZlib&quot;=&gt;Version…
   &quot;FileSize&quot;  =&gt; (2.158, &quot;GB&quot;)
   &quot;gravity&quot;   =&gt; Dict{Any, Any}(&quot;versions&quot;=&gt;Dict{Any, Any}(&quot;CodecZlib&quot;=&gt;Version…
-  &quot;hydro&quot;     =&gt; Dict{Any, Any}(&quot;versions&quot;=&gt;Dict{Any, Any}(&quot;CodecZlib&quot;=&gt;Version…</code></pre><h2 id="Get-Info"><a class="docs-heading-anchor" href="#Get-Info">Get Info</a><a id="Get-Info-1"></a><a class="docs-heading-anchor-permalink" href="#Get-Info" title="Permalink"></a></h2><p>The following function <strong>infodata</strong> is comparable to <strong>getinfo()</strong> used for the RAMSES files and loads detailed information about the simulation output:</p><pre><code class="language-julia hljs">info = infodata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:23.949
+  &quot;hydro&quot;     =&gt; Dict{Any, Any}(&quot;versions&quot;=&gt;Dict{Any, Any}(&quot;CodecZlib&quot;=&gt;Version…</code></pre><h2 id="Get-Info"><a class="docs-heading-anchor" href="#Get-Info">Get Info</a><a id="Get-Info-1"></a><a class="docs-heading-anchor-permalink" href="#Get-Info" title="Permalink"></a></h2><p>The following function <strong>infodata</strong> is comparable to <strong>getinfo()</strong> used for the RAMSES files and loads detailed information about the simulation output:</p><pre><code class="language-julia hljs">info = infodata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:14:12.588
 Use datatype: hydro
 Code: RAMSES
 output [300] summary:
@@ -316,11 +320,12 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: (&quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
 -------------------------------------------------------
+boundaries:       not periodic (&amp;BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
-=======================================================</code></pre><p>In this case, it loaded the <strong>InfoDataType</strong> from the <strong>hydro</strong> data. Choose a different stored <strong>datatype</strong> to get the info from:</p><pre><code class="language-julia hljs">info = infodata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, :particles);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:24.606
+=======================================================</code></pre><p>In this case, it loaded the <strong>InfoDataType</strong> from the <strong>hydro</strong> data. Choose a different stored <strong>datatype</strong> to get the info from:</p><pre><code class="language-julia hljs">info = infodata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, :particles);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:14:13.272
 Use datatype: particles
 Code: RAMSES
 output [300] summary:
@@ -354,38 +359,39 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: (&quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
 -------------------------------------------------------
+boundaries:       not periodic (&amp;BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
-=======================================================</code></pre><h2 id="Load-The-Data-from-JLD2"><a class="docs-heading-anchor" href="#Load-The-Data-from-JLD2">Load The Data from JLD2</a><a id="Load-The-Data-from-JLD2-1"></a><a class="docs-heading-anchor-permalink" href="#Load-The-Data-from-JLD2" title="Permalink"></a></h2><h3 id="Full-Data"><a class="docs-heading-anchor" href="#Full-Data">Full Data</a><a id="Full-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Full-Data" title="Permalink"></a></h3><pre><code class="language-julia hljs">gas = loaddata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, :hydro);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:24.707
+=======================================================</code></pre><h2 id="Load-The-Data-from-JLD2"><a class="docs-heading-anchor" href="#Load-The-Data-from-JLD2">Load The Data from JLD2</a><a id="Load-The-Data-from-JLD2-1"></a><a class="docs-heading-anchor-permalink" href="#Load-The-Data-from-JLD2" title="Permalink"></a></h2><h3 id="Full-Data"><a class="docs-heading-anchor" href="#Full-Data">Full Data</a><a id="Full-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Full-Data" title="Permalink"></a></h3><pre><code class="language-julia hljs">gas = loaddata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, :hydro);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:14:13.328
 Open Mera-file output_00300.jld2:
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-Memory used for data table :2.321106480434537 GB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">typeof(gas)</code></pre><pre><code class="nohighlight hljs">HydroDataType</code></pre><pre><code class="language-julia hljs">part = loaddata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, :particles);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:26.227
+Memory used for data table :2.321167668327689 GB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">typeof(gas)</code></pre><pre><code class="nohighlight hljs">HydroDataType</code></pre><pre><code class="language-julia hljs">part = loaddata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, :particles);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:14:14.487
 Open Mera-file output_00300.jld2:
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-Memory used for data table :38.44944095611572 MB
+Memory used for data table :38.51209735870361 MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">typeof(part)</code></pre><pre><code class="nohighlight hljs">PartDataType</code></pre><h3 id="Data-Range"><a class="docs-heading-anchor" href="#Data-Range">Data Range</a><a id="Data-Range-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Range" title="Permalink"></a></h3><p>Complete data is loaded, and the selected subregion is returned:</p><pre><code class="language-julia hljs">gas = loaddata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, :hydro,
                     xrange=[-10,10],
                     yrange=[-10,10], zrange=[-2,2],
                     center=[:boxcenter],
-                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:26.563
+                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:14:14.739
 Open Mera-file output_00300.jld2:
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-Memory used for data table :580.297945022583 MB
+Memory used for data table :580.3606014251709 MB
 -------------------------------------------------------</code></pre><h2 id="Convert-RAMSES-Output-Into-JLD2"><a class="docs-heading-anchor" href="#Convert-RAMSES-Output-Into-JLD2">Convert RAMSES Output Into JLD2</a><a id="Convert-RAMSES-Output-Into-JLD2-1"></a><a class="docs-heading-anchor-permalink" href="#Convert-RAMSES-Output-Into-JLD2" title="Permalink"></a></h2><p>Existing AMR, hydro, gravity, particle, and clump data is sequentially stored in a JLD2 file. The individual loading/writing processes are timed, and the memory usage is returned in a dictionary:</p><h3 id="Full-Data-2"><a class="docs-heading-anchor" href="#Full-Data-2">Full Data</a><a class="docs-heading-anchor-permalink" href="#Full-Data-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">cvd = convertdata(300, path=&quot;$MERA_EXAMPLES/RAMSES/mw_L10&quot;,
-                  fpath=&quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:51:28.685
+                  fpath=&quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:14:16.941
 Requested datatypes: [:hydro, :gravity, :particles, :clumps, :rt, :sinks]
 Max threads: 4 of 4 available
 Threading applied to: hydro, gravity, particles
@@ -399,10 +405,10 @@ reading/writing lmax: 10 of 10
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
 -----------------------------------
 - hydro (threaded: max_threads=4)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.28 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.29 ms/it)
 ✓ File processing complete! Combining results...
 - gravity (threaded: max_threads=4)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.60 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.81 ms/it)
 ✓ File processing complete! Combining results...
 - particles (threaded: max_threads=4)
 Final Statistics:
@@ -413,7 +419,7 @@ Final Statistics:
 - compressed file size: 2.158 GB
 - compression ratio: 0.38
 - data reduction: 62.0%
-- total processing time: 88.43 seconds
+- total processing time: 108.61 seconds
 - effective threads: 4</code></pre><h4 id="Timer"><a class="docs-heading-anchor" href="#Timer">Timer</a><a id="Timer-1"></a><a class="docs-heading-anchor-permalink" href="#Timer" title="Permalink"></a></h4><p>Get a view of the timers:</p><pre><code class="language-julia hljs">using Mera.TimerOutputs</code></pre><pre><code class="language-julia hljs">cvd</code></pre><pre><code class="nohighlight hljs">Dict{Any, Any} with 5 entries:
   &quot;threading&quot;    =&gt; Dict{Any, Any}(&quot;max_threads_requested&quot;=&gt;4, &quot;julia_version&quot;=…
   &quot;viewdata&quot;     =&gt; Dict{Any, Any}(&quot;particles&quot;=&gt;Dict{Any, Any}(&quot;versions&quot;=&gt;Dict…
@@ -422,64 +428,64 @@ Final Statistics:
   &quot;TimerOutputs&quot; =&gt; Dict{Any, Any}(&quot;writing&quot;=&gt;─────────────────────────────────…</code></pre><pre><code class="language-julia hljs">cvd[&quot;TimerOutputs&quot;][&quot;reading&quot;]</code></pre><pre><code class="nohighlight hljs">──────────────────────────────────────────────────────────────────────
                              Time                    Allocations
                     ───────────────────────   ────────────────────────
- Tot / % measured:       88.9s /  85.0%            100GiB /  95.1%
+ Tot / % measured:        109s /  67.4%            101GiB /  95.1%
 
 Section     ncalls     time    %tot     avg     alloc    %tot      avg
 ──────────────────────────────────────────────────────────────────────
-hydro            1    57.1s   75.6%   57.1s   76.1GiB   79.8%  76.1GiB
-gravity          1    17.0s   22.5%   17.0s   17.6GiB   18.4%  17.6GiB
-particles        1    1.39s    1.8%   1.39s   1.71GiB    1.8%  1.71GiB
+hydro            1    55.0s   74.9%   55.0s   76.1GiB   79.6%  76.1GiB
+gravity          1    16.9s   23.0%   16.9s   17.8GiB   18.6%  17.8GiB
+particles        1    1.60s    2.2%   1.60s   1.71GiB    1.8%  1.71GiB
 ──────────────────────────────────────────────────────────────────────</code></pre><pre><code class="language-julia hljs">cvd[&quot;TimerOutputs&quot;][&quot;writing&quot;]</code></pre><pre><code class="nohighlight hljs">──────────────────────────────────────────────────────────────────────
                              Time                    Allocations
                     ───────────────────────   ────────────────────────
- Tot / % measured:       88.9s /  14.0%            100GiB /   4.9%
+ Tot / % measured:        109s /  31.8%            101GiB /   4.8%
 
 Section     ncalls     time    %tot     avg     alloc    %tot      avg
 ──────────────────────────────────────────────────────────────────────
-gravity          1    7.11s   57.2%   7.11s   1.97GiB   40.5%  1.97GiB
-hydro            1    4.84s   38.9%   4.84s   2.85GiB   58.5%  2.85GiB
-particles        1    477ms    3.8%   477ms   52.3MiB    1.0%  52.3MiB
+gravity          1    18.2s   52.3%   18.2s   1.95GiB   40.5%  1.95GiB
+hydro            1    9.44s   27.2%   9.44s   2.81GiB   58.4%  2.81GiB
+particles        1    7.11s   20.5%   7.11s   54.2MiB    1.1%  54.2MiB
 ──────────────────────────────────────────────────────────────────────</code></pre><pre><code class="language-julia hljs"># prep timer
 to = TimerOutput();</code></pre><pre><code class="language-julia hljs">@timeit to &quot;MERA&quot; begin
     @timeit to &quot;hydro&quot;     gas = loaddata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, :hydro, )
     @timeit to &quot;particles&quot; part= loaddata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, :particles)
-end;</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:52:58.128
+end;</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:16:06.186
 Open Mera-file output_00300.jld2:
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-Memory used for data table :2.321106480434537 GB
+Memory used for data table :2.321167668327689 GB
 -------------------------------------------------------
-[Mera]: 2026-08-31T13:53:03.589
+[Mera]: 2026-10-25T09:16:06.959
 Open Mera-file output_00300.jld2:
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-Memory used for data table :38.44944095611572 MB
+Memory used for data table :38.51209735870361 MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">to</code></pre><pre><code class="nohighlight hljs">────────────────────────────────────────────────────────────────────────
                                Time                    Allocations
                       ───────────────────────   ────────────────────────
-  Tot / % measured:        6.04s /  92.3%           5.30GiB /  98.9%
+  Tot / % measured:        866ms /  91.0%           5.32GiB /  99.7%
 
 Section       ncalls     time    %tot     avg     alloc    %tot      avg
 ────────────────────────────────────────────────────────────────────────
-MERA               1    5.58s  100.0%   5.58s   5.24GiB  100.0%  5.24GiB
-  hydro            1    5.46s   97.9%   5.46s   5.16GiB   98.5%  5.16GiB
-  particles        1    115ms    2.1%   115ms   81.0MiB    1.5%  81.0MiB
+MERA               1    788ms  100.0%   788ms   5.30GiB  100.0%  5.30GiB
+  hydro            1    773ms   98.0%   773ms   5.22GiB   98.5%  5.22GiB
+  particles        1   15.6ms    2.0%  15.6ms   81.2MiB    1.5%  81.2MiB
 ────────────────────────────────────────────────────────────────────────</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; The reading from JLD2 files is multiple times faster than from the original RAMSES files. &lt;/div&gt;</p><h4 id="Used-Memory"><a class="docs-heading-anchor" href="#Used-Memory">Used Memory</a><a id="Used-Memory-1"></a><a class="docs-heading-anchor-permalink" href="#Used-Memory" title="Permalink"></a></h4><pre><code class="language-julia hljs">cvd[&quot;size&quot;]</code></pre><pre><code class="nohighlight hljs">Dict{Any, Any} with 4 entries:
   &quot;folder&quot;   =&gt; Any[6101111412, &quot;Bytes&quot;]
   &quot;selected&quot; =&gt; Any[6.09885e9, &quot;Bytes&quot;]
-  &quot;ondisc&quot;   =&gt; Any[2317448537, &quot;Bytes&quot;]
-  &quot;used&quot;     =&gt; Any[4.34515e9, &quot;Bytes&quot;]</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; The compressed JLD2 file takes a significantly smaller disk space than the original RAMSES folder.&lt;/div&gt;</p><pre><code class="language-julia hljs">factor = cvd[&quot;size&quot;][&quot;folder&quot;][1] / cvd[&quot;size&quot;][&quot;ondisc&quot;][1]
+  &quot;ondisc&quot;   =&gt; Any[2317580946, &quot;Bytes&quot;]
+  &quot;used&quot;     =&gt; Any[4.34535e9, &quot;Bytes&quot;]</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; The compressed JLD2 file takes a significantly smaller disk space than the original RAMSES folder.&lt;/div&gt;</p><pre><code class="language-julia hljs">factor = cvd[&quot;size&quot;][&quot;folder&quot;][1] / cvd[&quot;size&quot;][&quot;ondisc&quot;][1]
 println(&quot;==============================================================================&quot;)
 println(&quot;In this example, the disk space is reduced by a factor of $factor !!&quot;)
 println(&quot;==============================================================================&quot;)</code></pre><pre><code class="nohighlight hljs">==============================================================================
-In this example, the disk space is reduced by a factor of 2.632684745568527 !!
+In this example, the disk space is reduced by a factor of 2.632534333926993 !!
 ==============================================================================</code></pre><h3 id="Selected-Datatypes"><a class="docs-heading-anchor" href="#Selected-Datatypes">Selected Datatypes</a><a id="Selected-Datatypes-1"></a><a class="docs-heading-anchor-permalink" href="#Selected-Datatypes" title="Permalink"></a></h3><pre><code class="language-julia hljs">cvd = convertdata(300, [:hydro, :particles],
                   path=&quot;$MERA_EXAMPLES/RAMSES/mw_L10&quot;,
-                  fpath=&quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:53:03.969
+                  fpath=&quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:16:07.237
 Requested datatypes: [:hydro, :particles]
 Max threads: 4 of 4 available
 Threading applied to: hydro, gravity, particles
@@ -493,7 +499,7 @@ reading/writing lmax: 10 of 10
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
 -----------------------------------
 - hydro (threaded: max_threads=4)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (41.36 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (41.59 ms/it)
 ✓ File processing complete! Combining results...
 - particles (threaded: max_threads=4)
 Final Statistics:
@@ -504,13 +510,13 @@ Final Statistics:
 - compressed file size: 1.306 GB
 - compression ratio: 0.326
 - data reduction: 77.0%
-- total processing time: 75.32 seconds
+- total processing time: 79.61 seconds
 - effective threads: 4</code></pre><h3 id="What-survives-the-round-trip"><a class="docs-heading-anchor" href="#What-survives-the-round-trip">What survives the round trip</a><a id="What-survives-the-round-trip-1"></a><a class="docs-heading-anchor-permalink" href="#What-survives-the-round-trip" title="Permalink"></a></h3><p>A mera file stores the data <strong>table</strong>, not a reduced summary, so every column comes back exactly as it was read from RAMSES, including the ones that identify <em>what</em> a particle is. <code>:family</code> and <code>:tag</code> are ordinary columns and are written and read back unchanged, so particle-type selection works identically on a mera file and on the original output:</p><pre><code class="language-julia hljs">parts = loaddata(3, &quot;path/to/mera_files&quot;, :particles)
 getparticlemask(parts, :tracer)      # same result as on the RAMSES output
 getmask(parts, :family, ==(2.0))     # :family behaves like any other quantity</code></pre><p>This is worth knowing before converting a large run: the conversion is lossless for selection purposes, so you do not have to keep the original output around in order to separate dark matter from stars, or tracers from either. The same applies to the values themselves, a round trip reproduces the RAMSES read bit-for-bit, which is one of the properties Mera&#39;s own test suite asserts on every snapshot of a public fixture.</p><h2 id="Compression"><a class="docs-heading-anchor" href="#Compression">Compression</a><a id="Compression-1"></a><a class="docs-heading-anchor-permalink" href="#Compression" title="Permalink"></a></h2><p>Mera files are LZ4-compressed. This build runs on JLD2 0.6, whose compression is provided by JLD2Lz4, <strong>LZ4 is the only codec available</strong>. Passing <code>compress=true</code> (or leaving it out) gives you LZ4; passing <code>compress=false</code> writes uncompressed.</p><div class="admonition is-info" id="Other-compressors-are-accepted-but-substituted-f6050b9ba2b4fa58"><header class="admonition-header">Other compressors are accepted but substituted<a class="admonition-anchor" href="#Other-compressors-are-accepted-but-substituted-f6050b9ba2b4fa58" title="Permalink"></a></header><div class="admonition-body"><p>For backwards compatibility, <code>ZlibCompressor</code> and <code>Bzip2Compressor</code> are still accepted as arguments, but Mera warns and writes LZ4 instead, so do not choose one expecting a smaller file. The cells below demonstrate exactly that: watch for the warning in the output.</p></div></div><table><tr><th style="text-align: right">Argument</th><th style="text-align: right">What you get</th></tr><tr><td style="text-align: right"><code>compress=true</code> (or omitted)</td><td style="text-align: right">LZ4, the default</td></tr><tr><td style="text-align: right"><code>compress=false</code></td><td style="text-align: right">no compression</td></tr><tr><td style="text-align: right"><code>ZlibCompressor()</code> / <code>Bzip2Compressor()</code></td><td style="text-align: right">accepted, but <strong>substituted with LZ4</strong> and a warning</td></tr><tr><td style="text-align: right">any other JLD2-accepted filter</td><td style="text-align: right">passed through to JLD2 unchanged</td></tr></table><p>Passing a compressor Mera cannot use shows what happens, the call succeeds, the file is written, and the warning tells you the codec was swapped:</p><pre><code class="language-julia hljs">using Mera.CodecZlib
 cvd = convertdata(300, [:hydro, :particles], compress=ZlibCompressor(),
                   path=&quot;$MERA_EXAMPLES/RAMSES/mw_L10&quot;,
-                  fpath=&quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:54:19.669
+                  fpath=&quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:17:27.225
 Requested datatypes: [:hydro, :particles]
 Max threads: 4 of 4 available
 Threading applied to: hydro, gravity, particles
@@ -520,13 +526,13 @@ xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ┌ Warning: This Mera build (JLD2 0.6) supports LZ4 compression only — using LZ4 instead of ZlibCompressor.
-└ @ Mera ~/code-github/Mera.jl/src/functions/data/data_save.jl:281
+└ @ Mera ~/code-github/Mera.jl/src/functions/data/data_save.jl:321
 reading/writing lmax: 10 of 10
 -----------------------------------
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
 -----------------------------------
 - hydro (threaded: max_threads=4)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:25 (40.50 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.18 ms/it)
 ✓ File processing complete! Combining results...
 - particles (threaded: max_threads=4)
 Final Statistics:
@@ -537,9 +543,9 @@ Final Statistics:
 - compressed file size: 1.306 GB
 - compression ratio: 0.326
 - data reduction: 77.0%
-- total processing time: 71.66 seconds
+- total processing time: 70.63 seconds
 - effective threads: 4</code></pre><pre><code class="language-julia hljs">savedata(gas, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;,
-            fmode=:write, compress=ZlibCompressor());</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:55:31.362
+            fmode=:write, compress=ZlibCompressor());</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:18:37.894
 Create file: output_00300.jld2
 Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
 -----------------------------------
@@ -553,7 +559,7 @@ JLD2  0.6.5
 CodecBzip2  0.8.5
 CodecZlib  0.7.8
 CodecLz4  0.4.6
-Mera  1.8.0
+Mera  1.8.3
 -----------------------------------
 Memory size: 2.321 GB (uncompressed)
 Total file size: 1.275 GB
@@ -576,7 +582,7 @@ Total file size: 1.275 GB
   │  raw pointers.</code></pre><h2 id="Comments"><a class="docs-heading-anchor" href="#Comments">Comments</a><a id="Comments-1"></a><a class="docs-heading-anchor-permalink" href="#Comments" title="Permalink"></a></h2><p>Add a description to the files:</p><pre><code class="language-julia hljs">comment = &quot;The simulation is....&quot;
 cvd = convertdata(300, [:hydro, :particles], comments=comment,
                   path=&quot;$MERA_EXAMPLES/RAMSES/mw_L10&quot;,
-                  fpath=&quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:55:39.753
+                  fpath=&quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:18:50.666
 Requested datatypes: [:hydro, :particles]
 Max threads: 4 of 4 available
 Threading applied to: hydro, gravity, particles
@@ -590,7 +596,7 @@ reading/writing lmax: 10 of 10
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
 -----------------------------------
 - hydro (threaded: max_threads=4)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.23 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (41.15 ms/it)
 ✓ File processing complete! Combining results...
 - particles (threaded: max_threads=4)
 Final Statistics:
@@ -601,9 +607,9 @@ Final Statistics:
 - compressed file size: 1.306 GB
 - compression ratio: 0.326
 - data reduction: 77.0%
-- total processing time: 68.01 seconds
+- total processing time: 79.31 seconds
 - effective threads: 4</code></pre><pre><code class="language-julia hljs">comment = &quot;The simulation is....&quot;
-savedata(gas, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, comments=comment, fmode=:write);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-31T13:56:47.797
+savedata(gas, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, comments=comment, fmode=:write);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-10-25T09:20:10.009
 Create file: output_00300.jld2
 Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
 -----------------------------------
@@ -617,8 +623,8 @@ JLD2  0.6.5
 CodecBzip2  0.8.5
 CodecZlib  0.7.8
 CodecLz4  0.4.6
-Mera  1.8.0
+Mera  1.8.3
 -----------------------------------
 Memory size: 2.321 GB (uncompressed)
 Total file size: 1.275 GB
------------------------------------</code></pre><p>Load the comment (hydro) from JLD2 file:</p><pre><code class="language-julia hljs">vd = viewdata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, verbose=false);</code></pre><pre><code class="language-julia hljs">vd[&quot;hydro&quot;][&quot;comments&quot;]</code></pre><pre><code class="nohighlight hljs">&quot;The simulation is....&quot;</code></pre></article><nav class="docs-footer"><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. <a href="https://manuelbehrendt.github.io/Mera.jl/stable/privacy/">Privacy</a>: page views are counted without cookies or personal data.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Friday 23 October 2026 08:23">Friday 23 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+-----------------------------------</code></pre><p>Load the comment (hydro) from JLD2 file:</p><pre><code class="language-julia hljs">vd = viewdata(300, &quot;$MERA_EXAMPLES/MERA-FILES/JLD2_files/&quot;, verbose=false);</code></pre><pre><code class="language-julia hljs">vd[&quot;hydro&quot;][&quot;comments&quot;]</code></pre><pre><code class="nohighlight hljs">&quot;The simulation is....&quot;</code></pre></article><nav class="docs-footer"><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. <a href="https://manuelbehrendt.github.io/Mera.jl/dev/privacy/">Privacy</a>: page views are counted without cookies or personal data.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Sunday 25 October 2026 15:08">Sunday 25 October 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
