@@ -600,6 +600,11 @@ A result is worth more when you, a co-author or a referee can trace it back: whi
 which Mera version, which script. Mera records this for you; it costs a few lines a day.
 
 !!! tip "FAIR in 5 lines"
+    FAIR stands for Findable, Accessible, Interoperable and Reusable: results that others can
+    find, open with their own tools, and repeat. Mera does most of the work: every file it saves
+    gets a *sidecar*, a small `<file>.meta.json` next to it that records which snapshot, code and
+    package versions made the file.
+
     Start each analysis in its own folder: `meraproject("galaxy_paper")` makes it, then start
     Julia there with `julia --project=.` (the first time: `] instantiate`). The folder keeps its
     own list of package versions, so the sidecars can record exactly what ran. Then:
