@@ -42,7 +42,7 @@ cd(mktempdir())
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.3 | Julia 1.12.7 | 4 threads
+Mera v1.9.0 | Julia 1.12.7 | 4 threads
 ```
 
 ## Export a map

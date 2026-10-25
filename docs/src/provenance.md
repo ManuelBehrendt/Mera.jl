@@ -51,8 +51,8 @@ gas = gethydro(info, verbose=false, show_progress=false);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.3 | Julia 1.12.7 | 4 threads
-[Mera]: 2026-10-24T21:44:51.163
+Mera v1.9.0 | Julia 1.12.7 | 4 threads
+[Mera]: 2026-10-25T13:50:56.942
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -106,7 +106,7 @@ println(p)
 
 ```
 Provenance:
-  Mera version : v1.8.3
+  Mera version : v1.9.0
   simulation   : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   output       : 300  (RAMSES, written 2025-06-21T18:31:24.020)
   time         : 445.89 Myr
@@ -125,7 +125,7 @@ mera_build()
 ```
 
 ```
-"1.8.3"
+"1.9.0"
 ```
 
 On a normal install it is just the version, as above. A branch installed from GitHub
@@ -134,9 +134,9 @@ branch and the commit, and marks a working tree with uncommitted changes, becaus
 alone does not say what ran:
 
 ```
-Mera v1.8.3 (repo master @ tree 62c57b9) | mw_L10/output_00300 | 445.89 Myr | ...
-Mera v1.8.3 (dev master @ 3a91f2c) | mw_L10/output_00300 | 445.89 Myr | ...
-Mera v1.8.3 (dev my-feature @ 4f2a9c1 +uncommitted) | mw_L10/output_00300 | 445.89 Myr | ...
+Mera v1.9.0 (repo master @ tree 62c57b9) | mw_L10/output_00300 | 445.89 Myr | ...
+Mera v1.9.0 (dev master @ 3a91f2c) | mw_L10/output_00300 | 445.89 Myr | ...
+Mera v1.9.0 (dev my-feature @ 4f2a9c1 +uncommitted) | mw_L10/output_00300 | 445.89 Myr | ...
 ```
 
 This keeps a shared script honest about what produced it. The [Gallery](gallery.md) uses the
@@ -168,7 +168,7 @@ println("registered : ", mi.registered)
 
 ```
 source     : checkout
-registered : false
+registered : nothing
 ```
 
 This page is built from a checkout of the repository, so it says `:checkout`; on a normal
@@ -200,8 +200,8 @@ end
 ```
 
 ```
-mera_version = v"1.8.3"
-mera_build   = "1.8.3"
+mera_version = v"1.9.0"
+mera_build   = "1.9.0"
 path         = "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10"
 output       = 300
 simcode      = "RAMSES"
@@ -236,7 +236,7 @@ println("aexp           : ", pc.aexp)
 
 ```
 Provenance:
-  Mera version : v1.8.3
+  Mera version : v1.9.0
   simulation   : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/yt_cosmo
   output       : 80  (RAMSES, written 2026-06-01T07:42:48.561)
   time         : z=0.1426  (aexp=0.8752, age 11.925 Gyr)
@@ -258,8 +258,8 @@ println(provenance_string(cinfo))
 ```
 
 ```
-Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-Mera v1.8.3 | yt_cosmo/output_00080 | z=0.14256 | L=1.0 ndim=3 lmin=6 lmax=16 | ScalesType003
+Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+Mera v1.9.0 | yt_cosmo/output_00080 | z=0.14256 | L=1.0 ndim=3 lmin=6 lmax=16 | ScalesType003
 ```
 
 ## Where it applies
@@ -290,11 +290,11 @@ println("gravity    : ", provenance_string(grav))
 ```
 
 ```
-InfoType   : Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-map        : Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-pdf        : Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-particles  : Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-gravity    : Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+InfoType   : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+map        : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+pdf        : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+particles  : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+gravity    : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
 ```
 
 A plain value cannot know its snapshot: a [`getvar`](@ref) array, a [`timeseries`](@ref) table,
@@ -315,7 +315,7 @@ println("use the source instead : ", provenance_string(gas))
 
 ```
 ArgumentError: provenance: this Array carries no `.info`. Apply it to a data object (hydro/particles/gravity/clumps/RT), a projection map, a profile, phase or pdf of either, a galaxy frame, or an InfoType. For a result without it (a timeseries table, a pdf of a plain array, a getvar array), take provenance of the source data object.
-use the source instead : Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+use the source instead : Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
 ```
 
 ## Deterministic
