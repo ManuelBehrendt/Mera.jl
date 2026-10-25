@@ -31,15 +31,15 @@ Two features answer this:
     extra work, every time you save.
 
 !!! tip "FAIR in 5 lines"
-    Start Julia in the analysis folder with `julia --project=.` (the first time: `] add Mera`),
-    so the analysis has its own environment. Then:
+    Start each analysis in its own folder: `meraproject("galaxy_paper")` makes it, then start
+    Julia there with `julia --project=.` (the first time: `] instantiate`). Then:
 
     ```julia
     exportdata(m, "fig3.h5")                            # 1. saves write their sidecar by themselves
     save("fig3.png", fig); writesidecar("fig3.png", m)  # 2. a figure: one more line
     readsidecar("fig3.png")                             # 3. where a file came from
     sidecaroverview(".")                                # 4. all files of the analysis
-    citation(gas; file="software.bib")                  # 5. the exact versions to cite
+    bundle("."; simulation=info)                        # 5. before publishing: one record, and the BibTeX
     ```
 
     Nothing has to be switched on. Once per session Mera says when the record is weak, for
@@ -85,6 +85,9 @@ exportdata(m, "fig3_maps.h5"; length_unit=:kpc,
 ```
 
 ```
+[Mera] Hint: fig3_maps.h5.meta.json records where fig3_maps.h5 came from.
+             readsidecar("fig3_maps.h5") shows it; sidecar(false) stops writing them.
+             (shown once per session; verbose(false) silences Mera's messages)
 exportdata: T, sd → fig3_maps.h5  (+ fig3_maps.h5.meta.json)
 ```
 
@@ -215,7 +218,7 @@ r = readsidecar("fig3_maps.h5")
 
 ```
 Sidecar of fig3_maps.h5  (hdf5, projection)  data file: unchanged
-  written      2026-10-25 05:42 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-25 06:20 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
@@ -299,7 +302,7 @@ readsidecar("output_00300.jld2")
 
 ```
 Sidecar of output_00300.jld2  (jld2, mera_file)  data file: unchanged
-  written      2026-10-25 05:43 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-25 06:21 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
@@ -341,7 +344,7 @@ readsidecar("fig3.png")
 
 ```
 Sidecar of fig3.png  (png, figure)  data file: unchanged
-  written      2026-10-25 05:43 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-25 06:21 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
@@ -367,16 +370,16 @@ recs = sidecaroverview(".");
 10 sidecars in .
 file               kind        format  snapshot             time       written (UTC)     data file
 -----------------  ----------  ------  -------------------  ---------  ----------------  ---------
-cells.npz          namedtuple  npz     mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
-fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
-fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-25 05:42  present
-fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 05:42  present
-fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
-fig3_maps.npz      projection  npz     mw_L10/output_00300  445.9 Myr  2026-10-25 05:42  present
-fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
-fig3_sd.npy        projection  npy     mw_L10/output_00300  445.9 Myr  2026-10-25 05:42  present
-fig4_profile.csv   profile     csv     mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
-output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 05:43  present
+cells.npz          namedtuple  npz     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
+fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-10-25 06:21  present
+fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
+fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
+fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 06:21  present
+fig3_maps.npz      projection  npz     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
+fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
+fig3_sd.npy        projection  npy     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
+fig4_profile.csv   profile     csv     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
+output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 06:21  present
 ```
 
 ## Has a file changed?
@@ -645,6 +648,65 @@ citation(gas)
 citation("fig3.png"; file="software.bib");
 ```
 
+## One record for the whole folder
+
+Before the folder is published, [`bundle`](@ref) joins all its sidecars into one record,
+`ro-crate-metadata.json`. It is an [RO-Crate](https://www.researchobject.org/ro-crate/), the
+format that Zenodo and other repositories read: every file with its size and SHA-256, and for
+each file Mera wrote, what made it (the Mera version, the script and the snapshot). It also
+writes `software.bib` from [`citation`](@ref) and, with `simulation=`, the simulation record.
+Nothing is copied.
+
+```julia
+bundle("."; simulation=info, title="Sharing results example",
+       creators=["Behrendt, Manuel"], license="CC-BY-4.0")
+```
+
+```
+┌ Warning: These files changed after their sidecar was written: fig3_maps.csv. Write them again, or their recorded SHA-256 does not match.
+└ @ Mera ~/code-github/Mera.jl/src/functions/export/bundle.jl:213
+Bundle of .: 13 files, 10 with a sidecar, 1 snapshot, Mera 1.8.3
+  → ./ro-crate-metadata.json
+```
+
+```
+"./ro-crate-metadata.json"
+```
+
+The warning names the CSV that was edited above: `bundle` checks every file against the SHA-256
+in its sidecar before it records it.
+
+Authors, title and license can also live in an `analysis.toml` in the folder, so the call
+becomes `bundle("."; simulation=info)`. [`meraproject`](@ref) writes one when it starts a new
+analysis folder. One entry of the record, the action that wrote the figure:
+
+```julia
+crate = Mera.JSON3.read(read("ro-crate-metadata.json", String))
+Mera.JSON3.pretty(only(e for e in crate["@graph"] if e["@id"] == "#make-fig3.png"))
+```
+
+```
+{
+    "@id": "#make-fig3.png",
+    "@type": "CreateAction",
+    "name": "Mera wrote fig3.png",
+    "instrument": [
+        {
+            "@id": "#mera-1.8.3"
+        }
+    ],
+    "result": {
+        "@id": "fig3.png"
+    },
+    "object": [
+        {
+            "@id": "#snapshot-mw_L10_output_00300"
+        }
+    ],
+    "endTime": "2026-10-25T06:21:18.096"
+}
+```
+
 ## FITS
 
 FITS export needs the FITSIO package. It is not installed with Mera, since most users never write
@@ -672,11 +734,28 @@ CRVAL1 = 0.0498960498960822
 CDELT1 = 0.0997920997921645
 ```
 
-## Switching sidecars off
+## Why sidecars are on by default, and how to switch them off
+
+A record helps only if it exists when someone asks for it, often a year later. A feature that
+has to be switched on is mostly never switched on, so Mera writes the sidecar every time. It
+costs little:
+
+* it is small, about 5 KB per file;
+* it is quiet: the first sidecar of a session prints one short line saying what the new file is
+  and how to stop it, and after that only `exportdata` names it, in its usual line;
+* it never breaks a save: if the sidecar cannot be written, you get a warning and the data file
+  is still written.
+
+There are good reasons to switch them off. On a cluster that limits the number of files, every
+saved file now counts twice. And the sidecar records the simulation path (never the host name);
+if that should not be public, `anonymize=true` keeps only its last two parts.
 
 `sidecar=false` turns the sidecar off for one call. [`sidecar`](@ref) switches it for the whole
-session, like [`verbose`](@ref): `sidecar(false)` for none, `sidecar(nothing)` to return to each
-call's own keyword.
+session, like [`verbose`](@ref): `sidecar(false)` at the top of a script for none,
+`sidecar(nothing)` to return to each call's own keyword. To switch them off without changing a
+script, set the environment variable `MERA_SIDECAR=0`, for example in a cluster job script:
+`MERA_SIDECAR=0 julia analysis.jl`. The frames that `savemovie` writes with `save_frames` get no
+sidecar; the movie itself does.
 
 ```julia
 sidecar(false)
@@ -769,7 +848,8 @@ it, and publish it next to the results.
 - [ ] give each figure file its sidecar with `writesidecar`
 - [ ] check the folder with `sidecaroverview(dir; verify=true)`
 - [ ] use `anonymize=true` if the simulation path should not be public
-- [ ] put the data files, their sidecars and the scripts or notebooks in one record, e.g. on Zenodo
+- [ ] put the data files, their sidecars and the scripts or notebooks in one folder, run
+      `bundle` on it, and upload it, e.g. to Zenodo
 - [ ] describe the simulation with `simulationrecord`, and `datacite` if it is published too
 - [ ] cite the software with the BibTeX from `citation`
 - [ ] commit the `Project.toml` and `Manifest.toml` of the analysis (see [Reproducibility](reproducibility.md))

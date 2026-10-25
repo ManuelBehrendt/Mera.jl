@@ -600,15 +600,15 @@ A result is worth more when you, a co-author or a referee can trace it back: whi
 which Mera version, which script. Mera records this for you; it costs a few lines a day.
 
 !!! tip "FAIR in 5 lines"
-    Start Julia in the analysis folder with `julia --project=.` (the first time: `] add Mera`),
-    so the analysis has its own environment. Then:
+    Start each analysis in its own folder: `meraproject("galaxy_paper")` makes it, then start
+    Julia there with `julia --project=.` (the first time: `] instantiate`). Then:
 
     ```julia
     exportdata(m, "fig3.h5")                            # 1. saves write their sidecar by themselves
     save("fig3.png", fig); writesidecar("fig3.png", m)  # 2. a figure: one more line
     readsidecar("fig3.png")                             # 3. where a file came from
     sidecaroverview(".")                                # 4. all files of the analysis
-    citation(gas; file="software.bib")                  # 5. the exact versions to cite
+    bundle("."; simulation=info)                        # 5. before publishing: one record, and the BibTeX
     ```
 
     Nothing has to be switched on. Once per session Mera says when the record is weak, for
