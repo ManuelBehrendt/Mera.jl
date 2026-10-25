@@ -384,12 +384,12 @@ end
         @test cat2.tree isa Mera.StructureTree && length(cat2.tree.nodes) == 3
         @test cat2.tree.nodes[cat2.tree.roots[1]].n_subtree == 50
         @test cat2.meta.field == :rho
-        rm(out; force=true)
+        rm(out; force=true); rm(out * ".meta.json"; force=true)
         # appends .jld2 automatically; catalog without a tree round-trips too
         cat3 = Mera.ClumpCatalog(0, NamedTuple[], meta)         # tree === nothing
         base = tempname(); out3 = save_clumps(base, cat3)
         @test endswith(out3, ".jld2") && load_clumps(out3).tree === nothing
-        rm(out3; force=true)
+        rm(out3; force=true); rm(out3 * ".meta.json"; force=true)
     end
 end
 

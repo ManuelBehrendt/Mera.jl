@@ -35,11 +35,16 @@ and `Manifest.toml` and of the script that ran. It is JSON, so any language read
 recorded. `sidecar=false` on a call, or [`sidecar`](@ref)`(false)` for the whole session, turns
 it off.
 
+A figure is saved by the plotting package, so Mera does not see it: call
+[`writesidecar`](@ref) right after the save to give it the same record, taken from the results
+it shows. [`save_clumps`](@ref) writes a sidecar too; pass `source=` to record the snapshot.
+
 [`readsidecar`](@ref) prints one sidecar and checks that its data file still matches the recorded
 SHA-256; [`sidecaroverview`](@ref) lists every sidecar in a folder. The tutorial
 [Sharing results](../export_sidecars.md) shows them on a real simulation.
 
 ```@docs; canonical=false
+writesidecar
 readsidecar
 sidecaroverview
 SidecarRecord

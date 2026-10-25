@@ -96,7 +96,7 @@ Global switch controlling whether saves and exports write a sidecar `<file>.meta
 setting `true` or `false` overrides them all. Prefer [`sidecar`](@ref) to change it.
 
 ```julia
-sidecar(false)     # no sidecar files from savedata, savemap, savemovie, exportdata
+sidecar(false)     # no sidecar files from any save, export or writesidecar
 sidecar(nothing)   # hand control back to the per-call keywords
 ```
 """
@@ -168,6 +168,7 @@ export
     mera_install,
     exportdata,
     readsidecar,
+    writesidecar,
     sidecaroverview,
     SidecarRecord,
     simulationrecord,

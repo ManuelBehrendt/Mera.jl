@@ -37,7 +37,8 @@ end
     readsidecar(file; verify=true) -> SidecarRecord
 
 Read the sidecar of a file written by [`savedata`](@ref), [`savemap`](@ref),
-[`savemovie`](@ref) or [`exportdata`](@ref), and print a short summary in the REPL.
+[`savemovie`](@ref), [`save_clumps`](@ref), [`exportdata`](@ref) or [`writesidecar`](@ref), and
+print a short summary in the REPL.
 
 # Arguments
 - `file::String`: the data file (`fig3.h5`) or its sidecar (`fig3.h5.meta.json`).
@@ -57,7 +58,7 @@ r.status                            # :unchanged, :changed or :missing
 r.data["environment"]["julia_version"]
 ```
 
-See also [`sidecaroverview`](@ref), [`exportdata`](@ref), [`sidecar`](@ref).
+See also [`sidecaroverview`](@ref), [`writesidecar`](@ref), [`exportdata`](@ref), [`sidecar`](@ref).
 """
 function readsidecar(file::AbstractString; verify::Bool=true)
     sc, data_file = endswith(file, ".meta.json") ? (String(file), String(chop(file; tail=10))) :
@@ -130,21 +131,44 @@ catch
     nothing
 end
 
-function _sc_snapshot(d)
+# The sources of a sidecar: none, one, or a list (a figure with several panels).
+function _sc_sources(d)
     src = _sc_get(d, "source")
-    src === nothing && return "-"
+    src === nothing && return Any[]
+    return src isa AbstractVector ? filter(!isnothing, collect(src)) : Any[src]
+end
+
+function _sc_snapshot_of(src)
     path = _sc_get(src, "simulation_path")
     out = _sc_get(src, "output")
     name = path === nothing ? "?" : basename(rstrip(String(path), '/'))
     return out === nothing ? name : "$name/output_$(lpad(out, 5, '0'))"
 end
 
-function _sc_time(d)
-    t = _sc_get(d, "source", "time_myr")
+function _sc_time_of(src)
+    t = _sc_get(src, "time_myr")
     t === nothing && return "-"
-    z = _sc_get(d, "source", "redshift")
+    z = _sc_get(src, "redshift")
     z !== nothing && return "z=$(round(z, sigdigits=4))"
     return t >= 1000 ? "$(round(t / 1000, sigdigits=4)) Gyr" : "$(round(t, sigdigits=4)) Myr"
+end
+
+# "first .. last" when a file comes from several snapshots
+function _sc_span(f, d)
+    srcs = _sc_sources(d)
+    isempty(srcs) && return "-"
+    a, b = f(first(srcs)), f(last(srcs))
+    return a == b ? a : "$a .. $b"
+end
+
+_sc_snapshot(d) = _sc_span(_sc_snapshot_of, d)
+_sc_time(d) = _sc_span(_sc_time_of, d)
+
+function _sc_array_lines(r)
+    a = _sc_get(r, "arrays")
+    a === nothing && return String[]
+    return [string(k, (u = _sc_get(v, "unit")) === nothing ? "" : " [$u]", " ",
+                   join(_sc_get(v, "shape"), "×")) for (k, v) in pairs(a)]
 end
 
 _sc_written(d) = (w = _sc_get(d, "created_utc"); w === nothing ? "-" : replace(first(String(w), 16), 'T' => ' '))
@@ -161,11 +185,20 @@ function _sc_contents(d)
         o = _sc_get(r, "outputs")
         return ["$(_sc_get(r, "frames")) frames of $(_sc_get(r, "quantity")) [$(_sc_get(r, "unit"))], " *
                 "outputs $(first(o))..$(last(o))"]
+    elseif kind == "clump_catalog"
+        field = _sc_get(r, "finder", "field")
+        n = _sc_get(r, "clumps")
+        return ["$n clump$(n == 1 ? "" : "s")" *
+                (field === nothing ? "" : " of $field ≥ $(_sc_get(r, "finder", "threshold")) " *
+                                          "$(_sc_get(r, "finder", "threshold_unit"))")]
+    elseif kind in ("figure", "file")
+        m = _sc_get(r, "made_from")
+        m === nothing && return String[]
+        m isa AbstractVector && return ["made from $(length(m)) results"]
+        lines = _sc_array_lines(m)
+        return isempty(lines) ? ["made from a $(_sc_get(m, "type"))"] : lines
     end
-    a = _sc_get(r, "arrays")
-    a === nothing && return String[]
-    return [string(k, (u = _sc_get(v, "unit")) === nothing ? "" : " [$u]", " ",
-                   join(_sc_get(v, "shape"), "×")) for (k, v) in pairs(a)]
+    return _sc_array_lines(r)
 end
 
 _sc_status(s::Symbol) = s === :unchecked ? "present" : string(s)
@@ -182,17 +215,22 @@ function Base.show(io::IO, ::MIME"text/plain", r::SidecarRecord)
         println(io, "  written      ", _sc_written(d), " UTC by Mera ", _sc_get(env, "mera_build"), tag,
                 "; Julia ", _sc_get(env, "julia_version"), ", ", _sc_get(env, "julia_threads"), " threads")
     end
-    src = _sc_get(d, "source")
-    print(io, "  source       ")
-    if src === nothing
-        println(io, "not recorded")
-    elseif _sc_get(src, "complete") == true
-        println(io, _sc_get(src, "summary"))
-        println(io, "  simulation   ", _sc_get(src, "simulation_path"))
-    else
-        println(io, "incomplete (the InfoType had no simulation path)")
+    srcs = _sc_sources(d)
+    isempty(srcs) && println(io, "  source       not recorded")
+    for (k, src) in enumerate(srcs)
+        print(io, k == 1 ? "  source       " : "               ")
+        if _sc_get(src, "complete") == true
+            println(io, _sc_get(src, "summary"))
+            length(srcs) == 1 && println(io, "  simulation   ", _sc_get(src, "simulation_path"))
+        else
+            println(io, "incomplete (the InfoType had no simulation path)")
+        end
     end
     inp = _sc_get(d, "input_files")
+    if inp isa AbstractVector                       # several sources: name the first one's files
+        i = findfirst(!isnothing, inp)
+        inp = i === nothing ? nothing : inp[i]
+    end
     inp === nothing || println(io, "  input files  ", join(string.(keys(inp)), ", "), " (SHA-256 recorded)")
     scr = _sc_get(d, "analysis", "script")
     if scr !== nothing

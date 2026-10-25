@@ -305,6 +305,64 @@ _sidecar_json(file) = _J.read(read(Mera._sidecar_file(file), String))
         @test occursin("environment", sprint(show, MIME"text/plain"(), readsidecar(f("m.h5"))))
     end
 
+    @testset "writesidecar: any file, one or several sources" begin
+        wd = mktempdir()
+        png = joinpath(wd, "fig.png")
+        write(png, rand(UInt8, 100))                            # stands in for a saved figure
+        @test writesidecar(png, p; note="Figure 3", verbose=false) == png * ".meta.json"
+        sc = _sidecar_json(png)
+        @test sc["result"]["kind"] == "figure" && sc["result"]["format"] == "png"
+        @test sc["result"]["made_from"]["kind"] == "projection"
+        @test sc["result"]["made_from"]["arrays"]["sd"]["unit"] == "Msol_pc2"
+        @test sc["file"]["sha256"] == bytes2hex(open(Mera.SHA.sha256, png))
+        @test sc["source"]["complete"] == false && sc["note"] == "Figure 3"
+        @test haskey(sc, "analysis") && haskey(sc, "environment")
+        txt = sprint(show, MIME"text/plain"(), readsidecar(png))
+        @test occursin("(png, figure)", txt) && occursin("sd [Msol_pc2]", txt)
+
+        pdf2 = joinpath(wd, "panels.pdf")
+        write(pdf2, "x")
+        writesidecar(pdf2, [p, gas]; verbose=false)             # a figure with two panels
+        sc = _sidecar_json(pdf2)
+        @test sc["source"] isa AbstractVector && length(sc["source"]) == 2
+        @test sc["result"]["made_from"][2]["type"] == "HydroDataType"
+        @test sc["result"]["made_from"][2]["rows"] == length(gas.data)
+        @test occursin("made from 2 results", sprint(show, MIME"text/plain"(), readsidecar(pdf2)))
+
+        dat = joinpath(wd, "table.dat")
+        write(dat, "1 2 3")
+        writesidecar(dat; verbose=false)                        # no source: file and environment only
+        sc = _sidecar_json(dat)
+        @test sc["result"]["kind"] == "file" && sc["source"] === nothing
+        @test !haskey(sc["result"], "made_from")
+        @test occursin("source       not recorded", sprint(show, MIME"text/plain"(), readsidecar(dat)))
+        @test length(sidecaroverview(wd; verbose=false)) == 3
+
+        @test_throws ArgumentError writesidecar(joinpath(wd, "missing.png"), p)
+        try
+            sidecar(false)
+            rm(png * ".meta.json")
+            @test writesidecar(png, p; verbose=false) === nothing
+            @test !isfile(png * ".meta.json")
+        finally
+            sidecar(nothing)
+        end
+    end
+
+    @testset "save_clumps writes a sidecar" begin
+        cd_ = mktempdir()
+        meta = (dim=Symbol("3D"), field=:rho, threshold=1.0, threshold_unit=:nH, mass_unit=:Msol)
+        cat = Mera.ClumpCatalog(1, NamedTuple[(id=1, n_members=3, mass=2.0)], meta)
+        fn = save_clumps(joinpath(cd_, "clumps"), cat; source=gas, note="run A")
+        sc = _sidecar_json(fn)
+        @test sc["result"]["kind"] == "clump_catalog" && sc["result"]["clumps"] == 1
+        @test sc["result"]["finder"]["field"] == "rho" && sc["result"]["tree"] == false
+        @test sc["source"] !== nothing && sc["note"] == "run A"
+        @test occursin("1 clump of rho ≥ 1 nH", sprint(show, MIME"text/plain"(), readsidecar(fn)))
+        fn2 = save_clumps(joinpath(cd_, "plain"), cat; sidecar=false)
+        @test isfile(fn2) && !isfile(fn2 * ".meta.json")
+    end
+
     @testset "profile and phase carry info" begin
         @test profile(gas, :r_cylinder, :rho).info === gas.info
         @test profile(p, :sd).info === p.info

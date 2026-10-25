@@ -1844,21 +1844,41 @@ end
 #  Persistence to disk (full-fidelity JLD2)
 # =====================================================================================
 """
-    save_clumps(filename, cat::ClumpCatalog) -> String
+    save_clumps(filename, cat::ClumpCatalog; source=nothing, sidecar=true, anonymize=false,
+                note="", include_script=false) -> String
 
 Write a [`ClumpCatalog`](@ref) to `filename` as a JLD2 file (full fidelity — per-clump fields,
 boundedness, nested `subclumps`, the hierarchy `tree`, and `meta` are all preserved). A `.jld2`
 extension is appended if missing. Reload with [`load_clumps`](@ref). For a flat tabular export
 (CSV/DataFrame) use [`clumptable`](@ref) instead.
 
+# Keywords
+- `source = nothing`: the data object the catalogue was found in. A catalogue does not carry
+  its snapshot, so pass it to record the provenance in the sidecar.
+- `sidecar::Bool = true`: also write `<file>.meta.json` with the number of clumps, the finder
+  settings, the provenance and the environment. The global switch [`sidecar`](@ref) overrides
+  this keyword.
+- `anonymize::Bool = false`: in the sidecar, keep only the last two parts of the simulation path.
+- `note::String = ""`: a free text stored in the sidecar.
+- `include_script::Bool = false`: also store the full text of the running script in the sidecar.
+
+Returns the file name written, as a `String`.
+
 ```julia
-save_clumps("clumps_out100", cat)
+save_clumps("clumps_out100", cat; source=gas)
 cat2 = load_clumps("clumps_out100.jld2")
 ```
 """
-function save_clumps(filename::AbstractString, cat::ClumpCatalog)
+function save_clumps(filename::AbstractString, cat::ClumpCatalog; source=nothing, sidecar::Bool=true,
+                     anonymize::Bool=false, note::AbstractString="", include_script::Bool=false)
     fn = endswith(filename, ".jld2") ? String(filename) : filename * ".jld2"
     JLD2.jldsave(fn; meraclumps_version=1, catalog=cat)
+    if checksidecar(sidecar)
+        result = OrderedDict{String,Any}("kind" => "clump_catalog", "format" => "jld2",
+                     "layout" => "the Mera ClumpCatalog: reload with load_clumps",
+                     "clumps" => cat.nclumps, "tree" => cat.tree !== nothing, "finder" => cat.meta)
+        _write_sidecar(fn, result, source; anonymize=anonymize, note=note, include_script=include_script)
+    end
     return fn
 end
 

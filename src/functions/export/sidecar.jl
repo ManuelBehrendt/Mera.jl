@@ -230,3 +230,96 @@ function _read_sidecar_result(file::AbstractString)
         return OrderedDict{String,Any}()
     end
 end
+
+# ---- a sidecar for any file ----------------------------------------------------------
+#
+# Figures are saved by the plotting package, so Mera never sees them. `writesidecar` gives such a
+# file the same record, taken from the Mera results it was made from.
+
+const _FIGURE_FORMATS = ("png", "pdf", "svg", "eps", "jpg", "jpeg", "gif", "tif", "tiff", "webp")
+
+# Several sources of one file, e.g. the panels of a figure. The sidecar then holds a list.
+struct _SidecarSources
+    items::Vector{Any}
+end
+
+_sidecar_source(s::_SidecarSources; anonymize::Bool=false) =
+    Any[_sidecar_source(x; anonymize=anonymize) for x in s.items]
+
+function _sidecar_input_files(s::_SidecarSources)
+    files = Any[_sidecar_input_files(x) for x in s.items]
+    return all(isnothing, files) ? nothing : files
+end
+
+# What a source holds: its arrays and units when exportdata can describe it, else its type.
+function _sidecar_made_from(x)
+    try
+        return _export_meta(_exportset(x))
+    catch
+        d = OrderedDict{String,Any}("type" => string(nameof(typeof(x))))
+        x isa DataSetType && (d["rows"] = length(x.data))
+        return d
+    end
+end
+
+"""
+    writesidecar(file, source=nothing; note="", anonymize=false, include_script=false, verbose=true)
+
+Write the sidecar `<file>.meta.json` for a file that Mera did not write itself, typically a
+figure saved with Makie, PyPlot or Plots. The sidecar is the same as for [`exportdata`](@ref):
+the SHA-256 of the file, the provenance of the snapshot, the input files of the run, the
+analysis environment and script, and the Julia and Mera that ran.
+
+Call it right after the save:
+```julia
+save("fig3.png", fig)               # Makie
+writesidecar("fig3.png", p)         # p: the projection shown in the figure
+```
+
+# Arguments
+- `file::String`: an existing file.
+- `source`: the Mera result the file shows (a projection, profile, data object, movie or
+  `InfoType`), or a vector of them for a figure with several panels. With `nothing` the
+  sidecar still records the file, the analysis and the environment, but no snapshot.
+
+# Keywords
+- `note::String = ""`: a free text stored in the sidecar, e.g. "Figure 3 of the paper".
+- `anonymize::Bool = false`: keep only the last two parts of the simulation path.
+- `include_script::Bool = false`: also store the full text of the running script (or the code
+  cells of the notebook). Its name and SHA-256 are always recorded, when Julia knows the script.
+- `verbose::Bool = true`: print the sidecar's path.
+
+# Returns
+The sidecar's path as a `String`, or `nothing` when sidecars are switched off with
+[`sidecar`](@ref)`(false)` or the sidecar could not be written (a warning says why). An existing
+sidecar of the file is replaced.
+
+# Examples
+```julia
+writesidecar("fig3.png", p; note="Figure 3")
+writesidecar("evolution.pdf", [p10, p20, p30])   # one panel per snapshot
+readsidecar("fig3.png")                          # read it back
+```
+
+See also [`readsidecar`](@ref), [`sidecaroverview`](@ref), [`exportdata`](@ref).
+"""
+function writesidecar(file::AbstractString, source=nothing; note::AbstractString="",
+                      anonymize::Bool=false, include_script::Bool=false, verbose::Bool=true)
+    verbose = checkverbose(verbose)
+    isfile(file) || throw(ArgumentError("\"$file\" does not exist: save the file first, then write its sidecar"))
+    if !checksidecar(true)
+        verbose && println("Sidecars are switched off with sidecar(false): nothing written.")
+        return nothing
+    end
+    several = source isa Tuple || (source isa AbstractVector && !(eltype(source) <: Number))
+    items = several ? Any[s for s in source] : Any[source]
+    ext = lowercase(lstrip(last(splitext(file)), '.'))
+    result = OrderedDict{String,Any}("kind" => ext in _FIGURE_FORMATS ? "figure" : "file",
+                                     "format" => isempty(ext) ? nothing : ext)
+    made = Any[_sidecar_made_from(s) for s in items if s !== nothing]
+    isempty(made) || (result["made_from"] = several ? made : only(made))
+    src = several ? _SidecarSources(items) : source
+    sc = _write_sidecar(file, result, src; anonymize=anonymize, note=note, include_script=include_script)
+    verbose && sc !== nothing && println("Sidecar written → ", sc)
+    return sc
+end
