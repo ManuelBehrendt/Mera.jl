@@ -33,8 +33,10 @@ the run's `namelist.txt`, `makefile.txt`, `patches.txt` and `compilation.txt`, t
 CPU and thread count that ran, and the analysis around it: the SHA-256 of your `Project.toml`
 and `Manifest.toml` and of the script that ran. It is JSON, so any language reads it. The host name is never
 recorded. `sidecar=false` on a call, or [`sidecar`](@ref)`(false)` for the whole session, turns
-it off. Once per session Mera also says when a sidecar cannot record enough: when Julia runs in
-the shared environment instead of one for the analysis, or Mera has uncommitted changes.
+it off; so does the environment variable `MERA_SIDECAR=0`, without changing a script. The first
+sidecar of a session prints one line saying what the new file is. Once per session Mera also says
+when a sidecar cannot record enough: when Julia runs in the shared environment instead of one for
+the analysis, or Mera has uncommitted changes.
 
 A figure is saved by the plotting package, so Mera does not see it: call
 [`writesidecar`](@ref) right after the save to give it the same record, taken from the results
@@ -44,10 +46,17 @@ it shows. [`save_clumps`](@ref) writes a sidecar too; pass `source=` to record t
 SHA-256; [`sidecaroverview`](@ref) lists every sidecar in a folder. The tutorial
 [Sharing results](../export_sidecars.md) shows them on a real simulation.
 
+Before publishing, [`bundle`](@ref) joins the sidecars of an analysis folder into one
+[RO-Crate](https://www.researchobject.org/ro-crate/) record, `ro-crate-metadata.json`, with a
+`software.bib` to cite. [`meraproject`](@ref) starts a new analysis folder with its own
+environment, so the sidecars record exactly the packages that ran.
+
 ```@docs; canonical=false
 writesidecar
 readsidecar
 sidecaroverview
+bundle
+meraproject
 SidecarRecord
 SimulationRecord
 ```

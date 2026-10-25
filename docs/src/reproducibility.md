@@ -12,15 +12,15 @@ by a referee who has your script. That needs four things, and Mera supports each
     figure six months ago is difficult; recording it as you go costs nothing.
 
 !!! tip "FAIR in 5 lines"
-    Start Julia in the analysis folder with `julia --project=.` (the first time: `] add Mera`),
-    so the analysis has its own environment. Then:
+    Start each analysis in its own folder: `meraproject("galaxy_paper")` makes it, then start
+    Julia there with `julia --project=.` (the first time: `] instantiate`). Then:
 
     ```julia
     exportdata(m, "fig3.h5")                            # 1. saves write their sidecar by themselves
     save("fig3.png", fig); writesidecar("fig3.png", m)  # 2. a figure: one more line
     readsidecar("fig3.png")                             # 3. where a file came from
     sidecaroverview(".")                                # 4. all files of the analysis
-    citation(gas; file="software.bib")                  # 5. the exact versions to cite
+    bundle("."; simulation=info)                        # 5. before publishing: one record, and the BibTeX
     ```
 
     Nothing has to be switched on. Once per session Mera says when the record is weak, for
@@ -68,6 +68,11 @@ The difference between them matters:
 
 **`Manifest.toml` is what makes a result reproducible.** Keep it next to your script and commit it
 to version control.
+
+Mera can also start the folder for you: `meraproject("my_analysis")` writes a `Project.toml`
+with the Mera you run now, a first `analysis.jl`, an `analysis.toml` for the title, authors and
+license, and a short README. `] instantiate` in that folder then installs Mera there and writes
+the `Manifest.toml`.
 
 ## Start Julia in the project
 
@@ -176,6 +181,14 @@ record of what it did, so publish it next to the results.
 To read one back, `readsidecar("fig3.h5")` prints it and says whether `fig3.h5` still matches the
 SHA-256 it was written with; `sidecaroverview("results/")` lists every sidecar in a folder.
 `sidecar=false` turns them off for one call; [`sidecar`](@ref)`(false)` for the session.
+
+**Why they are on by default.** A record helps only if it exists when someone asks for it, often
+a year later, and a feature that has to be switched on is mostly never switched on. A sidecar
+costs little: about 5 KB, one short line the first time a session writes one, and it never
+breaks a save, since a sidecar that cannot be written becomes a warning. Switch them off with
+`sidecar(false)` at the top of a script when the number of files matters, for example on a
+cluster with a file quota, or without touching the script: `MERA_SIDECAR=0 julia analysis.jl`.
+Use `anonymize=true` when the simulation path should not be public.
 Once per session Mera also says when a sidecar cannot record enough: when Julia runs in the
 shared environment instead of one for the analysis, or Mera itself has uncommitted changes.
 [Sharing results](export_sidecars.md) walks through all of it on a real simulation.
@@ -281,5 +294,6 @@ Two places to watch on a periodic run, because neither wraps:
 - [ ] the scripts or notebooks that made the results are published next to them
 - [ ] every figure file has a sidecar (`writesidecar` right after the save)
 - [ ] the software is cited at its exact version (`citation(gas)` gives the BibTeX)
+- [ ] the published folder has its `ro-crate-metadata.json` (`bundle(".")`)
 - [ ] for camera views, the viewing vectors (`m.los`, `m.up`, or the `angmom` axis) are saved too
 - [ ] the simulation output and its path are named in the script, not typed by hand each run
