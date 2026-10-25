@@ -9,7 +9,8 @@
 This file is a compact grounding for an AI assistant. It is not a tutorial. It states the data
 model, the vocabulary, the mistakes that are easy to make, and how to check that an answer is
 right. Everything below was verified against Mera 1.8. Versions before 1.8 have none of the region
-values, `filterdata` or the off-axis features named here.
+values, `filterdata` or the off-axis features named here. Items marked (1.9) need Mera 1.9 or later:
+`exportdata`, the sidecar files and the functions around them.
 
 ## Data model
 
@@ -148,6 +149,16 @@ These are mistakes an assistant makes confidently. Each was reproduced.
 11. **`getvar(grav, :epot)` is corrected, the raw column is not.** RAMSES stores the potential short
    by a factor `boxlen`; `getvar` multiplies it back. The raw column `grav.data.epot`, and so
    `@where`/`@apply` on it, holds RAMSES's uncorrected value.
+12. **(1.9) Every save writes a second file.** `savedata`, `savemap`, `savemovie`, `save_clumps`,
+   `exportdata` and `batch_convert_mera` put a sidecar `<file>.meta.json` next to the file. Code that
+   reads every file in a folder must filter by extension:
+   `filter(endswith(".jld2"), readdir(dir))`, not `readdir(dir)`.
+13. **(1.9) h5py shows exported maps transposed.** Julia arrays are column-major, so a Julia
+   `nx × ny` map has shape `(ny, nx)` in h5py: use `f["sd"][:].T`. NumPy files from `exportdata`
+   are written in Fortran order and need no transpose.
+14. **(1.9) A `getvar` array does not know its snapshot, and a figure is not seen by Mera.**
+   `exportdata(values, file; source=gas)` records the provenance of plain arrays. A figure saved
+   with Makie or PyPlot gets its record from `writesidecar("fig.png", m)` right after the save.
 
 ## Write it so a person can read it
 
@@ -193,9 +204,33 @@ pixel size, the viewing angle or the thread count changes.
     mera_build()              # distinguishes a registry install from a checkout of a branch
 
 `pkgversion` reports the same string for a release and for a development checkout, so a result from
-a branch looks like a result from the release unless `mera_build` is used. Saved maps and reports
-carry provenance with them. For a shared analysis, pin the environment in a `Project.toml` next to
-the script and commit the `Manifest.toml` that `instantiate` produces.
+a branch looks like a result from the release unless `mera_build` is used. `mera_install()` gives
+the full record: registry, branch, checkout or path install, and whether the code is exactly the
+registered release. Saved maps and reports carry provenance with them. For a shared analysis, pin
+the environment in a `Project.toml` next to the script and commit the `Manifest.toml` that
+`instantiate` produces; `meraproject("my_analysis")` (1.9) starts such a folder.
+
+**(1.9) The record on disk.** The same record exists at three levels: `provenance(obj)` in memory,
+a sidecar next to every saved file, and `bundle` for a whole folder.
+
+    exportdata(m, "fig3.h5"; note="Figure 3")     # .h5 .jld2 .csv .npy .npz .json, .fits after using FITSIO
+    save("fig3.png", fig); writesidecar("fig3.png", m)
+    readsidecar("fig3.h5")                         # prints it; .status says if the file changed
+    sidecaroverview(".")                           # one line per file in a folder
+    citation(gas; file="software.bib")             # Mera at its version, plus the RAMSES papers
+    bundle("."; simulation=info)                   # ro-crate-metadata.json, software.bib, simulation.json
+    simulationrecord(info); datacite(rec; creators=..., title=..., license=...)
+
+A sidecar holds the snapshot's provenance, the units, the file's SHA-256, the SHA-256 of the run's
+namelist and makefile, the analysis environment (Project.toml and Manifest.toml SHA-256, the script
+by name and SHA-256) and the Julia, Mera and thread count that ran; never the host name, and with
+`anonymize=true` only the last two parts of the simulation path. Sidecars are on by default;
+`sidecar(false)` or the environment variable `MERA_SIDECAR=0` turns them off. A failed sidecar is a
+warning, never a failed save.
+
+Threads: a result repeats bit for bit at the same thread count. Across thread counts reading and
+axis-aligned projections stay identical, while off-axis, particle and volume maps differ only at
+round-off.
 
 ## Also in Mera
 
@@ -223,5 +258,7 @@ cubes, kinematic mock observations and their FITS export, a fly-through renderer
 - Profiles and phase diagrams: https://manuelbehrendt.github.io/Mera.jl/stable/15_multi_Profiles_Phase/
 - Find the right function by task: https://manuelbehrendt.github.io/Mera.jl/stable/where_to_start/
 - Reproducibility: https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/
+- Exporting data for other tools (1.9): https://manuelbehrendt.github.io/Mera.jl/stable/exporting_data/
+- Sidecars, citing and publishing (1.9): https://manuelbehrendt.github.io/Mera.jl/stable/export_sidecars/
 - Complete worked recipes: https://manuelbehrendt.github.io/Mera.jl/stable/gallery/
 - Full API: https://manuelbehrendt.github.io/Mera.jl/stable/api/
