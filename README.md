@@ -146,15 +146,15 @@ GitHub Actions) and uploaded to Codecov; see [Testing](#testing) below and the
   [Notifications](https://manuelbehrendt.github.io/Mera.jl/stable/notifications/)
 - **The whole analysis is here**: regions, units, projections, profiles, phase diagrams, PDFs, clump
   finding, star formation, time series, movies and export.
-- **Every result remembers where it came from**: the version of Mera, the exact code it ran on and
-  the snapshot you used. Fifteen public test simulations with known answers let you check your own
-  installation.
-  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/)
-- **Every saved file says where it came from** *(from 1.9)*. Next to each file Mera writes, a small
-  readable `.meta.json` records the snapshot, the units, the SHA-256 of the file, your script and
-  your package versions, with no extra work. Before you publish, one call turns the folder into a
-  single record that Zenodo reads, with the BibTeX of the exact versions you used.
-  [Sharing results](https://manuelbehrendt.github.io/Mera.jl/dev/export_sidecars/)
+- **Every result remembers where it came from, and so does every file you save**: the version of
+  Mera, the exact code it ran on and the snapshot you used. *From 1.9* each file Mera writes gets a
+  small readable `.meta.json` next to it, with the units, the file's SHA-256, your script and your
+  package versions. Before you publish, one call turns the folder into a single record that Zenodo
+  reads, with the BibTeX of the exact versions you used. These are the records that guidelines for
+  FAIR data (findable, accessible, interoperable, reusable) ask for, written without extra work.
+  Fifteen public test simulations with known answers let you check your own installation.
+  [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/) ·
+  [Sharing Results & Sidecars](https://manuelbehrendt.github.io/Mera.jl/dev/export_sidecars/)
 - **Bring your own hydro code.** Readers plug into a registry, so a reader written in your own
   package works with the whole analysis without changing Mera.
   [Adding a reader](https://manuelbehrendt.github.io/Mera.jl/stable/adding_a_reader/)
@@ -339,7 +339,7 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 - **Sidecar files** *(from 1.9)*: every save and export writes a readable `<file>.meta.json`;
   `writesidecar` adds one to a figure, `readsidecar` and `sidecaroverview` read them back and
   notice files changed since
-- **`bundle` / `meraproject` / `citation`** *(from 1.9)*: an analysis folder with its own
+- **`meraproject` / `bundle` / `citation`** *(from 1.9)*: an analysis folder with its own
   environment from the start, one RO-Crate record of it before publishing, and the BibTeX of
   Mera and the RAMSES papers your run needs
 - **`simulationrecord` / `datacite`** *(from 1.9)*: describe a simulation (code, resolution,
