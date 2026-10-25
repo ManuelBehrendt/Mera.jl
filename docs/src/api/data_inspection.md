@@ -76,6 +76,7 @@ mera_install
 simulationrecord
 writesimulationrecord
 datacite
+citation
 quicklook
 quicklookplot
 ```

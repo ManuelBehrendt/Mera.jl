@@ -60,6 +60,29 @@ const _J91 = Mera.JSON3
         @test_throws ArgumentError datacite(rec2; toml=nothing)              # no file read: no title
     end
 
+    @testset "citation: Mera at its version, from a file's sidecar (data-free)" begin
+        v = string(pkgversion(Mera))
+        c = citation()
+        @test c isa Text
+        bib = string(c)
+        @test occursin("@software{Mera_$(replace(v, '.' => '_'))", bib)
+        @test occursin("version = {$v}", bib) && occursin("doi     = {10.5281/zenodo.3675254}", bib)
+        @test count("@", bib) == 1                                         # Mera alone
+        d = mktempdir()
+        @test string(citation(; file=joinpath(d, "mera.bib"))) == read(joinpath(d, "mera.bib"), String)
+        gas = synthetic_clumps(; lmax=4).gas
+        f = joinpath(d, "fig.png"); write(f, "png")
+        writesidecar(f, gas; verbose=false)
+        @test occursin("version = {$v}", string(citation(f)))
+        @test_throws ArgumentError citation(42)
+        @test_throws ArgumentError citation(joinpath(d, "nosidecar.png"))
+        # the code's papers follow the physics the run used
+        @test length(Mera._code_papers("RAMSES", Dict("mhd" => false, "radiative_transfer" => false))) == 1
+        @test occursin("Rosdahl2013", join(Mera._code_papers("RAMSES", Dict("radiative_transfer" => true))))
+        @test occursin("Fromang2006", join(Mera._code_papers("ramses", Dict("mhd" => true))))
+        @test isempty(Mera._code_papers("SOMECODE", nothing)) && isempty(Mera._code_papers(nothing, nothing))
+    end
+
     if !DATA_AVAILABLE
         @test_skip "Simulation data not available"
     else
@@ -100,6 +123,17 @@ const _J91 = Mera.JSON3
             @test m["sizes"][1] == "43 outputs"
             @test any(d -> d["descriptionType"] == "TechnicalInfo" && occursin("43 outputs", d["description"]),
                       m["descriptions"])
+        end
+
+        @testset "citation: the papers of the run's code and physics (data)" begin
+            for (key, papers) in ((:spiral_clumps, ["Teyssier2002"]),
+                                  (:rt_stromgren, ["Teyssier2002", "Rosdahl2013"]),
+                                  (:ramses_mhd, ["Teyssier2002", "Fromang2006"]))
+                ds = DATASETS[key]
+                bib = string(citation(getinfo(ds.output, ds.path; verbose=false)))
+                found = [m.captures[1] for m in eachmatch(r"@article\{(\w+),", bib)]
+                @test found == papers
+            end
         end
     end
 end
