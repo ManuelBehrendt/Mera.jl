@@ -13,7 +13,8 @@ by a referee who has your script. That needs four things, and Mera supports each
 
 !!! tip "FAIR in 5 lines"
     Start each analysis in its own folder: `meraproject("galaxy_paper")` makes it, then start
-    Julia there with `julia --project=.` (the first time: `] instantiate`). Then:
+    Julia there with `julia --project=.` (the first time: `] instantiate`). The folder keeps its
+    own list of package versions, so the sidecars can record exactly what ran. Then:
 
     ```julia
     exportdata(m, "fig3.h5")                            # 1. saves write their sidecar by themselves
@@ -23,10 +24,8 @@ by a referee who has your script. That needs four things, and Mera supports each
     bundle("."; simulation=info)                        # 5. before publishing: one record, and the BibTeX
     ```
 
-    Nothing has to be switched on. The first save of a session prints one line naming the new
-    sidecar. If Julia runs without a project of its own, Mera says so once: the sidecar then
-    records the shared environment, which changes with every package you add anywhere, so it
-    cannot tell which versions made your result. The rest of this page explains each part.
+    Nothing else has to be switched on. If you skip the first step, Mera reminds you once.
+    The rest of this page explains each part.
 
 | what you need | how |
 |---|---|
