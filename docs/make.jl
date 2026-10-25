@@ -146,6 +146,7 @@ makedocs(modules = [Mera],
                               "Statistics (PDFs)"           => "statistics.md",
                               "Profiles & Phase Diagrams"   => "15_multi_Profiles_Phase.md",
                               "Provenance"                  => "provenance.md",
+                              "Exporting Data"              => "exporting_data.md",
                               "Sharing Results & Sidecars"  => "export_sidecars.md"],
                           "Structure Finding" => Any[
                               "Clump Finding"               => "clumpfind.md",

@@ -334,7 +334,8 @@ If you already know what you want to compute:
 | cut out a spatial region | [Get Subregions](03_hydro_Get_Subregions.md) |
 | compute masses and other quantities | [Basic Calculations](04_multi_Basic_Calculations.md) |
 | store or share a snapshot | [MERA Files](07_multi_Mera_Files.md) |
-| hand results to Python, or publish them with their record | [Sharing Results & Sidecars](export_sidecars.md) |
+| hand a map or profile to Python or another tool | [Exporting Data](exporting_data.md) |
+| publish results with the record of where they came from | [Sharing Results & Sidecars](export_sidecars.md) |
 | make it faster | [Multi-Threading](multi-threading/multi-threading_intro.md) |
 | know what it costs before you run it | [Performance](benchmarks/performance.md) |
 | look up a function | [Complete API](api.md) |

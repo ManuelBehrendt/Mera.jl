@@ -315,7 +315,8 @@ heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
 - **`upgrade_merafile`**: bring a MERA file written by an older version up to date
 - **`export_vtk`**: write AMR cells / particles to VTK for ParaView/VisIt
 - **`exportdata`** *(from 1.9)*: a map, profile, phase diagram, table or movie as HDF5, CSV,
-  NumPy (`.npy`/`.npz`), JSON or FITS, for Python and other tools
+  NumPy (`.npy`/`.npz`), JSON or FITS, for Python and other tools.
+  [Exporting data](https://manuelbehrendt.github.io/Mera.jl/dev/exporting_data/)
 
 ### Quick looks and reports
 - **`quicklook`**: point it at a snapshot you have never seen. Budgeted read, maps along all three

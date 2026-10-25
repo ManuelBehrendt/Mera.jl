@@ -16,6 +16,14 @@ Mera version, what units produced this?* `provenance` answers it. It reads the m
 Mera result already carries (its `InfoType`) and returns a compact, **deterministic** record.
 You can print it, compare it in a test, or put it on a figure or into a log.
 
+Mera keeps one record of where a result came from, at three levels:
+
+| level | the record | page |
+|:--|:--|:--|
+| one object | `provenance(gas)`, carried in memory by every Mera result | [Provenance](provenance.md) |
+| one file | a sidecar, `<file>.meta.json`, next to every file Mera saves | [Sharing Results & Sidecars](export_sidecars.md) |
+| one folder | `bundle(".")`, one record of a whole analysis, for publishing | [Sharing Results & Sidecars](export_sidecars.md#One-record-for-the-whole-folder) |
+
 !!! note "One part of a larger picture"
     A provenance record says what produced a number. It does not, by itself, let someone rebuild
     the software that produced it. For that you also need the package versions pinned in a Julia
@@ -137,10 +145,20 @@ same line in its attribution block, so a reader can tell a released Mera from so
 Set `MERA_PROVENANCE_PLAIN=1` to force the plain version. These pages are rendered that way, so
 they show a release rather than the checkout the documentation was built from.
 
-[`mera_install`](@ref) gives the full record: how Mera was installed (`:registry`,
-`:repository`, `:checkout` or `:path`), the branch or commit where that applies, and `registered`,
-which compares the code's content hash with the one the Julia registry stores for this version.
-`true` means the code is exactly the registered release, also when it came from a branch.
+[`mera_install`](@ref) gives the full record: how Mera was installed, the branch or commit where
+that applies, and whether the code is exactly the registered release.
+
+| `source` | installed with |
+|:--|:--|
+| `:registry` | `pkg> add Mera` |
+| `:repository` | `pkg> add Mera#master`, or a URL with a branch |
+| `:checkout` | a git checkout, `pkg> dev Mera` |
+| `:path` | a local folder without git |
+
+`registered` compares the code's content hash with the one the Julia registry stores for this
+version: `true` means the code is exactly the registered release, also when it came from a branch;
+`false` means it differs or has uncommitted changes; `nothing` means unknown, for example when the
+local copy of the registry is older than the version.
 
 ```julia
 mi = mera_install()

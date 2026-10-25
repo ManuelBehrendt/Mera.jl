@@ -5,23 +5,26 @@
      Any edit here is lost the next time the docs are rendered. -->
 ```
 
-# Sharing results: export and sidecars
+# Sharing results: sidecars
 
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook**: [open / download `export_sidecars.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/export_sidecars.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-A figure is finished, and then the questions start. A co-author works in Python and wants the map.
-The journal, or a Zenodo record, asks for the data behind Figure 3. And a year later someone asks
-which snapshot, which units and which Mera version produced it.
+A year after a paper, someone asks which snapshot, which units and which Mera version produced
+Figure 3. Every file Mera writes for you answers that by itself: next to it sits a **sidecar**, a
+small readable `<file>.meta.json` with what the file holds, where its data came from and what ran.
+This page shows the sidecar and how to read it back, how to give a figure one, and how to turn a
+whole folder into one record for publishing. [Exporting Data](exporting_data.md) covers the file
+formats themselves.
 
-Two features answer this:
+Mera keeps one record of where a result came from, at three levels:
 
-* [`exportdata`](@ref) writes a Mera result as plain arrays that other tools read directly:
-  HDF5, CSV, NumPy, JSON or FITS.
-* Every file that Mera writes for you gets a **sidecar**, a small readable `<file>.meta.json`
-  next to it. It records what the file holds and in which units, where the data came from, and
-  what ran.
+| level | the record | page |
+|:--|:--|:--|
+| one object | `provenance(gas)`, carried in memory by every Mera result | [Provenance](provenance.md) |
+| one file | a sidecar, `<file>.meta.json`, next to every file Mera saves | [Sharing Results & Sidecars](export_sidecars.md) |
+| one folder | `bundle(".")`, one record of a whole analysis, for publishing | [Sharing Results & Sidecars](export_sidecars.md#One-record-for-the-whole-folder) |
 
 !!! note "Why this matters"
     Reproducible work needs more than the final figure. Guidelines for FAIR simulation data
@@ -57,6 +60,13 @@ gas  = gethydro(info, verbose=false, show_progress=false);
 # All files of this page go to a fresh folder, and the page works inside it.
 # In your own work this is a folder next to your script, e.g. "results/".
 cd(mktempdir())
+
+# A map and two exported files to work with; Exporting Data explains the formats.
+m = projection(gas, [:sd, :T], [:Msol_pc2, :K]; pxsize=[100., :pc],
+               verbose=false, show_progress=false)
+exportdata(m, "fig3_maps.h5"; length_unit=:kpc,
+           note="Figure 3: gas surface density and temperature")
+exportdata(m, "fig3_maps.csv"; length_unit=:kpc, verbose=false)
 ```
 
 ```
@@ -68,23 +78,6 @@ cd(mktempdir())
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.3 | Julia 1.12.7 | 4 threads
-```
-
-## Export a map
-
-A projection is exported with all its maps, plus the pixel centres `x` and `y`. `length_unit`
-sets the unit of those coordinates; without it they are in code units. `note` is a free text
-that goes into the sidecar.
-
-```julia
-m = projection(gas, [:sd, :T], [:Msol_pc2, :K]; pxsize=[100., :pc],
-               verbose=false, show_progress=false)
-
-exportdata(m, "fig3_maps.h5"; length_unit=:kpc,
-           note="Figure 3: gas surface density and temperature")
-```
-
-```
 [Mera] Hint: fig3_maps.h5.meta.json records where fig3_maps.h5 came from.
              readsidecar("fig3_maps.h5") shows it; sidecar(false) stops writing them.
              (shown once per session; verbose(false) silences Mera's messages)
@@ -92,111 +85,7 @@ exportdata: T, sd → fig3_maps.h5  (+ fig3_maps.h5.meta.json)
 ```
 
 ```
-"fig3_maps.h5"
-```
-
-Two files were written, the data and its sidecar:
-
-```julia
-readdir()
-```
-
-```
-2-element Vector{String}:
- "fig3_maps.h5"
- "fig3_maps.h5.meta.json"
-```
-
-## Which format
-
-The extension of the file name selects the format.
-
-| extension | holds | good for |
-|:--|:--|:--|
-| `.h5`, `.hdf5` | all arrays, each with a `unit` attribute | Python (h5py), IDL, MATLAB, archives |
-| `.jld2` | all arrays, readable with h5py | Julia users who still want plain arrays |
-| `.csv` | one row per pixel of a map, or per bin of a profile | spreadsheets, pandas, quick looks |
-| `.npy` | exactly one array | numpy |
-| `.npz` | all arrays | numpy |
-| `.json` | all arrays, for small results (at most 10⁶ values) | web tools, small tables |
-| `.fits` | one image per map, with a linear WCS | DS9, astropy; needs `using FITSIO` |
-
-`vars` picks some of the arrays; the coordinates are always kept. A `.npy` file holds one array,
-so it needs `vars` when the projection has more than one map.
-
-```julia
-exportdata(m, "fig3_sd.npy"; vars=:sd)
-exportdata(m, "fig3_maps.npz")
-exportdata(m, "fig3_maps.csv"; length_unit=:kpc)
-
-# the CSV has one row per pixel, x running fastest
-foreach(println, first(eachline("fig3_maps.csv"), 3))
-```
-
-```
-exportdata: sd → fig3_sd.npy  (+ fig3_sd.npy.meta.json)
-exportdata: T, sd → fig3_maps.npz  (+ fig3_maps.npz.meta.json)
-exportdata: T, sd → fig3_maps.csv  (+ fig3_maps.csv.meta.json)
-x,y,T,sd
-0.049896049896082234,0.049896049896082234,459791.19681345526,0.0006336270014472903
-0.1496881496882467,0.049896049896082234,459791.19681345526,0.0006336270014472903
-```
-
-## Reading it in Python
-
-The files need neither Julia nor Mera. One thing to know: Julia stores arrays column by column,
-and HDF5 readers in C order, such as h5py, show the axes reversed. A Julia `nx × ny` map has
-shape `(ny, nx)` in h5py. NumPy files are written in Fortran order, so there `a[i, j]` is
-`A[i+1, j+1]` in Julia and no transpose is needed. The sidecar of each file states its layout.
-
-```python
-import h5py, numpy as np, pandas as pd
-
-with h5py.File("fig3_maps.h5") as f:
-    sd = f["sd"][:].T                 # .T: back to (x, y)
-    x, y = f["x"][:], f["y"][:]
-    print(f["sd"].attrs["unit"])      # Msol_pc2
-
-sd = np.load("fig3_sd.npy")           # already (x, y)
-maps = np.load("fig3_maps.npz")       # maps["sd"], maps["T"], maps["x"], maps["y"]
-df = pd.read_csv("fig3_maps.csv")     # columns x, y, T, sd
-```
-
-## Profiles, phase diagrams and tables
-
-Profiles, phase diagrams, pdfs and [`timeseries`](@ref) tables export the same way. In a CSV a
-profile has one row per bin; the bin edges become `edges_lo` and `edges_hi`, and the quantiles
-become one column each.
-
-```julia
-prof = profile(gas, :r_cylinder, :rho; center=[:bc], xunit=:kpc, unit=:nH, nbins=20)
-exportdata(prof, "fig4_profile.csv"; note="Figure 4: radial density profile")
-
-println(split(readline("fig4_profile.csv"), ','))
-```
-
-```
-exportdata: x, edges, count, sum, sumw2, mean, std, var, sem, neff, min, max, median, quantiles, skewness, kurtosis → fig4_profile.csv  (+ fig4_profile.csv.meta.json)
-SubString{String}["x", "edges_lo", "edges_hi", "count", "sum", "sumw2", "mean", "std", "var", "sem", "neff", "min", "max", "median", "quantiles_1", "quantiles_2", "quantiles_3", "skewness", "kurtosis"]
-```
-
-## Plain values
-
-A [`getvar`](@ref) array is a plain Julia array, and it stays one: it does not know which
-snapshot it came from. Export such values as a NamedTuple and pass the data object as `source`,
-so the sidecar can record the provenance.
-
-```julia
-cells = (rho = getvar(gas, :rho, :nH), T = getvar(gas, :T, :K), level = getvar(gas, :level))
-exportdata(cells, "cells.npz"; source=gas)
-```
-
-```
-exportdata: rho, T, level → cells.npz  (+ cells.npz.meta.json)
-```
-
-```
-"cells.npz"
+"fig3_maps.csv"
 ```
 
 ## The sidecar
@@ -218,7 +107,7 @@ r = readsidecar("fig3_maps.h5")
 
 ```
 Sidecar of fig3_maps.h5  (hdf5, projection)  data file: unchanged
-  written      2026-10-25 06:20 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-25 11:30 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
@@ -231,9 +120,11 @@ Sidecar of fig3_maps.h5  (hdf5, projection)  data file: unchanged
   sidecar      fig3_maps.h5.meta.json
 ```
 
-The line *written* names the Mera build that wrote the file. It says "not a registered release"
-here because this page is built from a development checkout of Mera; see
-[Which Mera ran](#Which-Mera-ran) below.
+The line *written* names the Mera build that wrote the file, and the `environment` part of the
+sidecar stores how Mera was installed: the registered release, a branch from GitHub, or a local
+checkout, and whether the code is exactly the registered release. It says "not a registered
+release" here because this page is built from a development checkout of Mera;
+[Which build ran](provenance.md#Which-build-ran) explains the cases.
 
 The sidecar is plain JSON, with these parts:
 
@@ -302,7 +193,7 @@ readsidecar("output_00300.jld2")
 
 ```
 Sidecar of output_00300.jld2  (jld2, mera_file)  data file: unchanged
-  written      2026-10-25 06:21 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-25 11:30 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
@@ -332,7 +223,7 @@ fig
 Sidecar written → fig3.png.meta.json
 ```
 
-![](export_sidecars_files/export_sidecars_23_3.png)
+![](export_sidecars_files/export_sidecars_12_3.png)
 
 For a figure with several panels, pass all its results, `writesidecar("fig4.pdf", [m1, m2, m3])`;
 the sidecar then lists the snapshot of each panel. Read back, it shows what the figure was made
@@ -344,7 +235,7 @@ readsidecar("fig3.png")
 
 ```
 Sidecar of fig3.png  (png, figure)  data file: unchanged
-  written      2026-10-25 06:21 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
+  written      2026-10-25 11:31 UTC by Mera 1.8.3, not a registered release; Julia 1.12.7, 4 threads
   source       Mera v1.8.3 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
@@ -367,19 +258,15 @@ recs = sidecaroverview(".");
 ```
 
 ```
-10 sidecars in .
+6 sidecars in .
 file               kind        format  snapshot             time       written (UTC)     data file
 -----------------  ----------  ------  -------------------  ---------  ----------------  ---------
-cells.npz          namedtuple  npz     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
-fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-10-25 06:21  present
-fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
-fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
-fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 06:21  present
-fig3_maps.npz      projection  npz     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
-fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
-fig3_sd.npy        projection  npy     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
-fig4_profile.csv   profile     csv     mw_L10/output_00300  445.9 Myr  2026-10-25 06:20  present
-output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 06:21  present
+fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-10-25 11:31  present
+fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-25 11:30  present
+fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 11:30  present
+fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 11:30  present
+fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 11:30  present
+output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 11:30  present
 ```
 
 ## Has a file changed?
@@ -408,53 +295,14 @@ recs = sidecaroverview("."; verify=true, verbose=false)
 ```
 
 ```
-10-element Vector{Pair{String, Symbol}}:
-         "cells.npz" => :unchanged
+6-element Vector{Pair{String, Symbol}}:
           "fig3.png" => :unchanged
      "fig3_maps.csv" => :changed
       "fig3_maps.h5" => :unchanged
     "fig3_maps.jld2" => :unchanged
-     "fig3_maps.npz" => :unchanged
     "fig3_public.h5" => :unchanged
-       "fig3_sd.npy" => :unchanged
-  "fig4_profile.csv" => :unchanged
  "output_00300.jld2" => :unchanged
 ```
-
-## Which Mera ran
-
-The same version number can mean different code: the registered release, a branch installed from
-GitHub with `pkg> add Mera#master`, or a local checkout with your own changes.
-[`mera_install`](@ref) tells them apart, and every sidecar stores its record.
-
-| `source` | installed with |
-|:--|:--|
-| `:registry` | `pkg> add Mera` |
-| `:repository` | `pkg> add Mera#master`, or a URL with a branch |
-| `:checkout` | a git checkout, `pkg> dev Mera` |
-| `:path` | a local folder without git |
-
-`registered` compares the code's content hash with the one the Julia registry stores for this
-version: `true` means the code is exactly the registered release, also when it came from a branch;
-`false` means it differs or has uncommitted changes; `nothing` means unknown, for example when the
-local copy of the registry is older than the version.
-
-```julia
-mi = mera_install()
-println("version    : ", mi.version)
-println("source     : ", mi.source)
-println("registered : ", mi.registered)
-```
-
-```
-version    : 1.8.3
-source     : checkout
-registered : false
-```
-
-This page is built from a checkout of the Mera repository, so it says `:checkout`. On a normal
-installation the same cell says `:registry` and `registered : true`. The short form is
-[`mera_build`](@ref), which is also the version field of every provenance line.
 
 ## Describing the simulation
 
@@ -665,7 +513,7 @@ bundle("."; simulation=info, title="Sharing results example",
 ```
 ┌ Warning: These files changed after their sidecar was written: fig3_maps.csv. Write them again, or their recorded SHA-256 does not match.
 └ @ Mera ~/code-github/Mera.jl/src/functions/export/bundle.jl:213
-Bundle of .: 13 files, 10 with a sidecar, 1 snapshot, Mera 1.8.3
+Bundle of .: 9 files, 6 with a sidecar, 1 snapshot, Mera 1.8.3
   → ./ro-crate-metadata.json
 ```
 
@@ -703,35 +551,8 @@ Mera.JSON3.pretty(only(e for e in crate["@graph"] if e["@id"] == "#make-fig3.png
             "@id": "#snapshot-mw_L10_output_00300"
         }
     ],
-    "endTime": "2026-10-25T06:21:18.096"
+    "endTime": "2026-10-25T11:31:03.939"
 }
-```
-
-## FITS
-
-FITS export needs the FITSIO package. It is not installed with Mera, since most users never write
-FITS; add it once with `pkg> add FITSIO`. A map then becomes one image per variable, with the
-unit in `BUNIT` and a linear WCS in the length unit:
-
-```julia
-using FITSIO
-exportdata(m, "fig3_maps.fits"; length_unit=:kpc)
-
-FITS("fig3_maps.fits") do f
-    h = read_header(f["sd"])
-    for k in ("BUNIT", "CTYPE1", "CUNIT1", "CRVAL1", "CDELT1")
-        println(rpad(k, 7), "= ", h[k])
-    end
-end
-```
-
-```
-exportdata: T, sd → fig3_maps.fits  (+ fig3_maps.fits.meta.json)
-BUNIT  = Msol_pc2
-CTYPE1 = X
-CUNIT1 = kpc
-CRVAL1 = 0.0498960498960822
-CDELT1 = 0.0997920997921645
 ```
 
 ## Why sidecars are on by default, and how to switch them off
@@ -857,6 +678,7 @@ it, and publish it next to the results.
 ## See also
 
 * [Provenance](provenance.md), the record in the `source` part of every sidecar
+* [Exporting Data](exporting_data.md), the formats `exportdata` writes
 * [Reproducibility](reproducibility.md), pinned environments and test simulations
 * [MERA files](07_multi_Mera_Files.md), Mera's own format for data objects
 * [`export_vtk`](@ref), for ParaView and VisIt

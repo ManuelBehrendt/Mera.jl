@@ -22,6 +22,7 @@ infodata
 [`exportdata`](@ref) writes a projection, a profile, phase or pdf, a timeseries table, a movie,
 or plain arrays to `.h5`, `.jld2`, `.csv`, `.npy`, `.npz`, `.json` or `.fits` (the last after
 `using FITSIO`). The file holds plain arrays that Python, IDL or a spreadsheet read directly.
+The tutorial [Exporting Data](../exporting_data.md) shows each format and how to read it in Python.
 
 ```@docs; canonical=false
 exportdata

@@ -109,6 +109,7 @@ not how many pixels there are.
 |:---|:---|:---|
 | to record what produced a number | `provenance(obj)`, `provenance_string`, `mera_build` | [Provenance](provenance.md) |
 | someone else to reproduce it | a `Project.toml` beside the script, and its `Manifest.toml` | [Reproducibility](reproducibility.md) |
+| a co-author's map as HDF5, CSV or NumPy | `exportdata(m, "fig3.h5")` | [Exporting Data](exporting_data.md) |
 | every result file to say where it came from | `exportdata`, `writesidecar` after saving a figure, `sidecaroverview` | [Sharing Results & Sidecars](export_sidecars.md) |
 | to cite the exact versions I used | `citation(gas; file="software.bib")` | [Reproducibility](reproducibility.md) |
 | to publish an analysis folder as one record | `bundle("."; simulation=info)`, after `meraproject` at the start | [Sharing Results & Sidecars](export_sidecars.md) |

@@ -35,7 +35,7 @@ by a referee who has your script. That needs four things, and Mera supports each
 | what you need | how |
 |---|---|
 | the same package versions | a **Julia project**, described on this page |
-| a record of what produced a number | [`provenance`](provenance.md) |
+| a record of what produced a number | [`provenance`](provenance.md) on an object, a sidecar next to each saved file, `bundle` for a folder: [Sharing Results & Sidecars](export_sidecars.md) |
 | the formula behind a derived quantity | [How Quantities Are Computed](computation_reference.md) |
 | confidence the package itself is correct | [test simulations with known answers](index.md#About-the-data-in-these-tutorials) |
 
@@ -201,7 +201,7 @@ session. If Julia runs in the shared environment (the `@v1.12` prompt) instead o
 own project, the recorded `Manifest.toml` changes whenever you add any package, so it no longer
 says which versions made the result. If Mera runs from a checkout with uncommitted changes, the
 recorded commit is not the code that ran.
-[Sharing results](export_sidecars.md) walks through all of it on a real simulation.
+[Sharing Results & Sidecars](export_sidecars.md) walks through all of it on a real simulation.
 
 ### Threads
 
