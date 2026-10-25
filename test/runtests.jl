@@ -113,6 +113,7 @@ if isempty(_focus)
         tinclude("90_thread_reproducibility_tests.jl")  # what the thread count may and may not change
         tinclude("91_simulation_record_tests.jl")  # simulationrecord and datacite
         tinclude("92_bundle_tests.jl")             # bundle (RO-Crate) and meraproject
+        tinclude("93_citation_codes_tests.jl")     # multicode: the papers of the other codes
         tinclude("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
         tinclude("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
         tinclude("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities

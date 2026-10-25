@@ -157,6 +157,12 @@ code-blind, and what the cross-reader test (`test/59_multicode_contract_tests.jl
 None of this is a reason to avoid the non-RAMSES readers. It is a reason to check your first
 result against something you already trust, and to tell us when it disagrees.
 
+**What to cite.** [`citation`](@ref)`(info)` gives the BibTeX of Mera and of the code that wrote
+the data: PLUTO, Athena++, FLASH, Quokka, AMReX, AREPO, SWIFT and GIZMO each have their paper. A
+GADGET run lists both the GADGET-2 and the GADGET-4 paper, because the files do not say which
+version wrote them; keep the one that applies. Chombo has no paper with a DOI, so a Chombo run
+cites Mera alone. [`datacite`](@ref) names the same paper as related work.
+
 ## Where to go next
 
 - The reader pages in the sidebar, for what each format gives you and what it does not.
