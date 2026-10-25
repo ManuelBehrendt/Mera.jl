@@ -947,7 +947,7 @@ end
 
 """
     gethydro_amrex(info; vars=:all, xrange, yrange, zrange, center, range_unit,
-                   verbose=true, show_progress=true) -> HydroDataType
+                   verbose=true, show_progress=true, max_threads=Threads.nthreads()) -> HydroDataType
 
 Read the cell data of an AMReX/BoxLib plotfile into a Mera `HydroDataType` — the AMR
 hierarchy flattened to LEAF cells with columns `(:level, :cx, :cy, :cz, <vars…>)`.
@@ -965,6 +965,12 @@ this was written against is 33 GB on disk):
 
 `vars` names Mera columns, not plotfile components; `info.variable_list` lists them and
 `amrex_provenance(info)` says where each one comes from.
+
+# Keywords
+- `vars = :all`: the Mera columns to read, e.g. `[:rho, :vx]`.
+- `xrange`, `yrange`, `zrange`, `center`, `range_unit`: the window to read, as for [`gethydro`](@ref).
+- `verbose::Bool = true`, `show_progress::Bool = true`: print a summary and a progress bar.
+- `max_threads::Int = Threads.nthreads()`: the number of threads that read boxes in parallel.
 """
 function gethydro_amrex(info::InfoType;
                         vars::Union{Symbol,Vector{Symbol}}=:all,
@@ -1230,14 +1236,22 @@ function amrex_particle_columns(ph::AMReXParticleHeader; namemap::AbstractDict=D
 end
 
 """
-    getparticles_amrex(info; ptype=nothing, xrange, yrange, zrange, center,
-                       range_unit, verbose=true) -> PartDataType
+    getparticles_amrex(info; ptype=nothing, vars=:all, xrange, yrange, zrange, center,
+                       range_unit, namemap=Dict(), verbose=true) -> PartDataType
 
 Read one AMReX particle container into a Mera `PartDataType` with columns `:x,:y,:z`
 (measured from `domain_left_edge`, like the cell data) plus every component the container
 stores. A plotfile may hold several containers — pass `ptype="CIC_particles"` to pick
 one; with no `ptype` the single container is used, and it is an error when there is more
 than one. `amrex_meta(info)[:particle_types]` lists them.
+
+# Keywords
+- `ptype = nothing`: the particle container to read, needed when the plotfile holds several.
+- `vars = :all`: only `:all` is supported; a particle record stores every component together.
+- `xrange`, `yrange`, `zrange`, `center`, `range_unit`: the window to read, as for [`getparticles`](@ref).
+- `namemap = Dict()`: rename components, e.g. `Dict("mass" => :mass)`; by default the names
+  recorded for this run are used.
+- `verbose::Bool = true`: print a summary.
 """
 function getparticles_amrex(info::InfoType;
                             ptype::Union{Nothing,AbstractString}=nothing,

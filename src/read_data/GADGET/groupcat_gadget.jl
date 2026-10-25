@@ -121,7 +121,8 @@ function _group_offsets(lenType::AbstractMatrix)
 end
 
 """
-    groupinfo(path::String, snap::Int; verbose=true) -> InfoType
+    groupinfo(path::String, snap::Int; unit_length=1.0, unit_density=1.0, unit_velocity=1.0,
+              verbose=true) -> InfoType
 
 Build an [`InfoType`](@ref) from a **group catalogue's own header**, without a snapshot.
 
@@ -142,6 +143,12 @@ gc.Group_R_Crit200 .* info.scale.kpc
 
 Fields that describe particle data (`particles_variable_list`, `levelmax`, …) are left at their
 defaults: there is no snapshot to describe.
+
+# Keywords
+- `unit_length`, `unit_density`, `unit_velocity`: the code units in CGS, overriding the header,
+  as for [`getinfo_gadget`](@ref). With the default `1.0` the header's units are used, or
+  GADGET's own defaults (1 kpc/h, 1e10 Msol/h, 1 km/s) when the header has none.
+- `verbose::Bool = true`: print a summary.
 
 See also [`getgroups`](@ref).
 """
