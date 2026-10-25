@@ -40,6 +40,27 @@ end
             @test all(_roundoff_equal(a[k], b[k]; rtol=1e-10) for k in vars)
         end
 
+        @testset "quiet blocks on several threads leave the user's verbose setting alone" begin
+            # Regression: _quietly saved and restored the global setting, so blocks that overlapped
+            # on threads left it at `false` and silenced Mera for the rest of the session.
+            for setting in (nothing, true)
+                verbose(setting)
+                inside = fill(false, 4 * _NT)                      # not a BitVector: threads write it
+                Threads.@threads for k in eachindex(inside)
+                    Mera._quietly() do
+                        sleep(0.01 * (k % 3))                      # make the blocks overlap
+                        inside[k] = !Mera.checkverbose(true)       # silent inside
+                    end
+                end
+                @test all(inside)
+                @test Mera.verbose_mode === setting && Mera.checkverbose(true)
+            end
+            verbose(nothing)
+            frames = rotation_sequence(gas, :sd; angles=0:30:90, inclination=40, axis=:angmom,
+                                       fov=0.3, parallel_frames=true)
+            @test length(frames) == 4 && Mera.verbose_mode === nothing && Mera.checkverbose(true)
+        end
+
         @testset "volumerender: repeatable, and round-off across thread counts" begin
             kw = (scale=:linear, colorrange=(0.5, 2.0), opacity=(1.0, 1.0), verbose=false)
             ch(v) = Float64.(reinterpret(reshape, Float64, v.image))

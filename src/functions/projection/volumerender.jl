@@ -569,18 +569,6 @@ function _volume_crop_square(m::VolumeRenderType, fov_code; npix::Union{Nothing,
                             m.cam_right, m.center, m.boxlen, m.scale, m.info)
 end
 
-# Run `f` with Mera's messages off, then restore the setting. Used for the internal camera
-# setup, which would otherwise emit hints meant for someone computing physics.
-function _quietly(f)
-    old = Mera.verbose_mode
-    try
-        verbose(false)
-        return f()
-    finally
-        verbose(old)
-    end
-end
-
 # ------------------------------------------------------------------------------------
 #  Geometry helpers: view presets, front-to-back order, chunking, downsampling
 # ------------------------------------------------------------------------------------

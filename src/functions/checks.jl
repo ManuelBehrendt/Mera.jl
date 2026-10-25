@@ -105,7 +105,31 @@ reset_hints() = (lock(_HINT_LOCK) do; empty!(_HINT_SHOWN); end; nothing)
 
 
 # global verbose mode ===========================
+
+# Mera's messages are off while any `_quietly` block runs. A counter rather than saving and
+# restoring the global setting: blocks run on several threads at once (the frames of
+# `rotation_sequence`), and the last one to finish used to restore another block's `false`,
+# which silenced Mera for the rest of the session.
+const _QUIET_DEPTH = Threads.Atomic{Int}(0)
+
+"""
+    _quietly(f)
+
+Internal. Run `f` with Mera's messages off, without touching the user's `verbose` setting. Used
+for internal steps, such as the camera set-up, that would otherwise print hints meant for someone
+computing physics. Safe to call from several threads at once.
+"""
+function _quietly(f)
+    Threads.atomic_add!(_QUIET_DEPTH, 1)
+    try
+        return f()
+    finally
+        Threads.atomic_sub!(_QUIET_DEPTH, 1)
+    end
+end
+
 function checkverbose(verbose::Bool)
+    _QUIET_DEPTH[] > 0 && return false
     if verbose_mode != nothing
         verbose = copy(verbose_mode)
     end
