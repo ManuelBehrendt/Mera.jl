@@ -22,6 +22,8 @@ worse, runs and returns a plausible number. The failures are specific and repeat
 - it reaches for `getvar(gas, :sd)`, which does not exist, because surface density lives only in
   `projection`
 - it assumes a selection keeps whole cells, and so does not expect the boundary weighting
+- it loops over `readdir(folder)` and trips over the `.meta.json` sidecar that Mera writes next to
+  every saved file, or reads an exported HDF5 map in h5py without the transpose
 
 None of these are exotic. They are what anyone infers from the function names alone.
 
@@ -31,8 +33,8 @@ Both are published with the documentation:
 
 | file | what it is |
 |---|---|
-| [`llms.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms.txt) | A compact grounding, about 2000 words. The data model, the vocabulary, the traps above, what is not in Mera, and how to check a result. Written to be pasted or attached whole. |
-| [`llms-full.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms-full.txt) | The conceptual documentation concatenated into one file, about 30 000 words. Attach it when the question needs depth. |
+| [`llms.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms.txt) | A compact grounding, about 2400 words. The data model, the vocabulary, the traps above, what is not in Mera, and how to check a result. Written to be pasted or attached whole. |
+| [`llms-full.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms-full.txt) | The conceptual documentation concatenated into one file, about 37 000 words. Attach it when the question needs depth. |
 
 `llms-full.txt` deliberately leaves out the tutorial pages. Those are generated from notebooks and
 are mostly printed output, which fills an assistant's context without teaching it much.
@@ -87,9 +89,15 @@ mera_build()             # tells a registry install from a checkout of a branch
 ```
 
 `pkgversion` reports the same string either way, so a result from a development branch looks like a
-result from the release unless `mera_build` is used. Saved maps and reports carry provenance with
-them. For anything shared, pin the environment in a `Project.toml` beside the script and commit the
-`Manifest.toml` that `instantiate` produces, as the [gallery](gallery.md) recipes do.
+result from the release unless `mera_build` is used. For anything shared, pin the environment in a
+`Project.toml` beside the script and commit the `Manifest.toml` that `instantiate` produces, as the
+[gallery](gallery.md) recipes do; `meraproject("my_analysis")` starts such a folder.
+
+Ask the assistant to save results with Mera's own functions (`exportdata`, `savemap`, `savedata`)
+rather than with a generic writer: then every file gets its sidecar, the readable record of where
+it came from, without anyone thinking about it. A figure saved with Makie needs one more line,
+`writesidecar("fig.png", m)`. Before you publish, `bundle(".")` turns the folder into one record
+with the BibTeX of the versions used; [Sharing Results & Sidecars](export_sidecars.md) shows it.
 
 ## Where this does not help
 
@@ -106,4 +114,6 @@ reason.
 - [Off-axis cheatsheet](offaxis_cheatsheet.md), every off-axis option on one page
 - [Masking and filtering](05_multi_Masking_Filtering.md), including the code-units trap
 - [Reproducibility](reproducibility.md)
+- [Exporting Data](exporting_data.md) and [Sharing Results & Sidecars](export_sidecars.md), for
+  files other tools read and the record that goes with them
 - [Gallery](gallery.md), complete recipes with pinned environments
