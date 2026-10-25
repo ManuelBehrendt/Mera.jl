@@ -92,8 +92,9 @@ global showprogress_mode = nothing
 """
 Global switch controlling whether saves and exports write a sidecar `<file>.meta.json`.
 
-`nothing` (the default) leaves each function on its own `sidecar` keyword, which is `true`;
-setting `true` or `false` overrides them all. Prefer [`sidecar`](@ref) to change it.
+`nothing` (the default) leaves each function on its own `sidecar` keyword, which is `true`,
+unless the environment variable `MERA_SIDECAR` says otherwise; setting `true` or `false`
+overrides them all. Prefer [`sidecar`](@ref) to change it.
 
 ```julia
 sidecar(false)     # no sidecar files from any save, export or writesidecar
@@ -175,6 +176,8 @@ export
     writesimulationrecord,
     datacite,
     citation,
+    bundle,
+    meraproject,
     SimulationRecord,
     makethumb,
     Provenance,
@@ -572,6 +575,7 @@ include("functions/export/sidecar.jl")
 include("functions/export/sidecar_read.jl")
 include("functions/export/simulation_record.jl")
 include("functions/export/citation.jl")
+include("functions/export/bundle.jl")
 include("functions/export/npy.jl")
 include("functions/export/exportdata.jl")
 # ============================================
