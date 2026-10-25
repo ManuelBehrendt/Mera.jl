@@ -561,6 +561,9 @@ function upgrade_merafile(output::Integer, path::AbstractString;
     fname = "output_" * lpad(output, 5, '0') * ".jld2"
     isfile(joinpath(tmp, fname)) || error("[Mera]: upgraded file was not written")
     mv(joinpath(tmp, fname), joinpath(path, fname); force=true)
+    # the new sidecar describes the upgraded file; an old one would carry the old SHA-256
+    sc = _sidecar_file(fname)
+    isfile(joinpath(tmp, sc)) && mv(joinpath(tmp, sc), joinpath(path, sc); force=true)
     rm(tmp; recursive=true)
     verbose && println("[Mera]: upgraded $(upgraded) in ", path)
     return upgraded

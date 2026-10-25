@@ -476,5 +476,34 @@ _sidecar_json(file) = _J.read(read(Mera._sidecar_file(file), String))
             @test _sidecar_json(file)["file"]["sha256"] == bytes2hex(open(Mera.SHA.sha256, file))
             @test loaddata(ds.output, mf, :hydro; verbose=false).data == g.data
         end
+
+        @testset "batch_convert_mera writes a sidecar for each converted file (data)" begin
+            src, dst, off = mktempdir(), mktempdir(), mktempdir()
+            savedata(g, src, :write; verbose=false)
+            name = "output_" * lpad(ds.output, 5, '0') * ".jld2"
+            capture_stdout() do
+                batch_convert_mera(src, dst, ds.output, ds.output; requested_threads=1, show_confirmation=false)
+                batch_convert_mera(src, off, ds.output, ds.output; requested_threads=1, show_confirmation=false,
+                                   sidecar=false)
+            end
+            sc = _sidecar_json(joinpath(dst, name))
+            @test sc["result"]["converted_from"]["name"] == name
+            @test sc["result"]["contents"]["hydro"]["rows"] == length(g.data)
+            @test sc["source"]["complete"] == true && sc["source"]["output"] == ds.output
+            @test sc["file"]["sha256"] == bytes2hex(open(Mera.SHA.sha256, joinpath(dst, name)))
+            @test readdir(off) == [name]                                  # sidecar=false: none
+        end
+
+        @testset "upgrade_merafile keeps the sidecar with the file (data)" begin
+            uf = mktempdir()
+            savedata(g, uf, :write; verbose=false)
+            file = joinpath(uf, "output_" * lpad(ds.output, 5, '0') * ".jld2")
+            write(file * ".meta.json", "{}")                       # an old sidecar, now wrong
+            @test upgrade_merafile(ds.output, uf; datatypes=[:hydro], verbose=false) == [:hydro]
+            sc = _sidecar_json(file)
+            @test sc["file"]["sha256"] == bytes2hex(open(Mera.SHA.sha256, file))
+            @test string.(keys(sc["result"]["contents"])) == ["hydro"]
+            @test readdir(uf) == basename.([file, file * ".meta.json"])
+        end
     end
 end

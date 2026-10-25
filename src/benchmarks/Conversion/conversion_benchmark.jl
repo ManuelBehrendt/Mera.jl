@@ -200,7 +200,7 @@ function benchmark_conversion(path::AbstractString, output::Int;
     verbose && println("Warm-up write (not timed) ...")
     try
         mktempdir() do warmdir
-            savedata(loaded[first(comps)], warmdir, :write, verbose=false)
+            savedata(loaded[first(comps)], warmdir, :write, verbose=false, sidecar=false)
         end
         GC.gc()
     catch e
@@ -209,7 +209,8 @@ function benchmark_conversion(path::AbstractString, output::Int;
 
     verbose && println("Writing the MERA file ...")
     write_time = @elapsed for (i, c) in enumerate(comps)
-        savedata(loaded[c], merapath, i == 1 ? :write : :append, verbose=false)
+        savedata(loaded[c], merapath, i == 1 ? :write : :append, verbose=false,
+                 sidecar=false)              # time the write alone, not the sidecar's SHA-256
     end
     verbose && @printf("  %.2f s\n", write_time)
 
