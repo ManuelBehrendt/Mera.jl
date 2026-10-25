@@ -212,11 +212,39 @@ function _write_sidecar(file::AbstractString, result::AbstractDict, source;
         isempty(note) || (d["note"] = String(note))
         _write_json(sc, d)
         verbose && println("  sidecar → ", sc)
+        _sidecar_hints(d["environment"]["mera_install"])
         return sc
     catch e
         @warn "Could not write the sidecar $sc; the data file itself was written." exception = e
         return nothing
     end
+end
+
+# ---- hints, once per session --------------------------------------------------------
+#
+# A sidecar is only as good as what it can record. Two common set-ups weaken it, and both are
+# easy to fix, so the first sidecar of a session says so. Silenced by verbose(false).
+
+# true when Julia runs in the shared environment (~/.julia/environments/v1.x), which changes
+# whenever any package is added, so its Manifest says little about one analysis
+function _shared_environment(project=Base.active_project())
+    project === nothing && return true
+    shared = joinpath(first(DEPOT_PATH), "environments")
+    return startswith(abspath(project), abspath(shared) * Base.Filesystem.path_separator)
+end
+
+function _sidecar_hints(install; project=Base.active_project())
+    checkverbose(true) || return nothing
+    if _shared_environment(project)
+        @info """The sidecar records the shared Julia environment, which changes whenever a package \
+                 is added. For an analysis you want to repeat, give it its own environment: \
+                 `] activate .` in the analysis folder, then `] add Mera`.""" maxlog = 1
+    end
+    if get(install, :dirty, nothing) === true
+        @info """Mera runs from a checkout with uncommitted changes, so the sidecar cannot say \
+                 exactly which code ran. Commit the changes before making results you publish.""" maxlog = 1
+    end
+    return nothing
 end
 
 # The `result` entry of an existing sidecar, or an empty one.

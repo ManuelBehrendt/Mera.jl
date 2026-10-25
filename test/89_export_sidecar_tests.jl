@@ -349,6 +349,22 @@ _sidecar_json(file) = _J.read(read(Mera._sidecar_file(file), String))
         end
     end
 
+    @testset "hints: shared environment, uncommitted Mera" begin
+        shared = joinpath(first(DEPOT_PATH), "environments", "v$(VERSION.major).$(VERSION.minor)", "Project.toml")
+        own = joinpath(mktempdir(), "Project.toml")
+        @test Mera._shared_environment(shared) && Mera._shared_environment(nothing)
+        @test !Mera._shared_environment(own)
+        @test_logs (:info, r"shared Julia environment") (:info, r"uncommitted changes") Mera._sidecar_hints((dirty=true,); project=shared)
+        @test_logs Mera._sidecar_hints((dirty=false,); project=own)            # nothing to say
+        @test_logs Mera._sidecar_hints((source=:registry,); project=own)
+        try
+            verbose(false)
+            @test_logs Mera._sidecar_hints((dirty=true,); project=shared)      # verbose(false) silences
+        finally
+            verbose(nothing)
+        end
+    end
+
     @testset "save_clumps writes a sidecar" begin
         cd_ = mktempdir()
         meta = (dim=Symbol("3D"), field=:rho, threshold=1.0, threshold_unit=:nH, mass_unit=:Msol)

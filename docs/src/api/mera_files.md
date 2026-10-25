@@ -33,7 +33,8 @@ the run's `namelist.txt`, `makefile.txt`, `patches.txt` and `compilation.txt`, t
 CPU and thread count that ran, and the analysis around it: the SHA-256 of your `Project.toml`
 and `Manifest.toml` and of the script that ran. It is JSON, so any language reads it. The host name is never
 recorded. `sidecar=false` on a call, or [`sidecar`](@ref)`(false)` for the whole session, turns
-it off.
+it off. Once per session Mera also says when a sidecar cannot record enough: when Julia runs in
+the shared environment instead of one for the analysis, or Mera has uncommitted changes.
 
 A figure is saved by the plotting package, so Mera does not see it: call
 [`writesidecar`](@ref) right after the save to give it the same record, taken from the results
