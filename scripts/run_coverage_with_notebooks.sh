@@ -147,7 +147,7 @@ TOP_NBS=(
 FEATURE_NBS=(
   first_look pipelines switching_to_mera julia_for_simulation_analysis units_and_constants
   magnetic_fields derived_fields statistics sfr covering_grid galaxyframe
-  clumpfind clumpfind_synthetic provenance timeseries movie
+  clumpfind clumpfind_synthetic provenance exporting_data export_sidecars timeseries movie
 )
 
 # NB_FROM=<name> resumes an interrupted run at that notebook (use with SKIP_SUITE=1 and
