@@ -497,6 +497,13 @@ the same API, developed openly on the `multicode` branch until they are released
 [Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/multicode/multicode/), and readers
 are credited to the people who wrote them.
 
+**Data storage.** MERA's data tables (one column per field) are planned to move from
+IndexedTables.jl to [StructArrays.jl](https://github.com/JuliaArrays/StructArrays.jl), the package
+IndexedTables is built on. Columns will then no longer have to sit in memory: memory-mapped arrays
+will allow data larger than RAM, and Arrow or HDF5 columns can be read straight from file. Function
+names and arguments will stay the same, and **every MERA file saved with an earlier version will
+stay readable**.
+
 MERA is actively developed and its priorities are driven by user needs. Have a feature request, a
 RAMSES variant to support, or a gap to report? Please
 [open an issue](https://github.com/ManuelBehrendt/Mera.jl/issues) or start a
