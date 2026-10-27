@@ -259,7 +259,10 @@ end
 
 # Which `family` values are stars and which dark matter, per simulation code. RAMSES numbers its
 # families 1 = DM, 2 = star. A reader whose code numbers them differently adds its own entry when
-# it is loaded, e.g. `_FAMILY_CODES["MYCODE"] = (stars=[4], dm=[1])`. Unknown codes use RAMSES's.
-const _FAMILY_CODES = Dict{String,NamedTuple{(:stars, :dm),Tuple{Vector{Int},Vector{Int}}}}(
-    "RAMSES" => (stars=[2], dm=[1]))
-_family_codes(info) = get(_FAMILY_CODES, string(info.simcode), _FAMILY_CODES["RAMSES"])
+# it is loaded, e.g. `_FAMILY_CODES["MYCODE"] = (stars=[4], dm=[1])`, or a function of the info
+# when the meaning depends on the run. Unknown codes use RAMSES's.
+const _FAMILY_CODES = Dict{String,Any}("RAMSES" => (stars=[2], dm=[1]))
+function _family_codes(info)
+    fc = get(_FAMILY_CODES, string(info.simcode), _FAMILY_CODES["RAMSES"])
+    return fc isa Function ? fc(info) : fc
+end

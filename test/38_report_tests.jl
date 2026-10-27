@@ -19,6 +19,9 @@
         bi = Mera.InfoType(); bi.boundaries = Symbol(""); @test Mera._boundaries(bi) === :unknown
         ri = Mera.InfoType(); ri.simcode = "RAMSES"; @test Mera._family_codes(ri) == (stars=[2], dm=[1])
         oi = Mera.InfoType(); oi.simcode = "SOMECODE"; @test Mera._family_codes(oi).stars == [2]   # RAMSES default
+        Mera._FAMILY_CODES["RULECODE"] = info -> (stars=[7], dm=[8])                                 # a rule
+        oi.simcode = "RULECODE"; @test Mera._family_codes(oi) == (stars=[7], dm=[8])
+        delete!(Mera._FAMILY_CODES, "RULECODE")
         mk(label, kind, dt, meta) = Mera.ReportResultCard(label, kind, dt, :projection, nothing, meta)
         @test Mera._card_title(mk("hydro_sd_map", :map, :hydro, (var=:sd, direction=:z))) == "Gas Σ (along z)"
         @test Mera._card_title(mk("rho_T_phase", :phase, :hydro, (xvar=:rho, yvar=:T))) == "ρ–T phase"
