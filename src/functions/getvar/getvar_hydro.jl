@@ -19,8 +19,14 @@ const _RT_A_METAL = 16.0
 #   nIons = 1 + isH2 + 2·isHe   ⇒   isH2 = iseven(nIons) (∈ {2,4}),  isHe = nIons ≥ 3.
 # `iIons` points at the FIRST stored fraction (xHI with H2, else xHII). Returns the
 # 1-based variable_list index of each species (0 if that species is not stored).
-function _rt_species(rtd)
-    i0 = rtd[:iIons]
+#
+# `iIons` is RAMSES's INTERNAL index, and the output file orders the variables differently
+# for MHD. Internally: ρ, momentum (3), energy, B (3 faces), then the passive scalars. In the
+# output: ρ, v (3), B left (3), B right (3), p, then the scalars. So with MHD every scalar sits
+# 3 columns later in the output (the right faces), and reading column iIons gave a B component.
+# For hydro the two orders agree.
+function _rt_species(rtd, vlist)
+    i0 = rtd[:iIons] + (:bx_right in vlist ? 3 : 0)
     nI = get(rtd, :nIons, 1)
     isH2 = iseven(nI)
     isHe = nI >= 3
@@ -33,8 +39,8 @@ function _rt_species(rtd)
 end
 
 function _rt_mu(dataobject, data, rtd)
-    sp = _rt_species(rtd)
     vlist = dataobject.info.variable_list
+    sp = _rt_species(rtd, vlist)
     X = get(rtd, :X_fraction, 0.76)
     Y = get(rtd, :Y_fraction, 1.0 - X)
     xHII = select(data, vlist[sp.iHII])
@@ -318,7 +324,7 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :xHII || i == :xHeII || i == :xHeIII
             rtd = dataobject.info.descriptor.rt
             haskey(rtd, :iIons) || error("getvar :$i needs the RT ionization fractions (descriptor :iIons); load an RT run.")
-            sp = _rt_species(rtd)                          # H2-aware species layout
+            sp = _rt_species(rtd, dataobject.info.variable_list)   # H2-aware species layout
             ion_idx = i == :xHII ? sp.iHII : (i == :xHeII ? sp.iHeII : sp.iHeIII)
             ion_idx == 0 && error("getvar :$i: this run does not track that species (nIons=$(get(rtd,:nIons,0))).")
             selected_unit = getunit(dataobject, i, vars, units)
@@ -335,7 +341,8 @@ function get_data(  dataobject::HydroDataType,
             end
             selected_unit = getunit(dataobject, :em_recomb, vars, units)
             nH = _rt_nH(dataobject, masked_data, rtd)                     # n_H [cm^-3]
-            xhii = select(masked_data, dataobject.info.variable_list[_rt_species(rtd).iHII])
+            vlist = dataobject.info.variable_list
+            xhii = select(masked_data, vlist[_rt_species(rtd, vlist).iHII])
             vars_dict[:em_recomb] = @. (nH * xhii)^2 * selected_unit
 
         # RT-derived number densities [cm^-3]. n_H = rho * scale.nH (= X/m_H * unit_d);
@@ -348,7 +355,7 @@ function get_data(  dataobject::HydroDataType,
             if !haskey(rtd, :iIons)
                 error("getvar :$i needs the RT ionization fractions (descriptor :iIons); load an RT run.")
             end
-            sp = _rt_species(rtd)
+            sp = _rt_species(rtd, dataobject.info.variable_list)
             selected_unit = getunit(dataobject, i, vars, units)
             vlist = dataobject.info.variable_list
             nH    = _rt_nH(dataobject, masked_data, rtd)                    # n_H [cm^-3], X from descriptor
@@ -380,7 +387,7 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :xHI
             rtd = dataobject.info.descriptor.rt
             haskey(rtd, :iIons) || error("getvar :xHI needs the RT ionization fraction (descriptor :iIons); load an RT run.")
-            sp = _rt_species(rtd)
+            sp = _rt_species(rtd, dataobject.info.variable_list)
             selected_unit = getunit(dataobject, :xHI, vars, units)
             vlist = dataobject.info.variable_list
             xHI = sp.isH2 ? select(masked_data, vlist[sp.iHI]) :
@@ -392,7 +399,7 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :xH2
             rtd = dataobject.info.descriptor.rt
             haskey(rtd, :iIons) || error("getvar :xH2 needs an RT run with H2 chemistry (descriptor :iIons).")
-            sp = _rt_species(rtd)
+            sp = _rt_species(rtd, dataobject.info.variable_list)
             sp.isH2 || error("getvar :xH2: this run has no H2 chemistry (nIons=$(get(rtd,:nIons,0)) is odd ⇒ xHI is not stored).")
             selected_unit = getunit(dataobject, :xH2, vars, units)
             vlist = dataobject.info.variable_list
@@ -404,7 +411,7 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :n_H2
             rtd = dataobject.info.descriptor.rt
             haskey(rtd, :iIons) || error("getvar :n_H2 needs an RT run with H2 chemistry (descriptor :iIons).")
-            sp = _rt_species(rtd)
+            sp = _rt_species(rtd, dataobject.info.variable_list)
             sp.isH2 || error("getvar :n_H2: this run has no H2 chemistry (nIons=$(get(rtd,:nIons,0)) is odd).")
             selected_unit = getunit(dataobject, :n_H2, vars, units)
             vlist = dataobject.info.variable_list

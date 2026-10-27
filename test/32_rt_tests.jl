@@ -36,7 +36,8 @@ end
     # RAMSES-RT stores ionization fractions in the order [xHI? , xHII, xHeII?, xHeIII?]
     # (rt/rt_init.f90); the count fixes the layout: nIons = 1 + isH2 + 2·isHe, so
     # isH2 = iseven(nIons) and isHe = nIons ≥ 3. _rt_species must remap accordingly.
-    sp = Mera._rt_species
+    hv = [:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01, :scalar_02, :scalar_03]   # hydro output
+    sp(rtd) = Mera._rt_species(rtd, hv)
     # default (no H2, with He): [xHII, xHeII, xHeIII] — iIons → xHII (legacy layout)
     s3 = sp(Dict(:iIons => 6, :nIons => 3))
     @test (s3.isH2, s3.isHe) == (false, true)
@@ -53,6 +54,29 @@ end
     s2 = sp(Dict(:iIons => 6, :nIons => 2))
     @test (s2.isH2, s2.isHe) == (true, false)
     @test (s2.iHI, s2.iHII, s2.iHeII, s2.iHeIII) == (6, 7, 0, 0)
+    # MHD: iIons is RAMSES's internal index (ρ, momentum, energy, B, scalars = 9 for the first
+    # scalar), but the output writes ρ, v, B left, B right, p, scalars: 3 columns later
+    mv = [:rho, :vx, :vy, :vz, :bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right, :p,
+          :scalar_00, :scalar_01, :scalar_02]
+    sm = Mera._rt_species(Dict(:iIons => 9, :nIons => 3), mv)
+    @test mv[sm.iHII] === :scalar_00 && mv[sm.iHeIII] === :scalar_02
+end
+
+@testset "RT on an MHD run: ion fractions (ramses_rt_dirac)" begin
+    # RAMSES's rt-dirac test runs RT with the MHD solver. Before the column fix, :xHII read
+    # :by_right and came out between -38 and 38.
+    f = @isdefined(PUBLIC_FIXTURES) ? get(PUBLIC_FIXTURES, :ramses_rt_dirac, nothing) : nothing
+    if f !== nothing && isdir(f.path)
+        info = getinfo(f.outputs, f.path, verbose=false)
+        gas = gethydro(info, verbose=false, show_progress=false)
+        x = getvar(gas, :xHII)
+        @test x == getvar(gas, :scalar_00)
+        @test all(0.0 .<= x .<= 1.0) && maximum(x) > 0.9          # ionised near the sources
+        @test all(0.0 .<= getvar(gas, :xHeIII) .<= 1.0)
+        @test all(getvar(gas, :mu) .> 0.4)                         # μ ≥ 0.5 for pure ionised H, about
+    else
+        @test_skip "ramses_rt_dirac not available"
+    end
 end
 
 if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
