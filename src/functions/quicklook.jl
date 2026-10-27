@@ -179,8 +179,10 @@ end
 # mean). Particle masses/SFR are exact (all particles read); gas mass follows the hydro read.
 # `pscale` (= 1/subsample-fraction) scales the extensive particle quantities up to whole-snapshot
 # estimates when the particles were read as a subsample (pscale = 1 ⇒ exact, full read).
-# tracer particles: RAMSES families 0 (gas tracers) to -5; they carry no mass of their own
-_tracer_count(p) = :family in propertynames(getfield(p, :data).columns) ? count(<=(0), getvar(p, :family)) : 0
+# tracer particles: RAMSES families 0 (gas tracers) to -5; they carry no mass of their own. Other
+# formats use the family column differently (GADGET: the PartType, 0 = gas), so only RAMSES counts.
+_tracer_count(p) = (p.info.simcode == "RAMSES" && :family in propertynames(getfield(p, :data).columns)) ?
+                   count(<=(0), getvar(p, :family)) : 0
 
 function _quicklook_budget(gas_mass_Msol, p; pscale::Real=1.0)
     base = (gas_mass_Msol=gas_mass_Msol, stellar_mass_Msol=nothing, dm_mass_Msol=nothing,

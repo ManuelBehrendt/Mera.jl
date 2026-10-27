@@ -452,12 +452,20 @@ end
         @test count(iszero, sph.maps[:sd]) < count(iszero, pt.maps[:sd])
 
         # without either column the smoothing length comes from the 32 nearest neighbours:
-        # still mass-conserving, and smoother than nearest-pixel deposition
+        # smoother than nearest-pixel deposition, and mass-conserving up to the sliver that the
+        # kernel of a particle near the map edge places outside it (≈ 2e-9 here)
         knn = projection(dm, :sd; weighting=:sph, res=res, verbose=false, show_progress=false)
-        @test sum(knn.maps[:sd]) * pa ≈ Float64(n)  rtol=1e-10
+        @test sum(knn.maps[:sd]) * pa ≈ Float64(n)  rtol=1e-6
+        @test sum(knn.maps[:sd]) * pa <= Float64(n) * (1 + 1e-12)
         @test count(iszero, knn.maps[:sd]) < count(iszero, pt.maps[:sd])
         hk = Mera._knn_smoothing(base.x, base.y, base.z)
         @test all(hk .> 0) && Mera._knn_smoothing([0.5], [0.5], [0.5]) == [Inf]
+        # a mixed file (AREPO: gas cells with a :volume, collisionless particles with NaN there):
+        # the particles without a valid volume take the neighbour length
+        mix = mkp((:volume, [isodd(i) ? 1e-6 : NaN for i in 1:n]))
+        mx = projection(mix, :sd; weighting=:sph, res=res, verbose=false, show_progress=false)
+        @test all(isfinite, mx.maps[:sd])
+        @test sum(mx.maps[:sd]) * pa ≈ Float64(n)  rtol=1e-6
 
         # particles on a lattice (a cosmological run at high redshift): nearest-pixel deposition
         # leaves a moiré of empty pixels, the neighbour kernel a smooth map

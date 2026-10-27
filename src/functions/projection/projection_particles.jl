@@ -24,20 +24,28 @@
 # low-resolution boundary particles of a zoom run trace the initial lattice, not structure
 # (see the "Zoom Simulations" page).
 function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
-    if :volume in cols
-        Vc = getcol(:volume)
-        return max.(α .* (3.0 .* Vc ./ (4 * pi)) .^ (1/3), pixsize)
-    elseif :subfind_hsml in cols
-        h = getcol(:subfind_hsml)
-        return max.(Float64.(h), pixsize)
-    elseif all(in(cols), (:x, :y, :z))
-        h = _knn_smoothing(Float64.(getcol(:x)), Float64.(getcol(:y)), Float64.(getcol(:z)))
-        return clamp.(h, pixsize, 16 * pixsize)
+    # A particle file can hold gas cells and collisionless particles together (AREPO): only the
+    # cells have a volume, the others carry NaN there. Each particle takes the first source that
+    # gives it a valid length.
+    valid(x) = isfinite(x) && x > 0
+    h = :volume in cols ? α .* (3.0 .* Float64.(getcol(:volume)) ./ (4 * pi)) .^ (1/3) : nothing
+    if h === nothing || !all(valid, h)
+        other = :subfind_hsml in cols ? Float64.(getcol(:subfind_hsml)) :
+                all(in(cols), (:x, :y, :z)) ?
+                    clamp.(_knn_smoothing(Float64.(getcol(:x)), Float64.(getcol(:y)), Float64.(getcol(:z))),
+                           pixsize, 16 * pixsize) : nothing
+        other === nothing && h === nothing && throw(ArgumentError(
+            "projection (particles): weighting=:sph needs a smoothing length: a :volume column " *
+            "(gas cells), a :subfind_hsml column, or the positions :x, :y, :z to measure one from " *
+            "the nearest neighbours. Without them, use weighting=:mass."))
+        if h === nothing
+            h = other
+        elseif other !== nothing
+            bad = .!valid.(h)
+            h[bad] .= other[bad]
+        end
     end
-    throw(ArgumentError(
-        "projection (particles): weighting=:sph needs a smoothing length: a :volume column " *
-        "(gas cells), a :subfind_hsml column, or the positions :x, :y, :z to measure one from " *
-        "the nearest neighbours. Without them, use weighting=:mass."))
+    return max.(h, pixsize)
 end
 
 # Half the distance to the k-th nearest neighbour of every particle (positions in code units).
