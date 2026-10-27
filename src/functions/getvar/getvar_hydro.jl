@@ -41,6 +41,8 @@ end
 # The variable_list names of the ionization fractions an RT run stores; empty for other runs.
 # Readers that load only some variables add these so the temperature can use μ per cell.
 function _rt_ion_columns(info)
+    # data built in memory, and older Mera files, may carry no RT descriptor at all
+    (isdefined(info, :descriptor) && isdefined(info.descriptor, :rt)) || return Symbol[]
     rtd = info.descriptor.rt
     haskey(rtd, :iIons) || return Symbol[]
     vl = info.variable_list
@@ -318,11 +320,10 @@ function get_data(  dataobject::HydroDataType,
             # there μ is taken per cell instead (the same as :T_rt), in whatever unit was asked for.
             selected_unit = getunit(dataobject, i, vars, units)
             T_const = select(masked_data, :p) ./ select(masked_data, :rho) .* selected_unit
-            rtd = dataobject.info.descriptor.rt
             ions = _rt_ion_columns(dataobject.info)
             if !isempty(ions) && all(in(propertynames(masked_data.columns)), ions)
                 mu_const = dataobject.info.scale.K / dataobject.info.scale.T_mu
-                vars_dict[i] = T_const .* (_rt_mu(dataobject, masked_data, rtd) ./ mu_const)
+                vars_dict[i] = T_const .* (_rt_mu(dataobject, masked_data, dataobject.info.descriptor.rt) ./ mu_const)
             else
                 isempty(ions) || @warn "getvar :$i: this RT run's ionization fractions ($(join(ions, ", "))) " *
                     "were not loaded, so the temperature uses the constant μ. Load them with gethydro " *

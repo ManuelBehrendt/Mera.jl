@@ -288,7 +288,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     bmag_range = nothing; beta_range = nothing
     # an RT run tracks the ionisation: :T then takes μ per cell from it, and the dashboard reports
     # how much of the gas is ionised
-    rt_ion = info.rt && haskey(info.descriptor.rt, :iIons)
+    rt_ion = info.rt && !isempty(_rt_ion_columns(info))
     xHII_range = nothing; ionised_fraction = nothing
 
     # --- gas (hydro): budgeted read → Σ map(s) along the selected axes + ρ–T phase + ranges ---
