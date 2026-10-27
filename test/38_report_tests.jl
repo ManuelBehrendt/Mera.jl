@@ -6,6 +6,17 @@
 
 @testset verbose=true "Composable report (Phase 1)" begin
 
+    @testset "readable unit labels and card titles (data-free)" begin
+        @test Mera._unit_label(:Msol_pc2) == "M⊙/pc²" && Mera._unit_label(:g_cm3) == "g/cm³"
+        @test Mera._unit_label(:nH) == "cm⁻³" && Mera._unit_label(:km_s) == "km/s"
+        @test Mera._unit_label(:standard) == "code" && Mera._unit_label(:K) == "K"
+        mk(label, kind, dt, meta) = Mera.ReportResultCard(label, kind, dt, :projection, nothing, meta)
+        @test Mera._card_title(mk("hydro_sd_map", :map, :hydro, (var=:sd, direction=:z))) == "Gas Σ (along z)"
+        @test Mera._card_title(mk("rho_T_phase", :phase, :hydro, (xvar=:rho, yvar=:T))) == "ρ–T phase"
+        @test Mera._card_title(mk("rho_profile", :profile, :hydro, (xvar=:r_sphere, yvar=:rho))) == "ρ profile"
+        @test Mera._card_title(mk("my map", :map, :hydro, (var=:sd, direction=:z))) == "my map"   # own label kept
+    end
+
     @testset "card constructors & traits (data-free)" begin
         pc = ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=128)
         @test pc.kind == :hydro && Mera.card_result_kind(pc) == :map
