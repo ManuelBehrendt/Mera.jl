@@ -428,6 +428,8 @@ raises a question.
     temperature diagram, and reports masses, densities and temperatures. See
     [First Look](first_look.md). New to Mera? [First Steps](00_multi_FirstSteps.md) is a guided
     first session, and [Coming from Other Tools](switching_to_mera.md) translates habits you bring.
+    No snapshot of your own yet? `download_testdata()` fetches small public runs with known
+    answers, and [The Test Simulations](test_simulations.md) shows each of them with `quicklook`.
 
 ## Getting data in
 
@@ -442,7 +444,8 @@ raises a question.
 | read only part of the box | `xrange`, `yrange`, `zrange` with `center=[:bc]`, `range_unit=:kpc` | [Load by Selection](02_hydro_Load_Selections.md) |
 | stop waiting for the same read every time | `savedata`, `loaddata`, `convertdata` | [Mera Files](07_multi_Mera_Files.md), [Converter](07_1_multi_Mera_Files_Converter.md) |
 | restart RAMSES on a different number of CPUs | `repartition`, then `compareramses` to check; `writeramses` from Mera data or a mera file | [RAMSES restart, any CPUs](07_2_multi_RAMSES_Restart.md) |
-| practise on data with a known answer | `download_testdata` (fifteen small RAMSES runs) | [Test simulations](api/data_loading.md#Test-simulations) |
+| practise on data with a known answer | `download_testdata` (fifteen small RAMSES runs) | [The Test Simulations](test_simulations.md) |
+| check that Mera works on my machine | `download_testdata`, then `Pkg.test("Mera")` | [Testing Framework](advanced_features/testing_guide.md) |
 
 ## Asking for numbers
 
