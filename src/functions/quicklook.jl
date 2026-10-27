@@ -363,8 +363,10 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     if parts !== nothing
         star_mask, dm_mask = _star_dm_masks(parts)                 # family-aware (legacy: birth≠0 / ==0)
         function ppj(mask, dir)                                     # Σ along `dir`; scale up if subsampled
+            # smoothed over each particle's nearest neighbours: nearest-pixel deposition shows
+            # sparse particles as noise, and particles still on their initial lattice as moiré
             pm = projection(parts, :sd, du.sigma[1]; direction=dir, center=[:bc], res=res,
-                            mask=mask, verbose=false, show_progress=false)
+                            mask=mask, weighting=:sph, verbose=false, show_progress=false)
             psub < 1.0 && (pm.maps[:sd] .*= pscale)
             pm
         end

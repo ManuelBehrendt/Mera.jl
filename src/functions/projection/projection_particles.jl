@@ -3,23 +3,26 @@
 
 # Smoothing lengths for `weighting=:sph`, in code units, floored at one pixel.
 #
-# TWO SOURCES, in order:
+# THREE SOURCES, in order:
 #
 #   :volume        — gas cells. h = α·(3V/4π)^⅓ resolves each Voronoi cell's own footprint.
 #   :subfind_hsml  — COLLISIONLESS particles, which have no volume. SUBFIND already computed a
 #                    local smoothing length for its density estimate, and Mera reads it for all
 #                    six PartTypes. Used AS IS: it is a smoothing length, not a radius derived
 #                    from a volume, so the α that tunes the volume form does not belong on it.
+#   neighbours     — any other particles (RAMSES dark matter, stars, tracers): h is half the
+#                    distance to the 32nd nearest neighbour, so each kernel (support 2h) reaches
+#                    about 32 particles. Capped at 16 pixels so an isolated particle stays cheap.
 #
-# Without either, `:sph` used to be refused outright, leaving `:mass` nearest-pixel deposition —
-# which for sparse particles is shot noise. Deposition is mass-conserving for any h (the kernel
-# is renormalised discretely), so the choice of h affects smoothness, never totals.
+# Deposition is mass-conserving for any h (the kernel is renormalised discretely), so the choice
+# of h affects smoothness, never totals.
 #
-# A CAVEAT NO KERNEL FIXES: low-resolution zoom boundary particles begin on a LATTICE in the
-# initial conditions and, in low-density regions, have barely moved. Smoothing them produces
-# moiré — a regular interference pattern between the particle lattice and the pixel grid that
-# reads as structure. Coarsening pixels only shifts the beat frequency. See the "Zoom
-# Simulations" page: a map of boundary particles is not meaningful at any pixel size.
+# Particles that still sit near the LATTICE of their initial conditions (a cosmological run at
+# high redshift) gave a moiré pattern with nearest-pixel deposition, and with any fixed h of
+# about a pixel: an interference between the lattice and the pixel grid. A neighbour-based h
+# spans a few lattice spacings and removes it. What smoothing cannot add is meaning: the
+# low-resolution boundary particles of a zoom run trace the initial lattice, not structure
+# (see the "Zoom Simulations" page).
 function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
     if :volume in cols
         Vc = getcol(:volume)
@@ -27,13 +30,33 @@ function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
     elseif :subfind_hsml in cols
         h = getcol(:subfind_hsml)
         return max.(Float64.(h), pixsize)
+    elseif all(in(cols), (:x, :y, :z))
+        h = _knn_smoothing(Float64.(getcol(:x)), Float64.(getcol(:y)), Float64.(getcol(:z)))
+        return clamp.(h, pixsize, 16 * pixsize)
     end
     throw(ArgumentError(
-        "projection (particles): weighting=:sph needs a smoothing length. Gas cells supply one " *
-        "through :volume (AREPO/GADGET); collisionless particles through :subfind_hsml " *
-        "(SubfindHsml), which SUBFIND runs write for every PartType — reload including it, " *
-        "e.g. getparticles(info; vars=[:subfind_hsml]). Without either, use weighting=:mass — " *
-        "but note that is nearest-pixel deposition, i.e. shot noise for sparse particles."))
+        "projection (particles): weighting=:sph needs a smoothing length: a :volume column " *
+        "(gas cells), a :subfind_hsml column, or the positions :x, :y, :z to measure one from " *
+        "the nearest neighbours. Without them, use weighting=:mass."))
+end
+
+# Half the distance to the k-th nearest neighbour of every particle (positions in code units).
+# Queried in blocks so the neighbour lists of a large run never sit in memory all at once.
+function _knn_smoothing(x, y, z; k::Int=32)
+    n = length(x)
+    n <= 1 && return fill(Inf, n)
+    kk = min(k, n - 1)
+    tree = KDTree(permutedims(hcat(x, y, z)))
+    h = Vector{Float64}(undef, n)
+    block = 100_000
+    for lo in 1:block:n
+        hi = min(lo + block - 1, n)
+        _, d = knn(tree, permutedims(hcat(view(x, lo:hi), view(y, lo:hi), view(z, lo:hi))), kk + 1, true)
+        for (j, dj) in enumerate(d)
+            h[lo + j - 1] = dj[end] / 2           # dj[1] is the particle itself, at distance 0
+        end
+    end
+    return h
 end
 
 # Unnormalised 2-D M4 cubic spline (the normalisation cancels under the discrete renormalisation below).
