@@ -197,6 +197,13 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
                         aspect=Makie.DataAspect(), AX...)
         xs = range(ex[1], ex[2], length=Base.size(mp, 1)); ys = range(ex[3], ex[4], length=Base.size(mp, 2))
         hm = _loghm!(ax, xs, ys, mp; colormap=cmapof(key))
+        sp = get(s, :sink_pos_code, nothing)                          # sinks, as open circles
+        if sp !== nothing && !isempty(sp.x)
+            h, v = key in (:x, :stars_x, :dm_x) ? (sp.y, sp.z) :
+                   key in (:y, :stars_y, :dm_y) ? (sp.x, sp.z) : (sp.x, sp.y)
+            Makie.scatter!(ax, h .* (skpc * lenfac), v .* (skpc * lenfac); marker=:circle,
+                           color=:transparent, strokecolor=:white, strokewidth=1.5, markersize=12)
+        end
         cb(fig[r, c][1, 2], hm; label=key === :bmag ? (cu ? "log₁₀ ⟨|B|⟩ [code]" : "log₁₀ ⟨|B|⟩ [μG]") :
                                          (cu ? "log₁₀ Σ [code]" : "log₁₀ Σ"))
     end
@@ -257,6 +264,11 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
         push!(L, ""); push!(L, "MAGNETIC")
         push!(L, "  |B|  $(nf(s.bmag_range_muG[1]))…$(nf(s.bmag_range_muG[2])) μG")
         push!(L, "  β    $(nf(s.beta_range[1]))…$(nf(s.beta_range[2]))")
+    end
+    if get(s, :sink_count, 0) > 0
+        push!(L, ""); push!(L, "SINKS (○ on the maps)")
+        push!(L, "  number $(s.sink_count)")
+        push!(L, cu ? "  mass   $(nf(s.sink_mass_code))" : "  mass   $(nf(s.sink_mass_Msol)) M⊙")
     end
     axt = Makie.Axis(fig[rt, ct]; title="census", titlesize=13, titlegap=4,
                      backgroundcolor=(:gray, 0.05))

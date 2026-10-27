@@ -180,6 +180,25 @@
             @test any(c -> c isa SFRCard, ReportPlan(dc.output; path=dc.path).cards)
         end
 
+        @testset "quicklook sinks (sinks3d)" begin
+            # RAMSES keeps sinks in their own catalogue; the particle header counts none
+            f = PUBLIC_FIXTURES[:sinks3d]
+            if isdir(f.path)
+                n = maximum(parse(Int, d[8:end]) for d in readdir(f.path) if startswith(d, "output_"))
+                q = quicklook(n; path=f.path, verbose=false)
+                sk = getsinks(getinfo(n, f.path, verbose=false), verbose=false)
+                @test q.summary.sink_count == length(sk.data) >= 1
+                @test q.summary.sink_mass_Msol ≈ sum(getvar(sk, :mass, :Msol))
+                @test q.summary.sink_pos_code.x ≈ getvar(sk, :x)
+                if Base.find_package("CairoMakie") !== nothing
+                    @eval using CairoMakie
+                    @test occursin("Figure", string(typeof(quicklookplot(q))))
+                end
+            else
+                @test_skip "sinks3d not available"
+            end
+        end
+
         @testset "quicklook on uniform initial conditions (stromgren3d, mhdtube3d)" begin
             # uniform density, and maps that vary only by rounding: the phase diagram and the
             # plot must not fail on a range of zero width

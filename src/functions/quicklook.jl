@@ -177,6 +177,8 @@ fall outside it (see `gethydro`'s `xrange`/`yrange`/`zrange`).
   dark-matter maps alike. Use `directions=[:z]` for a single, compact map per component.
   The face-on map keeps the bare key (`q.maps.stars`); edge-on views are `q.maps.stars_x` / `.stars_y`
   (and `dm_x` / `dm_y`).
+* sinks — when the output has a sink catalogue, the dashboard gives their number and mass and the
+  plot marks them on the maps (`summary.sink_count`, `.sink_mass_Msol`, `.sink_pos_code`).
 * `particle_subsample` — for **very large particle runs**, read only ~this fraction of the particle
   CPU files (e.g. `0.1`); RAMSES balances ~equal particles per CPU, so this reads ~that fraction of
   particles (skipping whole files → cuts I/O & memory). The particle census, masses and SFR are then
@@ -348,6 +350,20 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
         end
     end
 
+    # sinks: RAMSES keeps them in their own catalogue, not among the particles, so the particle
+    # header counts none. The catalogue is a single small file.
+    sinks = nothing
+    if info.sinks
+        try
+            sk = getsinks(info; verbose=false)
+            sm = cu ? getvar(sk, :mass) : getvar(sk, :mass, :Msol)
+            sinks = (n=length(sk.data), mass=sum(sm; init=0.0), mass_max=maximum(sm; init=0.0),
+                     pos=(x=getvar(sk, :x), y=getvar(sk, :y), z=getvar(sk, :z)))
+        catch e
+            verbose && @warn "quicklook: sink read failed; skipping sinks" exception=e
+        end
+    end
+
     # particle counts: prefer the budget's exact read counts (header part_info is not always populated)
     ns = bud.has_particles ? bud.n_stars : (want.stars ? facts.nstars : 0)
     nd = bud.has_particles ? bud.n_dm    : (want.dm    ? facts.ndm    : 0)
@@ -361,6 +377,11 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                             gas_mass_code=gas_mass_code, stellar_mass_code=bud.stellar_mass_code,
                             dm_mass_code=bud.dm_mass_code, rho_range_code=rho_range_code,
                             p_range_code=p_range_code, bmag_range_code=bmag_range_code,
+                            sink_count = sinks === nothing ? 0 : sinks.n,
+                            sink_mass_Msol = (sinks === nothing || cu) ? nothing : sinks.mass,
+                            sink_mass_max_Msol = (sinks === nothing || cu) ? nothing : sinks.mass_max,
+                            sink_mass_code = (sinks === nothing || !cu) ? nothing : sinks.mass,
+                            sink_pos_code = sinks === nothing ? nothing : sinks.pos,
                             seconds=time()-t0))
     verbose && _quicklook_print(summary, t0)
     # a closing timestamp: on a long run the dashboard scrolls up, and this is what tells you
@@ -425,6 +446,12 @@ function _quicklook_print(s, t0)
     if g(:stellar_mass_Msol) !== nothing           # particle masses + SFR
         println("│ star mass  : $(nf(s.stellar_mass_Msol)) M⊙        DM mass : $(nf(s.dm_mass_Msol)) M⊙")
         println("│ current SFR: $(nf(s.sfr10)) (10 Myr) · $(nf(s.sfr100)) (100 Myr) M⊙/yr")
+    end
+    if get(s, :sink_count, 0) > 0                  # sink catalogue
+        println("│ sinks      : $(s.sink_count)  ·  mass " *
+                (cu ? "$(nf(s.sink_mass_code))" :
+                      "$(nf(s.sink_mass_Msol)) M⊙" *
+                      (s.sink_count > 1 ? " (most massive $(nf(s.sink_mass_max_Msol)) M⊙)" : "")))
     end
     if all(k -> g(k) === nothing, (:gas_mass_Msol, :stellar_mass_Msol, :gas_mass_code, :stellar_mass_code))
         println("│ (header only — call quicklook(output) to read a sample)")
