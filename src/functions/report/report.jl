@@ -402,6 +402,10 @@ function report(plan::ReportPlan; output::Symbol=:ascii, budget_s=nothing, verbo
             push!(results, ReportResultCard(card_label(c), card_result_kind(c), dt, :skipped,
                 nothing, (note="projection cards support hydro/particles only", cost_s=0.0))); continue
         end
+        if c isa SFRCard && haskey(datas, dt) && !(:birth in propertynames(getfield(datas[dt], :data).columns))
+            push!(results, ReportResultCard(card_label(c), card_result_kind(c), dt, :skipped,
+                nothing, (note="the particles carry no birth times", cost_s=0.0))); continue
+        end
         if !_card_var_available(info, c)
             push!(results, ReportResultCard(card_label(c), card_result_kind(c), dt, :skipped,
                 nothing, (note="required variables not stored in this output", cost_s=0.0))); continue

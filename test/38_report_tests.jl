@@ -16,6 +16,9 @@
         @test Mera._human_time(125.0) == "2 min 5 s" && Mera._human_time(3780.0) == "1 h 3 min"
         # readers of other codes leave info.boundaries unset: quicklook treats that as unknown
         @test Mera._boundaries(Mera.InfoType()) === :unknown
+        bi = Mera.InfoType(); bi.boundaries = Symbol(""); @test Mera._boundaries(bi) === :unknown
+        ri = Mera.InfoType(); ri.simcode = "RAMSES"; @test Mera._family_codes(ri) == (stars=[2], dm=[1])
+        oi = Mera.InfoType(); oi.simcode = "SOMECODE"; @test Mera._family_codes(oi).stars == [2]   # RAMSES default
         mk(label, kind, dt, meta) = Mera.ReportResultCard(label, kind, dt, :projection, nothing, meta)
         @test Mera._card_title(mk("hydro_sd_map", :map, :hydro, (var=:sd, direction=:z))) == "Gas Σ (along z)"
         @test Mera._card_title(mk("rho_T_phase", :phase, :hydro, (xvar=:rho, yvar=:T))) == "ρ–T phase"

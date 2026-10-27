@@ -104,8 +104,12 @@ end
 # the middle). The maps move only when that point is well defined (the cells agree on it: mean
 # resultant length ≥ 0.5) and more than an eighth of the box away from the middle on some axis.
 # Returns the centre in code length (the box middle on axes that stay), or `nothing`.
-# what the run's namelist says about the boundaries; readers of other codes do not set it
-_boundaries(info) = isdefined(info, :boundaries) ? info.boundaries : :unknown
+# what the run's namelist says about the boundaries; readers of other codes do not set it, or
+# leave a blank symbol
+function _boundaries(info)
+    b = isdefined(info, :boundaries) ? info.boundaries : :unknown
+    return b in (:periodic, :nonperiodic, :mixed) ? b : :unknown
+end
 
 function _quicklook_shift(gas, info)
     _boundaries(info) === :unknown && return nothing      # no namelist: periodicity is not known
@@ -163,11 +167,19 @@ end
 # `family` column — the canonical type (1=DM, 2=star, 3=cloud/sink, 4=debris, 5=other) — so cloud,
 # debris, sinks and tracers are not misbucketed; use it when present. The LEGACY format (pversion=0)
 # has no family column, so fall back to the birth convention (birth≠0 ⇒ star, birth==0 ⇒ DM).
+# Which `family` values are stars and which dark matter, per simulation code. RAMSES numbers its
+# families 1 = DM, 2 = star; the readers of other codes add their own entry (GADGET and AREPO use
+# the PartType: stars 4, dark matter 1 to 3).
+const _FAMILY_CODES = Dict{String,NamedTuple{(:stars, :dm),Tuple{Vector{Int},Vector{Int}}}}(
+    "RAMSES" => (stars=[2], dm=[1]))
+_family_codes(info) = get(_FAMILY_CODES, string(info.simcode), _FAMILY_CODES["RAMSES"])
+
 function _star_dm_masks(p)
     cols = propertynames(getfield(p, :data).columns)
     if :family in cols
         fam = getvar(p, :family)
-        return (fam .== 2, fam .== 1)        # tracers are family ≤ 0 (see _tracer_count)
+        fc = _family_codes(p.info)
+        return (in(fc.stars).(fam), in(fc.dm).(fam))   # RAMSES tracers are family ≤ 0 (see _tracer_count)
     else
         b = getvar(p, :birth)
         return (b .!= 0.0, b .== 0.0)
