@@ -104,8 +104,11 @@ end
 # the middle). The maps move only when that point is well defined (the cells agree on it: mean
 # resultant length ≥ 0.5) and more than an eighth of the box away from the middle on some axis.
 # Returns the centre in code length (the box middle on axes that stay), or `nothing`.
+# what the run's namelist says about the boundaries; readers of other codes do not set it
+_boundaries(info) = isdefined(info, :boundaries) ? info.boundaries : :unknown
+
 function _quicklook_shift(gas, info)
-    info.boundaries === :unknown && return nothing        # no namelist: periodicity is not known
+    _boundaries(info) === :unknown && return nothing      # no namelist: periodicity is not known
     ax = periodic_axes(info.namelist_content)
     any((ax.x, ax.y, ax.z)) || return nothing
     L = info.boxlen
@@ -461,7 +464,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                             sink_mass_Msol = sinks === nothing ? nothing : sinks.mass,
                             sink_mass_max_Msol = sinks === nothing ? nothing : sinks.mass_max,
                             sink_pos_code = sinks === nothing ? nothing : sinks.pos,
-                            boundaries=info.boundaries,
+                            boundaries=_boundaries(info),
                             map_center_code = shift === nothing ? nothing : Tuple(shift),
                             seconds=time()-t0))
     verbose && _quicklook_print(summary, t0)

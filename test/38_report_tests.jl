@@ -14,6 +14,8 @@
         @test Mera._axis_label(:r_sphere_periodic, :cm) == "r [cm]"
         @test Mera._human_time(0.123) == "0.12 s" && Mera._human_time(5.43) == "5.43 s"
         @test Mera._human_time(125.0) == "2 min 5 s" && Mera._human_time(3780.0) == "1 h 3 min"
+        # readers of other codes leave info.boundaries unset: quicklook treats that as unknown
+        @test Mera._boundaries(Mera.InfoType()) === :unknown
         mk(label, kind, dt, meta) = Mera.ReportResultCard(label, kind, dt, :projection, nothing, meta)
         @test Mera._card_title(mk("hydro_sd_map", :map, :hydro, (var=:sd, direction=:z))) == "Gas Σ (along z)"
         @test Mera._card_title(mk("rho_T_phase", :phase, :hydro, (xvar=:rho, yvar=:T))) == "ρ–T phase"
