@@ -30,6 +30,9 @@ function _loghm!(ax, xs, ys, A; colormap)
         cr = (0.0, 1.0)
     else
         lo, hi = minimum(fin), maximum(fin)
+        # At most 8 decades below the maximum: an RT photon density reaches 1e-45 in the dark, which
+        # would spread the colours over 45 decades. Lower values take the lowest colour.
+        lo = max(lo, hi - 8)
         # A uniform map (uniform initial conditions) varies only by rounding, which gives Makie a
         # zero-width range once it converts to Float32, or a colour bar of noise. Below 1e-4 dex
         # (0.02 %) show it as uniform: one dex centred on the value.
@@ -51,7 +54,7 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
     if c.kind === :map
         z = c.data.z; ex = c.data.extent                             # extent in kpc, or code units (card_compute)
         lu = get(m, :length_unit, "kpc")
-        ax = Makie.Axis(pos; title=c.label, xlabel="x [$lu]", ylabel="y [$lu]", aspect=Makie.DataAspect())
+        ax = Makie.Axis(pos[1, 1]; title=c.label, xlabel="x [$lu]", ylabel="y [$lu]", aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=size(z, 1)); ys = range(ex[3], ex[4], length=size(z, 2))
         pr = _poscolor(z); cmap = Mera._seq_cmap(m.var)
         hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z; colormap=cmap) :
@@ -61,7 +64,7 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
     elseif c.kind === :phase
         xe = c.data.xedges; ye = c.data.yedges; H = c.data.H
         logx = all(>(0), xe); logy = all(>(0), ye)               # log axes for positive (log-spaced) bins
-        ax = Makie.Axis(pos; title=c.label, xlabel=string(m.xvar), ylabel=string(m.yvar),
+        ax = Makie.Axis(pos[1, 1]; title=c.label, xlabel=string(m.xvar), ylabel=string(m.yvar),
                         xscale = logx ? log10 : identity, yscale = logy ? log10 : identity)
         xc = logx ? sqrt.(xe[1:end-1] .* xe[2:end]) : (xe[1:end-1] .+ xe[2:end]) ./ 2  # bin centres
         yc = logy ? sqrt.(ye[1:end-1] .* ye[2:end]) : (ye[1:end-1] .+ ye[2:end]) ./ 2
@@ -83,6 +86,16 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
             Makie.lines!(ax, x[keep], y[keep])
         else
             Makie.lines!(ax, x, y)
+        end
+        # a profile that is uniform up to rounding: centre the axis on the value (one dex on a log
+        # axis, ±5 % on a linear one) instead of zooming into the rounding noise
+        fy = filter(v -> isfinite(v) && (!uselog || v > 0), y)
+        if !isempty(fy)
+            lo, hi = extrema(fy); mid = (lo + hi) / 2
+            if hi - lo <= 1e-4 * max(abs(mid), floatmin())
+                Makie.ylims!(ax, uselog ? (mid / sqrt(10), mid * sqrt(10)) :
+                                 mid == 0 ? (-1.0, 1.0) : (mid - 0.05 * abs(mid), mid + 0.05 * abs(mid)))
+            end
         end
         return ax
     elseif c.kind === :sfr
