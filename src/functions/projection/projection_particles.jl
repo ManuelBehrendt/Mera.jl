@@ -61,9 +61,12 @@ end
 
 # Half the distance to the k-th nearest neighbour of every particle (positions in code units).
 # Queried in blocks so the neighbour lists of a large run never sit in memory all at once.
-function _knn_smoothing(x, y, z; k::Int=32)
+# Above `exact_limit` particles the search is too slow for a quick map (minutes for the 7 million
+# of a GADGET zoom run), so the density comes from a count in a grid instead (_grid_smoothing).
+function _knn_smoothing(x, y, z; k::Int=32, exact_limit::Int=1_000_000)
     n = length(x)
     n <= 1 && return fill(Inf, n)
+    n > exact_limit && return _grid_smoothing(x, y, z; k=k)
     kk = min(k, n - 1)
     tree = KDTree(permutedims(hcat(x, y, z)))
     h = Vector{Float64}(undef, n)
@@ -74,6 +77,29 @@ function _knn_smoothing(x, y, z; k::Int=32)
         for (j, dj) in enumerate(d)
             h[lo + j - 1] = dj[end] / 2           # dj[1] is the particle itself, at distance 0
         end
+    end
+    return h
+end
+
+# The same length from the local density: count the particles in a regular grid of about k per
+# cell, and give each particle half the radius that holds k particles at its cell's density. One
+# pass over the particles, so it scales to any number of them.
+function _grid_smoothing(x, y, z; k::Int=32)
+    n = length(x)
+    lo = (minimum(x), minimum(y), minimum(z))
+    m = clamp(round(Int, cbrt(n / k)), 1, 256)                 # cells per axis
+    Δ = ((maximum(x) - lo[1]) / m, (maximum(y) - lo[2]) / m, (maximum(z) - lo[3]) / m)
+    Δ = map(d -> d > 0 ? d : 1.0, Δ)
+    cell(v, a) = clamp(floor(Int, (v - lo[a]) / Δ[a]) + 1, 1, m)
+    counts = zeros(Int, m, m, m)
+    @inbounds for i in 1:n
+        counts[cell(x[i], 1), cell(y[i], 2), cell(z[i], 3)] += 1
+    end
+    V = Δ[1] * Δ[2] * Δ[3]
+    h = Vector{Float64}(undef, n)
+    @inbounds for i in 1:n
+        c = counts[cell(x[i], 1), cell(y[i], 2), cell(z[i], 3)]
+        h[i] = 0.5 * cbrt(3k * V / (4π * c))
     end
     return h
 end

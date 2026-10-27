@@ -619,6 +619,9 @@ end
         @test count(iszero, knn.maps[:sd]) < count(iszero, pt.maps[:sd])
         hk = Mera._knn_smoothing(base.x, base.y, base.z)
         @test all(hk .> 0) && Mera._knn_smoothing([0.5], [0.5], [0.5]) == [Inf]
+        # the grid estimate used above a million particles agrees with the neighbour search
+        hg = Mera._knn_smoothing(base.x, base.y, base.z; exact_limit=0)
+        @test 0.5 < median(hg) / median(hk) < 2
         # a mixed file (AREPO: gas cells with a :volume, collisionless particles with NaN there):
         # the particles without a valid volume take the neighbour length
         mix = mkp((:volume, [isodd(i) ? 1e-6 : NaN for i in 1:n]))
