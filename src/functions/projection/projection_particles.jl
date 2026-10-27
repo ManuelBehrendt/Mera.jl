@@ -16,7 +16,8 @@
 #                    from a volume, so the α that tunes the volume form does not belong on it.
 #   neighbours     — any other particles (RAMSES dark matter, stars, tracers): h is half the
 #                    distance to the 32nd nearest neighbour, so each kernel (support 2h) reaches
-#                    about 32 particles. Capped at 16 pixels so an isolated particle stays cheap.
+#                    about 32 particles. Capped at 16 pixels (4 above a million particles) so an
+#                    isolated particle stays cheap.
 #
 # Deposition is mass-conserving for any h (the kernel is renormalised discretely), so the choice
 # of h affects smoothness, never totals.
@@ -41,7 +42,7 @@ function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
         other = :subfind_hsml in cols ? Float64.(getcol(:subfind_hsml)) :
                 all(in(cols), (:x, :y, :z)) ?
                     clamp.(_knn_smoothing(Float64.(getcol(:x)), Float64.(getcol(:y)), Float64.(getcol(:z))),
-                           pixsize, 16 * pixsize) : nothing
+                           pixsize, _max_smoothing_px(length(getcol(:x))) * pixsize) : nothing
         other === nothing && h === nothing && throw(ArgumentError(
             "projection (particles): weighting=:sph needs a smoothing length: an :hsml or :volume " *
             "column (gas), a :subfind_hsml column, or the positions :x, :y, :z to measure one from " *
@@ -58,6 +59,12 @@ function _fill_invalid(h, new)
     h[bad] .= new[bad]
     return h
 end
+
+# The largest kernel, in pixels. A kernel's cost grows with its area, and the sparse particles of a
+# large run (the low-resolution dark matter of a zoom) reach the cap: 16 pixels made a quicklook of
+# 7 million particles take minutes. With more than a million particles a map holds many per pixel,
+# so 4 pixels already removes the noise and the lattice pattern.
+_max_smoothing_px(n::Integer) = n > 1_000_000 ? 4 : 16
 
 # Half the distance to the k-th nearest neighbour of every particle (positions in code units).
 # Queried in blocks so the neighbour lists of a large run never sit in memory all at once.
