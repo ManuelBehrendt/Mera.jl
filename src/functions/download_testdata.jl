@@ -132,6 +132,8 @@ Available simulations, with download sizes:
 | `sedov3d_iogroups` | 0.4 | Sedov written in IO-group folders (`IOGROUPSIZEREP=2`) |
 | `cosmo3d` | 12.0 | a small cosmological run: gas, dark matter, gravity, AMR |
 
+The [Test Simulations](@ref "The Test Simulations") page shows each of them with `quicklook`.
+
 See also: [`getinfo`](@ref), [`synthetic_clumps`](@ref) for a data-free alternative.
 """
 function download_testdata(names; dir::AbstractString=_testdata_default_dir(),

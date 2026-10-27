@@ -91,6 +91,7 @@ makedocs(modules = [Mera],
 		              "Where to Start"         => "where_to_start.md",
 		              "First Look"             => "first_look.md",
 		              "Composable Reports"     => "report.md",
+		              "Test Simulations"       => "test_simulations.md",
 		              "Getting Started"        => Any[
 		                  "First Steps"                    => "00_multi_FirstSteps.md",
 		                  "Coming from Other Tools"        => "switching_to_mera.md",
