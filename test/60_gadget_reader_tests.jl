@@ -539,11 +539,12 @@ end
         tf = filter(isfinite, Tm.maps[:T])
         @test !isempty(tf) && minimum(tf) > 0                                  # intensive SPH map is finite & positive
 
-        # :sph requires a :volume column — particles without one error clearly (strict mode rethrows)
+        # particles without a :volume (stars) take their smoothing length from the nearest neighbours
         st = getparticles_gadget(getinfo_gadget(0, dir, verbose=false); families=[4], verbose=false)  # stars, no :volume
-        withenv("MERA_PROJECTION_STRICT" => "true") do
-            @test_throws ArgumentError projection(st, :vx, res=8, weighting=:sph, verbose=false, show_progress=false)
-        end
+        sm = projection(st, :sd, res=8, weighting=:sph, verbose=false, show_progress=false)
+        @test all(isfinite, sm.maps[:sd])
+        Ms = sum(sm.maps[:sd]) * (st.info.boxlen / 8)^2             # kernels near the box edge lose a part
+        @test 0 < Ms <= msum(st) * (1 + 1e-9)
     end
 
     @testset "multi-file snapshots (chunked, TNG layout)" begin
