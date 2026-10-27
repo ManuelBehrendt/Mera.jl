@@ -149,9 +149,10 @@ end
 # colorblind-safe: gas density = viridis (the density standard), stars = magma (warm/stellar), dark
 # matter = cividis (the CVD-optimised cool map), |B| = plasma, ionised fraction = cividis, and the
 # ρ–T phase diagram = roma (Crameri), whose many hues separate the gas phases. A user-supplied
-# `colormap` overrides all of them.
+# `colormap` overrides all of them. The edge-on views of a component use its face-on map.
 const _QL_CMAP = Dict(:z => :viridis, :x => :viridis, :y => :viridis,
-                      :stars => :magma, :dm => :cividis, :phase => :roma,
+                      :stars => :magma, :stars_x => :magma, :stars_y => :magma,
+                      :dm => :cividis, :dm_x => :cividis, :dm_y => :cividis, :phase => :roma,
                       :bmag => :plasma, :xHII => :cividis)
 
 # ---- quicklookplot: the first-look dashboard --------------------------------------------
