@@ -95,28 +95,32 @@ function createpath(output::Real, path::String; namelist::String="")
 
     fnames = FileNamesType()
     fnames.output    = joinpath(path, Path_folder)
-    fnames.info      = joinpath(path, Path_folder, Info_file)
-    fnames.amr       = joinpath(path, Path_folder, AMR_file)
-    fnames.hydro     = joinpath(path, Path_folder, Hydro_file)
-    fnames.hydro_descriptor  = joinpath(path, Path_folder, "hydro_file_descriptor.txt")
-    fnames.gravity   = joinpath(path, Path_folder, Grav_file)
-    fnames.particles = joinpath(path, Path_folder, Part_file)
-    fnames.part_descriptor  = joinpath(path, Path_folder, "part_file_descriptor.txt")
-    fnames.rt        = joinpath(path, Path_folder, RT_file)
-    fnames.rt_descriptor    = joinpath(path, Path_folder, "rt_file_descriptor.txt") # newer version
-    fnames.rt_descriptor_v0  = joinpath(path, Path_folder, RT_descriptor) # older version
-    fnames.clumps    = joinpath(path, Path_folder, Clump_file)
-    fnames.sinks     = joinpath(path, Path_folder, Sink_file)
-    fnames.timer     = joinpath(path, Path_folder, Timer_file)
-    fnames.header    = joinpath(path, Path_folder, Header_file)
+    # An output written in IO groups keeps its files in group_GGGGG/ subfolders, those written
+    # once per output in group_00001/. The names below then point there, and getproc2string
+    # finds each rank's own folder.
+    dir = _iogroup_dir(fnames.output, Info_file)
+    fnames.info      = joinpath(dir, Info_file)
+    fnames.amr       = joinpath(dir, AMR_file)
+    fnames.hydro     = joinpath(dir, Hydro_file)
+    fnames.hydro_descriptor  = joinpath(dir, "hydro_file_descriptor.txt")
+    fnames.gravity   = joinpath(dir, Grav_file)
+    fnames.particles = joinpath(dir, Part_file)
+    fnames.part_descriptor  = joinpath(dir, "part_file_descriptor.txt")
+    fnames.rt        = joinpath(dir, RT_file)
+    fnames.rt_descriptor    = joinpath(dir, "rt_file_descriptor.txt") # newer version
+    fnames.rt_descriptor_v0  = joinpath(dir, RT_descriptor) # older version
+    fnames.clumps    = joinpath(dir, Clump_file)
+    fnames.sinks     = joinpath(dir, Sink_file)
+    fnames.timer     = joinpath(dir, Timer_file)
+    fnames.header    = joinpath(dir, Header_file)
 
-    fnames.compilation = joinpath(path, Path_folder, "compilation.txt")
-    fnames.makefile    = joinpath(path, Path_folder, "makefile.txt")
-    fnames.patchfile   = joinpath(path, Path_folder, "patches.txt")
+    fnames.compilation = joinpath(dir, "compilation.txt")
+    fnames.makefile    = joinpath(dir, "makefile.txt")
+    fnames.patchfile   = joinpath(dir, "patches.txt")
 
 
     if namelist == "" || namelist == "./"
-        fnames.namelist  = joinpath(path, Path_folder, "namelist.txt")
+        fnames.namelist  = joinpath(dir, "namelist.txt")
     else
         fnames.namelist  = namelist
     end
@@ -133,7 +137,42 @@ end
 
 
 
+# ---- IO groups --------------------------------------------------------------------------
+# RAMSES built with IOGROUPSIZE = n writes the files of rank r into output_NNNNN/group_GGGGG/,
+# G = (r-1)÷n + 1 (amr/output_amr.f90), and the files written once per output into group_00001/.
+# The same rule as the RAMSES writer's `rank_dir`.
+
+# the folder that holds the once-per-output files: the output itself, or its group_00001/
+function _iogroup_dir(outdir::AbstractString, info_file::AbstractString)
+    isfile(joinpath(outdir, info_file)) && return outdir
+    g1 = joinpath(outdir, "group_00001")
+    return isfile(joinpath(g1, info_file)) ? g1 : outdir
+end
+
+# ranks per group, counted once per output folder (the readers ask from several threads)
+const _IOGROUP_SIZE = Dict{String,Int}()
+const _IOGROUP_LOCK = ReentrantLock()
+function _iogroup_size(outdir::AbstractString)
+    lock(_IOGROUP_LOCK) do
+        get!(_IOGROUP_SIZE, outdir) do
+            g1 = joinpath(outdir, "group_00001")
+            isdir(g1) ? count(f -> occursin(r"^amr_\d{5}\.out\d{5}$", f), readdir(g1)) : 0
+        end
+    end
+end
+
+# a file name in group_00001/ moved to the group folder of rank `icpu`
+function _iogroup_path(path::String, icpu::Integer)
+    gdir = dirname(path)
+    basename(gdir) == "group_00001" || return path
+    outdir = dirname(gdir)
+    n = _iogroup_size(outdir)
+    n > 0 || return path
+    return joinpath(outdir, "group_" * lpad((icpu - 1) ÷ n + 1, 5, '0'), basename(path))
+end
+
 function getproc2string(path::String, icpu::Int32)
+    path = _iogroup_path(path, icpu)
     if icpu < 10
         return string(path, "out0000", icpu)
     elseif icpu < 100 && icpu > 9
@@ -148,6 +187,7 @@ function getproc2string(path::String, icpu::Int32)
 end
 
 function getproc2string(path::String, textfile::Bool, icpu::Int)
+    path = _iogroup_path(path, icpu)
     if icpu < 10
         return string(path, "txt0000", icpu)
     elseif icpu < 100 && icpu > 9

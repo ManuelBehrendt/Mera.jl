@@ -58,8 +58,11 @@ function _quicklook_cells_ondisk(info)
     stem = basename(info.fnames.hydro)                      # e.g. "hydro_00300."
     bytes = 0
     try
-        for f in readdir(dir)
-            startswith(f, stem) && (bytes += filesize(joinpath(dir, f)))
+        # an IO-group output spreads the hydro files over its group_GGGGG/ folders
+        dirs = basename(dir) == "group_00001" ?
+               [joinpath(dirname(dir), d) for d in readdir(dirname(dir)) if occursin(r"^group_\d{5}$", d)] : [dir]
+        for d in dirs, f in readdir(d)
+            startswith(f, stem) && (bytes += filesize(joinpath(d, f)))
         end
     catch
         return nothing                                       # unreadable → fall back to the header
