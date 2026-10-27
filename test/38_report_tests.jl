@@ -243,17 +243,17 @@
             if isdir(fs.path) && isdir(fr.path)
                 q = quicklook(fs.outputs; path=fs.path, verbose=false)
                 @test q.summary.boundaries === :periodic
-                o = q.summary.map_origin_code
+                o = q.summary.map_center_code
                 L = fs.boxlen
-                # the blast sits at the box corner, so the map window now starts half a box before it
-                @test o !== nothing && all(abs(mod(oi + L/2 + L/2, L) - L/2) < L/8 for oi in o)
+                # the blast sits at the box corner, so the maps are centred there (periodically near 0)
+                @test o !== nothing && all(min(oi, L - oi) < L/8 for oi in o)
                 m = q.maps.z.maps[:sd]; n = size(m, 1)
                 c = m[n÷2-n÷8:n÷2+n÷8, n÷2-n÷8:n÷2+n÷8]
                 @test minimum(c) < 0.9 * maximum(m)          # the blast's thin interior is now in the middle
-                @test q.maps.z.extent[1] ≈ o[1] atol=fs.boxlen/n
+                @test q.maps.z.extent[1] ≈ -L/2 atol=L/n            # axes measured from the centre
                 @test sum(m) ≈ sum(quicklook(fs.outputs; path=fs.path, verbose=false).maps.z.maps[:sd])
                 qr = quicklook(fr.outputs; path=fr.path, verbose=false)   # reflecting walls
-                @test qr.summary.boundaries === :nonperiodic && qr.summary.map_origin_code === nothing
+                @test qr.summary.boundaries === :nonperiodic && qr.summary.map_center_code === nothing
             else
                 @test_skip "sedov3d_amr or stromgren3d not available"
             end
