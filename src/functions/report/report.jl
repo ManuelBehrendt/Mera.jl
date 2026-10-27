@@ -439,6 +439,9 @@ report(sim_output::Int; path::String=".", cards=:default, output::Symbol=:ascii,
 function _read_for(info, dt::Symbol, cards, luse::Int)
     if dt === :hydro
         raw = _hydro_readset(info, cards)
+        # narrowing the read is only an optimisation; a reader that cannot select columns refuses
+        # `vars`, so it reads everything (as quicklook does)
+        (raw !== nothing && !_can_select_columns(info)) && (raw = nothing)
         return raw === nothing ? gethydro(info; lmax=luse, verbose=false, show_progress=false) :
                                  gethydro(info, raw; lmax=luse, verbose=false, show_progress=false)
     elseif dt === :particles

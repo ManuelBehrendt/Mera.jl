@@ -28,23 +28,35 @@
 # low-resolution boundary particles of a zoom run trace the initial lattice, not structure
 # (see the "Zoom Simulations" page).
 function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
-    if :hsml in cols
-        h = getcol(:hsml)
-        return max.(0.5 .* Float64.(h), pixsize)
-    elseif :volume in cols
-        Vc = getcol(:volume)
-        return max.(α .* (3.0 .* Vc ./ (4 * pi)) .^ (1/3), pixsize)
-    elseif :subfind_hsml in cols
-        h = getcol(:subfind_hsml)
-        return max.(Float64.(h), pixsize)
-    elseif all(in(cols), (:x, :y, :z))
-        h = _knn_smoothing(Float64.(getcol(:x)), Float64.(getcol(:y)), Float64.(getcol(:z)))
-        return clamp.(h, pixsize, 16 * pixsize)
+    # A particle file can hold several kinds together (AREPO: gas cells and collisionless
+    # particles; GADGET: SPH gas and the rest). Each particle takes the first source that gives it
+    # a valid length: GADGET's own :hsml (the kernel support radius, so halved), the gas cell
+    # :volume, SUBFIND's :subfind_hsml, then its nearest neighbours. Missing values are NaN.
+    valid(x) = isfinite(x) && x > 0
+    h = :hsml in cols ? 0.5 .* Float64.(getcol(:hsml)) : nothing
+    if :volume in cols && (h === nothing || !all(valid, h))
+        h = _fill_invalid(h, α .* (3.0 .* Float64.(getcol(:volume)) ./ (4 * pi)) .^ (1/3))
     end
-    throw(ArgumentError(
-        "projection (particles): weighting=:sph needs a smoothing length: a :volume column " *
-        "(gas cells), a :subfind_hsml column, or the positions :x, :y, :z to measure one from " *
-        "the nearest neighbours. Without them, use weighting=:mass."))
+    if h === nothing || !all(valid, h)
+        other = :subfind_hsml in cols ? Float64.(getcol(:subfind_hsml)) :
+                all(in(cols), (:x, :y, :z)) ?
+                    clamp.(_knn_smoothing(Float64.(getcol(:x)), Float64.(getcol(:y)), Float64.(getcol(:z))),
+                           pixsize, 16 * pixsize) : nothing
+        other === nothing && h === nothing && throw(ArgumentError(
+            "projection (particles): weighting=:sph needs a smoothing length: an :hsml or :volume " *
+            "column (gas), a :subfind_hsml column, or the positions :x, :y, :z to measure one from " *
+            "the nearest neighbours. Without them, use weighting=:mass."))
+        other === nothing || (h = _fill_invalid(h, other))
+    end
+    return max.(h, pixsize)
+end
+
+# `new` where `h` has no valid length (or all of `new` when there is no `h` yet)
+function _fill_invalid(h, new)
+    h === nothing && return new
+    bad = .!(isfinite.(h) .& (h .> 0))
+    h[bad] .= new[bad]
+    return h
 end
 
 # Half the distance to the k-th nearest neighbour of every particle (positions in code units).
