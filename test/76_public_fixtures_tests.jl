@@ -1110,4 +1110,16 @@ end
     end
 end
 
+@testset "IO-group output: a clear error" begin
+    # RAMSES with IOGROUPSIZE>0 puts the files into group_GGGGG/; the readers do not read that
+    # layout yet, and the error must say so rather than report a missing info file
+    f = PUBLIC_FIXTURES[:sedov3d_iogroups]
+    if isdir(f.path)
+        err = try getinfo(f.output, f.path, verbose=false); nothing catch e; e end
+        @test err isa ErrorException && occursin("IO groups", err.msg)
+    else
+        @test_skip "sedov3d_iogroups not available"
+    end
+end
+
 end  # if PUBLIC_AVAILABLE

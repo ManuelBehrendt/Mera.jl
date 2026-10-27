@@ -328,7 +328,7 @@ const PUBLIC_FIXTURES = Dict(
         ramses_version = "2026.05",            # built with IOGROUPSIZEREP=2, see its namelist
         outputs = 3, boxlen = 0.5, ncpu = 4, output = 3,
         oracle = (iogroupsize = 2,),
-        note = "files in output_NNNNN/group_GGGGG; Mera's readers need a plain output (repartition first)",
+        note = "files in output_NNNNN/group_GGGGG; Mera's readers do not read IO groups yet",
     ),
     :cosmo3d => (
         path = joinpath(PUBLIC_PATH, "cosmo3d"),

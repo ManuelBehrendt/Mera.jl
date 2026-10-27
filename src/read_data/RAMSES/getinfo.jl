@@ -111,6 +111,14 @@ end
 
 function readinfofile!(dataobject::InfoType)
     if  !isfile(dataobject.fnames.info)
+      # RAMSES with IOGROUPSIZE>0 writes its files into output_NNNNN/group_GGGGG/; say so instead
+      # of reporting a missing info file
+      outdir = dirname(dataobject.fnames.info)
+      if isdir(joinpath(outdir, "group_00001"))
+          error("[Mera]: $(outdir) is written in IO groups (group_00001/, group_00002/, …; " *
+                "RAMSES's IOGROUPSIZE). Mera's readers do not read IO groups yet. " *
+                "Run RAMSES with IOGROUPSIZE=0 to get a plain output.")
+      end
       println()
       error("[Mera]:  File or folder does not exist: $(dataobject.fnames.info) !")
     end
