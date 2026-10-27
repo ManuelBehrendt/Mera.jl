@@ -126,9 +126,7 @@
                 qm  = quicklook(mhd.output; path=mhd.path, verbose=false)
                 # MHD run → a face-on |B| map (projected :bmag) plus |B| and plasma-β summary ranges
                 @test haskey(qm.maps, :bmag) && haskey(qm.maps.bmag.maps, :bmag)
-                # this run sets no physical units, so |B| is reported in code units
-                br = qm.summary.code_units ? qm.summary.bmag_range_code : qm.summary.bmag_range_muG
-                @test br !== nothing && br[2] > 0
+                @test qm.summary.bmag_range_muG !== nothing && qm.summary.bmag_range_muG[2] > 0
                 @test qm.summary.beta_range !== nothing && qm.summary.beta_range[1] > 0
                 if Base.find_package("CairoMakie") !== nothing
                     @eval using CairoMakie
@@ -140,44 +138,55 @@
             end
         end
 
-        @testset "quicklook on a run without physical units (sedov3d_amr)" begin
+        @testset "readable units for any run (sedov3d_amr vs spiral)" begin
+            # RAMSES's default units (1 cm, 1 g/cm³, 1 s) are shown in cm, g and g/cm³, not as a
+            # box of 3e-22 kpc; the summary keeps its physical fields with the units in their names
             f = PUBLIC_FIXTURES[:sedov3d_amr]
             if isdir(f.path)
                 q = quicklook(f.outputs; path=f.path, verbose=false)
                 s = q.summary
-                @test s.code_units
-                @test s.box_kpc === nothing && s.gas_mass_Msol === nothing && s.T_range_K === nothing
-                @test s.box_code == f.boxlen
+                @test s.units.length[2] == "cm" && s.units.mass[2] == "g" && s.units.density[2] == "g/cm³"
                 info = getinfo(f.outputs, f.path, verbose=false)
+                @test s.box_kpc ≈ f.boxlen * info.scale.kpc                # still kpc in the field
+                @test s.box_kpc * s.units.length[3] ≈ f.boxlen               # 0.5 cm shown
                 gas = gethydro(info, verbose=false, show_progress=false)
-                @test s.gas_mass_code ≈ sum(getvar(gas, :mass))          # code units, nothing converted
-                @test s.rho_range_code[1] > 0 && s.p_range_code[1] > 0
-                @test sum(q.phase.H) > 0                                 # the ρ–p phase diagram
+                @test s.gas_mass_Msol * s.units.mass[3] ≈ sum(getvar(gas, :mass, :g))
                 txt = mktemp() do fpath, io
                     redirect_stdout(() -> Mera._quicklook_print(s, time()), io); flush(io)
                     read(fpath, String)
                 end
-                @test occursin("code units", txt)
+                @test occursin("0.5 cm", txt) && occursin("g/cm³", txt) && !occursin("kpc", txt)
+                # report: its default cards take the same units
+                plan = ReportPlan(f.outputs; path=f.path)
+                @test plan.cards[1].unit === :g_cm2 && plan.cards[2].xunit === :g_cm3
+                rep = report(plan; output=:none, verbose=false)
+                mapcard = first(c for c in rep.cards if c.kind === :map)
+                @test mapcard.meta.length_unit == "cm" && mapcard.data.extent[2] ≈ f.boxlen
+                # cards the user chose are left as they are
+                own = ReportPlan(f.outputs; path=f.path, cards=[ProjectionCard(:hydro, :sd; unit=:Msol_pc2)])
+                @test own.cards[1].unit === :Msol_pc2
             else
                 @test_skip "sedov3d_amr not available"
             end
-            @test !quicklook(dc.output; path=dc.path, read=false, verbose=false).summary.code_units
+            # a galaxy keeps kpc, M⊙ and n_H, and the default cards as before
+            qg = quicklook(dc.output; path=dc.path, read=false, verbose=false)
+            @test qg.summary.units.length[2] == "kpc" && qg.summary.units.density[1] === :nH
+            pg = ReportPlan(dc.output; path=dc.path)
+            @test pg.cards[1].unit === :Msol_pc2 && any(c -> c isa SFRCard, pg.cards)
+            @test Mera._qnum(1.0e-20) == "1e-20" && Mera._qnum(245200.0) == "245200" && Mera._qnum(0.125) == "0.125"
+        end
+
+        @testset "quicklook tracer particles (sedov3d_grav_part)" begin
+            f = PUBLIC_FIXTURES[:sedov3d_grav_part]
             if isdir(f.path)
-                # report: the default cards switch to code units (no K, no star-formation card)
-                plan = ReportPlan(f.outputs; path=f.path)
-                @test plan.cards[2] isa PhaseCard && plan.cards[2].yvar === :p
-                @test !any(c -> c isa SFRCard, plan.cards)
-                rep = report(plan; output=:none, verbose=false)
-                @test rep.summary.code_units && rep.summary.box_kpc === nothing
-                @test rep.summary.box_code == f.boxlen
-                mapcard = first(c for c in rep.cards if c.kind === :map)
-                @test mapcard.data.extent[2] <= f.boxlen                  # code length, not kpc
-                # cards the user chose are left as they are
-                own = ReportPlan(f.outputs; path=f.path, cards=[PhaseCard(:hydro, :rho, :T)])
-                @test own.cards[1].yvar === :T
+                n = maximum(parse(Int, d[8:end]) for d in readdir(f.path) if startswith(d, "output_"))
+                q = quicklook(n; path=f.path, verbose=false)
+                p = getparticles(getinfo(n, f.path, verbose=false), verbose=false, show_progress=false)
+                @test q.summary.ntracers == count(<=(0), getvar(p, :family)) > 0
+                @test q.summary.npart >= q.summary.ntracers
+            else
+                @test_skip "sedov3d_grav_part not available"
             end
-            # a run with physical units keeps the default cards
-            @test any(c -> c isa SFRCard, ReportPlan(dc.output; path=dc.path).cards)
         end
 
         @testset "quicklook RT run (stromgren3d)" begin
@@ -191,6 +200,7 @@
                 @test all(q.summary.T_range_K .≈ extrema(getvar(gas, :T_rt, :K)))
                 @test q.summary.ionised_fraction ≈ sum(m .* x) / sum(m)
                 @test 0 < q.summary.ionised_fraction < 1
+                @test haskey(q.maps, :xHII) && maximum(q.maps.xHII.maps[:xHII]) <= 1 + 1e-9   # the ionised-fraction map
             else
                 @test_skip "stromgren3d not available"
             end
