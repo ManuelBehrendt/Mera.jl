@@ -35,6 +35,9 @@
         @test isempty(capture_stdout() do; getvar(gas, :r_sphere, center=[:bc]); end)
         Mera.reset_hints()
         @test isempty(capture_stdout() do; getvar(gas, :r_sphere, center=[0.4, 0.5, 0.6]); end)
+        # the corner given on purpose (a source at the origin) is a centre too: no hint
+        Mera.reset_hints()
+        @test isempty(capture_stdout() do; getvar(gas, :r_sphere, center=[0.0, 0.0, 0.0]); end)
     end
 
     @testset "getvar: absolute positions never warn (corner is their correct default)" begin

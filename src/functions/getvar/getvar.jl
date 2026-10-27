@@ -170,10 +170,15 @@ const _CENTER_RELATIVE_VARS = Set{Symbol}([
 _cellsize_col(boxlen, level, unit) =
     Float64[boxlen / 2^l * unit for l in level]
 
+# getvar's default `center`. Only this object means "no centre given": an origin passed on purpose,
+# such as [0, 0, 0] for a source in the box corner, is a different array and gets no hint.
+# Nothing may modify it.
+const _CORNER = Float64[0.0, 0.0, 0.0]
+
 function _center_hint(vars, center)
     # Cheap guard first: in the common (correct) case an origin was given, and this returns
     # before `hint_once` is ever reached. Bookkeeping is shared — see checks.jl.
-    all(iszero, _as_center(center)) || return nothing   # an origin was given: nothing to say
+    center === _CORNER || return nothing                 # an origin was given: nothing to say
     for v in vars
         v in _CENTER_RELATIVE_VARS || continue
         hint(v,
@@ -283,7 +288,7 @@ See also [`getpositions`](@ref), [`getvelocities`](@ref), [`msum`](@ref), [`subr
 """
 function getvar(   dataobject::DataSetType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
@@ -292,7 +297,7 @@ function getvar(   dataobject::DataSetType, var::Symbol;
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -306,7 +311,7 @@ end
 
 function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     vcenter=nothing,
@@ -314,7 +319,7 @@ function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -328,7 +333,7 @@ end
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     vcenter=nothing,
@@ -336,7 +341,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -351,7 +356,7 @@ end
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     vcenter=nothing,
@@ -359,7 +364,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     units = fill(unit, length(vars)) # use given unit for all variables
 
     # construct corresponding DataSetType from filtered database to use the calculations below
@@ -376,7 +381,7 @@ end
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     units::Array{Symbol,1}=[:standard],
@@ -386,7 +391,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
                     ref_time::Real=dataobject.info.time)
 
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
 
     # construct corresponding DataSetType from filtered database to use the calculations below
@@ -406,14 +411,14 @@ end
 function getvar(   dataobject::GravDataType, var::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -426,13 +431,13 @@ end
 function getvar(   dataobject::GravDataType, var::Symbol, unit::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -445,13 +450,13 @@ end
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -464,13 +469,13 @@ end
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, unit::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -484,14 +489,14 @@ end
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1};
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -511,10 +516,10 @@ end
 function getvar(   dataobject::RtDataType, var::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, unit::Symbol=:standard,
                     mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -524,9 +529,9 @@ end
 function getvar(   dataobject::RtDataType, var::Symbol, unit::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -536,9 +541,9 @@ end
 function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -548,9 +553,9 @@ end
 function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, unit::Symbol;
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -561,10 +566,10 @@ end
 function getvar(   dataobject::RtDataType, vars::Array{Symbol,1};
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, unit::Symbol=:standard,
                     mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -576,10 +581,10 @@ end
 # getvar(rt, hydro, :photoionizations) reads the same as getvar(rt, :photoionizations; hydro_data=hydro).
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, unit::Symbol=:standard,
                     mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -588,9 +593,9 @@ end
 
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, var::Symbol, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -599,9 +604,9 @@ end
 
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -610,9 +615,9 @@ end
 
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -622,10 +627,10 @@ end
 
 function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, vars::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.], center_unit::Symbol=:standard,
+                    center::CenterType=_CORNER, center_unit::Symbol=:standard,
                     direction::Symbol=:z, unit::Symbol=:standard,
                     mask::MaskType=[false], ref_time::Real=dataobject.info.time)
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
@@ -646,14 +651,14 @@ getvar(hydro_data::HydroDataType, dataobject::RtDataType, args...; kwargs...) =
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -665,13 +670,13 @@ end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, var::Symbol, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -683,13 +688,13 @@ end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -701,13 +706,13 @@ end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -720,14 +725,14 @@ end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
-                    center::CenterType=[0.,0.,0.],
+                    center::CenterType=_CORNER,
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    center = center === _CORNER ? _CORNER : center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
