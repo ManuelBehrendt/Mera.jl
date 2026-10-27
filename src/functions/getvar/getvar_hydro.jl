@@ -38,6 +38,16 @@ function _rt_species(rtd, vlist)
             iHeIII = isHe ? iHII + 2 : 0)
 end
 
+# The variable_list names of the ionization fractions an RT run stores; empty for other runs.
+# Readers that load only some variables add these so the temperature can use μ per cell.
+function _rt_ion_columns(info)
+    rtd = info.descriptor.rt
+    haskey(rtd, :iIons) || return Symbol[]
+    vl = info.variable_list
+    sp = _rt_species(rtd, vl)
+    return [vl[i] for i in (sp.iHI, sp.iHII, sp.iHeII, sp.iHeIII) if 0 < i <= length(vl)]
+end
+
 function _rt_mu(dataobject, data, rtd)
     vlist = dataobject.info.variable_list
     sp = _rt_species(rtd, vlist)
@@ -65,13 +75,13 @@ function _rt_mu(dataobject, data, rtd)
     end
 end
 
-# Hydrogen number density [cm^-3] for RT-derived quantities, using the run's actual
-# hydrogen mass fraction X from the RT descriptor. Mera's scale.nH bakes in X=0.76;
-# this rescales by X/0.76 so the densities are correct for runs with a different X
-# (e.g. the pure-hydrogen X=1 Strömgren test). Backward-compatible (factor 1 at X=0.76).
+# Hydrogen number density [cm^-3] for RT-derived quantities, with the run's hydrogen mass
+# fraction X from the RT descriptor (X = 1 for the pure-hydrogen Strömgren test). getinfo builds
+# scale.nH with the same X, but this does not rely on it: a setcomposition! or a Mera file saved
+# with an older scale table leaves the RT densities right.
 function _rt_nH(dataobject, data, rtd)
     X = get(rtd, :X_fraction, 0.76)
-    return select(data, :rho) .* dataobject.info.scale.nH .* (X / 0.76)
+    return select(data, :rho) .* (dataobject.info.unit_d * X / dataobject.info.constants.mH)
 end
 
 function get_data(  dataobject::HydroDataType,
@@ -304,8 +314,21 @@ function get_data(  dataobject::HydroDataType,
                                         select( masked_data, :rho) ) .* selected_unit
 
         elseif i == :T || i == :Temp || i == :Temperature
+            # p/ρ times the unit, which carries a constant μ. An RT run tracks the ionization, so
+            # there μ is taken per cell instead (the same as :T_rt), in whatever unit was asked for.
             selected_unit = getunit(dataobject, i, vars, units)
-            vars_dict[i] =   select( masked_data, :p) ./ select( masked_data, :rho) .* selected_unit
+            T_const = select(masked_data, :p) ./ select(masked_data, :rho) .* selected_unit
+            rtd = dataobject.info.descriptor.rt
+            ions = _rt_ion_columns(dataobject.info)
+            if !isempty(ions) && all(in(propertynames(masked_data.columns)), ions)
+                mu_const = dataobject.info.scale.K / dataobject.info.scale.T_mu
+                vars_dict[i] = T_const .* (_rt_mu(dataobject, masked_data, rtd) ./ mu_const)
+            else
+                isempty(ions) || @warn "getvar :$i: this RT run's ionization fractions ($(join(ions, ", "))) " *
+                    "were not loaded, so the temperature uses the constant μ. Load them with gethydro " *
+                    "to get μ per cell." maxlog=1
+                vars_dict[i] = T_const
+            end
 
         elseif i == :overdensity || i == :delta
             # Gas overdensity δ = ρ/ρ̄_b − 1 relative to the mean (proper) baryon

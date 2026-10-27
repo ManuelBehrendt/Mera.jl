@@ -177,8 +177,11 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             xHII = getvar(gas, :xHII)
             @test all(0.0 .<= xHII .<= 1.0 + 1e-9)
 
-            # n_H uses the run's actual X (descriptor), correcting scale.nH's baked X=0.76
-            nH = getvar(gas, :rho) .* gas.scale.nH .* (get(rtd, :X_fraction, 0.76) / 0.76)
+            # n_H uses the run's actual X from the descriptor: getinfo builds scale.nH with it, and
+            # the RT densities compute it from unit_d and m_H directly (independent anchor)
+            X_run = get(rtd, :X_fraction, 0.76)
+            nH = getvar(gas, :rho) .* info.unit_d .* X_run ./ info.constants.mH
+            @test getvar(gas, :rho, :nH) ≈ nH
             @test getvar(gas, :n_HII) ≈ nH .* xHII
             @test getvar(gas, :n_HI)  ≈ nH .* (1.0 .- xHII)
             # HI + HII must reconstruct the total hydrogen density (independent anchor)
@@ -208,17 +211,19 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
                 @test minimum(mu) >= 0.5 - 1e-6        # fully ionized limit μ → 0.5
             end
 
-            # RT-aware temperature uses local μ; T = (T/μ)·μ.
-            # Mera's plain :T (unit=:K) bakes in a CONSTANT μ = 1/X_const (X_const=0.76),
-            # so T_rt / T_const = μ_local · X_const.
-            T_rt    = getvar(gas, :T_rt)
-            T_const = getvar(gas, :T, :K)
+            # On an RT run the temperature uses the local μ: T = (T/μ)·μ, and :T is the same as :T_rt
+            T_rt   = getvar(gas, :T_rt)
+            T_permu = getvar(gas, :p) ./ getvar(gas, :rho) .* info.scale.T_mu
             @test all(T_rt .> 0.0)
-            @test T_rt ≈ T_const .* mu .* 0.76
-            # local μ (≤1) < constant μ (1/0.76≈1.32), so T_rt ≤ T_const in EVERY cell
-            @test all(T_rt .<= T_const .+ 1e-6)
-            # and strictly lower somewhere ionized (μ<1.32)
-            @test maximum(T_rt) < maximum(T_const)
+            @test T_rt ≈ T_permu .* mu
+            @test getvar(gas, :T, :K) ≈ T_rt
+            # the constant μ (1/X) would overestimate it wherever the gas is ionized (μ < 1/X)
+            @test maximum(T_rt) < maximum(T_permu ./ X_run)
+
+            # without the ionization fractions loaded, :T falls back to the constant μ and says so
+            gp = gethydro(info, [:rho, :p], verbose=false, show_progress=false)
+            Tfb = @test_logs (:warn, r"not loaded") match_mode=:any getvar(gp, :T, :K)
+            @test Tfb ≈ getvar(gp, :p) ./ getvar(gp, :rho) .* info.scale.T_mu ./ X_run
         end
 
         @testset "RT projection" begin
@@ -295,7 +300,7 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             g2.info.descriptor.rt[:X_fraction] = 0.76
             g2.info.descriptor.rt[:Y_fraction] = 0.24
             X = 0.76; Y = 0.24; AZ = 16.0
-            xHII = getvar(g2, :xHII); nH = getvar(g2, :rho) .* g2.scale.nH
+            xHII = getvar(g2, :xHII); nH = getvar(g2, :rho) .* g2.info.unit_d .* X ./ g2.info.constants.mH
 
             @test getvar(g2, :xHeII)  ≈ xHeII
             @test getvar(g2, :xHeIII) ≈ xHeIII

@@ -88,6 +88,7 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", code::S
     isgravityfile1!(info)   # gravity overview
     readparticlesfile1!(info)   # particles overview
     readrtfile1!(info)      # rt overview
+    _rt_composition!(info)  # an RT run states its composition: use it for :nH and the constant μ
     readclumpfile1!(info)   # clumps overview
 
     readsinkfile1!(info)    # sinks overview
@@ -434,6 +435,16 @@ function readhydrofile1!(dataobject::InfoType)
 end
 
 # in work
+# RAMSES-RT writes the hydrogen and helium mass fractions into info_rt_NNNNN.txt. Nothing else in
+# the output records the composition, so the unit scales start from X = 0.76; an RT run that
+# states another X (a pure-hydrogen Strömgren test has X = 1) gets its own value instead.
+function _rt_composition!(info::InfoType)
+    info.rt || return info
+    X = get(info.descriptor.rt, :X_fraction, nothing)
+    (X isa Real && 0 < X <= 1 && X != 0.76) || return info
+    return setcomposition!(info; X_frac=X, mu=1/X)
+end
+
 function readrtfile1!(dataobject::InfoType)
 
     # read descriptor file

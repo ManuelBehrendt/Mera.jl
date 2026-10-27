@@ -499,5 +499,7 @@ function _hydro_readset(info, cards)
     any(card_has_mask, cards) && return nothing
     logical = unique(reduce(vcat, (card_vars(c) for c in cards); init=Symbol[]))
     raw = getvar_requirements(:hydro, logical)
+    # on an RT run the temperature takes μ from the ionization fractions, so read them as well
+    any(in((:T, :Temp, :Temperature, :T_rt, :mu)), logical) && (raw = union(raw, _rt_ion_columns(info)))
     (!isempty(raw) && all(in(info.variable_list), raw)) ? raw : nothing
 end

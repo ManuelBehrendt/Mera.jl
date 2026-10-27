@@ -177,7 +177,7 @@ fall outside it (see `gethydro`'s `xrange`/`yrange`/`zrange`).
   dark-matter maps alike. Use `directions=[:z]` for a single, compact map per component.
   The face-on map keeps the bare key (`q.maps.stars`); edge-on views are `q.maps.stars_x` / `.stars_y`
   (and `dm_x` / `dm_y`).
-* RT — on a radiative-transfer run the temperature uses μ from the tracked ionisation (`:T_rt`),
+* RT — on a radiative-transfer run the temperature uses μ per cell from the tracked ionisation,
   and the dashboard gives the ionised share of the gas mass (`summary.ionised_fraction`).
 * sinks — when the output has a sink catalogue, the dashboard gives their number and mass and the
   plot marks them on the maps (`summary.sink_count`, `.sink_mass_Msol`, `.sink_pos_code`).
@@ -266,10 +266,9 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     gas_mass = nothing; nH_range = nothing; T_range = nothing
     bmag_range = nothing; beta_range = nothing
     gas_mass_code = nothing; rho_range_code = nothing; p_range_code = nothing; bmag_range_code = nothing
-    # an RT run tracks the ionisation, so the temperature takes μ from it (:T_rt) instead of the
-    # neutral default, and the dashboard reports how much of the gas is ionised
+    # an RT run tracks the ionisation: :T then takes μ per cell from it, and the dashboard reports
+    # how much of the gas is ionised
     rt_ion = info.rt && haskey(info.descriptor.rt, :iIons) && !cu
-    Tq = rt_ion ? :T_rt : :T
     xHII_range = nothing; ionised_fraction = nothing
 
     # --- gas (hydro): budgeted read → Σ map(s) along the selected axes + ρ–T phase + ranges ---
@@ -288,8 +287,8 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
         end
         # MHD run? then also read the magnetic field so the dashboard can show a |B| map + β stats.
         is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
-        qlreq  = vcat([:sd, Tq, :rho, :p], is_mhd ? [:bmag] : Symbol[], rt_ion ? [:xHII] : Symbol[])
-        qlvars = getvar_requirements(:hydro, qlreq)                # read only the needed vars (else full)
+        qlreq  = vcat([:sd, :T, :rho, :p], is_mhd ? [:bmag] : Symbol[])
+        qlvars = union(getvar_requirements(:hydro, qlreq), _rt_ion_columns(info))   # read only these (else full)
         # Narrowing the read is an optimisation, not a requirement, so it must be conditional on
         # the reader being able to narrow. A frontend that cannot select columns REFUSES a `vars=`
         # rather than silently returning everything, which turned quicklook into an error for
@@ -309,10 +308,10 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
             gas_mass_code = sum(getvar(gas, :mass))
             rho_range_code = extrema(getvar(gas, :rho)); p_range_code = extrema(getvar(gas, :p))
         else
-            ph = phase(gas, :rho, Tq; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
+            ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
                        xunit=:nH, yunit=:K)
             gas_mass = sum(getvar(gas, :mass, :Msol))
-            nH_range = extrema(getvar(gas, :rho, :nH)); T_range = extrema(getvar(gas, Tq, :K))
+            nH_range = extrema(getvar(gas, :rho, :nH)); T_range = extrema(getvar(gas, :T, :K))
             if rt_ion
                 xh = getvar(gas, :xHII); mg = getvar(gas, :mass)
                 xHII_range = extrema(xh); ionised_fraction = sum(mg .* xh) / sum(mg)
