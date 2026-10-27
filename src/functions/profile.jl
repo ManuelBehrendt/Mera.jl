@@ -51,6 +51,8 @@ function _bin_edges(v, rng, scale::Symbol, n::Int; binsize=nothing)
             @warn "scale=:log: non-positive values are dropped (they have no log bin)" maxlog=1
         end
         hi <= 0 && throw(ArgumentError("log-scale upper bound must be positive (got $hi)"))
+        # every value the same (uniform initial conditions): one dex around it, so it lands in a bin
+        rng === nothing && hi == lo && ((lo, hi) = (lo / sqrt(10.0), hi * sqrt(10.0)))
         hi <= lo && throw(ArgumentError("log-scale range is empty: lo=$lo ≥ hi=$hi"))
         e = binsize === nothing ? collect(10.0 .^ range(log10(lo), log10(hi), length=n+1)) :
                                   10.0 .^ _edges_by_step(log10(lo), log10(hi), Float64(binsize))   # binsize = dex step
@@ -74,6 +76,10 @@ function _bin_edges(v, rng, scale::Symbol, n::Int; binsize=nothing)
     scale in (:linear,) || throw(ArgumentError("scale must be :linear, :log or :equal (got :$scale)"))
     # strictly-increasing range (the :log branch guards its own at line 41); a reversed/degenerate
     # linear range would otherwise build collapsed or decreasing edges and silently mis-bin.
+    if rng === nothing && hi == lo                 # every value the same: a range centred on it
+        δ = lo == 0 ? 0.5 : 0.5 * abs(lo)
+        lo, hi = lo - δ, hi + δ
+    end
     hi > lo || throw(ArgumentError("binning range requires lo < hi (got lo=$lo, hi=$hi)"))
     binsize === nothing && return collect(range(lo, hi, length=n+1))
     return _edges_by_step(lo, hi, Float64(binsize))             # binsize = width in xunit
