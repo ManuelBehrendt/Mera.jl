@@ -65,13 +65,13 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         pr = _poscolor(z); cmap = Mera._seq_cmap(m.var)
         hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z; colormap=cmap) :
              _loghm!(ax, xs, ys, z; colormap=cmap)
-        Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? Mera._var_label(m.var) : "log₁₀ $(Mera._var_label(m.var)) [$(_ulabel(m.unit))]")
+        Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? Mera._var_label(m.var) : "log₁₀ " * Mera._axis_label(m.var, m.unit))
         return ax
     elseif c.kind === :phase
         xe = c.data.xedges; ye = c.data.yedges; H = c.data.H
         logx = all(>(0), xe); logy = all(>(0), ye)               # log axes for positive (log-spaced) bins
-        ax = Makie.Axis(pos[1, 1]; title=Mera._card_title(c), xlabel="$(Mera._var_label(m.xvar)) [$(_ulabel(m.xunit))]",
-                        ylabel="$(Mera._var_label(m.yvar)) [$(_ulabel(m.yunit))]",
+        ax = Makie.Axis(pos[1, 1]; title=Mera._card_title(c), xlabel=Mera._axis_label(m.xvar, m.xunit),
+                        ylabel=Mera._axis_label(m.yvar, m.yunit),
                         xscale = logx ? log10 : identity, yscale = logy ? log10 : identity)
         xc = logx ? sqrt.(xe[1:end-1] .* xe[2:end]) : (xe[1:end-1] .+ xe[2:end]) ./ 2  # bin centres
         yc = logy ? sqrt.(ye[1:end-1] .* ye[2:end]) : (ye[1:end-1] .+ ye[2:end]) ./ 2
@@ -88,8 +88,8 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         wide = !isempty(pos_y) && length(pos_y) == count(isfinite, y) &&        # all-positive…
                (maximum(pos_y) / minimum(pos_y) > 30)                            # …spanning ≳1.5 decades
         uselog = ys in (:log, :log10) || (ys === :auto && wide)
-        ax = Makie.Axis(pos; title=Mera._card_title(c), xlabel="$(Mera._var_label(m.xvar)) [$(_ulabel(m.xunit))]",
-                        ylabel="$(m.yvar === :rho && m.unit === :nH ? "n_H" : Mera._var_label(m.yvar)) [$(_ulabel(m.unit))]",
+        ax = Makie.Axis(pos; title=Mera._card_title(c), xlabel=Mera._axis_label(m.xvar, m.xunit),
+                        ylabel=m.yvar === nothing ? "count" : Mera._axis_label(m.yvar, m.unit),
                         yscale = uselog ? log10 : identity)
         # empty bins are NaN; join the bins that hold cells rather than break the line at every gap
         # (with more bins than cells across, every other bin is empty and nothing would be drawn)

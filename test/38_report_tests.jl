@@ -10,6 +10,8 @@
         @test Mera._unit_label(:Msol_pc2) == "M⊙/pc²" && Mera._unit_label(:g_cm3) == "g/cm³"
         @test Mera._unit_label(:nH) == "cm⁻³" && Mera._unit_label(:km_s) == "km/s"
         @test Mera._unit_label(:standard) == "code" && Mera._unit_label(:K) == "K"
+        @test Mera._axis_label(:xHII, :standard) == "xHII" && Mera._axis_label(:rho, :nH) == "n_H [cm⁻³]"
+        @test Mera._axis_label(:r_sphere_periodic, :cm) == "r [cm]"
         mk(label, kind, dt, meta) = Mera.ReportResultCard(label, kind, dt, :projection, nothing, meta)
         @test Mera._card_title(mk("hydro_sd_map", :map, :hydro, (var=:sd, direction=:z))) == "Gas Σ (along z)"
         @test Mera._card_title(mk("rho_T_phase", :phase, :hydro, (xvar=:rho, yvar=:T))) == "ρ–T phase"

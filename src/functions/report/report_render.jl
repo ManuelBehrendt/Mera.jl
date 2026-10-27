@@ -105,8 +105,16 @@ end
 
 # readable names for the quantities on a card: :sd → "Σ", :rho → "ρ"
 const _VAR_WORDS = Dict(:sd => "Σ", :rho => "ρ", :T => "T", :p => "p", :bmag => "|B|", :xHII => "xHII",
-                        :r_sphere => "r", :r_cylinder => "R", :mass => "mass", :vz => "v_z")
+                        :r_sphere => "r", :r_cylinder => "R", :r_sphere_periodic => "r",
+                        :r_cylinder_periodic => "R", :mass => "mass", :vz => "v_z", :mu => "μ", :beta => "β")
 _var_label(v) = get(_VAR_WORDS, v, string(v))
+
+# an axis label "name [unit]"; a pure number (a fraction, μ, plasma β) has no unit to show
+const _DIMENSIONLESS = (:xHI, :xHII, :xHeII, :xHeIII, :mu, :beta, :mach, :reducedflux1, :reducedflux2, :reducedflux3)
+function _axis_label(v, u)
+    name = v === :rho && u === :nH ? "n_H" : _var_label(v)
+    return (u === :standard && v in _DIMENSIONLESS) ? name : "$name [$(_unit_label(u))]"
+end
 const _KIND_WORDS = Dict(:hydro => "Gas", :particles => "Particles", :rt => "Radiation",
                          :gravity => "Gravity", :clumps => "Clumps")
 
