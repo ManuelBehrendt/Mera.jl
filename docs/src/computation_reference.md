@@ -44,7 +44,7 @@ and clumps. GADGET/AREPO gas particles carry their own thermodynamics from `:u`,
 
 | Quantity | Symbol | Formula |
 |---|---|---|
-| Temperature | `:T` | ``T = (p/\rho)\cdot\texttt{scale.T\_mu}\cdot\mu`` (constant ``\mu = 1/X \approx 1.32``) |
+| Temperature | `:T` | ``T = (p/\rho)\cdot\texttt{scale.T\_mu}\cdot\mu`` (constant ``\mu = 1/X \approx 1.32``; on an RT run ``\mu`` per cell) |
 | Sound speed | `:cs` | ``c_s = \sqrt{\gamma\, p/\rho}`` |
 | Kinetic energy | `:ekin` | ``E_\mathrm{kin} = \tfrac12\, m\, v^2`` |
 | Thermal energy | `:etherm` | ``E_\mathrm{therm} = p\, V`` |
@@ -56,8 +56,14 @@ and clumps. GADGET/AREPO gas particles carry their own thermodynamics from `:u`,
   it assumes **neutral** gas everywhere. The raw "temperature per μ" (RAMSES ``T/\mu``) is the
   separate scale `scale.T_mu` ``= \tfrac{m_H}{k_B}(\mathrm{unit}_l/\mathrm{unit}_t)^2``, i.e. the
   assumed ``\mu`` is exactly `scale.K/scale.T_mu`. In ionized gas the true ``\mu`` falls to
-  ``\approx 0.6``, so `:T` overestimates ``T`` by up to ``\sim\!2\times`` there; use the
-  ionization-aware **`:T_rt`** (see the **Radiative-transfer (RT) quantities** section below) in RT runs.
+  ``\approx 0.6``, so on a run that does not track the ionization `:T` overestimates ``T`` by up to
+  ``\sim\!2\times`` there.
+- **On an RT run** Mera uses what the run tracks. `:T` takes ``\mu`` per cell from the stored
+  ionization fractions (see **Mean molecular weight & RT temperature** below), and `getinfo` takes the
+  hydrogen and helium mass fractions ``X, Y`` from the run's RT header (`info_rt_NNNNN.txt`), so
+  `:nH` and the constant ``\mu = 1/X`` match the run. A pure-hydrogen run (``X = 1``) gets
+  ``n_H = \rho/m_H``, not ``0.76\,\rho/m_H``. [`setcomposition!`](@ref) still overrides ``X`` and the
+  constant ``\mu``.
 - **Sound speed** `:cs` is adiabatic, with ``\gamma`` taken from `info.gamma` (typically 5/3).
 - **Kinetic energy** `:ekin` is *bulk* motion only, with ``v^2 = v_x^2+v_y^2+v_z^2``; it does
   **not** include thermal/random energy (that is `:etherm`).
@@ -443,7 +449,7 @@ Each is ``\sqrt{\langle v^2\rangle - \langle v\rangle^2}`` over the mass in a pi
 
 The middle form is what Mera computes, and it needs no μ: ``P/\rho`` **is** ``k_B T/(\mu m_H)`` by
 the ideal gas law, whatever the ionization state. That matters on an RT run, where μ varies per cell
-and the constant μ behind plain `:T` is wrong by a large factor. Use `:T_rt` and `:mu` there.
+and a constant μ would be wrong by a large factor. `:T` and `:mu` use the per-cell μ there.
 
 It is **isotropic**, so there is no directional version. Combine it with a directional bulk
 dispersion by adding the **variances**, because a line profile is a convolution:
@@ -528,19 +534,19 @@ non-RT run. RAMSES-RT stores them in a fixed order, ``[x_\mathrm{HI}`` *(only wi
 The hydrogen number density used throughout is
 
 ```math
-n_H = \rho\,\cdot\,\texttt{scale.nH}\,\cdot\,\frac{X}{0.76},
+n_H = \rho\,\mathrm{unit}_d\,\frac{X}{m_H},
 ```
 
-i.e. `scale.nH` ``= (0.76/m_H)\,\mathrm{unit}_d`` rescaled by the run's **actual** hydrogen mass
-fraction ``X`` from the descriptor (so a pure-hydrogen ``X=1`` Strömgren test is correct; the factor
-is 1 for the default ``X=0.76``).
+with the run's **actual** hydrogen mass fraction ``X`` from the RT descriptor, so a pure-hydrogen
+``X=1`` Strömgren test is correct. `getinfo` builds the unit scales with the same ``X``, so this equals
+`getvar(gas, :rho, :nH)`.
 
 ### Mean molecular weight & RT temperature
 
 | Quantity | Formula |
 |---|---|
 | Mean molecular weight `:mu` | ``\mu = \Big[\,X_H\,h_p + \tfrac{X_\mathrm{He}}{4}(1+x_\mathrm{HeII}+2x_\mathrm{HeIII}) + \tfrac{Z}{A_Z}\,\Big]^{-1}`` |
-| RT-aware temperature `:T_rt` | ``T_\mathrm{rt} = (p/\rho)\cdot\texttt{scale.T\_mu}\cdot\mu`` |
+| Temperature `:T` (also `:T_rt`) | ``T = (p/\rho)\cdot\texttt{scale.T\_mu}\cdot\mu`` |
 
 where the hydrogen particle count per H nucleus is ``h_p = 1 + x_\mathrm{HII}`` without H₂ chemistry,
 or ``h_p = x_\mathrm{HI} + 2x_\mathrm{HII} + x_{\mathrm{H_2}}`` with it (``h_p \to 1,\,0.5,\,2`` for
@@ -549,8 +555,8 @@ Y(1-Z)/(X+Y)`` (so ``X_H+X_\mathrm{He}+Z = 1`` per cell), with ``X,Y`` the primo
 the local metal mass fraction (`:metallicity`; ``0`` if absent), and ``A_Z \approx 16``. He is taken
 neutral when not tracked; metal free electrons are neglected (sub-percent). So ``\mu`` runs from
 ``\approx 2`` (fully molecular) through ``\approx 1.32`` (neutral atomic) to ``\approx 0.5\text{–}0.6``
-(ionized). On a **non-RT** run, `:mu` returns the constant `scale.K/scale.T_mu` and `:T_rt` reduces
-exactly to `:T`.
+(ionized). On an RT run `:T` and `:T_rt` are the same quantity; `:T_rt` is kept as a name for it.
+On a **non-RT** run, `:mu` returns the constant `scale.K/scale.T_mu` and `:T` uses that.
 
 ### Ionization & molecular fractions, number densities
 

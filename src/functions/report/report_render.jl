@@ -74,17 +74,64 @@ _rng(t) = "$(_nf(t[1])) … $(_nf(t[2]))"
 function _render_ascii(r::QuickReport, io::IO)
     s = r.summary
     println(io, "┌─ Mera report ── output $(s.output) ($(s.simcode)) ─────────────────────────")
-    println(io, "│ box      : $(_nf(s.box_kpc)) kpc    levels $(s.levelmin)–$(s.levelmax)  (finest $(_nf(s.finest_cell_pc)) pc)")
-    println(io, "│ time     : $(_nf(s.time_Myr)) Myr" *
-                (s.redshift === nothing ? "  (non-cosmological)" : "    z = $(_nf(s.redshift))"))
+    u = get(s, :units, nothing)          # the units picked for this run; kpc, pc and Myr without
+    L, Lc, T = u === nothing ? ((:kpc, "kpc", 1.0), (:pc, "pc", 1.0), (:Myr, "Myr", 1.0)) :
+                               (u.length, u.finest, u.time)
+    q(v, e) = "$(_qnum(v * e[3])) $(e[2])"
+    println(io, "│ box      : $(q(s.box_kpc, L))    levels $(s.levelmin)–$(s.levelmax)  (finest $(q(s.finest_cell_pc, Lc)))")
+    println(io, "│ time     : $(q(s.time_Myr, T))" * (s.redshift === nothing ? "" : "    z = $(_nf(s.redshift))"))
     rtag = s.sampled ? "  ⚠ APPROXIMATE (coarse levels ≤ $(s.lmax_used) of $(s.levelmax))" : "  (full resolution)"
     println(io, "│ read     : level $(s.lmax_used)$(rtag)")
     println(io, "├─ $(s.ncards) cards ───────────────────────────────────────────────────────")
     for c in r.cards
         println(io, _card_line(c))
     end
-    tot = round(r.cost.total_s, digits=2)
-    println(io, "└─ total $(tot) s ───────────────────────────────────────────────────────")
+    println(io, "└─ total $(_human_time(r.cost.total_s)) ───────────────────────────────────────────────────────")
+end
+
+# Mera unit names read as symbols: :Msol_pc2 → "M⊙/pc²", :g_cm3 → "g/cm³", :nH → "cm⁻³", :km_s → "km/s"
+const _UNIT_WORDS = Dict("Msol" => "M⊙", "Msun" => "M⊙", "muG" => "μG", "Gauss" => "G", "Au" => "AU")
+const _SUPERSCRIPT = Dict('1' => "", '2' => "²", '3' => "³", '4' => "⁴")
+function _unit_label(u)
+    u === :standard && return "code"
+    u === :nH && return "cm⁻³"
+    u isa Symbol || return string(u)
+    word(p) = (m = match(r"^(.*?)(\d)$", p); m === nothing ? get(_UNIT_WORDS, p, p) :
+               get(_UNIT_WORDS, m[1], m[1]) * get(_SUPERSCRIPT, m[2][1], m[2]))
+    parts = split(string(u), '_')
+    return join(word.(parts), "/")
+end
+
+# readable names for the quantities on a card: :sd → "Σ", :rho → "ρ"
+const _VAR_WORDS = Dict(:sd => "Σ", :rho => "ρ", :T => "T", :p => "p", :bmag => "|B|", :xHII => "xHII",
+                        :r_sphere => "r", :r_cylinder => "R", :r_sphere_periodic => "r",
+                        :r_cylinder_periodic => "R", :mass => "mass", :vz => "v_z", :mu => "μ", :beta => "β")
+_var_label(v) = get(_VAR_WORDS, v, string(v))
+
+# an axis label "name [unit]"; a pure number (a fraction, μ, plasma β) has no unit to show
+const _DIMENSIONLESS = (:xHI, :xHII, :xHeII, :xHeIII, :mu, :beta, :mach, :reducedflux1, :reducedflux2, :reducedflux3)
+function _axis_label(v, u)
+    name = v === :rho && u === :nH ? "n_H" : _var_label(v)
+    return (u === :standard && v in _DIMENSIONLESS) ? name : "$name [$(_unit_label(u))]"
+end
+const _KIND_WORDS = Dict(:hydro => "Gas", :particles => "Particles", :rt => "Radiation",
+                         :gravity => "Gravity", :clumps => "Clumps")
+
+# the title a plot shows: the card's own label when the user set one, else a readable name
+function _card_title(c::ReportResultCard)
+    m = c.meta
+    if c.kind === :map && c.label == "$(c.datatype)_$(m.var)_map"
+        dir = get(m, :direction, :z)
+        return "$(get(_KIND_WORDS, c.datatype, string(c.datatype))) $(_var_label(m.var))" *
+               (dir isa Symbol ? " (along $dir)" : "")
+    elseif c.kind === :phase && c.label == "$(m.xvar)_$(m.yvar)_phase"
+        return "$(_var_label(m.xvar))–$(_var_label(m.yvar)) phase"
+    elseif c.kind === :profile && c.label == "$(m.yvar === nothing ? m.xvar : m.yvar)_profile"
+        return m.yvar === nothing ? "$(_var_label(m.xvar)) distribution" : "$(_var_label(m.yvar)) profile"
+    elseif c.kind === :sfr && c.label == "sfr"
+        return "star formation history"
+    end
+    return c.label
 end
 
 function _card_line(c::ReportResultCard)
@@ -94,9 +141,9 @@ function _card_line(c::ReportResultCard)
         c.func === :skipped ? "(skipped: $(get(m,:note,"")))" :
         c.func === :error   ? "(ERROR: $(get(m,:note,"")))" :
         c.kind === :scalar  ? "= $(_nf(c.data)) $(m.unit)" :
-        c.kind === :map     ? "[map $(m.var)]  $(m.res)×$(m.res)  range $(_rng(m.vrange)) $(m.unit)" :
-        c.kind === :phase   ? "[phase $(m.xvar)–$(m.yvar)]  $(m.nbins[1])×$(m.nbins[2]) bins  ($(m.xunit),$(m.yunit))" :
-        c.kind === :profile ? "[profile $(m.yvar) vs $(m.xvar)]  $(m.nbins) bins  y∈[$(_rng(m.yrange))] $(m.unit)" :
+        c.kind === :map     ? "[map $(m.var)]  $(m.res)×$(m.res)  range $(_rng(m.vrange)) $(_unit_label(m.unit))" :
+        c.kind === :phase   ? "[phase $(m.xvar)–$(m.yvar)]  $(m.nbins[1])×$(m.nbins[2]) bins  ($(_unit_label(m.xunit)), $(_unit_label(m.yunit)))" :
+        c.kind === :profile ? "[profile $(m.yvar) vs $(m.xvar)]  $(m.nbins) bins  y∈[$(_rng(m.yrange))] $(_unit_label(m.unit))" :
         c.kind === :sfr     ? "[SFR]  $(m.ntimebins) bins ($(m.tbinsize) Myr)  peak $(_nf(m.srange[2])) $(m.unit)" :
         c.kind === :clumps  ? "[clumps $(m.field)]  $(m.nclumps) found  total $(_nf(c.data.total_mass)) $(m.unit)  max $(_nf(m.max_mass))" :
         "?"

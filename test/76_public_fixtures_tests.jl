@@ -1110,4 +1110,23 @@ end
     end
 end
 
+@testset "IO-group output reads like a plain one" begin
+    # RAMSES with IOGROUPSIZE=2 puts the files of ranks 1-2 into group_00001/ and of ranks 3-4 into
+    # group_00002/. Every rank's file must be found, so the cells cover the box exactly once and the
+    # mass is the initial uniform density times the box volume.
+    f = PUBLIC_FIXTURES[:sedov3d_iogroups]
+    if isdir(f.path)
+        info = getinfo(f.output, f.path, verbose=false)
+        @test basename(dirname(info.fnames.info)) == "group_00001"
+        @test Mera.getproc2string(info.fnames.amr, Int32(3)) ==
+              joinpath(f.path, "output_" * lpad(f.output, 5, '0'), "group_00002", "amr_" * lpad(f.output, 5, '0') * ".out00003")
+        gas = gethydro(info, verbose=false, show_progress=false)
+        @test sum(getvar(gas, :volume)) ≈ f.boxlen^3 rtol=1e-12
+        @test sum(getvar(gas, :mass)) ≈ f.boxlen^3 rtol=1e-6      # ρ = 1 initially, mass conserved
+        @test quicklook(f.output; path=f.path, verbose=false).summary.ncells == length(gas.data)
+    else
+        @test_skip "sedov3d_iogroups not available"
+    end
+end
+
 end  # if PUBLIC_AVAILABLE

@@ -30,37 +30,56 @@ function _loghm!(ax, xs, ys, A; colormap)
         cr = (0.0, 1.0)
     else
         lo, hi = minimum(fin), maximum(fin)
-        if hi <= lo                                   # constant map → widen by a RELATIVE amount so
-            d = max(abs(lo), 1.0) * 1e-6              # the bump survives at large |log10| (eps(1) would
-            lo, hi = lo - d, hi + d                   # be absorbed); Makie errors on a zero-width range
+        # At most 8 decades below the maximum: an RT photon density reaches 1e-45 in the dark, which
+        # would spread the colours over 45 decades. Lower values take the lowest colour.
+        lo = max(lo, hi - 8)
+        # A uniform map (uniform initial conditions) varies only by rounding, which gives Makie a
+        # zero-width range once it converts to Float32, or a colour bar of noise. Below 1e-4 dex
+        # (0.02 %) show it as uniform: one dex centred on the value.
+        if hi - lo < 1e-4
+            mid = (lo + hi) / 2
+            lo, hi = mid - 0.5, mid + 0.5
         end
         cr = (lo, hi)
     end
     Makie.heatmap!(ax, xs, ys, L; colormap, colorrange=cr)
 end
 
+# a unit for an axis label: Mera's :standard is the code unit, so say that
+_ulabel(u) = Mera._unit_label(u)
+
+# true when a map varies only by rounding (below 1e-4 dex), the same test `_loghm!` uses
+function _isuniform(A)
+    v = [log10(x) for x in A if isfinite(x) && x > 0]
+    return !isempty(v) && maximum(v) - minimum(v) < 1e-4
+end
+
 # draw one card into a grid position (creates its own Axis); returns the Axis or nothing
 function _draw_card!(pos, c::Mera.ReportResultCard)
     m = c.meta
     if c.kind === :map
-        z = c.data.z; ex = c.data.extent                             # extent stored in kpc (card_compute)
-        ax = Makie.Axis(pos; title=c.label, xlabel="x [kpc]", ylabel="y [kpc]", aspect=Makie.DataAspect())
+        z = c.data.z; ex = c.data.extent                             # extent in kpc, or code units (card_compute)
+        lu = get(m, :length_unit, "kpc")
+        ax = Makie.Axis(pos[1, 1]; title=Mera._card_title(c), xlabel="x [$lu]", ylabel="y [$lu]", aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=size(z, 1)); ys = range(ex[3], ex[4], length=size(z, 2))
         pr = _poscolor(z); cmap = Mera._seq_cmap(m.var)
         hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z; colormap=cmap) :
-             Makie.heatmap!(ax, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, z); colormap=cmap)
-        Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? string(m.var) : "log10 $(m.var) [$(m.unit)]")
+             _loghm!(ax, xs, ys, z; colormap=cmap)
+        Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? Mera._var_label(m.var) : "log₁₀ " * Mera._axis_label(m.var, m.unit))
         return ax
     elseif c.kind === :phase
         xe = c.data.xedges; ye = c.data.yedges; H = c.data.H
         logx = all(>(0), xe); logy = all(>(0), ye)               # log axes for positive (log-spaced) bins
-        ax = Makie.Axis(pos; title=c.label, xlabel=string(m.xvar), ylabel=string(m.yvar),
+        ax = Makie.Axis(pos[1, 1]; title=Mera._card_title(c), xlabel=Mera._axis_label(m.xvar, m.xunit),
+                        ylabel=Mera._axis_label(m.yvar, m.yunit),
                         xscale = logx ? log10 : identity, yscale = logy ? log10 : identity)
         xc = logx ? sqrt.(xe[1:end-1] .* xe[2:end]) : (xe[1:end-1] .+ xe[2:end]) ./ 2  # bin centres
         yc = logy ? sqrt.(ye[1:end-1] .* ye[2:end]) : (ye[1:end-1] .+ ye[2:end]) ./ 2
-        hm = Makie.heatmap!(ax, xc, yc, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, H);
-                            colormap=:batlow)  # multi-hue, perceptually-uniform & colorblind-safe (theme-independent)
-        Makie.Colorbar(pos[1, 2], hm; label="log10 count")
+        # roma (Crameri): many hues to tell the gas phases apart, perceptually uniform, colorblind-safe
+        tot = sum(x -> isfinite(x) ? x : 0.0, H)                    # shares of the total weight
+        hm = _loghm!(ax, xc, yc, tot > 0 ? H ./ tot : H; colormap=:roma)
+        w = get(m, :weight, :none)
+        Makie.Colorbar(pos[1, 2], hm; label=w === :none ? "log₁₀ count fraction" : "log₁₀ $(w) fraction")
         return ax
     elseif c.kind === :profile
         x = c.data.x; y = c.data.y
@@ -69,17 +88,26 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         wide = !isempty(pos_y) && length(pos_y) == count(isfinite, y) &&        # all-positive…
                (maximum(pos_y) / minimum(pos_y) > 30)                            # …spanning ≳1.5 decades
         uselog = ys in (:log, :log10) || (ys === :auto && wide)
-        ax = Makie.Axis(pos; title=c.label, xlabel="$(m.xvar) [$(m.xunit)]",
-                        ylabel="$(m.yvar) [$(m.unit)]", yscale = uselog ? log10 : identity)
-        if uselog                                                               # drop non-positive points for a log axis
-            keep = isfinite.(y) .& (y .> 0)
-            Makie.lines!(ax, x[keep], y[keep])
-        else
-            Makie.lines!(ax, x, y)
+        ax = Makie.Axis(pos; title=Mera._card_title(c), xlabel=Mera._axis_label(m.xvar, m.xunit),
+                        ylabel=m.yvar === nothing ? "count" : Mera._axis_label(m.yvar, m.unit),
+                        yscale = uselog ? log10 : identity)
+        # empty bins are NaN; join the bins that hold cells rather than break the line at every gap
+        # (with more bins than cells across, every other bin is empty and nothing would be drawn)
+        keep = isfinite.(y) .& (uselog ? (y .> 0) : trues(length(y)))
+        Makie.lines!(ax, x[keep], y[keep])
+        # a profile that is uniform up to rounding: centre the axis on the value (one dex on a log
+        # axis, ±5 % on a linear one) instead of zooming into the rounding noise
+        fy = filter(v -> isfinite(v) && (!uselog || v > 0), y)
+        if !isempty(fy)
+            lo, hi = extrema(fy); mid = (lo + hi) / 2
+            if hi - lo <= 1e-4 * max(abs(mid), floatmin())
+                Makie.ylims!(ax, uselog ? (mid / sqrt(10), mid * sqrt(10)) :
+                                 mid == 0 ? (-1.0, 1.0) : (mid - 0.05 * abs(mid), mid + 0.05 * abs(mid)))
+            end
         end
         return ax
     elseif c.kind === :sfr
-        ax = Makie.Axis(pos; title=c.label, xlabel="t [Myr]", ylabel="SFR [$(m.unit)]")
+        ax = Makie.Axis(pos; title=Mera._card_title(c), xlabel="t [Myr]", ylabel="SFR [$(_ulabel(m.unit))]")
         isempty(c.data.t) || Makie.stairs!(ax, c.data.t, c.data.sfr; step=:center)
         return ax
     end
@@ -117,44 +145,52 @@ function Mera._save_card_pngs(r::Mera.QuickReport, dir::AbstractString; kwargs..
     return files
 end
 
-# meaningful per-component colormaps for the quicklook panels — all perceptually-uniform and
-# colorblind-safe, oriented bright=more: gas density = viridis (the density standard), stars = magma
-# (warm/stellar), dark matter = cividis (the CVD-optimised cool map), ρ–T phase = viridis (the 2D-
-# histogram standard). A user-supplied `colormap` overrides all of them.
+# meaningful per-component colormaps for the quicklook panels — all perceptually uniform and
+# colorblind-safe: gas density = viridis (the density standard), stars = magma (warm/stellar), dark
+# matter = cividis (the CVD-optimised cool map), |B| = plasma, ionised fraction = cividis, and the
+# ρ–T phase diagram = roma (Crameri), whose many hues separate the gas phases. A user-supplied
+# `colormap` overrides all of them.
 const _QL_CMAP = Dict(:z => :viridis, :x => :viridis, :y => :viridis,
-                      :stars => :magma, :dm => :cividis, :phase => :batlow,
-                      :bmag => :plasma)   # magnetic field |B| — distinct from the gas viridis maps
-# :batlow (Crameri) is a multi-hue perceptually-uniform, colorblind-safe map — the recommended
-# rainbow alternative — giving the ρ–T phase histogram more colour range than the single-hue viridis.
+                      :stars => :magma, :dm => :cividis, :phase => :roma,
+                      :bmag => :plasma, :xHII => :cividis)
 
 # ---- quicklookplot: the first-look dashboard --------------------------------------------
 # Gas Σ along z, x, y + stellar / dark-matter Σ when particles are
 # present · ρ–T phase diagram · a text census (cells, particles, masses, SFR, ranges). Panels fill a
 # 3-column grid in order, so the dashboard grows with the components actually in the output. Each panel
 # uses a meaningful perceptually-uniform colormap (see `_QL_CMAP`); pass `colormap=` to override.
+# Lengths, masses and densities are shown in the units `quicklook` picked for the run (`summary.units`).
 function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=nothing)
     q.maps === nothing && error("quicklookplot: no maps to plot (header-only call, or no datatypes " *
                                 "produced a map). Call quicklook(output) with at least one of " *
                                 "datatypes = [:hydro,:stars,:dm].")
     cmapof(k) = colormap === nothing ? get(_QL_CMAP, k, :viridis) : colormap   # per-component, unless overridden
     s = q.summary
-    nf(x) = x === nothing ? "—" : string(round(x, sigdigits=4))
+    nf = Mera._qnum
     m = q.maps
+    u = get(s, :units, nothing)
+    u === nothing && (u = Mera._display_units(q.info))
+    lenunit = u.length[2]
+    lenfac = getfield(q.info.scale, u.length[1])                     # code length → the shown unit
     # Panels are named by the line of sight, not by "face-on" / "edge-on". Those describe a disc
     # seen from a particular angle and mean nothing for a blast wave, a cluster or a turbulent box,
     # which is most of what a first look is pointed at.
-    lbl = Dict(:z     => ("Gas Σ (along z)",          "x [kpc]", "y [kpc]"),
-               :x     => ("Gas Σ (along x)",          "y [kpc]", "z [kpc]"),
-               :y     => ("Gas Σ (along y)",          "x [kpc]", "z [kpc]"),
-               :stars   => ("Stars Σ (along z)",        "x [kpc]", "y [kpc]"),
-               :stars_x => ("Stars Σ (along x)",        "y [kpc]", "z [kpc]"),
-               :stars_y => ("Stars Σ (along y)",        "x [kpc]", "z [kpc]"),
-               :dm      => ("Dark matter Σ (along z)",  "x [kpc]", "y [kpc]"),
-               :dm_x    => ("Dark matter Σ (along x)",  "y [kpc]", "z [kpc]"),
-               :dm_y    => ("Dark matter Σ (along y)",  "x [kpc]", "z [kpc]"),
-               :bmag  => ("|B| (along z)",            "x [kpc]", "y [kpc]"))
+    xy, yz, xz = ("x", "y"), ("y", "z"), ("x", "z")
+    lbl = Dict(:z => ("Gas Σ (along z)", xy...), :x => ("Gas Σ (along x)", yz...),
+               :y => ("Gas Σ (along y)", xz...),
+               :stars => ("Stars Σ (along z)", xy...), :stars_x => ("Stars Σ (along x)", yz...),
+               :stars_y => ("Stars Σ (along y)", xz...),
+               :dm => ("Dark matter Σ (along z)", xy...), :dm_x => ("Dark matter Σ (along x)", yz...),
+               :dm_y => ("Dark matter Σ (along y)", xz...),
+               :bmag => ("|B| (along z)", xy...), :xHII => ("ionised fraction (along z)", xy...))
+    # gas of one density everywhere (a static test medium) gives the same flat map along every axis:
+    # draw it once and say so, rather than spend three panels on one colour
+    gaskeys = [k for k in (:z, :x, :y) if haskey(m, k)]
+    flatgas = length(gaskeys) > 1 && all(k -> _isuniform(m[k].maps[:sd]), gaskeys)
+    flatgas && (lbl[gaskeys[1]] = ("Gas Σ (uniform along every axis)", lbl[gaskeys[1]][2:3]...))
     specs = Any[]
-    for k in (:z, :x, :y, :stars, :stars_x, :stars_y, :dm, :dm_x, :dm_y, :bmag)
+    for k in (:z, :x, :y, :stars, :stars_x, :stars_y, :dm, :dm_x, :dm_y, :bmag, :xHII)
+        flatgas && k in gaskeys[2:end] && continue
         haskey(m, k) && push!(specs, (m[k], lbl[k]..., k))
     end
     havephase = q.phase !== nothing
@@ -168,68 +204,93 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
                 fontsize=19, font=:bold, color=(:black, 0.85), padding=(0, 0, 8, 2))
     gpos(i) = (cld(i, ncols), mod1(i, ncols))                        # row-major fill of a tight grid
 
-    skpc = q.info.scale.kpc                                          # projection extent is in code length → kpc
-    # adaptive length unit so axis ticks stay O(1–100) instead of an unreadable ×10⁴ smear:
-    # a Mpc-scale (cosmological) box reads in Mpc, a galaxy-scale box in kpc.
-    boxspan = q.info.boxlen * skpc
-    lenfac, lenunit = boxspan ≥ 3_000 ? (1e-3, "Mpc") : (1.0, "kpc")
-    relabel(l) = replace(l, "kpc" => lenunit)
     AX = (titlesize=13, titlefont=:regular, titlegap=4,
           xlabelsize=11, ylabelsize=11, xticklabelsize=9, yticklabelsize=9,
           xgridvisible=false, ygridvisible=false,
           xticks=Makie.LinearTicks(4), yticks=Makie.LinearTicks(4))
     cb(pos, h; label) = Makie.Colorbar(pos, h; label, width=11, labelsize=10,
                                        ticklabelsize=9, ticksize=3)
+    cblabel(key) = key === :bmag ? "log₁₀ ⟨|B|⟩ [$(u.bfield[2])]" :
+                   key === :xHII ? "log₁₀ ⟨xHII⟩" : "log₁₀ Σ [$(u.sigma[2])]"
 
-    for (i, (proj, title, xl, yl, key)) in enumerate(specs)
+    for (i, (proj, title, hx, vx, key)) in enumerate(specs)
         r, c = gpos(i)
-        mapkey = key === :bmag ? :bmag : :sd        # the |B| panel projects :bmag, the others :sd
-        mp = proj.maps[mapkey]; ex = proj.extent .* skpc .* lenfac
-        ax = Makie.Axis(fig[r, c][1, 1]; title=title, xlabel=relabel(xl), ylabel=relabel(yl),
+        mapkey = key in (:bmag, :xHII) ? key : :sd      # |B| and xHII panels project themselves
+        mp = proj.maps[mapkey]; ex = proj.extent .* lenfac
+        ax = Makie.Axis(fig[r, c][1, 1]; title=title, xlabel="$hx [$lenunit]", ylabel="$vx [$lenunit]",
                         aspect=Makie.DataAspect(), AX...)
         xs = range(ex[1], ex[2], length=Base.size(mp, 1)); ys = range(ex[3], ex[4], length=Base.size(mp, 2))
         hm = _loghm!(ax, xs, ys, mp; colormap=cmapof(key))
-        cb(fig[r, c][1, 2], hm; label=key === :bmag ? "log₁₀ ⟨|B|⟩ [μG]" : "log₁₀ Σ")
+        sp = get(s, :sink_pos_code, nothing)                          # sinks, as open circles
+        if sp !== nothing && !isempty(sp.x)
+            o = get(s, :map_center_code, nothing)                     # maps rolled in a periodic box:
+            Lb = q.info.boxlen                                        # positions from that centre
+            wrap(a, i) = o === nothing ? a : mod.(a .- o[i] .+ Lb / 2, Lb) .- Lb / 2
+            px, py, pz = wrap(sp.x, 1), wrap(sp.y, 2), wrap(sp.z, 3)
+            h, v = key in (:x, :stars_x, :dm_x) ? (py, pz) :
+                   key in (:y, :stars_y, :dm_y) ? (px, pz) : (px, py)
+            Makie.scatter!(ax, h .* lenfac, v .* lenfac; marker=:circle,
+                           color=:transparent, strokecolor=:white, strokewidth=1.5, markersize=12)
+        end
+        cb(fig[r, c][1, 2], hm; label=cblabel(key))
     end
     if havephase
         r, c = gpos(length(specs) + 1); ph = q.phase
-        ax2 = Makie.Axis(fig[r, c][1, 1]; title="ρ–T phase", xlabel="n_H [cm⁻³]", ylabel="T [K]",
+        ax2 = Makie.Axis(fig[r, c][1, 1]; title="ρ–T phase",
+                         xlabel="$(u.density[3]) [$(u.density[2])]", ylabel="T [K]",
                          xscale=log10, yscale=log10, titlesize=13, titlegap=4,
                          xlabelsize=11, ylabelsize=11, xticklabelsize=9, yticklabelsize=9,
                          xgridvisible=true, ygridvisible=true,
                          xgridcolor=(:gray, 0.12), ygridcolor=(:gray, 0.12))
         xc = sqrt.(ph.xedges[1:end-1] .* ph.xedges[2:end]); yc = sqrt.(ph.yedges[1:end-1] .* ph.yedges[2:end])
-        hm2 = _loghm!(ax2, xc, yc, ph.H; colormap=cmapof(:phase))
-        cb(fig[r, c][1, 2], hm2; label="log₁₀ mass")
+        tot = sum(x -> isfinite(x) ? x : 0.0, ph.H)                 # show the share of the gas mass
+        hm2 = _loghm!(ax2, xc, yc, tot > 0 ? ph.H ./ tot : ph.H; colormap=cmapof(:phase))
+        cb(fig[r, c][1, 2], hm2; label="log₁₀ mass fraction")
     end
 
     # text census (not a bar plot) — adapts to which components were read; kept short per line so it
     # never overflows the panel, and rendered in a light "info card" for a cleaner look.
     rt, ct = gpos(npanels); L = String[]
+    inmass(v) = nf(v * u.mass[3])
     if get(s, :gas_mass_Msol, nothing) !== nothing
         push!(L, "CELLS"); push!(L, "  $(s.ncells) read" * (q.sampled ? "  (coarse)" : "  (full)"))
     end
     if get(s, :npart, 0) > 0
         push!(L, ""); push!(L, "PARTICLES")
         push!(L, "  total  $(s.npart)"); push!(L, "  stars  $(s.nstars)"); push!(L, "  DM     $(s.ndm)")
+        get(s, :ntracers, 0) > 0 && push!(L, "  tracer $(s.ntracers)")
         get(s, :particle_subsample, 1.0) < 1.0 && push!(L, "  ⚠ ×$(round(1/s.particle_subsample, digits=1)) subsample")
     end
-    push!(L, ""); push!(L, "MASS [M⊙]")
-    get(s, :gas_mass_Msol, nothing) !== nothing && push!(L, "  gas    $(nf(s.gas_mass_Msol))")   # exact (mass-conserving)
+    push!(L, ""); push!(L, "MASS [$(u.mass[2])]")
+    get(s, :gas_mass_Msol, nothing) !== nothing && push!(L, "  gas    $(inmass(s.gas_mass_Msol))")   # exact (mass-conserving)
     if get(s, :stellar_mass_Msol, nothing) !== nothing
-        push!(L, "  stars  $(nf(s.stellar_mass_Msol))"); push!(L, "  DM     $(nf(s.dm_mass_Msol))")
-        push!(L, ""); push!(L, "SFR [M⊙/yr]")
-        push!(L, "  10 Myr   $(nf(s.sfr10))"); push!(L, "  100 Myr  $(nf(s.sfr100))")
+        s.nstars > 0 && push!(L, "  stars  $(inmass(s.stellar_mass_Msol))")
+        s.ndm > 0 && push!(L, "  DM     $(inmass(s.dm_mass_Msol))")
+        if get(s, :nstars, 0) > 0 && get(s, :sfr10, nothing) !== nothing
+            push!(L, ""); push!(L, "SFR [M⊙/yr]")
+            push!(L, "  10 Myr   $(nf(s.sfr10))"); push!(L, "  100 Myr  $(nf(s.sfr100))")
+        end
     end
     if get(s, :nH_range, nothing) !== nothing
         push!(L, ""); push!(L, "RANGES" * (q.sampled ? " (smoothed)" : ""))
-        push!(L, "  nH  $(nf(s.nH_range[1]))…$(nf(s.nH_range[2]))")
+        d = u.density
+        push!(L, "  $(rpad(d[3], 4))$(nf(s.nH_range[1] * d[4]))…$(nf(s.nH_range[2] * d[4])) $(d[2])")
         push!(L, "  T   $(nf(s.T_range_K[1]))…$(nf(s.T_range_K[2])) K")
     end
+    if get(s, :ionised_fraction, nothing) !== nothing          # RT run
+        push!(L, ""); push!(L, "IONISED")
+        push!(L, "  $(nf(100 * s.ionised_fraction)) % of the gas mass")
+    end
     if get(s, :bmag_range_muG, nothing) !== nothing            # MHD run
+        b = u.bfield
         push!(L, ""); push!(L, "MAGNETIC")
-        push!(L, "  |B|  $(nf(s.bmag_range_muG[1]))…$(nf(s.bmag_range_muG[2])) μG")
+        push!(L, "  |B|  $(nf(s.bmag_range_muG[1] * b[3]))…$(nf(s.bmag_range_muG[2] * b[3])) $(b[2])")
         push!(L, "  β    $(nf(s.beta_range[1]))…$(nf(s.beta_range[2]))")
+    end
+    if get(s, :sink_count, 0) > 0
+        push!(L, ""); push!(L, "SINKS (○ on the maps)")
+        push!(L, "  number $(s.sink_count)")
+        push!(L, "  mass   $(inmass(s.sink_mass_Msol)) $(u.mass[2])")
     end
     axt = Makie.Axis(fig[rt, ct]; title="census", titlesize=13, titlegap=4,
                      backgroundcolor=(:gray, 0.05))

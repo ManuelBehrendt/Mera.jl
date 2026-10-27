@@ -74,6 +74,9 @@ ENV["MERA_TEST_DATA"] = download_testdata()      # all fifteen, into ~/.julia/me
 path = download_testdata("sedov3d_amr")         # or one, by name (2.3 MB)
 ```
 
+What each one looks like, and the first numbers Mera reports for it, is on the
+[Test Simulations](../test_simulations.md) page.
+
 From a shell, `./testdata/fetch_fixtures.sh` does the same; `--small` leaves out the 165 MB Bondi
 run (142 MB in total), and single names are accepted too. It downloads only what is missing and
 prints the folder it used as its last line. How the simulations are made, and how to regenerate

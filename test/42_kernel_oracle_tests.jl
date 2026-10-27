@@ -50,6 +50,14 @@ using Statistics, LinearAlgebra, Random
         ee = Mera._bin_edges(x, nothing, :equal, 10)
         memb = Mera._bin_members(x, ee, 10)
         @test issorted(ee) && all(b -> abs(length(b) - 20) <= 2, memb)   # 200/10 ≈ 20 each
+        # every value the same (uniform initial conditions): the range is centred on the value
+        # instead of failing, and all points land in one bin
+        for (v, scale) in ((7.6e-4, :log), (7.6e-4, :linear), (0.0, :linear), (-3.0, :linear))
+            e1 = Mera._bin_edges(fill(v, 50), nothing, scale, 10)
+            @test issorted(e1) && e1[1] < v < e1[end]
+            @test sum(length, Mera._bin_members(fill(v, 50), e1, 10)) == 50
+        end
+        @test_throws ArgumentError Mera._bin_edges(fill(2.0, 5), (2.0, 2.0), :log, 10)   # explicit: still an error
     end
 
     @testset "bin members partition the data (_bin_members)" begin

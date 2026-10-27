@@ -158,8 +158,8 @@ GitHub Actions) and uploaded to Codecov; see [Testing](#testing) below and the
 - **Every result remembers where it came from, and so does every file you save**: the version of
   Mera, the exact code it ran on and the snapshot you used. Each file Mera writes also gets a
   small readable `.meta.json` next to it, with the units, the file's SHA-256, your script and your
-  package versions. Before you publish, one call turns the folder into a single record that Zenodo
-  reads, with the BibTeX of the exact versions you used. These are the records that guidelines for
+  package versions. Before you publish, one call describes the whole folder in one standard record (an
+  RO-Crate) to upload with it, and writes the BibTeX for the Mera version you used. These are the records that guidelines for
   FAIR data (findable, accessible, interoperable, reusable) ask for, written without extra work.
   Fifteen public test simulations with known answers let you check your own installation.
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/) ·
@@ -405,8 +405,8 @@ Mera adds a hint: start Julia with `julia -t 8` (or set `JULIA_NUM_THREADS=8`) t
 in parallel. In scripts the greeting is a single `[ Info: Mera v2.0.0-DEV` line, and `MERA_QUIET=1`
 turns it off.
 
-For collaborators, the in-development multi-code version (2.0, see the note at the top) is
-installed from the branch, noting the `#multicode` suffix in the `pkg>` form:
+For collaborators, the readers for other codes (see the note at the top) are installed from the
+branch, noting the `#multicode` suffix in the `pkg>` form:
 
 ```julia-repl
 pkg> add https://github.com/ManuelBehrendt/Mera.jl#multicode
@@ -501,10 +501,17 @@ including what the attribution block should contain and what makes a recipe usab
 
 **1.x, RAMSES.** Continued depth on the RAMSES path: analysis, performance and documentation.
 
-**2.0, multiple simulation codes.** AREPO, GADGET, PLUTO, Athena++, FLASH, Chombo and AMReX/Quokka
-behind the same API, developed on the `multicode` branch. What each reader does today is listed in
+**Other simulation codes.** AREPO, GADGET, PLUTO, Athena++, FLASH, Chombo and AMReX/Quokka behind
+the same API, developed openly on the `multicode` branch until they are released. What each reader does today is listed in
 [Other Simulation Codes](https://manuelbehrendt.github.io/Mera.jl/multicode/multicode/), and readers
 are credited to the people who wrote them.
+
+**Data storage.** MERA's data tables (one column per field) are planned to move from
+IndexedTables.jl to [StructArrays.jl](https://github.com/JuliaArrays/StructArrays.jl), the package
+IndexedTables is built on. Columns will then no longer have to sit in memory: memory-mapped arrays
+will allow data larger than RAM, and Arrow or HDF5 columns can be read straight from file. Function
+names and arguments will stay the same, and **every MERA file saved with an earlier version will
+stay readable**.
 
 MERA is actively developed and its priorities are driven by user needs. Have a feature request, a
 RAMSES variant to support, or a gap to report? Please

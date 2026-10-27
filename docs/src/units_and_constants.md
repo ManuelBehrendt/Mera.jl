@@ -33,11 +33,11 @@ pkgversion(Mera)
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 4 threads
+Mera v1.9.0 | Julia 1.12.7 | 4 threads
 ```
 
 ```
-v"1.8.0"
+v"1.9.0"
 ```
 
 ```julia
@@ -49,7 +49,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10"); # output=300 in given path
 ```
 
 ```
-[Mera]: 2026-08-31T14:44:26.621
+[Mera]: 2026-10-27T10:26:58.339
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -82,6 +82,7 @@ clumps:           false
 -------------------------------------------------------
 namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
+boundaries:       not periodic (&BOUNDARY_PARAMS closes x, y, z)
 timer-file:       true
 compilation-file: false
 makefile:         true
@@ -351,12 +352,14 @@ nH = ρ_code × scale.nH = ρ_code × (scale.g_cm3 × X_H) / mH
 
 Where:
 - **`ρ_code`** - Density in code units
-- **`X_H`** - Hydrogen mass fraction (`X_frac = 0.76` in RAMSES; primordial composition)
+- **`X_H`** - Hydrogen mass fraction (`X_frac = 0.76` in RAMSES; primordial composition). On an RT run, `getinfo` takes the run's own value from its RT header (`info_rt_NNNNN.txt`), e.g. `X = 1` for pure hydrogen
 - **`mH`** - Hydrogen-atom mass, `info.constants.mH` (RAMSES convention, `1.66e-24` g; ≈ the proton mass `info.constants.mp` = `1.6726e-24` g)
 
 `n_H` is the number density of hydrogen **nuclei** (summed over all ionization states); it depends only on `X_H`, **not** on the ionization state.
 
 **Note on μ (mean molecular weight):** MERA/RAMSES uses the simplified convention `μ = 1/X_H ≈ 1.32`, so the same result can be written `nH = ρ_code × scale.g_cm3 / (μ × mH)` (the `X_H` factor is absorbed into `1/μ`). Be careful: this `μ` is the RAMSES value that enters the **temperature** scale (`scale.T = scale.T_mu × μ`), it is *not* the textbook ionization-dependent mean molecular weight (≈ 0.62 for fully ionized, ≈ 1.22 for neutral H+He gas). Do **not** substitute that ionization-dependent value into the `nH` formula; only `X_H` (equivalently `μ = 1/X_H`) is correct here.
+
+**On an RT run** the ionization state is known, so Mera uses it: `getvar(gas, :T, :K)` takes μ per cell from the stored ionization fractions (`getvar(gas, :mu)` returns it), and the constant μ above is only used where the ionization is not tracked. For pure hydrogen μ runs from 1 (neutral) to 0.5 (fully ionized). The [Radiative Transfer](10_multi_RadiativeTransfer.md) tutorial shows it on the Strömgren test, and [`setcomposition!`](@ref) overrides X and the constant μ.
 
 **Note**: This documentation covers the most commonly used scaling factors and constants. Mera.jl actually provides **133 scaling factors** and **41 physical constants** in total. The actual available factors may vary depending on your Mera.jl version and simulation setup. Use `propertynames(info.scale)` and `propertynames(info.constants)` to see all available items for your specific installation.
 
@@ -587,7 +590,7 @@ println("✓ Persistence: Maintain constants after clearing InfoType")
 === Available Constants Structure ===
 [Mera]: Constants given in cgs units
 =========================================
-Au	= 0.01495978707
+Au	= 1.495978707e13
 Mpc	= 3.08567758128e24
 kpc	= 3.08567758128e21
 pc	= 3.08567758128e18

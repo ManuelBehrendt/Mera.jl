@@ -610,21 +610,26 @@ end
         # is the shot noise this exists to remove for sparse particles
         @test count(iszero, sph.maps[:sd]) < count(iszero, pt.maps[:sd])
 
-        # without either column the refusal must name BOTH routes and the fallback. It is
-        # downgraded to a warning by the non-strict path, so assert the text reaches stdout —
-        # printing only the exception TYPE threw the actionable part away.
-        out = capture_stdout() do
-            projection(dm, :sd; weighting=:sph, res=16, verbose=false, show_progress=false)
-        end
-        @test occursin("needs a smoothing length", out)
-        @test occursin(":subfind_hsml", out) && occursin(":volume", out)
-        @test occursin("weighting=:mass", out)
-        # …and MERA_PROJECTION_STRICT=1 raises instead of warning (it is an env switch, not a
-        # keyword), so a script can opt into failing loudly
-        withenv("MERA_PROJECTION_STRICT" => "1") do
-            @test_throws ArgumentError projection(dm, :sd; weighting=:sph, res=16,
-                                                  verbose=false, show_progress=false)
-        end
+        # without either column the smoothing length comes from the 32 nearest neighbours:
+        # still mass-conserving, and smoother than nearest-pixel deposition
+        knn = projection(dm, :sd; weighting=:sph, res=res, verbose=false, show_progress=false)
+        @test sum(knn.maps[:sd]) * pa ≈ Float64(n)  rtol=1e-10
+        @test count(iszero, knn.maps[:sd]) < count(iszero, pt.maps[:sd])
+        hk = Mera._knn_smoothing(base.x, base.y, base.z)
+        @test all(hk .> 0) && Mera._knn_smoothing([0.5], [0.5], [0.5]) == [Inf]
+
+        # particles on a lattice (a cosmological run at high redshift): nearest-pixel deposition
+        # leaves a moiré of empty pixels, the neighbour kernel a smooth map
+        g = range(0.0, 1.0; length=17)[1:16] .+ 1/32
+        lx = vec([a for a in g, b in g, c in g]); ly = vec([b for a in g, b in g, c in g])
+        lz = vec([c for a in g, b in g, c in g]); nl = length(lx)
+        lat = _zoom_particles(info; x=lx, y=ly, z=lz, vx=zeros(nl), vy=zeros(nl), vz=zeros(nl),
+                              mass=fill(1.0, nl))
+        lpt  = projection(lat, :sd; res=40, verbose=false, show_progress=false)
+        lsph = projection(lat, :sd; weighting=:sph, res=40, verbose=false, show_progress=false)
+        @test count(iszero, lpt.maps[:sd]) > 0.3 * length(lpt.maps[:sd])     # the moiré
+        inner = lsph.maps[:sd][5:36, 5:36]                                    # away from the edges
+        @test maximum(inner) / minimum(inner) < 1.5                           # smooth
 
         # :voronoi is NOT relaxed the same way: it is a nearest-GENERATOR rule, undefined for a
         # particle that owns no cell, so :subfind_hsml does not make it meaningful

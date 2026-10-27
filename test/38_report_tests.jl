@@ -6,6 +6,23 @@
 
 @testset verbose=true "Composable report (Phase 1)" begin
 
+    @testset "readable unit labels and card titles (data-free)" begin
+        @test Mera._unit_label(:Msol_pc2) == "M⊙/pc²" && Mera._unit_label(:g_cm3) == "g/cm³"
+        @test Mera._unit_label(:nH) == "cm⁻³" && Mera._unit_label(:km_s) == "km/s"
+        @test Mera._unit_label(:standard) == "code" && Mera._unit_label(:K) == "K"
+        @test Mera._axis_label(:xHII, :standard) == "xHII" && Mera._axis_label(:rho, :nH) == "n_H [cm⁻³]"
+        @test Mera._axis_label(:r_sphere_periodic, :cm) == "r [cm]"
+        @test Mera._human_time(0.123) == "0.12 s" && Mera._human_time(5.43) == "5.43 s"
+        @test Mera._human_time(125.0) == "2 min 5 s" && Mera._human_time(3780.0) == "1 h 3 min"
+        # readers of other codes leave info.boundaries unset: quicklook treats that as unknown
+        @test Mera._boundaries(Mera.InfoType()) === :unknown
+        mk(label, kind, dt, meta) = Mera.ReportResultCard(label, kind, dt, :projection, nothing, meta)
+        @test Mera._card_title(mk("hydro_sd_map", :map, :hydro, (var=:sd, direction=:z))) == "Gas Σ (along z)"
+        @test Mera._card_title(mk("rho_T_phase", :phase, :hydro, (xvar=:rho, yvar=:T))) == "ρ–T phase"
+        @test Mera._card_title(mk("rho_profile", :profile, :hydro, (xvar=:r_sphere, yvar=:rho))) == "ρ profile"
+        @test Mera._card_title(mk("my map", :map, :hydro, (var=:sd, direction=:z))) == "my map"   # own label kept
+    end
+
     @testset "card constructors & traits (data-free)" begin
         pc = ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=128)
         @test pc.kind == :hydro && Mera.card_result_kind(pc) == :map
@@ -135,6 +152,165 @@
                 end
             else
                 @test_skip "ramses_mhd_128 not available"
+            end
+        end
+
+        @testset "readable units for any run (sedov3d_amr vs spiral)" begin
+            # RAMSES's default units (1 cm, 1 g/cm³, 1 s) are shown in cm, g and g/cm³, not as a
+            # box of 3e-22 kpc; the summary keeps its physical fields with the units in their names
+            f = PUBLIC_FIXTURES[:sedov3d_amr]
+            if isdir(f.path)
+                q = quicklook(f.outputs; path=f.path, verbose=false)
+                s = q.summary
+                @test s.units.length[2] == "cm" && s.units.mass[2] == "g" && s.units.density[2] == "g/cm³"
+                info = getinfo(f.outputs, f.path, verbose=false)
+                @test s.box_kpc ≈ f.boxlen * info.scale.kpc                # still kpc in the field
+                @test s.box_kpc * s.units.length[3] ≈ f.boxlen               # 0.5 cm shown
+                gas = gethydro(info, verbose=false, show_progress=false)
+                @test s.gas_mass_Msol * s.units.mass[3] ≈ sum(getvar(gas, :mass, :g))
+                txt = mktemp() do fpath, io
+                    redirect_stdout(() -> Mera._quicklook_print(s, time()), io); flush(io)
+                    read(fpath, String)
+                end
+                @test occursin("0.5 cm", txt) && occursin("g/cm³", txt) && !occursin("kpc", txt)
+                # report: its default cards take the same units
+                plan = ReportPlan(f.outputs; path=f.path)
+                @test plan.cards[1].unit === :g_cm2 && plan.cards[2].xunit === :g_cm3
+                rep = report(plan; output=:none, verbose=false)
+                mapcard = first(c for c in rep.cards if c.kind === :map)
+                @test mapcard.meta.length_unit == "cm" && mapcard.data.extent[2] ≈ f.boxlen
+                # cards the user chose are left as they are
+                own = ReportPlan(f.outputs; path=f.path, cards=[ProjectionCard(:hydro, :sd; unit=:Msol_pc2)])
+                @test own.cards[1].unit === :Msol_pc2
+            else
+                @test_skip "sedov3d_amr not available"
+            end
+            # a galaxy keeps kpc, M⊙ and n_H, and the default cards as before
+            qg = quicklook(dc.output; path=dc.path, read=false, verbose=false)
+            @test qg.summary.units.length[2] == "kpc" && qg.summary.units.density[1] === :nH
+            pg = ReportPlan(dc.output; path=dc.path)
+            @test pg.cards[1].unit === :Msol_pc2 && any(c -> c isa SFRCard, pg.cards)
+            @test Mera._qnum(1.0e-20) == "1e-20" && Mera._qnum(245200.0) == "245200" && Mera._qnum(0.125) == "0.125"
+        end
+
+        @testset "report cards on RT names and periodic radii" begin
+            # :xHII is stored as a passive scalar (:scalar_00); :r_sphere_periodic is geometry. Neither
+            # may make a card look as if its variable were missing
+            fs, fr = PUBLIC_FIXTURES[:sedov3d_amr], PUBLIC_FIXTURES[:stromgren3d]
+            if isdir(fs.path) && isdir(fr.path)
+                r1 = report(fr.outputs; path=fr.path, output=:none, verbose=false,
+                            cards=[ProfileCard(:hydro, :r_sphere, :xHII; geometry=:spherical, nbins=16)])
+                @test r1.cards[1].func === :profile
+                r2 = report(fs.outputs; path=fs.path, output=:none, verbose=false,
+                            cards=[ProfileCard(:hydro, :r_sphere_periodic, :rho; geometry=:spherical, nbins=16)])
+                @test r2.cards[1].func === :profile
+                @test maximum(r2.cards[1].data.x) <= sqrt(3) / 2 * fs.boxlen   # no farther than half the box
+            else
+                @test_skip "sedov3d_amr or stromgren3d not available"
+            end
+            @test getvar_requirements(:hydro, [:r_sphere_periodic, :rho]) == [:rho]
+        end
+
+        @testset "quicklook tracer particles (sedov3d_grav_part)" begin
+            f = PUBLIC_FIXTURES[:sedov3d_grav_part]
+            if isdir(f.path)
+                n = maximum(parse(Int, d[8:end]) for d in readdir(f.path) if startswith(d, "output_"))
+                q = quicklook(n; path=f.path, verbose=false)
+                p = getparticles(getinfo(n, f.path, verbose=false), verbose=false, show_progress=false)
+                @test q.summary.ntracers == count(<=(0), getvar(p, :family)) > 0
+                @test q.summary.npart >= q.summary.ntracers
+            else
+                @test_skip "sedov3d_grav_part not available"
+            end
+        end
+
+        @testset "quicklook RT run (stromgren3d)" begin
+            # temperature with μ from the ionisation, and the ionised share of the gas mass
+            f = PUBLIC_FIXTURES[:stromgren3d]
+            if isdir(f.path)
+                q = quicklook(f.outputs; path=f.path, verbose=false)
+                gas = gethydro(getinfo(f.outputs, f.path, verbose=false), verbose=false, show_progress=false)
+                x = getvar(gas, :xHII); m = getvar(gas, :mass)
+                @test q.summary.T_mu_from_ionisation
+                @test all(q.summary.T_range_K .≈ extrema(getvar(gas, :T_rt, :K)))
+                @test q.summary.ionised_fraction ≈ sum(m .* x) / sum(m)
+                @test 0 < q.summary.ionised_fraction < 1
+                @test haskey(q.maps, :xHII) && maximum(q.maps.xHII.maps[:xHII]) <= 1 + 1e-9   # the ionised-fraction map
+            else
+                @test_skip "stromgren3d not available"
+            end
+            @test !quicklook(dc.output; path=dc.path, verbose=false).summary.T_mu_from_ionisation
+        end
+
+        @testset "quicklook centres a periodic box (sedov3d_amr) and leaves walls alone (stromgren3d)" begin
+            fs, fr = PUBLIC_FIXTURES[:sedov3d_amr], PUBLIC_FIXTURES[:stromgren3d]
+            if isdir(fs.path) && isdir(fr.path)
+                q = quicklook(fs.outputs; path=fs.path, verbose=false)
+                @test q.summary.boundaries === :periodic
+                o = q.summary.map_center_code
+                L = fs.boxlen
+                # the blast sits at the box corner, so the maps are centred there (periodically near 0)
+                @test o !== nothing && all(min(oi, L - oi) < L/8 for oi in o)
+                m = q.maps.z.maps[:sd]; n = size(m, 1)
+                c = m[n÷2-n÷8:n÷2+n÷8, n÷2-n÷8:n÷2+n÷8]
+                @test minimum(c) < 0.9 * maximum(m)          # the blast's thin interior is now in the middle
+                @test q.maps.z.extent[1] ≈ -L/2 atol=L/n            # axes measured from the centre
+                @test sum(m) ≈ sum(quicklook(fs.outputs; path=fs.path, verbose=false).maps.z.maps[:sd])
+                qr = quicklook(fr.outputs; path=fr.path, verbose=false)   # reflecting walls
+                @test qr.summary.boundaries === :nonperiodic && qr.summary.map_center_code === nothing
+            else
+                @test_skip "sedov3d_amr or stromgren3d not available"
+            end
+        end
+
+        @testset "quicklook comoving box (cosmo3d)" begin
+            f = PUBLIC_FIXTURES[:cosmo3d]
+            if isdir(f.path)
+                q = quicklook(f.output; path=f.path, read=false, verbose=false)
+                @test q.summary.box_comoving_Mpc ≈ q.summary.box_kpc / 1e3 / q.info.aexp rtol=1e-6
+            else
+                @test_skip "cosmo3d not available"
+            end
+            @test quicklook(dc.output; path=dc.path, read=false, verbose=false).summary.box_comoving_Mpc === nothing
+        end
+
+        @testset "quicklook sinks (sinks3d)" begin
+            # RAMSES keeps sinks in their own catalogue; the particle header counts none
+            f = PUBLIC_FIXTURES[:sinks3d]
+            if isdir(f.path)
+                n = maximum(parse(Int, d[8:end]) for d in readdir(f.path) if startswith(d, "output_"))
+                q = quicklook(n; path=f.path, verbose=false)
+                sk = getsinks(getinfo(n, f.path, verbose=false), verbose=false)
+                @test q.summary.sink_count == length(sk.data) >= 1
+                @test q.summary.sink_mass_Msol ≈ sum(getvar(sk, :mass, :Msol))
+                @test q.summary.sink_pos_code.x ≈ getvar(sk, :x)
+                if Base.find_package("CairoMakie") !== nothing
+                    @eval using CairoMakie
+                    @test occursin("Figure", string(typeof(quicklookplot(q))))
+                end
+            else
+                @test_skip "sinks3d not available"
+            end
+        end
+
+        @testset "quicklook on uniform initial conditions (stromgren3d, mhdtube3d)" begin
+            # uniform density, and maps that vary only by rounding: the phase diagram and the
+            # plot must not fail on a range of zero width
+            for key in (:stromgren3d, :mhdtube3d)
+                f = PUBLIC_FIXTURES[key]
+                if !isdir(f.path)
+                    @test_skip "$key not available"
+                    continue
+                end
+                q = quicklook(f.outputs; path=f.path, verbose=false)
+                @test count(>(0), vec(sum(q.phase.H; dims=2))) >= 1     # the density lands in a bin
+                if Base.find_package("CairoMakie") !== nothing
+                    @eval using CairoMakie
+                    fig = quicklookplot(q)
+                    f_png = tempname() * ".png"; CairoMakie.save(f_png, fig)
+                    @test filesize(f_png) > 0
+                    rm(f_png, force=true)
+                end
             end
         end
 

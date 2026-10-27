@@ -5,8 +5,8 @@
 #   bundle("galaxy_paper")         ro-crate-metadata.json, software.bib, simulation.json
 #
 # Each sidecar describes one file. Before the folder is published, `bundle` joins them into one
-# RO-Crate (https://www.researchobject.org/ro-crate/), the JSON-LD record that Zenodo, WorkflowHub
-# and other repositories read: every file, what made it (Mera, the script, the snapshot), and
+# RO-Crate (https://www.researchobject.org/ro-crate/), a standard JSON-LD format for describing
+# research data: every file, what made it (Mera, the script, the snapshot), and
 # who made it under which license. It writes into the folder itself and copies nothing, so it
 # needs no extra disk space.
 # ====================================================================================

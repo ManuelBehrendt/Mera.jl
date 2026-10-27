@@ -267,7 +267,7 @@ end
 
 State the gas composition of a run, and rebuild the unit table from it.
 
-Two quantities depend on composition and no simulation format records them:
+Two quantities depend on composition, and most simulation outputs do not record it:
 
 - `X_frac`, the hydrogen **mass fraction**, converts a mass density to `:nH`
 - `mu`, the mean molecular weight, converts pressure over density to a temperature in `:K`
@@ -277,7 +277,10 @@ reader starts from. Another code will assume something else. PLUTO without a che
 treats the gas as fully ionised, X = 0.711 and mu = 0.614, which makes its temperatures about
 a factor of two lower than the default would give.
 
-Nothing changes unless you call this, so existing results are unaffected.
+Nothing changes unless you call this, so existing results are unaffected. The exception is a
+RAMSES-RT run: its `info_rt` file states X, and `getinfo` uses that value (with `mu = 1/X`). On
+such a run `:T` also takes μ per cell from the tracked ionisation, so the constant `mu` here only
+matters where the ionisation fractions are not loaded.
 
 ```julia
 info = getinfo(5, path)
