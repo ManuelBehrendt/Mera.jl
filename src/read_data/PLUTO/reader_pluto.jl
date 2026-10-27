@@ -260,7 +260,16 @@ _blankval(::Type{T}) where {T<:Integer} = zero(T)
 _blankval(::Type{T}) where {T<:AbstractFloat} = zero(T)
 _blankval(::Type{Array{S,N}}) where {S,N} = Array{S,N}(undef, ntuple(_ -> 0, N)...)
 _blankval(::Type{Dict{K,V}}) where {K,V} = Dict{K,V}()
-_blankval(::Type{T}) where {T} = _fill_undefined!(T())   # nested mutable struct (its own `new()`)
+# A nested mutable struct made by its own `new()`: its references are undefined, but its plain
+# fields (Int, Float64, Bool) are already "defined" and hold whatever was in memory, which showed
+# up as a sink count of 4.8e11 and an eta_sn of 1.9e-319 on GADGET runs. Blank every field.
+function _blankval(::Type{T}) where {T}
+    x = T()
+    for f in fieldnames(T)
+        setfield!(x, f, _blankval(fieldtype(T, f)))
+    end
+    return x
+end
 function _fill_undefined!(x)
     for f in fieldnames(typeof(x))
         isdefined(x, f) || setfield!(x, f, _blankval(fieldtype(typeof(x), f)))

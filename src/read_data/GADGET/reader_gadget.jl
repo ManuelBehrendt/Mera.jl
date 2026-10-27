@@ -132,6 +132,13 @@ const _AREPO_CONFIG_GROUPS = ("Config", "Configuration")
 # BoundsError on a file that is plainly GADGET-HDF5.
 const _GADGET_KNOWN_SUBCODES = ("GADGET", "AREPO", "SWIFT", "GIZMO")
 
+# GADGET and AREPO number their particle families by PartType: stars are 4, dark matter 1 to 3
+# (2 and 3 the low-resolution particles of a zoom run). quicklook and the census read this.
+for code in _GADGET_KNOWN_SUBCODES                     # GADGET, AREPO, SWIFT, GIZMO
+    _FAMILY_CODES[code] = (stars=[4], dm=[1, 2, 3])
+end
+
+
 function _gadget_subcode(f)
     h = attributes(f["Header"])
     if haskey(h, "Code")
@@ -323,6 +330,12 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
         nfsp > 1 && length(fns) != nfsp && @warn "GADGET: the header expects $nfsp snapshot " *
             "chunks but $(length(fns)) file(s) were found — reading what is present."
         info.output = output; info.path = abspath(path); info.simcode = _gadget_subcode(f)
+        # particle census from the header, by PartType: 1-3 dark matter (2 and 3 are the
+        # low-resolution particles of a zoom run), 4 stars, 5 black holes
+        pinfo = _blankval(PartInfoType)
+        pinfo.Npart = sum(npart); pinfo.Ndm = npart[2] + npart[3] + npart[4]
+        pinfo.Nstars = npart[5]; pinfo.Nsinks = npart[6]
+        info.part_info = pinfo
         info.Narraysize = 0
         a = _gadget_header_cosmology!(info, h; verbose=verbose, unit_length=unit_length,
                                       unit_density=unit_density, unit_velocity=unit_velocity)
