@@ -187,6 +187,24 @@
             @test Mera._qnum(1.0e-20) == "1e-20" && Mera._qnum(245200.0) == "245200" && Mera._qnum(0.125) == "0.125"
         end
 
+        @testset "report cards on RT names and periodic radii" begin
+            # :xHII is stored as a passive scalar (:scalar_00); :r_sphere_periodic is geometry. Neither
+            # may make a card look as if its variable were missing
+            fs, fr = PUBLIC_FIXTURES[:sedov3d_amr], PUBLIC_FIXTURES[:stromgren3d]
+            if isdir(fs.path) && isdir(fr.path)
+                r1 = report(fr.outputs; path=fr.path, output=:none, verbose=false,
+                            cards=[ProfileCard(:hydro, :r_sphere, :xHII; geometry=:spherical, nbins=16)])
+                @test r1.cards[1].func === :profile
+                r2 = report(fs.outputs; path=fs.path, output=:none, verbose=false,
+                            cards=[ProfileCard(:hydro, :r_sphere_periodic, :rho; geometry=:spherical, nbins=16)])
+                @test r2.cards[1].func === :profile
+                @test maximum(r2.cards[1].data.x) <= sqrt(3) / 2 * fs.boxlen   # no farther than half the box
+            else
+                @test_skip "sedov3d_amr or stromgren3d not available"
+            end
+            @test getvar_requirements(:hydro, [:r_sphere_periodic, :rho]) == [:rho]
+        end
+
         @testset "quicklook tracer particles (sedov3d_grav_part)" begin
             f = PUBLIC_FIXTURES[:sedov3d_grav_part]
             if isdir(f.path)

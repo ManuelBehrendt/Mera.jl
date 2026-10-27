@@ -57,6 +57,7 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :v=>[:vx,:vy,:vz], :v2=>[:vx,:vy,:vz],
     :x=>[:cx], :y=>[:cy], :z=>[:cz],
     :r_cylinder=>[:x,:y], :r_sphere=>[:x,:y,:z], :ϕ=>[:x,:y],
+    :r_sphere_periodic=>[:x,:y,:z], :r_cylinder_periodic=>[:x,:y],
     :vr_cylinder=>[:x,:y,:vx,:vy], :vr_cylinder2=>[:x,:y,:vx,:vy],
     :vϕ_cylinder=>[:x,:y,:vx,:vy], :vϕ_cylinder2=>[:x,:y,:vx,:vy],
     :vr_sphere=>[:x,:y,:z,:vx,:vy,:vz], :vθ_sphere=>[:x,:y,:z,:vx,:vy,:vz],
@@ -93,6 +94,7 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :ar_sphere=>[:x,:y,:z,:ax,:ay,:az], :aθ_sphere=>[:x,:y,:z,:ax,:ay,:az],
     :aϕ_sphere=>[:x,:y,:z,:ax,:ay,:az],
     :r_cylinder=>[:x,:y], :r_sphere=>[:x,:y,:z], :ϕ=>[:x,:y],
+    :r_sphere_periodic=>[:x,:y,:z], :r_cylinder_periodic=>[:x,:y],
   ),
 
   # Particles store positions/velocities/mass directly, so :x/:y/:z/:mass are leaves.
@@ -110,6 +112,7 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :vx2=>[:vx], :vy2=>[:vy], :vz2=>[:vz],
     :v=>[:vx,:vy,:vz], :v2=>[:vx,:vy,:vz],
     :r_cylinder=>[:x,:y], :r_sphere=>[:x,:y,:z], :ϕ=>[:x,:y],
+    :r_sphere_periodic=>[:x,:y,:z], :r_cylinder_periodic=>[:x,:y],
     :vr_cylinder=>[:x,:y,:vx,:vy], :vϕ_cylinder=>[:x,:y,:vx,:vy],
     :vr_sphere=>[:x,:y,:z,:vx,:vy,:vz], :vθ_sphere=>[:x,:y,:z,:vx,:vy,:vz],
     :vϕ_sphere=>[:x,:y,:vx,:vy],
@@ -144,6 +147,7 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :cellsize=>[:level], :volume=>[:cellsize],
     :x=>[:cx], :y=>[:cy], :z=>[:cz],
     :r_cylinder=>[:x,:y], :r_sphere=>[:x,:y,:z], :ϕ=>[:x,:y],
+    :r_sphere_periodic=>[:x,:y,:z], :r_cylinder_periodic=>[:x,:y],
   ),
 )
 

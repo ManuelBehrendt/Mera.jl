@@ -89,13 +89,12 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
                (maximum(pos_y) / minimum(pos_y) > 30)                            # …spanning ≳1.5 decades
         uselog = ys in (:log, :log10) || (ys === :auto && wide)
         ax = Makie.Axis(pos; title=Mera._card_title(c), xlabel="$(Mera._var_label(m.xvar)) [$(_ulabel(m.xunit))]",
-                        ylabel="$(Mera._var_label(m.yvar)) [$(_ulabel(m.unit))]", yscale = uselog ? log10 : identity)
-        if uselog                                                               # drop non-positive points for a log axis
-            keep = isfinite.(y) .& (y .> 0)
-            Makie.lines!(ax, x[keep], y[keep])
-        else
-            Makie.lines!(ax, x, y)
-        end
+                        ylabel="$(m.yvar === :rho && m.unit === :nH ? "n_H" : Mera._var_label(m.yvar)) [$(_ulabel(m.unit))]",
+                        yscale = uselog ? log10 : identity)
+        # empty bins are NaN; join the bins that hold cells rather than break the line at every gap
+        # (with more bins than cells across, every other bin is empty and nothing would be drawn)
+        keep = isfinite.(y) .& (uselog ? (y .> 0) : trues(length(y)))
+        Makie.lines!(ax, x[keep], y[keep])
         # a profile that is uniform up to rounding: centre the axis on the value (one dex on a log
         # axis, ±5 % on a linear one) instead of zooming into the rounding noise
         fy = filter(v -> isfinite(v) && (!uselog || v > 0), y)

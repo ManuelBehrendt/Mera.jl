@@ -467,7 +467,18 @@ function _card_var_available(info, c::ReportCard)
     dt = card_datatype(c)
     dt in (:hydro, :gravity, :rt) || return true
     req = getvar_requirements(_regkind(dt), card_vars(c))
+    dt === :hydro && (req = _hydro_columns(info, req))
     isempty(setdiff(req, _datatype_varlist(info, dt)))
+end
+
+# RAMSES-RT stores the ionisation fractions as passive scalars (:scalar_00, …); the names getvar
+# knows them by (:xHII, …) stand for those columns on an RT run
+const _RT_ION_NAMES = (:xHI, :xHII, :xHeII, :xHeIII)
+function _hydro_columns(info, req)
+    any(in(_RT_ION_NAMES), req) || return req
+    ions = _rt_ion_columns(info)
+    isempty(ions) && return req
+    return union(filter(!in(_RT_ION_NAMES), req), ions)
 end
 
 function _report_summary(info, luse, sampled, ncards)
@@ -492,7 +503,7 @@ end
 function _hydro_readset(info, cards)
     any(card_has_mask, cards) && return nothing
     logical = unique(reduce(vcat, (card_vars(c) for c in cards); init=Symbol[]))
-    raw = getvar_requirements(:hydro, logical)
+    raw = _hydro_columns(info, getvar_requirements(:hydro, logical))
     # on an RT run the temperature takes μ from the ionization fractions, so read them as well
     any(in((:T, :Temp, :Temperature, :T_rt, :mu)), logical) && (raw = union(raw, _rt_ion_columns(info)))
     (!isempty(raw) && all(in(info.variable_list), raw)) ? raw : nothing
