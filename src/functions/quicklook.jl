@@ -97,6 +97,50 @@ function _display_units(info)
             density=(D..., sc.nH > 0 ? f(D[1]) / sc.nH : 1.0), sigma=S, bfield=B)
 end
 
+# Where the structure of a periodic box lies, as an offset to apply to the maps. The weight of a cell
+# is how far its density is from the typical (median) value, times its volume, so a blast, a halo
+# or a sink's surroundings count and the uniform background does not. Along each periodic axis the
+# position is the circular mean of the cells (a blast split over the box corners averages to the
+# corner, not to the middle). The maps move only when that point is well defined (the cells agree
+# on it: mean resultant length ≥ 0.5) and more than an eighth of the box away from the middle.
+# Returns the map origin per axis in code length, or `nothing` to leave the maps as they are.
+function _quicklook_shift(gas, info)
+    ax = periodic_axes(info.namelist_content)
+    info.boundaries === :unknown && return nothing        # no namelist: periodicity is not known
+    any((ax.x, ax.y, ax.z)) || return nothing
+    L = info.boxlen
+    ρ = getvar(gas, :rho); V = getvar(gas, :volume)
+    w = abs.(ρ .- median(ρ)) .* V
+    sum(w) > 0 || return nothing
+    origin = zeros(3); moved = false
+    for (i, (axis, per)) in enumerate(zip((:x, :y, :z), (ax.x, ax.y, ax.z)))
+        per || continue
+        θ = 2π .* getvar(gas, axis) ./ L
+        C = sum(w .* cos.(θ)); S = sum(w .* sin.(θ))
+        hypot(C, S) / sum(w) >= 0.5 || continue
+        c = mod(atan(S, C) / (2π) * L, L)                  # the structure's position on this axis
+        abs(c - L/2) > L/8 || continue                     # already near the middle
+        origin[i] = c - L/2; moved = true
+    end
+    return moved ? origin : nothing
+end
+
+# Move a full-box projection by `origin` (code length per axis, periodic): the pixels are rolled and
+# the extent becomes origin .. origin + L, so the axes still show true positions.
+function _shift_map!(p, origin, axes::NTuple{2,Int}, L)
+    ext = p.extent
+    for (k, mp) in collect(p.maps)
+        n1, n2 = size(mp)
+        s1 = round(Int, origin[axes[1]] / L * n1); s2 = round(Int, origin[axes[2]] / L * n2)
+        p.maps[k] = circshift(mp, (-s1, -s2))
+    end
+    n1, n2 = size(first(values(p.maps)))
+    d1 = round(Int, origin[axes[1]] / L * n1) * L / n1; d2 = round(Int, origin[axes[2]] / L * n2) * L / n2
+    p.extent = [ext[1] + d1, ext[2] + d1, ext[3] + d2, ext[4] + d2]
+    hasproperty(p, :cextent) && (p.cextent = p.cextent .+ [d1, d1, d2, d2])
+    return p
+end
+
 # a number for the dashboard: four significant digits, plain in a readable range, else exponential
 function _qnum(x)
     x === nothing && return "—"
@@ -271,6 +315,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
              box_comoving_Mpc = cosmo ? info.boxlen * sc.Mpc / info.aexp : nothing,
              npart = nstars + ndm + nsinks, nstars = nstars, ndm = ndm, nsinks = nsinks)
 
+    shift = nothing
     if !read
         verbose && _quicklook_print(facts, t0)
         return QuickLookResult(info, info.levelmin, info.levelmax, nothing, 0, false,
@@ -326,6 +371,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
             println("   projecting $(length(dirs)) gas map(s) [$(join(dirs, ", "))] " *
                     "and the phase diagram from $n cells")
         for d in dirs; maps = merge(maps, NamedTuple{(d,)}((pj(d),))); end
+        shift = _quicklook_shift(gas, info)
         ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
                    xunit=du.density[1], yunit=:K)
         gas_mass = sum(getvar(gas, :mass, :Msol))
@@ -396,6 +442,15 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
         end
     end
 
+    # In a periodic box, every map is moved so the structure sits in the middle (see _quicklook_shift)
+    if shift !== nothing && !isempty(maps)
+        mapaxes(k) = (s = string(k); endswith(s, "_x") || k === :x ? (2, 3) :
+                                     endswith(s, "_y") || k === :y ? (1, 3) : (1, 2))
+        for k in keys(maps)
+            _shift_map!(maps[k], shift, mapaxes(k), info.boxlen)
+        end
+    end
+
     # particle counts: prefer the budget's exact read counts (header part_info is not always populated)
     ns = bud.has_particles ? bud.n_stars : (want.stars ? facts.nstars : 0)
     nd = bud.has_particles ? bud.n_dm    : (want.dm    ? facts.ndm    : 0)
@@ -414,6 +469,8 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                             sink_mass_Msol = sinks === nothing ? nothing : sinks.mass,
                             sink_mass_max_Msol = sinks === nothing ? nothing : sinks.mass_max,
                             sink_pos_code = sinks === nothing ? nothing : sinks.pos,
+                            boundaries=info.boundaries,
+                            map_origin_code = shift === nothing ? nothing : Tuple(shift),
                             seconds=time()-t0))
     verbose && _quicklook_print(summary, t0)
     # a closing timestamp: on a long run the dashboard scrolls up, and this is what tells you
@@ -441,7 +498,10 @@ function _quicklook_print(s, t0)
     como = g(:box_comoving_Mpc)
     println("│ box        : $(show(s.box_kpc, L))" * (como === nothing ? "" : " ($(nf(como)) Mpc comoving)") *
             "      levels $(s.levelmin)–$(s.levelmax)  (finest $(show(s.finest_cell_pc, Lc)))")
-    println("│ grid       : ndim $(s.ndim) · ncpu $(s.ncpu) · nvarh $(s.nvarh)")
+    println("│ grid       : ndim $(s.ndim) · ncpu $(s.ncpu) · nvarh $(s.nvarh)" *
+            (g(:boundaries) in (:periodic, :nonperiodic, :mixed) ? " · $(s.boundaries) box" : ""))
+    g(:map_origin_code) !== nothing &&
+        println("│ maps       : shifted across the periodic box to centre the structure")
     println("│ time       : $(show(s.time_Myr, Tu))" *
             (s.redshift === nothing ? "" : "   z = $(nf(s.redshift))"))
     if get(s, :npart, 0) > 0                       # particle census

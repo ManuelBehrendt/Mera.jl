@@ -223,8 +223,12 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
         hm = _loghm!(ax, xs, ys, mp; colormap=cmapof(key))
         sp = get(s, :sink_pos_code, nothing)                          # sinks, as open circles
         if sp !== nothing && !isempty(sp.x)
-            h, v = key in (:x, :stars_x, :dm_x) ? (sp.y, sp.z) :
-                   key in (:y, :stars_y, :dm_y) ? (sp.x, sp.z) : (sp.x, sp.y)
+            o = get(s, :map_origin_code, nothing)                     # maps moved in a periodic box
+            Lb = q.info.boxlen
+            wrap(a, i) = o === nothing ? a : mod.(a .- o[i], Lb) .+ o[i]
+            px, py, pz = wrap(sp.x, 1), wrap(sp.y, 2), wrap(sp.z, 3)
+            h, v = key in (:x, :stars_x, :dm_x) ? (py, pz) :
+                   key in (:y, :stars_y, :dm_y) ? (px, pz) : (px, py)
             Makie.scatter!(ax, h .* lenfac, v .* lenfac; marker=:circle,
                            color=:transparent, strokecolor=:white, strokewidth=1.5, markersize=12)
         end

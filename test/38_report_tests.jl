@@ -238,6 +238,27 @@
             @test !quicklook(dc.output; path=dc.path, verbose=false).summary.T_mu_from_ionisation
         end
 
+        @testset "quicklook centres a periodic box (sedov3d_amr) and leaves walls alone (stromgren3d)" begin
+            fs, fr = PUBLIC_FIXTURES[:sedov3d_amr], PUBLIC_FIXTURES[:stromgren3d]
+            if isdir(fs.path) && isdir(fr.path)
+                q = quicklook(fs.outputs; path=fs.path, verbose=false)
+                @test q.summary.boundaries === :periodic
+                o = q.summary.map_origin_code
+                L = fs.boxlen
+                # the blast sits at the box corner, so the map window now starts half a box before it
+                @test o !== nothing && all(abs(mod(oi + L/2 + L/2, L) - L/2) < L/8 for oi in o)
+                m = q.maps.z.maps[:sd]; n = size(m, 1)
+                c = m[n÷2-n÷8:n÷2+n÷8, n÷2-n÷8:n÷2+n÷8]
+                @test minimum(c) < 0.9 * maximum(m)          # the blast's thin interior is now in the middle
+                @test q.maps.z.extent[1] ≈ o[1] atol=fs.boxlen/n
+                @test sum(m) ≈ sum(quicklook(fs.outputs; path=fs.path, verbose=false).maps.z.maps[:sd])
+                qr = quicklook(fr.outputs; path=fr.path, verbose=false)   # reflecting walls
+                @test qr.summary.boundaries === :nonperiodic && qr.summary.map_origin_code === nothing
+            else
+                @test_skip "sedov3d_amr or stromgren3d not available"
+            end
+        end
+
         @testset "quicklook comoving box (cosmo3d)" begin
             f = PUBLIC_FIXTURES[:cosmo3d]
             if isdir(f.path)
