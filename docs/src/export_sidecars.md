@@ -499,8 +499,8 @@ citation("fig3.png"; file="software.bib");
 ## One record for the whole folder
 
 Before the folder is published, [`bundle`](@ref) joins all its sidecars into one record,
-`ro-crate-metadata.json`. It is an [RO-Crate](https://www.researchobject.org/ro-crate/), the
-format that Zenodo and other repositories read: every file with its size and SHA-256, and for
+`ro-crate-metadata.json`. It is an [RO-Crate](https://www.researchobject.org/ro-crate/), a
+standard format for describing research data: every file with its size and SHA-256, and for
 each file Mera wrote, what made it (the Mera version, the script and the snapshot). It also
 writes `software.bib` from [`citation`](@ref) and, with `simulation=`, the simulation record.
 Nothing is copied.

@@ -149,8 +149,8 @@ GitHub Actions) and uploaded to Codecov; see [Testing](#testing) below and the
 - **Every result remembers where it came from, and so does every file you save**: the version of
   Mera, the exact code it ran on and the snapshot you used. Each file Mera writes also gets a
   small readable `.meta.json` next to it, with the units, the file's SHA-256, your script and your
-  package versions. Before you publish, one call turns the folder into a single record that Zenodo
-  reads, with the BibTeX of the exact versions you used. These are the records that guidelines for
+  package versions. Before you publish, one call describes the whole folder in one standard record (an
+  RO-Crate) to upload with it, and writes the BibTeX for the Mera version you used. These are the records that guidelines for
   FAIR data (findable, accessible, interoperable, reusable) ask for, written without extra work.
   Fifteen public test simulations with known answers let you check your own installation.
   [Reproducibility](https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/) ·

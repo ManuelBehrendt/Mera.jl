@@ -12,9 +12,9 @@
 
 
 Practical Julia habits for post-processing work: reproducible environments, what compile-time
-latency is (and is not), memory discipline on laptop-scale machines, and measured
-multithreading. Nothing here is Mera-specific dogma, these are the standard patterns of the
-language, applied to snapshot analysis.
+latency is (and is not), working with other packages, memory discipline on laptop-scale
+machines, and measured multithreading. Nothing here is Mera-specific dogma, these are the
+standard patterns of the language, applied to snapshot analysis.
 
 ## 1. Environments: make every project reproducible
 
@@ -62,9 +62,9 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.0 | Julia 1.12.7 | 8 threads
-[ Info: Mera v1.8.0
-first call: 13.67 s   second call: 0.061 s
+Mera v1.9.0 | Julia 1.12.7 | 8 threads
+[ Info: Mera v1.9.0
+first call: 11.54 s   second call: 0.045 s
 ```
 
 Keep one session alive while you work (REPL, Jupyter, VS Code) instead of re-launching
@@ -94,10 +94,39 @@ println("mass-weighted T (ρ>1e-24 g/cm³): ", round(mwT(rho, T, vol), sigdigits
 ```
 
 ```
-mass-weighted T (ρ>1e-24 g/cm³): 67870.0 K   —   590311 cells in 0.2 ms
+mass-weighted T (ρ>1e-24 g/cm³): 67870.0 K   —   590311 cells in 0.21 ms
 ```
 
-## 4. Memory discipline on laptop-scale machines
+## 4. Other packages work on Mera's tables
+
+`gas.data` is a table in Julia's common table interface (Tables.jl). Every package that reads
+tables reads it directly. Neither package needs code for the other: DataFrames.jl knows nothing
+about Mera, and Mera knows nothing about DataFrames.jl. Here DataFrames.jl groups the cells by
+refinement level:
+
+```julia
+using DataFrames, Statistics
+df = DataFrame(gas.data)                    # the columns of the Mera table
+df.rho = getvar(gas, :rho, :g_cm3)          # replace code units by g/cm³
+df.mass = getvar(gas, :mass, :Msol)         # add a derived quantity
+per_level = combine(groupby(df, :level), nrow => :cells,
+                    :rho => mean => :mean_rho_g_cm3, :mass => sum => :mass_Msol)
+```
+
+```
+3×4 DataFrame
+ Row │ level  cells   mean_rho_g_cm3  mass_Msol
+     │ Int64  Int64   Float64         Float64
+─────┼───────────────────────────────────────────
+   1 │     5    3655     1.04463e-30  1.72106e6
+   2 │     6  182368     4.34703e-30  4.4668e7
+   3 │     7  404288     7.40422e-27  2.10832e10
+```
+
+The result is an ordinary `DataFrame`, so the rest of the DataFrames.jl tools apply to it. The
+same holds for the plotting, statistics and file packages that read tables.
+
+## 5. Memory discipline on laptop-scale machines
 
 The levers, in the order to reach for them:
 
@@ -151,14 +180,14 @@ usedmemory(small)
 
 ```
 576 cells (windowed, lmax=6, :rho only)  vs  590311 full (lmax=7)
-Memory used: 481.456 KB
+Memory used: 484.62 KB
 ```
 
 ```
-(481.4560546875, "KB")
+(484.6201171875, "KB")
 ```
 
-## 5. Multithreading, measured
+## 6. Multithreading, measured
 
 Start Julia with threads (`julia -t 8` or `JULIA_NUM_THREADS=8`) and Mera's heavy paths
 (reading, projections) use them automatically; every such function takes `max_threads=` to
@@ -201,13 +230,13 @@ fig
 
 ```
 Julia threads: 8  ->  testing [1, 2, 4, 8]
-max_threads=1  105.12 s   speedup ×1.0
-max_threads=2  76.07 s   speedup ×1.38
-max_threads=4  52.85 s   speedup ×1.99
-max_threads=8  29.5 s   speedup ×3.56
+max_threads=1  101.3 s   speedup ×1.0
+max_threads=2  74.44 s   speedup ×1.36
+max_threads=4  57.71 s   speedup ×1.76
+max_threads=8  28.2 s   speedup ×3.59
 ```
 
-![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_5.png)
+![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_11_5.png)
 
 The dashed line is ideal scaling; the gap to it is the serial fraction.
 
@@ -220,13 +249,13 @@ proj = projection(gas, [:sd, :T, :vx, :vy])    # threads over the four variables
 ```
 
 For off-axis or `:exact` work a single quantity already uses the threads: the sweep above
-reaches 3.56x at 8 threads on one variable, which the axis-aligned path cannot do at any
+reaches 3.59x at 8 threads on one variable, which the axis-aligned path cannot do at any
 thread count. Nothing extra is needed there. Throttle individual calls (`max_threads=4`) when you run several analyses at once or
 share the machine.
 The examples throughout these docs use at most 8 threads, treat that as a sensible laptop
 ceiling, not a recommendation to buy more cores.
 
-## 6. Where to go next
+## 7. Where to go next
 
 - [First Steps](00_multi_FirstSteps.md), the full introductory tutorial.
 - [Coming from Other Analysis Tools](switching_to_mera.md), concept mapping + one complete workflow.
