@@ -46,7 +46,13 @@ function _loghm!(ax, xs, ys, A; colormap)
 end
 
 # a unit for an axis label: Mera's :standard is the code unit, so say that
-_ulabel(u) = u === :standard ? "code" : string(u)
+_ulabel(u) = Mera._unit_label(u)
+
+# true when a map varies only by rounding (below 1e-4 dex), the same test `_loghm!` uses
+function _isuniform(A)
+    v = [log10(x) for x in A if isfinite(x) && x > 0]
+    return !isempty(v) && maximum(v) - minimum(v) < 1e-4
+end
 
 # draw one card into a grid position (creates its own Axis); returns the Axis or nothing
 function _draw_card!(pos, c::Mera.ReportResultCard)
@@ -54,18 +60,18 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
     if c.kind === :map
         z = c.data.z; ex = c.data.extent                             # extent in kpc, or code units (card_compute)
         lu = get(m, :length_unit, "kpc")
-        ax = Makie.Axis(pos[1, 1]; title=c.label, xlabel="x [$lu]", ylabel="y [$lu]", aspect=Makie.DataAspect())
+        ax = Makie.Axis(pos[1, 1]; title=Mera._card_title(c), xlabel="x [$lu]", ylabel="y [$lu]", aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=size(z, 1)); ys = range(ex[3], ex[4], length=size(z, 2))
         pr = _poscolor(z); cmap = Mera._seq_cmap(m.var)
         hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z; colormap=cmap) :
              _loghm!(ax, xs, ys, z; colormap=cmap)
-        Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? string(m.var) : "log10 $(m.var) [$(_ulabel(m.unit))]")
+        Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? Mera._var_label(m.var) : "log₁₀ $(Mera._var_label(m.var)) [$(_ulabel(m.unit))]")
         return ax
     elseif c.kind === :phase
         xe = c.data.xedges; ye = c.data.yedges; H = c.data.H
         logx = all(>(0), xe); logy = all(>(0), ye)               # log axes for positive (log-spaced) bins
-        ax = Makie.Axis(pos[1, 1]; title=c.label, xlabel="$(m.xvar) [$(_ulabel(m.xunit))]",
-                        ylabel="$(m.yvar) [$(_ulabel(m.yunit))]",
+        ax = Makie.Axis(pos[1, 1]; title=Mera._card_title(c), xlabel="$(Mera._var_label(m.xvar)) [$(_ulabel(m.xunit))]",
+                        ylabel="$(Mera._var_label(m.yvar)) [$(_ulabel(m.yunit))]",
                         xscale = logx ? log10 : identity, yscale = logy ? log10 : identity)
         xc = logx ? sqrt.(xe[1:end-1] .* xe[2:end]) : (xe[1:end-1] .+ xe[2:end]) ./ 2  # bin centres
         yc = logy ? sqrt.(ye[1:end-1] .* ye[2:end]) : (ye[1:end-1] .+ ye[2:end]) ./ 2
@@ -73,7 +79,7 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         tot = sum(x -> isfinite(x) ? x : 0.0, H)                    # shares of the total weight
         hm = _loghm!(ax, xc, yc, tot > 0 ? H ./ tot : H; colormap=:roma)
         w = get(m, :weight, :none)
-        Makie.Colorbar(pos[1, 2], hm; label=w === :none ? "log10 count" : "log10 $(w) fraction")
+        Makie.Colorbar(pos[1, 2], hm; label=w === :none ? "log₁₀ count fraction" : "log₁₀ $(w) fraction")
         return ax
     elseif c.kind === :profile
         x = c.data.x; y = c.data.y
@@ -82,8 +88,8 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         wide = !isempty(pos_y) && length(pos_y) == count(isfinite, y) &&        # all-positive…
                (maximum(pos_y) / minimum(pos_y) > 30)                            # …spanning ≳1.5 decades
         uselog = ys in (:log, :log10) || (ys === :auto && wide)
-        ax = Makie.Axis(pos; title=c.label, xlabel="$(m.xvar) [$(_ulabel(m.xunit))]",
-                        ylabel="$(m.yvar) [$(_ulabel(m.unit))]", yscale = uselog ? log10 : identity)
+        ax = Makie.Axis(pos; title=Mera._card_title(c), xlabel="$(Mera._var_label(m.xvar)) [$(_ulabel(m.xunit))]",
+                        ylabel="$(Mera._var_label(m.yvar)) [$(_ulabel(m.unit))]", yscale = uselog ? log10 : identity)
         if uselog                                                               # drop non-positive points for a log axis
             keep = isfinite.(y) .& (y .> 0)
             Makie.lines!(ax, x[keep], y[keep])
@@ -102,7 +108,7 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         end
         return ax
     elseif c.kind === :sfr
-        ax = Makie.Axis(pos; title=c.label, xlabel="t [Myr]", ylabel="SFR [$(m.unit)]")
+        ax = Makie.Axis(pos; title=Mera._card_title(c), xlabel="t [Myr]", ylabel="SFR [$(_ulabel(m.unit))]")
         isempty(c.data.t) || Makie.stairs!(ax, c.data.t, c.data.sfr; step=:center)
         return ax
     end
@@ -178,8 +184,14 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
                :dm => ("Dark matter Σ (along z)", xy...), :dm_x => ("Dark matter Σ (along x)", yz...),
                :dm_y => ("Dark matter Σ (along y)", xz...),
                :bmag => ("|B| (along z)", xy...), :xHII => ("ionised fraction (along z)", xy...))
+    # gas of one density everywhere (a static test medium) gives the same flat map along every axis:
+    # draw it once and say so, rather than spend three panels on one colour
+    gaskeys = [k for k in (:z, :x, :y) if haskey(m, k)]
+    flatgas = length(gaskeys) > 1 && all(k -> _isuniform(m[k].maps[:sd]), gaskeys)
+    flatgas && (lbl[gaskeys[1]] = ("Gas Σ (uniform along every axis)", lbl[gaskeys[1]][2:3]...))
     specs = Any[]
     for k in (:z, :x, :y, :stars, :stars_x, :stars_y, :dm, :dm_x, :dm_y, :bmag, :xHII)
+        flatgas && k in gaskeys[2:end] && continue
         haskey(m, k) && push!(specs, (m[k], lbl[k]..., k))
     end
     havephase = q.phase !== nothing
