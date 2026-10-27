@@ -30,9 +30,12 @@ function _loghm!(ax, xs, ys, A; colormap)
         cr = (0.0, 1.0)
     else
         lo, hi = minimum(fin), maximum(fin)
-        if hi <= lo                                   # constant map → widen by a RELATIVE amount so
-            d = max(abs(lo), 1.0) * 1e-6              # the bump survives at large |log10| (eps(1) would
-            lo, hi = lo - d, hi + d                   # be absorbed); Makie errors on a zero-width range
+        # A uniform map (uniform initial conditions) varies only by rounding, which gives Makie a
+        # zero-width range once it converts to Float32, or a colour bar of noise. Below 1e-4 dex
+        # (0.02 %) show it as uniform: one dex centred on the value.
+        if hi - lo < 1e-4
+            mid = (lo + hi) / 2
+            lo, hi = mid - 0.5, mid + 0.5
         end
         cr = (lo, hi)
     end
@@ -48,7 +51,7 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         xs = range(ex[1], ex[2], length=size(z, 1)); ys = range(ex[3], ex[4], length=size(z, 2))
         pr = _poscolor(z); cmap = Mera._seq_cmap(m.var)
         hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z; colormap=cmap) :
-             Makie.heatmap!(ax, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, z); colormap=cmap)
+             _loghm!(ax, xs, ys, z; colormap=cmap)
         Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? string(m.var) : "log10 $(m.var) [$(m.unit)]")
         return ax
     elseif c.kind === :phase

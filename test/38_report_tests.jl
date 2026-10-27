@@ -138,6 +138,27 @@
             end
         end
 
+        @testset "quicklook on uniform initial conditions (stromgren3d, mhdtube3d)" begin
+            # uniform density, and maps that vary only by rounding: the phase diagram and the
+            # plot must not fail on a range of zero width
+            for key in (:stromgren3d, :mhdtube3d)
+                f = PUBLIC_FIXTURES[key]
+                if !isdir(f.path)
+                    @test_skip "$key not available"
+                    continue
+                end
+                q = quicklook(f.outputs; path=f.path, verbose=false)
+                @test count(>(0), vec(sum(q.phase.H; dims=2))) >= 1     # the density lands in a bin
+                if Base.find_package("CairoMakie") !== nothing
+                    @eval using CairoMakie
+                    fig = quicklookplot(q)
+                    f_png = tempname() * ".png"; CairoMakie.save(f_png, fig)
+                    @test filesize(f_png) > 0
+                    rm(f_png, force=true)
+                end
+            end
+        end
+
         @testset "particle subsample (large-run mode)" begin
             info = getinfo(dc.output, dc.path, verbose=false)
             pf = getparticles(info, verbose=false, show_progress=false)                 # full read
