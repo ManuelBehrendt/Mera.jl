@@ -102,9 +102,9 @@ quicklookplot(q)
 ```
 
 ```
-[Mera]: quicklook output 7, reading gas: 2026-10-27T12:51:52.700
+[Mera]: quicklook output 7, reading gas: 2026-10-27T16:51:54.404
    8 CPU file(s), levels 4-7 of 7  (full resolution)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 (55.43 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 (50.21 ms/it)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 7071 cells
 ┌─ Mera quicklook ── output 7 (RAMSES) ───────────────
@@ -116,8 +116,8 @@ Processing files: 100%|███████████████████
 │ gas mass   : 0.125 g
 │ ρ range    : 0.05543 … 2.661 g/cm³
 │ T range    : 1.582e-13 … 1.325e-6 K
-└─ 6.33 s ──────────────────────────────────
-[Mera]: quicklook output 7 finished: 2026-10-27T12:51:58.829
+└─ 6.17 s ──────────────────────────────────
+[Mera]: quicklook output 7 finished: 2026-10-27T16:52:00.371
 ```
 
 ![](test_simulations_files/test_simulations_5_9.png)
@@ -153,7 +153,7 @@ look(7, "sedov3d_bisection");
 ```
 
 ```
-[Mera]: quicklook output 7, reading gas: 2026-10-27T12:52:17.054
+[Mera]: quicklook output 7, reading gas: 2026-10-27T16:52:18.438
    4 CPU file(s), levels 4-7 of 7  (full resolution)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 7071 cells
@@ -166,8 +166,8 @@ look(7, "sedov3d_bisection");
 │ gas mass   : 0.125 g
 │ ρ range    : 0.05543 … 2.661 g/cm³
 │ T range    : 1.582e-13 … 1.325e-6 K
-└─ 0.13 s ──────────────────────────────────
-[Mera]: quicklook output 7 finished: 2026-10-27T12:52:17.174
+└─ 0.12 s ──────────────────────────────────
+[Mera]: quicklook output 7 finished: 2026-10-27T16:52:18.557
 ```
 
 ### `sedov3d_iogroups`: files in IO groups
@@ -185,7 +185,7 @@ look(3, "sedov3d_iogroups");
 ```
 
 ```
-[Mera]: quicklook output 3, reading gas: 2026-10-27T12:52:17.181
+[Mera]: quicklook output 3, reading gas: 2026-10-27T16:52:18.564
    4 CPU file(s), levels 4-7 of 7  (full resolution)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 6469 cells
@@ -198,8 +198,8 @@ look(3, "sedov3d_iogroups");
 │ gas mass   : 0.125 g
 │ ρ range    : 0.174 … 2.043 g/cm³
 │ T range    : 1.582e-13 … 2.467e-6 K
-└─ 0.12 s ──────────────────────────────────
-[Mera]: quicklook output 3 finished: 2026-10-27T12:52:17.292
+└─ 0.11 s ──────────────────────────────────
+[Mera]: quicklook output 3 finished: 2026-10-27T16:52:18.671
 ```
 
 ## Gravity and particles
@@ -218,11 +218,11 @@ look(7, "sedov3d_grav_part");
 ```
 
 ```
-[Mera]: quicklook output 7, reading gas: 2026-10-27T12:52:17.300
+[Mera]: quicklook output 7, reading gas: 2026-10-27T16:52:18.679
    8 CPU file(s), levels 4-7 of 7  (full resolution)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 7071 cells
-[Mera]: quicklook output 7, reading particles: 2026-10-27T12:52:17.423
+[Mera]: quicklook output 7, reading particles: 2026-10-27T16:52:18.795
 ┌─ Mera quicklook ── output 7 (RAMSES) ───────────────
 │ box        : 0.5 cm      levels 4–7  (finest 0.003906 cm)
 │ grid       : ndim 3 · ncpu 8 · nvarh 5 · periodic box
@@ -233,8 +233,8 @@ look(7, "sedov3d_grav_part");
 │ gas mass   : 0.125 g
 │ ρ range    : 0.05542 … 2.661 g/cm³
 │ T range    : 1.582e-13 … 1.325e-6 K
-└─ 4.04 s ──────────────────────────────────
-[Mera]: quicklook output 7 finished: 2026-10-27T12:52:21.331
+└─ 3.86 s ──────────────────────────────────
+[Mera]: quicklook output 7 finished: 2026-10-27T16:52:22.532
 ```
 
 ### `dm_gas3d_bisection`: gas and dark matter
@@ -251,11 +251,11 @@ quicklookplot(look(4, "dm_gas3d_bisection"))
 ```
 
 ```
-[Mera]: quicklook output 4, reading gas: 2026-10-27T12:52:21.346
+[Mera]: quicklook output 4, reading gas: 2026-10-27T16:52:22.557
    4 CPU file(s), levels 5-7 of 7  (full resolution)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 52466 cells
-[Mera]: quicklook output 4, reading particles: 2026-10-27T12:52:21.519
+[Mera]: quicklook output 4, reading particles: 2026-10-27T16:52:22.733
 ┌─ Mera quicklook ── output 4 (RAMSES) ───────────────
 │ box        : 1 cm      levels 5–7  (finest 0.007812 cm)
 │ grid       : ndim 3 · ncpu 4 · nvarh 5 · periodic box
@@ -267,7 +267,7 @@ quicklookplot(look(4, "dm_gas3d_bisection"))
 │ T range    : 1.545e-9 … 9.866e-8 K
 │ part. mass : DM 1 g
 └─ 2.49 s ──────────────────────────────────
-[Mera]: quicklook output 4 finished: 2026-10-27T12:52:23.831
+[Mera]: quicklook output 4 finished: 2026-10-27T16:52:25.039
 ```
 
 ![](test_simulations_files/test_simulations_19_4.png)
@@ -288,12 +288,12 @@ quicklookplot(look(2, "sinks3d"))
 ```
 
 ```
-[Mera]: quicklook output 2, reading gas: 2026-10-27T12:52:24.266
+[Mera]: quicklook output 2, reading gas: 2026-10-27T16:52:25.424
    8 CPU file(s), levels 5-6 of 6  (full resolution)
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 (17.57 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 (20.23 ms/it)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 262144 cells
-[Mera]: quicklook output 2, reading particles: 2026-10-27T12:52:24.700
+[Mera]: quicklook output 2, reading particles: 2026-10-27T16:52:25.859
 ┌─ Mera quicklook ── output 2 (RAMSES) ───────────────
 │ box        : 250 pc      levels 5–6  (finest 3.906 pc)
 │ grid       : ndim 3 · ncpu 8 · nvarh 5 · periodic box
@@ -304,10 +304,10 @@ Processing files: 100%|███████████████████
 │ T range    : 5.406 … 7.063 K
 │ sinks      : 1  ·  mass 2721 M⊙
 └─ 1.0 s ──────────────────────────────────
-[Mera]: quicklook output 2 finished: 2026-10-27T12:52:25.259
+[Mera]: quicklook output 2 finished: 2026-10-27T16:52:26.413
 ```
 
-![](test_simulations_files/test_simulations_22_9.png)
+![](test_simulations_files/test_simulations_22_8.png)
 
 ### `ramses_smbh_bondi`: Bondi accretion
 
@@ -324,12 +324,12 @@ quicklookplot(look(15, "ramses_smbh_bondi"))
 ```
 
 ```
-[Mera]: quicklook output 15, reading gas: 2026-10-27T12:52:26.051
+[Mera]: quicklook output 15, reading gas: 2026-10-27T16:52:27.170
    8 CPU file(s), levels 6-7 of 8  (budgeted to ~2000000 cells)
 Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.10  s/it)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 2097152 cells
-[Mera]: quicklook output 15, reading particles: 2026-10-27T12:52:27.760
+[Mera]: quicklook output 15, reading particles: 2026-10-27T16:52:28.836
 [ Info: sfr_snapshot: using eta_sn=1.0e-10 from the run's namelist to rebuild birth masses from the current :mass. Stars older than 5.0 Myr are scaled by 1/(1-eta_sn), which RAISES the rate. Pass eta_sn=0 to switch this off, or eta_sn=<value> to set it.
 ┌─ Mera quicklook ── output 15 (RAMSES) ───────────────
 │ box        : 1 kpc      levels 6–8  (finest 3.906 pc)
@@ -340,11 +340,11 @@ Processing files: 100%|███████████████████
 │ n_H range  : 0.007415 … 0.1147 cm⁻³  ⚠ peaks smoothed (lower bound)
 │ T range    : 1.705 … 66650 K  ⚠ peaks smoothed (lower bound)
 │ sinks      : 1  ·  mass 1.005e6 M⊙
-└─ 2.3 s ──────────────────────────────────
-[Mera]: quicklook output 15 finished: 2026-10-27T12:52:28.318
+└─ 2.22 s ──────────────────────────────────
+[Mera]: quicklook output 15 finished: 2026-10-27T16:52:29.351
 ```
 
-![](test_simulations_files/test_simulations_25_10.png)
+![](test_simulations_files/test_simulations_25_9.png)
 
 ```julia
 rep = report(15; path=sim("ramses_smbh_bondi"), output=:none, cards=[
@@ -374,7 +374,7 @@ quicklookplot(look(6, "mhdtube3d"))
 ```
 
 ```
-[Mera]: quicklook output 6, reading gas: 2026-10-27T12:52:30.896
+[Mera]: quicklook output 6, reading gas: 2026-10-27T16:52:31.753
    8 CPU file(s), levels 4-5 of 5  (full resolution)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 32768 cells
@@ -388,8 +388,8 @@ quicklookplot(look(6, "mhdtube3d"))
 │ T range    : 1.78e-8 … 3.153e-8 K
 │ |B| range  : 3.546 … 6.688 G
 │ plasma β   : 0.1281 … 3.947  (β<1 ⇒ B-dominated)
-└─ 0.92 s ──────────────────────────────────
-[Mera]: quicklook output 6 finished: 2026-10-27T12:52:31.808
+└─ 0.94 s ──────────────────────────────────
+[Mera]: quicklook output 6 finished: 2026-10-27T16:52:32.689
 ```
 
 ![](test_simulations_files/test_simulations_29_5.png)
@@ -418,7 +418,7 @@ quicklookplot(look(2, "ramses_abc_flow"))
 ```
 
 ```
-[Mera]: quicklook output 2, reading gas: 2026-10-27T12:52:32.702
+[Mera]: quicklook output 2, reading gas: 2026-10-27T16:52:33.639
    8 CPU file(s), levels 5-5 of 5  (full resolution)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 32768 cells
@@ -433,7 +433,7 @@ quicklookplot(look(2, "ramses_abc_flow"))
 │ |B| range  : 0.005458 … 4.967 G
 │ plasma β   : 0.6808 … 562500  (β<1 ⇒ B-dominated)
 └─ 0.74 s ──────────────────────────────────
-[Mera]: quicklook output 2 finished: 2026-10-27T12:52:33.436
+[Mera]: quicklook output 2 finished: 2026-10-27T16:52:34.375
 ```
 
 ![](test_simulations_files/test_simulations_33_5.png)
@@ -460,7 +460,7 @@ quicklookplot(look(7, "stromgren3d"))
 ```
 
 ```
-[Mera]: quicklook output 7, reading gas: 2026-10-27T12:52:33.812
+[Mera]: quicklook output 7, reading gas: 2026-10-27T16:52:34.742
    8 CPU file(s), levels 5-5 of 5  (full resolution)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 32768 cells
@@ -473,8 +473,8 @@ quicklookplot(look(7, "stromgren3d"))
 │ n_H range  : 0.001 … 0.001 cm⁻³
 │ T range    : 116.8 … 21600 K  (μ from the ionisation)
 │ ionised    : 3.931 % of the gas mass  (xHII 4.578e-5 … 0.9996)
-└─ 0.93 s ──────────────────────────────────
-[Mera]: quicklook output 7 finished: 2026-10-27T12:52:34.707
+└─ 0.89 s ──────────────────────────────────
+[Mera]: quicklook output 7 finished: 2026-10-27T16:52:35.595
 ```
 
 ![](test_simulations_files/test_simulations_36_4.png)
@@ -504,7 +504,7 @@ quicklookplot(look(2, "ramses_rt_dirac"))
 ```
 
 ```
-[Mera]: quicklook output 2, reading gas: 2026-10-27T12:52:35.123
+[Mera]: quicklook output 2, reading gas: 2026-10-27T16:52:35.992
    8 CPU file(s), levels 3-6 of 6  (full resolution)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 25040 cells
@@ -519,8 +519,8 @@ quicklookplot(look(2, "ramses_rt_dirac"))
 │ ionised    : 0.2054 % of the gas mass  (xHII 1e-20 … 1)
 │ |B| range  : 8.273 … 61.4 μG
 │ plasma β   : 0.06187 … 300.9  (β<1 ⇒ B-dominated)
-└─ 0.82 s ──────────────────────────────────
-[Mera]: quicklook output 2 finished: 2026-10-27T12:52:35.932
+└─ 0.78 s ──────────────────────────────────
+[Mera]: quicklook output 2 finished: 2026-10-27T16:52:36.770
 ```
 
 ![](test_simulations_files/test_simulations_40_5.png)
@@ -555,11 +555,11 @@ quicklookplot(look(3, "cosmo3d"))
 ```
 
 ```
-[Mera]: quicklook output 3, reading gas: 2026-10-27T12:52:40.694
+[Mera]: quicklook output 3, reading gas: 2026-10-27T16:52:41.360
    8 CPU file(s), levels 5-8 of 8  (full resolution)
 ✓ File processing complete! Combining results...
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 74740 cells
-[Mera]: quicklook output 3, reading particles: 2026-10-27T12:52:40.905
+[Mera]: quicklook output 3, reading particles: 2026-10-27T16:52:41.561
 ┌─ Mera quicklook ── output 3 (RAMSES) ───────────────
 │ box        : 125.5 kpc (1.25 Mpc comoving)      levels 5–8  (finest 490.1 pc)
 │ grid       : ndim 3 · ncpu 8 · nvarh 5 · periodic box
@@ -570,11 +570,11 @@ quicklookplot(look(3, "cosmo3d"))
 │ n_H range  : 2.605e-5 … 0.1162 cm⁻³
 │ T range    : 6.834e-6 … 122200 K
 │ part. mass : DM 6.656e10 M⊙
-└─ 0.77 s ──────────────────────────────────
-[Mera]: quicklook output 3 finished: 2026-10-27T12:52:41.461
+└─ 0.74 s ──────────────────────────────────
+[Mera]: quicklook output 3 finished: 2026-10-27T16:52:42.099
 ```
 
-![](test_simulations_files/test_simulations_44_5.png)
+![](test_simulations_files/test_simulations_44_4.png)
 
 ## How long each first look took
 
@@ -591,18 +591,18 @@ end
 
 ```
 simulation            cells read   quicklook
-sedov3d_amr           7071         10.0 s
-sedov3d_bisection     7071         0.13 s
-sedov3d_iogroups      6469         0.12 s
-sedov3d_grav_part     7071         4.0 s
+sedov3d_amr           7071         9.7 s
+sedov3d_bisection     7071         0.12 s
+sedov3d_iogroups      6469         0.11 s
+sedov3d_grav_part     7071         3.9 s
 dm_gas3d_bisection    52466        2.5 s
 sinks3d               262144       1.0 s
-ramses_smbh_bondi     2097152      2.3 s
-mhdtube3d             32768        0.92 s
+ramses_smbh_bondi     2097152      2.2 s
+mhdtube3d             32768        0.95 s
 ramses_abc_flow       32768        0.74 s
-stromgren3d           32768        0.94 s
-ramses_rt_dirac       25040        0.82 s
-cosmo3d               74740        0.78 s
+stromgren3d           32768        0.9 s
+ramses_rt_dirac       25040        0.79 s
+cosmo3d               74740        0.75 s
 ```
 
 ## Next steps
