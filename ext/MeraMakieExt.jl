@@ -42,17 +42,21 @@ function _loghm!(ax, xs, ys, A; colormap)
     Makie.heatmap!(ax, xs, ys, L; colormap, colorrange=cr)
 end
 
+# a unit for an axis label: Mera's :standard is the code unit, so say that
+_ulabel(u) = u === :standard ? "code" : string(u)
+
 # draw one card into a grid position (creates its own Axis); returns the Axis or nothing
 function _draw_card!(pos, c::Mera.ReportResultCard)
     m = c.meta
     if c.kind === :map
-        z = c.data.z; ex = c.data.extent                             # extent stored in kpc (card_compute)
-        ax = Makie.Axis(pos; title=c.label, xlabel="x [kpc]", ylabel="y [kpc]", aspect=Makie.DataAspect())
+        z = c.data.z; ex = c.data.extent                             # extent in kpc, or code units (card_compute)
+        lu = get(m, :length_unit, "kpc")
+        ax = Makie.Axis(pos; title=c.label, xlabel="x [$lu]", ylabel="y [$lu]", aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=size(z, 1)); ys = range(ex[3], ex[4], length=size(z, 2))
         pr = _poscolor(z); cmap = Mera._seq_cmap(m.var)
         hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z; colormap=cmap) :
              _loghm!(ax, xs, ys, z; colormap=cmap)
-        Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? string(m.var) : "log10 $(m.var) [$(m.unit)]")
+        Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? string(m.var) : "log10 $(m.var) [$(_ulabel(m.unit))]")
         return ax
     elseif c.kind === :phase
         xe = c.data.xedges; ye = c.data.yedges; H = c.data.H
@@ -72,8 +76,8 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         wide = !isempty(pos_y) && length(pos_y) == count(isfinite, y) &&        # all-positive…
                (maximum(pos_y) / minimum(pos_y) > 30)                            # …spanning ≳1.5 decades
         uselog = ys in (:log, :log10) || (ys === :auto && wide)
-        ax = Makie.Axis(pos; title=c.label, xlabel="$(m.xvar) [$(m.xunit)]",
-                        ylabel="$(m.yvar) [$(m.unit)]", yscale = uselog ? log10 : identity)
+        ax = Makie.Axis(pos; title=c.label, xlabel="$(m.xvar) [$(_ulabel(m.xunit))]",
+                        ylabel="$(m.yvar) [$(_ulabel(m.unit))]", yscale = uselog ? log10 : identity)
         if uselog                                                               # drop non-positive points for a log axis
             keep = isfinite.(y) .& (y .> 0)
             Makie.lines!(ax, x[keep], y[keep])

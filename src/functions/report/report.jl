@@ -228,11 +228,13 @@ function card_compute(c::ProjectionCard, data)
         projection(data, c.var, c.unit; pxsize=c.pxsize, direction=c.direction, center=c.center,
                    weighting=[c.weight, missing], range_unit=c.range_unit, verbose=false, show_progress=false)
     z = p.maps[c.var]
-    extent_kpc = collect(Float64, p.extent) .* data.scale.kpc   # projection extent is code length → kpc
+    # projection extent is code length → kpc, unless the run has no physical units
+    cu = _code_units(data.info)
+    extent = collect(Float64, p.extent) .* (cu ? 1.0 : data.scale.kpc)
     ReportResultCard(c.label, :map, c.kind, :projection,
-                     (z=Float64.(z), extent=extent_kpc, pixsize=p.pixsize),
+                     (z=Float64.(z), extent=extent, pixsize=p.pixsize),
                      (var=c.var, unit=c.unit, weight=c.weight, res=size(z, 1), direction=c.direction,
-                      range_unit=c.range_unit, vrange=_finite_extrema(z)))
+                      range_unit=c.range_unit, vrange=_finite_extrema(z), length_unit=cu ? "code" : "kpc"))
 end
 
 function card_compute(c::PhaseCard, data)
@@ -296,8 +298,15 @@ struct ReportPlan
     budget::Int
 end
 function ReportPlan(output::Int; path::String=".", cards=ReportCard[], lmax::Int=-1, budget::Int=2_000_000)
-    ReportPlan(output, path, _resolve_cards(cards), lmax, budget)
+    # the default cards ask for kpc, M⊙ and K; a run without physical units gets them in code units
+    isdefault = cards === :default || (cards isa AbstractVector && isempty(cards))
+    resolved = isdefault && _plan_code_units(output, path) ? _code_unit_cards() : _resolve_cards(cards)
+    ReportPlan(output, path, resolved, lmax, budget)
 end
+
+# reads only the info file; a path that cannot be read is reported later, by `report` itself
+_plan_code_units(output, path) =
+    try _code_units(getinfo(output, path; verbose=false)) catch; false end
 
 # default card set: the quicklook figures (gas Σ map, ρ–T phase, disk density profile) PLUS the
 # star-formation history — so report's default matches the star formation that quicklook headlines in
@@ -311,6 +320,15 @@ _default_cards() = ReportCard[
     ProfileCard(:hydro, :r_cylinder, :rho; weight=:mass, geometry=:cylindrical, nbins=40,
                 center=[:bc], range_unit=:kpc, xunit=:kpc, unit=:nH, yscale=:log),
     SFRCard(:particles; tbinsize=50.0),
+]
+# the default set for a run without physical units: the same map, density against pressure (no
+# temperature without units), and a spherical profile, since such runs are mostly idealised tests
+# around a point rather than discs. No star-formation card: a rate needs a time unit.
+_code_unit_cards() = ReportCard[
+    ProjectionCard(:hydro, :sd; res=256, direction=:z, center=[:bc]),
+    PhaseCard(:hydro, :rho, :p; weight=:mass, nbins=(80, 80), xscale=:log, yscale=:log),
+    ProfileCard(:hydro, :r_sphere, :rho; weight=:mass, geometry=:spherical, nbins=40,
+                center=[:bc], yscale=:log),
 ]
 _resolve_cards(cards::Symbol) = cards === :default ? _default_cards() :
     throw(ArgumentError("unknown cards preset :$cards (use :default or a Vector of cards)"))
@@ -457,12 +475,15 @@ function _card_var_available(info, c::ReportCard)
 end
 
 function _report_summary(info, luse, sampled, ncards)
-    sc = info.scale; cosmo = iscosmological(info)
-    (output=info.output, simcode=info.simcode, box_kpc=info.boxlen * sc.kpc,
+    sc = info.scale; cosmo = iscosmological(info); cu = _code_units(info)
+    (output=info.output, simcode=info.simcode, code_units=cu,
+     box_kpc = cu ? nothing : info.boxlen * sc.kpc,
      levelmin=info.levelmin, levelmax=info.levelmax, lmax_used=luse, sampled=sampled,
-     finest_cell_pc=info.boxlen / 2.0^info.levelmax * sc.pc, ncpu=info.ncpu, ndim=info.ndim,
-     nvarh=info.nvarh, time_Myr=gettime(info, unit=:Myr),    # gettime: age-of-universe for cosmological
+     finest_cell_pc = cu ? nothing : info.boxlen / 2.0^info.levelmax * sc.pc, ncpu=info.ncpu,
+     ndim=info.ndim, nvarh=info.nvarh,
+     time_Myr = cu ? nothing : gettime(info, unit=:Myr),     # gettime: age-of-universe for cosmological
      redshift=cosmo ? (1.0 / info.aexp - 1.0) : nothing,     # runs (info.time is conformal), else info.time
+     box_code=info.boxlen, finest_cell_code=info.boxlen / 2.0^info.levelmax, time_code=info.time,
      ncards=ncards)
 end
 

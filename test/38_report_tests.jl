@@ -162,6 +162,22 @@
                 @test_skip "sedov3d_amr not available"
             end
             @test !quicklook(dc.output; path=dc.path, read=false, verbose=false).summary.code_units
+            if isdir(f.path)
+                # report: the default cards switch to code units (no K, no star-formation card)
+                plan = ReportPlan(f.outputs; path=f.path)
+                @test plan.cards[2] isa PhaseCard && plan.cards[2].yvar === :p
+                @test !any(c -> c isa SFRCard, plan.cards)
+                rep = report(plan; output=:none, verbose=false)
+                @test rep.summary.code_units && rep.summary.box_kpc === nothing
+                @test rep.summary.box_code == f.boxlen
+                mapcard = first(c for c in rep.cards if c.kind === :map)
+                @test mapcard.data.extent[2] <= f.boxlen                  # code length, not kpc
+                # cards the user chose are left as they are
+                own = ReportPlan(f.outputs; path=f.path, cards=[PhaseCard(:hydro, :rho, :T)])
+                @test own.cards[1].yvar === :T
+            end
+            # a run with physical units keeps the default cards
+            @test any(c -> c isa SFRCard, ReportPlan(dc.output; path=dc.path).cards)
         end
 
         @testset "quicklook on uniform initial conditions (stromgren3d, mhdtube3d)" begin

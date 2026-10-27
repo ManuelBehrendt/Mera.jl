@@ -74,9 +74,15 @@ _rng(t) = "$(_nf(t[1])) … $(_nf(t[2]))"
 function _render_ascii(r::QuickReport, io::IO)
     s = r.summary
     println(io, "┌─ Mera report ── output $(s.output) ($(s.simcode)) ─────────────────────────")
-    println(io, "│ box      : $(_nf(s.box_kpc)) kpc    levels $(s.levelmin)–$(s.levelmax)  (finest $(_nf(s.finest_cell_pc)) pc)")
-    println(io, "│ time     : $(_nf(s.time_Myr)) Myr" *
-                (s.redshift === nothing ? "  (non-cosmological)" : "    z = $(_nf(s.redshift))"))
+    if get(s, :code_units, false)
+        println(io, "│ units    : code units (the run sets no physical units)")
+        println(io, "│ box      : $(_nf(s.box_code))    levels $(s.levelmin)–$(s.levelmax)  (finest $(_nf(s.finest_cell_code)))")
+        println(io, "│ time     : $(_nf(s.time_code))")
+    else
+        println(io, "│ box      : $(_nf(s.box_kpc)) kpc    levels $(s.levelmin)–$(s.levelmax)  (finest $(_nf(s.finest_cell_pc)) pc)")
+        println(io, "│ time     : $(_nf(s.time_Myr)) Myr" *
+                    (s.redshift === nothing ? "  (non-cosmological)" : "    z = $(_nf(s.redshift))"))
+    end
     rtag = s.sampled ? "  ⚠ APPROXIMATE (coarse levels ≤ $(s.lmax_used) of $(s.levelmax))" : "  (full resolution)"
     println(io, "│ read     : level $(s.lmax_used)$(rtag)")
     println(io, "├─ $(s.ncards) cards ───────────────────────────────────────────────────────")
