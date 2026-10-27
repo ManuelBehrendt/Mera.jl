@@ -180,6 +180,17 @@
             @test any(c -> c isa SFRCard, ReportPlan(dc.output; path=dc.path).cards)
         end
 
+        @testset "quicklook comoving box (cosmo3d)" begin
+            f = PUBLIC_FIXTURES[:cosmo3d]
+            if isdir(f.path)
+                q = quicklook(f.output; path=f.path, read=false, verbose=false)
+                @test q.summary.box_comoving_Mpc ≈ q.summary.box_kpc / 1e3 / q.info.aexp rtol=1e-6
+            else
+                @test_skip "cosmo3d not available"
+            end
+            @test quicklook(dc.output; path=dc.path, read=false, verbose=false).summary.box_comoving_Mpc === nothing
+        end
+
         @testset "quicklook sinks (sinks3d)" begin
             # RAMSES keeps sinks in their own catalogue; the particle header counts none
             f = PUBLIC_FIXTURES[:sinks3d]

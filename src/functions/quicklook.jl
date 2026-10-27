@@ -240,6 +240,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
              finest_cell_pc = cu ? nothing : finest_pc,
              ncpu=info.ncpu, ndim=info.ndim, nvarh=info.nvarh,
              time_Myr = cu ? nothing : time_Myr, redshift=z,
+             box_comoving_Mpc = cosmo ? info.boxlen * sc.Mpc / info.aexp : nothing,
              box_code=info.boxlen, finest_cell_code=info.boxlen / 2.0^info.levelmax,
              time_code=info.time,
              npart = nstars + ndm + nsinks, nstars = nstars, ndm = ndm, nsinks = nsinks)
@@ -400,7 +401,9 @@ function _quicklook_print(s, t0)
         println("│ units      : code units (the run sets no physical units)")
         println("│ box        : $(nf(s.box_code))      levels $(s.levelmin)–$(s.levelmax)  (finest $(nf(s.finest_cell_code)))")
     else
-        println("│ box        : $(nf(s.box_kpc)) kpc      levels $(s.levelmin)–$(s.levelmax)  (finest $(nf(s.finest_cell_pc)) pc)")
+        como = get(s, :box_comoving_Mpc, nothing)
+        println("│ box        : $(nf(s.box_kpc)) kpc" * (como === nothing ? "" : " ($(nf(como)) Mpc comoving)") *
+                "      levels $(s.levelmin)–$(s.levelmax)  (finest $(nf(s.finest_cell_pc)) pc)")
     end
     println("│ grid       : ndim $(s.ndim) · ncpu $(s.ncpu) · nvarh $(s.nvarh)")
     if cu
