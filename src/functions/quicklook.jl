@@ -125,6 +125,13 @@ function _quicklook_shift(gas, info)
     return moved ? centre : nothing
 end
 
+# a duration for a person: "0.12 s", "5.4 s", "2 min 5 s", "1 h 3 min"
+function _human_time(s::Real)
+    s < 60 && return "$(round(s, sigdigits = s < 1 ? 2 : 3)) s"
+    s < 3600 && return "$(floor(Int, s / 60)) min $(round(Int, s % 60)) s"
+    return "$(floor(Int, s / 3600)) h $(round(Int, (s % 3600) / 60)) min"
+end
+
 # a number for the dashboard: four significant digits, plain in a readable range, else exponential
 function _qnum(x)
     x === nothing && return "—"
@@ -529,7 +536,7 @@ function _quicklook_print(s, t0)
     if all(k -> g(k) === nothing, (:gas_mass_Msol, :stellar_mass_Msol))
         println("│ (header only — call quicklook(output) to read a sample)")
     end
-    println("└─ $(round(time()-t0, digits=2)) s ──────────────────────────────────")
+    println("└─ $(_human_time(time() - t0)) ──────────────────────────────────")
 end
 
 # =====================================================================================

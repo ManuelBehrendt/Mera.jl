@@ -86,8 +86,7 @@ function _render_ascii(r::QuickReport, io::IO)
     for c in r.cards
         println(io, _card_line(c))
     end
-    tot = round(r.cost.total_s, digits=2)
-    println(io, "└─ total $(tot) s ───────────────────────────────────────────────────────")
+    println(io, "└─ total $(_human_time(r.cost.total_s)) ───────────────────────────────────────────────────────")
 end
 
 # Mera unit names read as symbols: :Msol_pc2 → "M⊙/pc²", :g_cm3 → "g/cm³", :nH → "cm⁻³", :km_s → "km/s"
