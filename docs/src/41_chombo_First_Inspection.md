@@ -48,19 +48,19 @@ ql = quicklook(0; path=path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
-[Mera]: quicklook output 0, reading gas: 2026-09-15T19:34:31.787
+[Mera]: quicklook output 0, reading gas: 2026-10-27T16:54:38.441
    1 CPU file(s), levels 5-7 of 7  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 646248 cells
 ┌─ Mera quicklook ── output 0 (CHOMBO) ───────────────
-│ box        : 0.0001205 kpc      levels 5–7  (finest 0.0009413 pc)
+│ box        : 24850 AU      levels 5–7  (finest 194.2 AU)
 │ grid       : ndim 3 · ncpu 1 · nvarh 6
-│ time       : 0.0 Myr  (non-cosmological)
+│ time       : 0.0 s
 │ read       : 646248 cells  (full resolution)
 │ gas mass   : 1.219 M⊙
-│ nH range   : 11240.0 … 1.035e7 cm⁻³
-│ T  range   : 34170.0 … 34170.0 K
-└─ 7.29 s ──────────────────────────────────
-[Mera]: quicklook output 0 finished: 2026-09-15T19:34:37.811
+│ ρ range    : 2.456e-20 … 2.261e-17 g/cm³
+│ T range    : 34170 … 34170 K
+└─ 7.47 s ──────────────────────────────────
+[Mera]: quicklook output 0 finished: 2026-10-27T16:54:44.659
 ```
 
 ```julia
@@ -240,7 +240,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-09-15T19:34:57.003
+[Mera]: 2026-10-27T16:55:02.521
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [mpc] :: 120.488 [mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [mpc] :: 120.488 [mpc]

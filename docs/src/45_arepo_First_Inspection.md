@@ -42,7 +42,7 @@ info = getinfo(150, path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
-[Mera]: 2026-09-15T22:03:06.416
+[Mera]: 2026-10-27T16:57:44.569
 Code: AREPO
 output: 150  time: 1.5381  redshift: 0.0
 boxlen = 40000.0
@@ -50,7 +50,7 @@ cells/particles: 12865831 gas cells (Voronoi), 13368238 halo/DM, 295531 stars  (
 gas is PartType0 → load with getparticles(info, families=[0]); there is no separate hydro block
 group catalogue: none found  (halo membership via halo= unavailable)
 -------------------------------------------------------
-[Mera]: composition not recorded by this format; using X = 0.76, mu = 1.32 (RAMSES convention) for :nH and :T. Change with setcomposition!(info; X_frac=…, mu=…).
+[Mera]: composition in use: X = 0.76, mu = 1.2195 (X is the default; the format does not record one)
 ```
 
 A census of the whole snapshot in one call, before loading anything yourself:
@@ -60,16 +60,15 @@ ql = quicklook(150; path=path);
 ```
 
 ```
-[Mera]: quicklook output 150, reading particles: 2026-09-15T22:03:21.999
+[Mera]: quicklook output 150, reading particles: 2026-10-27T16:57:59.196
 ┌─ Mera quicklook ── output 150 (AREPO) ───────────────
-│ box        : 40000.0 kpc      levels 1–1  (finest 2.0e7 pc)
+│ box        : 40 Mpc      levels 1–1  (finest 20 Mpc)
 │ grid       : ndim 3 · ncpu 1 · nvarh 0
-│ time       : 1504.0 Myr  (non-cosmological)
-│ particles  : 13368242 total  —  stars 0 · DM 13368238 · sinks 4
-│ star mass  : 0.0 M⊙        DM mass : 9.049e14 M⊙
-│ current SFR: — (10 Myr) · — (100 Myr) M⊙/yr
-└─ 17.27 s ──────────────────────────────────
-[Mera]: quicklook output 150 finished: 2026-09-15T22:03:39.267
+│ time       : 1.504 Gyr
+│ particles  : 13663769 total  —  stars 295531 · DM 13368238
+│ part. mass : stars 2.043e13 M⊙  ·  DM 9.049e14 M⊙
+└─ 24.5 s ──────────────────────────────────
+[Mera]: quicklook output 150 finished: 2026-10-27T16:58:23.596
 ```
 
 ```julia
@@ -201,7 +200,7 @@ extrema(getvar(gas, :T, :K))        # default composition
 ```
 
 ```
-(10.708062581365388, 5.571910085560703e8)
+(9.924545807119138, 5.164209347592847e8)
 ```
 
 ```julia
@@ -237,7 +236,7 @@ end
 ```
 
 ```
-mass       filled pixels: 32.2%
+mass       filled pixels: 33.0%
 sph        filled pixels: 100.0%
 voronoi    filled pixels: 100.0%
 ```
@@ -273,7 +272,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-09-15T22:04:16.018
+[Mera]: 2026-10-27T16:59:00.906
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]

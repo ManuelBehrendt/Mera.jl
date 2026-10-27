@@ -43,15 +43,16 @@ info = getinfo(200, path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
+[ Info: Mera v2.0.0-DEV
 [Mera]: this snapshot records no unit attributes; using GADGET's defaults (1 kpc/h, 1e10 Msol/h, 1 km/s). Override with unit_length=, unit_density= or unit_velocity= if your run used others.
-[Mera]: 2026-09-15T22:02:04.141
+[Mera]: 2026-10-27T17:08:26.087
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
 boxlen = 64000.0
-particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
+particles: 4334546 gas, 4786616 halo/DM, 2333848 low-res DM (2), 450921 stars, 1149 bndry/BH  (total 11907080)
 group catalogue: none found  (halo membership via halo= unavailable)
 -------------------------------------------------------
-[Mera]: composition not recorded by this format; using X = 0.76, mu = 1.32 (RAMSES convention) for :nH and :T. Change with setcomposition!(info; X_frac=…, mu=…).
+[Mera]: composition in use: X = 0.76, mu = 1.2195 (X is the default; the format does not record one)
 ```
 
 A census of the whole snapshot in one call, before loading anything yourself:
@@ -61,16 +62,15 @@ ql = quicklook(200; path=path);
 ```
 
 ```
-[Mera]: quicklook output 200, reading particles: 2026-09-15T22:02:19.751
+[Mera]: quicklook output 200, reading particles: 2026-10-27T17:08:40.786
 ┌─ Mera quicklook ── output 200 (GADGET) ───────────────
-│ box        : 31530.0 kpc      levels 1–1  (finest 1.576e7 pc)
+│ box        : 31.53 Mpc (91.43 Mpc comoving)      levels 1–1  (finest 15.76 Mpc)
 │ grid       : ndim 3 · ncpu 1 · nvarh 0
-│ time       : 3510.0 Myr   z = 1.9
-│ particles  : 7120468 total  —  stars 2333848 · DM 4786616 · sinks 4
-│ star mass  : 2.887e16 M⊙        DM mass : 1.079e14 M⊙
-│ current SFR: — (10 Myr) · — (100 Myr) M⊙/yr
-└─ 11.99 s ──────────────────────────────────
-[Mera]: quicklook output 200 finished: 2026-09-15T22:02:31.740
+│ time       : 3.51 Gyr   z = 1.9
+│ particles  : 7572534 total  —  stars 450921 · DM 7120464 · sinks 1149
+│ part. mass : stars 1.767e12 M⊙  ·  DM 2.897e16 M⊙
+└─ 14.7 s ──────────────────────────────────
+[Mera]: quicklook output 200 finished: 2026-10-27T17:08:55.423
 ```
 
 ```julia
@@ -137,7 +137,7 @@ gas = getparticles(info; families=[0]);      # PartType0, the gas
 ```
 
 ```
-[Mera]: GADGET gas cells = 4334546, families 0  (x,y,z,vx,vy,vz,mass,id,family,rho,u,ne,sfr,nh,volume)
+[Mera]: GADGET gas cells = 4334546, families 0  (x,y,z,vx,vy,vz,mass,id,family,rho,u,ne,sfr,hsml,nh,volume)
 ```
 
 ```julia
@@ -145,7 +145,7 @@ gas.data
 ```
 
 ```
-Table with 4334546 rows, 15 columns:
+Table with 4334546 rows, 16 columns:
 Columns:
 #   colname  type
 ────────────────────
@@ -162,8 +162,9 @@ Columns:
 11  u        Float64
 12  ne       Float64
 13  sfr      Float64
-14  nh       Float64
-15  volume   Float64
+14  hsml     Float64
+15  nh       Float64
+16  volume   Float64
 ```
 
 The table looks different from a grid one. There is **no `level`, `cx`, `cy`, `cz`**: a particle
@@ -187,7 +188,10 @@ Dict{Float64, Int64} with 5 entries:
   1.0 => 4786616
 ```
 
-Family 0 is gas, 1 is dark matter, 2 the disk component, 4 stars and 5 black holes.
+Family 0 is gas, 1 dark matter, 4 stars and 5 black holes. Family 2 here is the low-resolution
+dark matter of this cosmological zoom: each of its particles weighs 550 times one of family 1. In
+an isolated GADGET-2 galaxy the same number means disk stars, so Mera decides by whether the run
+is cosmological, and counts families 1 to 3 as dark matter here.
 
 ## 4. Physical quantities
 
@@ -234,7 +238,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-09-15T22:02:51.238
+[Mera]: 2026-10-27T17:09:13.819
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 31.527 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 31.527 [Mpc]
