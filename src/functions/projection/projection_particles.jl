@@ -32,9 +32,7 @@ function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
     h = :volume in cols ? α .* (3.0 .* Float64.(getcol(:volume)) ./ (4 * pi)) .^ (1/3) : nothing
     if h === nothing || !all(valid, h)
         other = :subfind_hsml in cols ? Float64.(getcol(:subfind_hsml)) :
-                all(in(cols), (:x, :y, :z)) ?
-                    clamp.(_knn_smoothing(Float64.(getcol(:x)), Float64.(getcol(:y)), Float64.(getcol(:z))),
-                           pixsize, _max_smoothing_px(length(getcol(:x))) * pixsize) : nothing
+                all(in(cols), (:x, :y, :z)) ? _neighbour_lengths(getcol, pixsize) : nothing
         other === nothing && h === nothing && throw(ArgumentError(
             "projection (particles): weighting=:sph needs a smoothing length: a :volume column " *
             "(gas cells), a :subfind_hsml column, or the positions :x, :y, :z to measure one from " *
@@ -47,6 +45,12 @@ function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
         end
     end
     return max.(h, pixsize)
+end
+
+# neighbour-based lengths from the positions, clamped to one pixel .. the largest kernel
+function _neighbour_lengths(getcol, pixsize)
+    x = Float64.(getcol(:x)); y = Float64.(getcol(:y)); z = Float64.(getcol(:z))
+    return clamp.(_knn_smoothing(x, y, z), pixsize, _max_smoothing_px(length(x)) * pixsize)
 end
 
 # The largest kernel, in pixels. A kernel's cost grows with its area, and the sparse particles of a
@@ -80,25 +84,31 @@ end
 # The same length from the local density: count the particles in a regular grid of about k per
 # cell, and give each particle half the radius that holds k particles at its cell's density. One
 # pass over the particles, so it scales to any number of them.
-function _grid_smoothing(x, y, z; k::Int=32)
+function _grid_smoothing(x::AbstractVector{Float64}, y::AbstractVector{Float64},
+                         z::AbstractVector{Float64}; k::Int=32)
     n = length(x)
-    lo = (minimum(x), minimum(y), minimum(z))
     m = clamp(round(Int, cbrt(n / k)), 1, 256)                 # cells per axis
-    Δ = ((maximum(x) - lo[1]) / m, (maximum(y) - lo[2]) / m, (maximum(z) - lo[3]) / m)
-    Δ = map(d -> d > 0 ? d : 1.0, Δ)
-    cell(v, a) = clamp(floor(Int, (v - lo[a]) / Δ[a]) + 1, 1, m)
+    x0, y0, z0 = minimum(x), minimum(y), minimum(z)
+    dx = _cellwidth(maximum(x) - x0, m); dy = _cellwidth(maximum(y) - y0, m)
+    dz = _cellwidth(maximum(z) - z0, m)
     counts = zeros(Int, m, m, m)
+    cells = Vector{Int}(undef, n)                               # each particle's cell, as a linear index
     @inbounds for i in 1:n
-        counts[cell(x[i], 1), cell(y[i], 2), cell(z[i], 3)] += 1
+        ix = clamp(floor(Int, (x[i] - x0) / dx), 0, m - 1)
+        iy = clamp(floor(Int, (y[i] - y0) / dy), 0, m - 1)
+        iz = clamp(floor(Int, (z[i] - z0) / dz), 0, m - 1)
+        c = 1 + ix + m * (iy + m * iz)
+        cells[i] = c
+        counts[c] += 1
     end
-    V = Δ[1] * Δ[2] * Δ[3]
+    hk = 3k * dx * dy * dz / 4π
     h = Vector{Float64}(undef, n)
     @inbounds for i in 1:n
-        c = counts[cell(x[i], 1), cell(y[i], 2), cell(z[i], 3)]
-        h[i] = 0.5 * cbrt(3k * V / (4π * c))
+        h[i] = 0.5 * cbrt(hk / counts[cells[i]])
     end
     return h
 end
+_cellwidth(span::Float64, m::Int) = span > 0 ? span / m : 1.0
 
 # Unnormalised 2-D M4 cubic spline (the normalisation cancels under the discrete renormalisation below).
 # Written without branches: for q < 1, 0.25(2-q)³ - (1-q)³ = 1 - 1.5q² + 0.75q³. This lets the
