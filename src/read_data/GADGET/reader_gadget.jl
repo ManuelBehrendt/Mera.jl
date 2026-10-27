@@ -132,10 +132,14 @@ const _AREPO_CONFIG_GROUPS = ("Config", "Configuration")
 # BoundsError on a file that is plainly GADGET-HDF5.
 const _GADGET_KNOWN_SUBCODES = ("GADGET", "AREPO", "SWIFT", "GIZMO")
 
-# GADGET and AREPO number their particle families by PartType: stars are 4, dark matter 1 to 3
-# (2 and 3 the low-resolution particles of a zoom run). quicklook and the census read this.
+# GADGET-format codes number their particles by PartType: 0 gas, 1 dark matter, 4 stars, 5 black
+# holes. Types 2 and 3 depend on the run: the low-resolution dark matter of a cosmological zoom, or
+# the disk and bulge stars of an isolated galaxy (GADGET-2's convention). quicklook and the census
+# read this.
+_gadget_family_codes(info) = iscosmological(info) ? (stars=[4], dm=[1, 2, 3]) : (stars=[2, 3, 4], dm=[1])
+_gadget_type_name(p, info) = p in (2, 3) && iscosmological(info) ? "low-res DM ($p)" : _GADGET_FAMILY[p]
 for code in _GADGET_KNOWN_SUBCODES                     # GADGET, AREPO, SWIFT, GIZMO
-    _FAMILY_CODES[code] = (stars=[4], dm=[1, 2, 3])
+    _FAMILY_CODES[code] = _gadget_family_codes
 end
 
 
@@ -330,16 +334,17 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
         nfsp > 1 && length(fns) != nfsp && @warn "GADGET: the header expects $nfsp snapshot " *
             "chunks but $(length(fns)) file(s) were found — reading what is present."
         info.output = output; info.path = abspath(path); info.simcode = _gadget_subcode(f)
-        # particle census from the header, by PartType: 1-3 dark matter (2 and 3 are the
-        # low-resolution particles of a zoom run), 4 stars, 5 black holes
-        pinfo = _blankval(PartInfoType)
-        pinfo.Npart = sum(npart); pinfo.Ndm = npart[2] + npart[3] + npart[4]
-        pinfo.Nstars = npart[5]; pinfo.Nsinks = npart[6]
-        info.part_info = pinfo
         info.Narraysize = 0
         a = _gadget_header_cosmology!(info, h; verbose=verbose, unit_length=unit_length,
                                       unit_density=unit_density, unit_velocity=unit_velocity)
         time = info.time
+        # particle census from the header, by PartType (what types 2 and 3 are depends on the run,
+        # see _gadget_family_codes); 5 are black holes
+        fc = _gadget_family_codes(info)
+        pinfo = _blankval(PartInfoType)
+        pinfo.Npart = sum(npart); pinfo.Nsinks = npart[6]
+        pinfo.Ndm = sum(npart[t + 1] for t in fc.dm); pinfo.Nstars = sum(npart[t + 1] for t in fc.stars)
+        info.part_info = pinfo
         info.hydro = false; info.gravity = false; info.particles = true
         info.rt = false; info.clumps = false; info.sinks = false
         info.variable_list = Symbol[]; info.nvarh = 0
@@ -382,7 +387,7 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
             # mesh-generating point carrying a cell volume. Calling it "gas particles" invites
             # people to look for `gethydro`; naming it "gas cells" says what the data model is.
             isarepo = info.simcode == "AREPO"
-            label(p) = (p == 0 && isarepo) ? "gas cells (Voronoi)" : _GADGET_FAMILY[p]
+            label(p) = (p == 0 && isarepo) ? "gas cells (Voronoi)" : _gadget_type_name(p, info)
             println(isarepo ? "cells/particles: " : "particles: ",
                     join(["$(n) $(label(p))" for (p, n) in present], ", "),
                     "  (total ", sum(npart), ")")

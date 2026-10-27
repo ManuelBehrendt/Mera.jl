@@ -517,6 +517,27 @@ end
         end
     end
 
+    @testset "PartType 2 and 3: stars in an isolated galaxy, dark matter in a cosmological run" begin
+        mk(fn, cosmo) = h5open(joinpath(dir, fn), "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 100.0; hg["NumPart_Total"] = UInt32[0, 2, 3, 1, 4, 0]; hg["MassTable"] = zeros(6)
+            hg["Time"] = cosmo ? 0.5 : 1.0
+            hg["HubbleParam"] = 0.7; hg["Omega0"] = cosmo ? 0.3 : 0.0; hg["OmegaLambda"] = cosmo ? 0.7 : 0.0
+            for (t, n) in ((1, 2), (2, 3), (3, 1), (4, 4))
+                g = create_group(f, "PartType$t")
+                g["Coordinates"] = fill(50.0, 3, n); g["Velocities"] = zeros(Float32, 3, n)
+                g["Masses"] = fill(Float32(t), n); g["ParticleIDs"] = UInt32.(1:n)
+            end
+        end
+        mk("snap_041.hdf5", false); mk("snap_042.hdf5", true)
+        iso = getinfo_gadget(41, dir, verbose=false); cos = getinfo_gadget(42, dir, verbose=false)
+        @test Mera._family_codes(iso) == (stars=[2, 3, 4], dm=[1])           # disk, bulge, new stars
+        @test (iso.part_info.Nstars, iso.part_info.Ndm) == (3 + 1 + 4, 2)
+        @test Mera._family_codes(cos) == (stars=[4], dm=[1, 2, 3])           # low-resolution dark matter
+        @test (cos.part_info.Nstars, cos.part_info.Ndm, cos.part_info.Nsinks) == (4, 2 + 3 + 1, 0)
+        @test iso.part_info.eta_sn == 0.0                                    # no leftover memory
+    end
+
     @testset "SPH-kernel projection (weighting=:sph): conserving + smoothing" begin
         # three gas cells near the box centre (far from edges ⇒ no boundary leakage ⇒ exact conservation)
         fn = joinpath(dir, "snap_008.hdf5")
