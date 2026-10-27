@@ -260,6 +260,10 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
         push!(L, "  nH  $(nf(s.nH_range[1]))…$(nf(s.nH_range[2]))")
         push!(L, "  T   $(nf(s.T_range_K[1]))…$(nf(s.T_range_K[2])) K")
     end
+    if get(s, :ionised_fraction, nothing) !== nothing          # RT run
+        push!(L, ""); push!(L, "IONISED")
+        push!(L, "  $(nf(100 * s.ionised_fraction)) % of the gas mass")
+    end
     if get(s, :bmag_range_muG, nothing) !== nothing            # MHD run
         push!(L, ""); push!(L, "MAGNETIC")
         push!(L, "  |B|  $(nf(s.bmag_range_muG[1]))…$(nf(s.bmag_range_muG[2])) μG")

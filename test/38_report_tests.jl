@@ -180,6 +180,23 @@
             @test any(c -> c isa SFRCard, ReportPlan(dc.output; path=dc.path).cards)
         end
 
+        @testset "quicklook RT run (stromgren3d)" begin
+            # temperature with μ from the ionisation, and the ionised share of the gas mass
+            f = PUBLIC_FIXTURES[:stromgren3d]
+            if isdir(f.path)
+                q = quicklook(f.outputs; path=f.path, verbose=false)
+                gas = gethydro(getinfo(f.outputs, f.path, verbose=false), verbose=false, show_progress=false)
+                x = getvar(gas, :xHII); m = getvar(gas, :mass)
+                @test q.summary.T_mu_from_ionisation
+                @test all(q.summary.T_range_K .≈ extrema(getvar(gas, :T_rt, :K)))
+                @test q.summary.ionised_fraction ≈ sum(m .* x) / sum(m)
+                @test 0 < q.summary.ionised_fraction < 1
+            else
+                @test_skip "stromgren3d not available"
+            end
+            @test !quicklook(dc.output; path=dc.path, verbose=false).summary.T_mu_from_ionisation
+        end
+
         @testset "quicklook comoving box (cosmo3d)" begin
             f = PUBLIC_FIXTURES[:cosmo3d]
             if isdir(f.path)

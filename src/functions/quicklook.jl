@@ -177,6 +177,8 @@ fall outside it (see `gethydro`'s `xrange`/`yrange`/`zrange`).
   dark-matter maps alike. Use `directions=[:z]` for a single, compact map per component.
   The face-on map keeps the bare key (`q.maps.stars`); edge-on views are `q.maps.stars_x` / `.stars_y`
   (and `dm_x` / `dm_y`).
+* RT — on a radiative-transfer run the temperature uses μ from the tracked ionisation (`:T_rt`),
+  and the dashboard gives the ionised share of the gas mass (`summary.ionised_fraction`).
 * sinks — when the output has a sink catalogue, the dashboard gives their number and mass and the
   plot marks them on the maps (`summary.sink_count`, `.sink_mass_Msol`, `.sink_pos_code`).
 * `particle_subsample` — for **very large particle runs**, read only ~this fraction of the particle
@@ -264,6 +266,11 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     gas_mass = nothing; nH_range = nothing; T_range = nothing
     bmag_range = nothing; beta_range = nothing
     gas_mass_code = nothing; rho_range_code = nothing; p_range_code = nothing; bmag_range_code = nothing
+    # an RT run tracks the ionisation, so the temperature takes μ from it (:T_rt) instead of the
+    # neutral default, and the dashboard reports how much of the gas is ionised
+    rt_ion = info.rt && haskey(info.descriptor.rt, :iIons) && !cu
+    Tq = rt_ion ? :T_rt : :T
+    xHII_range = nothing; ionised_fraction = nothing
 
     # --- gas (hydro): budgeted read → Σ map(s) along the selected axes + ρ–T phase + ranges ---
     # Guard on info.hydro too (mirrors the info.particles guard below): a gravity-/particle-/clumps-only
@@ -281,7 +288,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
         end
         # MHD run? then also read the magnetic field so the dashboard can show a |B| map + β stats.
         is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
-        qlreq  = is_mhd ? [:sd, :T, :rho, :p, :bmag] : [:sd, :T, :rho, :p]
+        qlreq  = vcat([:sd, Tq, :rho, :p], is_mhd ? [:bmag] : Symbol[], rt_ion ? [:xHII] : Symbol[])
         qlvars = getvar_requirements(:hydro, qlreq)                # read only the needed vars (else full)
         # Narrowing the read is an optimisation, not a requirement, so it must be conditional on
         # the reader being able to narrow. A frontend that cannot select columns REFUSES a `vars=`
@@ -302,10 +309,14 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
             gas_mass_code = sum(getvar(gas, :mass))
             rho_range_code = extrema(getvar(gas, :rho)); p_range_code = extrema(getvar(gas, :p))
         else
-            ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
+            ph = phase(gas, :rho, Tq; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
                        xunit=:nH, yunit=:K)
             gas_mass = sum(getvar(gas, :mass, :Msol))
-            nH_range = extrema(getvar(gas, :rho, :nH)); T_range = extrema(getvar(gas, :T, :K))
+            nH_range = extrema(getvar(gas, :rho, :nH)); T_range = extrema(getvar(gas, Tq, :K))
+            if rt_ion
+                xh = getvar(gas, :xHII); mg = getvar(gas, :mass)
+                xHII_range = extrema(xh); ionised_fraction = sum(mg .* xh) / sum(mg)
+            end
         end
         if is_mhd                          # face-on (mass-weighted) |B| map + |B| / plasma-β ranges
             bproj = projection(gas, :bmag, cu ? :standard : :muG; direction=:z, center=[:bc], res=res,
@@ -378,6 +389,8 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                             gas_mass_code=gas_mass_code, stellar_mass_code=bud.stellar_mass_code,
                             dm_mass_code=bud.dm_mass_code, rho_range_code=rho_range_code,
                             p_range_code=p_range_code, bmag_range_code=bmag_range_code,
+                            T_mu_from_ionisation=rt_ion, xHII_range=xHII_range,
+                            ionised_fraction=ionised_fraction,
                             sink_count = sinks === nothing ? 0 : sinks.n,
                             sink_mass_Msol = (sinks === nothing || cu) ? nothing : sinks.mass,
                             sink_mass_max_Msol = (sinks === nothing || cu) ? nothing : sinks.mass_max,
@@ -440,7 +453,11 @@ function _quicklook_print(s, t0)
         println("│ gas mass   : $(nf(s.gas_mass_Msol)) M⊙" * (s.sampled ? "  (mass-conserving)" : ""))
         rnote = s.sampled ? "  ⚠ peaks smoothed (lower bound)" : ""
         g(:nH_range) !== nothing && println("│ nH range   : $(nf(s.nH_range[1])) … $(nf(s.nH_range[2])) cm⁻³$(rnote)")
-        g(:T_range_K) !== nothing && println("│ T  range   : $(nf(s.T_range_K[1])) … $(nf(s.T_range_K[2])) K$(rnote)")
+        g(:T_range_K) !== nothing && println("│ T  range   : $(nf(s.T_range_K[1])) … $(nf(s.T_range_K[2])) K$(rnote)" *
+                                             (get(s, :T_mu_from_ionisation, false) ? "  (μ from the ionisation)" : ""))
+        g(:ionised_fraction) !== nothing &&
+            println("│ ionised    : $(nf(100 * s.ionised_fraction)) % of the gas mass  " *
+                    "(xHII $(nf(s.xHII_range[1])) … $(nf(s.xHII_range[2])))")
     end
     if g(:bmag_range_muG) !== nothing              # MHD run — magnetic field + plasma β
         println("│ |B| range  : $(nf(s.bmag_range_muG[1])) … $(nf(s.bmag_range_muG[2])) μG")
