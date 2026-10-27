@@ -126,7 +126,9 @@
                 qm  = quicklook(mhd.output; path=mhd.path, verbose=false)
                 # MHD run → a face-on |B| map (projected :bmag) plus |B| and plasma-β summary ranges
                 @test haskey(qm.maps, :bmag) && haskey(qm.maps.bmag.maps, :bmag)
-                @test qm.summary.bmag_range_muG !== nothing && qm.summary.bmag_range_muG[2] > 0
+                # this run sets no physical units, so |B| is reported in code units
+                br = qm.summary.code_units ? qm.summary.bmag_range_code : qm.summary.bmag_range_muG
+                @test br !== nothing && br[2] > 0
                 @test qm.summary.beta_range !== nothing && qm.summary.beta_range[1] > 0
                 if Base.find_package("CairoMakie") !== nothing
                     @eval using CairoMakie
@@ -136,6 +138,30 @@
             else
                 @test_skip "ramses_mhd_128 not available"
             end
+        end
+
+        @testset "quicklook on a run without physical units (sedov3d_amr)" begin
+            f = PUBLIC_FIXTURES[:sedov3d_amr]
+            if isdir(f.path)
+                q = quicklook(f.outputs; path=f.path, verbose=false)
+                s = q.summary
+                @test s.code_units
+                @test s.box_kpc === nothing && s.gas_mass_Msol === nothing && s.T_range_K === nothing
+                @test s.box_code == f.boxlen
+                info = getinfo(f.outputs, f.path, verbose=false)
+                gas = gethydro(info, verbose=false, show_progress=false)
+                @test s.gas_mass_code ≈ sum(getvar(gas, :mass))          # code units, nothing converted
+                @test s.rho_range_code[1] > 0 && s.p_range_code[1] > 0
+                @test sum(q.phase.H) > 0                                 # the ρ–p phase diagram
+                txt = mktemp() do fpath, io
+                    redirect_stdout(() -> Mera._quicklook_print(s, time()), io); flush(io)
+                    read(fpath, String)
+                end
+                @test occursin("code units", txt)
+            else
+                @test_skip "sedov3d_amr not available"
+            end
+            @test !quicklook(dc.output; path=dc.path, read=false, verbose=false).summary.code_units
         end
 
         @testset "quicklook on uniform initial conditions (stromgren3d, mhdtube3d)" begin

@@ -68,6 +68,11 @@ function _quicklook_cells_ondisk(info)
     return bytes / (max(info.nvarh, 1) * 8)
 end
 
+# A run without physical units: RAMSES writes unit_l = unit_d = unit_t = 1 when the namelist sets
+# none, as idealised tests usually do. Converting such a run to kpc, M⊙ or K gives numbers like a
+# box of 3e-22 kpc, so quicklook shows it in code units instead.
+_code_units(info) = info.unit_l == 1 && info.unit_d == 1 && info.unit_t == 1
+
 function _quicklook_level(info, budget::Int)
     est = _quicklook_cells_ondisk(info)
     if est === nothing                                       # no hydro files to measure
@@ -102,11 +107,22 @@ end
 # mean). Particle masses/SFR are exact (all particles read); gas mass follows the hydro read.
 # `pscale` (= 1/subsample-fraction) scales the extensive particle quantities up to whole-snapshot
 # estimates when the particles were read as a subsample (pscale = 1 ⇒ exact, full read).
-function _quicklook_budget(gas_mass_Msol, p; pscale::Real=1.0)
+# With `code_units=true` the masses go to the `_code` fields and the rate stays empty: a rate needs
+# a time unit, and the run has none.
+function _quicklook_budget(gas_mass_Msol, p; pscale::Real=1.0, code_units::Bool=false,
+                           gas_mass_code=nothing)
     base = (gas_mass_Msol=gas_mass_Msol, stellar_mass_Msol=nothing, dm_mass_Msol=nothing,
-            n_stars=0, n_dm=0, sfr10=nothing, sfr100=nothing, sfr_mean=nothing, has_particles=false)
+            n_stars=0, n_dm=0, sfr10=nothing, sfr100=nothing, sfr_mean=nothing, has_particles=false,
+            gas_mass_code=gas_mass_code, stellar_mass_code=nothing, dm_mass_code=nothing)
     p === nothing && return base
-    m = getvar(p, :mass, :Msol); star, dm = _star_dm_masks(p)
+    star, dm = _star_dm_masks(p)
+    if code_units
+        m = getvar(p, :mass)
+        return merge(base, (n_stars=round(Int, count(star)*pscale), n_dm=round(Int, count(dm)*pscale),
+                            stellar_mass_code=sum(m[star])*pscale, dm_mass_code=sum(m[dm])*pscale,
+                            has_particles=true))
+    end
+    m = getvar(p, :mass, :Msol)
     # sfr_snapshot rebuilds birth masses from RAMSES's :birth column and an eta_sn from the run's
     # namelist. Neither exists outside RAMSES, and asking for them turned quicklook into an error
     # on every particle-based code. Masses and counts work everywhere, so report those and leave
@@ -119,7 +135,7 @@ function _quicklook_budget(gas_mass_Msol, p; pscale::Real=1.0)
             sfr10    = sm === nothing ? nothing : sm.sfr[1]*pscale,
             sfr100   = sm === nothing ? nothing : sm.sfr[2]*pscale,
             sfr_mean = sm === nothing ? nothing : sm.sfr_mean*pscale,
-            has_particles=true)
+            has_particles=true, gas_mass_code=gas_mass_code, stellar_mass_code=nothing, dm_mass_code=nothing)
 end
 
 """
@@ -134,6 +150,12 @@ cells), then builds surface-density projections along **each axis** (`.maps.x/.y
 two edge-on views), a ρ–T phase diagram, a **global snapshot budget** (gas / stellar / dark-matter mass
 and the current SFR), and prints a compact dashboard. On an **MHD run** it additionally reads the
 magnetic field and adds a face-on `|B|` map (`.maps.bmag`, μG) plus `|B|` and plasma-β ranges.
+
+**Runs without physical units.** When the run sets no units (`unit_l`, `unit_d` and `unit_t` all
+1, as in many idealised tests), everything is shown in code units and the phase diagram is ρ–p
+instead of ρ–T. The summary then has `code_units = true`, its physical fields (`box_kpc`,
+`gas_mass_Msol`, `nH_range`, …) are `nothing`, and the values are in the `_code` fields
+(`box_code`, `gas_mass_code`, `rho_range_code`, `p_range_code`, …).
 
 **How long it takes.** `read=false` returns immediately whatever the run size: it touches no data.
 A reading call is dominated by the number of per-CPU files, not by the box size, because every one
@@ -196,6 +218,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
         setcomposition!(info; X_frac=xf, mu = mu === nothing ? 1/xf : mu)
     end
     sc = info.scale
+    cu = _code_units(info)
     cosmo = iscosmological(info)
     z = cosmo ? (1.0/info.aexp - 1.0) : nothing
     finest_pc = info.boxlen / 2.0^info.levelmax * sc.pc
@@ -209,10 +232,14 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     # gettime, which returns the age of the universe at this snapshot (Friedmann table); for a
     # non-cosmological run gettime reduces to info.time scaled to Myr.
     time_Myr = gettime(info, unit=:Myr)
-    facts = (output=output, simcode=info.simcode, box_kpc=info.boxlen*sc.kpc,
-             levelmin=info.levelmin, levelmax=info.levelmax, finest_cell_pc=finest_pc,
+    facts = (output=output, simcode=info.simcode, code_units=cu,
+             box_kpc = cu ? nothing : info.boxlen*sc.kpc,
+             levelmin=info.levelmin, levelmax=info.levelmax,
+             finest_cell_pc = cu ? nothing : finest_pc,
              ncpu=info.ncpu, ndim=info.ndim, nvarh=info.nvarh,
-             time_Myr=time_Myr, redshift=z,
+             time_Myr = cu ? nothing : time_Myr, redshift=z,
+             box_code=info.boxlen, finest_cell_code=info.boxlen / 2.0^info.levelmax,
+             time_code=info.time,
              npart = nstars + ndm + nsinks, nstars = nstars, ndm = ndm, nsinks = nsinks)
 
     if !read
@@ -233,6 +260,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     n = 0; luse = info.levelmax; sampled = false
     gas_mass = nothing; nH_range = nothing; T_range = nothing
     bmag_range = nothing; beta_range = nothing
+    gas_mass_code = nothing; rho_range_code = nothing; p_range_code = nothing; bmag_range_code = nothing
 
     # --- gas (hydro): budgeted read → Σ map(s) along the selected axes + ρ–T phase + ranges ---
     # Guard on info.hydro too (mirrors the info.particles guard below): a gravity-/particle-/clumps-only
@@ -250,7 +278,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
         end
         # MHD run? then also read the magnetic field so the dashboard can show a |B| map + β stats.
         is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
-        qlreq  = is_mhd ? [:sd, :T, :rho, :bmag] : [:sd, :T, :rho]
+        qlreq  = is_mhd ? [:sd, :T, :rho, :p, :bmag] : [:sd, :T, :rho, :p]
         qlvars = getvar_requirements(:hydro, qlreq)                # read only the needed vars (else full)
         # Narrowing the read is an optimisation, not a requirement, so it must be conditional on
         # the reader being able to narrow. A frontend that cannot select columns REFUSES a `vars=`
@@ -260,21 +288,29 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
               gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=verbose) :
               gethydro(info, lmax=luse, verbose=false, show_progress=verbose)
         n = length(gas.data)
-        pj(dir) = projection(gas, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
-                             verbose=false, show_progress=false)
+        pj(dir) = projection(gas, :sd, cu ? :standard : :Msol_pc2; direction=dir, center=[:bc],
+                             res=res, verbose=false, show_progress=false)
         verbose && !isempty(dirs) &&
             println("   projecting $(length(dirs)) gas map(s) [$(join(dirs, ", "))] " *
                     "and the phase diagram from $n cells")
         for d in dirs; maps = merge(maps, NamedTuple{(d,)}((pj(d),))); end
-        ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
-                   xunit=:nH, yunit=:K)
-        gas_mass = sum(getvar(gas, :mass, :Msol))
-        nH_range = extrema(getvar(gas, :rho, :nH)); T_range = extrema(getvar(gas, :T, :K))
+        if cu                              # no temperature without units: density against pressure
+            ph = phase(gas, :rho, :p; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log)
+            gas_mass_code = sum(getvar(gas, :mass))
+            rho_range_code = extrema(getvar(gas, :rho)); p_range_code = extrema(getvar(gas, :p))
+        else
+            ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
+                       xunit=:nH, yunit=:K)
+            gas_mass = sum(getvar(gas, :mass, :Msol))
+            nH_range = extrema(getvar(gas, :rho, :nH)); T_range = extrema(getvar(gas, :T, :K))
+        end
         if is_mhd                          # face-on (mass-weighted) |B| map + |B| / plasma-β ranges
-            bproj = projection(gas, :bmag, :muG; direction=:z, center=[:bc], res=res,
+            bproj = projection(gas, :bmag, cu ? :standard : :muG; direction=:z, center=[:bc], res=res,
                                verbose=false, show_progress=false)
             maps = merge(maps, (bmag = bproj,))
-            bmag_range = extrema(getvar(gas, :bmag, :muG)); beta_range = extrema(getvar(gas, :beta))
+            beta_range = extrema(getvar(gas, :beta))
+            cu ? (bmag_range_code = extrema(getvar(gas, :bmag))) :
+                 (bmag_range = extrema(getvar(gas, :bmag, :muG)))
         end
     end
 
@@ -291,11 +327,11 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
             verbose && @warn "quicklook: particle read failed; skipping particle maps & budget" exception=e
         end
     end
-    bud = _quicklook_budget(gas_mass, parts; pscale=pscale)
+    bud = _quicklook_budget(gas_mass, parts; pscale=pscale, code_units=cu, gas_mass_code=gas_mass_code)
     if parts !== nothing
         star_mask, dm_mask = _star_dm_masks(parts)                 # family-aware (legacy: birth≠0 / ==0)
         function ppj(mask, dir)                                     # Σ along `dir`; scale up if subsampled
-            pm = projection(parts, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
+            pm = projection(parts, :sd, cu ? :standard : :Msol_pc2; direction=dir, center=[:bc], res=res,
                             mask=mask, verbose=false, show_progress=false)
             psub < 1.0 && (pm.maps[:sd] .*= pscale)
             pm
@@ -321,7 +357,11 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                             stellar_mass_Msol=bud.stellar_mass_Msol, dm_mass_Msol=bud.dm_mass_Msol,
                             sfr10=bud.sfr10, sfr100=bud.sfr100,
                             nH_range=nH_range, T_range_K=T_range,
-                            bmag_range_muG=bmag_range, beta_range=beta_range, seconds=time()-t0))
+                            bmag_range_muG=bmag_range, beta_range=beta_range,
+                            gas_mass_code=gas_mass_code, stellar_mass_code=bud.stellar_mass_code,
+                            dm_mass_code=bud.dm_mass_code, rho_range_code=rho_range_code,
+                            p_range_code=p_range_code, bmag_range_code=bmag_range_code,
+                            seconds=time()-t0))
     verbose && _quicklook_print(summary, t0)
     # a closing timestamp: on a long run the dashboard scrolls up, and this is what tells you
     # the call actually returned rather than still working
@@ -333,15 +373,40 @@ end
 function _quicklook_print(s, t0)
     nf(x) = x === nothing ? "—" : string(round(x, sigdigits=4))
     g(k) = get(s, k, nothing)
+    cu = get(s, :code_units, false)
     println("┌─ Mera quicklook ── output $(s.output) ($(s.simcode)) ───────────────")
-    println("│ box        : $(nf(s.box_kpc)) kpc      levels $(s.levelmin)–$(s.levelmax)  (finest $(nf(s.finest_cell_pc)) pc)")
+    if cu
+        println("│ units      : code units (the run sets no physical units)")
+        println("│ box        : $(nf(s.box_code))      levels $(s.levelmin)–$(s.levelmax)  (finest $(nf(s.finest_cell_code)))")
+    else
+        println("│ box        : $(nf(s.box_kpc)) kpc      levels $(s.levelmin)–$(s.levelmax)  (finest $(nf(s.finest_cell_pc)) pc)")
+    end
     println("│ grid       : ndim $(s.ndim) · ncpu $(s.ncpu) · nvarh $(s.nvarh)")
-    println("│ time       : $(nf(s.time_Myr)) Myr" * (s.redshift === nothing ? "  (non-cosmological)" : "   z = $(nf(s.redshift))"))
+    if cu
+        println("│ time       : $(nf(s.time_code))")
+    else
+        println("│ time       : $(nf(s.time_Myr)) Myr" * (s.redshift === nothing ? "  (non-cosmological)" : "   z = $(nf(s.redshift))"))
+    end
     if get(s, :npart, 0) > 0                       # particle census
         extra = (get(s, :nsinks, 0) > 0 ? " · sinks $(s.nsinks)" : "")
         sub = g(:particle_subsample) !== nothing && s.particle_subsample < 1.0 ?
               "  ⚠ ×$(round(1/s.particle_subsample,digits=1)) subsample est." : ""
         println("│ particles  : $(s.npart) total  —  stars $(s.nstars) · DM $(s.ndm)$(extra)$(sub)")
+    end
+    if g(:gas_mass_code) !== nothing               # gas (read), code units
+        tag = s.sampled ? "  ⚠ coarse levels ≤ $(s.lmax_used) of $(s.levelmax)" : "  (full resolution)"
+        println("│ read       : $(s.ncells) cells$(tag)")
+        println("│ gas mass   : $(nf(s.gas_mass_code))")
+        rnote = s.sampled ? "  ⚠ peaks smoothed (lower bound)" : ""
+        println("│ ρ range    : $(nf(s.rho_range_code[1])) … $(nf(s.rho_range_code[2]))$(rnote)")
+        println("│ p range    : $(nf(s.p_range_code[1])) … $(nf(s.p_range_code[2]))$(rnote)")
+    end
+    if g(:bmag_range_code) !== nothing             # MHD run, code units
+        println("│ |B| range  : $(nf(s.bmag_range_code[1])) … $(nf(s.bmag_range_code[2]))")
+        println("│ plasma β   : $(nf(s.beta_range[1])) … $(nf(s.beta_range[2]))  (β<1 ⇒ B-dominated)")
+    end
+    if g(:stellar_mass_code) !== nothing           # particle masses, code units
+        println("│ star mass  : $(nf(s.stellar_mass_code))        DM mass : $(nf(s.dm_mass_code))")
     end
     if g(:gas_mass_Msol) !== nothing               # gas (read)
         tag = s.sampled ? "  ⚠ coarse levels ≤ $(s.lmax_used) of $(s.levelmax)" : "  (full resolution)"
@@ -361,7 +426,7 @@ function _quicklook_print(s, t0)
         println("│ star mass  : $(nf(s.stellar_mass_Msol)) M⊙        DM mass : $(nf(s.dm_mass_Msol)) M⊙")
         println("│ current SFR: $(nf(s.sfr10)) (10 Myr) · $(nf(s.sfr100)) (100 Myr) M⊙/yr")
     end
-    if g(:gas_mass_Msol) === nothing && g(:stellar_mass_Msol) === nothing
+    if all(k -> g(k) === nothing, (:gas_mass_Msol, :stellar_mass_Msol, :gas_mass_code, :stellar_mass_code))
         println("│ (header only — call quicklook(output) to read a sample)")
     end
     println("└─ $(round(time()-t0, digits=2)) s ──────────────────────────────────")

@@ -171,11 +171,12 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
                 fontsize=19, font=:bold, color=(:black, 0.85), padding=(0, 0, 8, 2))
     gpos(i) = (cld(i, ncols), mod1(i, ncols))                        # row-major fill of a tight grid
 
-    skpc = q.info.scale.kpc                                          # projection extent is in code length → kpc
+    cu = get(s, :code_units, false)                                  # a run without physical units
+    skpc = cu ? 1.0 : q.info.scale.kpc                               # projection extent is in code length → kpc
     # adaptive length unit so axis ticks stay O(1–100) instead of an unreadable ×10⁴ smear:
     # a Mpc-scale (cosmological) box reads in Mpc, a galaxy-scale box in kpc.
     boxspan = q.info.boxlen * skpc
-    lenfac, lenunit = boxspan ≥ 3_000 ? (1e-3, "Mpc") : (1.0, "kpc")
+    lenfac, lenunit = cu ? (1.0, "code") : boxspan ≥ 3_000 ? (1e-3, "Mpc") : (1.0, "kpc")
     relabel(l) = replace(l, "kpc" => lenunit)
     AX = (titlesize=13, titlefont=:regular, titlegap=4,
           xlabelsize=11, ylabelsize=11, xticklabelsize=9, yticklabelsize=9,
@@ -192,11 +193,13 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
                         aspect=Makie.DataAspect(), AX...)
         xs = range(ex[1], ex[2], length=Base.size(mp, 1)); ys = range(ex[3], ex[4], length=Base.size(mp, 2))
         hm = _loghm!(ax, xs, ys, mp; colormap=cmapof(key))
-        cb(fig[r, c][1, 2], hm; label=key === :bmag ? "log₁₀ ⟨|B|⟩ [μG]" : "log₁₀ Σ")
+        cb(fig[r, c][1, 2], hm; label=key === :bmag ? (cu ? "log₁₀ ⟨|B|⟩ [code]" : "log₁₀ ⟨|B|⟩ [μG]") :
+                                         (cu ? "log₁₀ Σ [code]" : "log₁₀ Σ"))
     end
     if havephase
         r, c = gpos(length(specs) + 1); ph = q.phase
-        ax2 = Makie.Axis(fig[r, c][1, 1]; title="ρ–T phase", xlabel="n_H [cm⁻³]", ylabel="T [K]",
+        ax2 = Makie.Axis(fig[r, c][1, 1]; title=cu ? "ρ–p phase" : "ρ–T phase",
+                         xlabel=cu ? "ρ [code]" : "n_H [cm⁻³]", ylabel=cu ? "p [code]" : "T [K]",
                          xscale=log10, yscale=log10, titlesize=13, titlegap=4,
                          xlabelsize=11, ylabelsize=11, xticklabelsize=9, yticklabelsize=9,
                          xgridvisible=true, ygridvisible=true,
@@ -209,7 +212,7 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
     # text census (not a bar plot) — adapts to which components were read; kept short per line so it
     # never overflows the panel, and rendered in a light "info card" for a cleaner look.
     rt, ct = gpos(npanels); L = String[]
-    if get(s, :gas_mass_Msol, nothing) !== nothing
+    if get(s, :gas_mass_Msol, nothing) !== nothing || get(s, :gas_mass_code, nothing) !== nothing
         push!(L, "CELLS"); push!(L, "  $(s.ncells) read" * (q.sampled ? "  (coarse)" : "  (full)"))
     end
     if get(s, :npart, 0) > 0
@@ -217,7 +220,24 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
         push!(L, "  total  $(s.npart)"); push!(L, "  stars  $(s.nstars)"); push!(L, "  DM     $(s.ndm)")
         get(s, :particle_subsample, 1.0) < 1.0 && push!(L, "  ⚠ ×$(round(1/s.particle_subsample, digits=1)) subsample")
     end
-    push!(L, ""); push!(L, "MASS [M⊙]")
+    if cu
+        push!(L, ""); push!(L, "MASS [code units]")
+        get(s, :gas_mass_code, nothing) !== nothing && push!(L, "  gas    $(nf(s.gas_mass_code))")
+        if get(s, :stellar_mass_code, nothing) !== nothing
+            push!(L, "  stars  $(nf(s.stellar_mass_code))"); push!(L, "  DM     $(nf(s.dm_mass_code))")
+        end
+        if get(s, :rho_range_code, nothing) !== nothing
+            push!(L, ""); push!(L, "RANGES" * (q.sampled ? " (smoothed)" : ""))
+            push!(L, "  ρ   $(nf(s.rho_range_code[1]))…$(nf(s.rho_range_code[2]))")
+            push!(L, "  p   $(nf(s.p_range_code[1]))…$(nf(s.p_range_code[2]))")
+        end
+        if get(s, :bmag_range_code, nothing) !== nothing
+            push!(L, ""); push!(L, "MAGNETIC")
+            push!(L, "  |B|  $(nf(s.bmag_range_code[1]))…$(nf(s.bmag_range_code[2]))")
+            push!(L, "  β    $(nf(s.beta_range[1]))…$(nf(s.beta_range[2]))")
+        end
+    end
+    cu || (push!(L, ""); push!(L, "MASS [M⊙]"))
     get(s, :gas_mass_Msol, nothing) !== nothing && push!(L, "  gas    $(nf(s.gas_mass_Msol))")   # exact (mass-conserving)
     if get(s, :stellar_mass_Msol, nothing) !== nothing
         push!(L, "  stars  $(nf(s.stellar_mass_Msol))"); push!(L, "  DM     $(nf(s.dm_mass_Msol))")
