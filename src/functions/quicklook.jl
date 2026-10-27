@@ -101,7 +101,7 @@ function _qnum(x)
     (a == 0 || 1e-3 <= a < 1e6) ||
         return replace(@sprintf("%.4g", x), "e+0" => "e", "e+" => "e", "e-0" => "e-")
     v = round(x, sigdigits=4)
-    return isinteger(v) && a >= 1 ? string(Int(v)) : string(v)
+    return isinteger(v) && abs(v) >= 1 ? string(Int(v)) : string(v)
 end
 
 function _quicklook_level(info, budget::Int)
