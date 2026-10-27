@@ -32,11 +32,15 @@
 #                                                         # coverage_suite.lcov of an earlier run
 #   SKIP_SUITE=1 COV_BASE=coverage_partial.lcov NB_FROM=switching_to_mera UPLOAD=1 ...
 #                                                         # resume an interrupted notebook phase
+#   SKIP_SUITE=1 COV_BASE=coverage_all.lcov NB_ONLY="17_multi_Volume_Rendering" NB_TIMEOUT=-1 UPLOAD=1 ...
+#                                                         # rerun only these notebooks, without
+#                                                         # the time limit per cell
 #
 # Env overrides:
 #   NOTEBOOK_DIR   default: /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1
 #   COV_KERNEL     default: mera-docs-1.12-cov-mera
 #   JULIA          default: julia +1.12
+#   NB_TIMEOUT     seconds per notebook cell, default 5400; -1 for no limit
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -120,7 +124,7 @@ run_nb () {  # $1 = notebook path w/o .ipynb, $2 = output subdir
     MERA_PROVENANCE_PLAIN=1 \
     jupyter nbconvert --to notebook --execute --allow-errors \
         --ExecutePreprocessor.kernel_name="$COV_KERNEL" \
-        --ExecutePreprocessor.timeout=5400 \
+        --ExecutePreprocessor.timeout="${NB_TIMEOUT:-5400}" \
         --output-dir "executed/$outdir" --output "$(basename "$nb").ipynb" \
         "$nb.ipynb" 2>&1 | tail -1
 }
@@ -153,7 +157,9 @@ FEATURE_NBS=(
 # NB_FROM=<name> resumes an interrupted run at that notebook (use with SKIP_SUITE=1 and
 # COV_BASE=<the coverage.lcov the interrupted run wrote>).
 started=$([[ -z "${NB_FROM:-}" ]] && echo 1 || echo 0)
+# NB_ONLY="<name> <name>" runs only these notebooks.
 run_if_due () {  # $1 = notebook path w/o .ipynb, $2 = output subdir
+    if [[ -n "${NB_ONLY:-}" ]]; then [[ " $NB_ONLY " == *" $1 "* ]] || return 0; fi
     [[ "$started" == 1 || "$1" == "${NB_FROM:-}" ]] || return 0
     started=1
     if [ ! -s "$1.ipynb" ]; then echo "    -- skip (missing/empty): $1"; return 0; fi
