@@ -43,19 +43,19 @@ ql = quicklook(500; path=path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
-[Mera]: quicklook output 500, reading gas: 2026-09-15T19:35:26.704
+[Mera]: quicklook output 500, reading gas: 2026-10-27T16:08:06.270
    5300 CPU file(s), levels 7-11 of 11  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 21708800 cells
 ┌─ Mera quicklook ── output 500 (Athena++) ───────────────
-│ box        : 1.296e-18 kpc      levels 7–11  (finest 6.33e-19 pc)
+│ box        : 40 m      levels 7–11  (finest 1.953 cm)
 │ grid       : ndim 3 · ncpu 5300 · nvarh 8
-│ time       : 1.584e-10 Myr  (non-cosmological)
+│ time       : 5000 s
 │ read       : 21708800 cells  (full resolution)
-│ gas mass   : 4.7230000000000006e-20 M⊙
-│ nH range   : 2.232e25 … 5.253e29 cm⁻³
-│ T  range   : 9.839e-10 … 2.325e-8 K
-└─ 54.86 s ──────────────────────────────────
-[Mera]: quicklook output 500 finished: 2026-09-15T19:36:20.552
+│ gas mass   : 9.395e13 g
+│ ρ range    : 48.75 … 1.147e6 g/cm³
+│ T range    : 9.839e-10 … 2.325e-8 K
+└─ 49.6 s ──────────────────────────────────
+[Mera]: quicklook output 500 finished: 2026-10-27T16:08:54.827
 ```
 
 ```julia
@@ -69,8 +69,8 @@ has a genuine spread of temperatures, so the plane fills instead of collapsing t
 
 !!! warning "This run is in code units"
     Athena++ keeps its unit constants in the problem setup, not in the output, so Mera cannot
-    read them and treats one code unit as one CGS unit. Anything printed in kpc or solar masses
-    above is therefore arithmetic rather than physics. Pass `unit_length=`, `unit_density=` and
+    read them and treats one code unit as one CGS unit. The lengths, masses and densities printed
+    above (in cm, g and g/cm³) are therefore arithmetic rather than physics. Pass `unit_length=`, `unit_density=` and
     `unit_velocity=` if you know them; everything below stays in code units, which is honest for
     a turbulence box.
 
@@ -81,7 +81,7 @@ info = getinfo(500, path);
 ```
 
 ```
-[Mera]: 2026-09-15T19:36:37.161
+[Mera]: 2026-10-27T16:09:10.357
 Code: Athena++
 output: 500  time: 5000.0 [code units]
 root grid: 128³ (level 7), MaxLevel 4 ⇒ levels 7:11, boxlen = 4000.0
@@ -208,7 +208,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-09-15T19:37:22.269
+[Mera]: 2026-10-27T16:09:49.033
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 4000.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 4000.0 [cm]
