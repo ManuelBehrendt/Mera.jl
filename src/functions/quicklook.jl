@@ -167,13 +167,7 @@ end
 # `family` column — the canonical type (1=DM, 2=star, 3=cloud/sink, 4=debris, 5=other) — so cloud,
 # debris, sinks and tracers are not misbucketed; use it when present. The LEGACY format (pversion=0)
 # has no family column, so fall back to the birth convention (birth≠0 ⇒ star, birth==0 ⇒ DM).
-# Which `family` values are stars and which dark matter, per simulation code. RAMSES numbers its
-# families 1 = DM, 2 = star; the readers of other codes add their own entry (GADGET and AREPO use
-# the PartType: stars 4, dark matter 1 to 3).
-const _FAMILY_CODES = Dict{String,NamedTuple{(:stars, :dm),Tuple{Vector{Int},Vector{Int}}}}(
-    "RAMSES" => (stars=[2], dm=[1]))
-_family_codes(info) = get(_FAMILY_CODES, string(info.simcode), _FAMILY_CODES["RAMSES"])
-
+# The star and dark-matter `family` values per code come from `_family_codes` (reader_interface.jl).
 function _star_dm_masks(p)
     cols = propertynames(getfield(p, :data).columns)
     if :family in cols
