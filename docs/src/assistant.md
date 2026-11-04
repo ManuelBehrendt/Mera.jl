@@ -29,12 +29,13 @@ None of these are exotic. They are what anyone infers from the function names al
 
 ## Two files to give it
 
-Both are published with the documentation:
+Both are published with the documentation, and the links below always open the copies that match
+the docs version you are reading:
 
 | file | what it is |
 |---|---|
-| [`llms.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms.txt) | A compact grounding, about 2600 words. The data model, the vocabulary, the traps above, what is not in Mera, and how to check a result. Written to be pasted or attached whole. |
-| [`llms-full.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms-full.txt) | The conceptual documentation concatenated into one file, about 37 000 words. Attach it when the question needs depth. |
+| [`llms.txt`](llms.txt) | A compact grounding, about 2600 words. The data model, the vocabulary, the traps above, what is not in Mera, and how to check a result. Written to be pasted or attached whole. |
+| [`llms-full.txt`](llms-full.txt) | The conceptual documentation concatenated into one file, about 37 000 words. Attach it when the question needs depth. |
 
 !!! note "Working with a code other than RAMSES"
     The multicode docs have their own copies,
