@@ -156,6 +156,12 @@
                 @test haskey(qm.maps, :bmag) && haskey(qm.maps.bmag.maps, :bmag)
                 @test qm.summary.bmag_range_muG !== nothing && qm.summary.bmag_range_muG[2] > 0
                 @test qm.summary.beta_range !== nothing && qm.summary.beta_range[1] > 0
+                # the default report of an MHD run adds a face-on |B| map; a hydro run has neither
+                vars(o, p) = [c.var for c in ReportPlan(o; path=p).cards if c isa ProjectionCard]
+                @test :bmag in vars(mhd.output, mhd.path) && !(:xHII in vars(mhd.output, mhd.path))
+                @test vars(dc.output, dc.path) == [:sd]
+                dm = report(mhd.output; path=mhd.path, output=:none, verbose=false)
+                @test count(c -> c.kind === :map, dm.cards) == 2
                 if Base.find_package("CairoMakie") !== nothing
                     @eval using CairoMakie
                     fig = quicklookplot(qm)                       # the |B| panel must render too
@@ -549,6 +555,10 @@
                 q = quicklook(rt.output; path=rt.path, datatypes=[:hydro], verbose=false)
                 gas = gethydro(info, verbose=false, show_progress=false)
                 @test isapprox(q.summary.gas_mass_Msol, sum(getvar(gas, :mass, :Msol)); rtol=1e-6)
+                # the default report of an RT run adds a face-on map of the ionised fraction
+                @test :xHII in [c.var for c in ReportPlan(rt.output; path=rt.path).cards if c isa ProjectionCard]
+                dr = report(rt.output; path=rt.path, output=:none, verbose=false)
+                @test count(c -> c.kind === :map, dr.cards) == 2
             else
                 @test_skip "rt_stromgren not available — skipping RT report/quicklook test"
             end
