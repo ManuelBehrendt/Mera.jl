@@ -48,7 +48,7 @@ ql = quicklook(0; path=path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
-[Mera]: quicklook output 0, reading gas: 2026-10-27T16:54:38.441
+[Mera]: quicklook output 0, reading gas: 2026-11-04T11:55:03.404
    1 CPU file(s), levels 5-7 of 7  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 646248 cells
 ┌─ Mera quicklook ── output 0 (CHOMBO) ───────────────
@@ -59,8 +59,8 @@ Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
 │ gas mass   : 1.219 M⊙
 │ ρ range    : 2.456e-20 … 2.261e-17 g/cm³
 │ T range    : 34170 … 34170 K
-└─ 7.47 s ──────────────────────────────────
-[Mera]: quicklook output 0 finished: 2026-10-27T16:54:44.659
+└─ 7.57 s ──────────────────────────────────
+[Mera]: quicklook output 0 finished: 2026-11-04T11:55:09.681
 ```
 
 ```julia
@@ -114,9 +114,12 @@ capabilities(info)
 ```
 
 ```
-2-element Vector{Symbol}:
+5-element Vector{Symbol}:
  :info
  :hydro
+ :input_files
+ :outputs
+ :output_files
 ```
 
 Chombo files carry gas. This particular run also stored the gravitational potential, which shows
@@ -240,7 +243,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-10-27T16:55:02.521
+[Mera]: 2026-11-04T11:55:26.476
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [mpc] :: 120.488 [mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [mpc] :: 120.488 [mpc]

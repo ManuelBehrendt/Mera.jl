@@ -42,7 +42,7 @@ info = getinfo(150, path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
-[Mera]: 2026-10-27T16:57:44.569
+[Mera]: 2026-11-04T12:00:26.407
 Code: AREPO
 output: 150  time: 1.5381  redshift: 0.0
 boxlen = 40000.0
@@ -60,15 +60,15 @@ ql = quicklook(150; path=path);
 ```
 
 ```
-[Mera]: quicklook output 150, reading particles: 2026-10-27T16:57:59.196
+[Mera]: quicklook output 150, reading particles: 2026-11-04T12:00:43.224
 ┌─ Mera quicklook ── output 150 (AREPO) ───────────────
 │ box        : 40 Mpc      levels 1–1  (finest 20 Mpc)
 │ grid       : ndim 3 · ncpu 1 · nvarh 0
 │ time       : 1.504 Gyr
 │ particles  : 13663769 total  —  stars 295531 · DM 13368238
 │ part. mass : stars 2.043e13 M⊙  ·  DM 9.049e14 M⊙
-└─ 24.5 s ──────────────────────────────────
-[Mera]: quicklook output 150 finished: 2026-10-27T16:58:23.596
+└─ 31.2 s ──────────────────────────────────
+[Mera]: quicklook output 150 finished: 2026-11-04T12:01:14.383
 ```
 
 ```julia
@@ -86,11 +86,14 @@ capabilities(info)
 ```
 
 ```
-4-element Vector{Symbol}:
+7-element Vector{Symbol}:
  :info
  :particles
  :groups
  :logs
+ :input_files
+ :outputs
+ :output_files
 ```
 
 ```julia
@@ -272,7 +275,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-10-27T16:59:00.906
+[Mera]: 2026-11-04T12:01:59.841
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]

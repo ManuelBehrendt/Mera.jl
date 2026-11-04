@@ -49,8 +49,7 @@ ql = quicklook(5; path=path, unit_length=UL, unit_density=UD, unit_velocity=UV,
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
-[ Info: Mera v2.0.0-DEV
-[Mera]: quicklook output 5, reading gas: 2026-10-27T16:53:51.900
+[Mera]: quicklook output 5, reading gas: 2026-11-04T11:54:13.530
    1 CPU file(s), levels 6-6 of 6  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 262144 cells
 ┌─ Mera quicklook ── output 5 (PLUTO) ───────────────
@@ -61,8 +60,8 @@ Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
 │ gas mass   : 5.601e15 g
 │ n_H range  : 0.001293 … 2.895 cm⁻³
 │ T range    : 0.0007382 … 4760 K
-└─ 4.61 s ──────────────────────────────────
-[Mera]: quicklook output 5 finished: 2026-10-27T16:53:56.123
+└─ 7.16 s ──────────────────────────────────
+[Mera]: quicklook output 5 finished: 2026-11-04T11:54:18.320
 ```
 
 `quicklook` prints the summary and keeps the maps it made. It does not draw them,
@@ -101,7 +100,7 @@ setcomposition!(info; X_frac=0.711, mu=0.614);
 ```
 
 ```
-[Mera]: 2026-10-27T16:54:11.319
+[Mera]: 2026-11-04T11:54:33.240
 Code: PLUTO
 output: 5  time: 0.5 [code units]
 grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
@@ -133,10 +132,13 @@ capabilities(info)                  # what this code can provide
 ```
 
 ```
-3-element Vector{Symbol}:
+6-element Vector{Symbol}:
  :info
  :hydro
  :particles
+ :input_files
+ :outputs
+ :output_files
 ```
 
 ```julia
@@ -276,7 +278,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-10-27T16:54:12.871
+[Mera]: 2026-11-04T11:54:35.316
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 1.496e13 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 1.496e13 [cm]

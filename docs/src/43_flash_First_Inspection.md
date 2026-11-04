@@ -46,7 +46,7 @@ ql = quicklook(150; path=path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
-[Mera]: quicklook output 150, reading gas: 2026-10-27T16:55:29.131
+[Mera]: quicklook output 150, reading gas: 2026-11-04T11:58:07.199
    2169 CPU file(s), levels 7-10 of 10  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 7774208 cells
 ┌─ Mera quicklook ── output 150 (FLASH) ───────────────
@@ -57,8 +57,8 @@ Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
 │ gas mass   : 5.215e13 M⊙
 │ ρ range    : 3.331e-30 … 5.922e-26 g/cm³
 │ T range    : 8.136e6 … 1.043e8 K
-└─ 27.3 s ──────────────────────────────────
-[Mera]: quicklook output 150 finished: 2026-10-27T16:55:54.952
+└─ 26.7 s ──────────────────────────────────
+[Mera]: quicklook output 150 finished: 2026-11-04T11:58:32.435
 ```
 
 ```julia
@@ -74,7 +74,7 @@ info = getinfo(150, path);
 ```
 
 ```
-[Mera]: 2026-10-27T16:56:10.140
+[Mera]: 2026-11-04T11:58:46.759
 Code: FLASH
 output: 150  time: 1.1835e17 [code units]
 root grid: 16³ (level 4), FLASH lrefine 4:7 ⇒ levels 7:10, boxlen = 7.40544e24
@@ -121,9 +121,12 @@ capabilities(info)
 ```
 
 ```
-2-element Vector{Symbol}:
+5-element Vector{Symbol}:
  :info
  :hydro
+ :input_files
+ :outputs
+ :output_files
 ```
 
 ## 3. Load the gas, and look at the refinement
@@ -244,7 +247,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-10-27T16:56:29.975
+[Mera]: 2026-11-04T11:59:06.348
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 2.4 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 2.4 [Mpc]

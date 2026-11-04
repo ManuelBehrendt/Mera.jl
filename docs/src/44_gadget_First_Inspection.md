@@ -43,9 +43,8 @@ info = getinfo(200, path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
-[ Info: Mera v2.0.0-DEV
 [Mera]: this snapshot records no unit attributes; using GADGET's defaults (1 kpc/h, 1e10 Msol/h, 1 km/s). Override with unit_length=, unit_density= or unit_velocity= if your run used others.
-[Mera]: 2026-10-27T17:08:26.087
+[Mera]: 2026-11-04T11:59:21.094
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
 boxlen = 64000.0
@@ -62,15 +61,15 @@ ql = quicklook(200; path=path);
 ```
 
 ```
-[Mera]: quicklook output 200, reading particles: 2026-10-27T17:08:40.786
+[Mera]: quicklook output 200, reading particles: 2026-11-04T11:59:37.141
 ┌─ Mera quicklook ── output 200 (GADGET) ───────────────
 │ box        : 31.53 Mpc (91.43 Mpc comoving)      levels 1–1  (finest 15.76 Mpc)
 │ grid       : ndim 3 · ncpu 1 · nvarh 0
 │ time       : 3.51 Gyr   z = 1.9
 │ particles  : 7572534 total  —  stars 450921 · DM 7120464 · sinks 1149
 │ part. mass : stars 1.767e12 M⊙  ·  DM 2.897e16 M⊙
-└─ 14.7 s ──────────────────────────────────
-[Mera]: quicklook output 200 finished: 2026-10-27T17:08:55.423
+└─ 17.5 s ──────────────────────────────────
+[Mera]: quicklook output 200 finished: 2026-11-04T11:59:54.578
 ```
 
 ```julia
@@ -114,11 +113,14 @@ capabilities(info)
 ```
 
 ```
-4-element Vector{Symbol}:
+7-element Vector{Symbol}:
  :info
  :particles
  :groups
  :logs
+ :input_files
+ :outputs
+ :output_files
 ```
 
 `:hydro` is absent, and that is correct: **GADGET has no grid**. Gas lives in the particle file
@@ -238,7 +240,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-10-27T17:09:13.819
+[Mera]: 2026-11-04T12:00:11.520
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 31.527 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 31.527 [Mpc]
