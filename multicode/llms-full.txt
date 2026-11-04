@@ -42,7 +42,7 @@ rather than core work, because the analysis layer is code-blind, so
     Mera does not have yet, write to [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com).
     I am happy to collaborate on extensions.
 
-![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.png)
+![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.webp)
 
 *Computational astrophysicist analyzing AMR simulation data with MERA.jl's powerful visualization and analysis capabilities*
 
@@ -718,7 +718,7 @@ using CairoMakie
 quicklookplot(q)
 ```
 
-![](first_look_files/first_look_15_1.png)
+![](first_look_files/first_look_15_1.webp)
 
 ## Step 3: choosing what to read
 
@@ -2706,7 +2706,7 @@ Over the **full data range** (the default `xrange`) the binned weights sum to th
 a radial mass profile sums to the total mass. Restricting `xrange`/`edges` instead sums only the
 weight **inside that range**.
 
-![Rotation curve, enclosed-mass profile and a mass-weighted density-temperature phase diagram](assets/analysis/profiles_phase.png)
+![Rotation curve, enclosed-mass profile and a mass-weighted density-temperature phase diagram](assets/analysis/profiles_phase.webp)
 
 ## What you can compute
 
@@ -3065,7 +3065,7 @@ once `:mach_custom` is registered, `projection(gas, :mach_custom)` just works:
 
 ![A user-defined field projected like any built-in. `add_field(:mach_custom, …)` registers the local
 Mach number ℳ = |v|/c_s on top of the built-in sound speed `:cs`; `projection(gas, :mach_custom)` then
-renders it, supersonic disk gas (red) over the subsonic halo (blue).](assets/features/derived_fields.png)
+renders it, supersonic disk gas (red) over the subsonic halo (blue).](assets/features/derived_fields.webp)
 
 ### Units
 
@@ -3809,7 +3809,7 @@ end
 fig
 ```
 
-![](pipelines_files/pipelines_13_1.png)
+![](pipelines_files/pipelines_13_1.webp)
 
 ```julia
 # off-axis needs no separate macro: the keywords pass straight through
@@ -4439,7 +4439,7 @@ CairoMakie.save("report.png", fig)
 ![A rendered composable report (isolated disk galaxy): the four cards above, a face-on gas
 surface-density map, the ρ-T phase diagram, a cylindrical-radius density profile (log y-axis,
 showing the exponential disk and its outer break), and the star-formation history, laid out as a
-2×2 grid by `render(rep, :plot)`.](assets/features/report_cards.png)
+2×2 grid by `render(rep, :plot)`.](assets/features/report_cards.webp)
 
 ### The cards
 
@@ -4551,7 +4551,7 @@ hydro-only output.
     ![RAMSES-RT Strömgren-sphere test: the gas surface density (left) with the ionization front carved
     near the source, and the group-1 ionizing-photon density Np₁ (right) radiating from the
     corner source. The RT field is read with `getrt` and projected by an RT projection
-    card.](assets/features/rt_stromgren.png)
+    card.](assets/features/rt_stromgren.webp)
 
 ### Cost estimate & budget
 
