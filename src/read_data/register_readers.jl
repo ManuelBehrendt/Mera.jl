@@ -22,8 +22,9 @@ function register_builtin_readers!()
         name = "RAMSES (native AMR)",
         info = getinfo, hydro = gethydro, particles = getparticles,
         gravity = getgravity, rt = getrt, clumps = getclumps,
-        # defined later in the load order (export/simulation_record.jl), so resolved at call time
-        physics = info -> _ramses_physics(info))
+        # defined later in the load order (export/), so resolved at call time
+        physics = info -> _ramses_physics(info),
+        input_files = info -> _ramses_input_files(info))
 
     return nothing
 end

@@ -85,15 +85,34 @@ function _sidecar_source(x; anonymize::Bool=false)
     return d
 end
 
-# SHA-256 of the run's input files, when the output folder holds them.
+# The input files of a RAMSES output, in its output folder. Registered as the `input_files`
+# capability of the RAMSES reader. An InfoType without a folder (a synthetic object) has none.
+function _ramses_input_files(info::InfoType)
+    isdefined(info, :fnames) || return String[]
+    dir = info.fnames.output
+    isempty(dir) && return String[]
+    return [joinpath(dir, name) for name in _SIDECAR_INPUT_FILES]
+end
+
+# SHA-256 of the run's input files, by file name. The reader of the code names the files (its
+# `input_files` capability); the RAMSES one serves RAMSES and outputs no reader claims. A reader
+# without that capability records none. Files that do not exist are skipped.
 function _sidecar_input_files(x)
     info = _sidecar_info(x)
-    (info === nothing || !isdefined(info, :fnames)) && return nothing
-    dir = info.fnames.output
+    info === nothing && return nothing
+    rdr = isdefined(info, :simcode) ? _reader_by_simcode(info.simcode) : nothing
+    names = rdr === nothing ? _ramses_input_files : get(rdr.funcs, :input_files, nothing)
+    names === nothing && return nothing
+    paths = try
+        names(info)
+    catch e
+        @warn "Could not list the input files of this run." exception = e
+        return nothing
+    end
     files = OrderedDict{String,Any}()
-    for name in _SIDECAR_INPUT_FILES
-        f = joinpath(dir, name)
-        isfile(f) && (files[name] = OrderedDict("sha256" => _sha256_file(f)))
+    for f in paths
+        name = basename(f)
+        (isfile(f) && !haskey(files, name)) && (files[name] = OrderedDict("sha256" => _sha256_file(f)))
     end
     return isempty(files) ? nothing : files
 end

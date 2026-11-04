@@ -437,6 +437,33 @@ _sidecar_json(file) = _J.read(read(Mera._sidecar_file(file), String))
         @test phase(p, :sd, :rho).info === p.info
     end
 
+    @testset "input files come from the reader of the code" begin
+        run = mktempdir()
+        write(joinpath(run, "setup.par"), "nx = 64\n")
+        stub(code) = (i = Mera.InfoType(); i.simcode = code; i.path = run; i)
+        Mera.register_reader!(:sidecar_stub; simcodes=["SIDECAR_STUB"],
+            input_files = info -> [joinpath(info.path, "setup.par"), joinpath(info.path, "missing.par")])
+        Mera.register_reader!(:sidecar_bare; simcodes=["SIDECAR_BARE"])
+        try
+            # the files the reader names, by name with their SHA-256; missing ones are skipped
+            files = Mera._sidecar_input_files(stub("SIDECAR_STUB"))
+            @test collect(keys(files)) == ["setup.par"]
+            @test files["setup.par"]["sha256"] == bytes2hex(open(Mera.SHA.sha256, joinpath(run, "setup.par")))
+            # a reader that names no files records none, also when the working folder holds a
+            # RAMSES namelist (the RAMSES file names must not be looked up for another code)
+            cd(run) do
+                write("namelist.txt", "&RUN_PARAMS\n/\n")
+                @test Mera._sidecar_input_files(stub("SIDECAR_BARE")) === nothing
+                # a RAMSES object without an output folder (synthetic) has no input files either
+                r = stub("RAMSES"); r.fnames = Mera.FileNamesType(); r.fnames.output = ""
+                @test Mera._sidecar_input_files(r) === nothing
+            end
+            @test supports(stub("SIDECAR_STUB"), :input_files) && !supports(stub("SIDECAR_BARE"), :input_files)
+        finally
+            Mera.unregister_reader!(:sidecar_stub); Mera.unregister_reader!(:sidecar_bare)
+        end
+    end
+
     if !DATA_AVAILABLE
         @test_skip "Simulation data not available"
     else
