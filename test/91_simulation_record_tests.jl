@@ -29,6 +29,19 @@ const _J91 = Mera.JSON3
         @test haskey(Mera._reader(:ramses).funcs, :physics)
     end
 
+    @testset "a code without a grid has no refinement levels (data-free)" begin
+        stub(code) = (i = Mera.InfoType(); i.simcode = code; i.levelmin = 7; i.levelmax = 12; i.boxlen = 1.0; i)
+        Mera.register_reader!(:record_particles; simcodes=["RECORD_PART"], particles = i -> nothing)
+        try
+            r = simulationrecord(stub("RECORD_PART"))["resolution"]
+            @test all(isnothing, (r["levelmin"], r["levelmax"], r["cells_per_dim_finest"], r["finest_cell_pc"]))
+            @test occursin("no grid", sprint(show, MIME"text/plain"(), simulationrecord(stub("RECORD_PART"))))
+            @test simulationrecord(stub("RAMSES"))["resolution"]["levelmax"] == 12
+        finally
+            Mera.unregister_reader!(:record_particles)
+        end
+    end
+
     @testset "datacite needs creators and a title (data-free)" begin
         rec = SimulationRecord(Mera.OrderedDict{String,Any}("simulation" => Dict("code" => "RAMSES")), "")
         @test_throws ArgumentError datacite(rec; title="x")
