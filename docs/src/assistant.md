@@ -36,6 +36,15 @@ Both are published with the documentation:
 | [`llms.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms.txt) | A compact grounding, about 2600 words. The data model, the vocabulary, the traps above, what is not in Mera, and how to check a result. Written to be pasted or attached whole. |
 | [`llms-full.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms-full.txt) | The conceptual documentation concatenated into one file, about 37 000 words. Attach it when the question needs depth. |
 
+!!! note "Working with a code other than RAMSES"
+    The multicode docs have their own copies,
+    [`llms.txt`](https://manuelbehrendt.github.io/Mera.jl/multicode/llms.txt) and
+    [`llms-full.txt`](https://manuelbehrendt.github.io/Mera.jl/multicode/llms-full.txt). They add
+    the other readers: which codes are read and how they are detected, the entry points and units
+    of each, their traps, and how sidecars, simulation records and citations work on every code.
+    Give those to the assistant when your data come from PLUTO, Chombo, Athena++, FLASH, GADGET,
+    AREPO or AMReX/Quokka.
+
 `llms-full.txt` deliberately leaves out the tutorial pages. Those are generated from notebooks and
 are mostly printed output, which fills an assistant's context without teaching it much.
 

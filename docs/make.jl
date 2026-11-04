@@ -352,6 +352,19 @@ let conceptual = ["index.md", "where_to_start.md", "first_look.md", "computation
     @info "wrote llms-full.txt"
 end
 
+# multicode only: the other codes in the AI grounding. llms.txt is shared with master, so the part
+# about the other readers lives in llms_multicode.txt and is appended here; a merge from master
+# never touches it. multicode.md joins the conceptual pages of llms-full.txt the same way.
+let build = joinpath(@__DIR__, "build"), src = joinpath(@__DIR__, "src")
+    open(io -> write(io, read(joinpath(src, "llms_multicode.txt"), String)), joinpath(build, "llms.txt"), "a")
+    rm(joinpath(build, "llms_multicode.txt"); force=true)
+    open(joinpath(build, "llms-full.txt"), "a") do io
+        println(io, "\n\n<!-- ===== multicode.md ===== -->\n")
+        write(io, read(joinpath(src, "multicode.md"), String))
+    end
+    @info "added the other codes to llms.txt and llms-full.txt"
+end
+
 # The release line is published from `master`, the multi-code line from `multicode`, each
 # into its own folder on the docs site. Without this, the frontend pages exist only as raw
 # markdown on a branch, which is not something you can send a collaborator.
