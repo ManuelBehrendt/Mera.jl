@@ -33,7 +33,7 @@ Both are published with the documentation:
 
 | file | what it is |
 |---|---|
-| [`llms.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms.txt) | A compact grounding, about 2400 words. The data model, the vocabulary, the traps above, what is not in Mera, and how to check a result. Written to be pasted or attached whole. |
+| [`llms.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms.txt) | A compact grounding, about 2600 words. The data model, the vocabulary, the traps above, what is not in Mera, and how to check a result. Written to be pasted or attached whole. |
 | [`llms-full.txt`](https://manuelbehrendt.github.io/Mera.jl/stable/llms-full.txt) | The conceptual documentation concatenated into one file, about 37 000 words. Attach it when the question needs depth. |
 
 `llms-full.txt` deliberately leaves out the tutorial pages. Those are generated from notebooks and
