@@ -33,6 +33,13 @@
         @test Mera._unit_factor(nothing, :standard) == 1.0
         delete_unit(:halfx); @test !(:halfx in list_units())
 
+        # :Zsun is registered on load, also when MERA_QUIET=1 silences the greeting
+        z = Mera.USER_UNITS[:Zsun]
+        delete_unit(:Zsun)
+        withenv(() -> Mera.__init__(), "MERA_QUIET" => "1")
+        @test Mera.USER_UNITS[:Zsun] == 1 / Mera.MERA_ZSUN_GFM
+        add_unit(:Zsun, z)
+
         fd = field_dependencies(:hydro, :ekin)
         @test Set(fd.direct) == Set([:mass, :v]) && Set(fd.raw) == Set([:rho, :vx, :vy, :vz])
         io = IOBuffer(); field_tree(:hydro, :mach; io=io); s = String(take!(io))
