@@ -43,7 +43,7 @@ ql = quicklook(500; path=path);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
-[Mera]: quicklook output 500, reading gas: 2026-11-04T11:55:53.558
+[Mera]: quicklook output 500, reading gas: 2026-11-04T17:19:37.904
    5300 CPU file(s), levels 7-11 of 11  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 21708800 cells
 ┌─ Mera quicklook ── output 500 (Athena++) ───────────────
@@ -54,8 +54,8 @@ Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
 │ gas mass   : 9.395e13 g
 │ ρ range    : 48.75 … 1.147e6 g/cm³
 │ T range    : 9.839e-10 … 2.325e-8 K
-└─ 49.2 s ──────────────────────────────────
-[Mera]: quicklook output 500 finished: 2026-11-04T11:56:41.748
+└─ 49.8 s ──────────────────────────────────
+[Mera]: quicklook output 500 finished: 2026-11-04T17:20:26.683
 ```
 
 ```julia
@@ -81,7 +81,7 @@ info = getinfo(500, path);
 ```
 
 ```
-[Mera]: 2026-11-04T11:56:57.893
+[Mera]: 2026-11-04T17:20:39.899
 Code: Athena++
 output: 500  time: 5000.0 [code units]
 root grid: 128³ (level 7), MaxLevel 4 ⇒ levels 7:11, boxlen = 4000.0
@@ -107,9 +107,10 @@ capabilities(info)
 ```
 
 ```
-5-element Vector{Symbol}:
+6-element Vector{Symbol}:
  :info
  :hydro
+ :physics
  :input_files
  :outputs
  :output_files
@@ -211,7 +212,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-11-04T11:57:37.053
+[Mera]: 2026-11-04T17:21:20.261
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 4000.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 4000.0 [cm]
