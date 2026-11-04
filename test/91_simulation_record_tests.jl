@@ -118,10 +118,21 @@ const _J91 = Mera.JSON3
         @test_throws ArgumentError citation(42)
         @test_throws ArgumentError citation(joinpath(d, "nosidecar.png"))
         # the code's papers follow the physics the run used
-        @test length(Mera._code_papers("RAMSES", Dict("mhd" => false, "radiative_transfer" => false))) == 1
-        @test occursin("Rosdahl2013", join(Mera._code_papers("RAMSES", Dict("radiative_transfer" => true))))
-        @test occursin("Fromang2006", join(Mera._code_papers("ramses", Dict("mhd" => true))))
+        phys(s...) = Dict("summary" => Dict(s...))
+        @test length(Mera._code_papers("RAMSES", phys("mhd" => false, "radiative_transfer" => false))) == 1
+        @test occursin("Rosdahl2013", join(Mera._code_papers("RAMSES", phys("radiative_transfer" => true))))
+        @test occursin("Fromang2006", join(Mera._code_papers("ramses", phys("mhd" => true))))
+        @test length(Mera._code_papers("RAMSES", nothing)) == 1                # code paper only
         @test isempty(Mera._code_papers("SOMECODE", nothing)) && isempty(Mera._code_papers(nothing, nothing))
+        # `when` as a function of the whole physics record
+        Mera._CODE_PAPERS["WHENTEST"] = [(when = p -> get(p, "written_by", nothing) == "B", bibtex = "@misc{B,}")]
+        try
+            @test Mera._code_papers("WHENTEST", Dict("written_by" => "B")) == ["@misc{B,}"]
+            @test isempty(Mera._code_papers("WHENTEST", Dict("written_by" => "A")))
+            @test isempty(Mera._code_papers("WHENTEST", nothing))
+        finally
+            delete!(Mera._CODE_PAPERS, "WHENTEST")
+        end
     end
 
     if !DATA_AVAILABLE

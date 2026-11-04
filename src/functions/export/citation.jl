@@ -13,8 +13,10 @@
 const _MERA_CONCEPT_DOI = "10.5281/zenodo.3675254"
 const _MERA_TITLE = "Mera.jl: Fast, conservation-correct, code-agnostic analysis of astrophysical simulations in Julia"
 
-# Papers to cite for the data of a simulation code: always the code paper, and a paper for a
-# physics module when the run used it (a key of the physics summary of `simulationrecord`).
+# Papers to cite for the data of a simulation code: always the code paper (`when = nothing`), and a
+# paper for a physics module when the run used it (`when` is a key of the physics summary of
+# `simulationrecord`). `when` may also be a function of the whole physics record, for a paper
+# that depends on more than one switch, e.g. on which code wrote a Chombo file.
 const _CODE_PAPERS = Dict(
     "RAMSES" => [
         (when = nothing, bibtex = """
@@ -68,12 +70,12 @@ function _mera_bibtex(version)
     }"""
 end
 
-# (Mera version, simulation code, physics summary) behind a source; `nothing` where unknown
+# (Mera version, simulation code, physics record) behind a source; `nothing` where unknown
 _citation_facts(::Nothing) = (string(pkgversion(@__MODULE__)), nothing, nothing)
 
 function _citation_facts(rec::SimulationRecord)
     d = rec.data
-    return (string(pkgversion(@__MODULE__)), _sc_get(d, "simulation", "code"), _sc_get(d, "physics", "summary"))
+    return (string(pkgversion(@__MODULE__)), _sc_get(d, "simulation", "code"), _sc_get(d, "physics"))
 end
 
 function _citation_facts(file::AbstractString)
@@ -89,8 +91,7 @@ function _citation_facts(x)
     info === nothing && throw(ArgumentError("citation: a $(nameof(typeof(x))) carries no `.info`; " *
                                             "pass the data object, an InfoType or a saved file"))
     code = isdefined(info, :simcode) ? string(info.simcode) : nothing
-    phys = _sc_get(_simulation_physics(info), "summary")
-    return (string(pkgversion(@__MODULE__)), code, phys)
+    return (string(pkgversion(@__MODULE__)), code, _simulation_physics(info))
 end
 
 # the code's papers that apply: the code paper and those of the physics the run used
@@ -98,8 +99,10 @@ function _code_papers(code, physics)
     code === nothing && return String[]
     papers = get(_CODE_PAPERS, uppercase(string(code)), nothing)
     papers === nothing && return String[]
-    used(k) = (v = _sc_get(physics, k); v !== nothing && v !== false)
-    return [p.bibtex for p in papers if p.when === nothing || (physics !== nothing && used(p.when))]
+    used(k) = (v = _sc_get(physics, "summary", k); v !== nothing && v !== false)
+    applies(when) = when === nothing ||
+                    (physics !== nothing && (when isa Function ? when(physics) === true : used(when)))
+    return [p.bibtex for p in papers if applies(p.when)]
 end
 
 """
