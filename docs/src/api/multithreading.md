@@ -1,6 +1,6 @@
 # Multi-Threading API Reference
 
-![MERA.jl Multi-Threading Performance](../assets/representtative_multithreading_60.png)
+![MERA.jl Multi-Threading Performance](../assets/representtative_multithreading_60.webp)
 
 Reference for Mera's threading controls. The guide: what is parallel, what to expect, how to
 choose a thread count, is [Multi-Threading](../multi-threading/multi-threading_intro.md).

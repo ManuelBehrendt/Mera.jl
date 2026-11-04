@@ -244,7 +244,7 @@ resolution. For a sphere, the whole-cell volume error stays at the ~0.5 to 1.5 %
 (it is a step function of which cell centres fall inside), while exact splitting (default
 `nsub=8`) is 10 to 100× smaller and falls smoothly as the cells shrink:
 
-![Region splitting accuracy](../assets/regions/split_accuracy.png)
+![Region splitting accuracy](../assets/regions/split_accuracy.webp)
 
 `nsub` (per-axis sub-sampling of boundary cells, default `8`) trades cost for accuracy; the error
 floor past `nsub≈8` is set by the grid resolution, not the sampling (right panel). Only boundary
@@ -265,7 +265,7 @@ projection(ball, :sd, :Msol_pc2; pxsize=[100., :pc])                            
 projection(subregion(gas, sphere(20.0; range_unit=:kpc) \ cylinder(5.0, 40.0; range_unit=:kpc)), :sd, :Msol_pc2)
 ```
 
-![Projection of split regions](../assets/regions/region_projection.png)
+![Projection of split regions](../assets/regions/region_projection.webp)
 
 *Left → right: a sphere selected with whole cells (blocky edge), the same sphere with exact
 splitting (smooth edge), and a composite `sphere \ cylinder` (a ball with a cylindrical hole).*

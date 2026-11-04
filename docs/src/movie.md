@@ -17,7 +17,7 @@ builds on the same machinery as [`timeseries`](@ref) (one snapshot resident at a
 RAM-safe) and the [`projection`](@ref) engine. Down a box axis the view is fixed by construction; off
 axis it is not, and `fov` is what makes it so (see below).
 
-![A 3-D Sedov blast over its first 36 outputs, each frame tagged with its output number (tags=:output): the column-density frames produced by getmovie, encoded to a GIF by savemovie.](assets/movie/sedov_density.gif)
+![A 3-D Sedov blast over its first 36 outputs, each frame tagged with its output number (tags=:output): the column-density frames produced by getmovie, encoded to a GIF by savemovie.](assets/movie/sedov_density.webp)
 
 This notebook runs on the `timeseries_sedov3d` test run (a 3-D Sedov blast, 13 outputs). All
 file outputs are written to a temporary directory.

@@ -148,7 +148,7 @@ the data, is what presses a read against a node's memory limit.
 
 ### Threading helps reading, but only so far
 
-![Reading thread scaling](../assets/benchmarks/thread_scaling.png)
+![Reading thread scaling](../assets/benchmarks/thread_scaling.webp)
 
 Reading gains **1.61x from 1 to 16 threads** and then turns over: 24 threads is slower
 than 16. Fitting Amdahl's law to the rising part gives a parallel fraction of 0.41, so
@@ -301,7 +301,7 @@ snapshot:
 | 12 | 299.8 s | 11.98 s | 25x | 6.83 GB |
 | 13 | 514.9 s | 22.69 s | **23x** | 12.73 GB |
 
-![Cost against refinement level](../assets/benchmarks/levels_overview.png)
+![Cost against refinement level](../assets/benchmarks/levels_overview.webp)
 
 The mechanism is visible in the shape rather than in the numbers. **RAMSES read cost is
 dominated by parsing every one of the 20489 files whatever you asked for**, so its curve

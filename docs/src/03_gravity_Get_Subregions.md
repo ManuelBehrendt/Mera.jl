@@ -174,7 +174,7 @@ a_bar!(fig[1, 3])
 fig
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_6_1.png)
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_6_1.webp)
 
 The gas lives in a thin disc; the acceleration it feels does not fall away
 nearly as quickly off the plane. Read that panel carefully rather than
@@ -491,7 +491,7 @@ a_bar!(fig[1, 3])
 fig
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_21_1.png)
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_21_1.webp)
 
 The hole is round, not staircased, and the outer rim ends where the cylinder
 does, to within half a pixel.

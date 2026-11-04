@@ -55,7 +55,7 @@ CairoMakie.save("report.png", fig)
 ![A rendered composable report (isolated disk galaxy): the four cards above, a face-on gas
 surface-density map, the ρ-T phase diagram, a cylindrical-radius density profile (log y-axis,
 showing the exponential disk and its outer break), and the star-formation history, laid out as a
-2×2 grid by `render(rep, :plot)`.](assets/features/report_cards.png)
+2×2 grid by `render(rep, :plot)`.](assets/features/report_cards.webp)
 
 ### The cards
 
@@ -167,7 +167,7 @@ hydro-only output.
     ![RAMSES-RT Strömgren-sphere test: the gas surface density (left) with the ionization front carved
     near the source, and the group-1 ionizing-photon density Np₁ (right) radiating from the
     corner source. The RT field is read with `getrt` and projected by an RT projection
-    card.](assets/features/rt_stromgren.png)
+    card.](assets/features/rt_stromgren.webp)
 
 ### Cost estimate & budget
 

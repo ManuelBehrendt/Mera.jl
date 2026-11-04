@@ -202,7 +202,7 @@ gas mass, r < 10 kpc: 1.821e10 Msol
 largest cell at the top of the sphere: 0.75 kpc
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_7_5.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_7_5.webp)
 
 These three lines are the pattern of every cut on this page: a region, a result that works like
 the original data, and a number. The first two maps show what was cut out: the full box, and the
@@ -293,7 +293,7 @@ sphericalshell      7754688 cells   1.18e10 Msol
 cylindricalshell    4084535 cells   8.032e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_10_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_10_4.webp)
 
 Face-on, the box and the cylinder differ only in the corners; edge-on, both are the same ±2 kpc
 slab. The two shells show how a projection hides depth. Face-on, the cylindrical shell is a ring
@@ -433,7 +433,7 @@ Colorbar(fig[1, 4]; colormap=:viridis, colorrange=(0, 1), label="volume fraction
 fig
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_16_1.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_16_1.webp)
 
 The errors are largest where the cells are large. In the refined corner the three panels almost
 agree.
@@ -535,7 +535,7 @@ nsub  points/cell     r = 10 kpc   r = 1.5 kpc   time, r = 10
 32    32768           -0.00036 %        0.01 %         1.21 s
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_20_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_20_3.webp)
 
 **How to choose `nsub`.** `nsub=1` tests only the cell centre, so it is the centre test again.
 From there the error falls quickly. What sets it is the size of the cut cells compared with the
@@ -597,7 +597,7 @@ Colorbar(fig[2, 4]; colormap=:inferno, colorrange=ZLIM, label="log₁₀ Σ  (zo
 fig
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_22_1.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_22_1.webp)
 
 In the zoom, the three rules of the drawing appear on real data: whole cells stick out past the
 circle, the centre test cuts into it, and the split edge lies on it. The split edge is a little
@@ -633,7 +633,7 @@ Colorbar(fig[1, 2], sc, label="volume fraction inside")
 fig
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_24_1.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_24_1.webp)
 
 The fractions lie on both sides of the circle, as in the drawing. Toward the galaxy (lower
 right) the circle crosses many small cells; toward the box edge (upper left) it crosses a few
@@ -719,7 +719,7 @@ whole box             : 3.0400672e10 Msol
 relative imbalance    : 0.0
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_29_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_29_3.webp)
 
 The two maps are exact complements, and the two masses add up to the box total. The hole is not
 completely black: the remaining parts of the cut cells are drawn over their full cell size
@@ -800,7 +800,7 @@ disc ∩ sphere : 5.90283e9 Msol
 sum           : 2.2834624e10   vs disc: 2.2834625e10 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_33_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_33_3.webp)
 
 Difference and intersection split the disc into two parts, and their masses add up to the disc
 mass. The side view is limited to a ±3 kpc slab, so the bite of the sphere shows as a dark lens
@@ -837,7 +837,7 @@ fig
 sculpture gas mass: 2.25759e10 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_3.webp)
 
 The left hole is black: its radius (2.5 kpc) is larger than the half-height of the disc (2 kpc),
 so it goes through the whole disc. The right hole lies inside the companion sphere, which is
@@ -951,7 +951,7 @@ text!(ax, Point3f(0, 0, 6.5); text="disc normal (z)", color=:black, fontsize=11)
 fig
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_44_1.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_44_1.webp)
 
 Now the cut: `cylinder(10., 1.; axis=[1., 0., 2.])`, a thin slab tilted toward +x. Two checks
 show that the tilt costs nothing. The volume matches the exact value πR²·2h, which does not
@@ -990,7 +990,7 @@ tilted-cylinder gas mass : 5.43585e9 Msol
 volume                   : 628.848 kpc³   vs  πR²·2h = 628.319 kpc³   (0.084 %)
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_46_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_46_3.webp)
 
 The volume matches the exact value to the usual sampling accuracy. The two views repeat the
 depth lesson of Step 6: the same selection can look like a blur or like a bar, depending on the
@@ -1046,7 +1046,7 @@ tilted shell volume : 402.739 kpc³   upright: 403.265 kpc³   analytic π(R²�
 in-plane bar volume : 120.595 kpc³   analytic πR²·2h = 120.637 kpc³
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_48_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_48_4.webp)
 
 In the view along the axis, the dashed exact circles at 6 and 10 kpc lie on the edges of the
 ring: cutting along a vector and looking along the same vector fit together. Both tilted volumes
@@ -1098,7 +1098,7 @@ sd_bar!(fig[1, 3])
 fig
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_51_1.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_51_1.webp)
 
 **The disc.** We cut `disc_region` from Step 2 twice, split and with `split=false`, to see the
 lesson of Step 4 on a real structure:
@@ -1164,7 +1164,7 @@ Colorbar(fig[3, 2], hm; label="Δ Σ  [Msol pc⁻²]")
 fig
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_55_1.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_55_1.webp)
 
 **The ring.** Dense gas often forms rings; this one lies between 6 and 10 kpc.
 `cylindricalshell(6., 10., 2.)` selects it within the ±2 kpc slab. A shell has *two* surfaces,
@@ -1215,7 +1215,7 @@ ring gas mass (6 < r < 10 kpc, |z| < 2 kpc):
 ring + inverse = box?  1.0
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_57_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_57_4.webp)
 
 **The envelope.** Outside the disc lies a halo-like envelope, `sphericalshell(10., 20.)`. Its
 inner surface is the same r = 10 kpc sphere as in Step 1 (`hello`). Shell and inner sphere share
@@ -1258,7 +1258,7 @@ sum                       : 3.0014956e10 Msol
 plain sphere(20) directly : 3.0014956e10 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_59_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_59_3.webp)
 
 Both panels use the same frame (±22 kpc) and the same colour scale, so sizes and brightness can
 be compared directly. The dashed r = 10 kpc circle is in both panels: it is the outer wall of
@@ -1391,7 +1391,7 @@ sum             2.28346e10      5.14581e9
 disc direct     2.28346e10      5.14581e9
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_5.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_5.webp)
 
 The stars tile the disc just like the gas. Particles are points, so each one belongs to exactly
 one zone, and the four zones add up to the disc by construction. The overlay shows why the
@@ -1469,7 +1469,7 @@ rendered fringe beyond |z| = 2 kpc   :
 mass invariance, refine=2 / refine=0 : 0.99966
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_66_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_66_3.webp)
 
 The soft band stays within its bound, and `refine=2` makes it four times thinner, while the mass
 stays the same. The children get their own fractions, so changes in the fourth decimal place are
@@ -1536,7 +1536,7 @@ fig
 map mass removed by the display clip : 0.45 %  (cosmetic only: msum is untouched)
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_70_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_70_2.webp)
 
 ## Step 10. Regions with a purpose
 
@@ -1576,7 +1576,7 @@ fig
 identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10   vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_3.webp)
 
 The rule holds, and the side view explains the top view: the blister adds gas only above the
 upper face, where the bright disc hides it from the top, while the chimney removes a full column
@@ -1621,7 +1621,7 @@ fig
 chimneys: 2.2548e10 Msol   crescent: 2.1784e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_74_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_74_3.webp)
 
 **Holes placed by the data.** Combinations become really useful when the data decide the
 geometry. Here we cut a hole around each of the three densest star-forming sites of the galaxy,
@@ -1670,7 +1670,7 @@ cluster sites [kpc, centre-relative]: [(-3.2, 8.8), (-3.2, -5.8), (-2.2, 3.8)]
 swiss-cheese disc: 1.5925e10 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_76_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_76_4.webp)
 
 The crosses mark the sites the *particles* chose; the holes are where the *gas* was cut. The
 three spheres hold a few per cent of the disc volume but a much larger share of its mass,
@@ -1716,7 +1716,7 @@ fig
 bows: 1.0791e10 Msol   filament tube: 2.3211e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_78_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_78_3.webp)
 
 Every shape here is still a measurement: `msum` on any of them uses the fractions, adds up with
 its inverse, and works on particles as well as on cells.

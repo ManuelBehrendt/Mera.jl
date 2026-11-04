@@ -430,7 +430,7 @@ fig
 [ Info: Mera v1.8.0
 ```
 
-![](00_multi_FirstSteps_files/00_multi_FirstSteps_12_6.png)
+![](00_multi_FirstSteps_files/00_multi_FirstSteps_12_6.webp)
 
 ## Units and constants
 

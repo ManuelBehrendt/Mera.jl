@@ -188,7 +188,7 @@ once `:mach_custom` is registered, `projection(gas, :mach_custom)` just works:
 
 ![A user-defined field projected like any built-in. `add_field(:mach_custom, …)` registers the local
 Mach number ℳ = |v|/c_s on top of the built-in sound speed `:cs`; `projection(gas, :mach_custom)` then
-renders it, supersonic disk gas (red) over the subsonic halo (blue).](assets/features/derived_fields.png)
+renders it, supersonic disk gas (red) over the subsonic halo (blue).](assets/features/derived_fields.webp)
 
 ### Units
 

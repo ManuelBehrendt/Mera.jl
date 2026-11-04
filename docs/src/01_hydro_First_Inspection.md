@@ -437,7 +437,7 @@ supertype( HydroPartType )
 ContainMassDataSetType
 ```
 
-![TypeHierarchy](./assets/TypeHierarchy.png)
+![TypeHierarchy](./assets/TypeHierarchy.webp)
 
 ## Data Organization and Structure
 
@@ -574,7 +574,7 @@ using CairoMakie
 overviewplot(gas)
 ```
 
-![](01_hydro_First_Inspection_files/01_hydro_First_Inspection_39_1.png)
+![](01_hydro_First_Inspection_files/01_hydro_First_Inspection_39_1.webp)
 
 ### Statistical Data Analysis
 

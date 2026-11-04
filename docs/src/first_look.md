@@ -170,7 +170,7 @@ using CairoMakie
 quicklookplot(q)
 ```
 
-![](first_look_files/first_look_15_1.png)
+![](first_look_files/first_look_15_1.webp)
 
 ## Step 3: choosing what to read
 

@@ -231,7 +231,7 @@ los=[1,1,1]    ŵ = [0.577, 0.577, 0.577]     û = [-0.408, -0.408, 0.816] frame
 direction=:z   axis-aligned path, no camera basis                   frame (321, 321)   m.direction = :unspecified
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_6_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_6_3.webp)
 
 ### A direction Mera works out for you
 
@@ -286,9 +286,9 @@ projection centre (box fraction) = [0.5, 0.5, 0.5]
 frame: (321, 321)  and  (321, 321)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_8_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_8_3.webp)
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_8_4.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_8_4.webp)
 
 Read the output back:
 
@@ -376,7 +376,7 @@ map          : (2731, 2731)
 stars in the frame : 627896   pixels : 7458361   occupied : 12.1 %
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_11_4.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_11_4.webp)
 
 ## 2. Pointing the camera
 
@@ -495,13 +495,13 @@ inclination + los         → ArgumentError
 direction=:faceon + axis  → ArgumentError
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_13_6.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_13_6.webp)
 
 ```
 angle between the gas and star angular-momentum axes = 0.03°
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_13_9.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_13_9.webp)
 
 `direction=:faceon` and `inclination=0, axis=:angmom` give the **same view**: the same line of
 sight to the last bit, the same up vector, and a map difference of exactly zero.
@@ -724,9 +724,9 @@ end
 figs4
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_20_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_20_1.webp)
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_20_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_20_2.webp)
 
 Read the frame sizes above, not just the pictures. The ±16 kpc request came back far taller:
 `xrange`/`yrange`/`zrange` bound a box **in simulation coordinates**, and the frame is that box's
@@ -805,7 +805,7 @@ fov asked  delivered  frame [px]   extent [kpc]        central depth [kpc]
 23         16.66      (134, 134)   33.33 x 33.33       47.1
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_23_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_23_2.webp)
 
 Four widths, one camera. The frame shrinks in pixels as `fov` shrinks, because the pixel size
 is held fixed, and the **column gets shallower** with it: the selection is a sphere, so halving
@@ -866,7 +866,7 @@ centre                5.3     [-10.3, 10.3, -10.3, 10.3]    5.453e9
 12 kpc out, corner    1.0     [-10.8, 10.8, -10.8, 10.8]    5.032e8
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_26_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_26_3.webp)
 
 The same idea as a movie. The camera keeps one direction and one field of view, and the centre
 walks across the box, so the galaxy drifts through the frame and out the other side. This is the
@@ -900,7 +900,7 @@ println("wrote assets/offaxis/pan_movie.gif  (", length(panseq), " frames, ",
 wrote assets/offaxis/pan_movie.gif  (60 frames, 5835.6 KB)
 ```
 
-![The camera keeps one direction and one field of view while its centre walks across the box, so the galaxy drifts through the frame.](assets/offaxis/pan_movie.gif)
+![The camera keeps one direction and one field of view while its centre walks across the box, so the galaxy drifts through the frame.](assets/offaxis/pan_movie.webp)
 
 **What the pan is good for.** Finding things. A simulation box is mostly empty and an object you
 have not located yet will not be at the centre. Panning at a fixed `fov` is a survey: it costs
@@ -940,7 +940,7 @@ fov=[16,4]   frame (321, 80)    pixels 25680     extent [-16.0, 16.0, -4.0, 4.0]
 the rectangle uses 24.9 % of the square's pixels for the same disc
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_31_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_31_2.webp)
 
 ## 4. Depth along the line of sight
 
@@ -1008,7 +1008,7 @@ depth = ±5 kpc            6.04271e9             0.8638
 depth = ±2 kpc            3.34081e9             0.4776
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_33_6.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_33_6.webp)
 
 ## 5. Whole cells or partial ones
 
@@ -1230,7 +1230,7 @@ angle gas to gas+stars   0.05 arcmin
 both maps on the joint axis: gas (166, 166)  stars (163, 163)   same camera: true
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_40_6.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_40_6.webp)
 
 The angle between the gas and stellar axes is the number that decides whether this matters. A
 few arcminutes, as here, and any of the three axes gives the same picture. Degrees, which is what
@@ -1504,9 +1504,9 @@ end
 sfig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_49_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_49_1.webp)
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_49_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_49_2.webp)
 
 The totals agree but the pictures do not, so a correct total alone does not make a good map.
 
@@ -1732,7 +1732,7 @@ stars   100 pc    27788           6.0            20.6 %
 stars   800 pc    796             64.5           3.8 %
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_55_4.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_55_4.webp)
 
 ### Velocity along the line of sight, and across it
 
@@ -1858,7 +1858,7 @@ binning     pixels used   median rel. diff    p99
 so the ratio of two round-off values there says nothing about the identity.
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_58_6.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_58_6.webp)
 
 Read the two rows of the first table against each other. `:σz` hardly moves between face-on
 and edge-on, because it is the spread along the **simulation** z and the camera has nothing to do
@@ -1999,9 +1999,9 @@ end
 fig2
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_62_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_62_1.webp)
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_62_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_62_2.webp)
 
 ```julia
 # Does σ_LOS depend on how finely you pixelate? Measure it rather than assume.
@@ -2356,7 +2356,7 @@ T > 1e4 K       30442895      2.87379e8               (166, 166)
 the two parts add back to the whole: 100.0 %
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_74_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_74_2.webp)
 
 The three frames are identical because `fov` pinned them, and the two parts add back to the
 whole because a mask only decides which cells are deposited, never how much of one.
@@ -2526,7 +2526,7 @@ gas   frame (321, 321)   stars (321, 321)   potential (321, 321)
 φ along the line of sight: (-147400.0, -39090.0) km²/s²
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_81_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_81_3.webp)
 
 Same keywords, same camera, three kinds of data. The stars form a **thinner, smoother disc** than
 the gas, which is why it helps to map both in one orientation. The potential is smoother than
@@ -2760,7 +2760,7 @@ face-on  frame   (163, 163) at  199.2 pc pixels,   empty 50.2 %
 edge-on  frame   (643, 643) at   49.9 pc pixels,   empty 98.8 %
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_88_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_88_3.webp)
 
 ### The two moments, and what a stellar width is made of
 
@@ -2896,7 +2896,7 @@ max |v_LOS| edge-on                 : 243.5 km/s
 median σ_LOS edge-on                : 23.0 km/s
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_91_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_91_3.webp)
 
 The age map is the panel that has no gas counterpart. It is a mass-weighted mean, so it reads as
 the mean age of the stars in each column rather than as an age of anything in particular. With
@@ -3128,7 +3128,7 @@ fig
 filled pixels per panel: [90000, 90000, 90000] of 90000
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_100_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_100_3.webp)
 
 ### The two slice movies
 
@@ -3196,12 +3196,12 @@ turns from face-on (i = 0°) towards edge-on.
 ```@raw html
 <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-start;">
   <figure style="margin:0; flex:1 1 300px;">
-    <img src="assets/offaxis/slice_travelling.gif" style="width:100%;"
+    <img src="assets/offaxis/slice_travelling.webp" style="width:100%;"
          alt="Travelling slice: the plane moves along the line of sight through the disc at a fixed orientation.">
     <figcaption style="font-size:0.85em; opacity:0.8;">travelling: <code>offset</code> from −10 to +10 kpc</figcaption>
   </figure>
   <figure style="margin:0; flex:1 1 300px;">
-    <img src="assets/offaxis/slice_rotating.gif" style="width:100%;"
+    <img src="assets/offaxis/slice_rotating.webp" style="width:100%;"
          alt="Rotating slice: the plane stays at the centre and turns from face-on towards edge-on.">
     <figcaption style="font-size:0.85em; opacity:0.8;">rotating: inclination from 0° to 174°</figcaption>
   </figure>
@@ -3237,7 +3237,7 @@ hideydecorations!(ax2, grid=false)
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_104_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_104_1.webp)
 
 **The two panels do not share a colour scale, and they cannot.** A projection sums density along
 kiloparsecs of path; a slice reads one cell. The numbers are orders of magnitude apart and they are
@@ -3316,7 +3316,7 @@ slab [kpc]      thickness   share of stellar mass   filled px
 0.1 … 0.2       100 pc      4.71 %                  7023
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_107_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_107_3.webp)
 
 The midplane slab holds most of the young stars and the higher ones thin out fast, which is the
 vertical structure of the disc seen one layer at a time. Nothing here needed a new keyword: a slab
@@ -3393,9 +3393,9 @@ end
 sfigm
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_111_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_111_1.webp)
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_111_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_111_2.webp)
 
 Four azimuths, and the frame size and extent are the same to three decimals, in the pictures and
 in the numbers. That is what makes the sequence usable as a movie: the frame does not change size,
@@ -3498,12 +3498,12 @@ handed to it changed.
 ```@raw html
 <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-start;">
   <figure style="margin:0; flex:1 1 300px;">
-    <img src="assets/offaxis/orbit_movie.gif" style="width:100%;"
+    <img src="assets/offaxis/orbit_movie.webp" style="width:100%;"
          alt="Gas orbit movie: the camera sweeps azimuth at fixed inclination and the frame does not breathe.">
     <figcaption style="font-size:0.85em; opacity:0.8;">gas, Σ</figcaption>
   </figure>
   <figure style="margin:0; flex:1 1 300px;">
-    <img src="assets/offaxis/orbit_movie_stars.gif" style="width:100%;"
+    <img src="assets/offaxis/orbit_movie_stars.webp" style="width:100%;"
          alt="Star orbit movie: the same sweep on the star particles, in the same fixed frame.">
     <figcaption style="font-size:0.85em; opacity:0.8;">stars, Σ</figcaption>
   </figure>

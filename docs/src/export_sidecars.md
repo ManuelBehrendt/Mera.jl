@@ -223,7 +223,7 @@ fig
 Sidecar written → fig3.png.meta.json
 ```
 
-![](export_sidecars_files/export_sidecars_12_3.png)
+![](export_sidecars_files/export_sidecars_12_3.webp)
 
 For a figure with several panels, pass all its results, `writesidecar("fig4.pdf", [m1, m2, m3])`;
 the sidecar then lists the snapshot of each panel. Read back, it shows what the figure was made

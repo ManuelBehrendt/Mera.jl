@@ -678,7 +678,7 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_43_1.png)
+![](06_particles_Projection_files/06_particles_Projection_43_1.webp)
 
 Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):
 
@@ -709,7 +709,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_46_1.png)
+![](06_particles_Projection_files/06_particles_Projection_46_1.webp)
 
 Plot the axes of the map relative to the map-center (given by keyword: data_center):
 
@@ -740,7 +740,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_49_1.png)
+![](06_particles_Projection_files/06_particles_Projection_49_1.webp)
 
 ## Projections of Derived Kinematic Data
 
@@ -865,7 +865,7 @@ imshow( (permutedims(proj_z.maps[:σz])  ), cmap=cmap2, origin="lower", extent=g
 colorbar();
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_58_1.png)
+![](06_particles_Projection_files/06_particles_Projection_58_1.webp)
 
 #### Use quantities in cylindrical coordinates:
 #### Face-on disc (z-direction)
@@ -994,7 +994,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=gete
 colorbar();
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_63_1.png)
+![](06_particles_Projection_files/06_particles_Projection_63_1.webp)
 
 ## Project on a Coarser Grid
 
@@ -1134,7 +1134,7 @@ imshow( (permutedims(proj_z.maps[:σy] )), cmap=cmap2, origin="lower", extent=ge
 colorbar();
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_69_1.png)
+![](06_particles_Projection_files/06_particles_Projection_69_1.webp)
 
 ### pxsize
 Fix the physical size of a map pixel. `pxsize` overrides `lmax` and `res`. The related keyword
@@ -1218,7 +1218,7 @@ cb = colorbar(im, label=L"\mathrm{log10(Birth) \ [Myr]}",orientation="horizontal
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_77_1.png)
+![](06_particles_Projection_files/06_particles_Projection_77_1.webp)
 
 Project the average age of the particles to the grid. The age is taken relative to the loaded snapshot time by default.
 
@@ -1256,7 +1256,7 @@ cb = colorbar(im, label=L"\mathrm{log10(Age) \ [Myr]}",orientation="horizontal",
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_82_1.png)
+![](06_particles_Projection_files/06_particles_Projection_82_1.webp)
 
 Project the average age of the particles relative to a given reference time:
 
@@ -1293,7 +1293,7 @@ cb = colorbar(im, label=L"\mathrm{Age \ [Myr]}",orientation="horizontal", pad=0.
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_87_1.png)
+![](06_particles_Projection_files/06_particles_Projection_87_1.webp)
 
 ## Projection of Masked Data
 
@@ -1347,7 +1347,7 @@ cb = colorbar(im, label=L"\mathrm{log10(Age) \ [Myr]}",orientation="horizontal",
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_92_1.png)
+![](06_particles_Projection_files/06_particles_Projection_92_1.webp)
 
 ## Summary
 

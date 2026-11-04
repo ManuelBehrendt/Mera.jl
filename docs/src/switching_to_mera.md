@@ -195,7 +195,7 @@ hidedecorations!(ax)
 fig
 ```
 
-![](switching_to_mera_files/switching_to_mera_10_1.png)
+![](switching_to_mera_files/switching_to_mera_10_1.webp)
 
 ```julia
 out = mktempdir()                                   # any existing folder

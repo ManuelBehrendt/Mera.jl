@@ -16,7 +16,7 @@ quantity over the cells (or particles) of a snapshot. The canonical use is the *
 PDF**, the log-normal core (with a power-law high-density tail) that supersonic turbulence
 and self-gravity imprint on the gas, and the starting point for many star-formation models.
 
-![Density PDF of a simulated disc, mass- vs volume-weighted: most of the volume is diffuse gas (volume-weighting peaks at low density) while most of the mass is dense (mass-weighting peaks high).](assets/statistics/density_pdf.png)
+![Density PDF of a simulated disc, mass- vs volume-weighted: most of the volume is diffuse gas (volume-weighting peaks at low density) while most of the mass is dense (mass-weighting peaks high).](assets/statistics/density_pdf.webp)
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -199,7 +199,7 @@ lines!(ax, log10.(Pv.centers), Pv.pdf, label="volume-weighted")
 axislegend(ax); fig
 ```
 
-![](statistics_files/statistics_7_1.png)
+![](statistics_files/statistics_7_1.webp)
 
 ## From a PDF to a number
 
@@ -267,7 +267,7 @@ inner  r < 5 kpc : 3195277 cells
 outer 5 - 20 kpc : 20413408 cells
 ```
 
-![](statistics_files/statistics_12_3.png)
+![](statistics_files/statistics_12_3.webp)
 
 The inner disc peaks about a decade and a half higher in density and carries a long tail to the
 star-forming end; the outer shell is the diffuse envelope. Same function, same units, same binning,

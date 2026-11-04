@@ -30,7 +30,7 @@ panel.
 | [mera-logo-black.svg](assets/logo/mera-logo-black.svg) | SVG, 13 KB | **Prefer this.** Vector, sharp at any size, from a slide title to a conference poster. |
 | [mera-logo-black-512.png](assets/logo/mera-logo-black-512.png) | PNG, 512 px | Slides and anything on screen. |
 | [mera-logo-black-1024.png](assets/logo/mera-logo-black-1024.png) | PNG, 1024 px | A full-width slide, or a figure in a paper. |
-| [mera-logo-black-2048.png](assets/logo/mera-logo-black-2048.png) | PNG, 2048 px | Print and posters. |
+| [mera-logo-black-2048.png](assets/logo/mera-logo-black-2048.webp) | PNG, 2048 px | Print and posters. |
 
 ```@raw html
 </div>
@@ -63,8 +63,8 @@ of an image, without a background of its own.
 |:---|:---|:---|
 | [mera-logo-transparent.svg](assets/logo/mera-logo-transparent.svg) | SVG, 13 KB | Over a photograph, or wherever a black block would clash. |
 | [mera-logo-transparent-512.png](assets/logo/mera-logo-transparent-512.png) | PNG, 512 px | Screen use. |
-| [mera-logo-transparent-1024.png](assets/logo/mera-logo-transparent-1024.png) | PNG, 1024 px | Slides and figures. |
-| [mera-logo-transparent-2048.png](assets/logo/mera-logo-transparent-2048.png) | PNG, 2048 px | Print and posters. |
+| [mera-logo-transparent-1024.png](assets/logo/mera-logo-transparent-1024.webp) | PNG, 1024 px | Slides and figures. |
+| [mera-logo-transparent-2048.png](assets/logo/mera-logo-transparent-2048.webp) | PNG, 2048 px | Print and posters. |
 
 ```@raw html
 </div>

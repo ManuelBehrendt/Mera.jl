@@ -119,7 +119,7 @@ default `time` is in **Myr**; the dimensionless Sedov sim is shown here in code 
 
 Plotting those columns against `time` tells the whole story of the run at a glance:
 
-![Evolution curves from the table: peak density rises as the blast forms, total mass is conserved, and the AMR cell count grows as refinement tracks the shock.](assets/timeseries/evolution.png)
+![Evolution curves from the table: peak density rises as the blast forms, total mass is conserved, and the AMR cell count grows as refinement tracks the shock.](assets/timeseries/evolution.webp)
 
 - **`rho_max(t)`** climbs as the shock steepens, the blast forms.
 - **`mass(t)`** is flat: mass is conserved to round-off (the panel shows mass relative to
@@ -256,7 +256,7 @@ can return anything: a [`slice`](@ref), a profile, a scalar. `getmovie` only mak
 
 Laid side by side, the maps show the shell sweeping outward through the box:
 
-![Column-density projection of the Sedov blast at outputs 1, 7 and 13: a uniform box, then an expanding shell, then a strong shock structure.](assets/timeseries/blast_montage.png)
+![Column-density projection of the Sedov blast at outputs 1, 7 and 13: a uniform box, then an expanding shell, then a strong shock structure.](assets/timeseries/blast_montage.webp)
 
 Return a scalar instead when you only need a number per snapshot, for example the peak
 column density over time, `d -> maximum(projection(d, :sd, verbose=false).maps[:sd])`.
@@ -326,7 +326,7 @@ lines!(ax3, t, Float64.(nc)); scatter!(ax3, t, Float64.(nc))
 fig
 ```
 
-![](timeseries_files/timeseries_15_1.png)
+![](timeseries_files/timeseries_15_1.webp)
 
 ## From mera files
 

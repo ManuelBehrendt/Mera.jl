@@ -334,7 +334,7 @@ end
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_10_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_10_1.webp)
 
 ```julia
 # The load behind those shapes: cells owned per rank, counted on every level (the unit RAMSES and
@@ -361,7 +361,7 @@ repartition: 3 CPUs          cells per rank [2693, 2693, 2694]   (max/min 1.000)
 repartition: 7 CPUs          cells per rank [1154, 1154, 1154, 1155, 1154, 1154, 1155]   (max/min 1.001)
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_11_3.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_11_3.webp)
 
 Narrow coloured bars, cells: after `repartition` every rank holds the same number of cells, to within one.
 RAMSES's own split is uneven (1,050 to 3,353 cells): it rebalances only every `nremap` steps, with
@@ -401,7 +401,7 @@ fig
 16 ranks, bisection  cells per rank 11278 to 12363
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_13_2.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_13_2.webp)
 
 ```julia
 # The grids rank 2 of 3 holds on levels 3, 4 and 5: its own and the ghost grids around them.
@@ -410,7 +410,7 @@ dec3 = RW.decompose(t, 3)
 rank_grids_figure(t, dec3, 2, (3, 4, 5); z=0.03)
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_14_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_14_1.webp)
 
 A slice at z = 0.03, through the blast. Blue: the grids rank 2 owns. Orange: **ghost grids**, copies of its neighbours' grids next to its
 border, because the solver needs the neighbouring values. The ghost layer is one grid wide. On these
@@ -451,7 +451,7 @@ rank  own grids  ghost grids  boundary grids
 rank_grids_figure(to, deco, 2, (2, 3, 4); z=0.5, xs=range(-0.2, 1.2; length=280), walls=true)
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_17_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_17_1.webp)
 
 The black square is the box. Green: the boundary grids rank 2 holds, outside the walls next to its
 own and ghost grids. On level 2 one grid is half the box, so rank 2 holds every grid there as a
@@ -762,7 +762,7 @@ Colorbar(fig[1, 5], hm; label="log₁₀ |Δρ|/ρ", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_32_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_32_1.webp)
 
 Machine precision everywhere: RAMSES cannot tell the converted files from its own. Particles are a
 stricter test, because gravity couples each particle to all the mass. The run with 30,000
@@ -1021,7 +1021,7 @@ gravity parents averaged   largest |Δρ|/ρ in this slice: 9.0e-05
 gravity parents as stored  largest |Δρ|/ρ in this slice: 1.2e-14
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_46_3.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_46_3.webp)
 
 Stored gravity parents: round-off. Averaged ones: the gas differs by up to `5e-5` around the
 centre, the potential by `3e-6`.
@@ -1480,7 +1480,7 @@ Colorbar(fig[1, 2], hm; label="log₁₀ largest relative difference", width=10)
 fig
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_63_1.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_63_1.webp)
 
 | run type | difference after one output | why |
 |---|---|---|
@@ -1561,7 +1561,7 @@ MHD tube: 4 → 3 ranks (Hilbert)            largest |Δρ|/ρ in the slice 0.0e
 radiative transfer: 4 → 5 ranks (bisection) largest |Δρ|/ρ in the slice 0.0e+00
 ```
 
-![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_66_4.png)
+![](07_2_multi_RAMSES_Restart_files/07_2_multi_RAMSES_Restart_66_4.webp)
 
 Round-off without structure, or exactly zero, and nothing along the rank borders: the new files
 give RAMSES the same neighbours at every border as its own files.
