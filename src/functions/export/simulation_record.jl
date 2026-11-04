@@ -209,7 +209,10 @@ See also [`datacite`](@ref), [`writesimulationrecord`](@ref), [`provenance`](@re
 function simulationrecord(info::InfoType)
     s = _defined(info, :scale)
     cosmo = try iscosmological(info) catch; false end
-    lmin, lmax, boxlen = _defined(info, :levelmin), _defined(info, :levelmax), _defined(info, :boxlen)
+    # a code whose reader has no grid (particle data, e.g. GADGET) has no refinement levels
+    grid = !isdefined(info, :simcode) || supports(info, :hydro)
+    lmin, lmax = grid ? (_defined(info, :levelmin), _defined(info, :levelmax)) : (nothing, nothing)
+    boxlen = _defined(info, :boxlen)
     finest = (s === nothing || lmax === nothing || boxlen === nothing) ? nothing : boxlen / 2^lmax * s.pc
     part = _defined(info, :part_info)
     counts = part === nothing ? nothing :
@@ -328,8 +331,12 @@ function Base.show(io::IO, ::MIME"text/plain", r::SimulationRecord)
     println(io, "  box          ", bk === nothing ? "?" : "$(_g5(bk)) kpc", bc === nothing ? "" : " ($(_g5(bc)) in code units)",
             ", ", g("box", "ndim"), "-D")
     fc = g("resolution", "finest_cell_pc")
-    println(io, "  resolution   levels ", g("resolution", "levelmin"), "..", g("resolution", "levelmax"),
-            fc === nothing ? "" : ", finest cell $(_g5(fc)) pc")
+    if g("resolution", "levelmax") === nothing
+        println(io, "  resolution   no grid (particle data)")
+    else
+        println(io, "  resolution   levels ", g("resolution", "levelmin"), "..", g("resolution", "levelmax"),
+                fc === nothing ? "" : ", finest cell $(_g5(fc)) pc")
+    end
     t = g("output", "time_myr"); z = g("output", "redshift")
     println(io, "  time         ", z !== nothing ? "z=$(_g5(z))" : t === nothing ? "?" : "$(_g5(t)) Myr")
     println(io, "  physics      ", _physics_line(g("physics", "summary")))
@@ -397,8 +404,9 @@ function _technical_info(d)
     push!(parts, "$(something(g("simulation", "code"), "Simulation")) simulation, $(g("box", "ndim"))-D")
     bk = g("box", "boxlen_kpc"); bk === nothing || push!(parts, "box $(_g5(bk)) kpc")
     fc = g("resolution", "finest_cell_pc")
-    push!(parts, "AMR levels $(g("resolution", "levelmin")) to $(g("resolution", "levelmax"))" *
-                 (fc === nothing ? "" : " (finest cell $(_g5(fc)) pc)"))
+    g("resolution", "levelmax") === nothing ||
+        push!(parts, "AMR levels $(g("resolution", "levelmin")) to $(g("resolution", "levelmax"))" *
+                     (fc === nothing ? "" : " (finest cell $(_g5(fc)) pc)"))
     push!(parts, "physics: " * _physics_line(g("physics", "summary")))
     run = g("run")
     if run !== nothing
