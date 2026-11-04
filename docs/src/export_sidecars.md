@@ -338,7 +338,7 @@ OrderedCollections.OrderedDict{String, Any} with 4 entries:
 ```
 
 Given the simulation folder instead, the record also lists every output with its time and size
-on disk, and the outputs at which the namelist changed, for a run restarted with new settings:
+on disk, and the outputs at which the run's input files changed (the namelist or the build), for a run restarted with new settings:
 
 ```julia
 run = simulationrecord(joinpath(MERA_EXAMPLES, "RAMSES/mw_L10"))
