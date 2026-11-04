@@ -44,6 +44,17 @@ end
 # the Makie extension calls Mera._seq_cmap for the report map cards.
 _seq_cmap(var) = var in (:T, :Temperature, :temperature) ? :inferno : :viridis
 
+# The colormap of each quicklook panel, all perceptually uniform and colorblind-safe: gas density =
+# viridis (the density standard), stars = magma (warm/stellar), dark matter = cividis (the
+# CVD-optimised cool map), |B| = plasma, ionised fraction = cividis, and the ρ–T phase diagram =
+# roma (Crameri), whose many hues separate the gas phases. The edge-on views of a component use its
+# face-on map. Kept here, not in the Makie extension, so the policy is testable without a backend;
+# a user-supplied `colormap` overrides all of them.
+const _QL_CMAP = Dict(:z => :viridis, :x => :viridis, :y => :viridis,
+                      :stars => :magma, :stars_x => :magma, :stars_y => :magma,
+                      :dm => :cividis, :dm_x => :cividis, :dm_y => :cividis, :phase => :roma,
+                      :bmag => :plasma, :xHII => :cividis)
+
 # choose the level to read so the predicted leaf-cell count stays within `budget`;
 # full resolution if it already fits, else the coarse levels (levelmin .. levelmin+2).
 # Estimate the leaf-cell count from the hydro files on disk.

@@ -88,6 +88,11 @@
         @test Mera._seq_cmap(:rho) == :viridis
         @test Mera._seq_cmap(:sd) == :viridis
         @test Mera._seq_cmap(:vx) == :viridis
+        # quicklook: the edge-on stellar and dark-matter panels share the face-on colormap
+        cm = Mera._QL_CMAP
+        @test cm[:stars_x] == cm[:stars_y] == cm[:stars] == :magma
+        @test cm[:dm_x] == cm[:dm_y] == cm[:dm] == :cividis
+        @test cm[:x] == cm[:y] == cm[:z] == :viridis
     end
 
     if !DATA_AVAILABLE
@@ -140,10 +145,6 @@
                 f = tempname() * ".png"; CairoMakie.save(f, fig)
                 @test isfile(f) && filesize(f) > 0
                 rm(f, force=true)
-                # the edge-on stellar and dark-matter panels share the face-on colormap
-                cm = Base.get_extension(Mera, :MeraMakieExt)._QL_CMAP
-                @test cm[:stars_x] == cm[:stars_y] == cm[:stars]
-                @test cm[:dm_x] == cm[:dm_y] == cm[:dm]
             end
         end
 
