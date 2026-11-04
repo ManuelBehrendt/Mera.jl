@@ -18,7 +18,9 @@ function register_builtin_readers!()
         gravity = getgravity, rt = getrt, clumps = getclumps,
         # defined later in the load order (export/), so resolved at call time
         physics = info -> _ramses_physics(info),
-        input_files = info -> _ramses_input_files(info))
+        input_files = info -> _ramses_input_files(info),
+        outputs = path -> checkoutputs(path; verbose=false).outputs,
+        output_files = info -> _ramses_output_files(info))
 
     register_reader!(:pluto;
         simcodes = ["PLUTO"],

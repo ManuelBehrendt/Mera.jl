@@ -42,6 +42,34 @@ const _J91 = Mera.JSON3
         end
     end
 
+    @testset "the folder form asks the reader for the outputs and their files (data-free)" begin
+        run = mktempdir()
+        for o in (3, 1, 2); write(joinpath(run, "snap$o.stub"), "x"^(100o)); end
+        write(joinpath(run, "a.par"), "first"); write(joinpath(run, "b.par"), "second")
+        stubinfo(o, p; verbose=true, kwargs...) =
+            (i = Mera.InfoType(); i.simcode = "RUN_STUB"; i.output = o; i.path = p; i.boxlen = 1.0; i)
+        Mera.register_reader!(:run_stub; simcodes=["RUN_STUB"], priority=1,
+            detect = p -> isfile(joinpath(p, "snap1.stub")), info = stubinfo,
+            outputs = p -> [parse(Int, m.captures[1]) for m in match.(r"^snap(\d+)\.stub$", readdir(p)) if m !== nothing],
+            output_files = i -> [joinpath(i.path, "snap$(i.output).stub")],
+            input_files = i -> [joinpath(i.path, i.output == 1 ? "a.par" : "b.par")])   # new setup from output 2
+        Mera.register_reader!(:run_bare; simcodes=["RUN_BARE"], priority=1,
+            detect = p -> isfile(joinpath(p, "bare.stub")), info = stubinfo)
+        try
+            @test Mera._run_outputs(run) == [1, 2, 3]
+            r = simulationrecord(run; verbose=false)["run"]
+            @test [o["bytes"] for o in r["output_list"]] == [100, 200, 300]
+            @test r["total_bytes"] == 600 && r["namelist_changed_at"] == [2]
+            @test simulationrecord(run; outputs=[3, 1], verbose=false)["run"]["first_output"] == 1
+            bare = mktempdir(); touch(joinpath(bare, "bare.stub"))
+            @test_throws ErrorException Mera._run_outputs(bare)      # the reader cannot list outputs
+            b = stubinfo(1, bare); b.simcode = "RUN_BARE"
+            @test Mera._output_bytes(b) === nothing                   # nor name its files
+        finally
+            Mera.unregister_reader!(:run_stub); Mera.unregister_reader!(:run_bare)
+        end
+    end
+
     @testset "datacite needs creators and a title (data-free)" begin
         rec = SimulationRecord(Mera.OrderedDict{String,Any}("simulation" => Dict("code" => "RAMSES")), "")
         @test_throws ArgumentError datacite(rec; title="x")

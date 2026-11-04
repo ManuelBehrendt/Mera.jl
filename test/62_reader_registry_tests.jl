@@ -26,7 +26,8 @@ end
 
     @testset "supports / capabilities" begin
         @test capabilities(_registry_stub_info("RAMSES")) ==
-              [:info, :hydro, :particles, :gravity, :rt, :clumps, :physics, :input_files]
+              [:info, :hydro, :particles, :gravity, :rt, :clumps, :physics, :input_files,
+               :outputs, :output_files]
         @test capabilities(_registry_stub_info("PLUTO")) == [:info, :hydro, :particles, :input_files]
         # the GADGET-HDF5 family gained :groups (SUBFIND/FoF catalogue) — getgroups(info) —
         # and :logs (the run-time ASCII files: sfr.txt, blackholes.txt, info.txt, …)
