@@ -28,6 +28,7 @@ function register_builtin_readers!()
         info = getinfo_pluto,
         hydro = gethydro_pluto,
         particles = getparticles_pluto,
+        physics = info -> _pluto_physics(info),
         input_files = info -> _pluto_input_files(info),
         outputs = pluto_output_numbers,
         output_files = _pluto_output_files)
@@ -37,7 +38,8 @@ function register_builtin_readers!()
         name = "Chombo / PLUTO-AMR (HDF5)",
         info = getinfo_chombo,
         hydro = gethydro_chombo,
-        input_files = info -> _pluto_input_files(info),
+        physics = info -> _chombo_physics(info),
+        input_files = info -> _chombo_input_files(info),
         outputs = _chombo_output_numbers,
         output_files = info -> [_chombo_file(info.output, info.path)])
 
@@ -46,6 +48,7 @@ function register_builtin_readers!()
         name = "Athena++ (.athdf)",
         info = getinfo_athena,
         hydro = gethydro_athena,
+        physics = info -> _athena_physics(info),
         input_files = info -> _athena_input_files(info),
         outputs = _athena_output_numbers,
         output_files = info -> [_athena_file(info.output, info.path)])
@@ -55,6 +58,7 @@ function register_builtin_readers!()
         name = "FLASH (PARAMESH HDF5)",
         info = getinfo_flash,
         hydro = gethydro_flash,
+        physics = info -> _flash_physics(info),
         input_files = info -> _flash_input_files(info),
         outputs = _flash_output_numbers,
         output_files = info -> [_flash_file(info.output, info.path)])
@@ -72,6 +76,7 @@ function register_builtin_readers!()
         info = getinfo_quokka,
         hydro = gethydro_quokka,
         particles = getparticles_quokka,
+        physics = info -> _amrex_physics(info),
         input_files = info -> _amrex_input_files(info),
         outputs = path -> amrex_output_numbers(path),
         output_files = info -> [amrex_meta(info)[:plotfile]])
@@ -85,6 +90,7 @@ function register_builtin_readers!()
         info = getinfo_amrex,
         hydro = gethydro_amrex,
         particles = getparticles_amrex,
+        physics = info -> _amrex_physics(info),
         input_files = info -> _amrex_input_files(info),
         outputs = path -> amrex_output_numbers(path),
         output_files = info -> [amrex_meta(info)[:plotfile]])
@@ -101,6 +107,7 @@ function register_builtin_readers!()
         particles = getparticles_gadget,
         groups = getgroups_gadget,
         logs = getlogs_gadget,
+        physics = info -> _gadget_physics(info),
         input_files = info -> _gadget_input_files(info),
         outputs = _gadget_output_numbers,
         output_files = info -> _gadget_files(info.output, info.path))

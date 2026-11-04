@@ -177,6 +177,100 @@ end
     end
 end
 
+# Each reader describes the physics of a run with the summary keys RAMSES uses; the code's own
+# parameters sit next to the summary. Chombo files also name the code that wrote them, which
+# decides the papers `citation` lists.
+@testset "physics of each code (data-free)" begin
+    keyset = Set(Mera._PHYSICS_KEYS)
+    phys(info) = simulationrecord(info)["physics"]
+    # PLUTO: the build in definitions.h, the run in pluto.ini; without them nothing is claimed
+    let d = mktempdir(); _synth_pluto(d)
+        @test phys(getinfo(0, d, verbose=false))["summary"]["mhd"] === nothing
+        write(joinpath(d, "definitions.h"), """
+            #define  PHYSICS         MHD
+            #define  RECONSTRUCTION  LINEAR   /* a comment */
+            #define  BODY_FORCE      VECTOR
+            #define  COOLING         NO
+            #define  PARTICLES       NO
+            """)
+        write(joinpath(d, "pluto.ini"), "[Solver]\n\nSolver   hlld\n\n[Time]\nCFL       0.4\nfirst_dt  1.e-9\n")
+        p = phys(getinfo(0, d, verbose=false)); s = p["summary"]
+        @test Set(keys(s)) == keyset
+        @test s["mhd"] === true && s["cooling"] === false && s["particles"] === false
+        @test s["gravity"] == Dict("body_force" => "VECTOR")
+        @test s["hydro"]["solver"] == "hlld" && s["hydro"]["reconstruction"] == "LINEAR" && s["hydro"]["cfl"] == 0.4
+        @test p["parameters"]["Time"]["first_dt"] == 1.0e-9 && p["definitions"]["PHYSICS"] == "MHD"
+    end
+    # Chombo: the components are the state of the run; the files next to it name the code
+    function chombo(dir, comps; ceilva=false)
+        h5open(joinpath(dir, "data.0000.3d.hdf5"), "w") do f
+            a = attributes(f); a["num_components"] = length(comps)
+            for (i, c) in enumerate(comps); a["component_$(i-1)"] = c; end
+            ceilva && (a["CeilVA_mass"] = 0.0)
+        end
+        info = Mera.InfoType(); info.simcode = "CHOMBO"; info.output = 0; info.path = dir
+        return info
+    end
+    papers(info) = [m.captures[1] for m in eachmatch(r"@article\{(\w+),", string(citation(info)))]
+    let d = mktempdir()                                                  # ORION2 with sink particles
+        info = chombo(d, ["density", "X-momentum", "energy-density", "X-magnfield", "gravitational-potential"]; ceilva=true)
+        touch(joinpath(d, "data.0000.3d.sink"))
+        p = Mera._chombo_physics(info); s = p["summary"]
+        @test p["written_by"] == "ORION2" && Set(keys(s)) == keyset
+        @test s["mhd"] === true && s["gravity"] === true && s["sinks"] === true && s["radiative_transfer"] === false
+        @test papers(info) == ["Li2012", "Krumholz2004"]
+    end
+    let d = mktempdir()                                                  # PLUTO-AMR, no field
+        info = chombo(d, ["density", "X-momentum", "energy-density"])
+        write(joinpath(d, "pluto.ini"), "[Solver]\nSolver  hllc\n")
+        p = Mera._chombo_physics(info)
+        @test p["written_by"] == "PLUTO-AMR" && p["summary"]["mhd"] === false
+        @test p["summary"]["hydro"]["solver"] == "hllc"
+        @test papers(info) == ["Mignone2007", "Mignone2012"]
+    end
+    let d = mktempdir()                                                  # nothing names the code
+        info = chombo(d, ["density"])
+        @test !haskey(Mera._chombo_physics(info), "written_by") && isempty(papers(info))
+    end
+    # Athena++: the blocks of the athinput file
+    let d = mktempdir(); _synth_athena(d)
+        write(joinpath(d, "athinput.jeans"), """
+            <time>
+            cfl_number = 0.3     # a comment
+            integrator = vl2
+            <hydro>
+            gamma      = 1.666666666667
+            <gravity>
+            mgmode     = FMG
+            """)
+        p = phys(getinfo(0, d, verbose=false)); s = p["summary"]
+        @test s["gravity"]["mgmode"] == "FMG" && s["hydro"]["integrator"] == "vl2" && s["hydro"]["cfl"] == 0.3
+        @test s["radiative_transfer"] === false && s["particles"] === false && s["mhd"] === nothing
+        @test p["variables"] == ["rho", "press", "vel1", "vel2", "vel3"]
+    end
+    # FLASH: the runtime parameters stored in the file
+    let d = mktempdir(); _synth_flash(d)
+        FS = FixedString{80,0}; fs(t) = FS(ntuple(i -> i <= ncodeunits(t) ? codeunits(t)[i] : 0x00, 80))
+        h5open(joinpath(d, "s_hdf5_plt_cnt_0000"), "r+") do f
+            f["logical runtime parameters"] = [(name=fs(k), value=Int32(v)) for (k, v) in ("usegravity" => 1, "usecool" => 0)]
+            f["string runtime parameters"] = [(name=fs("riemannsolver"), value=fs("hllc"))]
+        end
+        p = phys(getinfo(0, d, verbose=false)); s = p["summary"]
+        @test s["gravity"] === true && s["cooling"] === false && s["mhd"] === false
+        @test s["hydro"]["riemann_solver"] == "hllc"
+        @test p["runtime_parameters"]["logical"]["usegravity"] === true
+    end
+    # AMReX: the fields of the plotfile and the inputs in job_info
+    let d = mktempdir(); _synth_amrex(d; quokka=true)
+        write(joinpath(d, "plt00000", "job_info"),
+              "=====\n Inputs File Parameters\n=====\nmax_timesteps = 10\ncfl = 0.3\n=====\n Other\n")
+        p = phys(getinfo(0, d, verbose=false))
+        @test p["summary"]["hydro"] === true && p["summary"]["radiative_transfer"] === nothing
+        @test p["inputs"] == Dict("max_timesteps" => 10, "cfl" => 0.3)
+        @test haskey(p, "metadata") && "gasDensity" in p["fields"]
+    end
+end
+
 # Each reader lists the outputs of a run and names the files of one, for timeseries, getmovie and
 # the folder form of simulationrecord.
 @testset "outputs of a run and their files, per code (data-free)" begin

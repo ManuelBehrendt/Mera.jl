@@ -160,8 +160,19 @@ result against something you already trust, and to tell us when it disagrees.
 **What to cite.** [`citation`](@ref)`(info)` gives the BibTeX of Mera and of the code that wrote
 the data: PLUTO, Athena++, FLASH, Quokka, AMReX, AREPO, SWIFT and GIZMO each have their paper. A
 GADGET run lists both the GADGET-2 and the GADGET-4 paper, because the files do not say which
-version wrote them; keep the one that applies. Chombo has no paper with a DOI, so a Chombo run
-cites Mera alone. [`datacite`](@ref) names the same paper as related work.
+version wrote them; keep the one that applies. Chombo itself has no paper with a DOI, so a Chombo
+file cites the code that wrote it: PLUTO-AMR when `pluto.ini` lies next to it, ORION2 when
+`orion2.ini` does or the file carries ORION2's `CeilVA_mass` attribute (the rule yt uses), and
+ORION2's sink-particle paper when a `.sink` file is there. [`datacite`](@ref) names the code paper
+as related work.
+
+**What the run used.** [`simulationrecord`](@ref)`(info)["physics"]` describes the physics of the
+run with the keys every code shares: `hydro`, `mhd`, `gravity`, `particles`, `radiative_transfer`,
+`cooling`, `star_formation`, `feedback` and `sinks`. Each is on, off, the settings of that process,
+or `nothing` when the output does not say. The parameters it was read from sit next to the summary:
+PLUTO's `definitions.h` and `pluto.ini`, the components of a Chombo file, the Athena++ input file,
+the runtime parameters and setup call stored in a FLASH file, the inputs in an AMReX plotfile's
+`job_info`, and the `Config` and `Parameters` groups of an AREPO or GADGET-4 snapshot.
 
 ## Where to go next
 

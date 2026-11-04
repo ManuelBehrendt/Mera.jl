@@ -548,6 +548,32 @@ end
         @test files["Config.sh"]["sha256"] == bytes2hex(open(Mera.SHA.sha256, joinpath(run, "Config.sh")))
     end
 
+    @testset "physics: the Header flags, AREPO's Config and Parameters" begin
+        d = mktempdir(); fn = joinpath(d, "snap_000.hdf5"); _write_gadget_gas(fn)
+        s = simulationrecord(getinfo(0, d, verbose=false))["physics"]["summary"]
+        @test s["hydro"]["method"] == "SPH" && s["gravity"] === true && s["particles"] === true
+        @test s["mhd"] === nothing && s["cooling"] === nothing                  # nothing says
+        h5open(fn, "r+") do f
+            c = create_group(f, "Config")
+            attributes(c)["MHD"] = 1; attributes(c)["SELFGRAVITY"] = 1; attributes(c)["PMGRID"] = 256
+            p = create_group(f, "Parameters")
+            attributes(p)["CoolingOn"] = 1; attributes(p)["StarformationOn"] = 0
+            attributes(f["Header"])["Flag_Sfr"] = 1
+        end
+        info = getinfo(0, d, verbose=false)
+        @test info.simcode == "AREPO"
+        p = simulationrecord(info)["physics"]; s = p["summary"]
+        @test s["hydro"]["method"] == "moving mesh" && s["mhd"] === true && s["gravity"]["pm_grid"] == 256
+        @test s["cooling"] === true && s["star_formation"] === false          # Parameters win over Flag_Sfr
+        @test s["sinks"] === false && s["radiative_transfer"] === false
+        @test p["config"]["PMGRID"] == 256 && p["header_flags"]["Flag_Sfr"] == 1
+        # without a Parameters group, parameters-usedvalues next to the snapshot stands in
+        d2 = mktempdir(); _write_gadget_gas(joinpath(d2, "snap_000.hdf5"))
+        write(joinpath(d2, "parameters-usedvalues"), "CoolingOn        1\n% a comment\nStarformationOn  0\n")
+        s2 = simulationrecord(getinfo(0, d2, verbose=false))["physics"]["summary"]
+        @test s2["cooling"] === true && s2["star_formation"] === false
+    end
+
     @testset "outputs of a run: HDF5 snapshots, snapdir_NNN/ and their sizes" begin
         run = mktempdir()
         _write_gadget_gas(joinpath(run, "snap_000.hdf5")); _write_gadget_gas(joinpath(run, "snap_002.hdf5"))

@@ -30,6 +30,10 @@ _files_matching(dirs, pattern::Regex) =
 _pluto_input_files(info::InfoType) =
     _files_named(_snapshot_dirs(info.path), ("pluto.ini", "definitions.h"))
 
+# Chombo: PLUTO-AMR's files, or ORION2's input file
+_chombo_input_files(info::InfoType) =
+    _files_named(_snapshot_dirs(info.path), ("pluto.ini", "definitions.h", "orion2.ini"))
+
 # Athena++: the input file, athinput.<problem>
 _athena_input_files(info::InfoType) =
     _files_matching(_snapshot_dirs(info.path), r"^athinput\.")

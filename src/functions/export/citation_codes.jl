@@ -6,8 +6,9 @@
 # Every entry was checked against its Crossref record.
 #
 # Keys: `_CODE_PAPERS` is looked up with the code name in upper case, `_CODE_CITATIONS` with the
-# name exactly as the reader stores it in `info.simcode`. Chombo has no journal paper with a DOI,
-# so a Chombo run cites Mera alone.
+# name exactly as the reader stores it in `info.simcode`. Chombo itself has no journal paper with
+# a DOI; a Chombo file cites the code that wrote it (the `written_by` of its physics record):
+# PLUTO-AMR, or ORION2 and its sink particles.
 # ====================================================================================
 
 const _MULTICODE_PAPERS = Dict(
@@ -122,3 +123,44 @@ for (code, bib) in _MULTICODE_PAPERS
 end
 _CODE_PAPERS["GADGET"] = [(when = nothing, bibtex = b) for b in _GADGET_PAPERS]
 _CODE_CITATIONS["GADGET"] = _bibtex_doi(last(_GADGET_PAPERS))
+
+# Chombo files: the papers of the code that wrote them
+const _CHOMBO_PAPERS = (
+    pluto_amr = """
+    @article{Mignone2012,
+      author  = {Mignone, A. and Zanni, C. and Tzeferacos, P. and van Straalen, B. and Colella, P. and Bodo, G.},
+      title   = {The PLUTO Code for Adaptive Mesh Computations in Astrophysical Fluid Dynamics},
+      journal = {The Astrophysical Journal Supplement Series},
+      volume  = {198},
+      pages   = {7},
+      year    = {2012},
+      doi     = {10.1088/0067-0049/198/1/7}
+    }""",
+    orion2 = """
+    @article{Li2012,
+      author  = {Li, Pak Shing and Martin, Daniel F. and Klein, Richard I. and McKee, Christopher F.},
+      title   = {A Stable, Accurate Methodology for High Mach Number, Strong Magnetic Field MHD Turbulence with Adaptive Mesh Refinement: Resolution and Refinement Studies},
+      journal = {The Astrophysical Journal},
+      volume  = {745},
+      pages   = {139},
+      year    = {2012},
+      doi     = {10.1088/0004-637X/745/2/139}
+    }""",
+    orion2_sinks = """
+    @article{Krumholz2004,
+      author  = {Krumholz, Mark R. and McKee, Christopher F. and Klein, Richard I.},
+      title   = {Embedding Lagrangian Sink Particles in Eulerian Grids},
+      journal = {The Astrophysical Journal},
+      volume  = {611},
+      pages   = {399--412},
+      year    = {2004},
+      doi     = {10.1086/421935}
+    }""")
+
+_written_by(code) = p -> _sc_get(p, "written_by") == code
+_CODE_PAPERS["CHOMBO"] = [
+    (when = _written_by("PLUTO-AMR"), bibtex = _MULTICODE_PAPERS["PLUTO"]),
+    (when = _written_by("PLUTO-AMR"), bibtex = _CHOMBO_PAPERS.pluto_amr),
+    (when = _written_by("ORION2"), bibtex = _CHOMBO_PAPERS.orion2),
+    (when = p -> _written_by("ORION2")(p) && _sc_get(p, "summary", "sinks") === true,
+     bibtex = _CHOMBO_PAPERS.orion2_sinks)]

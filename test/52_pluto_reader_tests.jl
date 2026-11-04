@@ -217,6 +217,12 @@ if DATA_AVAILABLE && isdir(CH_PATH)
         sl = getvar(sub,:level); sx = Mera.select(sub.data,:cx); sy = Mera.select(sub.data,:cy); sz = Mera.select(sub.data,:cz)
         srho = getvar(sub, :rho)
         @test all(D[k(sl[i],sx[i],sy[i],sz[i])] == srho[i] for i in eachindex(sl))
+
+        # an ORION2 file (yt's rule: no pluto.ini, a CeilVA_mass attribute) with sink particles
+        ph = simulationrecord(info)["physics"]
+        @test ph["written_by"] == "ORION2"
+        @test ph["summary"]["mhd"] === true && ph["summary"]["gravity"] === true && ph["summary"]["sinks"] === true
+        @test occursin("Li2012", string(citation(info))) && occursin("Krumholz2004", string(citation(info)))
     end
 else
     @testset "Chombo reader (skipped: chombo_3d unavailable)" begin
