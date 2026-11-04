@@ -696,12 +696,13 @@ during precompilation, so this lives in `__init__` instead.)
 function __init__()
     v = pkgversion(@__MODULE__)
     vstr = v === nothing ? "" : " v$v"
+    # `:Zsun` is a CONVENTION (see MERA_ZSUN_GFM), registered as a normal user unit so it can
+    # be re-registered with a different convention via add_unit(:Zsun, 1/0.0134). Registered
+    # before the quiet switch below: a quiet session needs the unit as much as any other.
+    haskey(USER_UNITS, :Zsun) || add_unit(:Zsun, 1 / MERA_ZSUN_GFM)
     # MERA_QUIET=1 silences the load message entirely — for scripts, pipelines, and anyone who
     # has Mera as a dependency and does not want another package's banner in their session.
     lowercase(get(ENV, "MERA_QUIET", "false")) in ("1", "true", "yes") && return nothing
-    # `:Zsun` is a CONVENTION (see MERA_ZSUN_GFM), registered as a normal user unit so it can
-    # be re-registered with a different convention via add_unit(:Zsun, 1/0.0134).
-    haskey(USER_UNITS, :Zsun) || add_unit(:Zsun, 1 / MERA_ZSUN_GFM)
     if isinteractive()
         println()
         println( "*__   __ _______ ______   _______ ")
