@@ -1,7 +1,7 @@
 # Multi-Threading & Garbage Collection in Mera  
 *Threading in Mera: what is automatic, what you control, and how to measure it. Julia 1.10+.*
 
-![MERA.jl Multi-Threading Performance](../assets/representtative_multithreading_60.png)
+![MERA.jl Multi-Threading Performance](../assets/representtative_multithreading_60.webp)
 
 *High-performance parallel computing with MERA.jl: leveraging multi-core processors for accelerated astrophysical data analysis*
 

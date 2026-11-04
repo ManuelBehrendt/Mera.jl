@@ -882,7 +882,7 @@ cb = colorbar(im,
              pad=0.2)
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_51_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_51_1.webp)
 
 ```
 PyObject <matplotlib.colorbar.Colorbar object at 0x14ef28730>
@@ -917,7 +917,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_53_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_53_1.webp)
 
 ```
 PyObject <matplotlib.colorbar.Colorbar object at 0x15149ded0>
@@ -1083,7 +1083,7 @@ imshow( permutedims(proj_z.maps[:σz]) , cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_63_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_63_1.webp)
 
 #### Cylindrical Coordinate System
 
@@ -1228,7 +1228,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_68_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_68_1.webp)
 
 ### Performance Tips for Kinematic Analysis
 
@@ -1370,7 +1370,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_74_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_74_1.webp)
 
 #### Setting the pixel size directly (`pxsize`)
 
@@ -1457,7 +1457,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_77_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_77_1.webp)
 
 #### The same request in another length unit (`pxsize`)
 
@@ -1559,7 +1559,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_80_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_80_1.webp)
 
 ## Thermal Properties Analysis
 
@@ -1637,7 +1637,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(c_s) \ [km \ s^{-1}]}",orientation="horizontal", pad=0.2);
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_84_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_84_1.webp)
 
 #### Custom Adiabatic Index
 
@@ -1765,7 +1765,7 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 tight_layout()
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_92_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_92_1.webp)
 
 ## Weighting and Integration Schemes
 
@@ -1877,7 +1877,7 @@ cb = colorbar(im, label=L"\mathrm{log10(v) \ [km \ s^{-1}]}");
 # Note: Ultra-thin slices provide all cells that intersect the 2D plane
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_99_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_99_1.webp)
 
 ## Summary
 

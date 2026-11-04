@@ -125,7 +125,7 @@ Processing files: 100%|███████████████████
 ✓ File processing complete! Combining results...
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_4_10.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_4_10.webp)
 
 **Takeaway:** `getinfo → getrt → projection → show_map` already reveals the ionized sphere.
 Everything below varies *what* we put through this same pipeline.
@@ -205,7 +205,7 @@ title("Radial photon-density profile (≈ 1/r² then cutoff)"); tight_layout();
              (shown once per session; verbose(false) silences Mera's messages)
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_11_2.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_11_2.webp)
 
 ## Region selection
 
@@ -228,7 +228,7 @@ show_map(psub.maps[:Np_total]; logscale=true, clabel=L"$\log_{10}\,N_p^{\rm tota
 (full_cells = length(rt.data), sphere_cells = length(sub.data), shell_cells = length(shell.data)) = (full_cells = 32768, sphere_cells = 6176, shell_cells = 9640)
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_13_3.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_13_3.webp)
 
 ## The projection model (once)
 
@@ -277,9 +277,9 @@ maximum(getvar(rt, :reducedflux1)) = 0.9888163855508687
 maximum(getvar(rt, :Fmag1)) = 0.0001338306154295702
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_16_2.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_16_2.webp)
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_16_3.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_16_3.webp)
 
 ## Photon groups & energy bands
 
@@ -320,7 +320,7 @@ title("Photon content per energy band"); tight_layout();
 info.descriptor.rt[:group_egy] = [18.85, 35.08, 65.67]
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_18_2.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_18_2.webp)
 
 ## The hydro to RT bridge
 
@@ -374,7 +374,7 @@ subplot(1,2,2); pc = imshow(permutedims(col.maps[:xHII]), origin="lower", cmap="
 title("xHII — full-column average (diluted)"); xlabel("x [pixel]"); colorbar(pc, label="xHII (column avg)"); tight_layout();
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_22_1.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_22_1.webp)
 
 ## Ionization-state number densities
 
@@ -404,7 +404,7 @@ show_map(em.maps[:em_recomb]; logscale=true, cmap="hot",
          clabel=L"$\log_{10}\,\Sigma\,n_{HII}^2\,V$", ttl="Mock recombination emission")
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_26_1.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_26_1.webp)
 
 ## Strömgren climax: ionization & temperature profiles
 
@@ -431,7 +431,7 @@ title("Strömgren sphere: ionization & temperature"); tight_layout();
 round(r_front, digits = 2) = 2.61
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_28_3.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_28_3.webp)
 
 ```
 2.61
@@ -471,7 +471,7 @@ title("Ionization–temperature relation"); tight_layout();
 (mu_range = extrema(q[:mu]), T_max = maximum(q[:T]), nH = round(mean(getvar(gas, :rho, :nH)), sigdigits=3))
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_30_1.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_30_1.webp)
 
 ```
 (mu_range = (0.5000900622392285, 0.9999979654377008), T_max = 21275.378385872624, nH = 0.001)
@@ -517,7 +517,7 @@ round(sum(pion[core]) / sum(rec[core]), digits = 2) = 1.37
 maximum(getvar(rt, :ionization_balance, hydro_data = gas)) = 1.0161473703382636e-18
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_32_3.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_32_3.webp)
 
 ## Physical units & the descriptor
 
@@ -547,7 +547,7 @@ maximum(getvar(rt, :rad_energy_density)) = 3.6173072195430976e-14
 extrema(getvar(rt, :Np1_cgs)) = (6.424026570394928e-50, 0.00034004809861971647)
 ```
 
-![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_34_2.png)
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_34_2.webp)
 
 ## Further quantities & a quantitative Strömgren check
 

@@ -281,7 +281,7 @@ supertype( ClumpDataType )
 ContainMassDataSetType
 ```
 
-![TypeHierarchy](./assets/TypeHierarchy.png)
+![TypeHierarchy](./assets/TypeHierarchy.webp)
 
 ## Data Organization and Structure
 

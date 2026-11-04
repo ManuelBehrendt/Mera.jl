@@ -339,11 +339,11 @@ readdir("output_part05")
 
 **Load Data-File**
 
-![](images/01_particles.jpg)
+![](images/01_particles.webp)
 
 **Select age information**
 
-![](images/02_particles.jpg)
+![](images/02_particles.webp)
 
 ```julia
 # => save state
@@ -353,7 +353,7 @@ readdir("output_part05")
 
 **Select Glyphs, arrow orientation, number of sample points**
 
-![](images/01_particles2.jpg)
+![](images/01_particles2.webp)
 
 ```julia
 # => save state

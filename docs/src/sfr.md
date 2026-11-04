@@ -308,4 +308,4 @@ fig
 [ Info: Mera v1.8.0
 ```
 
-![](sfr_files/sfr_15_5.png)
+![](sfr_files/sfr_15_5.webp)

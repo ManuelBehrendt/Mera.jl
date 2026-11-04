@@ -49,7 +49,7 @@ using Mera, CairoMakie          # add CairoMakie once: ] add CairoMakie
 benchmark_report(path, 250; stages=[:storage, :sweep, :conversion])
 ```
 
-![Example benchmark report](../assets/benchmarks/example_report.png)
+![Example benchmark report](../assets/benchmarks/example_report.webp)
 
 That figure is a real run of the snippet above on `sedov3d_grav_part`, one of the public
 test simulations, so you can reproduce it in a couple of minutes before pointing anything

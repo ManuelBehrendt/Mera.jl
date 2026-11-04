@@ -19,7 +19,7 @@ Over the **full data range** (the default `xrange`) the binned weights sum to th
 a radial mass profile sums to the total mass. Restricting `xrange`/`edges` instead sums only the
 weight **inside that range**.
 
-![Rotation curve, enclosed-mass profile and a mass-weighted density-temperature phase diagram](assets/analysis/profiles_phase.png)
+![Rotation curve, enclosed-mass profile and a mass-weighted density-temperature phase diagram](assets/analysis/profiles_phase.webp)
 
 ## What you can compute
 

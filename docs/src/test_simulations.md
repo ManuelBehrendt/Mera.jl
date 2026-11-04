@@ -120,7 +120,7 @@ Processing files: 100%|███████████████████
 [Mera]: quicklook output 7 finished: 2026-10-27T16:52:00.371
 ```
 
-![](test_simulations_files/test_simulations_5_9.png)
+![](test_simulations_files/test_simulations_5_9.webp)
 
 The default report centres its profile on the box, which here is far from the blast. Cards chosen
 for this run measure the radius from the origin, where the explosion started, as the shortest
@@ -136,7 +136,7 @@ rep = report(7; path=sim("sedov3d_amr"), output=:none, cards=[
 render(rep, :plot; ncols=2)
 ```
 
-![](test_simulations_files/test_simulations_7_1.png)
+![](test_simulations_files/test_simulations_7_1.webp)
 
 ### `sedov3d_bisection`: the same blast, cut differently
 
@@ -270,7 +270,7 @@ quicklookplot(look(4, "dm_gas3d_bisection"))
 [Mera]: quicklook output 4 finished: 2026-10-27T16:52:25.039
 ```
 
-![](test_simulations_files/test_simulations_19_4.png)
+![](test_simulations_files/test_simulations_19_4.webp)
 
 ## Sinks
 
@@ -307,7 +307,7 @@ Processing files: 100%|███████████████████
 [Mera]: quicklook output 2 finished: 2026-10-27T16:52:26.413
 ```
 
-![](test_simulations_files/test_simulations_22_8.png)
+![](test_simulations_files/test_simulations_22_8.webp)
 
 ### `ramses_smbh_bondi`: Bondi accretion
 
@@ -344,7 +344,7 @@ Processing files: 100%|███████████████████
 [Mera]: quicklook output 15 finished: 2026-10-27T16:52:29.351
 ```
 
-![](test_simulations_files/test_simulations_25_9.png)
+![](test_simulations_files/test_simulations_25_9.webp)
 
 ```julia
 rep = report(15; path=sim("ramses_smbh_bondi"), output=:none, cards=[
@@ -355,7 +355,7 @@ rep = report(15; path=sim("ramses_smbh_bondi"), output=:none, cards=[
 render(rep, :plot; ncols=2)
 ```
 
-![](test_simulations_files/test_simulations_26_1.png)
+![](test_simulations_files/test_simulations_26_1.webp)
 
 ## Magnetic fields
 
@@ -392,7 +392,7 @@ quicklookplot(look(6, "mhdtube3d"))
 [Mera]: quicklook output 6 finished: 2026-10-27T16:52:32.689
 ```
 
-![](test_simulations_files/test_simulations_29_5.png)
+![](test_simulations_files/test_simulations_29_5.webp)
 
 ```julia
 rep = report(6; path=sim("mhdtube3d"), output=:none, cards=[
@@ -401,7 +401,7 @@ rep = report(6; path=sim("mhdtube3d"), output=:none, cards=[
 render(rep, :plot; ncols=2)
 ```
 
-![](test_simulations_files/test_simulations_30_1.png)
+![](test_simulations_files/test_simulations_30_1.webp)
 
 ### `ramses_abc_flow`: a dynamo
 
@@ -436,7 +436,7 @@ quicklookplot(look(2, "ramses_abc_flow"))
 [Mera]: quicklook output 2 finished: 2026-10-27T16:52:34.375
 ```
 
-![](test_simulations_files/test_simulations_33_5.png)
+![](test_simulations_files/test_simulations_33_5.webp)
 
 ## Radiative transfer
 
@@ -477,7 +477,7 @@ quicklookplot(look(7, "stromgren3d"))
 [Mera]: quicklook output 7 finished: 2026-10-27T16:52:35.595
 ```
 
-![](test_simulations_files/test_simulations_36_4.png)
+![](test_simulations_files/test_simulations_36_4.webp)
 
 ```julia
 rep = report(7; path=sim("stromgren3d"), output=:none, cards=[
@@ -488,7 +488,7 @@ rep = report(7; path=sim("stromgren3d"), output=:none, cards=[
 render(rep, :plot; ncols=2)
 ```
 
-![](test_simulations_files/test_simulations_37_1.png)
+![](test_simulations_files/test_simulations_37_1.webp)
 
 ### `ramses_rt_dirac`: radiation with MHD
 
@@ -523,7 +523,7 @@ quicklookplot(look(2, "ramses_rt_dirac"))
 [Mera]: quicklook output 2 finished: 2026-10-27T16:52:36.770
 ```
 
-![](test_simulations_files/test_simulations_40_5.png)
+![](test_simulations_files/test_simulations_40_5.webp)
 
 ```julia
 rep = report(2; path=sim("ramses_rt_dirac"), output=:none, cards=[
@@ -532,7 +532,7 @@ rep = report(2; path=sim("ramses_rt_dirac"), output=:none, cards=[
 render(rep, :plot; ncols=2)
 ```
 
-![](test_simulations_files/test_simulations_41_1.png)
+![](test_simulations_files/test_simulations_41_1.webp)
 
 ## Cosmology
 
@@ -574,7 +574,7 @@ quicklookplot(look(3, "cosmo3d"))
 [Mera]: quicklook output 3 finished: 2026-10-27T16:52:42.099
 ```
 
-![](test_simulations_files/test_simulations_44_4.png)
+![](test_simulations_files/test_simulations_44_4.webp)
 
 ## How long each first look took
 

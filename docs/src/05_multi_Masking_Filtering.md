@@ -499,7 +499,7 @@ hot   T>1e6 K : 8423491   22.7 % of cells   0.4 % of the mass
 densest 1%    : 370554    1.0 % of cells    20.1 % of the mass
 ```
 
-![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_26_3.png)
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_26_3.webp)
 
 Three views of one simulation, on one colour scale, and the shares printed above say what
 each panel holds. The cold phase is filamentary and carries 47.4 % of the mass in
@@ -571,7 +571,7 @@ p_cd = nothing; cold_d = nothing; GC.gc()
 fig
 ```
 
-![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_31_1.png)
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_31_1.webp)
 
 ```julia
 # refine the geometric edge below the map's pixel size (0.1 kpc), so what limits the

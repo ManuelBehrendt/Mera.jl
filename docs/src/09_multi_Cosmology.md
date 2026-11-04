@@ -219,7 +219,7 @@ xlabel("stellar age  [Gyr]"); ylabel("number of star particles")
 title("Stellar ages (cosmological run)"); tight_layout();
 ```
 
-![](09_multi_Cosmology_files/09_multi_Cosmology_15_1.png)
+![](09_multi_Cosmology_files/09_multi_Cosmology_15_1.webp)
 
 ## Formation redshift and formation time
 
@@ -249,7 +249,7 @@ xlabel("formation redshift  z_form"); ylabel("number of star particles")
 title("Star formation vs. redshift"); tight_layout();
 ```
 
-![](09_multi_Cosmology_files/09_multi_Cosmology_18_1.png)
+![](09_multi_Cosmology_files/09_multi_Cosmology_18_1.webp)
 
 ## Gas overdensity
 
@@ -302,7 +302,7 @@ xlabel("log10(1 + δ)"); ylabel("number of cells")
 title("Gas overdensity distribution"); tight_layout();
 ```
 
-![](09_multi_Cosmology_files/09_multi_Cosmology_21_1.png)
+![](09_multi_Cosmology_files/09_multi_Cosmology_21_1.webp)
 
 ## Comoving ↔ proper
 

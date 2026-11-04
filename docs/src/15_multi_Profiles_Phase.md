@@ -202,7 +202,7 @@ fig
 binsize=(500,:pc): 40 bins of 0.5 kpc
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_5_3.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_5_3.webp)
 
 ## 2. Statistics per bin
 
@@ -326,7 +326,7 @@ squeeze!(fig)
 fig
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_7_1.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_7_1.webp)
 
 ## 3. Density and enclosed mass
 
@@ -399,7 +399,7 @@ squeeze!(fig)
 fig
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_9_1.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_9_1.webp)
 
 ## 4. Weighting, gravity, and components
 
@@ -476,7 +476,7 @@ squeeze!(fig)
 fig
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_11_1.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_11_1.webp)
 
 ## 5. Phase diagrams
 
@@ -606,7 +606,7 @@ fig
 cells in the plane: 590311   filled bins: 7243   cells in the bins kept for the colour panels: 380390
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_4.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_4.webp)
 
 ## 6. Distribution shape and error bars on the mean
 
@@ -693,7 +693,7 @@ fig
 cells per bin (min, max): (3847, 4754)   stars per bin: (20266, 20267)
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_3.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_3.webp)
 
 ## More features
 

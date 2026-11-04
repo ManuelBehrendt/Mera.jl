@@ -277,7 +277,7 @@ end
 fig
 ```
 
-![](magnetic_fields_files/magnetic_fields_19_1.png)
+![](magnetic_fields_files/magnetic_fields_19_1.webp)
 
 Each field carries more than the mean: `std`, `min`, `max`, `median`, `quantiles` and the
 effective count per bin come back in the same pass, so a spread band costs nothing extra.

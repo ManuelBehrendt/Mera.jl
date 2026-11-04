@@ -249,7 +249,7 @@ Colorbar(fig[1,2], hm, label="log10 n_H")
 fig
 ```
 
-![](covering_grid_files/covering_grid_12_1.png)
+![](covering_grid_files/covering_grid_12_1.webp)
 
 That is the whole covering-grid workflow: size it, build the dense 3-D array (whole box or a
 sub-box), and take 2-D FRB slices, all volume-conservative resampling of the AMR leaves.

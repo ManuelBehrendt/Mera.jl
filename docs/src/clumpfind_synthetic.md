@@ -76,7 +76,7 @@ matching particle bags; plus a two-component kinematic stream for the phase-spac
 * **G1 + G2**, two cores sharing one envelope, ~0.1 kpc apart, the **deblending /
   substructure** test case that single-threshold friends-of-friends cannot split.
 
-![Synthetic clump field](assets/clumpfind/synthetic_overview.png)
+![Synthetic clump field](assets/clumpfind/synthetic_overview.webp)
 
 *Left: the gas column density (note the G1+G2 "peanut" at centre). Right: the eight
 injected ground-truth clumps, coloured by id.*
@@ -88,7 +88,7 @@ volume** and every finder runs in three dimensions. The clumps sit at different 
 particular clump **E** (z ≈ 0.25) lies almost directly under the **G1/G2** pair (z ≈ 0.75),
 so they overlap in the x to y projection yet are distinct in 3-D:
 
-![3-D clump distribution](assets/clumpfind/three_d.png)
+![3-D clump distribution](assets/clumpfind/three_d.webp)
 
 *Left: the clumps in the 3-D volume. Right: the x to y projection, E and G1/G2 (red circle)
 land on the same sky position. A 3-D finder separates them by depth; a 2-D connected-component
@@ -168,7 +168,7 @@ additionally resolve the touching pair, which is the only difference in their sc
 The red box marks G1+G2. `ThresholdFoF` connects them into one clump; the density-aware
 finders split them along the saddle:
 
-![Finder comparison](assets/clumpfind/finders_compare.png)
+![Finder comparison](assets/clumpfind/finders_compare.webp)
 
 ```julia
 near(c) = 0.40 < c.com[1] < 0.62 && 0.45 < c.com[2] < 0.60 && 0.68 < c.com[3] < 0.82
@@ -192,7 +192,7 @@ a FoF clump with 2 bound subclumps : true
 
 ## Accuracy, boundedness and the mass function
 
-![Accuracy panel](assets/clumpfind/accuracy.png)
+![Accuracy panel](assets/clumpfind/accuracy.webp)
 
 *Left: recovery metrics per finder. Centre: with `boundedness=true` the six cold clumps
 land at `α_vir ≪ 1` (bound) while the hot clump Fhot sits at `α_vir ≈ 18` (unbound), the
@@ -231,7 +231,7 @@ galaxy = synthetic_clumps(background=:galaxy, noise=0.2, lmax=6)   # clumps insi
 * **Structured disk**, when the diffuse ISM itself rises above the threshold, the choice of
   finder becomes decisive:
 
-![Clumps in an ISM disk](assets/clumpfind/ism_background.png)
+![Clumps in an ISM disk](assets/clumpfind/ism_background.webp)
 
 *Left: the eight clumps embedded in a smooth exponential disk. Centre: a fixed-threshold
 `ThresholdFoF` connects the elevated disk and the clumps into **2 giant blobs**, only 2 of 8
@@ -270,7 +270,7 @@ will merge clumps into the floor. This is exactly what
 Because the ground truth is known, the bench doubles as a **tuning guide**: you can watch
 recovery respond as you turn each knob. Sweeping the three most important parameters:
 
-![Parameter sensitivity](assets/clumpfind/sensitivity.png)
+![Parameter sensitivity](assets/clumpfind/sensitivity.webp)
 
 * **Linking length** (`ThresholdFoF`), *left*. Below one cell nothing links (empty catalog);
   then a **wide stable plateau** (ARI ≈ 0.89, 7 clumps) that is forgiving of the exact value;

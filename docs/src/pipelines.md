@@ -408,7 +408,7 @@ end
 fig
 ```
 
-![](pipelines_files/pipelines_13_1.png)
+![](pipelines_files/pipelines_13_1.webp)
 
 ```julia
 # off-axis needs no separate macro: the keywords pass straight through

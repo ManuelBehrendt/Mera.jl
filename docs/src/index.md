@@ -42,7 +42,7 @@ have never seen and it reports what is there and draws it.
     Mera does not have yet, write to [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com).
     I am happy to collaborate on extensions.
 
-![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.png)
+![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.webp)
 
 *Computational astrophysicist analyzing AMR simulation data with MERA.jl's powerful visualization and analysis capabilities*
 

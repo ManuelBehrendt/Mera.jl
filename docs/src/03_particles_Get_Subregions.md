@@ -169,7 +169,7 @@ sd_bar!(fig[1, 3])
 fig
 ```
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_6_1.png)
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_6_1.webp)
 
 ## 2. One Sphere, and Arithmetic That Cannot Drift
 
@@ -333,7 +333,7 @@ cylindricalshell(6, 10, 2)    145216   28.6 % of the stellar mass
 cylinder(8, 2) tilted 40°     229964   45.2 % of the stellar mass
 ```
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_14_5.png)
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_14_5.webp)
 
 Every panel is the same edge-on view of the same population; grey is
 everything, orange is what the region kept. The tilted cylinder is the one to

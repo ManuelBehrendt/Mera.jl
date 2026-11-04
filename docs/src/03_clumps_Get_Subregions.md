@@ -175,7 +175,7 @@ Colorbar(fig[1, 3]; colormap=:bone, colorrange=SDLIM, label="log₁₀ Σ_gas  [
 fig
 ```
 
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_6_1.png)
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_6_1.webp)
 
 Marker area scales with clump mass. They trace the dense gas, they are
 confined to the disc, and, the point of the next two sections, they are
@@ -339,7 +339,7 @@ slab |z| < 0.02    kpc :  bracket = 153.13 %
 slab |z| < 0.005   kpc :  bracket = 234.42 %
 ```
 
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_14_3.png)
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_14_3.webp)
 
 At the slab thicknesses this galaxy is normally sliced with the bracket is
 negligible: 0 % at |z| < 2 kpc, no clump reaches that high, and 0.45 % at
@@ -416,7 +416,7 @@ cylindricalshell(6, 10, 2)    151    32.3 % of the clump mass
 cylinder(8, 2) tilted 40°     196    28.5 % of the clump mass
 ```
 
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_17_4.png)
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_17_4.webp)
 
 Grey is the whole catalogue, orange what the region kept, seen edge-on. With a
 few hundred objects the panels double as a sanity check you cannot get from a

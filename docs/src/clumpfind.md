@@ -223,7 +223,7 @@ fig = clumpplot(cat; background=bg)        # marker size ∝ mass, colour = log�
 ![Clumps found by `clumpfind` ([`clumpplot`](@ref): marker size ∝ mass, colour = log₁₀ mass) overlaid on
 the gas surface density Σ. The markers sit on the over-dense peaks above the density threshold; fainter
 arm and inter-arm gas *below* the threshold is intentionally not flagged, clump finding is always
-threshold- (and finder-) dependent.](assets/features/clump_catalog.png)
+threshold- (and finder-) dependent.](assets/features/clump_catalog.webp)
 
 !!! note "Not every visible peak is a clump, by design"
     A clump is what the finder + threshold define. Two effects are worth knowing:
@@ -521,7 +521,7 @@ Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```
 
-![](clumpfind_files/clumpfind_28_6.png)
+![](clumpfind_files/clumpfind_28_6.webp)
 
 A [`ClumpCard`](@ref) runs `clumpfind` inside a [First-Look Report](report.md) (the full catalog is
 kept in the card's `data.catalog`):

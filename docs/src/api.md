@@ -1,13 +1,13 @@
-![MERA.jl API Reference](assets/representative_mera_worker_60.png)
+![MERA.jl API Reference](assets/representative_mera_worker_60.webp)
 
 *MERA.jl's comprehensive API for high-performance astrophysical data analysis and computational workflows*
 
 ## Types
 #### Abstract type hierarchies
 
-![DataSetType hierarchy](assets/TypeHierarchy.png)
+![DataSetType hierarchy](assets/TypeHierarchy.webp)
 
-![API type families](assets/TypeHierarchyAPI.png)
+![API type families](assets/TypeHierarchyAPI.webp)
 
 *The families you build and hand to a function: regions, filter conditions, clump finders,
 clump validators, neighbour indices and report cards.*

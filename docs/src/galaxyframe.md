@@ -16,7 +16,7 @@ repeats by hand. [`center_of`](@ref) and [`face_on`](@ref) / [`edge_on`](@ref) d
 the data: the centre from the mass distribution, the orientation from the **gas angular
 momentum**. The result drops straight into [`projection`](@ref).
 
-![Face-on and edge-on views of the spiral_clumps disk, both obtained automatically from the gas angular momentum with face_on(gas) and edge_on(gas).](assets/galaxyframe/face_edge.png)
+![Face-on and edge-on views of the spiral_clumps disk, both obtained automatically from the gas angular momentum with face_on(gas) and edge_on(gas).](assets/galaxyframe/face_edge.webp)
 
 This notebook runs on the `mw_L10` disk-galaxy snapshot (output 300), an isolated spiral, so
 the bare `face_on(gas)` call is correct. Each cell prints the real frame it computed.
@@ -312,7 +312,7 @@ face-on Sigma extrema : (0.0, 197.12448191215034)
 edge-on Sigma extrema : (0.0, 6535.0811176608195)
 ```
 
-![](galaxyframe_files/galaxyframe_14_8.png)
+![](galaxyframe_files/galaxyframe_14_8.webp)
 
 ## Several galaxies, mergers, cosmological boxes
 

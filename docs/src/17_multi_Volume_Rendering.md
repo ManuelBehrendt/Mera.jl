@@ -127,7 +127,7 @@ VolumeRenderType: 1075 × 742 pixels, :rho, filled 15.4 %   (23.0 s)
 VolumeLook(:rho in :nH, log (-2.0, 2.0), :inferno, opacity (0.0, 1.0), exposure 2.5, τ=1 over 120.0 pc)
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_6_4.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_6_4.webp)
 
 These four settings are a good starting point for a galaxy, and the rest of the page varies them
 one at a time:
@@ -178,7 +178,7 @@ rowsize!(fig.layout, 2, Relative(0.22))
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_9_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_9_1.webp)
 
 The opacity curve says how solid a cell of a given value is; `tau_unit_length` then turns that
 into a real optical depth over a real length. The colour curve says which colour it gets. Nothing
@@ -199,7 +199,7 @@ end
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_12_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_12_1.webp)
 
 Because opacity is per length, the picture does not depend on how finely you sample it. The same
 render at 240 pc and at 30 pc pixels differs in sharpness, not in brightness or depth.
@@ -222,7 +222,7 @@ pixels of 240 pc: (137, 95), filled 14.9 %
 pixels of 30 pc: (1075, 742), filled 15.4 %
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_14_5.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_14_5.webp)
 
 ## 6. When a picture comes out too dark
 
@@ -256,7 +256,7 @@ show_image!(fig[2, 2], volumerender(gas, :rho; unit=:nH, colorrange=(1e-2, 1e2),
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_16_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_16_1.webp)
 
 ## 7. Colour range, ramp and gamma
 
@@ -290,7 +290,7 @@ end
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_18_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_18_1.webp)
 
 ## 8. Isosurfaces
 
@@ -368,7 +368,7 @@ end
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_20_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_20_1.webp)
 
 ## 9. Other quantities
 
@@ -404,7 +404,7 @@ show_image!(fig[1, 2], mv; title="line of sight velocity: ±100 km/s")
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_22_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_22_1.webp)
 
 Besides the picture, a render carries two maps: `alpha`, how much of each pixel is filled, and
 `value`, the value of the quantity you actually see along that line of sight.
@@ -421,7 +421,7 @@ Colorbar(fig[1, 4], hm2, label="log₁₀ n_H [cm⁻³]", height=Relative(0.8))
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_24_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_24_1.webp)
 
 ## 10. Choosing the view
 
@@ -444,7 +444,7 @@ end
 fig
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_26_1.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_26_1.webp)
 
 ## 11. Movies: orbits
 
@@ -483,7 +483,7 @@ fig
 6 frames of (540, 543) pixels, one look: true
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_28_3.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_28_3.webp)
 
 ## 12. Movies: a camera path
 
@@ -515,7 +515,7 @@ fig
 pixel size per frame [pc]: [72.6, 72.6, 72.6, 64.4, 34.2, 22.7]
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_30_3.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_30_3.webp)
 
 ## 13. How the cost scales
 
@@ -597,7 +597,7 @@ sphere of 16 kpc: 20737653 cells  7.41 s
 time ~ pixels^0.15   and   time ~ cells^1.07
 ```
 
-![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_32_15.png)
+![](17_multi_Volume_Rendering_files/17_multi_Volume_Rendering_32_15.webp)
 
 ## 14. What it is, and what it is not
 
