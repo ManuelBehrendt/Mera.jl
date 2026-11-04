@@ -4407,8 +4407,9 @@ report(400; path="/sim")          # default: Σ map + ρ–T phase + disk ρ(R) 
 
 The no-argument default is the `quicklook` figures (gas Σ map · ρ-T phase · cylindrical density
 profile) **plus a star-formation-history card**, matching the star formation quicklook headlines in
-its census; the SFR card skips gracefully on an output without star particles. To compose your own,
-list **cards**:
+its census; the SFR card skips gracefully on an output without star particles. An RT run also gets a
+face-on map of its ionised fraction (`:xHII`), and an MHD run a face-on `|B|` map, the same maps
+quicklook shows for them. To compose your own, list **cards**:
 
 ```julia
 report(400; path="/sim", output=:ascii, cards=[
