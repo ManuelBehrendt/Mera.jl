@@ -14,5 +14,5 @@ var DOC_VERSIONS = [
   "dev",
   "multicode",
 ];
-var DOCUMENTER_NEWEST = "v1.10.0";
+var DOCUMENTER_NEWEST = "v1.10.1";
 var DOCUMENTER_STABLE = "stable";

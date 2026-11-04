@@ -1,0 +1,156 @@
+/* MERA.jl Custom Documentation Styles */
+
+/* Placeholder for existing custom styles */
+/* This file ensures compatibility with the current build system */
+
+/* ==========================================================================
+   Multi-code tabs (code-switcher)
+   Markup is emitted by the notebook converter:
+     <div class="mera-tabs"><div class="mera-tab" data-code="PLUTO">…</div>…</div>
+   custom.js builds the tab bar and adds .mera-tabs-js; without JS the
+   sections render stacked with their headings (graceful fallback).
+   ========================================================================== */
+.mera-tab-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 1rem 0 0.9rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid #dbdbdb;
+}
+.mera-tab-btn {
+    border: 1px solid #dbdbdb;
+    border-radius: 9999px;
+    background: #f5f5f5;
+    color: #363636;
+    padding: 0.25rem 0.9rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.mera-tab-btn:hover {
+    background: #e8e8e8;
+}
+.mera-tab-btn-active,
+.mera-tab-btn-active:hover {
+    background: #2e63b8;      /* Documenter link blue */
+    border-color: #2e63b8;
+    color: #fff;
+}
+.mera-tabs-js > .mera-tab { display: none; }
+.mera-tabs-js > .mera-tab.mera-tab-active { display: block; }
+
+/* dark theme */
+html.theme--documenter-dark .mera-tab-bar { border-bottom-color: #5e6d6f; }
+html.theme--documenter-dark .mera-tab-btn {
+    background: #282f2f;
+    border-color: #5e6d6f;
+    color: #fff;
+}
+html.theme--documenter-dark .mera-tab-btn:hover { background: #3b4444; }
+html.theme--documenter-dark .mera-tab-btn-active,
+html.theme--documenter-dark .mera-tab-btn-active:hover {
+    background: #1abc9c;
+    border-color: #1abc9c;
+    color: #fff;
+}
+
+/* print: show every code variant, hide the bar */
+@media print {
+    .mera-tabs-js > .mera-tab { display: block; }
+    .mera-tab-bar { display: none; }
+}
+/* Gallery cards -------------------------------------------------------------
+   One card per recipe, each showing the thumbnail make_thumb.jl produces. The
+   thumbnails are all 800x450, so the grid stays even however many there are. */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 1.3rem;
+    margin: 1.6rem 0;
+}
+.gallery-card {
+    display: block;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 6px;
+    overflow: hidden;
+    text-decoration: none !important;
+    color: inherit !important;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.gallery-card:hover {
+    border-color: rgba(128, 128, 128, 0.8);
+    transform: translateY(-2px);
+}
+/* The thumbnails are background images, not <img> tags, and the file names
+   live here rather than on the page. Reason: a card is written in a
+   `@raw html` block, and Documenter passes such a block through untouched,
+   so a relative URL in it is never rewritten. The page is served as
+   gallery.html in a local build but as gallery/ on the deployed site, one
+   directory deeper, so one relative src cannot be right in both. A URL in a
+   stylesheet is resolved against the stylesheet, and this file is always at
+   assets/custom.css, so the same URL is right in both. A new recipe needs one
+   more line below. */
+.gallery-card .gallery-thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 800 / 450;
+    margin: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.gallery-thumb-coin-flip-movie { background-image: url("gallery/coin_flip_movie_thumb.png"); }
+.gallery-thumb-word-in-a-galaxy { background-image: url("gallery/word_in_a_galaxy_thumb.png"); }
+.gallery-thumb-probe { background-image: url("gallery/probe_thumb.png"); }
+.gallery-thumb-sweep { background-image: url("gallery/sweep_thumb.png"); }
+.gallery-thumb-ramses-any-rank-count { background-image: url("gallery/ramses_any_rank_count_thumb.png"); }
+.gallery-thumb-grid-refined { background-image: url("gallery/where_is_the_grid_refined_thumb.png"); }
+.gallery-card .gallery-title {
+    display: block;
+    font-weight: 600;
+    padding: 0.7rem 0.85rem 0.15rem;
+}
+.gallery-card .gallery-meta {
+    display: block;
+    font-size: 0.82rem;
+    opacity: 0.75;
+    padding: 0 0.85rem 0.85rem;
+}
+
+/* Logo previews ------------------------------------------------------------
+   The swatches on the logo page show the same file on several backgrounds.
+   They are background images for the same reason as the gallery thumbnails
+   above: the markup is a `@raw html` block, so a relative URL written there
+   would break on the deployed site. The aspect ratios are the viewBox of each
+   SVG, so the box matches the artwork exactly. */
+.mera-logo-shot {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.mera-logo-shot-black {
+    width: 290px;
+    aspect-ratio: 1251 / 423;
+    background-image: url("logo/mera-logo-black.svg");
+}
+.mera-logo-shot-transparent {
+    width: 230px;
+    aspect-ratio: 1191 / 363;
+    background-image: url("logo/mera-logo-transparent.svg");
+}
+
+/* Paragraph lead-ins -------------------------------------------------------
+   Several pages introduce a topic with a bold phrase at the start of a
+   paragraph, e.g. "**AMR handled correctly.** ...". In the default theme these
+   are only bold, so they do not stand out from the sentence that follows and a
+   reader scanning the page cannot find them. Give them a small size increase
+   and a little air above, so they read as sub-points without competing with a
+   real heading (h3 is 1.5em). */
+.content p > strong:first-child {
+    font-size: 1.12em;
+    line-height: 1.35;
+}
+.content p:has(> strong:first-child) {
+    margin-top: 1.4em;
+}
