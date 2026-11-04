@@ -41,6 +41,8 @@ Order = [:macro]
 
 ```@docs
 Mera.MaskType
+Mera.MaskArrayType
+Mera.MaskArrayAbstractType
 ```
 
 ## Documentation Functions

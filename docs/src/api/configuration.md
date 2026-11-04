@@ -12,6 +12,8 @@ when called with no argument, so it can be queried as well as set.
 verbose
 showprogress
 output_mode
+verbose_mode
+showprogress_mode
 ```
 
 ## Sidecar files
