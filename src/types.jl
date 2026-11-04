@@ -809,7 +809,17 @@ mutable struct InfoType
     #overview::simulation_overview
     #cpu_overview::cpu_overview_type
     #boxcenter::Array{Float64,1}
-    InfoType() = new()
+    InfoType() = _zero_plain_fields!(new())
+end
+
+# `new()` leaves the plain fields (Bool, Int, Float64) holding whatever was in memory, and they
+# count as defined, so nothing fills them later. A reader that never sets one, as the readers of
+# other codes do for `namelist` or `rt`, then hands on a random value. Start them at false and zero.
+function _zero_plain_fields!(x)
+    for (f, T) in zip(fieldnames(typeof(x)), fieldtypes(typeof(x)))
+        T <: Union{Bool,Integer,AbstractFloat} && isbitstype(T) && setfield!(x, f, zero(T))
+    end
+    return x
 end
 
 
