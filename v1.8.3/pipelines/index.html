@@ -99,7 +99,7 @@ for (i, (m, lab, cm)) in enumerate(((sd, &quot;log Σ  [M⊙/pc²]&quot;, :infer
     hm = heatmap!(ax, proj.extent[1:2], proj.extent[3:4], log10.(max.(m, eps())); colormap=cm)
     Colorbar(fig[2, i], hm, label=lab, vertical=false)
 end
-fig</code></pre><p><img src="../pipelines_files/pipelines_13_1.png" alt/></p><pre><code class="language-julia hljs"># off-axis needs no separate macro: the keywords pass straight through
+fig</code></pre><p><img src="../pipelines_files/pipelines_13_1.webp" alt/></p><pre><code class="language-julia hljs"># off-axis needs no separate macro: the keywords pass straight through
 @project hydro sd=&gt;:Msol_pc2 inclination=60 azimuth=30 myargs=args
 size(sd)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-09-09T17:33:58.540
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]

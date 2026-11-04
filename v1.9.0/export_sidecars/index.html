@@ -76,7 +76,7 @@ Colorbar(fig[1, 2], hm; label=&quot;log10 Σ [Msol/pc²]&quot;)
 save(&quot;fig3.png&quot;, fig)
 
 writesidecar(&quot;fig3.png&quot;, m; note=&quot;Figure 3&quot;);
-fig</code></pre><pre><code class="nohighlight hljs">Sidecar written → fig3.png.meta.json</code></pre><p><img src="../export_sidecars_files/export_sidecars_12_3.png" alt/></p><p>For a figure with several panels, pass all its results, <code>writesidecar(&quot;fig4.pdf&quot;, [m1, m2, m3])</code>; the sidecar then lists the snapshot of each panel. Read back, it shows what the figure was made from:</p><pre><code class="language-julia hljs">readsidecar(&quot;fig3.png&quot;)</code></pre><pre><code class="nohighlight hljs">Sidecar of fig3.png  (png, figure)  data file: unchanged
+fig</code></pre><pre><code class="nohighlight hljs">Sidecar written → fig3.png.meta.json</code></pre><p><img src="../export_sidecars_files/export_sidecars_12_3.webp" alt/></p><p>For a figure with several panels, pass all its results, <code>writesidecar(&quot;fig4.pdf&quot;, [m1, m2, m3])</code>; the sidecar then lists the snapshot of each panel. Read back, it shows what the figure was made from:</p><pre><code class="language-julia hljs">readsidecar(&quot;fig3.png&quot;)</code></pre><pre><code class="nohighlight hljs">Sidecar of fig3.png  (png, figure)  data file: unchanged
   written      2026-10-25 11:55 UTC by Mera 1.9.0; Julia 1.12.7, 4 threads
   source       Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10

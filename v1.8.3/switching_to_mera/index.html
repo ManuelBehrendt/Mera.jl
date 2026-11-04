@@ -48,7 +48,7 @@ hm = heatmap!(ax, img, colormap=:inferno,
               colorrange=(quantile(fin, 0.02), quantile(fin, 0.999)))
 Colorbar(fig[1, 2], hm, label=&quot;log₁₀ Σ&quot;)
 hidedecorations!(ax)
-fig</code></pre><p><img src="../switching_to_mera_files/switching_to_mera_10_1.png" alt/></p><pre><code class="language-julia hljs">out = mktempdir()                                   # any existing folder
+fig</code></pre><p><img src="../switching_to_mera_files/switching_to_mera_10_1.webp" alt/></p><pre><code class="language-julia hljs">out = mktempdir()                                   # any existing folder
 nout = round(Int, info.output)                      # the file is named after the output number
 savedata(cold, out; fmode=:write, verbose=false)    # writes output_00300.jld2 (JLD2)
 back = loaddata(nout, out, :hydro, verbose=false)   # instant reload — no raw-snapshot re-read

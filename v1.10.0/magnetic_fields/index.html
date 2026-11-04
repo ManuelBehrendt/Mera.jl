@@ -111,7 +111,7 @@ for (n, (q, lab)) in enumerate(((:bmag, &quot;|B|&quot;), (:beta, &quot;plasma b
     ax = Axis(fig[1, n]; xlabel=&quot;r&quot;, ylabel=lab, yscale = q === :beta ? log10 : identity)
     lines!(ax, pr.x, pr.fields[q].mean)
 end
-fig</code></pre><p><img src="../magnetic_fields_files/magnetic_fields_19_1.png" alt/></p><p>Each field carries more than the mean: <code>std</code>, <code>min</code>, <code>max</code>, <code>median</code>, <code>quantiles</code> and the effective count per bin come back in the same pass, so a spread band costs nothing extra.</p><pre><code class="language-julia hljs">m, s = pr.fields[:bmag].mean, pr.fields[:bmag].std
+fig</code></pre><p><img src="../magnetic_fields_files/magnetic_fields_19_1.webp" alt/></p><p>Each field carries more than the mean: <code>std</code>, <code>min</code>, <code>max</code>, <code>median</code>, <code>quantiles</code> and the effective count per bin come back in the same pass, so a spread band costs nothing extra.</p><pre><code class="language-julia hljs">m, s = pr.fields[:bmag].mean, pr.fields[:bmag].std
 println(&quot;bins                : &quot;, length(m))
 println(&quot;cells in the first  : &quot;, Int(round(pr.count[1])))
 println(&quot;spread/mean, bin 1  : &quot;, round(s[1]/m[1], digits=3))</code></pre><pre><code class="nohighlight hljs">bins                : 16
