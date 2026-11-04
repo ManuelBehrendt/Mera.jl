@@ -19,7 +19,7 @@
 
 # The complete set of registrable entry points.
 const _READER_CAPABILITIES = (:info, :hydro, :particles, :gravity, :rt, :clumps, :groups, :logs, :physics,
-                              :input_files)
+                              :input_files, :outputs, :output_files)
 
 struct SimReader
     code::Symbol                  # registry key, e.g. :pluto (the getinfo `code=` value)
@@ -74,7 +74,7 @@ end
     register_reader!(code::Symbol; simcodes, name="", detect=nothing, priority=100,
                      note="", info=nothing, hydro=nothing, particles=nothing, groups=nothing,
                      gravity=nothing, rt=nothing, clumps=nothing, logs=nothing,
-                     physics=nothing, input_files=nothing)
+                     physics=nothing, input_files=nothing, outputs=nothing, output_files=nothing)
 
 Register a simulation-code frontend (internal API). `code` is the symbol accepted by
 `getinfo(...; code=…)`; `simcodes` lists the `InfoType.simcode` strings the reader
@@ -114,6 +114,11 @@ run: its parameters, its build settings, its code patches. Sidecars and
 [`simulationrecord`](@ref) record each of them by name with its SHA-256, so a result can be traced
 to the exact setup. List the files your code writes; the ones that do not exist for a given run
 are skipped. Without this function no input files are recorded.
+
+`outputs` is the optional function `path -> Vector{Int}` that lists the output numbers of the run
+in a folder, for [`timeseries`](@ref), [`getmovie`](@ref) and the folder form of
+[`simulationrecord`](@ref). `output_files` is the optional function `info -> Vector{String}` that
+names the files (or folders) of one output, so the record can give its size on disk.
 """
 function register_reader!(code::Symbol; simcodes::Vector{String},
                           name::String=String(code),
@@ -129,12 +134,14 @@ function register_reader!(code::Symbol; simcodes::Vector{String},
                           clumps::Union{Function,Nothing}=nothing,
                           logs::Union{Function,Nothing}=nothing,
                           physics::Union{Function,Nothing}=nothing,
-                          input_files::Union{Function,Nothing}=nothing)
+                          input_files::Union{Function,Nothing}=nothing,
+                          outputs::Union{Function,Nothing}=nothing,
+                          output_files::Union{Function,Nothing}=nothing)
     isempty(simcodes) && error("register_reader!: `simcodes` must name at least one InfoType.simcode string.")
     funcs = Dict{Symbol,Function}()
     for (cap, f) in pairs((info=info, hydro=hydro, particles=particles, groups=groups,
                            gravity=gravity, rt=rt, clumps=clumps, logs=logs, physics=physics,
-                           input_files=input_files))
+                           input_files=input_files, outputs=outputs, output_files=output_files))
         f === nothing || (funcs[cap] = f)
     end
     for s in simcodes
@@ -265,6 +272,14 @@ function detect_simcode(path::String)
         rdr.detect(path) && return rdr.code
     end
     return :ramses
+end
+
+# The output numbers of the run in `path`, sorted, from the reader that recognises the folder.
+function _run_outputs(path::String)
+    rdr = _reader(detect_simcode(path))
+    list = get(rdr.funcs, :outputs, nothing)
+    list === nothing && error("[Mera]: $(rdr.name) cannot list the outputs of a run in \"$path\".")
+    return sort!(collect(Int, list(path)))
 end
 
 # Which `family` values are stars and which dark matter, per simulation code. RAMSES numbers its

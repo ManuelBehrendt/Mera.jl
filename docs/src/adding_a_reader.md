@@ -190,6 +190,17 @@ Files that a run does not have are skipped. `physics` describes which physics th
 the `register_reader!` docstring for its keys). Without them, results still carry the code, the
 output and the time, but not the setup.
 
+Two more functions let Mera work on a whole run. `outputs` lists the output numbers in a folder,
+`output_files` names the files of one output:
+
+```julia
+outputs      = path -> [parse(Int, m[1]) for m in match.(r"^snap_(\d+)\.h5$", readdir(path)) if m !== nothing],
+output_files = info -> [joinpath(info.path, "snap_$(lpad(info.output, 3, '0')).h5")],
+```
+
+With them, [`timeseries`](@ref) and [`getmovie`](@ref) find every output, and the folder form of
+[`simulationrecord`](@ref) gives the size of the run on disk.
+
 ## You can do all of this without touching Mera
 
 You do not have to fork Mera, and you should not open a pull request until your reader already

@@ -178,7 +178,8 @@ run's input files. Where a sidecar describes one result, this describes the simu
 - `info::InfoType`: one output, from [`getinfo`](@ref). The record describes that output.
 - `path::String`: a simulation folder. The record of its last output, plus a `run` part that
   lists every output with its time, redshift and size on disk, and the outputs at which the
-  namelist changed (a restart with new settings).
+  run's input files changed (`namelist_changed_at`; for RAMSES the namelist or the build: a
+  restart with new settings).
 
 # Keywords (folder form)
 - `outputs = nothing`: the output numbers to include; `nothing` takes every output in the folder.
@@ -267,35 +268,51 @@ end
 
 _folder_bytes(dir) = sum((filesize(joinpath(r, f)) for (r, _, fs) in walkdir(dir) for f in fs); init=0)
 
+# The output folder of a RAMSES output. Registered as the `output_files` capability of the RAMSES
+# reader.
+_ramses_output_files(info::InfoType) =
+    (isdefined(info, :fnames) && !isempty(info.fnames.output)) ? [info.fnames.output] : String[]
+
+# Bytes on disk of one output: the files its reader names, a folder with all it holds. `nothing`
+# when the reader cannot name them.
+function _output_bytes(info::InfoType)
+    rdr = isdefined(info, :simcode) ? _reader_by_simcode(info.simcode) : nothing
+    files = rdr === nothing ? _ramses_output_files : get(rdr.funcs, :output_files, nothing)
+    files === nothing && return nothing
+    paths = files(info)
+    isempty(paths) && return nothing
+    return sum(p -> isdir(p) ? _folder_bytes(p) : isfile(p) ? filesize(p) : 0, paths)
+end
+
 function simulationrecord(path::AbstractString; outputs=nothing, verbose::Bool=true)
     verbose = checkverbose(verbose)
-    outs = outputs === nothing ? checkoutputs(path; verbose=false).outputs : sort!(collect(Int, outputs))
+    outs = outputs === nothing ? _run_outputs(path) : sort!(collect(Int, outputs))
     isempty(outs) && throw(ArgumentError("no outputs found in \"$path\""))
     table = Any[]
     changed = Int[]
-    last_nl = nothing
+    last_inputs = nothing
     info = nothing
     for o in outs
         info = getinfo(o, path; verbose=false)
         cosmo = try iscosmological(info) catch; false end
-        nl = joinpath(info.fnames.output, "namelist.txt")
-        h = isfile(nl) ? _sha256_file(nl) : nothing
-        (last_nl !== nothing && h !== nothing && h != last_nl) && push!(changed, o)
-        h === nothing || (last_nl = h)
+        inputs = _sidecar_input_files(info)
+        (last_inputs !== nothing && inputs !== nothing && inputs != last_inputs) && push!(changed, o)
+        inputs === nothing || (last_inputs = inputs)
         push!(table, OrderedDict{String,Any}(
             "output" => o,
             "time_myr" => try Float64(gettime(info, :Myr)) catch; nothing end,
             "redshift" => cosmo ? (try redshift(info) catch; nothing end) : nothing,
-            "bytes" => _folder_bytes(info.fnames.output)))
+            "bytes" => _output_bytes(info)))
     end
     rec = simulationrecord(info)
     times = filter(!isnothing, [t["time_myr"] for t in table])
+    bytes = [t["bytes"] for t in table]
     rec.data["run"] = OrderedDict{String,Any}(
         "outputs" => length(outs),
         "first_output" => first(outs),
         "last_output" => last(outs),
         "time_range_myr" => isempty(times) ? nothing : [minimum(times), maximum(times)],
-        "total_bytes" => sum(t["bytes"] for t in table),
+        "total_bytes" => any(isnothing, bytes) ? nothing : sum(bytes),
         "namelist_changed_at" => changed,
         "output_list" => table)
     verbose && println("simulationrecord: ", length(outs), " output", length(outs) == 1 ? "" : "s",
@@ -348,11 +365,12 @@ function Base.show(io::IO, ::MIME"text/plain", r::SimulationRecord)
     run = g("run")
     if run !== nothing
         tr = get(run, "time_range_myr", nothing)
-        v, u = humanize(Float64(run["total_bytes"]), 3, "memory")
+        tb = run["total_bytes"]
+        disk = tb === nothing ? "" : ", " * join(humanize(Float64(tb), 3, "memory"), " ")
         println(io, "  run          ", run["outputs"], " outputs (", run["first_output"], "..", run["last_output"], ")",
-                tr === nothing ? "" : ", $(_g5(tr[1]))..$(_g5(tr[2])) Myr", ", ", v, " ", u)
+                tr === nothing ? "" : ", $(_g5(tr[1]))..$(_g5(tr[2])) Myr", disk)
         ch = get(run, "namelist_changed_at", Int[])
-        isempty(ch) || println(io, "  namelist     changed at output", length(ch) == 1 ? " " : "s ", join(ch, ", "))
+        isempty(ch) || println(io, "  input files  changed at output", length(ch) == 1 ? " " : "s ", join(ch, ", "))
     end
     inp = g("input_files")
     print(io, "  input files  ", inp === nothing ? "none found" : join(string.(keys(inp)), ", ") * " (SHA-256 recorded)")
@@ -515,8 +533,9 @@ function datacite(rec::SimulationRecord; creators=nothing, title=nothing, descri
     push!(m["descriptions"], OrderedDict("description" => _technical_info(d), "descriptionType" => "TechnicalInfo"))
     run = _sc_get(d, "run")
     if run !== nothing
-        v, u = humanize(Float64(run["total_bytes"]), 3, "memory")
-        m["sizes"] = ["$(run["outputs"]) output$(run["outputs"] == 1 ? "" : "s")", "$v $u"]
+        m["sizes"] = ["$(run["outputs"]) output$(run["outputs"] == 1 ? "" : "s")"]
+        tb = run["total_bytes"]
+        tb === nothing || push!(m["sizes"], join(humanize(Float64(tb), 3, "memory"), " "))
     end
     m["formats"] = ["$(isempty(code) ? "simulation" : code) output files"]
     license === nothing ||

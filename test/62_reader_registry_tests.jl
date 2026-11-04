@@ -26,7 +26,8 @@ end
 
     @testset "supports / capabilities" begin
         @test capabilities(_registry_stub_info("RAMSES")) ==
-              [:info, :hydro, :particles, :gravity, :rt, :clumps, :physics, :input_files]
+              [:info, :hydro, :particles, :gravity, :rt, :clumps, :physics, :input_files,
+               :outputs, :output_files]
         # :logs / :groups belong to the GADGET-HDF5 family and are registered on `multicode`.
         # RAMSES must report false rather than pretend: its run-time files are a different set.
         @test !supports(_registry_stub_info("RAMSES"), :logs)
