@@ -73,7 +73,7 @@ when you want the picture:
 quicklookplot(ql)
 ```
 
-![](40_pluto_First_Inspection_files/40_pluto_First_Inspection_5_1.png)
+![](40_pluto_First_Inspection_files/40_pluto_First_Inspection_5_1.webp)
 
 Three column-density maps, one along each axis, and a density-temperature diagram.
 

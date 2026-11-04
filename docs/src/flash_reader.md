@@ -77,7 +77,7 @@ gas = gethydro(info)                              # ~7.8M leaf cells, in Mera's 
 projection(gas, :temp, pxsize=[5., :kpc], center=[:bc], direction=:z, zrange=[-0.03, 0.03], range_unit=:standard)
 ```
 
-![Temperature slices of the FLASH GasSloshing cluster along x, y and z, the spiral sloshing cold front (cool gas, blue) winding through the hot atmosphere; Mera's projection/slicing runs unchanged on FLASH data.](assets/flash/gassloshing_coldfront.png)
+![Temperature slices of the FLASH GasSloshing cluster along x, y and z, the spiral sloshing cold front (cool gas, blue) winding through the hot atmosphere; Mera's projection/slicing runs unchanged on FLASH data.](assets/flash/gassloshing_coldfront.webp)
 
 ## Units
 

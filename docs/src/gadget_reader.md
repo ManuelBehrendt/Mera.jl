@@ -335,7 +335,7 @@ dm = getparticles_gadget(info; families=[1]); st = getparticles_gadget(info; fam
 # scatter getvar(dm,:x) vs getvar(dm,:y), and the stars — or project with a finer lmax/res
 ```
 
-![GADGET disk galaxy: the dark-matter halo and filaments (left, 4.8M particles) and the star particles tracing the forming galaxy (right, 451k), read into a PartDataType and plotted with the usual getvar calls.](assets/gadget/diskgalaxy.png)
+![GADGET disk galaxy: the dark-matter halo and filaments (left, 4.8M particles) and the star particles tracing the forming galaxy (right, 451k), read into a PartDataType and plotted with the usual getvar calls.](assets/gadget/diskgalaxy.webp)
 
 ## Gas analysis (AREPO / IllustrisTNG)
 

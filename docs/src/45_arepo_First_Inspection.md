@@ -75,7 +75,7 @@ ql = quicklook(150; path=path);
 quicklookplot(ql)
 ```
 
-![](45_arepo_First_Inspection_files/45_arepo_First_Inspection_6_1.png)
+![](45_arepo_First_Inspection_files/45_arepo_First_Inspection_6_1.webp)
 
 The reader says it plainly: gas is `PartType0`, so it loads with `getparticles`, not `gethydro`.
 This snapshot does record its units, so no fallback is needed. It does not record a gas
@@ -286,7 +286,7 @@ Pixel size: 78.123 [kpc]
 Simulation min.: 19.999 [Mpc]
 ```
 
-![](45_arepo_First_Inspection_files/45_arepo_First_Inspection_30_2.png)
+![](45_arepo_First_Inspection_files/45_arepo_First_Inspection_30_2.webp)
 
 ## Where to go next
 

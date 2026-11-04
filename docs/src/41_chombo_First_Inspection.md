@@ -67,7 +67,7 @@ Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
 quicklookplot(ql)
 ```
 
-![](41_chombo_First_Inspection_files/41_chombo_First_Inspection_4_1.png)
+![](41_chombo_First_Inspection_files/41_chombo_First_Inspection_4_1.webp)
 
 A dense core in the middle of a small box. The numbers are physical straight away: about
 1.2 solar masses inside 0.12 parsec.

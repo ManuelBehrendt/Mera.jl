@@ -88,7 +88,7 @@ gas = gethydro(info)                              # 14,024,704 cells, in Mera's 
 projection(gas, :sd, pxsize=[0.004, :standard], center=[:bc], direction=:z)   # column density, face-on
 ```
 
-![Log column density of the Athena++ AM06 snapshot, projected along x, y and z with Mera's projection engine, the AMR MHD data load into the standard structs, so the off-axis projection runs unchanged.](assets/athena/am06_projection.png)
+![Log column density of the Athena++ AM06 snapshot, projected along x, y and z with Mera's projection engine, the AMR MHD data load into the standard structs, so the off-axis projection runs unchanged.](assets/athena/am06_projection.webp)
 
 ### MHD analysis
 
@@ -101,13 +101,13 @@ in-plane field. Note this is the **mass-weighted** field, so the streamlines tra
 *morphology*, not a flux-rigorous line integral (a small box-car smoother tidies the turbulent
 field into clean lines):
 
-![Athena++ AM06 column density with magnetic-field streamlines overlaid, the mass-weighted in-plane B-field traced over the cloud.](assets/athena/am06_bstream.png)
+![Athena++ AM06 column density with magnetic-field streamlines overlaid, the mass-weighted in-plane B-field traced over the cloud.](assets/athena/am06_bstream.webp)
 
 A **density–|B| phase diagram** is just `getvar` on the loaded cells plus a mass-weighted 2-D
 histogram, and it recovers the expected flux-freezing scaling (|B| ∝ ρ^~2/3) across ~6 decades in
 density, a real physics result extracted entirely through Mera's code-blind analysis layer:
 
-![Athena++ AM06 density–|B| phase diagram (mass-weighted), the magnetic field follows the flux-freezing scaling B ∝ ρ^~2/3 over six decades in density.](assets/athena/am06_phase.png)
+![Athena++ AM06 density–|B| phase diagram (mass-weighted), the magnetic field follows the flux-freezing scaling B ∝ ρ^~2/3 over six decades in density.](assets/athena/am06_phase.webp)
 
 ### AMR refinement map
 
@@ -115,7 +115,7 @@ The cell `:level` is a projectable quantity, so a **volume-weighted mean level a
 sight** maps where the grid refines, for AM06 it draws the nested MeshBlock hierarchy as
 concentric squares tightening onto the dense core (levels 7 → 11):
 
-![Athena++ AM06 AMR refinement level, the nested MeshBlock hierarchy shows as concentric squares of increasing level toward the dense core.](assets/athena/am06_levels.png)
+![Athena++ AM06 AMR refinement level, the nested MeshBlock hierarchy shows as concentric squares of increasing level toward the dense core.](assets/athena/am06_levels.webp)
 
 All figures on this page are regenerated from the fixture by `docs/make_reader_figures.jl`.
 

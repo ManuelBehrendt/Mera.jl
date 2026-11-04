@@ -65,7 +65,7 @@ Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
 quicklookplot(ql)
 ```
 
-![](43_flash_First_Inspection_files/43_flash_First_Inspection_4_1.png)
+![](43_flash_First_Inspection_files/43_flash_First_Inspection_4_1.webp)
 
 ## 2. The details: `getinfo`
 
@@ -278,7 +278,7 @@ Colorbar(fig[1,2], hm, label="log₁₀ Σ [M⊙/pc²]")
 fig
 ```
 
-![](43_flash_First_Inspection_files/43_flash_First_Inspection_26_1.png)
+![](43_flash_First_Inspection_files/43_flash_First_Inspection_26_1.webp)
 
 ## Where to go next
 

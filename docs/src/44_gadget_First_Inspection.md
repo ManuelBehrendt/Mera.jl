@@ -76,7 +76,7 @@ ql = quicklook(200; path=path);
 quicklookplot(ql)
 ```
 
-![](44_gadget_First_Inspection_files/44_gadget_First_Inspection_6_1.png)
+![](44_gadget_First_Inspection_files/44_gadget_First_Inspection_6_1.webp)
 
 Two notices on load, and both are worth reading.
 

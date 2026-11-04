@@ -62,7 +62,7 @@ Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
 quicklookplot(ql)
 ```
 
-![](42_athena_First_Inspection_files/42_athena_First_Inspection_4_1.png)
+![](42_athena_First_Inspection_files/42_athena_First_Inspection_4_1.webp)
 
 Unlike the two previous pages, the density-temperature diagram here has real structure. This run
 has a genuine spread of temperatures, so the plane fills instead of collapsing to a line.
@@ -242,7 +242,7 @@ Colorbar(fig[1,2], hm, label="log₁₀ Σ [code units]")
 fig
 ```
 
-![](42_athena_First_Inspection_files/42_athena_First_Inspection_24_1.png)
+![](42_athena_First_Inspection_files/42_athena_First_Inspection_24_1.webp)
 
 ## Where to go next
 

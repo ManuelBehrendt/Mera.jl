@@ -62,7 +62,7 @@ Because PLUTO data lands in the standard structs, the *entire* Mera workflow run
 to the RAMSES tutorials. Here is load → inspect → projection → time-series → movie → PDF, end to end,
 on a 3-D Sedov blast (6 PLUTO outputs):
 
-![A complete PLUTO workflow in Mera: the ρ projection of the Sedov blast (output 5), the peak density rising over the 6 outputs, and total mass conserved, produced with the same getvar/projection/timeseries calls used for RAMSES.](assets/pluto/pluto_workflow.png)
+![A complete PLUTO workflow in Mera: the ρ projection of the Sedov blast (output 5), the peak density rising over the 6 outputs, and total mass conserved, produced with the same getvar/projection/timeseries calls used for RAMSES.](assets/pluto/pluto_workflow.webp)
 
 ```julia
 using Mera
@@ -91,7 +91,7 @@ savemap(p, "pluto_rho.jld2")                               # 7. persist a map (M
 Projecting the loaded blast along each axis shows the spherical shock front directly (the Sedov test
 runs in one octant, so the shell appears as a quarter-circle from each direction):
 
-![Log column density of the PLUTO Sedov blast (output 5), projected along x, y and z, the uniform-grid PLUTO data feed Mera's projection engine unchanged.](assets/pluto/pluto_projection.png)
+![Log column density of the PLUTO Sedov blast (output 5), projected along x, y and z, the uniform-grid PLUTO data feed Mera's projection engine unchanged.](assets/pluto/pluto_projection.webp)
 
 Every step above is the same call you would make on a RAMSES snapshot. That is the whole point of
 the code-blind analysis layer.
