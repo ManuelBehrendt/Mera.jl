@@ -55,6 +55,14 @@ function pluto_output_numbers(path::String)
     return sort(nums)
 end
 
+# The files of PLUTO output `n`: `data.NNNN.dbl` or one file per variable (`rho.NNNN.dbl`, …),
+# and the same output in the other formats PLUTO writes (.flt, .vtk, .dbl.h5, .flt.h5).
+function _pluto_output_files(info::InfoType)
+    tag = "." * lpad(info.output, 4, '0') * "."
+    return [joinpath(info.path, f) for f in readdir(info.path)
+            if occursin(tag, f) && occursin(r"\.(dbl|flt|vtk)(\.h5)?$", f)]
+end
+
 # Detect which simulation code wrote a directory, from its signature files.
 # PLUTO static-grid: grid.out + dbl.out;  Chombo AMR (PLUTO/Orion): a *.hdf5 file;
 # RAMSES: output_*/info_*.txt (the default).

@@ -548,6 +548,17 @@ end
         @test files["Config.sh"]["sha256"] == bytes2hex(open(Mera.SHA.sha256, joinpath(run, "Config.sh")))
     end
 
+    @testset "outputs of a run: HDF5 snapshots, snapdir_NNN/ and their sizes" begin
+        run = mktempdir()
+        _write_gadget_gas(joinpath(run, "snap_000.hdf5")); _write_gadget_gas(joinpath(run, "snap_002.hdf5"))
+        mkpath(joinpath(run, "snapdir_005")); _write_gadget_gas(joinpath(run, "snapdir_005", "snap_005.0.hdf5"))
+        mkpath(joinpath(run, "groups_002")); touch(joinpath(run, "groups_002", "fof_subhalo_tab_002.0.hdf5"))
+        @test Mera._gadget_output_numbers(run) == [0, 2, 5]
+        @test Mera._run_outputs(run) == [0, 2, 5]
+        r = simulationrecord(run; outputs=[0, 2], verbose=false)["run"]
+        @test [o["bytes"] for o in r["output_list"]] == filesize.(joinpath.(run, ["snap_000.hdf5", "snap_002.hdf5"]))
+    end
+
     @testset "SPH-kernel projection (weighting=:sph): conserving + smoothing" begin
         # three gas cells near the box centre (far from edges ⇒ no boundary leakage ⇒ exact conservation)
         fn = joinpath(dir, "snap_008.hdf5")

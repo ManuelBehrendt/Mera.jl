@@ -177,6 +177,22 @@ end
     end
 end
 
+# Each reader lists the outputs of a run and names the files of one, for timeseries, getmovie and
+# the folder form of simulationrecord.
+@testset "outputs of a run and their files, per code (data-free)" begin
+    for (name, mk) in (("PLUTO", _synth_pluto), ("Athena++", _synth_athena), ("FLASH", _synth_flash),
+                       ("Quokka", d -> _synth_amrex(d; quokka=true)))
+        d = mktempdir(); mk(d)
+        @test Mera._run_outputs(d) == [0]
+        r = simulationrecord(d; verbose=false)["run"]
+        @test r["outputs"] == 1 && r["total_bytes"] > 0
+        @test r["total_bytes"] == Mera._output_bytes(getinfo(0, d, verbose=false))
+    end
+    let d = mktempdir(); _synth_pluto(d)                          # PLUTO: data.0000.dbl only
+        @test basename.(Mera._pluto_output_files(getinfo(0, d, verbose=false))) == ["data.0000.dbl"]
+    end
+end
+
 # Output-number discovery (filename-only) powers timeseries/getmovie across codes.
 @testset "output-number discovery (timeseries/getmovie)" begin
     let d = mktempdir()

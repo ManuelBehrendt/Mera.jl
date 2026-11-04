@@ -200,6 +200,23 @@ end
 
 _gadget_file(output::Int, path::String) = first(_gadget_files(output, path))
 
+# Output numbers of the snapshots in a folder: HDF5 `snap*_NNN.hdf5` (or its chunks
+# `snap*_NNN.K.hdf5`), TNG-style `snapdir_NNN/`, and GADGET-2 binary `snap*_NNN` / `snap*_NNN.K`.
+function _gadget_output_numbers(path::String)
+    nums = Set{Int}()
+    isdir(path) || return Int[]
+    for f in readdir(path)
+        m = match(r"^snapdir_(\d+)$", f)
+        m === nothing && (m = match(r"^snap\w*_(\d+)(\.\d+)?\.hdf5$"i, f))
+        # GADGET-2 binary: a name without extension; only its first bytes are read to confirm it
+        bin = m === nothing ? match(r"^snap\w*_(\d+)(\.\d+)?$", f) : nothing
+        fn = joinpath(path, f)
+        (bin !== nothing && isfile(fn) && _is_gadget_binary(fn)) && (m = bin)
+        m === nothing || push!(nums, parse(Int, m.captures[1]))
+    end
+    return sort!(collect(nums))
+end
+
 # binary snapshot files of `output` in `path`: one file `<base>_NNN`, or chunks `<base>_NNN.K`.
 # The number may be padded to more than three digits, so match the parsed value, not the text.
 function _gadget_bin_files(output::Int, path::String)

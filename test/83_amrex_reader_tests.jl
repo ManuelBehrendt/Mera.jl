@@ -412,7 +412,7 @@ end
         info = getinfo_amrex(7, plotdir; verbose=false)
         @test supports(info, :hydro)
         @test !supports(info, :gravity)
-        @test capabilities(info) == [:info, :hydro, :particles, :input_files]
+        @test capabilities(info) == [:info, :hydro, :particles, :input_files, :outputs, :output_files]
         @test_throws ErrorException getgravity(info, verbose=false)
         @test occursin("AMReX / BoxLib plotfile", Mera.capability_matrix())
         @test occursin("Quokka (AMReX plotfile)", Mera.capability_matrix())
