@@ -178,6 +178,18 @@ Leave out what your code does not have. Mera then says so honestly: `supports` r
 call fails with a message naming what your code *does* offer, and the capability table in the
 documentation shows a gap. Claiming something you cannot deliver is the one thing to avoid.
 
+Two optional functions make the results of your code traceable. `input_files` names the files
+that define a run, such as its parameter file and its build settings:
+
+```julia
+input_files = info -> [joinpath(info.path, "mycode.par"), joinpath(info.path, "config.h")]
+```
+
+Every sidecar and [`simulationrecord`](@ref) then records these files by name with their SHA-256.
+Files that a run does not have are skipped. `physics` describes which physics the run used (see
+the `register_reader!` docstring for its keys). Without them, results still carry the code, the
+output and the time, but not the setup.
+
 ## You can do all of this without touching Mera
 
 You do not have to fork Mera, and you should not open a pull request until your reader already

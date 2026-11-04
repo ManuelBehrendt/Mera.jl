@@ -18,7 +18,8 @@
 # ====================================================================================
 
 # The complete set of registrable entry points.
-const _READER_CAPABILITIES = (:info, :hydro, :particles, :gravity, :rt, :clumps, :groups, :logs, :physics)
+const _READER_CAPABILITIES = (:info, :hydro, :particles, :gravity, :rt, :clumps, :groups, :logs, :physics,
+                              :input_files)
 
 struct SimReader
     code::Symbol                  # registry key, e.g. :pluto (the getinfo `code=` value)
@@ -72,7 +73,8 @@ end
 """
     register_reader!(code::Symbol; simcodes, name="", detect=nothing, priority=100,
                      note="", info=nothing, hydro=nothing, particles=nothing, groups=nothing,
-                     gravity=nothing, rt=nothing, clumps=nothing)
+                     gravity=nothing, rt=nothing, clumps=nothing, logs=nothing,
+                     physics=nothing, input_files=nothing)
 
 Register a simulation-code frontend (internal API). `code` is the symbol accepted by
 `getinfo(...; code=…)`; `simcodes` lists the `InfoType.simcode` strings the reader
@@ -106,6 +108,12 @@ used, for [`simulationrecord`](@ref). It returns a `"summary"` with the keys `hy
 `gravity`, `particles`, `radiative_transfer`, `cooling`, `star_formation`, `feedback` and
 `sinks` (each `false`, `true`, a dictionary of settings, or `nothing` when unknown), and may add
 the code's own parameters next to it.
+
+`input_files` is the optional function `info -> Vector{String}` that names the files defining a
+run: its parameters, its build settings, its code patches. Sidecars and
+[`simulationrecord`](@ref) record each of them by name with its SHA-256, so a result can be traced
+to the exact setup. List the files your code writes; the ones that do not exist for a given run
+are skipped. Without this function no input files are recorded.
 """
 function register_reader!(code::Symbol; simcodes::Vector{String},
                           name::String=String(code),
@@ -120,11 +128,13 @@ function register_reader!(code::Symbol; simcodes::Vector{String},
                           rt::Union{Function,Nothing}=nothing,
                           clumps::Union{Function,Nothing}=nothing,
                           logs::Union{Function,Nothing}=nothing,
-                          physics::Union{Function,Nothing}=nothing)
+                          physics::Union{Function,Nothing}=nothing,
+                          input_files::Union{Function,Nothing}=nothing)
     isempty(simcodes) && error("register_reader!: `simcodes` must name at least one InfoType.simcode string.")
     funcs = Dict{Symbol,Function}()
     for (cap, f) in pairs((info=info, hydro=hydro, particles=particles, groups=groups,
-                           gravity=gravity, rt=rt, clumps=clumps, logs=logs, physics=physics))
+                           gravity=gravity, rt=rt, clumps=clumps, logs=logs, physics=physics,
+                           input_files=input_files))
         f === nothing || (funcs[cap] = f)
     end
     for s in simcodes
