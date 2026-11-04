@@ -25,25 +25,29 @@ function register_builtin_readers!()
         name = "PLUTO (static uniform grid)",
         info = getinfo_pluto,
         hydro = gethydro_pluto,
-        particles = getparticles_pluto)
+        particles = getparticles_pluto,
+        input_files = info -> _pluto_input_files(info))
 
     register_reader!(:chombo;
         simcodes = ["CHOMBO"],
         name = "Chombo / PLUTO-AMR (HDF5)",
         info = getinfo_chombo,
-        hydro = gethydro_chombo)
+        hydro = gethydro_chombo,
+        input_files = info -> _pluto_input_files(info))
 
     register_reader!(:athena;
         simcodes = ["Athena++"],
         name = "Athena++ (.athdf)",
         info = getinfo_athena,
-        hydro = gethydro_athena)
+        hydro = gethydro_athena,
+        input_files = info -> _athena_input_files(info))
 
     register_reader!(:flash;
         simcodes = ["FLASH"],
         name = "FLASH (PARAMESH HDF5)",
         info = getinfo_flash,
-        hydro = gethydro_flash)
+        hydro = gethydro_flash,
+        input_files = info -> _flash_input_files(info))
 
     # AMReX family. Quokka is registered FIRST and detected first (priority 10): a Quokka
     # plotfile is an AMReX plotfile plus `metadata.yaml`, so the generic reader would also
@@ -57,7 +61,8 @@ function register_builtin_readers!()
         select_vars = true,
         info = getinfo_quokka,
         hydro = gethydro_quokka,
-        particles = getparticles_quokka)
+        particles = getparticles_quokka,
+        input_files = info -> _amrex_input_files(info))
 
     register_reader!(:amrex;
         simcodes = ["AMReX"],
@@ -67,7 +72,8 @@ function register_builtin_readers!()
         select_vars = true,
         info = getinfo_amrex,
         hydro = gethydro_amrex,
-        particles = getparticles_amrex)
+        particles = getparticles_amrex,
+        input_files = info -> _amrex_input_files(info))
 
     register_reader!(:gadget;
         # These are different codes. They share one HDF5 snapshot layout, which is why one reader
@@ -80,7 +86,8 @@ function register_builtin_readers!()
         info = getinfo_gadget,
         particles = getparticles_gadget,
         groups = getgroups_gadget,
-        logs = getlogs_gadget)
+        logs = getlogs_gadget,
+        input_files = info -> _gadget_input_files(info))
 
     return nothing
 end

@@ -538,6 +538,16 @@ end
         @test iso.part_info.eta_sn == 0.0                                    # no leftover memory
     end
 
+    @testset "input files: parameters beside the snapshot, build options in the run folder" begin
+        run = mktempdir(); out = joinpath(run, "output"); mkpath(out)
+        _write_gadget_gas(joinpath(out, "snap_000.hdf5"))
+        write(joinpath(out, "parameters-usedvalues"), "BoxSize 100\n")
+        write(joinpath(run, "param.txt"), "BoxSize 100\n"); write(joinpath(run, "Config.sh"), "PERIODIC\n")
+        files = Mera._sidecar_input_files(getinfo(0, out, verbose=false))
+        @test collect(keys(files)) == ["parameters-usedvalues", "param.txt", "Config.sh"]
+        @test files["Config.sh"]["sha256"] == bytes2hex(open(Mera.SHA.sha256, joinpath(run, "Config.sh")))
+    end
+
     @testset "SPH-kernel projection (weighting=:sph): conserving + smoothing" begin
         # three gas cells near the box centre (far from edges ⇒ no boundary leakage ⇒ exact conservation)
         fn = joinpath(dir, "snap_008.hdf5")

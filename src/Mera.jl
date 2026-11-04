@@ -630,6 +630,7 @@ include("functions/export/sidecar_read.jl")
 include("functions/export/simulation_record.jl")
 include("functions/export/citation.jl")
 include("functions/export/citation_codes.jl")   # multicode: the other codes' papers
+include("functions/export/input_files_codes.jl")   # multicode: the other codes' input files
 include("functions/export/bundle.jl")
 include("functions/export/npy.jl")
 include("functions/export/exportdata.jl")

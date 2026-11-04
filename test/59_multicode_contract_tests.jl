@@ -140,6 +140,43 @@ end
     end
 end
 
+# Every reader names the files that define its runs; sidecars record them with their SHA-256.
+@testset "input files of each code (data-free)" begin
+    sha(f) = bytes2hex(open(Mera.SHA.sha256, f))
+    recorded(info) = (r = Mera._sidecar_input_files(info); r === nothing ? String[] : collect(keys(r)))
+    # PLUTO writes its snapshots into a subfolder; pluto.ini next to them wins over the run's
+    let run = mktempdir(); d = joinpath(run, "out"); mkpath(d); _synth_pluto(d)
+        write(joinpath(d, "pluto.ini"), "[Grid]\n"); write(joinpath(run, "pluto.ini"), "[Old]\n")
+        write(joinpath(run, "definitions.h"), "#define PHYSICS HD\n")
+        write(joinpath(run, "namelist.txt"), "&RUN_PARAMS\n/\n")         # a RAMSES name: ignored
+        info = getinfo(0, d, verbose=false)
+        files = Mera._sidecar_input_files(info)
+        @test collect(keys(files)) == ["pluto.ini", "definitions.h"]
+        @test files["pluto.ini"]["sha256"] == sha(joinpath(d, "pluto.ini"))
+        @test files["definitions.h"]["sha256"] == sha(joinpath(run, "definitions.h"))
+        # the same record reaches an exported result's sidecar
+        gas = gethydro(info, verbose=false, show_progress=false)
+        out = joinpath(mktempdir(), "map.h5")
+        exportdata(projection(gas, :sd; res=4, verbose=false, show_progress=false), out; verbose=false)
+        sc = Mera.JSON3.read(read(out * ".meta.json", String))
+        @test sc[:input_files][Symbol("pluto.ini")][:sha256] == sha(joinpath(d, "pluto.ini"))
+    end
+    let d = mktempdir(); _synth_athena(d); write(joinpath(d, "athinput.blast"), "<job>\n")
+        @test recorded(getinfo(0, d, verbose=false)) == ["athinput.blast"]
+    end
+    let d = mktempdir(); _synth_flash(d)
+        write(joinpath(d, "flash.par"), "nend = 10\n"); write(joinpath(d, "setup_call"), "./setup Sod\n")
+        @test recorded(getinfo(0, d, verbose=false)) == ["flash.par", "setup_call"]
+    end
+    let d = mktempdir(); _synth_amrex(d; quokka=true)
+        write(joinpath(d, "plt00000", "job_info"), "inputs\n")
+        @test recorded(getinfo(0, d, verbose=false)) == ["job_info", "metadata.yaml"]
+    end
+    let d = mktempdir(); _synth_flash(d)                                  # nothing written: none
+        @test Mera._sidecar_input_files(getinfo(0, d, verbose=false)) === nothing
+    end
+end
+
 # Output-number discovery (filename-only) powers timeseries/getmovie across codes.
 @testset "output-number discovery (timeseries/getmovie)" begin
     let d = mktempdir()
