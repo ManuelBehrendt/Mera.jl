@@ -220,3 +220,15 @@ end
     g(); GC.gc(); rg = @timed g()
     @test Base.gc_alloc_count(rg.gcstats) / n > 5.0    # row-wise really is expensive here
 end
+
+# The same for a new InfoType: its plain fields start at false and zero, not at leftover memory.
+# The readers of other codes leave some unset (`namelist`, `rt`, ...), and a random `true` there
+# once made a GADGET snapshot claim a parameter file it did not have.
+@testset "a new InfoType starts with false and zero" begin
+    for _ in 1:50
+        i = Mera.InfoType()
+        @test i.namelist === false && i.rt === false && i.sinks === false && i.hydro === false
+        @test i.ncpu == 0 && i.levelmax == 0 && i.boxlen == 0.0 && i.gamma == 0.0
+        @test !isdefined(i, :path)                          # references are still filled by the readers
+    end
+end
