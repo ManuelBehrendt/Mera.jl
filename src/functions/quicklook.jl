@@ -44,6 +44,21 @@ end
 # the Makie extension calls Mera._seq_cmap for the report map cards.
 _seq_cmap(var) = var in (:T, :Temperature, :temperature) ? :inferno : :viridis
 
+# an MHD run stores the magnetic field on the cell faces (bx_left, bx_right, ...)
+_is_mhd(info) = isdefined(info, :variable_list) &&
+                any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
+
+# The colormap of each quicklook panel, all perceptually uniform and colorblind-safe: gas density =
+# viridis (the density standard), stars = magma (warm/stellar), dark matter = cividis (the
+# CVD-optimised cool map), |B| = plasma, ionised fraction = cividis, and the ρ–T phase diagram =
+# roma (Crameri), whose many hues separate the gas phases. The edge-on views of a component use its
+# face-on map. Kept here, not in the Makie extension, so the policy is testable without a backend;
+# a user-supplied `colormap` overrides all of them.
+const _QL_CMAP = Dict(:z => :viridis, :x => :viridis, :y => :viridis,
+                      :stars => :magma, :stars_x => :magma, :stars_y => :magma,
+                      :dm => :cividis, :dm_x => :cividis, :dm_y => :cividis, :phase => :roma,
+                      :bmag => :plasma, :xHII => :cividis)
+
 # choose the level to read so the predicted leaf-cell count stays within `budget`;
 # full resolution if it already fits, else the coarse levels (levelmin .. levelmin+2).
 # Estimate the leaf-cell count from the hydro files on disk.
@@ -356,7 +371,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                     (sampled ? "  (budgeted to ~$budget cells)" : "  (full resolution)"))
         end
         # MHD run? then also read the magnetic field so the dashboard can show a |B| map + β stats.
-        is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
+        is_mhd = _is_mhd(info)
         qlreq  = vcat([:sd, :T, :rho, :p], is_mhd ? [:bmag] : Symbol[])
         qlvars = union(getvar_requirements(:hydro, qlreq), _rt_ion_columns(info))   # read only these (else full)
         # Narrowing the read is an optimisation, not a requirement, so it must be conditional on

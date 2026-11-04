@@ -131,6 +131,7 @@ if isempty(_focus)
         tinclude("64_datautils_coverage_tests.jl")  # data-free: viewdata/infodata/miscellaneous/mera_convert branches (synthetic snapshots + stdin-driven batch flows)
         tinclude("66_chombo_reader_tests.jl")  # data-free: Chombo/PLUTO-AMR reader contract (synthetic 2-level HDF5; leaf extraction + Orion mapping)
         tinclude("83_amrex_reader_tests.jl")          # data-free: AMReX/BoxLib container + Quokka layer (synthetic 2-level plotfile; geometry, leaves, temperature cascade, particles)
+        tinclude("38_report_tests.jl")           # report cards, units, colormaps; the engine tests self-gate on data
 
         # The analytic correctness oracles. These were included in the data-dependent tier below,
         # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and
@@ -169,7 +170,8 @@ if isempty(_focus)
         tinclude("35_offaxis_accuracy_tests.jl")    # off-axis spatial fidelity: where the binnings differ
         tinclude("36_offaxis_features_tests.jl")    # LOS features: profile/phase, offaxis_slice
         tinclude("37_derived_fields_tests.jl")      # derived-field registry: getvar_requirements, add_field, project auto-read
-        tinclude("38_report_tests.jl")              # composable report system (Phase 1): cards, engine, ascii/jld2
+        # 38 moved to the data-free tier above: its card, unit and colormap tests need no data,
+        # and its engine tests self-gate on DATA_AVAILABLE.
         tinclude("39_clumpfind_tests.jl")           # density-threshold clumpfinder (FoF 3D + connected-components 2D)
         # 40 / 41 / 43 moved to the data-free tier above — their analytic oracles are the
         # package's correctness anchors and must run in CI; their AMR-backed blocks self-gate.

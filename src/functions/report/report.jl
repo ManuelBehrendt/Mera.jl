@@ -288,7 +288,8 @@ _withcost(rc::ReportResultCard, dt::Float64) =
 
 A declarative, inspectable plan of report cards. Build it, [`preview`](@ref) its cost, then
 run it with [`report`](@ref). `cards` is a vector of [`ReportCard`] (or `:default` for the
-classic quicklook trio). `lmax=-1` picks a budgeted level (coarse if the full output exceeds
+quicklook figures, the star-formation history, and the ionised-fraction or `|B|` map of an RT or
+MHD run). `lmax=-1` picks a budgeted level (coarse if the full output exceeds
 `budget` cells), mirroring [`quicklook`](@ref)."""
 struct ReportPlan
     output::Int
@@ -299,25 +300,28 @@ struct ReportPlan
 end
 function ReportPlan(output::Int; path::String=".", cards=ReportCard[], lmax::Int=-1, budget::Int=2_000_000)
     # the default cards take their units from the run (kpc and M⊙/pc² for a galaxy, cm and g/cm²
-    # for a run with RAMSES's default units), so the header is read here
+    # for a run with RAMSES's default units) and add the maps of an RT or MHD run, so the header
+    # is read here
     isdefault = cards === :default || (cards isa AbstractVector && isempty(cards))
-    resolved = isdefault ? _default_cards(_plan_units(output, path)) : _resolve_cards(cards)
+    resolved = isdefault ? _default_cards(_plan_info(output, path)) : _resolve_cards(cards)
     ReportPlan(output, path, resolved, lmax, budget)
 end
 
 # reads only the info file; a path that cannot be read is reported later, by `report` itself
-_plan_units(output, path) =
-    try _display_units(getinfo(output, path; verbose=false)) catch; nothing end
+_plan_info(output, path) = try getinfo(output, path; verbose=false) catch; nothing end
 
 # default card set: the quicklook figures (gas Σ map, ρ–T phase, disk density profile) PLUS the
 # star-formation history — so report's default matches the star formation that quicklook headlines in
 # its census. The SFR card skips gracefully on an output without star particles. (Stellar/DM masses
 # live in the quicklook census; we don't add a particle-mass scalar here because a plain :particles
 # sum would conflate stars and dark matter on multi-family runs.)
-# `u` is the run's display units (see `_display_units`); without them the galaxy units are used.
-function _default_cards(u=nothing)
+# An RT run adds a map of its ionised fraction and an MHD run a map of |B|, the maps quicklook
+# shows for them. `info` gives the run's display units (see `_display_units`); without it the
+# galaxy units are used and no RT or MHD map is added.
+function _default_cards(info=nothing)
+    u = info === nothing ? nothing : _display_units(info)
     sig, dens, len = u === nothing ? (:Msol_pc2, :nH, :kpc) : (u.sigma[1], u.density[1], u.length[1])
-    return ReportCard[
+    cards = ReportCard[
         ProjectionCard(:hydro, :sd; unit=sig, res=256, direction=:z, center=[:bc]),
         PhaseCard(:hydro, :rho, :T; weight=:mass, nbins=(80, 80), xscale=:log, yscale=:log,
                   xunit=dens, yunit=:K),
@@ -325,6 +329,12 @@ function _default_cards(u=nothing)
                     center=[:bc], range_unit=len, xunit=len, unit=dens, yscale=:log),
         SFRCard(:particles; tbinsize=50.0),
     ]
+    info === nothing && return cards
+    info.rt && !isempty(_rt_ion_columns(info)) &&
+        push!(cards, ProjectionCard(:hydro, :xHII; res=256, direction=:z, center=[:bc]))
+    _is_mhd(info) &&
+        push!(cards, ProjectionCard(:hydro, :bmag; unit=u.bfield[1], res=256, direction=:z, center=[:bc]))
+    return cards
 end
 _resolve_cards(cards::Symbol) = cards === :default ? _default_cards() :
     throw(ArgumentError("unknown cards preset :$cards (use :default or a Vector of cards)"))

@@ -145,27 +145,17 @@ function Mera._save_card_pngs(r::Mera.QuickReport, dir::AbstractString; kwargs..
     return files
 end
 
-# meaningful per-component colormaps for the quicklook panels — all perceptually uniform and
-# colorblind-safe: gas density = viridis (the density standard), stars = magma (warm/stellar), dark
-# matter = cividis (the CVD-optimised cool map), |B| = plasma, ionised fraction = cividis, and the
-# ρ–T phase diagram = roma (Crameri), whose many hues separate the gas phases. A user-supplied
-# `colormap` overrides all of them. The edge-on views of a component use its face-on map.
-const _QL_CMAP = Dict(:z => :viridis, :x => :viridis, :y => :viridis,
-                      :stars => :magma, :stars_x => :magma, :stars_y => :magma,
-                      :dm => :cividis, :dm_x => :cividis, :dm_y => :cividis, :phase => :roma,
-                      :bmag => :plasma, :xHII => :cividis)
-
 # ---- quicklookplot: the first-look dashboard --------------------------------------------
 # Gas Σ along z, x, y + stellar / dark-matter Σ when particles are
 # present · ρ–T phase diagram · a text census (cells, particles, masses, SFR, ranges). Panels fill a
 # 3-column grid in order, so the dashboard grows with the components actually in the output. Each panel
-# uses a meaningful perceptually-uniform colormap (see `_QL_CMAP`); pass `colormap=` to override.
+# uses a meaningful perceptually-uniform colormap (see `Mera._QL_CMAP`); pass `colormap=` to override.
 # Lengths, masses and densities are shown in the units `quicklook` picked for the run (`summary.units`).
 function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=nothing)
     q.maps === nothing && error("quicklookplot: no maps to plot (header-only call, or no datatypes " *
                                 "produced a map). Call quicklook(output) with at least one of " *
                                 "datatypes = [:hydro,:stars,:dm].")
-    cmapof(k) = colormap === nothing ? get(_QL_CMAP, k, :viridis) : colormap   # per-component, unless overridden
+    cmapof(k) = colormap === nothing ? get(Mera._QL_CMAP, k, :viridis) : colormap   # per-component, unless overridden
     s = q.summary
     nf = Mera._qnum
     m = q.maps
