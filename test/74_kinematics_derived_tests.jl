@@ -32,9 +32,11 @@ function _zoom_particles(info; kwargs...)
     n    = length(first(values(cols)))
     names = Symbol[:id, :level]
     vals  = Any[collect(1:n), fill(1, n)]
-    for k in (:x, :y, :z, :vx, :vy, :vz, :mass, :rho, :volume, :u, :coolrate)
+    for k in (:x, :y, :z, :vx, :vy, :vz, :mass, :rho, :volume, :u, :coolrate,
+              :family, :aform, :subfind_hsml, :sfr)
         haskey(cols, k) || continue
-        push!(names, k); push!(vals, collect(Float64.(cols[k])))
+        v = cols[k]                                   # an integer column (family) stays integer
+        push!(names, k); push!(vals, collect(eltype(v) <: Integer ? v : Float64.(v)))
     end
     p = Mera.PartDataType()
     p.data  = IndexedTables.table(vals...; names=names, pkey=[:id])
@@ -721,6 +723,111 @@ end
         end
         σ = filter(isfinite, projection(p, :σlos; weighting=:sph, v...).maps[:σlos])
         @test !isempty(σ) && maximum(σ) < 1e-6
+    end
+
+
+    # ==========================================================================
+    # Found in a real AREPO zoom analysis (November 2026)
+    # ==========================================================================
+    @testset ":stars and :dm follow the code's own family numbers" begin
+        info = _zoom_info(); info.simcode = "FAMTOY"
+        Mera._FAMILY_CODES["FAMTOY"] = (stars=[4], dm=[1, 2, 3])   # a cosmological AREPO zoom
+        try
+            fam = [1, 2, 3, 4, 4, 0]
+            n = length(fam)
+            p = _zoom_particles(info; x=fill(50.0, n), y=fill(50.0, n), z=fill(50.0, n),
+                                mass=[1.0, 2.0, 4.0, 8.0, 16.0, 32.0], family=fam)
+            @test getparticlemask(p, :stars, verbose=false) == (fam .== 4)
+            @test getparticlemask(p, :dm, verbose=false) == in.(fam, Ref([1, 2, 3]))
+            @test_throws ArgumentError getparticlemask(p, :debris, verbose=false)   # RAMSES's family 4
+            sd(pt) = sum(projection(p, :sd; parttypes=pt, res=4, verbose=false,
+                                    show_progress=false).maps[:sd])
+            @test sd([:stars]) / sd([:all]) ≈ 24 / 63
+            @test sd([:dm]) / sd([:all]) ≈ 7 / 63
+        finally
+            delete!(Mera._FAMILY_CODES, "FAMTOY")
+        end
+    end
+
+    @testset "NaN stays NaN in stored columns and formation redshifts" begin
+        info = _zoom_info()
+        # a gas cell, a star and a wind particle loaded together: the gas columns are NaN on the
+        # particle rows, and the wind has a negative formation scale factor
+        p = _zoom_particles(info; x=fill(50.0, 3), y=fill(50.0, 3), z=fill(50.0, 3),
+                            vx=ones(3), vy=zeros(3), vz=zeros(3), mass=ones(3),
+                            rho=[1.0, NaN, NaN], aform=[NaN, 0.5, -0.01])
+        @test isnan(getvar(p, :rho)[2])                  # not a density of 0
+        zf = getvar(p, :zform)
+        @test zf[2] ≈ 1.0 && isnan(zf[3])                # the wind has no formation redshift
+        @test getvar(p, :vr_sphere; center=[:bc]) == zeros(3)   # r = 0 still gives 0
+        @test eltype(getvar(p, :id)) <: Integer          # labels keep their type
+    end
+
+    @testset "integer :family stays integer" begin
+        p = _zoom_particles(_zoom_info(); x=fill(50.0, 2), y=fill(50.0, 2), z=fill(50.0, 2),
+                            mass=ones(2), family=[1, 4])
+        @test getvar(p, :family) == [1, 4] && eltype(getvar(p, :family)) <: Integer
+    end
+
+    @testset ":sph: a zero SubfindHsml falls back to the neighbours" begin
+        # SUBFIND leaves 0 for the particles it did not reach (the low-resolution DM of a zoom);
+        # they used to get a one-pixel kernel
+        rng = MersenneTwister(1); n = 200
+        x, y, z = rand(rng, n), rand(rng, n), rand(rng, n)
+        hs = vcat(fill(0.05, 100), zeros(100))
+        get = k -> (x=x, y=y, z=z, subfind_hsml=hs)[k]
+        px = 1e-3
+        h = Mera._sph_smoothing_lengths((:x, :y, :z, :subfind_hsml), get, px)
+        @test h[1:100] == fill(0.05, 100)
+        @test h[101:end] ≈ Mera._neighbour_lengths(get, px)[101:end]
+        @test all(h[101:end] .> px)
+    end
+
+    @testset "a small window does not allocate a grid over the whole box" begin
+        # 4 code lengths in a box of 1e5, at 0.1 per pixel: the old code built a 1e6 × 1e6 grid
+        info = _zoom_info(; boxlen=1.0e5)
+        rng = MersenneTwister(2); n = 50
+        p = _zoom_particles(info; x=5e4 .+ rand(rng, n), y=5e4 .+ rand(rng, n),
+                            z=5e4 .+ rand(rng, n), mass=ones(n))
+        w = [-2e-5, 2e-5]
+        m = projection(p, :sd; pxsize=[0.1, :standard], xrange=w, yrange=w, zrange=w,
+                       center=[:bc], range_unit=:standard, verbose=false, show_progress=false)
+        @test all(size(m.maps[:sd]) .< 100)
+        @test sum(m.maps[:sd]) > 0
+        @test_throws ArgumentError projection(p, :sd; pxsize=[0.0, :standard], verbose=false,
+                                              show_progress=false)
+    end
+
+    @testset "a range in code units with range_unit=:standard warns" begin
+        info = _zoom_info()
+        @test_logs (:warn, r"BOX FRACTIONS") match_mode=:any Mera.prepranges(info, :standard,
+            false, [-5.5, 5.5], [missing, missing], [missing, missing], [0.5, 0.5, 0.5])
+        @test_logs min_level=Base.CoreLogging.Warn Mera.prepranges(info, :standard,
+            false, [-0.1, 0.1], [missing, missing], [missing, missing], [0.5, 0.5, 0.5])
+    end
+
+    @testset "metallicity has no physical unit; pdf and phase take verbose" begin
+        @test_throws ArgumentError Mera._check_unit_dimension(:metallicity, :Msol)
+        @test Mera._check_unit_dimension(:metallicity, :standard) === nothing
+        p = _zoom_particles(_zoom_info(); x=collect(10.0:10.0:50.0), y=fill(50.0, 5),
+                            z=fill(50.0, 5), mass=collect(1.0:5.0))
+        @test length(pdf(p, :mass; verbose=false).pdf) > 0
+        @test size(phase(p, :x, :mass; nbins=(4, 4), verbose=false).H) == (4, 4)
+    end
+
+
+    @testset "a stored :sfr reads in :Msol_yr; a missing :coolrate says why" begin
+        info = _zoom_info()
+        p = _zoom_particles(info; x=fill(50.0, 2), y=fill(50.0, 2), z=fill(50.0, 2),
+                            mass=ones(2), rho=ones(2), u=ones(2), sfr=[0.0, 2.5])
+        @test getvar(p, :sfr, :Msol_yr) == [0.0, 2.5]     # stored in M⊙/yr already
+        msg(e) = sprint(showerror, e)
+        info.particles_variable_list = [:rho, :u, :coolrate]  # the snapshot has it: reload
+        e = try; getvar(p, :t_cool); nothing; catch err; err; end
+        @test e isa ArgumentError && occursin("Reload", msg(e))
+        info.particles_variable_list = [:rho, :u]             # it does not: reloading cannot help
+        e = try; getvar(p, :t_cool); nothing; catch err; err; end
+        @test e isa ArgumentError && occursin("does not store it", msg(e))
     end
 
 end
