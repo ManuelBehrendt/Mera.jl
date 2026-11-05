@@ -182,6 +182,10 @@ _detect_hooks() = sort!([r for r in values(_READERS) if r.detect !== nothing],
                         by=r -> r.priority)
 
 # Consistent unsupported-capability error.
+# Whether a frontend function declares the keyword `k`, so a RAMSES-named keyword can be handed
+# on where the reader supports it and refused where it does not.
+_accepts_kw(f, k::Symbol) = any(m -> k in Base.kwarg_decl(m), methods(f))
+
 function _capability_error(rdr::SimReader, cap::Symbol, fname::String)
     have = join(sort(string.("get", collect(keys(rdr.funcs)))), ", ")
     msg = "[Mera]: $fname is not available for $(rdr.name) data (simcode " *

@@ -28,6 +28,18 @@ function prepranges(    dataobject::InfoType,
 
     center = prepboxcenter(dataobject, range_unit, center)
 
+    # The mistake prepboxcenter warns about for `center`, made with the ranges: with
+    # range_unit=:standard they are BOX FRACTIONS, so a range in code units (a radius in ckpc/h,
+    # say) reaches past the box, is clamped to it, and the whole box loads without a word.
+    if range_unit == :standard && !unclamped
+        if any(v -> v isa Real && isfinite(v) && abs(v) > 1, (xrangem..., yrangem..., zrangem...))
+            @warn "xrange/yrange/zrange with range_unit=:standard are BOX FRACTIONS, but " *
+                  "x=$(xrangem), y=$(yrangem), z=$(zrangem) reach past ±1. They look like code " *
+                  "units, and the selection is clamped to the whole box. Divide by info.boxlen, " *
+                  "or give them in a physical unit with a matching range_unit (e.g. " *
+                  "range_unit=:kpc)." maxlog=3
+        end
+    end
 
     # assign ranges to selected data range or missing ranges = full box
     if xrangem[1] === missing

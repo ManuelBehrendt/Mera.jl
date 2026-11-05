@@ -861,8 +861,19 @@ const _QTY_REF_UNIT = Dict{Symbol,Symbol}(
     :sd => :g_cm2, :surfacedensity => :g_cm2,
 )
 
+# Ratios with no physical unit: a unit with a dimension (`:Msol`, `:kpc`) is a mistake here.
+# Dimensionless units, and user units such as `:Zsun`, are not in the table and pass.
+const _QTY_DIMENSIONLESS = Set([:metallicity])
+
 function _check_unit_dimension(quantity::Union{Nothing,Symbol}, unit::Symbol)
     quantity === nothing && return nothing
+    if quantity in _QTY_DIMENSIONLESS
+        du = get(_unit_dims(), unit, nothing)
+        (du === nothing || du == (0, 0, 0)) && return nothing
+        throw(ArgumentError(
+            "getunit: :$quantity is a ratio and has no physical unit, so :$unit does not apply.\n" *
+            "  Use :standard (the mass fraction) or :Zsun (in solar units)."))
+    end
     ref = get(_QTY_REF_UNIT, quantity, nothing)
     ref === nothing && return nothing                     # quantity untagged -> allow
     dims = _unit_dims()

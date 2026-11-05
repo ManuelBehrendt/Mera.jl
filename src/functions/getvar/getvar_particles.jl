@@ -60,7 +60,14 @@ function get_data(dataobject::PartDataType,
     for i in vars
 
         # quantities that are in the datatable
-        if in(i, column_names)
+        # A stored :sfr is already in M⊙/yr (the GADGET-family readers store it so), so that unit
+        # is the column itself; scale has no :Msol_yr to look up. (A stored column, not a getvar
+        # quantity, so it is not in the getvar() overview.)
+        k = findfirst(==(i), vars)
+        if isequal(i, :sfr) && in(i, column_names) && k !== nothing && length(units) >= k &&
+           units[k] === :Msol_yr
+            vars_dict[i] = collect(Float64, select(masked_data, i))
+        elseif in(i, column_names)
             selected_unit = getunit(dataobject, i, vars, units)
 
             if i == :x
@@ -72,6 +79,9 @@ function get_data(dataobject::PartDataType,
             elseif i == :z
                 #selected_unit = (dataobject, :z, vars, units)
                 vars_dict[:z] =  (select(masked_data, cpos)  .- boxlen * center[3] )  .* selected_unit
+            elseif i in (:id, :family, :tag) && selected_unit == 1
+                # labels, not measurements: keep the integer type, so an id above 2^53 stays exact
+                vars_dict[i] = collect(select(masked_data, i))
             else
                 vars_dict[i] =  select(masked_data, i) .* selected_unit
             end
@@ -107,11 +117,9 @@ function get_data(dataobject::PartDataType,
         # silently produces a wrong age, so :birth is refused here with a pointer rather than
         # quietly reinterpreted.
         #
-        # WIND PARTICLES: TNG marks them with a_form < 0. The helper returns NaN for them, but
-        # get_data ends with a global NaN→0 sweep (for r=0 singularities), so what a caller
-        # actually sees here is age = 0 — which reads as "formed just now" and would bias a star
-        # formation history. The reliable test is the raw column: keep only getvar(:aform) .> 0.
-        # `age_from_aform` called directly does preserve the NaN.
+        # WIND PARTICLES: TNG marks them with a_form < 0, and they get NaN here. The NaN→0 sweep
+        # at the end leaves these three names alone: age = 0 would read as "formed just now" and
+        # bias a star formation history. Select stars with getvar(:aform) .> 0.
         elseif (i in (:age, :zform, :formation_redshift)) && (:aform in column_names)
             af = select(masked_data, :aform)
             if i === :zform || i === :formation_redshift
@@ -232,11 +240,17 @@ function get_data(dataobject::PartDataType,
         # convergence statistic must select :coolrate .< 0 explicitly rather than lean on the
         # sentinel. See the Zoom Simulations page.
         elseif (i in (:t_cool, :l_cool)) && !(:coolrate in column_names)
+            # reloading only helps when the snapshot has the column: some outputs of a run lack it
+            pvl = isdefined(dataobject.info, :particles_variable_list) ?
+                  dataobject.info.particles_variable_list : Symbol[]
+            stored = isempty(pvl) || :coolrate in pvl    # unknown: assume it is there
             throw(ArgumentError(
                 "getvar: :$i is derived from the net cooling rate :coolrate " *
-                "(GFM_CoolingRate), which this object does not carry. Reload including it — " *
-                "e.g. getparticles(info; vars=[:rho, :u, :coolrate]) — or omit `vars` to load " *
-                "every gas column. Runs without a cooling module do not write it at all."))
+                "(GFM_CoolingRate), which this object does not carry. " *
+                (stored ? "Reload including it — e.g. getparticles(info; vars=[:rho, :u, :coolrate]) " *
+                          "— or omit `vars` to load every gas column." :
+                          "This snapshot does not store it, so reloading " *
+                          "does not help; runs without a cooling module do not write it at all.")))
 
         elseif i == :t_cool || i == :l_cool
             selected_unit = getunit(dataobject, i, vars, units)
@@ -636,7 +650,13 @@ function get_data(dataobject::PartDataType,
 
 
 
+    # NaN -> 0 is for the r = 0 singularities of the derived quantities. A stored column keeps its
+    # values: in a load of gas and stars together the gas columns are NaN on the star rows, and 0
+    # would read as a real value. Ages and redshifts taken from :aform keep NaN where no formation
+    # time exists (wind particles), as 0 would read as "formed just now" or "formed at z = 0".
     for i in keys(vars_dict)
+        (in(i, column_names) || (i in (:age, :zform, :formation_redshift) && :aform in column_names)) && continue
+        eltype(vars_dict[i]) <: AbstractFloat || continue
         vars_dict[i][isnan.(vars_dict[i])] .= 0
     end
 
@@ -682,7 +702,9 @@ Boolean mask selecting a subset of particles, for use as the `mask=` argument of
 * a **`NamedTuple`** combining `family` and/or `tag`, e.g. `(family=2,)`, `(tag=3,)`, `(family=2, tag=1)`.
 
 On the **new** RAMSES particle format the `:family`/`:tag` columns are used (DM=1, star=2, cloud=3,
-debris=4, other=5, tracers ≤ 0). On the **legacy** format (no `:family` column) only `:stars`
+debris=4, other=5, tracers ≤ 0). `:stars` and `:dm` follow the family numbers of the code that
+wrote the data, so they also work for a reader that numbers its families differently; the other
+names are RAMSES families and raise an error there. On the **legacy** format (no `:family` column) only `:stars`
 (`birth ≠ 0`) and `:dm` (`birth == 0`) are available via the `:birth` field; other selections raise
 an error. The required column must be among the loaded particle variables.
 
@@ -722,7 +744,17 @@ function getparticlemask(dataobject::PartDataType, select; verbose::Bool=true)
                 result = fam .<= 0
             elseif select === :gas
                 result = fam .== 0
+            elseif select in (:stars, :star)
+                result = in.(fam, Ref(_family_codes(dataobject.info).stars))
+            elseif select in (:dm, :dark_matter, :darkmatter)
+                result = in.(fam, Ref(_family_codes(dataobject.info).dm))
             elseif haskey(_RAMSES_PARTICLE_FAMILY, select)
+                # clouds, debris and other are RAMSES's own families; another code numbers its
+                # families differently, so the RAMSES number would pick the wrong particles
+                code = string(dataobject.info.simcode)
+                (code == "RAMSES" || !haskey(_FAMILY_CODES, code)) || throw(ArgumentError(
+                    ":$select is a RAMSES particle family. On $code data select by number, " *
+                    "e.g. getparticlemask(part, (family=4,))."))
                 result = fam .== _RAMSES_PARTICLE_FAMILY[select]
             else
                 throw(ArgumentError("unknown particle type :$select (try :dm, :stars, :clouds, :debris, :other, :tracer, :gas, :all)"))

@@ -11,7 +11,7 @@
 # ====================================================================================
 
 const _MERA_CONCEPT_DOI = "10.5281/zenodo.3675254"
-const _MERA_TITLE = "Mera.jl: Fast, conservation-correct, code-agnostic analysis of astrophysical simulations in Julia"
+const _MERA_TITLE = "Mera.jl: geometrically exact, reproducible analysis of RAMSES simulations in Julia"
 
 # Papers to cite for the data of a simulation code: always the code paper (`when = nothing`), and a
 # paper for a physics module when the run used it (`when` is a key of the physics summary of

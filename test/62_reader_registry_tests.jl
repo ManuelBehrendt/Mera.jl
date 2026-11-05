@@ -138,6 +138,32 @@ end
         end
     end
 
+    # The other named keywords of getparticles never reach `kwargs...` either. `show_progress`
+    # and `myargs` used to vanish, and `stars=false` returned the stars.
+    @testset "getparticles: named keywords reach the reader, or are refused" begin
+        got = Ref{Any}(nothing)
+        try
+            Mera.register_reader!(:kwtoy; simcodes = ["KWTOY"], name = "Keyword toy",
+                particles = (info; xrange=[missing, missing], yrange=[missing, missing],
+                             zrange=[missing, missing], center=[0., 0., 0.], range_unit=:standard,
+                             verbose=true, show_progress=true, vars=:all) ->
+                    (got[] = (; xrange, verbose, show_progress); :parts))
+            toy = _registry_stub_info("KWTOY")
+            @test getparticles(toy; show_progress=false) === :parts
+            @test got[].show_progress == false
+            getparticles(toy; myargs=ArgumentsType(xrange=[0.1, 0.2], verbose=false, show_progress=false))
+            @test got[].xrange == [0.1, 0.2] && got[].verbose == false && got[].show_progress == false
+            for kw in ((stars=false,), (subsample=0.5,), (presorted=false,), (print_filenames=true,),
+                       (max_threads=Threads.nthreads() + 1,))
+                err = try; getparticles(toy; kw...); nothing; catch e; e; end
+                @test err isa ArgumentError && occursin(string(first(keys(kw))), err.msg)
+            end
+            @test getparticles(toy; stars=true) === :parts      # the default value is no request
+        finally
+            Mera.unregister_reader!(:kwtoy)
+        end
+    end
+
     @testset "kwargs passthrough: native RAMSES path rejects leftovers" begin
         ram = _registry_stub_info("RAMSES")
         for f in (gethydro, getparticles)

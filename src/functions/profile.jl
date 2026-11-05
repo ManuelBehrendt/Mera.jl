@@ -541,7 +541,7 @@ end
     phase(dataobject, xvar, yvar [, cvar]; weight=:mass, nbins=(100,100), xrange=nothing,
           yrange=nothing, xscale=:linear, yscale=:linear, xunit=:standard, yunit=:standard,
           cunit=:standard, weight_unit=:standard, center=[:bc], center_unit=:standard,
-          mask=[false]) -> NamedTuple
+          mask=[false], verbose=true) -> NamedTuple
 
 **2D phase diagram** — the summed `weight` in bins of (`xvar`, `yvar`) (e.g. a mass-weighted
 density–temperature diagram, `phase(gas, :rho, :T; xscale=:log, yscale=:log)`). With a third field
@@ -582,7 +582,8 @@ function phase(dataobject, xvar::Symbol, yvar::Symbol, cvar=nothing; weight::Uni
         xedges=nothing, yedges=nothing, normalize::Symbol=:none, cstat=:mean, quantiles=[0.16,0.5,0.84],
         xunit::Symbol=:standard, yunit::Symbol=:standard, cunit::Symbol=:standard,
         center=[:bc], range_unit::Symbol=:standard, center_unit=nothing, mask=[false],
-        xbinsize=nothing, ybinsize=nothing, weight_unit::Symbol=:standard)
+        xbinsize=nothing, ybinsize=nothing, weight_unit::Symbol=:standard,
+        verbose::Bool=true)    # nothing to print, accepted as in the other Mera functions
     cu = center_unit === nothing ? range_unit : center_unit  # `center_unit` is the clearer alias of `range_unit`
     xbsz = _resolve_binsize(xbinsize, dataobject.info, xunit, xscale)   # physical bin widths → axis units
     ybsz = _resolve_binsize(ybinsize, dataobject.info, yunit, yscale)
