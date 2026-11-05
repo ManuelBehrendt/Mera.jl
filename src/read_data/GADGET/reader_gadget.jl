@@ -642,6 +642,15 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
         end
         found && break
     end
+    # A requested column the snapshot does not store used to be left out in silence, and the
+    # error that came later, from getvar, told the caller to request what they had requested.
+    if keepvar !== nothing
+        derived = has_bfield ? (:volume, :bx, :by, :bz) : (:volume,)
+        absent = sort!([v for v in vars if !(v in derived) && !haskey(gas, v)])
+        isempty(absent) || @warn "getparticles: " * join(":" .* string.(absent), ", ") *
+            " requested, but snapshot $(info.output) does not store it for families $(want). " *
+            "Not loaded."
+    end
     # chunk-by-chunk streaming: each file is read and windowed independently, so a spatial
     # sub-selection of a large multi-file snapshot never holds more than one chunk in memory
     seen = zeros(Int64, 6)                 # particles of each type passed so far (global ordering)

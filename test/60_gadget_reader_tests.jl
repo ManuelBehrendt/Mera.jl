@@ -321,6 +321,15 @@ end
         # a typo names the valid options instead of failing obscurely later
         @test_throws ArgumentError getparticles_gadget(info; families=[0], vars=[:nope], verbose=false)
 
+        # a known column this snapshot does not store is named, not dropped in silence
+        @test_logs (:warn, r":coolrate requested, but snapshot") match_mode=:any getparticles_gadget(
+            info; families=[0], vars=[:rho, :coolrate], verbose=false)
+
+        # the generic router hands on what the frontend declares and refuses what it cannot do
+        @test length(getparticles(info; families=[0], show_progress=false, verbose=false).data) ==
+              length(allv.data)
+        @test_throws ArgumentError getparticles(info; families=[0], stars=false, verbose=false)
+
         # derived thermodynamics say WHICH column is missing rather than throwing a table FieldError
         for q in (:T, :p, :cs)
             @test_throws ArgumentError getvar(one, q)

@@ -327,7 +327,10 @@ else
                 # dropped. With it missing this was [2], and both the count and the mass
                 # fraction were underestimates — the mass fraction by ~17 %.
                 @test Set(c.families.derived) == Set([2, 3])
-                @test c.clean == false
+                # the nearest low-resolution particle sits at d_ref × R200, so none is inside:
+                # both protocluster haloes are clean, and the check must say so
+                @test c.clean
+                @test c.n_lowres == 0
                 @test c.conclusive
                 @test c.d_over_radius ≈ d_ref  rtol=0.05
 
@@ -339,8 +342,8 @@ else
                 @test c_std.clean == c.clean
                 @test c_std.d_over_radius        ≈ c.d_over_radius        rtol=1e-3
                 @test c_std.mass_fraction_lowres ≈ c.mass_fraction_lowres rtol=1e-3
-                # not equality: the two conversion chains put one particle either side of
-                # the sphere boundary (84812 vs 84811), which is float, not disagreement
+                # not equality: the two conversion chains could put a particle either side of
+                # the sphere boundary, which is float, not disagreement
                 @test abs(c_std.n_lowres - c.n_lowres) <= 5
             end
         end
