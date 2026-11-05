@@ -42,9 +42,9 @@ info = getinfo(200, path);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v2.0.0-DEV | Julia 1.12.7 | 8 threads
+Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
 [Mera]: this snapshot records no unit attributes; using GADGET's defaults (1 kpc/h, 1e10 Msol/h, 1 km/s). Override with unit_length=, unit_density= or unit_velocity= if your run used others.
-[Mera]: 2026-11-04T17:23:00.036
+[Mera]: 2026-11-05T14:45:59.573
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
 boxlen = 64000.0
@@ -61,15 +61,15 @@ ql = quicklook(200; path=path);
 ```
 
 ```
-[Mera]: quicklook output 200, reading particles: 2026-11-04T17:23:14.925
+[Mera]: quicklook output 200, reading particles: 2026-11-05T14:46:14.201
 ┌─ Mera quicklook ── output 200 (GADGET) ───────────────
 │ box        : 31.53 Mpc (91.43 Mpc comoving)      levels 1–1  (finest 15.76 Mpc)
 │ grid       : ndim 3 · ncpu 1 · nvarh 0
 │ time       : 3.51 Gyr   z = 1.9
 │ particles  : 7572534 total  —  stars 450921 · DM 7120464 · sinks 1149
 │ part. mass : stars 1.767e12 M⊙  ·  DM 2.897e16 M⊙
-└─ 15.1 s ──────────────────────────────────
-[Mera]: quicklook output 200 finished: 2026-11-04T17:23:29.977
+└─ 15.0 s ──────────────────────────────────
+[Mera]: quicklook output 200 finished: 2026-11-05T14:46:29.134
 ```
 
 ```julia
@@ -183,12 +183,12 @@ countmap(getvar(getparticles(info; verbose=false), :family))   # every family in
 ```
 
 ```
-Dict{Float64, Int64} with 5 entries:
-  0.0 => 4334546
-  4.0 => 450921
-  5.0 => 1149
-  2.0 => 2333848
-  1.0 => 4786616
+Dict{Int32, Int64} with 5 entries:
+  0 => 4334546
+  4 => 450921
+  5 => 1149
+  2 => 2333848
+  1 => 4786616
 ```
 
 Family 0 is gas, 1 dark matter, 4 stars and 5 black holes. Family 2 here is the low-resolution
@@ -241,7 +241,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-11-04T17:23:45.428
+[Mera]: 2026-11-05T14:46:44.467
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 31.527 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 31.527 [Mpc]
