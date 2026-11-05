@@ -30,16 +30,16 @@ exportdata(m, &quot;fig3_maps.csv&quot;; length_unit=:kpc, verbose=false)</code>
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.9.0 | Julia 1.12.7 | 4 threads
+Mera v1.10.2 | Julia 1.12.7 | 4 threads
 [Mera] Hint: fig3_maps.h5.meta.json records where fig3_maps.h5 came from.
              readsidecar(&quot;fig3_maps.h5&quot;) shows it; sidecar(false) stops writing them.
              (shown once per session; verbose(false) silences Mera&#39;s messages)
 exportdata: T, sd → fig3_maps.h5  (+ fig3_maps.h5.meta.json)</code></pre><pre><code class="nohighlight hljs">&quot;fig3_maps.csv&quot;</code></pre><h2 id="The-sidecar"><a class="docs-heading-anchor" href="#The-sidecar">The sidecar</a><a id="The-sidecar-1"></a><a class="docs-heading-anchor-permalink" href="#The-sidecar" title="Permalink"></a></h2><p><a href="../api/#Mera.readsidecar-Tuple{AbstractString}"><code>readsidecar</code></a> prints what a sidecar says. It also checks that the data file still matches the SHA-256 recorded when it was written.</p><div class="admonition is-info" id="SHA-256-in-short-3ddfe02a262784c6"><header class="admonition-header">SHA-256 in short<a class="admonition-anchor" href="#SHA-256-in-short-3ddfe02a262784c6" title="Permalink"></a></header><div class="admonition-body"><p>A SHA-256 is a fingerprint of a file: 64 characters computed from every byte of it. Change a single byte and the fingerprint is completely different, and two different files practically never share one. So when a file&#39;s SHA-256 matches the one in its sidecar, it is the file that was written. It says nothing about whether the content is right, only that it is unchanged. Outside Julia, <code>shasum -a 256 fig3_maps.h5</code> (macOS) or <code>sha256sum fig3_maps.h5</code> (Linux) computes the same fingerprint.</p></div></div><pre><code class="language-julia hljs">r = readsidecar(&quot;fig3_maps.h5&quot;)</code></pre><pre><code class="nohighlight hljs">Sidecar of fig3_maps.h5  (hdf5, projection)  data file: unchanged
-  written      2026-10-25 11:54 UTC by Mera 1.9.0; Julia 1.12.7, 4 threads
-  source       Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  written      2026-11-05 11:28 UTC by Mera 1.10.2, not a registered release; Julia 1.12.7, 4 threads
+  source       Mera v1.10.2 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
-  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
+  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 24 packages
   contents     x [kpc] 481
                y [kpc] 481
                T [K] 481×481
@@ -62,11 +62,11 @@ savedata(core, :write; path=&quot;.&quot;, verbose=false)
 savemap(m, &quot;fig3_maps.jld2&quot;; verbose=false)
 
 readsidecar(&quot;output_00300.jld2&quot;)</code></pre><pre><code class="nohighlight hljs">Sidecar of output_00300.jld2  (jld2, mera_file)  data file: unchanged
-  written      2026-10-25 11:55 UTC by Mera 1.9.0; Julia 1.12.7, 4 threads
-  source       Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  written      2026-11-05 11:28 UTC by Mera 1.10.2, not a registered release; Julia 1.12.7, 4 threads
+  source       Mera v1.10.2 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
-  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
+  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 24 packages
   contents     hydro: 1136840 rows, 11 columns
   sidecar      output_00300.jld2.meta.json</code></pre><h2 id="Figures"><a class="docs-heading-anchor" href="#Figures">Figures</a><a id="Figures-1"></a><a class="docs-heading-anchor-permalink" href="#Figures" title="Permalink"></a></h2><p>A figure is saved by the plotting package, so Mera does not see it. One more line, <a href="../api/#Mera.writesidecar"><code>writesidecar</code></a>, gives it the same record, taken from the result it shows:</p><pre><code class="language-julia hljs">using CairoMakie
 fig = Figure(size=(520, 420))
@@ -77,11 +77,11 @@ save(&quot;fig3.png&quot;, fig)
 
 writesidecar(&quot;fig3.png&quot;, m; note=&quot;Figure 3&quot;);
 fig</code></pre><pre><code class="nohighlight hljs">Sidecar written → fig3.png.meta.json</code></pre><p><img src="../export_sidecars_files/export_sidecars_12_3.webp" alt/></p><p>For a figure with several panels, pass all its results, <code>writesidecar(&quot;fig4.pdf&quot;, [m1, m2, m3])</code>; the sidecar then lists the snapshot of each panel. Read back, it shows what the figure was made from:</p><pre><code class="language-julia hljs">readsidecar(&quot;fig3.png&quot;)</code></pre><pre><code class="nohighlight hljs">Sidecar of fig3.png  (png, figure)  data file: unchanged
-  written      2026-10-25 11:55 UTC by Mera 1.9.0; Julia 1.12.7, 4 threads
-  source       Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  written      2026-11-05 11:28 UTC by Mera 1.10.2, not a registered release; Julia 1.12.7, 4 threads
+  source       Mera v1.10.2 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
-  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
+  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 24 packages
   contents     x [standard] 481
                y [standard] 481
                T [K] 481×481
@@ -90,12 +90,12 @@ fig</code></pre><pre><code class="nohighlight hljs">Sidecar written → fig3.png
   sidecar      fig3.png.meta.json</code></pre><h2 id="An-overview-of-a-folder"><a class="docs-heading-anchor" href="#An-overview-of-a-folder">An overview of a folder</a><a id="An-overview-of-a-folder-1"></a><a class="docs-heading-anchor-permalink" href="#An-overview-of-a-folder" title="Permalink"></a></h2><p><a href="../api/#Mera.sidecaroverview"><code>sidecaroverview</code></a> lists every sidecar in a folder: what each file holds, the snapshot, and when it was written.</p><pre><code class="language-julia hljs">recs = sidecaroverview(&quot;.&quot;);</code></pre><pre><code class="nohighlight hljs">6 sidecars in .
 file               kind        format  snapshot             time       written (UTC)     data file
 -----------------  ----------  ------  -------------------  ---------  ----------------  ---------
-fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-10-25 11:55  present
-fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-25 11:54  present
-fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 11:54  present
-fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 11:55  present
-fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 11:54  present
-output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 11:55  present</code></pre><h2 id="Has-a-file-changed?"><a class="docs-heading-anchor" href="#Has-a-file-changed?">Has a file changed?</a><a id="Has-a-file-changed?-1"></a><a class="docs-heading-anchor-permalink" href="#Has-a-file-changed?" title="Permalink"></a></h2><p>The recorded SHA-256 notices a file that was edited or replaced after it was written. Here one line is added to the CSV, as a spreadsheet program might do on saving:</p><pre><code class="language-julia hljs">open(&quot;fig3_maps.csv&quot;, &quot;a&quot;) do io
+fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present</code></pre><h2 id="Has-a-file-changed?"><a class="docs-heading-anchor" href="#Has-a-file-changed?">Has a file changed?</a><a id="Has-a-file-changed?-1"></a><a class="docs-heading-anchor-permalink" href="#Has-a-file-changed?" title="Permalink"></a></h2><p>The recorded SHA-256 notices a file that was edited or replaced after it was written. Here one line is added to the CSV, as a spreadsheet program might do on saving:</p><pre><code class="language-julia hljs">open(&quot;fig3_maps.csv&quot;, &quot;a&quot;) do io
     println(io, &quot;0,0,0,0&quot;)
 end
 
@@ -175,7 +175,7 @@ print(read(&quot;datacite.json&quot;, String))</code></pre><pre><code class="noh
     &quot;language&quot;: &quot;en&quot;,
     &quot;descriptions&quot;: [
         {
-            &quot;description&quot;: &quot;RAMSES simulation, 3-D; box 48 kpc; AMR levels 6 to 10 (finest cell 46.875 pc); physics: hydro (hllc), gravity, particles, cooling, star formation, feedback; 1 output at 445.89 Myr. Described with Mera 1.9.0 (simulationrecord).&quot;,
+            &quot;description&quot;: &quot;RAMSES simulation, 3-D; box 48 kpc; AMR levels 6 to 10 (finest cell 46.875 pc); physics: hydro (hllc), gravity, particles, cooling, star formation, feedback; 1 output at 445.89 Myr. Described with Mera 1.10.2 (simulationrecord).&quot;,
             &quot;descriptionType&quot;: &quot;TechnicalInfo&quot;
         }
     ],
@@ -202,10 +202,10 @@ print(read(&quot;datacite.json&quot;, String))</code></pre><pre><code class="noh
             &quot;resourceTypeGeneral&quot;: &quot;JournalArticle&quot;
         }
     ]
-}</code></pre><h2 id="What-to-cite"><a class="docs-heading-anchor" href="#What-to-cite">What to cite</a><a id="What-to-cite-1"></a><a class="docs-heading-anchor-permalink" href="#What-to-cite" title="Permalink"></a></h2><p><a href="../api/data_inspection/#Mera.citation"><code>citation</code></a> gives the BibTeX for Mera at the exact version that runs, and the papers of the code behind the data. For RAMSES that is the code paper, plus the MHD and RT papers when the run used them. On a saved file it takes the Mera version recorded in the sidecar.</p><pre><code class="language-julia hljs">citation(gas)</code></pre><pre><code class="nohighlight hljs">@software{Mera_1_9_0,
+}</code></pre><h2 id="What-to-cite"><a class="docs-heading-anchor" href="#What-to-cite">What to cite</a><a id="What-to-cite-1"></a><a class="docs-heading-anchor-permalink" href="#What-to-cite" title="Permalink"></a></h2><p><a href="../api/data_inspection/#Mera.citation"><code>citation</code></a> gives the BibTeX for Mera at the exact version that runs, and the papers of the code behind the data. For RAMSES that is the code paper, plus the MHD and RT papers when the run used them. On a saved file it takes the Mera version recorded in the sidecar.</p><pre><code class="language-julia hljs">citation(gas)</code></pre><pre><code class="nohighlight hljs">@software{Mera_1_10_2,
   author  = {Behrendt, Manuel},
-  title   = {Mera.jl: Fast, conservation-correct, code-agnostic analysis of astrophysical simulations in Julia},
-  version = {1.9.0},
+  title   = {Mera.jl: geometrically exact, reproducible analysis of RAMSES simulations in Julia},
+  version = {1.10.2},
   year    = {2026},
   doi     = {10.5281/zenodo.3675254},
   url     = {https://github.com/ManuelBehrendt/Mera.jl}
@@ -223,7 +223,7 @@ print(read(&quot;datacite.json&quot;, String))</code></pre><pre><code class="noh
 </code></pre><pre><code class="language-julia hljs">citation(&quot;fig3.png&quot;; file=&quot;software.bib&quot;);</code></pre><h2 id="One-record-for-the-whole-folder"><a class="docs-heading-anchor" href="#One-record-for-the-whole-folder">One record for the whole folder</a><a id="One-record-for-the-whole-folder-1"></a><a class="docs-heading-anchor-permalink" href="#One-record-for-the-whole-folder" title="Permalink"></a></h2><p>Before the folder is published, <a href="../api/#Mera.bundle"><code>bundle</code></a> joins all its sidecars into one record, <code>ro-crate-metadata.json</code>. It is an <a href="https://www.researchobject.org/ro-crate/">RO-Crate</a>, a standard format for describing research data: every file with its size and SHA-256, and for each file Mera wrote, what made it (the Mera version, the script and the snapshot). It also writes <code>software.bib</code> from <a href="../api/data_inspection/#Mera.citation"><code>citation</code></a> and, with <code>simulation=</code>, the simulation record. Nothing is copied.</p><pre><code class="language-julia hljs">bundle(&quot;.&quot;; simulation=info, title=&quot;Sharing results example&quot;,
        creators=[&quot;Behrendt, Manuel&quot;], license=&quot;CC-BY-4.0&quot;)</code></pre><pre><code class="nohighlight hljs">┌ Warning: These files changed after their sidecar was written: fig3_maps.csv. Write them again, or their recorded SHA-256 does not match.
 └ @ Mera ~/code-github/Mera.jl/src/functions/export/bundle.jl:213
-Bundle of .: 9 files, 6 with a sidecar, 1 snapshot, Mera 1.9.0
+Bundle of .: 9 files, 6 with a sidecar, 1 snapshot, Mera 1.10.2
   → ./ro-crate-metadata.json</code></pre><pre><code class="nohighlight hljs">&quot;./ro-crate-metadata.json&quot;</code></pre><p>The warning names the CSV that was edited above: <code>bundle</code> checks every file against the SHA-256 in its sidecar before it records it.</p><p>Authors, title and license can also live in an <code>analysis.toml</code> in the folder, so the call becomes <code>bundle(&quot;.&quot;; simulation=info)</code>. <a href="../api/#Mera.meraproject-Tuple{AbstractString}"><code>meraproject</code></a> writes one when it starts a new analysis folder. One entry of the record, the action that wrote the figure:</p><pre><code class="language-julia hljs">crate = Mera.JSON3.read(read(&quot;ro-crate-metadata.json&quot;, String))
 Mera.JSON3.pretty(only(e for e in crate[&quot;@graph&quot;] if e[&quot;@id&quot;] == &quot;#make-fig3.png&quot;))</code></pre><pre><code class="nohighlight hljs">{
     &quot;@id&quot;: &quot;#make-fig3.png&quot;,
@@ -231,7 +231,7 @@ Mera.JSON3.pretty(only(e for e in crate[&quot;@graph&quot;] if e[&quot;@id&quot;
     &quot;name&quot;: &quot;Mera wrote fig3.png&quot;,
     &quot;instrument&quot;: [
         {
-            &quot;@id&quot;: &quot;#mera-1.9.0&quot;
+            &quot;@id&quot;: &quot;#mera-1.10.2&quot;
         }
     ],
     &quot;result&quot;: {
@@ -242,7 +242,7 @@ Mera.JSON3.pretty(only(e for e in crate[&quot;@graph&quot;] if e[&quot;@id&quot;
             &quot;@id&quot;: &quot;#snapshot-mw_L10_output_00300&quot;
         }
     ],
-    &quot;endTime&quot;: &quot;2026-10-25T11:55:21.163&quot;
+    &quot;endTime&quot;: &quot;2026-11-05T11:28:40.925&quot;
 }</code></pre><h2 id="Why-sidecars-are-on-by-default,-and-how-to-switch-them-off"><a class="docs-heading-anchor" href="#Why-sidecars-are-on-by-default,-and-how-to-switch-them-off">Why sidecars are on by default, and how to switch them off</a><a id="Why-sidecars-are-on-by-default,-and-how-to-switch-them-off-1"></a><a class="docs-heading-anchor-permalink" href="#Why-sidecars-are-on-by-default,-and-how-to-switch-them-off" title="Permalink"></a></h2><p>A record helps only if it exists when someone asks for it, often a year later. A feature that has to be switched on is mostly never switched on, so Mera writes the sidecar every time. It costs little:</p><ul><li>it is small, about 5 KB per file;</li><li>it is quiet: the first sidecar of a session prints one short line saying what the new file is and how to stop it, and after that only <code>exportdata</code> names it, in its usual line;</li><li>it never breaks a save: if the sidecar cannot be written, you get a warning and the data file is still written.</li></ul><p>There are good reasons to switch them off. On a cluster that limits the number of files, every saved file now counts twice. And the sidecar records the simulation path (never the host name); if that should not be public, <code>anonymize=true</code> keeps only its last two parts.</p><p><code>sidecar=false</code> turns the sidecar off for one call. <a href="../api/configuration/#Mera.sidecar"><code>sidecar</code></a> switches it for the whole session, like <a href="../api/configuration/#Mera.verbose"><code>verbose</code></a>: <code>sidecar(false)</code> at the top of a script for none, <code>sidecar(nothing)</code> to return to each call&#39;s own keyword. To switch them off without changing a script, set the environment variable <code>MERA_SIDECAR=0</code>, for example in a cluster job script: <code>MERA_SIDECAR=0 julia analysis.jl</code>. The frames that <code>savemovie</code> writes with <code>save_frames</code> get no sidecar; the movie itself does.</p><pre><code class="language-julia hljs">sidecar(false)
 exportdata(m, &quot;scratch.npz&quot;; verbose=false)
 println(&quot;sidecar written: &quot;, isfile(&quot;scratch.npz.meta.json&quot;))
@@ -255,6 +255,7 @@ CairoMakie      0.15.13
 CodecZlib       0.7.8
 ColorSchemes    3.31.0
 Conda           1.10.3
+DataFrames      1.8.2
 DelimitedFiles  1.9.1
 FITSIO          0.17.5
 FileIO          1.20.0
@@ -275,4 +276,4 @@ TimerOutputs    0.5.29</code></pre><p>This page is executed by <code>nbconvert</
     &quot;name&quot;: &quot;analysis.jl&quot;,
     &quot;path&quot;: &quot;/home/me/projects/galaxy/analysis.jl&quot;,
     &quot;sha256&quot;: &quot;3f9a…&quot;
-}</code></pre><p><strong>What is still not recorded.</strong> Code typed into the REPL leaves no file behind, and VS Code notebooks do not pass their path on. And a function you wrote yourself, such as the reducer of a <a href="../api/calculations/#Mera.timeseries"><code>timeseries</code></a> or an <a href="../derived_fields/#Mera.add_field"><code>add_field</code></a> kernel, appears only by name: the result does not keep the code that made it. In those cases the script or notebook is still the record, so keep it, and publish it next to the results.</p><p><strong>Before you publish figure data:</strong></p><ul><li>[ ] run the analysis as a script, or in JupyterLab, so the sidecars name it</li><li>[ ] export each figure&#39;s data with <code>exportdata</code>, with a <code>note</code> naming the figure</li><li>[ ] give each figure file its sidecar with <code>writesidecar</code></li><li>[ ] check the folder with <code>sidecaroverview(dir; verify=true)</code></li><li>[ ] use <code>anonymize=true</code> if the simulation path should not be public</li><li>[ ] put the data files, their sidecars and the scripts or notebooks in one folder, run     <code>bundle</code> on it, and upload it, e.g. to Zenodo</li><li>[ ] describe the simulation with <code>simulationrecord</code>, and <code>datacite</code> if it is published too</li><li>[ ] cite the software with the BibTeX from <code>citation</code></li><li>[ ] commit the <code>Project.toml</code> and <code>Manifest.toml</code> of the analysis (see <a href="../reproducibility/">Reproducibility</a>)</li></ul><h2 id="See-also"><a class="docs-heading-anchor" href="#See-also">See also</a><a id="See-also-1"></a><a class="docs-heading-anchor-permalink" href="#See-also" title="Permalink"></a></h2><ul><li><a href="../provenance/">Provenance</a>, the record in the <code>source</code> part of every sidecar</li><li><a href="../exporting_data/">Exporting Data</a>, the formats <code>exportdata</code> writes</li><li><a href="../reproducibility/">Reproducibility</a>, pinned environments and test simulations</li><li><a href="../07_multi_Mera_Files/">MERA files</a>, Mera&#39;s own format for data objects</li><li><a href="../api/#Mera.export_vtk-Tuple{HydroDataType, String}"><code>export_vtk</code></a>, for ParaView and VisIt</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../exporting_data/">« Exporting Data</a><a class="docs-footer-nextpage" href="../clumpfind/">Clump Finding »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. <a href="https://manuelbehrendt.github.io/Mera.jl/dev/privacy/">Privacy</a>: page views are counted without cookies or personal data.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Wednesday 4 November 2026 17:37">Wednesday 4 November 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+}</code></pre><p><strong>What is still not recorded.</strong> Code typed into the REPL leaves no file behind, and VS Code notebooks do not pass their path on. And a function you wrote yourself, such as the reducer of a <a href="../api/calculations/#Mera.timeseries"><code>timeseries</code></a> or an <a href="../derived_fields/#Mera.add_field"><code>add_field</code></a> kernel, appears only by name: the result does not keep the code that made it. In those cases the script or notebook is still the record, so keep it, and publish it next to the results.</p><p><strong>Before you publish figure data:</strong></p><ul><li>[ ] run the analysis as a script, or in JupyterLab, so the sidecars name it</li><li>[ ] export each figure&#39;s data with <code>exportdata</code>, with a <code>note</code> naming the figure</li><li>[ ] give each figure file its sidecar with <code>writesidecar</code></li><li>[ ] check the folder with <code>sidecaroverview(dir; verify=true)</code></li><li>[ ] use <code>anonymize=true</code> if the simulation path should not be public</li><li>[ ] put the data files, their sidecars and the scripts or notebooks in one folder, run     <code>bundle</code> on it, and upload it, e.g. to Zenodo</li><li>[ ] describe the simulation with <code>simulationrecord</code>, and <code>datacite</code> if it is published too</li><li>[ ] cite the software with the BibTeX from <code>citation</code></li><li>[ ] commit the <code>Project.toml</code> and <code>Manifest.toml</code> of the analysis (see <a href="../reproducibility/">Reproducibility</a>)</li></ul><h2 id="See-also"><a class="docs-heading-anchor" href="#See-also">See also</a><a id="See-also-1"></a><a class="docs-heading-anchor-permalink" href="#See-also" title="Permalink"></a></h2><ul><li><a href="../provenance/">Provenance</a>, the record in the <code>source</code> part of every sidecar</li><li><a href="../exporting_data/">Exporting Data</a>, the formats <code>exportdata</code> writes</li><li><a href="../reproducibility/">Reproducibility</a>, pinned environments and test simulations</li><li><a href="../07_multi_Mera_Files/">MERA files</a>, Mera&#39;s own format for data objects</li><li><a href="../api/#Mera.export_vtk-Tuple{HydroDataType, String}"><code>export_vtk</code></a>, for ParaView and VisIt</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../exporting_data/">« Exporting Data</a><a class="docs-footer-nextpage" href="../clumpfind/">Clump Finding »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. <a href="https://manuelbehrendt.github.io/Mera.jl/dev/privacy/">Privacy</a>: page views are counted without cookies or personal data.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Thursday 5 November 2026 15:10">Thursday 5 November 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

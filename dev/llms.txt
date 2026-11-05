@@ -8,9 +8,9 @@
 
 This file is a compact grounding for an AI assistant. It is not a tutorial. It states the data
 model, the vocabulary, the mistakes that are easy to make, and how to check that an answer is
-right. Everything below was verified against Mera 1.8. Versions before 1.8 have none of the region
-values, `filterdata` or the off-axis features named here. Items marked (1.9) need Mera 1.9 or later:
-`exportdata`, the sidecar files and the functions around them.
+right. Everything below holds for Mera 1.10. Versions before 1.8 have none of the region values,
+`filterdata` or the off-axis features named here. Items marked (1.9) need Mera 1.9 or later:
+`exportdata`, the sidecar files and the functions around them. Items marked (1.10) need 1.10.
 
 ## Data model
 
@@ -159,6 +159,12 @@ These are mistakes an assistant makes confidently. Each was reproduced.
 14. **(1.9) A `getvar` array does not know its snapshot, and a figure is not seen by Mera.**
    `exportdata(values, file; source=gas)` records the provenance of plain arrays. A figure saved
    with Makie or PyPlot gets its record from `writesidecar("fig.png", m)` right after the save.
+15. **(1.10) The temperature of an RT run depends on the ion columns.** `:T` takes the mean molecular
+   weight of each cell from its ionisation fractions, so load the hydro data with them (the default
+   loads everything). Without them Mera warns and falls back to a constant μ, and `:T` changes.
+16. **Before 1.10.2, a gas projection with `fov` ignores `myargs`.** The camera angles, `center`
+   and `pxsize` set in an `ArgumentsType` are lost, and `:vlos` then fails for want of a camera.
+   On those versions pass them to `projection` (or `@project`) as keywords.
 
 ## Write it so a person can read it
 
@@ -220,6 +226,7 @@ a sidecar next to every saved file, and `bundle` for a whole folder.
     citation(gas; file="software.bib")             # Mera at its version, plus the RAMSES papers
     bundle("."; simulation=info)                   # ro-crate-metadata.json, software.bib, simulation.json
     simulationrecord(info); datacite(rec; creators=..., title=..., license=...)
+    simulationrecord("/path/to/sim")               # the whole run: every output with time and size
 
 A sidecar holds the snapshot's provenance, the units, the file's SHA-256, the SHA-256 of the run's
 namelist and makefile, the analysis environment (Project.toml and Manifest.toml SHA-256, the script
@@ -227,6 +234,11 @@ by name and SHA-256) and the Julia, Mera and thread count that ran; never the ho
 `anonymize=true` only the last two parts of the simulation path. Sidecars are on by default;
 `sidecar(false)` or the environment variable `MERA_SIDECAR=0` turns them off. A failed sidecar is a
 warning, never a failed save.
+
+`simulationrecord` describes the simulation rather than a result: code, box, resolution, units,
+cosmology, the physics the run used (`rec["physics"]["summary"]`, the same keys for every code) and
+the SHA-256 of its input files. Given the run folder it also lists every output and the outputs at
+which the input files changed, i.e. a restart with new settings (`rec["run"]["namelist_changed_at"]`).
 
 Threads: a result repeats bit for bit at the same thread count. Across thread counts reading and
 axis-aligned projections stay identical, while off-axis, particle and volume maps differ only at
@@ -242,6 +254,11 @@ round-off.
   still lacks.
 - `face_on`, `edge_on` and `angmom` give a frame to pass to `projection`; `periodic_recenter(map;
   center)` moves a finished map across a periodic box so a structure on a face appears whole.
+- `quicklook(output; path)` draws a first look at an unknown snapshot in physical units picked for
+  the run; `report(output; path)` composes cards (maps, phase diagrams, profiles, star formation, and
+  the ionised-fraction or `|B|` map of an RT or MHD run) and renders them as text or to a file.
+- (1.10) `projection(part, :sd; weighting=:sph)` smooths any particles, also those without a stored
+  smoothing length (RAMSES stars and dark matter), from their nearest neighbours.
 
 **Not part of Mera:** emission or extinction transfer functions, `column_integral`, line-of-sight
 cubes, kinematic mock observations and their FITS export, a fly-through renderer, and a
