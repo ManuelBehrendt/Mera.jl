@@ -79,6 +79,7 @@ Returns `(centers, edges, pdf, logbins, norm, quantity, unit, weight)`.
 - `logbins` — log-spaced bins over `log10(quantity)` (default; quantity must be > 0).
 - `bins` — number of bins; `valrange` — `(min, max)` of the quantity (default: data range).
 - `unit` — unit of `quantity`; `mask` — restrict to selected cells/particles.
+- `verbose` — accepted as in the other Mera functions; `pdf` prints nothing.
 
 ```julia
 P  = pdf(gas, :rho)                          # mass-weighted density PDF (area = 1)
@@ -106,7 +107,7 @@ Pk = pdf(gas, :rho; norm=:peak)              # peak = 1 (compare shapes)
 """
 function pdf(dataobject, quantity::Symbol; weight::Symbol=:mass, norm::Symbol=:density,
              logbins::Bool=true, bins::Int=60, valrange=nothing, unit::Symbol=:standard,
-             mask::MaskType=[false])
+             mask::MaskType=[false], verbose::Bool=true)    # verbose: nothing to print, accepted as elsewhere
     x = getvar(dataobject, quantity, unit, mask=mask)
     w = (weight === :cells || weight === :count) ? ones(Float64, length(x)) :
         Float64.(getvar(dataobject, weight, mask=mask))
