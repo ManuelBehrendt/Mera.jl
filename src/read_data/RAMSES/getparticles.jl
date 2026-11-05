@@ -164,12 +164,41 @@ function getparticles( dataobject::InfoType;
     rdr = _reader_by_simcode(dataobject.simcode)
     if rdr !== nothing && rdr.code !== :ramses
         haskey(rdr.funcs, :particles) || _capability_error(rdr, :particles, "getparticles")
+        # `myargs` must be applied BEFORE delegating: the block that folds it into the plain
+        # keywords sits further down, on the RAMSES-only path (as in gethydro).
+        if !(myargs.xrange === missing) && isequal(xrange, [missing, missing]) xrange = myargs.xrange end
+        if !(myargs.yrange === missing) && isequal(yrange, [missing, missing]) yrange = myargs.yrange end
+        if !(myargs.zrange === missing) && isequal(zrange, [missing, missing]) zrange = myargs.zrange end
+        if !(myargs.center === missing) && isequal(center, [0., 0., 0.]) center = myargs.center end
+        if !(myargs.range_unit === missing) && isequal(range_unit, :standard) range_unit = myargs.range_unit end
+        if !(myargs.verbose === missing) && isequal(verbose, true) verbose = myargs.verbose end
+        if !(myargs.show_progress === missing) && isequal(show_progress, true) show_progress = myargs.show_progress end
+        if !(myargs.lmax === missing) && isequal(lmax, dataobject.levelmax) lmax = myargs.lmax end
+
+        # The other named keywords never reach `kwargs...` either. Hand on the ones the reader
+        # declares; refuse a value the caller set that the reader cannot honour, instead of
+        # dropping it in silence (`stars=false` used to return the stars). A progress bar is
+        # cosmetic, so it is only skipped where the reader has none.
+        f = rdr.funcs[:particles]
+        named = Dict{Symbol,Any}()
+        _accepts_kw(f, :show_progress) && (named[:show_progress] = show_progress)
+        for (k, v, default) in ((:stars, stars, true), (:lmax, lmax, dataobject.levelmax),
+                                (:presorted, presorted, true), (:print_filenames, print_filenames, false),
+                                (:max_threads, max_threads, Threads.nthreads()), (:subsample, subsample, 1.0))
+            if _accepts_kw(f, k)
+                named[k] = v
+            elseif v != default
+                throw(ArgumentError("getparticles: `$k=$v` is not supported by the $(rdr.name) " *
+                                    "reader. Drop it" * (k === :stars ? ", and select particle " *
+                                    "types with the reader's own keyword." : ".")))
+            end
+        end
         # `vars` is a NAMED parameter here, so it never reaches `kwargs...` — forwarding only
         # `kwargs` would silently drop it and hand back every column. Translate the RAMSES spelling
         # (`[:all]`, a vector) to the frontend's (`:all`, a symbol) on the way through.
-        return rdr.funcs[:particles](dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
-                                     center=center, range_unit=range_unit, verbose=verbose,
-                                     vars=(vars == [:all] ? :all : vars), kwargs...)
+        return f(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
+                 center=center, range_unit=range_unit, verbose=verbose,
+                 vars=(vars == [:all] ? :all : vars), named..., kwargs...)
     end
     isempty(kwargs) || error("[Mera]: getparticles: unsupported keyword argument(s) for RAMSES data: " *
                              join(keys(kwargs), ", ") * ".")

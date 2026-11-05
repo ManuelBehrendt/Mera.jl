@@ -417,7 +417,16 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     if info.particles && (want.stars || want.dm)
         try
             verbose && printtime("quicklook output $output, reading particles: ", true)
-            parts = getparticles(info; subsample=psub, verbose=false, show_progress=verbose)
+            # a reader without subsampling returns every particle, so scaling the masses up by
+            # 1/fraction would overstate them: read them all and say so
+            rdr = _reader_by_simcode(info.simcode)
+            if psub < 1.0 && rdr !== nothing && rdr.code !== :ramses &&
+               !_accepts_kw(get(rdr.funcs, :particles, identity), :subsample)
+                @warn "quicklook: the $(rdr.name) reader cannot subsample particles, so all of them are read."
+                psub = 1.0; pscale = 1.0
+            end
+            parts = getparticles(info; (psub < 1.0 ? (subsample=psub,) : (;))...,
+                                 verbose=false, show_progress=verbose)
         catch e
             verbose && @warn "quicklook: particle read failed; skipping particle maps & budget" exception=e
         end
