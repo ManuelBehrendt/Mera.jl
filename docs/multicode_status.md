@@ -12,7 +12,7 @@ pkg> add https://github.com/ManuelBehrendt/Mera.jl#multicode
 ```
 
 Nothing here ships in a 1.x release. `master` is RAMSES-only; these readers live on `multicode`
-(version 2.0.0-DEV) and are installed by URL.
+(version <master release>+multicode, e.g. 1.10.2+multicode) and are installed by URL.
 
 ## Which codes have a reader
 

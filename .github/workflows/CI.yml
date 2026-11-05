@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    # `multicode` is the 2.0.0-DEV line (master + the non-RAMSES frontends). It is never
+    # `multicode` is master + the non-RAMSES frontends (version <master>+multicode). It is never
     # registered, but users install it by URL, so it needs the same smoke run as master.
     branches: [master, main, multicode]
   pull_request:

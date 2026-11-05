@@ -13,7 +13,7 @@ have never seen and it reports what is there and draws it.
 Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`, `getrt` and `getclumps` readers, because it writes those to separate files. Where another code stores the same physics inside its snapshot, Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`, Athena++ six-ray radiation, the reader maps it to the canonical field, so `getvar(gas, :gpot)` works there too. AREPO and GADGET add particles and FoF group catalogues (`getgroups`; subhalos are not read).
 
 !!! warning "You are reading the multi-code development docs"
-    This is the `multicode` branch, version 2.0.0-DEV. It is `master` plus the frontends for
+    This is the `multicode` branch, version 1.10.2+multicode. It is `master` plus the frontends for
     **AREPO, GADGET, PLUTO, Athena++, FLASH**, **Chombo** and **AMReX/Quokka**, and it is never
     registered, so it is installed by URL:
 
@@ -58,12 +58,12 @@ In the REPL, `using Mera` greets you with:
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v2.0.0-DEV | Julia 1.13.2 | 8 threads
+Mera v1.10.2+multicode | Julia 1.13.2 | 8 threads
 ```
 
 It shows the Mera version, the Julia version and how many threads Mera can use. With one thread,
 Mera adds a hint: start Julia with `julia -t 8` (or set `JULIA_NUM_THREADS=8`) to read and project
-in parallel. In scripts the greeting is a single `[ Info: Mera v2.0.0-DEV` line, and `MERA_QUIET=1`
+in parallel. In scripts the greeting is a single `[ Info: Mera v1.10.2+multicode` line, and `MERA_QUIET=1`
 turns it off.
 
 Then run something on a real RAMSES simulation. `download_testdata` fetches one of Mera's public

@@ -1,7 +1,7 @@
 
 ## The multicode build: other simulation codes
 
-This part applies to the `multicode` branch (Mera 2.0.0-DEV, installed with
+This part applies to the `multicode` branch (Mera 1.10.2+multicode, installed with
 `] add https://github.com/ManuelBehrendt/Mera.jl#multicode`). It replaces two statements above:
 here `getinfo` is not RAMSES-only, and Mera reads more than RAMSES. Everything else above holds for
 every code.

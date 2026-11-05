@@ -23,7 +23,7 @@ authors:
     given-names: Manuel
     orcid: "https://orcid.org/0000-0002-8759-941X"
     email: mera@manuelbehrendt.com
-version: 2.0.0-DEV
+version: 1.10.2+multicode
 date-released: "2026-06-16"   # TODO: unreleased development line; set on a 2.0 release
 license: MIT
 repository-code: "https://github.com/ManuelBehrendt/Mera.jl"

@@ -70,7 +70,7 @@ Every quantity comes in the unit you name. The same calls work on particles and 
 > [mera@manuelbehrendt.com](mailto:mera@manuelbehrendt.com). I am happy to collaborate on
 > extensions.
 
-On this `multicode` branch, version 2.0.0-DEV, Mera also reads **AREPO, GADGET, PLUTO, Athena++,
+On this `multicode` branch, version 1.10.2+multicode, Mera also reads **AREPO, GADGET, PLUTO, Athena++,
 FLASH**, **Chombo** and **AMReX/Quokka** through the same API. The AMReX/Quokka reader was
 contributed by [ChongChong He](https://github.com/chongchonghe). The branch is never registered, so
 it is installed by URL; the released 1.x line reads RAMSES only:
@@ -397,12 +397,12 @@ using Mera
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v2.0.0-DEV | Julia 1.13.2 | 8 threads
+Mera v1.10.2+multicode | Julia 1.13.2 | 8 threads
 ```
 
 It shows the Mera version, the Julia version and how many threads Mera can use. With one thread,
 Mera adds a hint: start Julia with `julia -t 8` (or set `JULIA_NUM_THREADS=8`) to read and project
-in parallel. In scripts the greeting is a single `[ Info: Mera v2.0.0-DEV` line, and `MERA_QUIET=1`
+in parallel. In scripts the greeting is a single `[ Info: Mera v1.10.2+multicode` line, and `MERA_QUIET=1`
 turns it off.
 
 For collaborators, the readers for other codes (see the note at the top) are installed from the
