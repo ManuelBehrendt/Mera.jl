@@ -1,17 +1,21 @@
 cff-version: 1.2.0
 message: "If you use Mera.jl in your research, please cite it as below."
-title: "Mera.jl: Fast, conservation-correct, code-agnostic analysis of astrophysical simulations in Julia"
+title: "Mera.jl: geometrically exact, reproducible analysis of RAMSES simulations in Julia"
 abstract: >-
-  Mera.jl is a Julia package for reading and analysing astrophysical simulation output. It reads
-  RAMSES adaptive-mesh-refinement data (hydro, gravity, particles, clumps, radiative transfer)
-  natively and in full. Formats are read through a reader registry, so the analysis layer works on
-  the data rather than on the simulation code that wrote it, and a reader for another code can be
-  registered from outside the package. It provides spatial selection, a derived-quantity registry
-  with physical units, weighted profiles and phase diagrams, mass-conserving projections
-  (axis-aligned and off-axis) and covering grids, a pluggable structure (clump/halo) finder, and a
-  conservation-correct inflow/outflow flux-budget tool, all checked by a data-free correctness
-  oracle. Readers for PLUTO, Chombo, Athena++, FLASH, GADGET and AREPO are in development on the
-  multicode branch and are not yet part of a release.
+  Mera.jl is an analysis framework for astrophysical simulations, written in Julia. It covers the
+  whole path from raw simulation output to a result you can publish: selecting regions, computing
+  physics in any unit, projecting from any viewing angle, profiles, phase diagrams, clump finding,
+  time series and movies. It reads RAMSES adaptive mesh refinement output natively, with hydro and
+  MHD, particles, gravity, clumps, sinks and radiative transfer, and handles cosmological runs
+  throughout. A snapshot is one table, one row per cell with its refinement level, so nothing is
+  flattened onto a uniform grid first. When a selected region cuts through a cell, Mera counts the
+  part of the cell that lies inside, and a map holds the same mass at any angle, pixel size or
+  thread count. Mera also renders volumes, finds clumps with seven algorithms, and rewrites a RAMSES
+  output so it restarts on any number of CPUs. Every file it saves records the snapshot, the code
+  and the package versions behind it, and one call bundles these records into an RO-Crate. Readers
+  plug into a registry, so a reader written in another package works with the whole analysis.
+  Readers for AREPO, GADGET, PLUTO, Athena++, FLASH, Chombo and AMReX/Quokka are in development on
+  the multicode branch and are not yet part of a release.
 type: software
 authors:
   - family-names: Behrendt
@@ -35,3 +39,8 @@ keywords:
   - adaptive mesh refinement
   - RAMSES
   - galaxy evolution
+  - magnetohydrodynamics
+  - radiative transfer
+  - data analysis
+  - visualization
+  - reproducibility
