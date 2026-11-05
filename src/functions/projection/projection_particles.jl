@@ -10,6 +10,7 @@
 #                    local smoothing length for its density estimate, and Mera reads it for all
 #                    six PartTypes. Used AS IS: it is a smoothing length, not a radius derived
 #                    from a volume, so the α that tunes the volume form does not belong on it.
+#                    Where it is 0 (particles SUBFIND did not reach) the neighbours decide.
 #   neighbours     — any other particles (RAMSES dark matter, stars, tracers): h is half the
 #                    distance to the 32nd nearest neighbour, so each kernel (support 2h) reaches
 #                    about 32 particles. Capped at 16 pixels (4 above a million particles) so an
@@ -26,23 +27,28 @@
 # (see the "Zoom Simulations" page).
 function _sph_smoothing_lengths(cols, getcol, pixsize::Real; α::Real=1.5)
     # A particle file can hold gas cells and collisionless particles together (AREPO): only the
-    # cells have a volume, the others carry NaN there. Each particle takes the first source that
-    # gives it a valid length.
+    # cells have a volume, the others carry NaN there. SUBFIND leaves its length at 0 for the
+    # particles it did not reach, all the low-resolution dark matter of a zoom. So each particle
+    # takes the first source that gives it a valid length, not the first source that exists.
     valid(x) = isfinite(x) && x > 0
-    h = :volume in cols ? α .* (3.0 .* Float64.(getcol(:volume)) ./ (4 * pi)) .^ (1/3) : nothing
-    if h === nothing || !all(valid, h)
-        other = :subfind_hsml in cols ? Float64.(getcol(:subfind_hsml)) :
-                all(in(cols), (:x, :y, :z)) ? _neighbour_lengths(getcol, pixsize) : nothing
-        other === nothing && h === nothing && throw(ArgumentError(
-            "projection (particles): weighting=:sph needs a smoothing length: a :volume column " *
-            "(gas cells), a :subfind_hsml column, or the positions :x, :y, :z to measure one from " *
-            "the nearest neighbours. Without them, use weighting=:mass."))
+    sources = Function[]
+    :volume in cols && push!(sources, () -> α .* (3.0 .* Float64.(getcol(:volume)) ./ (4 * pi)) .^ (1/3))
+    :subfind_hsml in cols && push!(sources, () -> Float64.(getcol(:subfind_hsml)))
+    all(in(cols), (:x, :y, :z)) && push!(sources, () -> _neighbour_lengths(getcol, pixsize))
+    isempty(sources) && throw(ArgumentError(
+        "projection (particles): weighting=:sph needs a smoothing length: a :volume column " *
+        "(gas cells), a :subfind_hsml column, or the positions :x, :y, :z to measure one from " *
+        "the nearest neighbours. Without them, use weighting=:mass."))
+    h = nothing
+    for source in sources
+        cand = source()
         if h === nothing
-            h = other
-        elseif other !== nothing
+            h = cand
+        else
             bad = .!valid.(h)
-            h[bad] .= other[bad]
+            h[bad] .= cand[bad]
         end
+        all(valid, h) && break
     end
     return max.(h, pixsize)
 end
@@ -302,7 +308,7 @@ end
 # Convert `parttypes` (e.g. [:stars], [:dm]) into a boolean particle selection that is folded into the
 # tested `mask=` path of projection (histogram weights are multiplied by the :mask column, zeroing
 # excluded particles — works for both the axis-aligned and the off-axis routines). Family-aware:
-# RAMSES new format uses :family with 1=DM, 2=star; legacy outputs fall back to :birth (≠0 ⇒ star,
+# the star and DM :family values come from `_family_codes`; legacy outputs fall back to :birth (≠0 ⇒ star,
 # ==0 ⇒ DM). Returns `nothing` for [:all] or [:stars,:dm] (no filtering). Errors loudly on an
 # unsupported request rather than silently projecting all particles.
 function _parttype_select(dataobject::PartDataType, parttypes::Array{Symbol,1})
@@ -313,7 +319,8 @@ function _parttype_select(dataobject::PartDataType, parttypes::Array{Symbol,1})
     cols = colnames(dataobject.data)
     if in(:family, cols)
         fam = select(dataobject.data, :family)
-        return want_star ? (fam .== 2) : (fam .== 1)
+        fc = _family_codes(dataobject.info)    # the codes' own numbers, not RAMSES's 1 and 2
+        return in.(fam, Ref(want_star ? fc.stars : fc.dm))
     elseif in(:birth, cols)
         b = select(dataobject.data, :birth)
         return want_star ? (b .!= 0) : (b .== 0)
@@ -881,6 +888,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 end
             end
         end
+        pxsize[1] > 0 || throw(ArgumentError("pxsize must be a positive length, got $(pxsize[1])"))
         px_scale = pxsize[1] / px_unit
         res = boxlen/px_scale
     end
@@ -1044,7 +1052,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     var_a = :x
     var_b = :y
-    finished = zeros(Float64, res,res)
     rl = data_centerm .* dataobject.boxlen
 
     # Bin edges are the pixel edges r-1 … r-1 of the window, the same interval `extent` reports,

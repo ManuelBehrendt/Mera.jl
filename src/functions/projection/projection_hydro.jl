@@ -713,6 +713,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                 end
             end
         end
+        pxsize[1] > 0 || throw(ArgumentError("pxsize must be a positive length, got $(pxsize[1])"))
         px_scale = pxsize[1] / px_unit
         res = boxlen / px_scale              # Convert physical size to pixel count
     end
