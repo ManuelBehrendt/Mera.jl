@@ -82,7 +82,8 @@ ran in:
   coin_flip_movie.ipynb
   Project.toml        which packages, and which versions are allowed
   Manifest.toml       the exact versions that ran, down to every dependency
-  media/              the figures, the animation, and the thumbnail on the card
+  media/              the figures, the animation, and the thumbnail on the card,
+                      each with its sidecar, plus software.bib and ro-crate-metadata.json
 ```
 
 The notebook's first cell activates that environment, so you run it against the versions the author
@@ -90,6 +91,17 @@ ran, not against whatever is installed on your machine. Add the provenance line 
 header, which names the Mera build and the exact snapshot, and a reader has everything needed to get
 the same numbers rather than a description of them. [Reproducibility](reproducibility.md) covers the
 same idea for your own work.
+
+Every recipe ends by recording what it made. Each figure and movie in `media/` has a sidecar
+next to it, which names the snapshot it shows, the Mera and Julia that made it, and the SHA-256 of
+the file and of the run's input files; `readsidecar("media/<file>")` prints it and checks that the
+file is unchanged. `media/software.bib` holds the BibTeX of the versions used, and
+`media/ro-crate-metadata.json` describes the folder as one record, ready for Zenodo. The sidecars
+keep only the last two parts of the simulation path, so they name the snapshot without the layout of
+the disk it was read from. [Sharing Results & Sidecars](export_sidecars.md) explains each file.
+
+The figures and movies are under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/): anyone
+may reuse them, with credit. The code in the recipes is under the MIT license, like Mera itself.
 
 The leading number is the order recipes arrived. It never changes, so it stays a stable way to refer
 to one even if the title does.
@@ -209,6 +221,8 @@ What makes a recipe useful to someone else:
   simulations from `download_testdata()`. A recipe that only runs on unpublished data is a
   showcase, and should say so.
 - **State the cost**, memory and time, and how to try a cheap version first.
+- **Record what you made.** Keep the template's last cell: it writes a sidecar for every figure
+  and movie in `media/`, the BibTeX of the versions used, and an RO-Crate record of the folder.
 - **Ship the environment.** Commit the `Project.toml` with `[compat]` bounds, and the
   `Manifest.toml` alongside it. Pkg's own words are that an independent project lets you check in a
   `Project.toml` "and even a `Manifest.toml` if you wish", and that `instantiate` then installs

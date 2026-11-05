@@ -162,6 +162,9 @@ These are mistakes an assistant makes confidently. Each was reproduced.
 15. **(1.10) The temperature of an RT run depends on the ion columns.** `:T` takes the mean molecular
    weight of each cell from its ionisation fractions, so load the hydro data with them (the default
    loads everything). Without them Mera warns and falls back to a constant μ, and `:T` changes.
+16. **Before 1.10.2, a gas projection with `fov` ignores `myargs`.** The camera angles, `center`
+   and `pxsize` set in an `ArgumentsType` are lost, and `:vlos` then fails for want of a camera.
+   On those versions pass them to `projection` (or `@project`) as keywords.
 
 ## Write it so a person can read it
 

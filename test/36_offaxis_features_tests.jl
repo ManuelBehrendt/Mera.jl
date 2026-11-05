@@ -651,6 +651,17 @@ end
         @test projection(gas, :sd, :Msol_pc2; akw...).los !=
               projection(gas, :sd, :Msol_pc2; angmom_radius=[2,:kpc], akw...).los
 
+        # the same through `myargs`: it was read only after the `fov` branch, so a camera, centre
+        # and pixel size given in the bundle never reached the sphere, and :vlos found no camera
+        bkw = (inclination=0.0, azimuth=30.0, position_angle=10.0, center=[:bc],
+               pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+        bykw   = projection(gas, [:sd, :vlos], [:Msol_pc2, :km_s]; fov=8, fov_unit=:kpc, bkw...)
+        byargs = projection(gas, [:sd, :vlos], [:Msol_pc2, :km_s]; fov=8, fov_unit=:kpc,
+                            myargs=ArgumentsType(; bkw...))
+        @test byargs.maps[:sd] == bykw.maps[:sd]
+        @test byargs.maps[:vlos] == bykw.maps[:vlos]
+        @test byargs.extent == bykw.extent
+
         # the slab must follow `center`, not the frame pivot. With los=+z the camera depth IS world
         # z, so moving the centre off the disc must empty the slab; it once did not, because the
         # cut was measured from the pivot and a full box puts that at the box centre.
