@@ -77,7 +77,7 @@ exportdata(m, "fig3_maps.csv"; length_unit=:kpc, verbose=false)
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.9.0 | Julia 1.12.7 | 4 threads
+Mera v1.10.2 | Julia 1.12.7 | 4 threads
 [Mera] Hint: fig3_maps.h5.meta.json records where fig3_maps.h5 came from.
              readsidecar("fig3_maps.h5") shows it; sidecar(false) stops writing them.
              (shown once per session; verbose(false) silences Mera's messages)
@@ -107,11 +107,11 @@ r = readsidecar("fig3_maps.h5")
 
 ```
 Sidecar of fig3_maps.h5  (hdf5, projection)  data file: unchanged
-  written      2026-10-25 11:54 UTC by Mera 1.9.0; Julia 1.12.7, 4 threads
-  source       Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  written      2026-11-05 11:28 UTC by Mera 1.10.2, not a registered release; Julia 1.12.7, 4 threads
+  source       Mera v1.10.2 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
-  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
+  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 24 packages
   contents     x [kpc] 481
                y [kpc] 481
                T [K] 481×481
@@ -193,11 +193,11 @@ readsidecar("output_00300.jld2")
 
 ```
 Sidecar of output_00300.jld2  (jld2, mera_file)  data file: unchanged
-  written      2026-10-25 11:55 UTC by Mera 1.9.0; Julia 1.12.7, 4 threads
-  source       Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  written      2026-11-05 11:28 UTC by Mera 1.10.2, not a registered release; Julia 1.12.7, 4 threads
+  source       Mera v1.10.2 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
-  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
+  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 24 packages
   contents     hydro: 1136840 rows, 11 columns
   sidecar      output_00300.jld2.meta.json
 ```
@@ -235,11 +235,11 @@ readsidecar("fig3.png")
 
 ```
 Sidecar of fig3.png  (png, figure)  data file: unchanged
-  written      2026-10-25 11:55 UTC by Mera 1.9.0; Julia 1.12.7, 4 threads
-  source       Mera v1.9.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  written      2026-11-05 11:28 UTC by Mera 1.10.2, not a registered release; Julia 1.12.7, 4 threads
+  source       Mera v1.10.2 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
-  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 23 packages
+  environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 24 packages
   contents     x [standard] 481
                y [standard] 481
                T [K] 481×481
@@ -261,12 +261,12 @@ recs = sidecaroverview(".");
 6 sidecars in .
 file               kind        format  snapshot             time       written (UTC)     data file
 -----------------  ----------  ------  -------------------  ---------  ----------------  ---------
-fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-10-25 11:55  present
-fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-10-25 11:54  present
-fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 11:54  present
-fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 11:55  present
-fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-10-25 11:54  present
-output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-10-25 11:55  present
+fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
 ```
 
 ## Has a file changed?
@@ -430,7 +430,7 @@ print(read("datacite.json", String))
     "language": "en",
     "descriptions": [
         {
-            "description": "RAMSES simulation, 3-D; box 48 kpc; AMR levels 6 to 10 (finest cell 46.875 pc); physics: hydro (hllc), gravity, particles, cooling, star formation, feedback; 1 output at 445.89 Myr. Described with Mera 1.9.0 (simulationrecord).",
+            "description": "RAMSES simulation, 3-D; box 48 kpc; AMR levels 6 to 10 (finest cell 46.875 pc); physics: hydro (hllc), gravity, particles, cooling, star formation, feedback; 1 output at 445.89 Myr. Described with Mera 1.10.2 (simulationrecord).",
             "descriptionType": "TechnicalInfo"
         }
     ],
@@ -471,10 +471,10 @@ citation(gas)
 ```
 
 ```
-@software{Mera_1_9_0,
+@software{Mera_1_10_2,
   author  = {Behrendt, Manuel},
-  title   = {Mera.jl: Fast, conservation-correct, code-agnostic analysis of astrophysical simulations in Julia},
-  version = {1.9.0},
+  title   = {Mera.jl: geometrically exact, reproducible analysis of RAMSES simulations in Julia},
+  version = {1.10.2},
   year    = {2026},
   doi     = {10.5281/zenodo.3675254},
   url     = {https://github.com/ManuelBehrendt/Mera.jl}
@@ -513,7 +513,7 @@ bundle("."; simulation=info, title="Sharing results example",
 ```
 ┌ Warning: These files changed after their sidecar was written: fig3_maps.csv. Write them again, or their recorded SHA-256 does not match.
 └ @ Mera ~/code-github/Mera.jl/src/functions/export/bundle.jl:213
-Bundle of .: 9 files, 6 with a sidecar, 1 snapshot, Mera 1.9.0
+Bundle of .: 9 files, 6 with a sidecar, 1 snapshot, Mera 1.10.2
   → ./ro-crate-metadata.json
 ```
 
@@ -540,7 +540,7 @@ Mera.JSON3.pretty(only(e for e in crate["@graph"] if e["@id"] == "#make-fig3.png
     "name": "Mera wrote fig3.png",
     "instrument": [
         {
-            "@id": "#mera-1.9.0"
+            "@id": "#mera-1.10.2"
         }
     ],
     "result": {
@@ -551,7 +551,7 @@ Mera.JSON3.pretty(only(e for e in crate["@graph"] if e["@id"] == "#make-fig3.png
             "@id": "#snapshot-mw_L10_output_00300"
         }
     ],
-    "endTime": "2026-10-25T11:55:21.163"
+    "endTime": "2026-11-05T11:28:40.925"
 }
 ```
 
@@ -616,6 +616,7 @@ CairoMakie      0.15.13
 CodecZlib       0.7.8
 ColorSchemes    3.31.0
 Conda           1.10.3
+DataFrames      1.8.2
 DelimitedFiles  1.9.1
 FITSIO          0.17.5
 FileIO          1.20.0
