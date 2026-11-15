@@ -235,6 +235,7 @@ export
     VolumeRenderType,
     project,
     offaxis_slice,
+    matchframe,
     profile,
     phase,
     profile3d,

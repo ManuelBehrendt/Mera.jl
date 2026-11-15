@@ -1496,7 +1496,9 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     nx = max(1, round(Int, (x1 - x0) / pixsize))
     ny = max(1, round(Int, (y1 - y0) / pixsize))
     if fov_half !== nothing                      # keep the centre on `center` after snapping
-        nx = max(1, ceil(Int, (x1 - x0) / pixsize)); ny = max(1, ceil(Int, (y1 - y0) / pixsize))
+        # an EVEN pixel count puts `center` on a pixel edge, so frames of different sizes about the
+        # same centre (gas with its cell margin, stars without) share one pixel grid
+        nx = 2 * max(1, ceil(Int, hx / pixsize)); ny = 2 * max(1, ceil(Int, hy / pixsize))
         x0 = -nx * pixsize / 2; y0 = -ny * pixsize / 2
     end
     x1 = x0 + nx * pixsize; y1 = y0 + ny * pixsize                # snap extent to pixel grid

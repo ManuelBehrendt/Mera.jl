@@ -1640,7 +1640,8 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
         # data, so every particle still lands on the grid.
         hw = fov_half + pixsize
         hx = max(hw, -x0, x1); hy = max(hw, -y0, y1)
-        nx = max(1, ceil(Int, 2hx / pixsize)); ny = max(1, ceil(Int, 2hy / pixsize))
+        # an even pixel count, as on the grid path, so a star map nests in the gas map's frame
+        nx = 2 * max(1, ceil(Int, hx / pixsize)); ny = 2 * max(1, ceil(Int, hy / pixsize))
         x0 = -nx * pixsize / 2; y0 = -ny * pixsize / 2
     else
         nx = max(1, round(Int, (x1 - x0) / pixsize))
