@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="420" viewBox="0 0 1040 420"
+     font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect width="1040" height="420" fill="#ffffff"/>
+  <text x="520" y="30" text-anchor="middle" font-size="19" font-weight="bold" fill="#1f2937">timeseries(path, reducer): one snapshot at a time &#8594; one row per output</text>
+  <text x="520" y="52" text-anchor="middle" font-size="13" fill="#64748b">memory stays bounded &#8212; each snapshot is loaded, reduced, then released before the next is read</text>
+
+  <!-- ===== Stage 1: outputs on disk ===== -->
+  <text x="120" y="86" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#334155">1 &#183; outputs on disk</text>
+  <g font-size="12" fill="#0f172a">
+    <rect x="40" y="98"  width="160" height="24" rx="5" fill="#eef2ff" stroke="#6366f1"/>
+    <text x="120" y="114" text-anchor="middle">output_00001</text>
+    <rect x="40" y="126" width="160" height="24" rx="5" fill="#eef2ff" stroke="#6366f1"/>
+    <text x="120" y="142" text-anchor="middle">output_00002</text>
+    <rect x="40" y="154" width="160" height="24" rx="5" fill="#eef2ff" stroke="#6366f1"/>
+    <text x="120" y="170" text-anchor="middle">output_00003</text>
+    <text x="120" y="192" text-anchor="middle" font-size="15" fill="#94a3b8">&#8942;</text>
+    <rect x="40" y="198" width="160" height="24" rx="5" fill="#eef2ff" stroke="#6366f1"/>
+    <text x="120" y="214" text-anchor="middle">output_00013</text>
+  </g>
+  <text x="120" y="248" text-anchor="middle" font-size="11.5" fill="#475569">RAMSES outputs</text>
+  <text x="120" y="264" text-anchor="middle" font-size="11.5" fill="#475569">or mera .jld2 files (mera_files=true)</text>
+
+  <!-- arrow 1->2 -->
+  <line x1="208" y1="160" x2="262" y2="160" stroke="#475569" stroke-width="2" marker-end="url(#ah)"/>
+
+  <!-- ===== Stage 2: load one ===== -->
+  <text x="340" y="86" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#334155">2 &#183; load output k</text>
+  <rect x="270" y="110" width="140" height="100" rx="8" fill="#ecfeff" stroke="#0891b2" stroke-width="1.6"/>
+  <text x="340" y="138" text-anchor="middle" font-size="12.5" fill="#0e7490">gethydro / loaddata</text>
+  <text x="340" y="162" text-anchor="middle" font-size="26">&#9636;</text>
+  <text x="340" y="190" text-anchor="middle" font-size="11" fill="#0f172a">one data object</text>
+  <text x="340" y="232" text-anchor="middle" font-size="11" fill="#b45309">only ONE snapshot in RAM</text>
+  <text x="340" y="248" text-anchor="middle" font-size="11" fill="#b45309">freed + GC before the next</text>
+
+  <!-- arrow 2->3 -->
+  <line x1="412" y1="160" x2="466" y2="160" stroke="#475569" stroke-width="2" marker-end="url(#ah)"/>
+
+  <!-- ===== Stage 3: reduce ===== -->
+  <text x="560" y="86" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#334155">3 &#183; reducer(d)</text>
+  <rect x="474" y="118" width="172" height="84" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.6"/>
+  <text x="560" y="142" text-anchor="middle" font-size="11.5" font-family="monospace" fill="#713f12">d -&gt; (</text>
+  <text x="560" y="160" text-anchor="middle" font-size="11.5" font-family="monospace" fill="#713f12">mass = msum(d,:Msol),</text>
+  <text x="560" y="178" text-anchor="middle" font-size="11.5" font-family="monospace" fill="#713f12">rho_max = maximum(...) )</text>
+  <text x="560" y="220" text-anchor="middle" font-size="11" fill="#475569">returns a scalar or NamedTuple</text>
+
+  <!-- arrow 3->4 -->
+  <line x1="648" y1="160" x2="702" y2="160" stroke="#475569" stroke-width="2" marker-end="url(#ah)"/>
+
+  <!-- ===== Stage 4: table grows ===== -->
+  <text x="788" y="86" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#334155">4 &#183; one row appended</text>
+  <g font-size="10.5">
+    <rect x="710" y="104" width="156" height="22" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="718" y="119" fill="#334155" font-weight="bold">output  time   mass  rho_max</text>
+    <rect x="710" y="126" width="156" height="20" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="718" y="140" fill="#0f172a">1       0.00   1.00   1.00</text>
+    <rect x="710" y="146" width="156" height="20" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="718" y="160" fill="#0f172a">2       0.02   1.00   2.46</text>
+    <rect x="710" y="166" width="156" height="20" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="718" y="180" fill="#0f172a">3       0.03   1.00   2.74</text>
+    <rect x="710" y="186" width="156" height="20" fill="#fff7ed" stroke="#fb923c"/>
+    <text x="718" y="200" fill="#9a3412">k       ...    ...    ...</text>
+  </g>
+  <text x="788" y="226" text-anchor="middle" font-size="11" fill="#475569">an IndexedTables table</text>
+
+  <!-- arrow 4->5 -->
+  <line x1="872" y1="160" x2="908" y2="160" stroke="#475569" stroke-width="2" marker-end="url(#ah)"/>
+
+  <!-- ===== Stage 5: analyse ===== -->
+  <text x="965" y="86" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#334155">5 &#183; analyse X(t)</text>
+  <rect x="912" y="110" width="106" height="100" rx="6" fill="#ffffff" stroke="#94a3b8"/>
+  <line x1="924" y1="198" x2="1010" y2="198" stroke="#cbd5e1"/>
+  <line x1="924" y1="118" x2="924" y2="198" stroke="#cbd5e1"/>
+  <polyline points="928,190 944,184 958,176 972,170 986,150 1000,120" fill="none" stroke="#dc2626" stroke-width="2.2"/>
+  <text x="965" y="226" text-anchor="middle" font-size="11" fill="#475569">plot, fit, compare</text>
+
+  <!-- loop-back arrow under stages 2-4 -->
+  <path d="M788,300 L340,300" fill="none" stroke="#0891b2" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+  <line x1="788" y1="270" x2="788" y2="300" stroke="#0891b2" stroke-width="2" stroke-dasharray="6 4"/>
+  <line x1="340" y1="300" x2="340" y2="270" stroke="#0891b2" stroke-width="2" stroke-dasharray="6 4"/>
+  <rect x="430" y="312" width="320" height="40" rx="8" fill="#ecfeff" stroke="#0891b2"/>
+  <text x="590" y="330" text-anchor="middle" font-size="12" font-weight="bold" fill="#0e7490">repeat for every selected output</text>
+  <text x="590" y="346" text-anchor="middle" font-size="11" fill="#0e7490">sequential &#183; respects JULIA_NUM_THREADS (cap 4 on a laptop)</text>
+
+  <text x="520" y="392" text-anchor="middle" font-size="11" fill="#94a3b8">Mera.jl &#183; timeseries.jl &#183; outputs discovered with checkoutputs / mera-file scan &#183; missing outputs skipped, time from gettime</text>
+</svg>
