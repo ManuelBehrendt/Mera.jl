@@ -8,7 +8,7 @@
 
 This file is a compact grounding for an AI assistant. It is not a tutorial. It states the data
 model, the vocabulary, the mistakes that are easy to make, and how to check that an answer is
-right. Everything below holds for Mera 1.10. Versions before 1.8 have none of the region values,
+right. Everything below holds for Mera 1.11. Versions before 1.8 have none of the region values,
 `filterdata` or the off-axis features named here. Items marked (1.9) need Mera 1.9 or later:
 `exportdata`, the sidecar files and the functions around them. Items marked (1.10) need 1.10.
 
@@ -165,7 +165,7 @@ These are mistakes an assistant makes confidently. Each was reproduced.
 15. **(1.10) The temperature of an RT run depends on the ion columns.** `:T` takes the mean molecular
    weight of each cell from its ionisation fractions, so load the hydro data with them (the default
    loads everything). Without them Mera warns and falls back to a constant μ, and `:T` changes.
-16. **Before 1.10.2, a gas projection with `fov` ignores `myargs`.** The camera angles, `center`
+16. **Before 1.11, a gas projection with `fov` ignores `myargs`.** The camera angles, `center`
    and `pxsize` set in an `ArgumentsType` are lost, and `:vlos` then fails for want of a camera.
    On those versions pass them to `projection` (or `@project`) as keywords.
 
@@ -230,6 +230,12 @@ a sidecar next to every saved file, and `bundle` for a whole folder.
     bundle("."; simulation=info)                   # ro-crate-metadata.json, software.bib, simulation.json
     simulationrecord(info); datacite(rec; creators=..., title=..., license=...)
     simulationrecord("/path/to/sim")               # the whole run: every output with time and size
+
+The crate is RO-Crate 1.3 with the Process Run Crate profile: each "Mera wrote this file" is a
+`CreateAction` (instrument Mera and the script, object the snapshot, agent the `creators`).
+Publish the folder zipped on a DOI repository such as Zenodo; `rocrate-validator validate <dir>`
+(Python, `pip install roc-validator`) checks the record. Mera itself has no crate reader beyond
+JSON3; to check files against the record, compare each entity's `sha256`.
 
 A sidecar holds the snapshot's provenance, the units, the file's SHA-256, the SHA-256 of the run's
 namelist and makefile, the analysis environment (Project.toml and Manifest.toml SHA-256, the script

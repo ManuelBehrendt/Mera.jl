@@ -77,7 +77,7 @@ exportdata(m, "fig3_maps.csv"; length_unit=:kpc, verbose=false)
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.10.2 | Julia 1.12.7 | 4 threads
+Mera v1.11.0 | Julia 1.12.7 | 4 threads
 [Mera] Hint: fig3_maps.h5.meta.json records where fig3_maps.h5 came from.
              readsidecar("fig3_maps.h5") shows it; sidecar(false) stops writing them.
              (shown once per session; verbose(false) silences Mera's messages)
@@ -107,8 +107,8 @@ r = readsidecar("fig3_maps.h5")
 
 ```
 Sidecar of fig3_maps.h5  (hdf5, projection)  data file: unchanged
-  written      2026-11-05 11:28 UTC by Mera 1.10.2, not a registered release; Julia 1.12.7, 4 threads
-  source       Mera v1.10.2 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  written      2026-11-25 13:11 UTC by Mera 1.11.0; Julia 1.12.7, 4 threads
+  source       Mera v1.11.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
   environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 24 packages
@@ -193,8 +193,8 @@ readsidecar("output_00300.jld2")
 
 ```
 Sidecar of output_00300.jld2  (jld2, mera_file)  data file: unchanged
-  written      2026-11-05 11:28 UTC by Mera 1.10.2, not a registered release; Julia 1.12.7, 4 threads
-  source       Mera v1.10.2 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  written      2026-11-25 13:11 UTC by Mera 1.11.0; Julia 1.12.7, 4 threads
+  source       Mera v1.11.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
   environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 24 packages
@@ -223,7 +223,7 @@ fig
 Sidecar written → fig3.png.meta.json
 ```
 
-![](export_sidecars_files/export_sidecars_12_3.webp)
+![](export_sidecars_files/export_sidecars_12_2.webp)
 
 For a figure with several panels, pass all its results, `writesidecar("fig4.pdf", [m1, m2, m3])`;
 the sidecar then lists the snapshot of each panel. Read back, it shows what the figure was made
@@ -235,8 +235,8 @@ readsidecar("fig3.png")
 
 ```
 Sidecar of fig3.png  (png, figure)  data file: unchanged
-  written      2026-11-05 11:28 UTC by Mera 1.10.2, not a registered release; Julia 1.12.7, 4 threads
-  source       Mera v1.10.2 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+  written      2026-11-25 13:11 UTC by Mera 1.11.0; Julia 1.12.7, 4 threads
+  source       Mera v1.11.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
   simulation   /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
   input files  namelist.txt, makefile.txt, patches.txt (SHA-256 recorded)
   environment  /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1: Project.toml and Manifest.toml (SHA-256 recorded), 24 packages
@@ -261,12 +261,12 @@ recs = sidecaroverview(".");
 6 sidecars in .
 file               kind        format  snapshot             time       written (UTC)     data file
 -----------------  ----------  ------  -------------------  ---------  ----------------  ---------
-fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
-fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
-fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
-fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
-fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
-output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-11-05 11:28  present
+fig3.png           figure      png     mw_L10/output_00300  445.9 Myr  2026-11-25 13:11  present
+fig3_maps.csv      projection  csv     mw_L10/output_00300  445.9 Myr  2026-11-25 13:11  present
+fig3_maps.h5       projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-11-25 13:11  present
+fig3_maps.jld2     projection  jld2    mw_L10/output_00300  445.9 Myr  2026-11-25 13:11  present
+fig3_public.h5     projection  hdf5    mw_L10/output_00300  445.9 Myr  2026-11-25 13:11  present
+output_00300.jld2  mera_file   jld2    mw_L10/output_00300  445.9 Myr  2026-11-25 13:11  present
 ```
 
 ## Has a file changed?
@@ -430,7 +430,7 @@ print(read("datacite.json", String))
     "language": "en",
     "descriptions": [
         {
-            "description": "RAMSES simulation, 3-D; box 48 kpc; AMR levels 6 to 10 (finest cell 46.875 pc); physics: hydro (hllc), gravity, particles, cooling, star formation, feedback; 1 output at 445.89 Myr. Described with Mera 1.10.2 (simulationrecord).",
+            "description": "RAMSES simulation, 3-D; box 48 kpc; AMR levels 6 to 10 (finest cell 46.875 pc); physics: hydro (hllc), gravity, particles, cooling, star formation, feedback; 1 output at 445.89 Myr. Described with Mera 1.11.0 (simulationrecord).",
             "descriptionType": "TechnicalInfo"
         }
     ],
@@ -471,10 +471,10 @@ citation(gas)
 ```
 
 ```
-@software{Mera_1_10_2,
+@software{Mera_1_11_0,
   author  = {Behrendt, Manuel},
-  title   = {Mera.jl: geometrically exact, reproducible analysis of RAMSES simulations in Julia},
-  version = {1.10.2},
+  title   = {Mera.jl: Analysis of astrophysical simulations in Julia},
+  version = {1.11.0},
   year    = {2026},
   doi     = {10.5281/zenodo.3675254},
   url     = {https://github.com/ManuelBehrendt/Mera.jl}
@@ -499,9 +499,13 @@ citation("fig3.png"; file="software.bib");
 ## One record for the whole folder
 
 Before the folder is published, [`bundle`](@ref) joins all its sidecars into one record,
-`ro-crate-metadata.json`. It is an [RO-Crate](https://www.researchobject.org/ro-crate/), a
+`ro-crate-metadata.json`. It is an [RO-Crate](https://www.researchobject.org/ro-crate/)
+(Soiland-Reyes et al. 2022, [doi:10.3233/DS-210053](https://doi.org/10.3233/DS-210053)), a
 standard format for describing research data: every file with its size and SHA-256, and for
-each file Mera wrote, what made it (the Mera version, the script and the snapshot). It also
+each file Mera wrote, what made it: the Mera version, the script, the snapshot and who ran it.
+The record follows RO-Crate 1.3 and its
+[Process Run Crate](https://www.researchobject.org/workflow-run-crate/profiles/process_run_crate/)
+profile, so tools made for RO-Crates read each of these entries as one run of a program. It also
 writes `software.bib` from [`citation`](@ref) and, with `simulation=`, the simulation record.
 Nothing is copied.
 
@@ -512,8 +516,8 @@ bundle("."; simulation=info, title="Sharing results example",
 
 ```
 ┌ Warning: These files changed after their sidecar was written: fig3_maps.csv. Write them again, or their recorded SHA-256 does not match.
-└ @ Mera ~/code-github/Mera.jl/src/functions/export/bundle.jl:213
-Bundle of .: 9 files, 6 with a sidecar, 1 snapshot, Mera 1.10.2
+└ @ Mera ~/code-github/Mera.jl/src/functions/export/bundle.jl:252
+Bundle of .: 9 files, 6 with a sidecar, 1 snapshot, Mera 1.11.0
   → ./ro-crate-metadata.json
 ```
 
@@ -540,7 +544,7 @@ Mera.JSON3.pretty(only(e for e in crate["@graph"] if e["@id"] == "#make-fig3.png
     "name": "Mera wrote fig3.png",
     "instrument": [
         {
-            "@id": "#mera-1.10.2"
+            "@id": "#mera-1.11.0"
         }
     ],
     "result": {
@@ -551,9 +555,61 @@ Mera.JSON3.pretty(only(e for e in crate["@graph"] if e["@id"] == "#make-fig3.png
             "@id": "#snapshot-mw_L10_output_00300"
         }
     ],
-    "endTime": "2026-11-05T11:28:40.925"
+    "agent": {
+        "@id": "#person-1"
+    },
+    "endTime": "2026-11-25T13:11:55.531"
 }
 ```
+
+## Publishing the record
+
+**Where it goes.** Upload the whole folder, with its sidecars and `ro-crate-metadata.json`, to a
+repository that gives it a DOI, for example [Zenodo](https://zenodo.org) or the repository of
+your institute. Zip it first, so the subfolders stay as they are. Zenodo stores the record as one
+file among the others; the Python tool [rocrate-zenodo](https://pypi.org/project/rocrate-zenodo/)
+also fills the Zenodo form from it (check the draft before you publish, as its authors advise).
+
+**How a reader checks it.** Whoever downloads the folder can test every file against the SHA-256
+the record lists. In Julia this is a few lines:
+
+```julia
+for e in crate["@graph"]
+    haskey(e, "sha256") || continue
+    f = string(e["@id"])
+    same = bytes2hex(open(Mera.SHA.sha256, f)) == e["sha256"]
+    println(rpad(f, 22), same ? "matches its record" : "CHANGED after it was written")
+end
+```
+
+```
+fig3.png              matches its record
+fig3_maps.csv         CHANGED after it was written
+fig3_maps.h5          matches its record
+fig3_maps.jld2        matches its record
+fig3_public.h5        matches its record
+output_00300.jld2     matches its record
+```
+
+The CSV edited above shows up again. The community tool
+[rocrate-validator](https://github.com/crs4/rocrate-validator) checks the record itself against
+the RO-Crate specification and the Process Run Crate profile:
+
+```
+pip install roc-validator
+rocrate-validator validate path/to/folder
+```
+
+**What to write in the paper.** A data availability statement can point to the folder, and the
+software section to `software.bib`, for example:
+
+> The maps, figures and the record of how each was made (an RO-Crate) are available at
+> Zenodo, doi:10.5281/zenodo.XXXXXXX. They were made with Mera.jl (version as in `software.bib`)
+> from output 300 of the simulation described in `simulation.json`.
+
+More on RO-Crate, its tools and profiles is at
+[researchobject.org/ro-crate](https://www.researchobject.org/ro-crate/) and on its
+[tools page](https://www.researchobject.org/ro-crate/tools).
 
 ## Why sidecars are on by default, and how to switch them off
 

@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use Mera.jl in your research, please cite it as below."
-title: "Mera.jl: geometrically exact, reproducible analysis of RAMSES simulations in Julia"
+title: "Mera.jl: Analysis of astrophysical simulations in Julia"
 abstract: >-
   Mera.jl is an analysis framework for astrophysical simulations, written in Julia. It covers the
   whole path from raw simulation output to a result you can publish: selecting regions, computing
@@ -23,7 +23,7 @@ authors:
     given-names: Manuel
     orcid: "https://orcid.org/0000-0002-8759-941X"
     email: mera@manuelbehrendt.com
-version: 1.10.2+multicode
+version: 1.11.0+multicode
 date-released: "2026-06-16"   # TODO: unreleased development line; set on a 2.0 release
 license: MIT
 repository-code: "https://github.com/ManuelBehrendt/Mera.jl"

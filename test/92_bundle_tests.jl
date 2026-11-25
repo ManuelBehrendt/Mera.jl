@@ -51,12 +51,20 @@ _crate(dir) = Dict(string(e["@id"]) => e for e in _J92.read(read(joinpath(dir, "
         @test out == joinpath(dir, "ro-crate-metadata.json")
         @test isfile(joinpath(dir, "software.bib")) && !isfile(joinpath(dir, "simulation.json"))
         g = _crate(dir)
-        @test g["ro-crate-metadata.json"]["conformsTo"]["@id"] == "https://w3id.org/ro/crate/1.1"
+        @test g["ro-crate-metadata.json"]["conformsTo"]["@id"] == "https://w3id.org/ro/crate/1.3"
         root = g["./"]
         @test root["name"] == "Clumps" && root["keywords"] == "clumps"
         @test root["license"]["@id"] == "https://spdx.org/licenses/CC-BY-4.0"
         @test root["author"][1]["@id"] == "https://orcid.org/0000-0002-1825-0097"
-        @test g["https://orcid.org/0000-0002-1825-0097"]["name"] == "Doe, Jane"
+        jane = g["https://orcid.org/0000-0002-1825-0097"]
+        @test jane["name"] == "Doe, Jane" && jane["familyName"] == "Doe" && jane["givenName"] == "Jane"
+        # the Process Run Crate profile: declared on the root and described as an entity
+        prof = "https://w3id.org/ro/wfrun/process/0.6"
+        @test root["conformsTo"]["@id"] == prof
+        @test g[prof]["@type"] == "CreativeWork" && g[prof]["name"] == "Process Run Crate"
+        @test !isempty(root["description"])                  # RO-Crate 1.3 asks for one
+        crate = _J92.read(read(joinpath(dir, "ro-crate-metadata.json"), String))
+        @test crate["@context"] == "https://w3id.org/ro/crate/1.3/context"
         parts = Set(string(x["@id"]) for x in root["hasPart"])
         @test parts == Set(["analysis.jl", "analysis.toml", "fig3.h5", "fig3.h5.meta.json", "figures/fig%203.png",
                             "figures/fig%203.png.meta.json", "software.bib"])
@@ -70,8 +78,19 @@ _crate(dir) = Dict(string(e["@id"]) => e for e in _J92.read(read(joinpath(dir, "
         @test "SoftwareSourceCode" in g["analysis.jl"]["@type"]
         act = g["#make-fig3.h5"]
         @test act["@type"] == "CreateAction" && act["result"]["@id"] == "fig3.h5"
+        @test act["agent"]["@id"] == "https://orcid.org/0000-0002-1825-0097"   # who ran it
         mera = g[string(act["instrument"][1]["@id"])]
         @test mera["@type"] == "SoftwareApplication" && mera["identifier"] == "https://doi.org/10.5281/zenodo.3675254"
+        @test mera["softwareVersion"] == string(pkgversion(Mera))      # plain, machine-readable
+        @test startswith(mera["version"], mera["softwareVersion"])       # may name the dev build
+        # every entity a reference points to is in the graph
+        refs = String[]
+        walk(x) = x isa AbstractDict ? (haskey(x, "@id") && length(x) == 1 ? push!(refs, string(x["@id"])) :
+                                        foreach(walk, values(x))) :
+                  x isa AbstractVector ? foreach(walk, x) : nothing
+        foreach(walk, values(g))
+        # (the RO-Crate specification itself is the one link that is not an entity of the crate)
+        @test filter(r -> !haskey(g, r), refs) == ["https://w3id.org/ro/crate/1.3"]
         @test !haskey(act, "object")                       # synthetic data: no complete snapshot
         @test !any(k -> startswith(k, "#snapshot"), keys(g))
 
@@ -96,6 +115,7 @@ _crate(dir) = Dict(string(e["@id"]) => e for e in _J92.read(read(joinpath(dir, "
         @test occursin("no creators", txt) && occursin("no license", txt)
         g = _crate(dir)
         @test g["./"]["name"] == basename(dir) && !haskey(g["./"], "author")
+        @test occursin("Mera.jl", g["./"]["description"])              # the default description
         @test count("@", read(joinpath(dir, "software.bib"), String)) == 1   # Mera alone
         @test_throws ArgumentError bundle(joinpath(dir, "notes.txt"))
         @test_throws ArgumentError bundle(dir; simulation=42)
