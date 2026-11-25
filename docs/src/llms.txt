@@ -8,7 +8,7 @@
 
 This file is a compact grounding for an AI assistant. It is not a tutorial. It states the data
 model, the vocabulary, the mistakes that are easy to make, and how to check that an answer is
-right. Everything below holds for Mera 1.10. Versions before 1.8 have none of the region values,
+right. Everything below holds for Mera 1.11. Versions before 1.8 have none of the region values,
 `filterdata` or the off-axis features named here. Items marked (1.9) need Mera 1.9 or later:
 `exportdata`, the sidecar files and the functions around them. Items marked (1.10) need 1.10.
 
@@ -165,7 +165,7 @@ These are mistakes an assistant makes confidently. Each was reproduced.
 15. **(1.10) The temperature of an RT run depends on the ion columns.** `:T` takes the mean molecular
    weight of each cell from its ionisation fractions, so load the hydro data with them (the default
    loads everything). Without them Mera warns and falls back to a constant μ, and `:T` changes.
-16. **Before 1.10.2, a gas projection with `fov` ignores `myargs`.** The camera angles, `center`
+16. **Before 1.11, a gas projection with `fov` ignores `myargs`.** The camera angles, `center`
    and `pxsize` set in an `ArgumentsType` are lost, and `:vlos` then fails for want of a camera.
    On those versions pass them to `projection` (or `@project`) as keywords.
 
