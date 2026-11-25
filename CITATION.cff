@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use Mera.jl in your research, please cite it as below."
-title: "Mera.jl: geometrically exact, reproducible analysis of RAMSES simulations in Julia"
+title: "Mera.jl: Analysis of astrophysical simulations in Julia"
 abstract: >-
   Mera.jl is an analysis framework for astrophysical simulations, written in Julia. It covers the
   whole path from raw simulation output to a result you can publish: selecting regions, computing
