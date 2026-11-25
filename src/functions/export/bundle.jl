@@ -11,7 +11,15 @@
 # needs no extra disk space.
 # ====================================================================================
 
-const _ROCRATE_SPEC = "https://w3id.org/ro/crate/1.1"
+# ------------------------------------------------------------------------------------
+# General RO-Crate pieces. Nothing in this part knows about Mera: it could serve any Julia
+# package that writes a crate.
+# ------------------------------------------------------------------------------------
+
+const _ROCRATE_SPEC = "https://w3id.org/ro/crate/1.3"
+# Process Run Crate: the profile for "this tool made these files from these inputs", which is
+# what each sidecar records. Declaring it lets RO-Crate tools read the actions as such.
+const _ROCRATE_PROFILE = "https://w3id.org/ro/wfrun/process/0.6"
 const _BUNDLE_METADATA = "ro-crate-metadata.json"
 
 const _MEDIA_TYPES = Dict(
@@ -42,16 +50,38 @@ function _rocrate_person(c, k::Int)
     dc = _datacite_creator(c)
     id = haskey(dc, "nameIdentifiers") ? dc["nameIdentifiers"][1]["nameIdentifier"] : "#person-$k"
     p = OrderedDict{String,Any}("@id" => id, "@type" => "Person", "name" => dc["name"])
+    for k in ("givenName", "familyName")              # repositories such as Zenodo need the parts
+        haskey(dc, k) && (p[k] = dc[k])
+    end
     haskey(dc, "affiliation") && (p["affiliation"] = join([a["name"] for a in dc["affiliation"]], "; "))
     return p
 end
 
 _rocrate_ref(id) = OrderedDict("@id" => id)
 
+# One reference, or a list when there are several: the JSON-LD form of a property's value.
+_rocrate_refs(ids) = length(ids) == 1 ? _rocrate_ref(only(ids)) : [_rocrate_ref(i) for i in ids]
+
 # A file's @id: its relative path, percent-encoded where a URI needs it ("fig 3.png" -> "fig%203.png")
 _rocrate_id(f::AbstractString) =
     join((isascii(c) && (isletter(c) || isdigit(c) || c in "/-._~")) ? string(c) :
          join("%" * uppercase(string(b; base=16, pad=2)) for b in codeunits(string(c))) for c in f)
+
+# The whole crate: the metadata descriptor, the root dataset (which declares the profile), the
+# profile itself, then every other entity.
+function _rocrate_document(root::AbstractDict, entities::AbstractVector)
+    root = merge(root, OrderedDict{String,Any}("conformsTo" => _rocrate_ref(_ROCRATE_PROFILE)))
+    meta = OrderedDict{String,Any}("@id" => _BUNDLE_METADATA, "@type" => "CreativeWork",
+                                   "conformsTo" => _rocrate_ref(_ROCRATE_SPEC), "about" => _rocrate_ref("./"))
+    profile = OrderedDict{String,Any}("@id" => _ROCRATE_PROFILE, "@type" => "CreativeWork",
+                                      "name" => "Process Run Crate", "version" => "0.6")
+    return OrderedDict{String,Any}("@context" => _ROCRATE_SPEC * "/context",
+                                   "@graph" => Any[meta; root; profile; entities])
+end
+
+# ------------------------------------------------------------------------------------
+# Mera's crate: the sidecars of a folder turned into files, software, snapshots and actions.
+# ------------------------------------------------------------------------------------
 
 """
     bundle(dir="."; title=nothing, description=nothing, creators=nothing, license=nothing,
@@ -60,9 +90,13 @@ _rocrate_id(f::AbstractString) =
 Describe a finished analysis folder in one record, ready to publish, for example on Zenodo.
 `bundle` reads the sidecars in the folder and writes three files into it:
 
-- `ro-crate-metadata.json`: an [RO-Crate](https://www.researchobject.org/ro-crate/) that lists
+- `ro-crate-metadata.json`: an [RO-Crate](https://www.researchobject.org/ro-crate/) 1.3 that lists
   every file with its size, type and SHA-256, and for each file written by Mera what made it: the
-  Mera version, the script and the snapshot, from its sidecar;
+  Mera version, the script, the snapshot and who ran it (the `creators`), from its sidecar. It
+  follows the [Process Run Crate](https://www.researchobject.org/workflow-run-crate/profiles/process_run_crate/)
+  profile, so RO-Crate tools such as the
+  [rocrate-validator](https://github.com/crs4/rocrate-validator) read each "Mera wrote this file"
+  as a run of a tool;
 - `software.bib`: the BibTeX from [`citation`](@ref);
 - `simulation.json`: the [`simulationrecord`](@ref), when `simulation` is given.
 
@@ -128,6 +162,8 @@ function bundle(dir::AbstractString="."; title=nothing, description=nothing, cre
     cite_from = rec !== nothing ? rec : isempty(sidecars) ? nothing : joinpath(dir, first(sort!(collect(keys(sidecars)))))
     citation(cite_from; file=joinpath(dir, "software.bib"))
     "software.bib" in files || (files = sort!([files; "software.bib"]))
+    # the authors of the analysis are taken as the ones who ran it (the `agent` of each action)
+    people = Any[_rocrate_person(c, k) for (k, c) in enumerate(creators isa AbstractVector ? creators : [creators])]
 
     graph = Any[]
     software = OrderedDict{String,Any}()          # one entity per Mera version
@@ -166,7 +202,7 @@ function bundle(dir::AbstractString="."; title=nothing, description=nothing, cre
             sid = "#mera-" * replace(string(v), r"[^0-9A-Za-z.+-]" => "_")
             haskey(software, sid) || (software[sid] = OrderedDict{String,Any}(
                 "@id" => sid, "@type" => "SoftwareApplication", "name" => "Mera.jl", "version" => string(v),
-                "url" => "https://github.com/ManuelBehrendt/Mera.jl", "identifier" => "https://doi.org/" * _MERA_CONCEPT_DOI))
+                "softwareVersion" => string(something(_sc_get(d, "environment", "mera_version"), v)), "url" => "https://github.com/ManuelBehrendt/Mera.jl", "identifier" => "https://doi.org/" * _MERA_CONCEPT_DOI))
             instruments = Any[_rocrate_ref(sid)]
             script = _sc_get(d, "analysis", "script", "name")
             if script !== nothing
@@ -186,6 +222,7 @@ function bundle(dir::AbstractString="."; title=nothing, description=nothing, cre
                                         "name" => "Mera wrote $(basename(f))", "instrument" => instruments,
                                         "result" => _rocrate_ref(fid))
             isempty(objects) || (a["object"] = objects)
+            isempty(people) || (a["agent"] = _rocrate_refs([p["@id"] for p in people]))
             created === nothing || (a["endTime"] = created)
             push!(actions, a)
         end
@@ -197,17 +234,19 @@ function bundle(dir::AbstractString="."; title=nothing, description=nothing, cre
 
     root = OrderedDict{String,Any}("@id" => "./", "@type" => "Dataset", "name" => string(title),
                                    "datePublished" => string(Dates.today()), "hasPart" => parts)
-    description === nothing || (root["description"] = string(description))
-    license === nothing || (root["license"] = _rocrate_ref("https://spdx.org/licenses/$(license)"))
+    # RO-Crate 1.3 asks every root dataset for a description
+    root["description"] = description === nothing ?
+        "Files of an analysis made with Mera.jl, each with a record of how it was made." : string(description)
+    # the license as an entity of its own, so a reader of the crate sees its name, not only a link
+    lic = license === nothing ? Any[] :
+          Any[OrderedDict{String,Any}("@id" => "https://spdx.org/licenses/$(license)", "@type" => "CreativeWork",
+                                      "name" => string(license), "identifier" => string(license))]
+    isempty(lic) || (root["license"] = _rocrate_ref(lic[1]["@id"]))
     isempty(keywords) || (root["keywords"] = join(string.(keywords), ", "))
-    people = Any[_rocrate_person(c, k) for (k, c) in enumerate(creators isa AbstractVector ? creators : [creators])]
     isempty(people) || (root["author"] = [_rocrate_ref(p["@id"]) for p in people])
     isempty(actions) || (root["mentions"] = [_rocrate_ref(a["@id"]) for a in actions])
-    meta = OrderedDict{String,Any}("@id" => _BUNDLE_METADATA, "@type" => "CreativeWork",
-                                   "conformsTo" => _rocrate_ref(_ROCRATE_SPEC), "about" => _rocrate_ref("./"))
-    crate = OrderedDict{String,Any}("@context" => _ROCRATE_SPEC * "/context",
-                                    "@graph" => Any[meta; root; graph; people; collect(values(software));
-                                                    collect(values(snapshots)); actions])
+    crate = _rocrate_document(root, Any[graph; people; lic; collect(values(software));
+                                        collect(values(snapshots)); actions])
     out = _write_json(joinpath(dir, _BUNDLE_METADATA), crate)
 
     isempty(changed) || @warn "These files changed after their sidecar was written: $(join(changed, ", ")). " *

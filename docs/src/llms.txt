@@ -231,6 +231,12 @@ a sidecar next to every saved file, and `bundle` for a whole folder.
     simulationrecord(info); datacite(rec; creators=..., title=..., license=...)
     simulationrecord("/path/to/sim")               # the whole run: every output with time and size
 
+The crate is RO-Crate 1.3 with the Process Run Crate profile: each "Mera wrote this file" is a
+`CreateAction` (instrument Mera and the script, object the snapshot, agent the `creators`).
+Publish the folder zipped on a DOI repository such as Zenodo; `rocrate-validator validate <dir>`
+(Python, `pip install roc-validator`) checks the record. Mera itself has no crate reader beyond
+JSON3; to check files against the record, compare each entity's `sha256`.
+
 A sidecar holds the snapshot's provenance, the units, the file's SHA-256, the SHA-256 of the run's
 namelist and makefile, the analysis environment (Project.toml and Manifest.toml SHA-256, the script
 by name and SHA-256) and the Julia, Mera and thread count that ran; never the host name, and with
