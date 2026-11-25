@@ -315,6 +315,24 @@ slice
 offaxis_slice
 ```
 
+## Gas and stars on one grid
+
+With the same `fov`, a gas map comes out a few pixels larger than a star map: the gas frame keeps
+room for the cells on the edge of the sphere, so no mass falls off the map. Both frames are centred
+on `center` with the same pixel edges, so [`matchframe`](@ref) puts one map on the other's grid,
+for an overlay or a ratio. With `aperture=:square` the two maps are already the same size.
+
+```julia
+gas   = projection(hydro, :sd, :Msol_pc2; inclination=60, fov=10, fov_unit=:kpc, pxsize=[50, :pc])
+stars = projection(part,  :sd, :Msol_pc2; inclination=60, fov=10, fov_unit=:kpc, pxsize=[50, :pc])
+s = matchframe(stars, gas)              # the star map on the gas frame
+ratio = s.maps[:sd] ./ gas.maps[:sd]
+```
+
+```@docs; canonical=false
+matchframe
+```
+
 ## Sequences, storage & export
 
 [`rotation_sequence`](@ref) varies the **angle** on one snapshot, with a fixed frame so the object

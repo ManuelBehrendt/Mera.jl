@@ -128,6 +128,9 @@ These are mistakes an assistant makes confidently. Each was reproduced.
    galaxy), while
    `subregion` defaults to `split=true`. `depth` cuts a slab along the view and also needs
    `split=true` to be exact; it is refused on axis-aligned calls, where `zrange` does the job.
+   With the same `fov` and `aperture=:circle`, a gas map is a few pixels larger than a star map
+   (its frame keeps room for the edge cells). Do not crop by hand: `matchframe(stars, gas)` puts
+   the star map on the gas grid, pixel for pixel. With `aperture=:square` both are the same size.
 6. **`@where` and `@apply` act on the raw table** (`gas.data`), not on the Mera object.
 7. **On particles, `:mass` is a mean and the face-on axis includes the dark matter.** A particle
    has no volume, so `projection(part, :mass)` is the mass-weighted mean particle mass per pixel;

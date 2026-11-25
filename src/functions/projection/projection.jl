@@ -885,6 +885,10 @@ function _rotseq_crop_square!(m, fov_code)
     if !(fov_code isa AbstractVector)      # the square case keeps its historical clamp
         ntx = nty = clamp(round(Int, 2*fx/px), 1, min(nx, ny))
     end
+    # cut the same number of pixels from both sides: an odd difference would shift the kept pixels
+    # half a pixel off the centre the extent below claims, so keep the parity of the frame
+    isodd(nx - ntx) && (ntx = ntx < nx ? ntx + 1 : ntx - 1)
+    isodd(ny - nty) && (nty = nty < ny ? nty + 1 : nty - 1)
     i0 = (nx - ntx) ÷ 2 + 1; j0 = (ny - nty) ÷ 2 + 1
     for k in collect(keys(m.maps)); m.maps[k] = m.maps[k][i0:i0+ntx-1, j0:j0+nty-1]; end
     cx = (m.extent[1]+m.extent[2])/2; cy = (m.extent[3]+m.extent[4])/2
@@ -1044,6 +1048,76 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
     return identity.(maps)
 end
 
+
+"""
+    matchframe(m::DataMapsType, ref::DataMapsType; fill=0.0) -> DataMapsType
+
+Put the maps of `m` on the pixel grid of `ref`, so the two can be overlaid, subtracted or divided
+pixel by pixel. A typical case is a star map and a gas map made with the same `fov`: the gas frame
+is a little larger, because it keeps room for the cells on the edge of the sphere.
+
+```julia
+gas   = projection(hydro, :sd, :Msol_pc2; inclination=60, fov=10, fov_unit=:kpc, pxsize=[50, :pc])
+stars = projection(part,  :sd, :Msol_pc2; inclination=60, fov=10, fov_unit=:kpc, pxsize=[50, :pc])
+s = matchframe(stars, gas)
+size(s.maps[:sd]) == size(gas.maps[:sd])     # true
+ratio = s.maps[:sd] ./ gas.maps[:sd]
+```
+
+Nothing is resampled: each pixel keeps its value, and the frame of `ref` is filled around it.
+This needs the same pixel size and pixel edges that line up, which holds for maps from the same
+snapshot with the same `pxsize`, `center` and view. Off-axis maps must also share one camera
+(`los`, `up` and `center`). Otherwise an `ArgumentError` says which condition fails.
+
+# Keywords
+- `fill::Real = 0.0`: the value of the pixels of `ref` that `m` does not cover. `0.0` is what a
+  projection itself leaves in pixels with no data.
+
+Returns a copy of `m` with the maps, `extent`, `cextent` and `ratio` of the `ref` frame. If `m`
+holds data outside the `ref` frame, those pixels are dropped and a warning says so: put the smaller
+map on the larger frame to keep everything.
+"""
+function matchframe(m::DataMapsType, ref::DataMapsType; fill::Real=0.0)
+    px = m.pixsize
+    isapprox(px, ref.pixsize; rtol=1e-9) || throw(ArgumentError(
+        "matchframe: the pixel sizes differ ($(px) and $(ref.pixsize) in code units). " *
+        "Project both with the same pxsize."))
+    isempty(m.los) == isempty(ref.los) || throw(ArgumentError(
+        "matchframe: one map is off-axis and the other is not, so their frames do not compare."))
+    if !isempty(m.los)
+        tol = 1e-9 * max(1.0, m.boxlen)
+        (isapprox(m.los, ref.los; atol=1e-9) && isapprox(m.up, ref.up; atol=1e-9) &&
+         isapprox(m.center, ref.center; atol=tol)) || throw(ArgumentError(
+            "matchframe: the two maps look from different cameras (los, up or center differ)."))
+    end
+    # where the first pixel of `ref` sits on the grid of `m`, in pixels: must be a whole number
+    di = (ref.extent[1] - m.extent[1]) / px; dj = (ref.extent[3] - m.extent[3]) / px
+    (abs(di - round(di)) < 1e-6 && abs(dj - round(dj)) < 1e-6) || throw(ArgumentError(
+        "matchframe: the pixel grids are offset by a fraction of a pixel, so no pixel of one " *
+        "map matches a pixel of the other. Use the same center and pxsize for both."))
+    di = round(Int, di); dj = round(Int, dj)
+    nx = round(Int, (ref.extent[2] - ref.extent[1]) / px)
+    ny = round(Int, (ref.extent[4] - ref.extent[3]) / px)
+
+    out = deepcopy(m)
+    lost = false
+    for (k, A) in m.maps
+        A isa AbstractMatrix || continue
+        B = Base.fill(convert(eltype(A), fill), nx, ny)
+        is = max(1, 1 + di):min(size(A, 1), nx + di)      # pixels of `m` inside the `ref` frame
+        js = max(1, 1 + dj):min(size(A, 2), ny + dj)
+        B[is .- di, js .- dj] .= @view A[is, js]
+        kept = falses(size(A)); kept[is, js] .= true
+        lost |= any(i -> !kept[i] && !iszero(A[i]) && !isnan(A[i]), eachindex(A))
+        out.maps[k] = B
+    end
+    lost && @warn "matchframe: the first map holds data outside the frame of the second; " *
+                  "those pixels were dropped. Swap the arguments to keep them."
+    out.extent  = copy(ref.extent)
+    out.cextent = m.cextent .+ (ref.extent .- m.extent)
+    out.ratio   = ref.ratio
+    return out
+end
 
 """
     savemap(p::DataMapsType, filename; sidecar=true, anonymize=false, note="", include_script=false,

@@ -481,10 +481,15 @@ test has **no guaranteed sign**: the cells it keeps count too much, the cells it
 little, and the two partly cancel. Both differences shrink on a finer grid, but at any
 resolution the split value is the one to quote.
 
-**How exact is the fraction?** For a box aligned with the axes, Mera computes it exactly. For a
-curved surface it tests a grid of `nsub × nsub × nsub` points in each boundary cell (default
-`nsub=8`, so 512 points). A sphere has a known volume, (4/3)πR³, so we can measure the accuracy,
-and improve it with a larger `nsub`:
+**How exact is the fraction?** For a box aligned with the axes, Mera computes it exactly: the
+part of a cell inside the box is the overlap along x times the overlap along y times the overlap
+along z. A curved surface has no such formula. It cuts the cell into an odd shape whose volume
+depends on how the surface passes through the cell, and a combined region (`∩ ∪ \ !`) can have
+any shape at all. What every region can do is say whether a point lies inside it, and a combined
+region only asks its parts: a point is inside `a \ b` if it is inside `a` and not inside `b`. So
+for these regions Mera tests a grid of `nsub × nsub × nsub` points in each boundary cell (default
+`nsub=8`, so 512 points) and counts the ones inside. A sphere has a known volume, (4/3)πR³, so we
+can measure the accuracy, and improve it with a larger `nsub`:
 
 ```julia
 # volume error of a split sphere against (4/3)πR³, for several nsub, on two spheres:

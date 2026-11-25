@@ -1081,6 +1081,65 @@ end
         @test size(slab.maps[:sd]) == size(sq_gas.maps[:sd])
     end
 
+    @testset "gas and stars with the same fov share one pixel grid" begin
+        # Under aperture=:circle the gas frame keeps a margin for its edge cells, so it is larger
+        # than the star frame. Both frames now have an even pixel count about `center`, so their
+        # pixel edges line up and matchframe puts one on the other exactly. With odd counts the
+        # two grids could sit half a pixel apart.
+        dp = DATASETS[:spiral_ugrid]
+        finfo = getinfo(dp.output, dp.path, verbose=false)
+        fgas  = gethydro(finfo, verbose=false, show_progress=false)
+        fpart = getparticles(finfo, verbose=false, show_progress=false)
+        for fov in (5.0, 5.07, 6.3), incl in (0, 37)
+            kw = (inclination=incl, center=[:bc], fov=fov, fov_unit=:kpc, pxsize=[0.2, :kpc],
+                  verbose=false, show_progress=false)
+            g = projection(fgas,  :sd, :Msol_pc2; kw...)
+            s = projection(fpart, :sd, :Msol_pc2; kw...)
+            @test all(iseven, size(g.maps[:sd])) && all(iseven, size(s.maps[:sd]))
+            d = (g.extent[1] - s.extent[1]) / s.pixsize
+            @test isapprox(d, round(d); atol=1e-9)                 # the pixel edges line up
+            sg = matchframe(s, g)
+            @test size(sg.maps[:sd]) == size(g.maps[:sd])
+            @test sg.extent == g.extent
+            @test isapprox(sum(sg.maps[:sd]), sum(s.maps[:sd]); rtol=1e-12)   # nothing lost
+            @test matchframe(sg, s).maps[:sd] == s.maps[:sd]       # and back again, exactly
+            # the star pixels sit in the middle of the gas frame, unchanged
+            oi = round(Int, (s.extent[1] - g.extent[1]) / s.pixsize)
+            oj = round(Int, (s.extent[3] - g.extent[3]) / s.pixsize)
+            ni, nj = size(s.maps[:sd])
+            @test sg.maps[:sd][oi+1:oi+ni, oj+1:oj+nj] == s.maps[:sd]
+            @test oi == size(g.maps[:sd], 1) - ni - oi                # as much margin on each side
+        end
+
+        kw = (inclination=37, center=[:bc], fov=5, fov_unit=:kpc, pxsize=[0.2, :kpc],
+              verbose=false, show_progress=false)
+        g = projection(fgas,  :sd, :Msol_pc2; kw...)
+        s = projection(fpart, :sd, :Msol_pc2; kw...)
+        # gas mass in the margin is outside the star frame: cutting it off warns
+        @test_logs (:warn, r"dropped") matchframe(g, s)
+        @test_logs matchframe(s, g)
+        shifted = deepcopy(s); shifted.extent .+= s.pixsize / 2
+        @test_throws ArgumentError matchframe(shifted, g)        # half a pixel apart
+        coarse = projection(fpart, :sd, :Msol_pc2; kw..., pxsize=[0.4, :kpc])
+        @test_throws ArgumentError matchframe(coarse, g)          # other pixel size
+        tilted = projection(fpart, :sd, :Msol_pc2; kw..., inclination=50)
+        @test_throws ArgumentError matchframe(tilted, g)          # other camera
+        axis = projection(fpart, :sd, :Msol_pc2; pxsize=[0.2, :kpc], verbose=false, show_progress=false)
+        @test_throws ArgumentError matchframe(axis, g)            # axis view vs camera view
+
+        # the square crop cuts the same number of pixels from both sides, so the extent it reports
+        # is where the kept pixels are; an odd difference used to shift them by half a pixel
+        nx = size(g.maps[:sd], 1)
+        for ntx_wanted in (nx - 7, nx - 10)
+            c = deepcopy(g); c.maps[:sd] = Float64[i for i in 1:nx, j in 1:nx]
+            Mera._rotseq_crop_square!(c, ntx_wanted * c.pixsize / 2)
+            kept = c.maps[:sd][:, 1]
+            @test kept[1] - 1 == nx - kept[end]                   # as many cut left as right
+            @test isapprox(c.extent[2] - c.extent[1], length(kept) * c.pixsize; rtol=1e-12)
+            @test isapprox(c.extent[1] + c.extent[2], g.extent[1] + g.extent[2]; atol=1e-12)
+        end
+    end
+
     @testset "slice: what a depth-buffer painter can honestly report per pixel" begin
         # A slice is NOT a deposit. Cells tile space, exactly one owns the point where the plane
         # crosses, and that one cell wins the pixel. So a cell COUNT is not available here and
