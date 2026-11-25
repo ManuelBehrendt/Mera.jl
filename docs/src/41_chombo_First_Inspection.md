@@ -47,8 +47,8 @@ ql = quicklook(0; path=path);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
-[Mera]: quicklook output 0, reading gas: 2026-11-05T14:41:56.220
+Mera v1.11.0+multicode | Julia 1.12.7 | 4 threads
+[Mera]: quicklook output 0, reading gas: 2026-11-25T16:22:27.062
    1 CPU file(s), levels 5-7 of 7  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 646248 cells
 ┌─ Mera quicklook ── output 0 (CHOMBO) ───────────────
@@ -59,8 +59,8 @@ Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
 │ gas mass   : 1.219 M⊙
 │ ρ range    : 2.456e-20 … 2.261e-17 g/cm³
 │ T range    : 34170 … 34170 K
-└─ 7.26 s ──────────────────────────────────
-[Mera]: quicklook output 0 finished: 2026-11-05T14:42:02.291
+└─ 7.14 s ──────────────────────────────────
+[Mera]: quicklook output 0 finished: 2026-11-25T16:22:32.988
 ```
 
 ```julia
@@ -244,7 +244,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-11-05T14:42:17.628
+[Mera]: 2026-11-25T16:22:50.331
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [mpc] :: 120.488 [mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [mpc] :: 120.488 [mpc]
@@ -255,8 +255,8 @@ Effective resolution: 128^2
 Map size: 128 x 128
 Pixel size: 0.941 [mpc]
 Simulation min.: 0.941 [mpc]
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```

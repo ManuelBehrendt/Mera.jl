@@ -42,9 +42,9 @@ info = getinfo(200, path);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
+Mera v1.11.0+multicode | Julia 1.12.7 | 4 threads
 [Mera]: this snapshot records no unit attributes; using GADGET's defaults (1 kpc/h, 1e10 Msol/h, 1 km/s). Override with unit_length=, unit_density= or unit_velocity= if your run used others.
-[Mera]: 2026-11-05T14:45:59.573
+[Mera]: 2026-11-25T16:26:34.334
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
 boxlen = 64000.0
@@ -61,15 +61,15 @@ ql = quicklook(200; path=path);
 ```
 
 ```
-[Mera]: quicklook output 200, reading particles: 2026-11-05T14:46:14.201
+[Mera]: quicklook output 200, reading particles: 2026-11-25T16:26:49.367
 ┌─ Mera quicklook ── output 200 (GADGET) ───────────────
 │ box        : 31.53 Mpc (91.43 Mpc comoving)      levels 1–1  (finest 15.76 Mpc)
 │ grid       : ndim 3 · ncpu 1 · nvarh 0
 │ time       : 3.51 Gyr   z = 1.9
 │ particles  : 7572534 total  —  stars 450921 · DM 7120464 · sinks 1149
 │ part. mass : stars 1.767e12 M⊙  ·  DM 2.897e16 M⊙
-└─ 15.0 s ──────────────────────────────────
-[Mera]: quicklook output 200 finished: 2026-11-05T14:46:29.134
+└─ 14.8 s ──────────────────────────────────
+[Mera]: quicklook output 200 finished: 2026-11-25T16:27:04.164
 ```
 
 ```julia
@@ -241,7 +241,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-11-05T14:46:44.467
+[Mera]: 2026-11-25T16:27:20.111
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 31.527 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 31.527 [Mpc]

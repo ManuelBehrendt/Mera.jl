@@ -45,8 +45,8 @@ ql = quicklook(150; path=path);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
-[Mera]: quicklook output 150, reading gas: 2026-11-05T14:44:51.235
+Mera v1.11.0+multicode | Julia 1.12.7 | 4 threads
+[Mera]: quicklook output 150, reading gas: 2026-11-25T16:25:23.482
    2169 CPU file(s), levels 7-10 of 10  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 7774208 cells
 ┌─ Mera quicklook ── output 150 (FLASH) ───────────────
@@ -57,8 +57,8 @@ Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
 │ gas mass   : 5.215e13 M⊙
 │ ρ range    : 3.331e-30 … 5.922e-26 g/cm³
 │ T range    : 8.136e6 … 1.043e8 K
-└─ 26.3 s ──────────────────────────────────
-[Mera]: quicklook output 150 finished: 2026-11-05T14:45:16.109
+└─ 25.3 s ──────────────────────────────────
+[Mera]: quicklook output 150 finished: 2026-11-25T16:25:47.418
 ```
 
 ```julia
@@ -74,7 +74,7 @@ info = getinfo(150, path);
 ```
 
 ```
-[Mera]: 2026-11-05T14:45:28.724
+[Mera]: 2026-11-25T16:26:01.958
 Code: FLASH
 output: 150  time: 1.1835e17 [code units]
 root grid: 16³ (level 4), FLASH lrefine 4:7 ⇒ levels 7:10, boxlen = 7.40544e24
@@ -248,7 +248,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-11-05T14:45:47.507
+[Mera]: 2026-11-25T16:26:20.141
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 2.4 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 2.4 [Mpc]
@@ -259,8 +259,8 @@ Effective resolution: 256^2
 Map size: 256 x 256
 Pixel size: 9.375 [kpc]
 Simulation min.: 2.344 [kpc]
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```

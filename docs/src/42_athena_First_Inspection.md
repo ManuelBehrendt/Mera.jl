@@ -42,8 +42,8 @@ ql = quicklook(500; path=path);
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
-[Mera]: quicklook output 500, reading gas: 2026-11-05T14:42:42.242
+Mera v1.11.0+multicode | Julia 1.12.7 | 4 threads
+[Mera]: quicklook output 500, reading gas: 2026-11-25T16:23:15.804
    5300 CPU file(s), levels 7-11 of 11  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 21708800 cells
 ┌─ Mera quicklook ── output 500 (Athena++) ───────────────
@@ -54,8 +54,8 @@ Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
 │ gas mass   : 9.395e13 g
 │ ρ range    : 48.75 … 1.147e6 g/cm³
 │ T range    : 9.839e-10 … 2.325e-8 K
-└─ 48.7 s ──────────────────────────────────
-[Mera]: quicklook output 500 finished: 2026-11-05T14:43:29.993
+└─ 48.5 s ──────────────────────────────────
+[Mera]: quicklook output 500 finished: 2026-11-25T16:24:03.276
 ```
 
 ```julia
@@ -81,7 +81,7 @@ info = getinfo(500, path);
 ```
 
 ```
-[Mera]: 2026-11-05T14:43:43.158
+[Mera]: 2026-11-25T16:24:17.939
 Code: Athena++
 output: 500  time: 5000.0 [code units]
 root grid: 128³ (level 7), MaxLevel 4 ⇒ levels 7:11, boxlen = 4000.0
@@ -212,7 +212,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-11-05T14:44:22.850
+[Mera]: 2026-11-25T16:24:54.738
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 4000.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 4000.0 [cm]
@@ -223,8 +223,8 @@ Effective resolution: 256^2
 Map size: 256 x 256
 Pixel size: 15.625 [cm]
 Simulation min.: 1.953 [cm]
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```

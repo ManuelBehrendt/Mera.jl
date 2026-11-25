@@ -48,8 +48,8 @@ ql = quicklook(5; path=path, unit_length=UL, unit_density=UD, unit_velocity=UV,
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
-[Mera]: quicklook output 5, reading gas: 2026-11-05T14:48:50.788
+Mera v1.11.0+multicode | Julia 1.12.7 | 4 threads
+[Mera]: quicklook output 5, reading gas: 2026-11-25T16:21:40.925
    1 CPU file(s), levels 6-6 of 6  (full resolution)
    projecting 3 gas map(s) [z, x, y] and the phase diagram from 262144 cells
 ┌─ Mera quicklook ── output 5 (PLUTO) ───────────────
@@ -60,8 +60,8 @@ Mera v1.10.2+multicode | Julia 1.12.7 | 8 threads
 │ gas mass   : 5.601e15 g
 │ n_H range  : 0.001293 … 2.895 cm⁻³
 │ T range    : 0.0007382 … 4760 K
-└─ 4.43 s ──────────────────────────────────
-[Mera]: quicklook output 5 finished: 2026-11-05T14:48:54.904
+└─ 4.33 s ──────────────────────────────────
+[Mera]: quicklook output 5 finished: 2026-11-25T16:21:44.938
 ```
 
 `quicklook` prints the summary and keeps the maps it made. It does not draw them,
@@ -100,7 +100,7 @@ setcomposition!(info; X_frac=0.711, mu=0.614);
 ```
 
 ```
-[Mera]: 2026-11-05T14:49:07.766
+[Mera]: 2026-11-25T16:21:59.574
 Code: PLUTO
 output: 5  time: 0.5 [code units]
 grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
@@ -279,7 +279,7 @@ size(proj.maps[:sd])
 ```
 
 ```
-[Mera]: 2026-11-05T14:49:09.314
+[Mera]: 2026-11-25T16:22:01.095
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 1.496e13 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 1.496e13 [cm]
@@ -290,8 +290,8 @@ Effective resolution: 64^2
 Map size: 64 x 64
 Pixel size: 2.3375e11 [cm]
 Simulation min.: 2.3375e11 [cm]
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```
