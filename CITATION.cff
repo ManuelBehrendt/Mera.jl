@@ -2,21 +2,23 @@ cff-version: 1.2.0
 message: "If you use Mera.jl in your research, please cite it as below."
 title: "Mera.jl: Analysis of astrophysical simulations in Julia"
 abstract: >-
-  Mera.jl is an analysis framework for astrophysical simulations, written in Julia. It covers the
-  whole path from raw simulation output to a result you can publish: selecting regions, computing
-  physics in any unit, projecting from any viewing angle, profiles, phase diagrams, clump finding,
-  time series and movies. It reads RAMSES adaptive mesh refinement output natively, with hydro and
-  MHD, particles, gravity, clumps, sinks and radiative transfer, and handles cosmological runs
-  throughout. A snapshot is one table, one row per cell with its refinement level, so nothing is
-  flattened onto a uniform grid first. When a selected region cuts through a cell, Mera counts the
-  part of the cell that lies inside, and a map holds the same mass at any angle, pixel size or
-  thread count. Mera also renders volumes, finds clumps with seven algorithms, and rewrites a RAMSES
-  output so it restarts on any number of CPUs. Every file it saves records the snapshot, the code
-  and the package versions behind it, and one call bundles these records into an RO-Crate. Readers
-  plug into a registry, so a reader written in another package works with the whole analysis.
-  This development line also reads AREPO, GADGET, PLUTO, Athena++, FLASH, Chombo and AMReX/Quokka
-  through the same registry and the same analysis layer, unchanged. The AMReX/Quokka reader was
-  contributed by ChongChong He.
+  Mera.jl is a Julia package for analysing astrophysical simulations. It reads RAMSES, a widely
+  used code for astrophysical fluid dynamics. RAMSES writes gas on an adaptive mesh, refined where
+  more detail is needed, together with gravity, radiation, particles, sinks and clumps. Mera.jl
+  reads all of it into Julia tables and works on them: it selects regions, derives quantities in
+  any unit, and makes projection maps from any angle, volume renderings, profiles, phase diagrams,
+  clump catalogues, time series and movies.
+
+  When a region, such as a sphere, cuts through a computational cell, Mera.jl can count only the
+  share of the cell that lies inside, for example a third of its volume and mass, in every later
+  sum, profile and map. This keeps results accurate, especially for small regions. Its numerical
+  core is tested against exact solutions and against the reference values of the RAMSES test
+  suite. Saved results record the snapshot, code and package versions behind them. The analysis is
+  written for two kinds of table, cells on a grid and particles. With register_reader!, a reader
+  for another astrophysical code fills these tables, and the analysis functions then work on its
+  data. This development line also reads AREPO, GADGET, PLUTO, Athena++, FLASH, Chombo and
+  AMReX/Quokka through the same interface. The AMReX/Quokka reader was contributed by
+  ChongChong He.
 type: software
 authors:
   - family-names: Behrendt
