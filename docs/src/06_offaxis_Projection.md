@@ -495,13 +495,13 @@ inclination + los         → ArgumentError
 direction=:faceon + axis  → ArgumentError
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_13_6.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_13_7.webp)
 
 ```
 angle between the gas and star angular-momentum axes = 0.03°
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_13_9.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_13_10.webp)
 
 `direction=:faceon` and `inclination=0, axis=:angmom` give the **same view**: the same line of
 sight to the last bit, the same up vector, and a map difference of exactly zero.
@@ -635,7 +635,7 @@ end
              These are WORLD-space bounds, so after rotation the full box depth folds into
              the image. Pass `zrange`, or `fov=<half-width>` for a fixed camera frame.
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-11-26T12:10:32.428
+[Mera]: 2026-11-26T15:47:20.291
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -860,10 +860,10 @@ maprow([p.map for p in panmaps], :sd,
 
 ```
 center                t [s]   extent [kpc]                  mass in frame [Msol]
-centre                6.6     [-10.3, 10.3, -10.3, 10.3]    5.453e9
-8 kpc along x         4.1     [-10.5, 10.5, -10.5, 10.5]    3.699e9
-8 kpc along y         3.4     [-10.5, 10.5, -10.5, 10.5]    3.692e9
-12 kpc out, corner    1.7     [-10.8, 10.8, -10.8, 10.8]    5.032e8
+centre                6.5     [-10.3, 10.3, -10.3, 10.3]    5.453e9
+8 kpc along x         4.4     [-10.5, 10.5, -10.5, 10.5]    3.699e9
+8 kpc along y         3.8     [-10.5, 10.5, -10.5, 10.5]    3.692e9
+12 kpc out, corner    1.1     [-10.8, 10.8, -10.8, 10.8]    5.032e8
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_26_3.webp)
@@ -1034,62 +1034,78 @@ too: `subregion(gas, sphere(10; center=[:bc], range_unit=:kpc); split=true)` att
 ```julia
 # Two questions, both answered by a total, so `binning` is irrelevant here: every kernel is a
 # partition of unity and conserves the total exactly (to rounding error). `:ngp` is the cheapest.
+using Printf
 skw = (los=[1.,2,3], center=[:bc], pxsize=[0.5,:kpc], binning=:ngp,
        verbose=false, show_progress=false)
 slabmass(m) = sum(m.maps[:mass])
+# The relative error, in powers of ten: an error near 1e-15 is round-off, so the answer is exact.
+rel_err(a, ref) = @sprintf("%+.1e", (a - ref) / ref)
+cell_min = minimum(getvar(gas, :cellsize, :kpc))
+println("smallest cell in the data: ", round(1000 * cell_min, digits=1), " pc\n")
 
 # 1. ADDITIVITY. Cut one slab into N adjacent pieces and add the pieces back up. Each cell must
 #    be counted once in total, however many faces cross it.
-println("ADDITIVITY of a [-20,20] kpc slab, re-summed from N pieces")
+println("ADDITIVITY: a [-20,20] kpc slab cut into N pieces, error of the summed pieces")
+println(rpad("", 16), rpad("N=2", 12), "N=4")
 for sp in (false, true)
     ref = slabmass(projection(gas, :mass, :Msol; depth=[-20.,20.], depth_unit=:kpc, split=sp, skw...))
-    print(rpad("  split=$(sp)", 16), "single slab ", round(ref, sigdigits=9))
+    print(rpad(sp ? "  split" : "  whole cells", 16))
     for N in (2, 4)
         e = range(-20, 20, length=N+1)
         s = sum(slabmass(projection(gas, :mass, :Msol; depth=[e[i],e[i+1]], depth_unit=:kpc,
                                split=sp, skw...)) for i in 1:N)
-        print("   N=$(N): ", round(100*(s-ref)/ref, digits=4), "%")
+        print(rpad(rel_err(s, ref), 12))
     end
     println()
 end
 
 # 2. A SMALL APERTURE, against the mass of the sphere it selected. `msum` on a split subregion is
 #    the independent answer: it never goes near the projection code.
-println("\nAPERTURE: does the map hold the mass of the sphere it selected?")
-println(rpad("  fov [kpc]", 12), rpad("whole cells", 16), rpad("split", 16), "true (msum)")
-for R in (3, 6, 12)
+println("\nAPERTURE: error of the map's mass against the sphere it selected")
+println(rpad("  fov [kpc]", 12), rpad("whole cells", 14), rpad("split", 14), "sphere mass (msum) [Msol]")
+for R in (1, 3, 6, 12)
     truth = msum(subregion(gas, sphere(float(R); center=[:bc], range_unit=:kpc);
                            split=true, verbose=false), :Msol)
     a = slabmass(projection(gas, :mass, :Msol; fov=R, fov_unit=:kpc, aperture=:circle, skw...))
     b = slabmass(projection(gas, :mass, :Msol; fov=R, fov_unit=:kpc, aperture=:circle,
                        split=true, skw...))
-    println(rpad("  $(R)", 12),
-            rpad(string(round(100*(a-truth)/truth, digits=3), "%"), 16),
-            rpad(string(round(100*(b-truth)/truth, digits=3), "%"), 16),
+    println(rpad("  $(R)", 12), rpad(rel_err(a, truth), 14), rpad(rel_err(b, truth), 14),
             round(truth, sigdigits=6))
 end
 ```
 
 ```
-ADDITIVITY of a [-20,20] kpc slab, re-summed from N pieces
-  split=false   single slab 6.99466224e9   N=2: 0.0063%   N=4: 0.0063%
-  split=true    single slab 6.99466087e9   N=2: 0.0%   N=4: 0.0%
-APERTURE: does the map hold the mass of the sphere it selected?
-  fov [kpc] whole cells     split           true (msum)
-  3         0.448%          0.0%            1.20219e9
-  6         0.239%          0.0%            3.24183e9
-  12        0.22%           0.0%            6.32512e9
+smallest cell in the data: 11.7 pc
+ADDITIVITY: a [-20,20] kpc slab cut into N pieces, error of the summed pieces
+                N=2         N=4
+  whole cells   +6.3e-05    +6.3e-05
+  split         +0.0e+00    +0.0e+00
+APERTURE: error of the map's mass against the sphere it selected
+  fov [kpc] whole cells   split         sphere mass (msum) [Msol]
+  1         +1.7e-02      +4.9e-15      1.50849e8
+  3         +4.5e-03      +5.9e-16      1.20219e9
+  6         +2.4e-03      +2.9e-16      3.24183e9
+  12        +2.2e-03      +3.0e-16      6.32512e9
 ```
 
-**Read the additivity line first.** With whole cells, the pieces add up to more than the slab
-they came from, and cutting into more pieces does not make the error smaller. The reason is double
-counting: seen along `[1,2,3]`, many cell centres lie exactly on a cut, and a cell whose centre is
-on the cut is kept by both neighbouring pieces. `split=true` gives such a cell a share on each
-side, so the pieces add up exactly.
+Every number in both tables is an **error**, relative to the right answer. It is not a share of
+split cells.
 
-**The aperture line** shows the same for a curved edge. With whole cells a small aperture gets too
-much mass, because the cells along its edge are a large part of a small sphere. With `split=true`
-the map holds the mass of the selected sphere, to round-off, at every radius.
+**Read the additivity line first.** With whole cells, the pieces add up to more than the slab
+they came from. The cut through the centre causes it: seen along `[1,2,3]`, many cell centres lie
+exactly on the plane through `center`, and a cell whose centre is on a cut is kept by both
+neighbouring pieces. The other cuts (at ±10 kpc for N=4) hit almost no centres, so N=4 has the
+same error as N=2. `split=true` gives such a cell a share on each side, so the pieces add up
+exactly: the error is zero, not only small.
+
+**The aperture line** shows the same for a curved edge. With whole cells the map gets too much
+mass, because every cell that reaches the sphere is kept whole. The error grows as the sphere gets
+smaller, because the cells along its edge are a larger part of it. With `split=true` the map holds
+the mass of the selected sphere, to round-off, at every radius.
+
+**Small here, large elsewhere.** The whole-cell errors in this run are small because its cells
+are small next to these cuts. They grow with coarser cells, thinner slabs and smaller apertures.
+`split=true` removes them at any size.
 
 **The cost:** `split=true` samples every cell that an edge passes through. Cells fully inside or
 outside need only a quick test, so the cost grows with the area of the cut, not with its volume.
@@ -1375,10 +1391,10 @@ level 10.0:  cell 0.0469  kpc  →  9.4 pixels per cell at pxsize = 0.005 kpc
 level 11.0:  cell 0.0234  kpc  →  4.7 pixels per cell at pxsize = 0.005 kpc
 level 12.0:  cell 0.0117  kpc  →  2.3 pixels per cell at pxsize = 0.005 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       35.0 %     1.245     0.4154
-cic       12.8 %     1.228     0.2669
-overlap   0.0 %      3.592     0.0128
-exact     0.0 %      15.417    0.0
+ngp       35.0 %     1.395     0.4154
+cic       12.8 %     1.087     0.2669
+overlap   0.0 %      2.934     0.0128
+exact     0.0 %      15.028    0.0
 stars     empty px   time [s]  what it does
 ngp       65.7 %     0.01      whole star in the nearest pixel
 cic       38.5 %     0.01      bilinear over 2x2
@@ -2356,7 +2372,7 @@ T > 1e4 K       30442895      2.87379e8               (166, 166)
 the two parts add back to the whole: 100.0 %
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_74_3.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_74_4.webp)
 
 The three frames are identical because `fov` pinned them, and the two parts add back to the
 whole because a mask only decides which cells are deposited, never how much of one.
@@ -2602,7 +2618,7 @@ stars, now  (166, 166)   star mass kept: true
 Σ★/Σgas over pixels with both: median 0.016
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_84_4.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_84_5.webp)
 
 Red pixels hold more mass in star particles than in gas, blue pixels the reverse. Remember what
 the star particles are (next section): stars formed during the run, not the old disc. A ratio of
