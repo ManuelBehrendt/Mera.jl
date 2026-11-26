@@ -128,10 +128,12 @@ show_status () {
 }
 
 # ---------------------------------------------------------------------------
-# State: one folder per run, tied to one commit
+# State: one folder per run, tied to one state of the measured code
 # ---------------------------------------------------------------------------
-tree_key () {   # the commit plus any uncommitted change to the code that is measured
-    echo "$(git rev-parse HEAD) $(git status --porcelain -- src test Project.toml | shasum | cut -c1-12)"
+tree_key () {   # src, test and Project.toml as committed, plus any uncommitted change to them;
+                # a commit that touches only docs or scripts keeps the run going
+    echo "$(git rev-parse HEAD:src HEAD:test HEAD:Project.toml | shasum | cut -c1-12)" \
+         "$(git status --porcelain -- src test Project.toml | shasum | cut -c1-12)"
 }
 [[ "${FRESH:-0}" == "1" ]] && rm -rf "$STATE"
 mkdir -p "$STATE/done" "$STATE/cov" "$STATE/logs"
@@ -139,7 +141,7 @@ if [[ -f "$STATE/tree" && "$(cat "$STATE/tree")" != "$(tree_key)" ]]; then
     echo "!!! $STATE belongs to another state of the code:"
     echo "      saved: $(cat "$STATE/tree")"
     echo "      now:   $(tree_key)"
-    echo "    Go back to that commit to continue, or start over with FRESH=1."
+    echo "    Go back to that code to continue, or start over with FRESH=1."
     exit 1
 fi
 tree_key > "$STATE/tree"

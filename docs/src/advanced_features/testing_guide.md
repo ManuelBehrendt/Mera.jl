@@ -197,8 +197,9 @@ uploaded as soon as it is complete, and the notebooks at the end.
 - **Closing the lid** pauses the run, and it carries on when the lid opens. If a step fails while
   the Mac was asleep (the data drive can drop out), it is run again at once.
 - **The data drive goes offline**: the run stops, and the next start continues from there.
-- **The code changed**: the saved steps belong to one commit, so the script refuses to mix two
-  versions of the code. Go back to that commit, or start over with `FRESH=1`.
+- **The code changed**: the saved steps belong to one state of `src`, `test` and `Project.toml`,
+  so the script refuses to mix two versions of the code. Go back to that code, or start over with
+  `FRESH=1`. A commit that changes only docs or scripts does not stop the run.
 
 | setting | does |
 |---|---|
