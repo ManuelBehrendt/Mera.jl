@@ -125,12 +125,12 @@ println("threads      : ", Threads.nthreads())
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.3 | Julia 1.12.7 | 8 threads
+Mera v1.11.0 | Julia 1.12.7 | 4 threads
 cells loaded : 51500562
 stars loaded : 627896
 box length   : 48.0 kpc
 levels       : 6 to 12
-threads      : 8
+threads      : 4
 ```
 
 ```julia
@@ -227,7 +227,7 @@ maprow([down_z, diag], :sd, ["direction=:z  (the default)", "los=[1,1,1]"];
 ```
 
 ```
-los=[1,1,1]    ŵ = [0.577, 0.577, 0.577]     û = [-0.408, -0.408, 0.816] frame (321, 321)   m.direction = :offaxis
+los=[1,1,1]    ŵ = [0.577, 0.577, 0.577]     û = [-0.408, -0.408, 0.816] frame (322, 322)   m.direction = :offaxis
 direction=:z   axis-aligned path, no camera basis                   frame (321, 321)   m.direction = :unspecified
 ```
 
@@ -283,7 +283,7 @@ maprow([hero_sfo, hero_seo], :sd, ["stars, direction=:faceon", "stars, direction
 line of sight  ŵ = [0.0, 0.001, 1.0]
 image up       û = [-0.0, 1.0, -0.001]
 projection centre (box fraction) = [0.5, 0.5, 0.5]
-frame: (321, 321)  and  (321, 321)
+frame: (322, 322)  and  (322, 322)
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_8_3.webp)
@@ -372,8 +372,8 @@ fig
 
 ```
 native pixel : 11.72 pc
-map          : (2731, 2731)
-stars in the frame : 627896   pixels : 7458361   occupied : 12.1 %
+map          : (2732, 2732)
+stars in the frame : 627896   pixels : 7463824   occupied : 12.1 %
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_11_4.webp)
@@ -635,7 +635,7 @@ end
              These are WORLD-space bounds, so after rotation the full box depth folds into
              the image. Pass `zrange`, or `fov=<half-width>` for a fixed camera frame.
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-10-25T11:27:00.225
+[Mera]: 2026-11-26T12:10:32.428
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -646,11 +646,11 @@ Weighting      = :mass
 Off-axis LOS   = [0.0, -0.8657, 0.5006]  (binning=:overlap)
 Effective resolution: 481^2  →  map size: 330 x 576
 xrange/yrange ±16 kpc    frame   (330, 576)   extent [kpc] = [-16.5, 16.5, -28.8, 28.7]
-fov=16 :square           frame   (321, 321)   extent [kpc] = [-16.0, 16.0, -16.0, 16.0]
+fov=16 :square           frame   (322, 322)   extent [kpc] = [-16.1, 16.1, -16.1, 16.1]
 fov=16 :circle           frame   (330, 330)   extent [kpc] = [-16.5, 16.5, -16.5, 16.5]
 stars, xrange/yrange ±16 kpc frame   (279, 139)   extent [kpc] = [-14.1, 13.7, -6.9, 6.9]
-stars, fov=16 :square    frame   (321, 321)   extent [kpc] = [-16.0, 16.0, -16.0, 16.0]
-stars, fov=16 :circle    frame   (323, 323)   extent [kpc] = [-16.1, 16.1, -16.1, 16.1]
+stars, fov=16 :square    frame   (322, 322)   extent [kpc] = [-16.1, 16.1, -16.1, 16.1]
+stars, fov=16 :circle    frame   (324, 324)   extent [kpc] = [-16.2, 16.2, -16.2, 16.2]
 ```
 
 ```julia
@@ -801,11 +801,11 @@ maprow(sweep, :sd, ["fov = $(f) kpc" for f in (4, 8, 16, 23)];
 fov asked  delivered  frame [px]   extent [kpc]        central depth [kpc]
 4          3.98       (32, 32)     7.96 x 7.96         11.3
 8          7.96       (64, 64)     15.92 x 15.92       22.5
-16         16.04      (129, 129)   32.08 x 32.08       45.4
+16         16.17      (130, 130)   32.33 x 32.33       45.7
 23         16.66      (134, 134)   33.33 x 33.33       47.1
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_23_2.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_23_3.webp)
 
 Four widths, one camera. The frame shrinks in pixels as `fov` shrinks, because the pixel size
 is held fixed, and the **column gets shallower** with it: the selection is a sphere, so halving
@@ -860,10 +860,10 @@ maprow([p.map for p in panmaps], :sd,
 
 ```
 center                t [s]   extent [kpc]                  mass in frame [Msol]
-centre                5.3     [-10.3, 10.3, -10.3, 10.3]    5.453e9
-8 kpc along x         3.7     [-10.4, 10.4, -10.4, 10.4]    3.699e9
-8 kpc along y         2.8     [-10.4, 10.4, -10.4, 10.4]    3.692e9
-12 kpc out, corner    1.0     [-10.8, 10.8, -10.8, 10.8]    5.032e8
+centre                6.6     [-10.3, 10.3, -10.3, 10.3]    5.453e9
+8 kpc along x         4.1     [-10.5, 10.5, -10.5, 10.5]    3.699e9
+8 kpc along y         3.4     [-10.5, 10.5, -10.5, 10.5]    3.692e9
+12 kpc out, corner    1.7     [-10.8, 10.8, -10.8, 10.8]    5.032e8
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_26_3.webp)
@@ -897,7 +897,7 @@ println("wrote assets/offaxis/pan_movie.gif  (", length(panseq), " frames, ",
 ```
 
 ```
-wrote assets/offaxis/pan_movie.gif  (60 frames, 5835.6 KB)
+wrote assets/offaxis/pan_movie.gif  (60 frames, 5744.2 KB)
 ```
 
 ![The camera keeps one direction and one field of view while its centre walks across the box, so the galaxy drifts through the frame.](assets/offaxis/pan_movie.webp)
@@ -935,9 +935,9 @@ maprow([sq, rect], :sd, ["fov=16, a square frame", "fov=[16,4], the same disc"];
 ```
 
 ```
-fov=16       frame (321, 321)   pixels 103041    extent [-16.0, 16.0, -16.0, 16.0]
-fov=[16,4]   frame (321, 80)    pixels 25680     extent [-16.0, 16.0, -4.0, 4.0]
-the rectangle uses 24.9 % of the square's pixels for the same disc
+fov=16       frame (322, 322)   pixels 103684    extent [-16.1, 16.1, -16.1, 16.1]
+fov=[16,4]   frame (322, 80)    pixels 25760     extent [-16.1, 16.1, -4.0, 4.0]
+the rectangle uses 24.8 % of the square's pixels for the same disc
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_31_2.webp)
@@ -1076,8 +1076,8 @@ ADDITIVITY of a [-20,20] kpc slab, re-summed from N pieces
   split=true    single slab 6.99466087e9   N=2: 0.0%   N=4: 0.0%
 APERTURE: does the map hold the mass of the sphere it selected?
   fov [kpc] whole cells     split           true (msum)
-  3         0.448%          -0.0%           1.20219e9
-  6         0.239%          -0.0%           3.24183e9
+  3         0.448%          0.0%            1.20219e9
+  6         0.239%          0.0%            3.24183e9
   12        0.22%           0.0%            6.32512e9
 ```
 
@@ -1227,7 +1227,7 @@ gas + stars   165.141               [2.0e-5, 0.00061, 1.0]
 the joint vector is the exact sum of the parts: true
 angle gas to stars        1.48 arcmin
 angle gas to gas+stars   0.05 arcmin
-both maps on the joint axis: gas (166, 166)  stars (163, 163)   same camera: true
+both maps on the joint axis: gas (166, 166)  stars (164, 164)   same camera: true
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_40_6.webp)
@@ -1375,14 +1375,14 @@ level 10.0:  cell 0.0469  kpc  →  9.4 pixels per cell at pxsize = 0.005 kpc
 level 11.0:  cell 0.0234  kpc  →  4.7 pixels per cell at pxsize = 0.005 kpc
 level 12.0:  cell 0.0117  kpc  →  2.3 pixels per cell at pxsize = 0.005 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       35.0 %     1.269     0.4154
-cic       12.8 %     1.189     0.2669
-overlap   0.0 %      2.592     0.0128
-exact     0.0 %      9.006     0.0
+ngp       35.0 %     1.245     0.4154
+cic       12.8 %     1.228     0.2669
+overlap   0.0 %      3.592     0.0128
+exact     0.0 %      15.417    0.0
 stars     empty px   time [s]  what it does
 ngp       65.7 %     0.01      whole star in the nearest pixel
-cic       38.4 %     0.01      bilinear over 2x2
-stars in this window: 183796
+cic       38.5 %     0.01      bilinear over 2x2
+stars in this window: 183809
   binning=:overlap  returns the :cic map exactly: true
   binning=:exact    returns the :cic map exactly: true
 ```
@@ -1728,8 +1728,8 @@ pixel 800 pc:  cells in the fov 43922383, :ncell sums to 43922383;  stars 627896
 data    pixel     filled pixels   median count   pixels with one object
 gas     100 pc    81005           235.0          0.1 %
 gas     800 pc    1394            13148.0        0.0 %
-stars   100 pc    27788           6.0            20.6 %
-stars   800 pc    796             64.5           3.8 %
+stars   100 pc    27704           6.0            20.3 %
+stars   800 pc    794             64.0           4.2 %
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_55_4.webp)
@@ -1803,8 +1803,8 @@ println(":σlos follows the camera, which is what a spectrum would see.")
 ```
 
 ```
-face-on   σz 9.3            σlos 9.3          σcamx 14.0        σcamy 13.8
-edge-on   σz 22.0           σlos 19.3         σcamx 19.2        σcamy 22.0
+face-on   σz 9.4            σlos 9.4          σcamx 14.1        σcamy 13.9
+edge-on   σz 21.9           σlos 19.2         σcamx 19.0        σcamy 21.9
 median km/s over pixels fed by more than one cell.
 :σz is the SIMULATION z in both rows, so it barely moves when the camera does.
 :σlos follows the camera, which is what a spectrum would see.
@@ -1850,10 +1850,10 @@ end
 
 ```
 binning     pixels used   median rel. diff    p99
-:ngp        10201         4.76e-14            2.11e-12
-:cic        10201         1.05e-13            3.98e-12
-:overlap    10201         7.06e-14            2.22e-12
-:exact      10201         7.21e-14            2.22e-12
+:ngp        10404         4.19e-14            2.16e-12
+:cic        10404         9.37e-14            3.76e-12
+:overlap    10404         6.74e-14            2.68e-12
+:exact      10404         6.73e-14            2.67e-12
 `:ncell` is how the single-cell pixels are excluded: their spread is exactly zero,
 so the ratio of two round-off values there says nothing about the identity.
 ```
@@ -1930,12 +1930,12 @@ println("  gas median σ_LOS edge-on  = ", round(median(gσ), digits=1), " km/s 
 ```
 edge-on   max |v_LOS| = 211.3 km/s
 face-on   max |v_LOS| = 45.9 km/s
-median σ_LOS edge-on  = 19.5 km/s
-stars edge-on   max |v_LOS| = 240.7 km/s
-stars face-on   max |v_LOS| = 20.6 km/s
-stars: pixels with σ > 0    = 1577 of 91809   (1.7 %)
-stars median σ_LOS edge-on  = 21.8 km/s   (over those pixels)
-  gas median σ_LOS edge-on  = 19.5 km/s   (same measure)
+median σ_LOS edge-on  = 19.4 km/s
+stars edge-on   max |v_LOS| = 243.3 km/s
+stars face-on   max |v_LOS| = 16.7 km/s
+stars: pixels with σ > 0    = 1546 of 92416   (1.7 %)
+stars median σ_LOS edge-on  = 22.5 km/s   (over those pixels)
+  gas median σ_LOS edge-on  = 19.4 km/s   (same measure)
 ```
 
 ```julia
@@ -2019,9 +2019,9 @@ end
 
 ```
 pxsize [kpc]   median σ_LOS    mean σ_LOS
-0.15           19.5            24.2
-0.6            19.6            24.8
-2.4            21.4            26.9
+0.15           19.4            24.1
+0.6            19.4            24.5
+2.4            19.7            26.2
 ```
 
 **On this galaxy, a 16× change in `pxsize` hardly changes σ_LOS** (table above). You might
@@ -2104,10 +2104,10 @@ println("\nnull test, disc face-on: σ_LOS ", round(median(good(fA.maps[:σlos])
 
 ```
 selection                 σ_LOS before  after     removed, variance  width ratio
-all gas                   19.5          63.8      -969.7 %           3.271
-disc, |z| < 2 kpc         41.7          34.2      32.6 %             0.821
-disc, nbins = 400         41.7          34.3      32.5 %             0.821
-null test, disc face-on: σ_LOS 6.94 → 6.94 km/s
+all gas                   19.4          63.5      -974.9 %           3.279
+disc, |z| < 2 kpc         42.6          38.1      19.9 %             0.895
+disc, nbins = 400         42.6          38.1      19.9 %             0.895
+null test, disc face-on: σ_LOS 6.99 → 6.99 km/s
 ```
 
 The first line goes the opposite way from the other two, and that is the point of the table.
@@ -2198,9 +2198,9 @@ println("\na median over the whole box instead would read ",
 ```
 σ_thermal per cell : 0.28 .. 1662.53 km/s   (whole box, so the top end is halo gas)
 equals cs/√γ       : true
-σ_bulk  (disc, rotation removed)  = 34.24 km/s
+σ_bulk  (disc, rotation removed)  = 38.11 km/s
 σ_therm (disc, mass-weighted rms) = 8.19 km/s
-σ_total = √(σ_bulk² + σ_therm²)   = 35.21 km/s
+σ_total = √(σ_bulk² + σ_therm²)   = 38.98 km/s
 a median over the whole box instead would read 19.05 km/s
 ```
 
@@ -2356,7 +2356,7 @@ T > 1e4 K       30442895      2.87379e8               (166, 166)
 the two parts add back to the whole: 100.0 %
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_74_2.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_74_3.webp)
 
 The three frames are identical because `fov` pinned them, and the two parts add back to the
 whole because a mask only decides which cells are deposited, never how much of one.
@@ -2522,7 +2522,7 @@ fig
 ```
 
 ```
-gas   frame (321, 321)   stars (321, 321)   potential (321, 321)
+gas   frame (322, 322)   stars (322, 322)   potential (322, 322)
 φ along the line of sight: (-147400.0, -39090.0) km²/s²
 ```
 
@@ -2546,6 +2546,67 @@ That difference is visible if you push the pixels: a grid map degrades smoothly,
 map becomes **grainy**, because each pixel is counting a finite number of objects and inherits a
 √N uncertainty. The cure is the same as in any counting experiment, coarsen the pixels until each
 one holds enough particles to mean something.
+
+### Gas and stars, pixel for pixel
+
+The three panels above match because they use `aperture=:square`: the frame is cropped to the
+`fov` square, so every map has the same size. With the default `aperture=:circle` nothing is
+cropped after the sphere, and the gas frame comes out **a few pixels larger** than the star frame.
+It keeps room for the cells on the edge of the sphere, so no gas mass falls off the map. Points
+have no extent and need no such room.
+
+Both frames are still centred on `center`, with the same pixel size and the same pixel edges, as
+long as both maps use one camera (Chapter 6: one vector for both, not `:faceon` on each). So
+[`matchframe`](@ref) can put the star map on the gas frame, padding the extra rim with zeros. After
+that the two arrays have the same size and pixel `[i, j]` is the same patch of sky in both, which is
+what a ratio or an overlay needs. Do not crop one of the maps by hand: it is easy to shift it by one
+pixel without noticing.
+
+```julia
+# ONE camera for both: face-on to the joint axis of Chapter 6. `direction=:faceon` would take each
+# object's own angular momentum, and gas and stars would then look along axes 1.5 arcmin apart;
+# matchframe refuses two cameras. The default aperture=:circle, and 200 pc pixels, because
+# face-on a pixel holds far fewer stars than edge-on.
+face_kw = (axis=L_both, inclination=0, center=[:bc], fov=16, fov_unit=:kpc, aperture=:circle,
+           pxsize=[0.2, :kpc], verbose=false, show_progress=false)
+gas_fo  = projection(gas,  :sd, :Msol_pc2; face_kw...)
+star_fo = projection(part, :sd, :Msol_pc2; face_kw...)
+println("gas frame   ", size(gas_fo.maps[:sd]), "   stars ", size(star_fo.maps[:sd]))
+
+# The star map on the gas frame. Only zeros are added, so the star mass is unchanged.
+star_on_gas = matchframe(star_fo, gas_fo)
+println("stars, now  ", size(star_on_gas.maps[:sd]), "   star mass kept: ",
+        isapprox(sum(star_on_gas.maps[:sd]), sum(star_fo.maps[:sd]); rtol=1e-12))
+
+# Now the arrays line up, so a ratio is one line. Where there is no gas, there is no ratio.
+Σgas  = Float64.(gas_fo.maps[:sd]); Σstar = Float64.(star_on_gas.maps[:sd])
+ratio_sg = ifelse.((Σgas .> 0) .& (Σstar .> 0), Σstar ./ Σgas, NaN)
+println("Σ★/Σgas over pixels with both: median ", round(median(filter(isfinite, ratio_sg)), sigdigits=3))
+
+# ── figure code from here: drawing only, nothing new about Mera ──
+ext = getextent(gas_fo, :kpc)
+rx = range(ext[1], ext[2], length=size(ratio_sg, 1)); ry = range(ext[3], ext[4], length=size(ratio_sg, 2))
+figr = Figure(size=(560, 460))
+axr = Axis(figr[1,1], title="Σ★ / Σgas, face-on", xlabel="x' [kpc]", ylabel="y' [kpc]",
+           aspect=DataAspect())
+hmr = heatmap!(axr, rx, ry, log10.(ratio_sg); colormap=:balance, colorrange=(-2, 2),
+               nan_color=EMPTY_COLOUR, interpolate=false)
+Colorbar(figr[1,2], hmr, label="log10 Σ★/Σgas")
+limits!(axr, -16, 16, -16, 16)
+figr
+```
+
+```
+gas frame   (166, 166)   stars (164, 164)
+stars, now  (166, 166)   star mass kept: true
+Σ★/Σgas over pixels with both: median 0.016
+```
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_84_4.webp)
+
+Red pixels hold more mass in star particles than in gas, blue pixels the reverse. Remember what
+the star particles are (next section): stars formed during the run, not the old disc. A ratio of
+this kind compares the young stars with the gas they formed from.
 
 ### What these star particles are, and what is missing
 
@@ -2618,11 +2679,11 @@ println("data_center ignored on off-axis hydro        : ",
 ```
 particle binning=:overlap falls back to :cic : true
 particle binning=:exact   falls back to :cic : true
-weighting=:sph off-axis (needs :volume)      : ArgumentError
+weighting=:sph off-axis (needs :volume)      : NO ERROR
 weighting=:voronoi off-axis (needs :volume)  : ArgumentError
-fov on particles, aperture=:circle           : (103, 103)
-fov on particles, aperture=:square           : (101, 101)
-same, for the gas that fills the sphere      : (101, 101)
+fov on particles, aperture=:circle           : (104, 104)
+fov on particles, aperture=:square           : (102, 102)
+same, for the gas that fills the sphere      : (102, 102)
 slice(part, …)                               : MethodError
 particle nmax                                : MethodError
 particle max_threads                         : NO ERROR
@@ -2682,7 +2743,7 @@ println("age              : median ", round(median(age), digits=1),
 
 ```
 particles        : 627896
-families present : [2.0]   (1 = dark matter, 2 = star)
+families present : Int8[2]   (1 = dark matter, 2 = star)
 stellar mass     : 5.035e8 Msol
 particle mass    : 800.0 .. 1600.0 Msol   (all equal: false)
 age              : median 245.0 Myr, oldest 575.8 Myr
@@ -2756,11 +2817,11 @@ fig
 ```
 
 ```
-face-on  frame   (163, 163) at  199.2 pc pixels,   empty 50.2 %
-edge-on  frame   (643, 643) at   49.9 pc pixels,   empty 98.8 %
+face-on  frame   (164, 164) at  199.2 pc pixels,   empty 50.8 %
+edge-on  frame   (644, 644) at   49.9 pc pixels,   empty 98.8 %
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_88_3.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_91_3.webp)
 
 ### The two moments, and what a stellar width is made of
 
@@ -2893,10 +2954,10 @@ fig
 ```
 median stellar age over filled pixels : 248.2 Myr
 max |v_LOS| edge-on                 : 243.5 km/s
-median σ_LOS edge-on                : 23.0 km/s
+median σ_LOS edge-on                : 23.2 km/s
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_91_3.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_94_3.webp)
 
 The age map is the panel that has no gas counterpart. It is a mass-weighted mean, so it reads as
 the mean age of the stars in each column rather than as an age of anything in particular. With
@@ -3048,7 +3109,7 @@ println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
 
 ```
 slice frame      (300, 300)   0.0 % NaN
-projection frame (301, 301)
+projection frame (302, 302)
 slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
 
@@ -3128,7 +3189,7 @@ fig
 filled pixels per panel: [90000, 90000, 90000] of 90000
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_100_3.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_103_3.webp)
 
 ### The two slice movies
 
@@ -3237,7 +3298,7 @@ hideydecorations!(ax2, grid=false)
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_104_1.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_107_1.webp)
 
 **The two panels do not share a colour scale, and they cannot.** A projection sums density along
 kiloparsecs of path; a slice reads one cell. The numbers are orders of magnitude apart and they are
@@ -3316,7 +3377,7 @@ slab [kpc]      thickness   share of stellar mass   filled px
 0.1 … 0.2       100 pc      4.71 %                  7023
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_107_3.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_110_3.webp)
 
 The midplane slab holds most of the young stars and the higher ones thin out fast, which is the
 vertical structure of the disc seen one layer at a time. Nothing here needed a new keyword: a slab
@@ -3366,10 +3427,10 @@ end
 ```
 
 ```
-azimuth   0°   frame (321, 321)   extent [kpc] = [-16.017, 16.017, -16.017, 16.017]
-azimuth  90°   frame (321, 321)   extent [kpc] = [-16.017, 16.017, -16.017, 16.017]
-azimuth 180°   frame (321, 321)   extent [kpc] = [-16.017, 16.017, -16.017, 16.017]
-azimuth 270°   frame (321, 321)   extent [kpc] = [-16.017, 16.017, -16.017, 16.017]
+azimuth   0°   frame (322, 322)   extent [kpc] = [-16.067, 16.067, -16.067, 16.067]
+azimuth  90°   frame (322, 322)   extent [kpc] = [-16.067, 16.067, -16.067, 16.067]
+azimuth 180°   frame (322, 322)   extent [kpc] = [-16.067, 16.067, -16.067, 16.067]
+azimuth 270°   frame (322, 322)   extent [kpc] = [-16.067, 16.067, -16.067, 16.067]
 ```
 
 ```julia
@@ -3393,9 +3454,9 @@ end
 sfigm
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_111_1.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_114_1.webp)
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_111_2.webp)
+![](06_offaxis_Projection_files/06_offaxis_Projection_114_2.webp)
 
 Four azimuths, and the frame size and extent are the same to three decimals, in the pictures and
 in the numbers. That is what makes the sequence usable as a movie: the frame does not change size,
@@ -3485,10 +3546,10 @@ println("stellar mass in frame over the orbit: ", round(100*(maximum(tot)-minimu
 ```
 
 ```
-wrote assets/offaxis/orbit_movie.gif  (120 frames, 13557.4 KB)
-map size: (321, 321)   every frame the same size: true
+wrote assets/offaxis/orbit_movie.gif  (120 frames, 13658.0 KB)
+map size: (322, 322)   every frame the same size: true
 star frame sizes over the orbit: 1 distinct, as for the gas movie above
-wrote assets/offaxis/orbit_movie_stars.gif  (120 frames, 6510.3 KB)
+wrote assets/offaxis/orbit_movie_stars.gif  (120 frames, 6536.0 KB)
 stellar mass in frame over the orbit: 2.37e-14 % peak-to-peak of the mean, and 100.0 % of the total stellar mass is inside the frame
 ```
 
@@ -3571,6 +3632,7 @@ camera survives the round trip : true
 | `projection(gas, :vlos; direction=:z)` errors in `getvar` | `:vlos`/`:σlos` exist only in the off-axis engine | write `los=[0,0,1]` (Chapter 8) |
 | holes or moiré in a zoomed map | `:cic`/`:ngp` with pixels finer than cells | `binning=:overlap` (Chapter 7) |
 | an orbit movie tumbles across snapshots | `direction=:faceon` recomputed per snapshot; L drifts | freeze one `los=` (the recipe at the end of the page) |
+| a gas map and a star map with the same `fov` differ in size by a few pixels | with `aperture=:circle` the gas frame keeps room for its edge cells | `matchframe(stars, gas)` puts the star map on the gas frame, or use `aperture=:square` (Chapter 11) |
 | a **star** σ map is full of exact zeros | those pixels hold one star, and one point has no spread | coarsen the pixel until pixels hold several stars (Chapter 11) |
 | a **star** median comes out at zero | empty off-axis pixels are `0.0`, not `NaN`, so `filter(isfinite, …)` keeps them | filter on `> 0`, not on `isfinite` |
 
