@@ -204,8 +204,19 @@ STEP_PID=""
 # The step and everything below it. A Jupyter kernel runs in a session of its own, so killing the
 # step's process group alone would leave the kernel, and its memory, behind.
 tree_of () { local c; echo "$1"; for c in $(pgrep -P "$1"); do tree_of "$c"; done; }
+# A busy Julia can ignore TERM for minutes, so whatever is still alive after 20 s gets KILL.
+stop_tree () {
+    local pids=($(tree_of "$1")) p i
+    kill -TERM "${pids[@]}" 2>/dev/null
+    for i in {1..20}; do
+        for p in "${pids[@]}"; do kill -0 "$p" 2>/dev/null && break; p=""; done
+        [[ -z "$p" ]] && return
+        sleep 1
+    done
+    kill -KILL "${pids[@]}" 2>/dev/null
+}
 on_stop () {
-    [[ -n "$STEP_PID" ]] && kill -TERM $(tree_of "$STEP_PID") 2>/dev/null
+    [[ -n "$STEP_PID" ]] && stop_tree "$STEP_PID"
     drop_stray_cov
     rm -f "$STATE/lock"
     log "!!! Stopped. Run the same command again to continue from here."
