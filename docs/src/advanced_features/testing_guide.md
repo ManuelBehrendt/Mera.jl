@@ -186,17 +186,29 @@ the combined result under `local-full-notebooks`. Measured on 2026-10-20: the su
 Its settings are `NOTEBOOK_DIR` (default `.../Mera-Docs/version_1.1`), `COV_KERNEL` (default
 `mera-docs-1.12-cov-mera`) and `UPLOAD`. The script stops at once if the kernel does not pass
 `--code-coverage` for this repository, because such a kernel runs for hours and records nothing.
-A long run can be split or resumed:
+
+The suite under coverage takes about two hours, the notebooks several more, so the run is made of
+steps that can be stopped and continued. Every test file and every notebook is a step of its own.
+When a step ends, its coverage files go to the folder `.coverage_run/` and the step is marked done.
+To stop, press Ctrl-C or close the terminal. To continue, start the same command again: finished
+steps are skipped, and only the step that was cut off runs again. With `UPLOAD=1` the suite is
+uploaded as soon as it is complete, and the notebooks at the end.
+
+- **Closing the lid** pauses the run, and it carries on when the lid opens. If a step fails while
+  the Mac was asleep (the data drive can drop out), it is run again at once.
+- **The data drive goes offline**: the run stops, and the next start continues from there.
+- **The code changed**: the saved steps belong to one state of `src`, `test` and `Project.toml`,
+  so the script refuses to mix two versions of the code. Go back to that code, or start over with
+  `FRESH=1`. A commit that changes only docs or scripts does not stop the run.
 
 | setting | does |
 |---|---|
-| `SKIP_SUITE=1` | skip the unit suite and merge the notebooks onto an earlier result (`coverage_suite.lcov`) |
-| `COV_BASE=file.lcov` | the earlier result to merge onto |
-| `NB_FROM=name` | start at this notebook, e.g. after the data drive went offline |
-
-The suite under coverage takes about two hours, the notebooks several more. Keep the machine awake
-(`caffeinate -dims ./scripts/run_coverage_with_notebooks.sh` on macOS): a sleeping laptop drops
-the data drive and the network, and the remaining notebooks are then skipped.
+| `STATUS=1` | show which steps are done or failed, and run nothing |
+| `FRESH=1` | forget the saved steps and start over |
+| `RETRY_FAILED=1` | also repeat the steps that failed (failing tests, a notebook cell that raised) |
+| `NB_ONLY="name ..."` | run only these notebooks, and no suite; nothing is uploaded |
+| `COV_BATCH=n` | test files per suite step (default 1): fewer start-ups, more to repeat after a stop |
+| `NB_TIMEOUT=s` | seconds per notebook cell (default 5400; `-1` for no limit) |
 
 The kernels are made once with `IJulia.installkernel`; set `COV_KERNEL` to the name that
 `jupyter kernelspec list` shows for the coverage kernel:

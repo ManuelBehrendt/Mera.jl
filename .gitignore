@@ -185,3 +185,6 @@ docs/src/assets/music_bar.html
 docs/src/assets/popup_music_player.html
 docs/src/assets/music_notice.js
 docs/src/assets/persistent_frame.html
+
+# state of an interrupted coverage run (scripts/run_coverage_with_notebooks.sh)
+/.coverage_run/
