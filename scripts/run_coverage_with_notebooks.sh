@@ -82,10 +82,12 @@ TOP_NBS=(
   07_multi_Mera_Files 07_1_multi_Mera_Files_Converter
   09_multi_Cosmology 10_multi_RadiativeTransfer
   15_multi_Profiles_Phase 17_multi_Volume_Rendering
+  40_pluto_First_Inspection 41_chombo_First_Inspection 42_athena_First_Inspection
+  43_flash_First_Inspection 44_gadget_First_Inspection 45_arepo_First_Inspection
 )
 # Not run here: 07_2_multi_RAMSES_Restart starts RAMSES itself with mpirun and runs for hours (its
-# Mera functions are covered by test/86_ramses_writer_tests.jl), and the 40-45 first-inspection
-# pages need the readers of the multicode branch.
+# Mera functions are covered by test/86_ramses_writer_tests.jl). The 40-45 first-inspection
+# pages are in the list on the multicode branch only, which has their readers.
 
 # Feature and topic notebooks, named to match their docs/src/<page>.md.
 FEATURE_NBS=(
