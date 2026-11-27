@@ -131,6 +131,9 @@ These are mistakes an assistant makes confidently. Each was reproduced.
    With the same `fov` and `aperture=:circle`, a gas map is a few pixels larger than a star map
    (its frame keeps room for the edge cells). Do not crop by hand: `matchframe(stars, gas)` puts
    the star map on the gas grid, pixel for pixel. With `aperture=:square` both are the same size.
+   Both maps need ONE camera: `direction=:faceon` on each takes each object's own angular
+   momentum, so gas and stars look along different axes and `matchframe` refuses them. Compute
+   `L = angmom([gas, stars]; ...)` once and pass `axis=L` to both.
 6. **`@where` and `@apply` act on the raw table** (`gas.data`), not on the Mera object.
 7. **On particles, `:mass` is a mean and the face-on axis includes the dark matter.** A particle
    has no volume, so `projection(part, :mass)` is the mass-weighted mean particle mass per pixel;
