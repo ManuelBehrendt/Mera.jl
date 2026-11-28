@@ -20,6 +20,33 @@ Every exported file also gets a small readable record next to it, its *sidecar*:
 holds, in which units, and where the data came from. [Sharing Results & Sidecars](export_sidecars.md)
 explains it; on this page it only appears in the listings.
 
+## Export, or a Mera file?
+
+Two ways to keep what you computed, for two different readers:
+
+| | [`exportdata`](@ref) | [`savedata`](@ref) |
+|:--|:--|:--|
+| writes | a **result**: a map, profile, phase diagram or table | the **loaded data itself**: the whole `gas` (or particles, gravity, …) object |
+| as | plain arrays (HDF5, CSV, NumPy, JSON, FITS) | a compressed JLD2 file, a [Mera file](07_multi_Mera_Files.md) |
+| read back by | Python, IDL, DS9, a spreadsheet | [`loaddata`](@ref), into an object every Mera function works on |
+
+A Mera file is the way to keep the data for later analysis in Mera:
+
+- It reloads much faster than the RAMSES output and takes less disk space.
+- It keeps the simulation information, the unit scales and the options the data was loaded
+  with, so `getvar`, `projection` or `profile` work on the reloaded object as on the original.
+- `loaddata` can read only a region (`xrange`, `yrange`, `zrange`), and one file holds several
+  data types (`:append`).
+- It gets a sidecar too.
+
+```julia
+mkpath("mera_files")                           # the folder must exist
+savedata(gas, :write; path="mera_files/")      # nothing is written without :write or :append
+gas = loaddata(300, "mera_files/", :hydro)
+```
+
+The rest of this page is about `exportdata`.
+
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
 # MERA_EXAMPLES environment variable; every path below is built from it.

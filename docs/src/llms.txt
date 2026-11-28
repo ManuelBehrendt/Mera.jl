@@ -36,6 +36,26 @@ Limit the read rather than trimming afterwards. Every getter, and `loadall`, tak
 `xrange`/`yrange`/`zrange` with `center` and `range_unit`, and applies them while reading. The
 defaults are the box corner and code units, so pass `center=[:bc], range_unit=:kpc`.
 
+`checkoutputs(path)` lists the output numbers that exist in a run folder.
+
+## Saving and reloading: Mera files
+
+To keep loaded data for later work in Mera, save the object itself, not an export:
+
+    mkpath("mera_files")                            # savedata and convertdata need the folder
+    savedata(gas, :write; path="mera_files/")       # output_00400.jld2, LZ4-compressed
+    savedata(part, :append; path="mera_files/")     # a further data type into the same file
+    gas = loaddata(400, "mera_files/", :hydro; xrange=[-10,10], center=[:bc], range_unit=:kpc)
+    viewdata(400, "mera_files/")                    # what the file holds, without loading it
+    convertdata(400; datatypes=[:hydro, :particles], path="/path/to/sim", fpath="mera_files/")
+
+**`savedata` writes nothing without `:write` or `:append`**, so a file is never overwritten by
+accident. A Mera file reloads much faster than the RAMSES output and keeps the simulation
+information, unit scales and load options, so every Mera function works on the reloaded object.
+`infodata(400; path="mera_files/")` is the `getinfo` of a Mera file, and `loadall` reads either
+kind of folder. `exportdata` (below) is the
+other route: it writes a result as plain arrays for other tools, not data for Mera.
+
 ## Units: always say the unit
 
 Every quantity takes a unit symbol, and the unit is part of the question:
@@ -48,6 +68,14 @@ Every quantity takes a unit symbol, and the unit is part of the question:
 `getvar(obj, :q)` without a unit returns **code units**, which mean something different in the next
 simulation. `getvar()` with no arguments prints every derived quantity; `list_units()` prints the
 units; `viewfields(obj)` shows what an object holds.
+
+A plain number in code units converts with the run's scale table: `x * info.scale.kpc` (also
+`gas.info.scale`, or `getunit(info, :kpc)`). The time of a snapshot is `gettime(info, :Myr)`;
+without the unit it is in code units too. In a cosmological run it is the age of the universe.
+
+Own derived quantities: `add_field(:name, (obj, deps) -> ...; depends_on=[:rho, :T], unit=...)`
+registers one that then works in `getvar`, `projection`, `profile` and `phase` like a built-in.
+The kernel returns code units. `list_fields(:hydro; builtin=true)` lists everything known.
 
 ## Regions are values
 
@@ -222,8 +250,10 @@ registered release. Saved maps and reports carry provenance with them. For a sha
 the environment in a `Project.toml` next to the script and commit the `Manifest.toml` that
 `instantiate` produces; `meraproject("my_analysis")` (1.9) starts such a folder.
 
-**(1.9) The record on disk.** The same record exists at three levels: `provenance(obj)` in memory,
-a sidecar next to every saved file, and `bundle` for a whole folder.
+**(1.9) The record on disk: FAIR results.** These functions make results findable, accessible,
+interoperable and reusable (the FAIR principles) without extra work. The same record exists at
+three levels: `provenance(obj)` in memory, a sidecar next to every saved file, and `bundle` for a
+whole folder, ready for a DOI repository.
 
     exportdata(m, "fig3.h5"; note="Figure 3")     # .h5 .jld2 .csv .npy .npz .json, .fits after using FITSIO
     save("fig3.png", fig); writesidecar("fig3.png", m)
@@ -233,6 +263,7 @@ a sidecar next to every saved file, and `bundle` for a whole folder.
     bundle("."; simulation=info)                   # ro-crate-metadata.json, software.bib, simulation.json
     simulationrecord(info); datacite(rec; creators=..., title=..., license=...)
     simulationrecord("/path/to/sim")               # the whole run: every output with time and size
+    writesimulationrecord(rec, "simulation.json")  # that record as readable JSON
 
 The crate is RO-Crate 1.3 with the Process Run Crate profile: each "Mera wrote this file" is a
 `CreateAction` (instrument Mera and the script, object the snapshot, agent the `creators`).
@@ -271,6 +302,21 @@ round-off.
   the ionised-fraction or `|B|` map of an RT or MHD run) and renders them as text or to a file.
 - (1.10) `projection(part, :sd; weighting=:sph)` smooths any particles, also those without a stored
   smoothing length (RAMSES stars and dark matter), from their nearest neighbours.
+- `center_of(gas; method=:densest, unit=:kpc)` finds a centre (`:com` by default). It returns
+  code units unless `unit` is given, so pass the result on with the same `range_unit`:
+  `center=c, range_unit=:kpc`.
+- `slice(gas, :rho, :nH; slice_axis=:z, slice_pos=0.5)` cuts a plane without integrating; any
+  off-axis view keyword makes it an off-axis cut. It samples the nearest cell, so it conserves
+  nothing: use `projection` for totals.
+- `covering_grid` resamples to a uniform 3-D grid; `export_vtk(gas, "out")` writes ParaView files.
+- Star formation: `sfr(part; tbinsize=10.0)` gives the history `(t_Myr, sfr)` from the star
+  particles; `depletion_time(gas_region, sfr_Msol_yr)` the depletion time and efficiency per
+  free-fall time; `localdispersion(gas; patchsize=[500, :pc])` the local velocity dispersion.
+- Cosmological runs: `iscosmological(info)`, `redshift(info)`, `lookback_time(info, a)`,
+  `comoving_to_proper_length(info, l)` and the matching density functions.
+- Clumps found with `clumpfind` go into a table with `clumptable(cat)` (ready for `DataFrame`).
+- `synthetic_clumps()` builds real Mera objects with a known answer and no simulation files, for
+  testing code before it meets data.
 
 **Not part of Mera:** emission or extinction transfer functions, `column_integral`, line-of-sight
 cubes, kinematic mock observations and their FITS export, a fly-through renderer, and a
@@ -287,6 +333,7 @@ cubes, kinematic mock observations and their FITS export, a fly-through renderer
 - Profiles and phase diagrams: https://manuelbehrendt.github.io/Mera.jl/stable/15_multi_Profiles_Phase/
 - Find the right function by task: https://manuelbehrendt.github.io/Mera.jl/stable/where_to_start/
 - Reproducibility: https://manuelbehrendt.github.io/Mera.jl/stable/reproducibility/
+- Mera files, saving and reloading: https://manuelbehrendt.github.io/Mera.jl/stable/07_multi_Mera_Files/
 - Exporting data for other tools (1.9): https://manuelbehrendt.github.io/Mera.jl/stable/exporting_data/
 - Sidecars, citing and publishing (1.9): https://manuelbehrendt.github.io/Mera.jl/stable/export_sidecars/
 - Complete worked recipes: https://manuelbehrendt.github.io/Mera.jl/stable/gallery/
