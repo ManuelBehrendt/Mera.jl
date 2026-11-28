@@ -429,6 +429,28 @@ _sidecar_json(file) = _J.read(read(Mera._sidecar_file(file), String))
         @test isfile(fn2) && !isfile(fn2 * ".meta.json")
     end
 
+    @testset "savedata and loaddata: a Mera file of synthetic data" begin
+        s   = synthetic_clumps(; lmax=4)
+        dir = joinpath(mktempdir(), "new", "mera_files")             # does not exist yet
+        savedata(s.gas, :write; path=dir, verbose=false)
+        fn = joinpath(dir, "output_00001.jld2")
+        @test isfile(fn) && isfile(fn * ".meta.json")                # the folder was made
+        @test _sidecar_json(fn)["source"]["complete"] == false      # read from no files
+        savedata(s.particles, :append; path=dir, verbose=false)
+        @test Set(string.(keys(_sidecar_json(fn)["result"]["contents"]))) == Set(["hydro", "particles"])
+
+        gas2  = loaddata(1, dir, :hydro; verbose=false)
+        part2 = loaddata(1, dir, :particles; verbose=false)
+        @test length(gas2.data) == length(s.gas.data)
+        @test msum(gas2, :Msol) ≈ msum(s.gas, :Msol)
+        @test getvar(gas2, :T, :K) ≈ getvar(s.gas, :T, :K)
+        @test length(part2.data) == length(s.particles.data)
+
+        untouched = joinpath(mktempdir(), "untouched")
+        savedata(s.gas; path=untouched, verbose=false)               # no fmode: nothing is written
+        @test !isdir(untouched)
+    end
+
     @testset "profile and phase carry info" begin
         @test profile(gas, :r_cylinder, :rho).info === gas.info
         @test profile(p, :sd).info === p.info

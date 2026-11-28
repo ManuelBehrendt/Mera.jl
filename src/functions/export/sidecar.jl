@@ -49,11 +49,13 @@ function _sidecar_simpath(path::AbstractString, anonymize::Bool)
 end
 
 # Where the result came from. A complete provenance when the InfoType has it, otherwise the
-# fields that are defined, marked `"complete": false`.
+# fields that are defined, marked `"complete": false`. Data without a simulation path (the
+# synthetic objects) was read from no snapshot, so it is never complete.
 function _sidecar_source(x; anonymize::Bool=false)
     info = _sidecar_info(x)
     info === nothing && return nothing
     p = try
+        isdefined(info, :path) && !isempty(info.path) || error("no simulation path")
         provenance(info)
     catch
         d = OrderedDict{String,Any}("complete" => false)
