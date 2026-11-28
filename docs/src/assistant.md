@@ -34,7 +34,7 @@ the docs version you are reading:
 
 | file | what it is |
 |---|---|
-| [`llms.txt`](llms.txt) | A compact grounding, about 2600 words. The data model, the vocabulary, the traps above, what is not in Mera, and how to check a result. Written to be pasted or attached whole. |
+| [`llms.txt`](llms.txt) | A compact grounding, about 3200 words. The data model, the vocabulary, the traps above, saving and sharing results (Mera files, sidecars, FAIR records), what is not in Mera, and how to check a result. Written to be pasted or attached whole. |
 | [`llms-full.txt`](llms-full.txt) | The conceptual documentation concatenated into one file, about 37 000 words. Attach it when the question needs depth. |
 
 !!! note "Working with a code other than RAMSES"

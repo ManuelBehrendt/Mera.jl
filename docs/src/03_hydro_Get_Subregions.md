@@ -90,7 +90,7 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
-Mera v1.8.3 | Julia 1.12.7 | 4 threads
+Mera v1.11.0 | Julia 1.12.7 | 4 threads
 cells loaded : 18966620
 box size     : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
@@ -293,7 +293,7 @@ sphericalshell      7754688 cells   1.18e10 Msol
 cylindricalshell    4084535 cells   8.032e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_10_4.webp)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_10_5.webp)
 
 Face-on, the box and the cylinder differ only in the corners; edge-on, both are the same ±2 kpc
 slab. The two shells show how a projection hides depth. Face-on, the cylindrical shell is a ring
@@ -532,12 +532,12 @@ fig
 
 ```
 nsub  points/cell     r = 10 kpc   r = 1.5 kpc   time, r = 10
-1     1                 -0.025 %        19.0 %         0.33 s
-2     8                 -0.096 %         3.0 %         0.25 s
-4     64                -0.026 %         0.9 %         0.22 s
-8     512              -0.0046 %        0.23 %         0.37 s
-16    4096            -0.00025 %       0.053 %         0.36 s
-32    32768           -0.00036 %        0.01 %         1.21 s
+1     1                 -0.025 %        19.0 %         0.26 s
+2     8                 -0.096 %         3.0 %         0.34 s
+4     64                -0.026 %         0.9 %         0.35 s
+8     512              -0.0046 %        0.23 %         0.36 s
+16    4096            -0.00025 %       0.053 %         0.52 s
+32    32768           -0.00036 %        0.01 %         1.31 s
 ```
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_20_3.webp)
@@ -564,8 +564,10 @@ rule:
    same place and compare its volume with the exact value. A box aligned with the axes needs no
    check: its fractions are exact for any `nsub`.
 
-Now the maps. The second row zooms onto the coarse west edge, because at full size the
-differences are smaller than a screen pixel. The dashed circle is the exact sphere.
+Now the maps. The second row zooms onto the north-west edge, where the cells are coarse and the
+circle runs at 45° to their faces. It cuts them diagonally, so each rule draws its own edge. (On
+the west edge the circle runs along one column of cells, and all three rules keep that same
+column.) The dashed circle is the exact sphere.
 
 ```julia
 zoomw = (center=ctr, xrange=[-12, 12], yrange=[-12, 12], pxsize=[0.1, :kpc])
@@ -574,16 +576,22 @@ p_up = proj(sph_whole;  zoomw...)
 p_sp = proj(sph;        zoomw...)
 p_lo = proj(sph_centre; zoomw...)
 
-# The rim spans about 1.8 dex, while the page-wide scale spans 6. Measured across this
-# window the three treatments differ from the split map by 15 % (whole) and 3 % (centres),
-# which is 0.06 and 0.01 dex: about 1 % of a six-decade colour bar, and invisible. The zoom
-# row therefore gets its own stretch, taken from the rim's own values.
-ZLIM = (-1.8, 0.4)
+# The zoom: a 5 kpc window on the circle at 135°, the north-west rim.
+Lz = (-9.6, -4.6, 4.6, 9.6)
+
+# The rim spans less than two decades, while the page-wide scale spans six, so the zoom row gets
+# its own stretch, taken from the whole-cell values in the window. One decade more at the bottom
+# leaves room for the split cells, which are dimmed by their fraction.
+sd_up = p_up.maps[:sd]
+zx = range(p_up.cextent[1]*kpc, p_up.cextent[2]*kpc; length=size(sd_up, 1))
+zy = range(p_up.cextent[3]*kpc, p_up.cextent[4]*kpc; length=size(sd_up, 2))
+zv = [log10(sd_up[i, j]) for i in eachindex(zx), j in eachindex(zy)
+      if Lz[1] <= zx[i] <= Lz[2] && Lz[3] <= zy[j] <= Lz[4] && sd_up[i, j] > 0]
+ZLIM = (floor(minimum(zv), digits=1) - 1, ceil(maximum(zv), digits=1))
 
 # ── figure code from here: panels, overlays, colorbars, no new Mera concepts ──
 fig  = Figure(size=(1080, 700))
 L    = (-12, 12, -12, 12)
-Lz   = (-11, -7, -2, 2)                              # the coarse west rim
 panels = ((p_up, "whole cells: bulges outward"),
           (p_sp, "split: edge on the circle"),
           (p_lo, "centres only: eroded inward"))
@@ -591,8 +599,9 @@ for (k, (p, ttl)) in enumerate(panels)
     ax = Axis(fig[1, k], title=ttl)
     show_sd!(ax, p, L)
     arc!(ax, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1, linestyle=:dash)
-    lines!(ax, [-11, -7, -7, -11, -11], [-2, -2, 2, 2, -2]; color=:cyan, linewidth=1)
-    axz = Axis(fig[2, k], title=k == 2 ? "zoom: the coarse west rim (own colour range)" : "")
+    lines!(ax, [Lz[1], Lz[2], Lz[2], Lz[1], Lz[1]], [Lz[3], Lz[3], Lz[4], Lz[4], Lz[3]];
+           color=:cyan, linewidth=1)
+    axz = Axis(fig[2, k], title=k == 2 ? "zoom: the north-west rim (own colour range)" : "")
     show_sd!(axz, p, Lz; lims=ZLIM)
     arc!(axz, Point2f(0, 0), 10., 0, 2π; color=:white, linewidth=1.2, linestyle=:dash)
 end
@@ -604,13 +613,15 @@ fig
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_22_1.webp)
 
-In the zoom, the three rules of the drawing appear on real data: whole cells stick out past the
-circle, the centre test cuts into it, and the split edge lies on it. The split edge is a little
-soft, because the projection spreads the (correctly reduced) mass of each cut cell over the
-whole cell. Step 9 measures this and shows how to make the edge sharp.
+In the zoom, the three rules of the drawing appear on real data: whole cells form a staircase
+outside the circle, and the centre test cuts a staircase into it. The split map keeps every cell
+the circle passes through, each dimmed by the share that lies inside: a cell the circle only
+touches is almost black, a cell it only clips is almost full. The split edge is soft, because
+the projection spreads the (correctly reduced) mass of each cut cell over the whole cell. Step 9
+measures this and shows how to make the edge sharp.
 
-The zoom row has its own colour range. On the page-wide scale of six decades, a difference of a
-few per cent would be invisible.
+The zoom row has its own colour range, so the steps within the rim's two decades are not lost on
+the page-wide scale of six.
 
 Next, the fractions themselves. We take the boundary cells of the split sphere
 (`0 < fraction < 1`) in a thin slab around the mid-plane and colour each cell by its fraction.
@@ -1581,7 +1592,7 @@ fig
 identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10   vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_3.webp)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_72_4.webp)
 
 The rule holds, and the side view explains the top view: the blister adds gas only above the
 upper face, where the bright disc hides it from the top, while the chimney removes a full column

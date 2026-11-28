@@ -1,23 +1,29 @@
 codecov:
   require_ci_to_pass: false
 
-# Two independent measurements, reported separately.
+# Three independent measurements, reported separately.
 #
-#   ci-smoke   what GitHub Actions can actually run: the data-free tier only, because the
-#              simulation data is far too large for a hosted runner.
-#   local-full the whole suite including the data-backed tier, measured on the maintainer's
-#              machine with MERA_TEST_DATA mounted, and uploaded by
-#              scripts/run_local_coverage.sh.
+#   ci-smoke              what GitHub Actions can actually run: the data-free tier only, because
+#                         the simulation data is far too large for a hosted runner.
+#   local-full            the whole suite including the data-backed tier, measured on the
+#                         maintainer's machine with MERA_TEST_DATA mounted, and uploaded by
+#                         scripts/run_local_coverage.sh or scripts/run_coverage_with_notebooks.sh.
+#   local-full-notebooks  the whole suite plus the documentation notebooks, uploaded by
+#                         scripts/run_coverage_with_notebooks.sh.
 #
-# carryforward is essential here. The two are uploaded at different times, so without it a push
-# that reports only ci-smoke would make local-full look empty, and the project total would sag
-# and recover for no real reason.
+# carryforward is essential here. The three are uploaded at different times, so without it a push
+# that reports only ci-smoke would make the local flags look empty, and the project total would
+# sag and recover for no real reason. Every flag that is uploaded must be listed here.
 flags:
   ci-smoke:
     paths:
       - src/
     carryforward: true
   local-full:
+    paths:
+      - src/
+    carryforward: true
+  local-full-notebooks:
     paths:
       - src/
     carryforward: true
