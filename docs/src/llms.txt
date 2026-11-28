@@ -42,7 +42,7 @@ defaults are the box corner and code units, so pass `center=[:bc], range_unit=:k
 
 To keep loaded data for later work in Mera, save the object itself, not an export:
 
-    mkpath("mera_files")                            # savedata and convertdata need the folder
+    mkpath("mera_files")                            # Mera 1.11 and older need the folder
     savedata(gas, :write; path="mera_files/")       # output_00400.jld2, LZ4-compressed
     savedata(part, :append; path="mera_files/")     # a further data type into the same file
     gas = loaddata(400, "mera_files/", :hydro; xrange=[-10,10], center=[:bc], range_unit=:kpc)

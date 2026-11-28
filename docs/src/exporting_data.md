@@ -40,7 +40,7 @@ A Mera file is the way to keep the data for later analysis in Mera:
 - It gets a sidecar too.
 
 ```julia
-mkpath("mera_files")                           # the folder must exist
+mkpath("mera_files")                           # Mera 1.11 and older need the folder
 savedata(gas, :write; path="mera_files/")      # nothing is written without :write or :append
 gas = loaddata(300, "mera_files/", :hydro)
 ```
