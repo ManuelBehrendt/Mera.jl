@@ -307,6 +307,7 @@ if [[ -z "${NB_ONLY:-}" ]] && suite_complete && [[ ! -s "$STATE/coverage_suite.l
     ids=(); for f in "${SUITE_FILES[@]}"; do ids+=("$(suite_id "$f")"); done
     collect "${ids[@]}"
     $JULIA --project=. scripts/process_coverage.jl 2>&1 | tail -8 | tee -a "$STATE/run.log"
+    drop_stray_cov    # the copies: their renamed form is not one that process_coverage cleans
     [[ -s coverage.lcov ]] && mv coverage.lcov "$STATE/coverage_suite.lcov"
 fi
 if [[ -s "$STATE/coverage_suite.lcov" && ! -f "$STATE/done/upload__local-full" ]]; then
@@ -392,6 +393,7 @@ if [[ -n "${NB_ONLY:-}" || ! -s "$STATE/coverage.lcov" ]]; then
     else
         $JULIA --project=. scripts/process_coverage.jl 2>&1 | tail -8 | tee -a "$STATE/run.log"
     fi
+    drop_stray_cov
     # NB_ONLY measures a few notebooks: the result stays in coverage.lcov and is not the full run
     [[ -s coverage.lcov && -z "${NB_ONLY:-}" ]] && cp coverage.lcov "$STATE/coverage.lcov"
 fi
