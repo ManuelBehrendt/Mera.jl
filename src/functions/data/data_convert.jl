@@ -54,7 +54,7 @@ return statistics_dictionary
   
 - **`path`:** Path to RAMSES simulation folders (default: `"./"`).
   
-- **`fpath`:** Output path for JLD2 files (default: `"./"`)
+- **`fpath`:** Output path for JLD2 files (default: `"./"`); created if it does not exist
   
 - **`fname`:** Base filename for output files (default: `"output_"`)
   - Final filename: `fname + output_number + ".jld2"`

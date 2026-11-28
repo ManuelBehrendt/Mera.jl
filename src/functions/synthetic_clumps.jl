@@ -63,7 +63,29 @@ function _synth_info(; boxlen=_BOXLEN, lmax=_LMAX)
     info.nvarh = 5
     info.variable_list = [:rho, :vx, :vy, :vz, :p]
     info.particles_variable_list = [:vx, :vy, :vz, :mass]
+    info.output = 1
+    info.boundaries = :unknown                 # what getinfo reports without a namelist
+    _blank_fields!(info)                       # no files: names, descriptor, namelist stay empty
     return info
+end
+
+# Fill every field that is still undefined with an empty value: "" , 0, false, an empty array
+# or Dict, or a blank Mera sub-object filled the same way. A real read sets these from the
+# files; without them `savedata`, `loaddata` and the sidecars would meet undefined fields.
+function _blank_fields!(x)
+    for (f, T) in zip(fieldnames(typeof(x)), fieldtypes(typeof(x)))
+        if isdefined(x, f)
+            v = getfield(x, f)
+            parentmodule(typeof(v)) === Mera && ismutable(v) && _blank_fields!(v)
+            continue
+        end
+        v = T <: AbstractString ? "" :
+            T <: Union{Bool,Number} && isconcretetype(T) ? zero(T) :
+            T <: Union{AbstractArray,AbstractDict} ? T() :
+            parentmodule(T) === Mera && ismutabletype(T) ? _blank_fields!(T()) : nothing
+        v === nothing || setfield!(x, f, v)
+    end
+    return x
 end
 
 # density contributed by clump k at (x,y,z), in code density

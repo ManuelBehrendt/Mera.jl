@@ -103,7 +103,7 @@ table together with the simulation information and the options it was loaded wit
   - `:write`: create the file, or replace an existing one.
   - `:append`: add a further data type to an existing file. A data type that is already in the
     file is not replaced; that raises an error.
-- `path::String = "./"`: the folder to write to.
+- `path::String = "./"`: the folder to write to. It is created if it does not exist.
 
 # Keywords
 - `fname = "output_"`: the start of the file name; the five-digit output number follows.
@@ -178,6 +178,7 @@ function savedata( dataobject::DataSetType;
 
 
     if wdata
+        mkpath(path)    # a new folder is made, as exportdata does; convertdata writes through here
         jldopen(fpath, jld2mode; compress = ctype) do f
             #mygroup = JLD2.Group(f, string(datatype))
             dt = string(datatype)
